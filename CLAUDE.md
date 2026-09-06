@@ -38,6 +38,26 @@ todo lo que la sección 14 deja fuera por depender de esto.
 requisito que sale del documento es que el programa arranque rápido, porque un agente lo invoca
 muchas veces en una sesión.
 
+## Cuatro requisitos identificados y no incorporados todavía
+
+No bloquean como los dos anteriores, pero **los cuatro tocan el modelo de estados y conviene
+decidirlos juntos**, antes de escribir el código que los usa. Cada uno tiene evidencia medida detrás,
+que está en la sección 9 de [`docs/DECISIONES.md`](docs/DECISIONES.md).
+
+1. **Distinguir "ponte con esto" de "estoy en ello".** Hoy hay tres papeles de estado (por defecto,
+   activo y terminal), y con ellos el gesto de una persona que encarga trabajo y el de un agente que
+   lo coge son el mismo dato. Hace falta un cuarto papel para el estado desde el que un agente puede
+   ponerse a trabajar, distinto del que escribe él al empezar.
+2. **Saber si alguien está trabajando de verdad.** Una tarea que un agente coge antes de que su
+   sesión muera se queda en el estado activo para siempre, y nada lo detecta. La forma conocida de
+   resolverlo es un arrendamiento con caducidad, y **depende de la decisión de persistencia**, así
+   que encaja con ella.
+3. **Señalar lo que espera a una persona.** Se puede configurar un estado tipo `Blocked`, pero
+   `biso prime` no lo distingue de los demás, así que un bloqueo que espera una decisión humana no se
+   ve donde se mira.
+4. **Distinguir terminar de descartar.** Hay un solo estado terminal, así que una tarea hecha y una
+   abandonada se confunden. Lo que falta es un papel que obligue a dar un motivo al entrar en él.
+
 ## Cosas que conviene tener presentes al implementar
 
 - **El mensaje de arranque tiene un tope duro de 5.120 bytes**, repartido en 3.072 para la parte fija

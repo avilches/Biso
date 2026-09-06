@@ -311,3 +311,93 @@ regla es fácil de romper sin darse cuenta. La justificación no solo se esconde
 la estructura. Una tabla llegó a tener una columna titulada "Por qué" que sobrevivió a cuatro
 revisiones, dos de ellas dedicadas expresamente a cazar justificaciones, porque todo el mundo buscaba
 frases y esa vivía en una celda.
+
+---
+
+## 9. Cuatro requisitos identificados y no incorporados
+
+Salen de un diseño anterior de gestor de tareas que no llegó a escribirse, y de la evidencia que
+aquel diseño recogió sobre la herramienta que usaba esta máquina antes. Se anotan aquí con su
+evidencia porque **los cuatro tocan el modelo de estados** y conviene decidirlos a la vez.
+
+### 9.1. Distinguir el encargo de la ejecución
+
+La especificación tiene tres papeles de estado: por defecto, activo y terminal. Con ellos, que una
+persona mueva una tarea para decir "ponte con esto" y que un agente la coja y anote que está en ello
+**son el mismo dato**, y no se pueden distinguir.
+
+Hace falta un cuarto papel, para el estado desde el cual un agente puede ponerse a trabajar. La
+asimetría es lo que da valor: ese estado lo mueve la persona y significa que se ejecute, mientras que
+el estado activo lo escribe el agente al cogerla y nunca la persona.
+
+Sin esa distinción no se puede disparar trabajo autónomo sin ambigüedad, que es el caso de uso
+concreto que motivó todo este trabajo: arrastrar una tarjeta desde el móvil para que un agente se
+ponga con esa tarea.
+
+### 9.2. Saber si alguien está trabajando de verdad
+
+Una tarea que un agente coge antes de que su sesión muera se queda en el estado activo
+indefinidamente, y nada lo detecta.
+
+La evidencia es concreta. La herramienta que se usaba antes tenía un campo para apuntar quién está
+trabajando en una tarea, y el tablero web lo pintaba, pero era una lista a la que se añade un nombre
+al empezar y que se vacía al terminar: **sin latido, sin marca de tiempo y sin caducidad**, de modo
+que una sesión que muere deja su nombre ahí para siempre. Y había un segundo fallo encima: solo lo
+escribían su servidor de integración y su API, nunca su línea de comandos, aunque su propio mensaje
+de arranque pedía al agente que mandara su nombre al cambiar de estado.
+
+Hay además un dato medido que descarta la solución fácil: **el evento de fin de sesión de Claude Code
+trae un motivo con cinco valores posibles y ninguno corresponde a un proceso muerto a lo bruto**, así
+que un hook de cierre no puede ser la única señal de que una tarea quedó huérfana, porque el caso que
+importa es justamente el que no lo dispara.
+
+La forma conocida de resolverlo es un arrendamiento con caducidad: latido mientras se trabaja, y algo
+que libere la tarea cuya sesión murió. Reclamar una tarea sería pasar del estado del apartado 9.1 al
+activo, así que las dos decisiones encajan.
+
+**Esta depende de cómo se persistan los datos** y conviene tomarla con esa.
+
+### 9.3. Señalar lo que espera a una persona
+
+Se puede configurar un estado tipo `Blocked`, pero es un estado más: `biso prime` no lo distingue, así
+que una tarea parada esperando una decisión humana no se ve donde se mira.
+
+La evidencia: en el tablero que se estudió había cuatro tareas paradas por una pregunta sin responder
+y nada lo señalaba. Eran, además, preguntas abiertas disfrazadas de trabajo pendiente, porque una
+decisión no tenía dónde vivir y la única forma de registrarla era crear una tarea.
+
+Lo que falta es un papel que marque un estado como "espera a una persona", y que el mensaje de
+arranque lo destaque en su propio bloque.
+
+### 9.4. Distinguir terminar de descartar
+
+Hay un solo estado terminal, así que una tarea hecha y una abandonada acaban en el mismo sitio y se
+confunden. Lo que falta es un papel que marque un estado como "al entrar aquí, el motivo es
+obligatorio".
+
+Es más pequeño que los tres anteriores, pero se decide con ellos porque es otro papel de estado.
+
+### 9.5. Lo que se miró de ese diseño anterior y se descarta
+
+**Un modelo con entidades separadas para tarea, idea, aprendizaje y decisión**, cada una con sus
+propios estados y campos. La necesidad que lo motivaba es real, porque sin sitio donde ponerlas las
+decisiones se disfrazan de tareas. Pero hay un dato posterior que contradice la solución: en el
+estudio de uso de una herramienta que sí tiene comandos dedicados para documentos y decisiones,
+**no hubo una sola llamada a ninguno de ellos en seis días, sesenta sesiones y diez proyectos**. La
+conclusión es que la necesidad se cubre mejor con un tipo más en el vocabulario que ya existe que con
+una entidad y un comando propios.
+
+**Una forma concreta de guardar los datos**, con un directorio por entidad para que añadir un
+comentario no reescriba nada de lo demás. No se descarta: es una opción razonada para la decisión de
+persistencia, que sigue abierta.
+
+### 9.6. Un contraste que conviene mirar antes de implementar
+
+Aquel diseño se imponía una regla contraria a la de esta especificación: **los valores por defecto
+viven completos en el binario, el comando de creación del tablero no escribe ninguna configuración, y
+un repositorio normal no tiene fichero de configuración nunca**. Su argumento era evitar acabar con un
+motor genérico que no sabe hacer nada solo y que obliga a configurar antes de escribir la primera
+tarea.
+
+Aquí `biso init` sí escribe la configuración. El argumento contrario es bueno y merece mirarse antes
+de dar la decisión por hecha.
