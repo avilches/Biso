@@ -779,8 +779,11 @@ git commit -m "Actualiza CLAUDE.md tras cerrar el modelo de estados"
 
 ## Tarea 14: la pasada final de coherencia
 
-No cubre ningún cambio nuevo. Existe porque la sección 8 de `DECISIONES.md` dice que al corregir una
-afirmación hay que buscarla en todo el documento, y esa búsqueda solo se puede hacer al final.
+Cubre el cambio 38, el barrido del vocabulario, más la búsqueda de afirmaciones a medias. El cambio 38
+estaba asignado a la tarea 1 y se movió aquí durante la ejecución, porque es un barrido de documento
+entero y las tareas 2 a 13 reescriben buena parte de ese documento: hacerlo antes obligaría a
+rehacerlo. Lo demás existe porque la sección 8 de `DECISIONES.md` dice que al corregir una afirmación
+hay que buscarla en todo el documento, y esa búsqueda solo se puede hacer al final.
 
 - [ ] **Paso 1: los greps que tienen que dar cero**
 
@@ -802,7 +805,22 @@ grep -o 'initial_status\|active_status\|terminal_status' docs/DECISIONES.md | so
 
 Esperado: que ningún papel aparezca en un documento con un nombre y en el otro con otro.
 
-- [ ] **Paso 3: comprobar que no ha quedado ninguna regla que cite el nombre de un estado**
+- [ ] **Paso 3: el barrido del vocabulario (cambio 38)**
+
+Aplicar la sección `## Vocabulario de este documento` a todo el documento, retirando los usos que ella
+misma prohíbe. Cada resultado de estos hay que mirarlo a mano, porque tres de las cinco palabras
+tienen un uso legítimo y solo el contexto lo dice:
+
+```bash
+grep -n 'columna\|panel\|tarjeta\|ticket' docs/SPEC.md
+```
+
+Un `columna` que nombre una de las ocho columnas de la tabla que imprimen `biso ls` y `biso prime` es
+correcto y se queda. Un `columna` que nombre un estado del tablero es un fallo y pasa a decir estado:
+hay uno conocido alrededor de la línea 1107, en la frase "que no se corresponda con una columna del
+tablero". Un `tarjeta` que hable de Trello es correcto. `panel` no es correcto nunca.
+
+- [ ] **Paso 4: comprobar que no ha quedado ninguna regla que cite el nombre de un estado**
 
 ```bash
 grep -n 'In Progress' docs/SPEC.md | grep -v 'example\|ejemplo\|^\s*[0-9]*:  ' | head -20
