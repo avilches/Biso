@@ -1504,9 +1504,6 @@ desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad 
 - **`--comment` funciona al crear**, igual que en cualquier otro comando de escritura.
 - **`--plan`, `--note` y `--summary` no están restringidos por el estado.** Se pueden escribir al
   crear, en cualquier estado.
-- **`default_assignee` de la configuración asigna esa persona cuando no se ha pasado `-a`.** Con
-  `--start` y sin `-a`, `--start` asigna `me` en su lugar; `default_assignee` solo se aplica cuando
-  ni `-a` ni `--start` han asignado a nadie.
 
 #### Comportamiento, caso a caso
 
@@ -2922,7 +2919,6 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `extensions` | lista | vacía |
 | `task_prefix` | texto de solo letras | `TASK` |
 | `me` | texto de persona | `BISO_ME` si está definida |
-| `default_assignee` | texto de persona | vacío |
 | `default_limit` | entero >= 0 | 30 |
 | `finish_strict` | booleano | falso |
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
@@ -2992,7 +2988,6 @@ Solo `config list` acepta `--json`:
       "extensions": ["trello.card"],
       "task_prefix": "TASK",
       "me": "@claude",
-      "default_assignee": null,
       "default_limit": 30,
       "finish_strict": false,
       "urgency": { "priority": 6.0, "active": 4.0, "blocking": 8.0, "blocked": -5.0,
@@ -3038,7 +3033,6 @@ Keys:
   extensions         declared external field keys, such as trello.card
   task_prefix        id prefix, letters only (default TASK)
   me                 who you are, for --mine and for comment authorship
-  default_assignee   assignee of a new task
   default_limit      how many rows `biso ls` prints (default 30)
   finish_strict      make `biso finish` refuse an incomplete task
   urgency.priority, urgency.active, urgency.blocking, urgency.blocked,
