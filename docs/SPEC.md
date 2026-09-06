@@ -45,8 +45,8 @@ escribe.
 | **criterio** | Un elemento de las dos listas de comprobación | `acceptanceCriteria`, `definitionOfDone` |
 | **comentario** | Una entrada inmutable del histórico | `comments` |
 
-Cuatro palabras quedan restringidas, y conviene decir a qué en vez de prohibirlas a secas, porque tres
-de ellas tienen un uso legítimo:
+Cinco palabras quedan restringidas, en cuatro reglas, y conviene decir a qué en vez de prohibirlas a
+secas, porque tres de ellas tienen un uso legítimo:
 
 - **columna** nombra únicamente una columna de la tabla que imprimen `biso ls` y `biso prime`, que
   tiene ocho. Un estado del tablero no se llama nunca columna.
