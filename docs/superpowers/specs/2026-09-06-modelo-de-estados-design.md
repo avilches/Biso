@@ -2,16 +2,17 @@
 
 Este documento cierra los cuatro requisitos que la sección 9 de [`DECISIONES.md`](../../DECISIONES.md)
 dejó identificados y sin incorporar. No es la especificación: es la decisión y su razón, escrita para
-que aplicarla a [`SPEC.md`](../../SPEC.md) y a `DECISIONES.md` sea mecánico. La sección 11 de este
-documento es la lista de esos cambios, uno a uno.
+que aplicarla a [`SPEC.md`](../../SPEC.md) y a `DECISIONES.md` sea mecánico. La sección 11 es la lista
+de esos cambios, uno a uno.
 
 Lo que decide, en una frase: **ningún papel de estado nuevo, un campo nuevo con dos verbos, y el
 encargo resuelto con la asignación que ya existe, retirando lo que la ensuciaba.**
 
-Este documento va por su segunda versión. La primera pasó una revisión adversarial que encontró trece
-sitios de `SPEC.md` sin contabilizar, una subida de tope que rompía el contrato de estabilidad, y un
-bloque nuevo de `biso prime` que se tragaba el tablero entero. Lo que sigue ya lleva esos arreglos, y
-la sección 12 recoge lo que quedó como riesgo aceptado.
+Este documento va por su tercera versión. Las dos primeras pasaron sendas revisiones adversariales que
+encontraron veinticinco problemas entre las dos, incluidos un tope que rompía el contrato de
+estabilidad, un bloque nuevo que se tragaba el tablero, una bandera que hoy es un error de uso, y
+quince sitios de `SPEC.md` sin contabilizar. Lo que sigue lleva esos arreglos, y la sección 12 recoge
+lo que queda como riesgo aceptado.
 
 ---
 
@@ -26,8 +27,6 @@ distinguirlo es lo que hace que el resultado sea pequeño. La regla es esta:
 El documento ya aplicaba esta regla sin enunciarla: `archived` es un campo y no un estado,
 precisamente porque una tarea archivada conserva el estado que tenía. Lo que faltaba era el criterio
 escrito, para no volver a meter en el vocabulario de estados algo que no es un punto del camino.
-
-Aplicado a los cuatro requisitos:
 
 | Requisito | Forma | Por qué |
 |---|---|---|
@@ -54,7 +53,7 @@ la sección 1, para no renumerar las quince secciones existentes. `DECISIONES.md
 | **terminal**, terminada | El papel del estado final | `terminal_status` |
 | **asignación** | Quién debe hacer la tarea. Es el gesto con el que una persona encarga trabajo | `assignees` |
 | **arrendamiento** | Hasta cuándo vale la reserva de un agente sobre una tarea activa. No es un estado | pendiente de la persistencia |
-| **pregunta abierta**, aparcada | Lo que detiene una tarea a la espera de una persona. No es un estado | `question` |
+| **pregunta abierta**, aparcada | Lo que detiene una tarea a la espera de una persona. No es un estado | `question`, `waiting` |
 | **archivada** | Fuera del tablero activo sin perder nada. No es un estado | `archived` |
 | **bloqueada** | Depende de alguna tarea sin terminar. Solo dependencias, nunca personas | `blocked` |
 | **persona** | Quien encarga y quien responde | |
@@ -62,9 +61,16 @@ la sección 1, para no renumerar las quince secciones existentes. `DECISIONES.md
 | **criterio** | Un elemento de las dos listas de comprobación | `acceptanceCriteria`, `definitionOfDone` |
 | **comentario** | Una entrada inmutable del histórico | `comments` |
 
-Palabras que el documento no vuelve a usar, porque cada una tiene ya su término: **columna** (es un
-estado), **panel** (es el tablero; lo que abre `biso board` es la interfaz web), **tarjeta** y
-**ticket** (es una tarea), y **bloqueada** referida a una persona (eso es una pregunta abierta).
+Cuatro palabras quedan restringidas, y conviene decir a qué en vez de prohibirlas a secas, porque tres
+de ellas tienen un uso legítimo:
+
+- **columna** nombra únicamente una columna de la tabla que imprimen `biso ls` y `biso prime`, que
+  tiene ocho. Un estado del tablero no se llama nunca columna.
+- **tarjeta** y **ticket** nombran únicamente lo que otra herramienta tiene, como una tarjeta de
+  Trello. Lo de `biso` es una tarea.
+- **panel** no se usa nunca: el conjunto de tareas es el tablero, y lo que abre `biso board` es la
+  interfaz web.
+- **bloqueada** no se usa nunca referida a una persona. Eso es una pregunta abierta.
 
 ---
 
@@ -102,7 +108,7 @@ de `biso prime` declaran que en ese mismo tablero el estado activo es `In Progre
 pueden ser ciertas. La regla funcionaba de casualidad porque el tablero por defecto tenía exactamente
 tres estados.
 
-No se arregla, se retira. En su lugar:
+No se arregla, se retira:
 
 - **Sin `--statuses`**, `biso init` crea `To Do, In Progress, Done`, con los papeles inicial, activo y
   terminal en ese orden.
@@ -112,12 +118,13 @@ No se arregla, se retira. En su lugar:
 El argumento para exigirlas está ya escrito en el apartado 6.1 de `DECISIONES.md`: una regla que
 adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
 
-Los cuatro casos límite de `biso init`, todos con error 2 porque son problemas de argumentos, que es
+Los cinco casos límite de `biso init`, todos con error 2 porque son problemas de argumentos, que es
 como esa sección clasifica hoy cualquier problema de sus banderas:
 
 | Caso | Mensaje |
 |---|---|
-| Falta alguna de las tres banderas de papel | Las tres nombradas, diciendo cuáles faltan |
+| Falta alguna de las tres banderas de papel, habiendo `--statuses` | Las tres nombradas, diciendo cuáles faltan |
+| Una bandera de papel sin `--statuses` | Que los papeles solo se fijan junto a la lista de estados |
 | Una bandera de papel nombra un estado que no está en `--statuses` | El valor y la lista de estados |
 | Dos banderas de papel nombran el mismo estado | Los dos papeles y el estado que comparten |
 | `--statuses` con menos de tres estados | Cuántos hacen falta y por qué |
@@ -130,8 +137,8 @@ otro papel.
 ### 3.4. El mínimo pasa de dos estados a tres
 
 Los tres papeles son obligatorios y **distintos entre sí**, así que un tablero necesita al menos tres
-estados. Con eso desaparece el caso de los dos estados y su aviso de que `biso start` no cambia el
-estado.
+estados. Con eso desaparece el caso de los dos estados, y con él su aviso de que `biso start` no cambia
+el estado, que hay que quitar de la tabla de la sección 4.3 y de la salida de `biso init`.
 
 Un tablero puede tener más de tres, y los que sobran no tienen papel. `Ideas`, `Review` o `Blocked`
 siguen siendo estados perfectamente válidos; lo que ya no pueden es ser un papel del modelo.
@@ -188,12 +195,11 @@ que es el que significa encargo.
 
 ### 4.3. Cómo queda el flujo
 
-Un agente que arranca pregunta por lo suyo, y lo hace **por papel y no por nombre de estado**, con los
-filtros del apartado 5.4:
+Un agente que arranca pregunta por lo suyo, y lo hace **por papel y no por nombre de estado**:
 
 ```
 biso ls --mine --not-active --not-waiting   # lo que puede empezar
-biso ls --mine --active                     # lo que dejo a medias
+biso ls --mine --active --not-waiting       # lo que dejo a medias
 ```
 
 Y una persona encarga con la misma llamada que crea la tarea:
@@ -219,15 +225,19 @@ entonces a propósito, y queda anotado aquí para que no se descubra por sorpres
 
 **No hay forma de decir "esto es tuyo, pero todavía no".** Con la asignación como única señal, asignar
 autoriza a empezar de inmediato. Quien necesite esa espera tiene dos salidas dentro del modelo: no
-asignar hasta que toque, o usar una fecha límite. Un estado extra sin papel no sirve, porque un agente
-no puede consultarlo de forma portable entre tableros sin cablear su nombre, que es justo lo que
-prohíbe el apartado 3.1.
+asignar hasta que toque, o usar una fecha límite.
+
+**Solo el papel activo tiene filtros, y es deliberado.** No hay `--initial` ni `--terminal`. La
+consecuencia es que en un tablero con estados de más, `--not-active` incluye esos estados extra, así
+que un `Ideas` asignado al agente le llega mezclado con el trabajo. Se acepta porque la mezcla solo
+ocurre si alguien asignó esa tarea a propósito, y `--mine` ya lleva esa intención dentro. Si algún día
+molesta, se añaden los dos filtros que faltan sin tocar nada más.
 
 ---
 
 ## 5. La pregunta abierta
 
-### 5.1. El campo
+### 5.1. El campo y su booleano
 
 Un campo nuevo de la tarea, `question`, con **las mismas tres partes que un comentario** de la sección
 5.2 de `SPEC.md`:
@@ -242,13 +252,16 @@ Vacío es lo normal. Con contenido significa que la tarea espera a una persona, 
 esté. Lleva tres partes y no una porque al responderse **se convierte literalmente en un comentario**,
 y para eso hacen falta su autor y su instante originales.
 
-No se añade ningún booleano derivado: que el campo tenga contenido ya lo dice todo, y añadir uno
-repetiría la redundancia que ya existe entre `ready` y `blocked`.
+Y un booleano derivado, `waiting`, que es cierto cuando el campo tiene contenido. **No es una copia del
+campo, es la relación que la especificación ya usa entre `dependencies` y `blocked`**: el dato y el
+hecho que se deduce de él viajan juntos en la ficha, y los filtros y los listados hablan del hecho. Sin
+él, `biso ls --json` no tendría forma de decir que una tarea está aparcada sin llevarse el cuerpo de la
+pregunta, que es texto largo y es justo lo que el listado no lleva nunca.
 
 **No es un campo escalar y no entra en la tabla de clases de campo de la sección 8.** Es un registro
 con tres partes, y la tabla de clases, según el apartado 6 de `DECISIONES.md`, "no es una lista de
-excepciones a la regla: es la regla aplicada a cada forma de dato". Declararlo escalar sería la primera
-excepción de esa tabla. En su lugar se aplica el patrón que la especificación ya usa para `archived`:
+excepciones a la regla: es la regla aplicada a cada forma de dato". En su lugar se aplica el patrón que
+la especificación ya usa para `archived`:
 
 > **Ninguna bandera de campo escribe `question`.** Lo escriben `biso ask`, `biso answer` y la
 > importación de `biso new --from`, y nadie más.
@@ -262,35 +275,47 @@ hay que inventar una clase de campo para un registro compuesto.
 Son verbos y no banderas por el principio 5, que dice que un gesto del flujo de trabajo es un comando.
 Sin ellos, responder cuesta dos llamadas, una para el comentario y otra para vaciar el campo.
 
-**`biso ask <ref> [<text>...]`** llena el campo. El autor es siempre la identidad configurada y no se
-puede pasar por bandera, para que `--comment-author` tenga un solo destino en todo el programa, que es
-el autor de un comentario.
+**Ninguno de los dos acepta `--comment-author`.** El autor de la pregunta y el de la respuesta son
+siempre la identidad configurada, y sin ella los dos son error 2. La razón es literal: la sección 10.6
+declara `--comment-author` como "requiere `--comment`" y convierte en error 2 pasarla sin él. Darle un
+segundo destino aquí violaría el principio 2 y obligaría a cambiar esa regla. Quien necesite firmar
+distinto tiene `--comment`, que sigue funcionando en los dos verbos con su autor de siempre.
+
+**`biso ask <ref> <text>...`** llena el campo.
 
 | Caso | Qué pasa |
 |---|---|
 | La tarea no tiene pregunta abierta | Se llena el campo. **No cambia el estado** |
 | La tarea ya tiene una pregunta abierta | Error 6, para que la segunda no borre a la primera en silencio |
-| Sin identidad configurada | Error 2, con el mismo mensaje que el autor de un comentario |
+| La tarea está en el estado terminal | Error 6, igual que `biso start`, con la pista de reabrirla |
+| La tarea está archivada | Se hace, con `note: TASK-11 is archived`, igual que `biso get` |
+| El texto está vacío | Error 3, con el `code` `empty_scalar_value` que ya existe. Aparcar una tarea en una pregunta que no dice nada es peor que negarse |
+| Sin identidad configurada | Error 2, con el `code` nuevo del apartado siguiente |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que `biso note` |
 | Varias referencias | No se admiten: toma exactamente una, como `note` y `comment` |
 
-**`biso answer <ref> [<text>...] [--comment-author <@who>]`** vacía el campo, en una sola escritura y
-con tres efectos:
+**`biso answer <ref> <text>...`** vacía el campo, en una sola escritura y con tres efectos:
 
 1. Añade al histórico un comentario con el `author`, el `askedAt` y el `body` que guardaba el campo.
-2. Añade detrás un segundo comentario con la respuesta, firmado por quien contesta y con el instante
-   de ahora. `--comment-author` afecta a este y solo a este.
+2. Añade detrás un segundo comentario con la respuesta, firmado por la identidad configurada y con el
+   instante de ahora.
 3. Vacía el campo.
 
 | Caso | Qué pasa |
 |---|---|
 | La tarea no tiene pregunta abierta | Error 6, con la pista de usar `biso comment` |
-| Sin `--comment-author` y sin identidad configurada | Error 2, el mismo de `biso comment` |
+| Sin texto | Error 2. Una respuesta sin respuesta no cierra nada |
+| Sin identidad configurada | Error 2, el mismo `code` que `ask` |
 | Se pasan además banderas de campo | Se aplican igual, como en cualquier verbo del ciclo |
 
 **El orden dentro de la escritura**, que la sección 4.9 exige fijar y no dejar al orden de la línea de
 comandos: los dos comentarios del verbo se añaden **antes** que cualquier comentario que venga de
-`--comment`, y el vaciado del campo es lo último. Así la conversación queda en el orden en que ocurrió.
+`--comment`, y el vaciado del campo es lo último.
+
+Eso deja los comentarios en orden de inserción y no de instante, porque el de la pregunta lleva una
+fecha pasada y se añade al final. **Los comentarios se guardan y se muestran en orden de inserción**,
+que es lo que `SPEC.md` hace hoy sin decirlo, y el instante de cada uno dice la verdad. Conviene
+escribirlo donde se define la lista.
 
 Los dos aceptan las demás banderas de campo de la sección 8, como el resto de verbos del ciclo. El caso
 de uso real de eso es responder y concretar a la vez:
@@ -301,58 +326,72 @@ biso answer TASK-11 "Solo los de texto. Los binarios se saltan enteros." \
 ```
 
 **Códigos de salida de los dos**: los mismos de `biso comment` (0, 2, 3, 4, 5, 7, 8, 9), más el 6 de
-las dos filas de arriba, con dos identificadores `code` nuevos en la tabla de la sección 12.3. El error
-2 por falta de identidad reutiliza el `code` que ya use `biso comment` para ese mismo caso.
+sus tablas. Eso son **siete identificadores `code` nuevos** en la sección 12.3: tres del código 6 para
+los tres casos de arriba, uno del código 2 para la falta de identidad, que hoy no tiene ninguno pese a
+existir el error, y otros tres del código 2 para los casos de `biso init` que no encajan en los que ya
+hay.
 
-### 5.3. Dos excepciones declaradas
+### 5.3. Tres excepciones declaradas
 
 **A la sección 5.3 de `SPEC.md`**, que dice que el instante de un comentario lo pone el programa y solo
 se puede fijar al importar. `biso answer` escribe un comentario con un instante pasado. No es una
 excepción de fondo, porque ese instante lo observó el propio programa cuando se hizo la pregunta y
 quien llama no lo negocia, pero es una excepción de forma y va escrita donde está la regla.
 
-**A la lista de fechas importables**, que hoy son tres (`id` aparte): `createdAt`, `updatedAt` y el
-instante de cada comentario. `question.askedAt` es la cuarta, y sigue la misma regla que el instante de
-un comentario: **es opcional al importar, y si falta se pone el instante de la importación**.
+**A la lista de fechas importables**, que hoy son tres: `createdAt`, `updatedAt` y el instante de cada
+comentario. `question.askedAt` es la cuarta, y sigue la misma regla que el instante de un comentario:
+**es opcional al importar, y si falta se pone el instante de la importación**.
+
+**Al ámbito único de búsqueda de texto de la sección 7.2**, que no lo usa solo `--search`: lo usa
+también la resolución de una referencia por texto. Ampliarlo al cuerpo de la pregunta abierta significa
+que `biso get "CRLF"` puede resolver a una tarea porque ese texto está en su pregunta, y que una
+pregunta puede crear una ambigüedad de código 5 donde antes no la había. **Se acepta a propósito**: lo
+contrario sería que el texto de una pregunta se pudiera encontrar justo al dejar de estar abierta,
+cuando pasa a ser comentario, y no antes.
 
 ### 5.4. Alrededor del campo
 
-- **`--waiting` y `--not-waiting`** en `biso ls` y en `biso export`. Son dos y no una porque el agente
-  necesita **excluir** las aparcadas para elegir trabajo, y ese es su filtro más usado.
-- **`--active` y `--not-active`** en los dos mismos comandos, que filtran por el papel y no por el
-  nombre del estado. Sin ellos no hay forma de escribir una consulta portable entre tableros, que es lo
-  que exige el apartado 3.1. Son incompatibles entre sí, como `--ready` y `--blocked`.
-- **`question` viaja en `biso export` y lo acepta `biso new --from`**, con sus tres partes, porque no
-  es un campo derivado y la ida y vuelta es una prueba de la suite. La línea de ejemplo del NDJSON, que
-  se presenta como la que lleva todos los tipos compuestos, tiene que incluirlo.
+- **`--waiting` y `--not-waiting`** en `biso ls` y en `biso export`, **incompatibles entre sí**. Son
+  dos y no una porque el agente necesita excluir las aparcadas para elegir trabajo. Y son incompatibles
+  porque juntas dan cero resultados en cualquier tablero, que es la afirmación falsa que el principio 1
+  existe para impedir. La regla general que conviene escribir: **dos filtros que se contradicen por
+  construcción son incompatibles; una combinación de filtros válidos que resulte vacía en este tablero
+  es un hecho legítimo.**
+- **`--active` y `--not-active`** en los dos mismos comandos, incompatibles entre sí por la misma
+  razón. Filtran por el papel y no por el nombre del estado, y sin ellos no hay consulta portable entre
+  tableros. Son compatibles con `-s`, con `--not-status` y con `--any-status`, porque filtran sobre el
+  mismo eje pero no se contradicen: `-s "To Do" --active` es una lista vacía en unos tableros y no en
+  otros, así que es un hecho y no una contradicción.
+- **`question` viaja en `biso export` y lo acepta `biso new --from`**, con sus tres partes. La línea de
+  ejemplo del NDJSON, que se presenta como la que lleva todos los tipos compuestos, tiene que
+  incluirlo.
+- **`biso ls --json` lleva `waiting` y no `question`**, exactamente como lleva `blocked` y no
+  `dependencies`. El cuerpo de una pregunta es texto largo, y el motivo por el que el listado no lleva
+  texto largo está medido en el principio 4: 215 fichas completas sumaron 179.369 bytes, casi la cuarta
+  parte de la salida del estudio.
 - **`biso get` gana una novena sección**, `question`, que se suma a las ocho de `--section`.
-- **`biso ls --json` lleva `question`**, entero. Es la única forma de que `biso ls --waiting --json`
-  sirva para algo, y no choca con la regla de que el listado no trae el cuerpo de la tarea, porque una
-  pregunta abierta no es cuerpo: es el dato que hace falta para actuar sobre la fila.
-- **`--search` busca dentro del cuerpo de la pregunta abierta**, porque si no lo hiciera el texto de
-  una pregunta sería encontrable justo al dejar de estar abierta, cuando pasa a ser un comentario, y no
-  antes.
 - **`biso start` sobre una tarea aparcada avisa y no lo impide**, igual que hace hoy con las
   dependencias sin terminar. Impedirlo empujaría a rodear la herramienta con `set`.
 - **`biso finish` sobre una tarea aparcada avisa y no lo impide**, por el mismo motivo que no lo impide
   con los criterios sin marcar.
 
 Los dos avisos entran en la tabla de la sección 4.3, que se declara a sí misma como la lista completa
-de avisos que el programa emite.
+de avisos y que ya hoy no lo es, porque le falta el de los dos estados de `biso init`. Ese, además,
+desaparece con el mínimo de tres estados.
 
 ---
 
 ## 6. `biso prime`
 
-### 6.1. Dos bloques nuevos, los dos acotados
+### 6.1. Cuatro bloques, todos acotados
 
 Entre `IN PROGRESS` y `NEXT UP` entran dos bloques:
 
 - **`WAITING ON A PERSON`**: las tareas con pregunta abierta. Cada tarea ocupa **dos líneas**: la fila
   de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo una línea indentada con la
-  pregunta recortada a una línea. Va en línea propia y no en una novena columna porque el algoritmo de
-  columnas tiene ocho exactas y una regla que dice que la octava nunca se rellena; una novena obligaría
-  a cambiarlo, y está publicado en dos sitios.
+  pregunta **recortada a 100 caracteres**, la misma cifra exacta que el algoritmo aplica a los títulos.
+  Va en línea propia y no en una novena columna porque el algoritmo tiene ocho exactas y una regla que
+  dice que la octava nunca se rellena.
 - **`ASSIGNED TO YOU`**: las asignadas a la identidad configurada que no estén en el estado activo y no
   tengan pregunta abierta.
 
@@ -364,34 +403,56 @@ cada tarea cae en el primero que la acepte:
 3. `ASSIGNED TO YOU`, si está asignada a la identidad configurada.
 4. `NEXT UP`, el resto.
 
-De ahí salen tres consecuencias que conviene ver escritas. **Una tarea aparcada no sale en
-`IN PROGRESS`** aunque esté en el estado activo, porque ese bloque significa que alguien está
-trabajando y ahí no lo está nadie. **`NEXT UP` deja de significar "sin empezar"**, así que su rótulo,
-su línea de recuento y la clave `notStartedHidden` del JSON cambian de nombre. Y **sin identidad
-configurada el bloque `ASSIGNED TO YOU` no se imprime**, igual que `biso prime` ya tolera hoy no tener
-identidad imprimiendo `you are (not set)`.
+De ahí salen cuatro consecuencias. **Una tarea aparcada no sale en `IN PROGRESS`** aunque esté en el
+estado activo, porque ese bloque significa que alguien está trabajando y ahí no lo está nadie. **Un
+bloque sin filas no se imprime**, ni siquiera su encabezado, que es lo que ya hace `--limit 0` hoy con
+`NEXT UP`. **Sin identidad configurada, `ASSIGNED TO YOU` no se imprime nunca**, igual que `biso prime`
+ya tolera hoy no tener identidad imprimiendo `you are (not set)`. Y **`NEXT UP` deja de significar "sin
+empezar"**, así que hay que renombrar tres cosas, con estos nombres concretos para que aplicarlo no
+exija decidir nada:
+
+| Hoy | Pasa a ser |
+|---|---|
+| `NEXT UP  (not started, not done, by urgency)` | `NEXT UP  (not assigned to you, by urgency)` |
+| `54 more not started: 'biso ls --all'` | `54 more not shown: 'biso ls --not-active --not-waiting'` |
+| La clave JSON `notStartedHidden` | `hiddenCount` |
 
 **`--limit` acota los dos bloques juntos, no cada uno por su lado.** Su valor sigue siendo 5, y son
-cinco filas repartidas entre `ASSIGNED TO YOU` y `NEXT UP`, en ese orden de preferencia, con una sola
-línea de recuento al final que dice cuántas quedaron fuera de los dos. Esa es la diferencia que impide
-que el mensaje crezca con el tablero: si cada bloque tuviera su propio límite, el resumen crecería al
-doble sin que `--limit` lo notara.
+cinco filas repartidas entre `ASSIGNED TO YOU` y `NEXT UP`, en ese orden de preferencia, con **una sola
+línea de recuento** al final del último de los dos que se imprima. Con `--limit 0` desaparecen los dos
+y queda solo esa línea. Si cada bloque tuviera su propio límite, el resumen crecería al doble sin que
+`--limit` lo notara.
 
-`IN PROGRESS` y `WAITING ON A PERSON` siguen sin límite, por el argumento que ya se aplica al primero:
-en un tablero sano son pocas. Si aun así el resumen no cupiera en su mitad, **el orden de recorte es
-`NEXT UP`, luego `ASSIGNED TO YOU`, luego `WAITING ON A PERSON`**, y la línea de recuento lo dice. Esa
-regla existe hoy nombrando un solo bloque y hay que ampliarla.
+**El orden de recorte se completa**, y esto arregla un agujero anterior a este diseño. La regla de hoy
+dice que se recorta `NEXT UP` "antes que cualquier otra cosa" y no nombra ninguna otra cosa, así que un
+tablero con muchas tareas en curso rebasa el tope sin conducta definida. El orden pasa a ser completo:
+
+1. `NEXT UP`.
+2. `ASSIGNED TO YOU`.
+3. `WAITING ON A PERSON`.
+4. `IN PROGRESS`.
+5. Si aun así no cupiera, cada bloque se reduce a su línea de recuento.
+
+Con esa lista **el tope deja de ser una aspiración y pasa a ser alcanzable siempre**, que es lo que una
+prueba de la suite necesita.
+
+**Los anchos de las columnas 1 a 7 se calculan sobre las filas que se van a imprimir en los cuatro
+bloques juntas**, que es la extensión natural de la regla de hoy, escrita para dos, y lo que hace que
+los cuatro se lean como una sola tabla. Las líneas de pregunta no entran en ese cálculo, porque no son
+filas de la tabla.
 
 Los cuatro bloques excluyen las tareas terminadas y las archivadas, igual que hoy.
 
 ### 6.2. El presupuesto: el tope total no se mueve
 
-El añadido a la parte fija son unos 55 bytes de las dos órdenes nuevas, 12 de la línea de la rejilla y
-214 de la regla nueva, en total **281**. La parte fija pasa de 2.963 a unos **3.244**.
+El añadido a la parte fija son unos 55 bytes de las dos órdenes nuevas y 214 de la regla nueva, en
+total **269**. No hay ninguna bandera de campo nueva, así que la rejilla `FIELD FLAGS` no cambia. La
+parte fija pasa de 2.963 a unos **3.232**.
 
-El resumen del tablero pierde 12 bytes por el estado `Blocked` que desaparece de la línea de recuento,
-gana el bloque de preguntas con sus dos líneas por tarea, y gana un encabezado más sin ganar filas,
-porque `--limit` acota los dos bloques juntos. Sale alrededor de **1.497** frente a los 1.099 de hoy.
+El resumen del tablero pierde lo que ocupaban `Ideas` y `Blocked` en la línea de recuento y en las
+filas, gana el bloque de preguntas con sus dos líneas por tarea, y gana un encabezado más sin ganar
+filas, porque `--limit` acota los dos bloques juntos. Sale alrededor de **1.480** frente a los 1.099 de
+hoy.
 
 | Mitad | Antes | Ahora |
 |---|---:|---:|
@@ -399,31 +460,40 @@ porque `--limit` acota los dos bloques juntos. Sale alrededor de **1.497** frent
 | Resumen del tablero | 2.048 | **1.664** |
 | **Total** | **5.120** | **5.120** |
 
-**El tope total no se mueve.** Lo que cambia es el reparto interno, porque la parte fija crece con la
-herramienta y el resumen no tiene por qué. Con esas cifras quedan 212 bytes de holgura en la parte fija
-y unos 167 en el resumen.
+**El tope total no se mueve.** Lo que cambia es el reparto, y la dirección merece justificarse, porque
+a primera vista contradice el motivo por el que existe el reparto. La sección 3 de `DECISIONES.md` dice
+que las dos mitades están para que el resumen, que crece con el tablero, no se coma el sitio de las
+reglas. Este diseño le quita sitio precisamente a esa mitad, y puede hacerlo por una razón que antes no
+se cumplía: **con el orden de recorte completo del apartado anterior, el resumen ya no crece sin
+límite**. Darle menos sitio cuesta filas mostradas, no correcciones. La parte fija, en cambio, no se
+puede recortar sola: o cabe o hay que quitar contenido a mano.
 
-Las tres cifras del añadido son estimaciones sobre texto que todavía no está escrito, y las del resumen
-dependen de cuántas preguntas abiertas haya. **Los números definitivos salen de regenerar el ejemplo**,
-que es lo que el apartado 8 de `DECISIONES.md` exige para cualquier salida del documento. Si al
-regenerarlo no cupieran, se recorta contenido, no se sube el tope.
+Las cifras del añadido son estimaciones sobre texto que todavía no está escrito, y en particular la
+regla nueva a la que se imputan 214 bytes no está redactada en ninguna parte. **Los números
+definitivos salen de regenerar el ejemplo**, que es lo que el apartado 8 de `DECISIONES.md` exige. Si
+al regenerarlo no cupieran, se recorta contenido, no se sube el tope.
 
 La sección 9.5 gana además la frase que faltaba: **cuál de los dos números congela el contrato de
 estabilidad**, que es el total, porque es el único que quien llama observa.
 
-### 6.3. Por qué el contrato de estabilidad no se toca, y por qué el renombrado sí puede
+### 6.3. Las cinco cosas que este diseño hace y el contrato prohíbe
 
-La sección 13 de `SPEC.md` lista entre lo que no cambia nunca "El tope de tamaño del mensaje de
-`biso prime`" y "Las claves de `data` en cada `kind` de JSON", que no se quitan. Este diseño mantiene el
-tope y renombra una clave, así que hay que decir por qué eso no es incoherente.
+La sección 13 de `SPEC.md` lista lo que no cambia nunca. Este diseño la toca cinco veces, y conviene
+tenerlas todas delante en vez de dos:
+
+1. Renombra la clave JSON `defaultStatus`, y las claves de `data` "no se quitan".
+2. Renombra la clave JSON `notStartedHidden`, por lo mismo.
+3. Cambia la semántica de `--limit` en `biso prime`, y "una bandera nunca cambia de semántica".
+4. Retira `default_assignee`, y retirar una funcionalidad exige un ciclo de aviso.
+5. Mueve el reparto interno del presupuesto, aunque no el tope.
 
 **El contrato obliga a partir de la 1.0, que no está publicada**, y la sección 13 no lo dice hoy: es lo
-primero que hay que escribir ahí. Con eso, ni el renombrado ni una subida de tope serían ilegales
-todavía.
+primero que hay que escribir ahí. Con eso, las cinco son legales.
 
 La razón para no subir el tope de todas formas no es legal, es de fondo: **un tope que se sube cada vez
-que aprieta no es un tope**, y su valor entero está en que obligue a elegir qué entra. El renombrado,
-en cambio, no debilita ninguna promesa: corrige un nombre antes de que nadie dependa de él.
+que aprieta no es un tope**, y su valor entero está en que obligue a elegir qué entra. Los cuatro
+cambios restantes no debilitan ninguna promesa: corrigen nombres y una semántica antes de que nadie
+dependa de ellos.
 
 ---
 
@@ -435,21 +505,17 @@ El término de actividad de la fórmula de la sección 5.4 pasa a estar condicio
 + 4.0 * activa   (1.0 si el estado es el activo Y no hay pregunta abierta, 0.0 si no)
 ```
 
-Sin coeficiente nuevo y sin término nuevo: **siguen siendo exactamente siete**, que es como el
-documento los describe. El motivo es que una tarea aparcada no la está trabajando nadie, y sin esta
-condición la fórmula afirmaría lo contrario y la pondría arriba del listado del que un agente elige.
+Sin coeficiente nuevo y sin término nuevo: **siguen siendo exactamente siete**. El motivo es que una
+tarea aparcada no la está trabajando nadie, y sin esta condición la fórmula afirmaría lo contrario y la
+pondría arriba del listado del que un agente elige.
 
-Eso obliga a tocar también `biso get --explain-urgency`, que imprime una línea por término. Con la
-condición nueva, una tarea en el estado activo y con una pregunta abierta muestra `0.00` en esa línea,
-y quien lo lea no puede saber si es porque el estado no es el activo o porque hay una pregunta. La
-línea tiene que decir cuál de los dos motivos se aplica.
+Eso obliga a tocar `biso get --explain-urgency` **en sus dos formas**. En el texto, la línea del
+término activo dice cuál de los dos motivos lo anula. Y en el JSON, `urgencyBreakdown.active` es hoy un
+número suelto, así que un programa vería el mismo `0.0` ambiguo: necesita acompañarlo del motivo.
 
 ---
 
 ## 8. El arrendamiento, aplazado
-
-Se decide su forma y se aplaza su mecanismo, y la separación es limpia porque la parte que tocaba el
-modelo de estados ya no existe.
 
 **La forma.** Arrendar es asignar con caducidad. Como la asignación ya existe, lo único que falta es un
 instante de caducidad sobre una tarea activa y asignada. Un arrendamiento vencido **saca la tarea del
@@ -461,6 +527,9 @@ mientras se trabaja, y quién detecta la caducidad sin que cueste caro.
 **Por qué no se escribe el campo ahora.** Sería un campo que nada mantiene, que `biso export` tendría
 que llevar y que la prueba de simetría tendría que cubrir, para un mecanismo que no existe.
 
+Entra en la sección 14 de `SPEC.md`, cuyo propósito declarado es que nombrar lo que no está evite que
+alguien lo dé por olvidado.
+
 ---
 
 ## 9. Lo retirado: el requisito 9.4
@@ -469,20 +538,20 @@ Se retira, y el argumento correcto no es el que parecía.
 
 **El argumento que no vale.** Decir que archivar y descartar son lo mismo no se sostiene contra lo que
 `SPEC.md` dice hoy de `biso archive`: existe `--unarchive`, que devuelve la tarea al tablero con el
-estado que tenía, y la ayuda del comando presenta el archivo como sacar tareas del tablero sin
-perderlas. Archivar es reversible, así que es aparcar, y aparcar no es descartar.
+estado que tenía, y la ayuda presenta el archivo como sacar tareas del tablero sin perderlas. Archivar
+es reversible, así que es aparcar, y aparcar no es descartar.
 
 **Y la deducción que proponía tampoco vale.** "Una tarea archivada que nunca llegó al estado terminal
-es una tarea abandonada" no se puede calcular, porque el modelo de datos guarda el estado actual y no
-un histórico de estados. Con `biso start --reopen` una tarea terminada vuelve al activo, y archivada
-desde ahí la deducción la llamaría abandonada habiendo estado hecha.
+es una tarea abandonada" no se puede calcular, porque el modelo guarda el estado actual y no un
+histórico de estados. Con `biso start --reopen` una tarea terminada vuelve al activo, y archivada desde
+ahí la deducción la llamaría abandonada habiendo estado hecha.
 
-**El argumento que sí vale.** Los otros tres requisitos de la sección 9 traen cada uno su evidencia
-medida: llamadas contadas, bytes medidos, fallos reproducidos. Este no trae ninguna. Dice que hecha y
-abandonada "se confunden", sin un solo caso en el que esa confusión haya costado algo. Un papel de
-estado que obliga a dar un motivo es barato de añadir cuando haga falta y caro de quitar si sobra, así
-que **se queda fuera hasta que haya un caso real que lo pida**, y entonces se engancha a `biso archive`
-en vez de a un estado nuevo.
+**El argumento que sí vale.** Los otros tres requisitos traen cada uno su evidencia medida: llamadas
+contadas, bytes medidos, fallos reproducidos. Este no trae ninguna. Dice que hecha y abandonada "se
+confunden", sin un solo caso en el que esa confusión haya costado algo. Un papel de estado que obliga a
+dar un motivo es barato de añadir cuando haga falta y caro de quitar si sobra, así que **se queda fuera
+hasta que haya un caso real que lo pida**, y entonces se engancha a `biso archive`. Entra también en la
+sección 14.
 
 ---
 
@@ -523,13 +592,15 @@ biso answer TASK-11 "Solo los de texto. Los binarios se saltan enteros." \
 biso finish TASK-11 --check all --summary "Normaliza CRLF en texto, salta binarios."
 ```
 
-Los filtros que cada uno usa en el día a día:
+Los filtros del día a día. **Las consultas del agente llevan `--not-waiting` porque `biso prime` aplica
+la precedencia y `biso ls` no**, así que sin esa bandera los dos leerían el mismo tablero de dos
+maneras distintas:
 
 | Quién | Qué quiere saber | Comando |
 |---|---|---|
 | Agente | Todo lo necesario al arrancar | `biso prime` |
 | Agente | Lo que puede empezar ahora | `biso ls --mine --not-active --not-waiting` |
-| Agente | Lo que dejó a medias | `biso ls --mine --active` |
+| Agente | Lo que dejó a medias | `biso ls --mine --active --not-waiting` |
 | Agente | Si algo suyo está esperando respuesta | `biso ls --mine --waiting` |
 | Persona | Qué espera una respuesta suya | `biso ls --waiting` |
 | Persona | Qué le ha encargado al agente | `biso ls -a @claude --not-active` |
@@ -547,102 +618,108 @@ Los filtros que cada uno usa en el día a día:
 | # | Dónde | Qué |
 |---|---|---|
 | 1 | Antes de la sección 1 | Entra la tabla de vocabulario de la sección 2 de este documento |
-| 2 | Sección 4.3 | Los dos avisos nuevos, sobre una lista que se declara completa |
+| 2 | Sección 4.3 | Los dos avisos nuevos; se quita el de los dos estados, que ya sobraba y ahora además no existe |
 | 3 | Sección 4.12 | `ask` y `answer` entran en la enumeración de qué es una lectura dirigida |
-| 4 | Sección 5 | Nuevo campo `question` con sus tres partes, no derivado |
-| 5 | Sección 5.3 | La excepción del instante escrito por `answer`, y `askedAt` como cuarta fecha importable |
-| 6 | Sección 5.4 | El término de actividad exige que no haya pregunta abierta |
-| 7 | Sección 7.2 | `--search` alcanza el cuerpo de la pregunta abierta |
-| 8 | Sección 8 | `question` no entra en la tabla de clases de campo, y se dice por qué |
+| 4 | Sección 5 | Nuevo campo `question` con sus tres partes, y el derivado `waiting` |
+| 5 | Sección 5.2 | Los comentarios se guardan y se muestran en orden de inserción |
+| 6 | Sección 5.3 | La excepción del instante escrito por `answer`, y `askedAt` como cuarta fecha importable |
+| 7 | Sección 5.4 | El término de actividad exige que no haya pregunta abierta |
+| 8 | Sección 7.2 | El ámbito único de búsqueda alcanza el cuerpo de la pregunta, para `--search` y para la resolución de referencias |
+| 9 | Sección 8 | `question` no entra en la tabla de clases de campo, y se dice por qué |
 
 **Los comandos**
 
 | # | Dónde | Qué |
 |---|---|---|
-| 9 | Sección 10, cabecera y tabla | De diecisiete comandos a diecinueve, y de nueve del ciclo a once |
-| 10 | Sección 10, texto de cierre | `ask` y `answer` entran en la lista de comandos que aceptan banderas de campo |
-| 11 | Sección 10.1 | Se retira la regla posicional; `--statuses` exige las tres banderas de papel |
-| 12 | Sección 10.3 | Se retira `default_assignee`; `new --from` acepta `question`; la línea de ejemplo del NDJSON la incluye |
-| 13 | Sección 10.4 | Filtros `--waiting`, `--not-waiting`, `--active` y `--not-active`; `question` en el JSON del listado |
-| 14 | Sección 10.5 | Novena sección `question`; `--explain-urgency` distingue los dos motivos del término activo |
-| 15 | Sección 10.6 | La lista de productores de `kind` `task.write` gana los dos verbos |
-| 16 | Sección 10.7 | Los dos verbos nuevos, con su orden de aplicación dentro de la escritura |
-| 17 | Sección 10.7.1 | `biso start` avisa sobre una tarea aparcada |
-| 18 | Sección 10.7.4 | `biso finish` avisa sobre una tarea aparcada |
-| 19 | Sección 10.9 | `question` en `export`, los cuatro filtros nuevos, y el guion de simetría con las banderas de papel |
-| 20 | Sección 10.10 | `initial_status`; mínimo de tres estados; papeles distintos; se retira `default_assignee` |
-| 21 | Sección 10.11 | `biso doctor` comprueba la invariante de los tres papeles |
-| 22 | Sección 11 | La ayuda de primer nivel lista `ask` y `answer`, y su cifra de líneas |
+| 10 | Sección 10, cabecera y tabla | De diecisiete comandos a diecinueve, y de nueve del ciclo a once |
+| 11 | Sección 10, texto de cierre | `ask` y `answer` entran en la lista de comandos que aceptan banderas de campo |
+| 12 | Sección 10.1 | Se retira la regla posicional; los cinco casos límite; se quita el aviso de los dos estados |
+| 13 | Sección 10.3 | Se retira `default_assignee`; `new --from` acepta `question`; el ejemplo de NDJSON lo incluye |
+| 14 | Sección 10.4 | Los cuatro filtros nuevos con sus incompatibilidades; `waiting` en el JSON del listado |
+| 15 | Sección 10.5 | Novena sección `question`, con su cifra escrita cuatro veces en esa sección; `--explain-urgency` en texto y en JSON; el ámbito de búsqueda de su ayuda |
+| 16 | Sección 10.6 | La lista de productores de `kind` `task.write` gana los dos verbos |
+| 17 | Sección 10.7 | Los dos verbos nuevos, con su orden de aplicación dentro de la escritura |
+| 18 | Sección 10.7.1 | `biso start` avisa sobre una tarea aparcada |
+| 19 | Sección 10.7.4 | `biso finish` avisa sobre una tarea aparcada |
+| 20 | Sección 10.9 | `question` en `export`, los cuatro filtros, y el guion de simetría con las banderas de papel |
+| 21 | Sección 10.10 | `initial_status`; mínimo de tres estados; papeles distintos; se retira `default_assignee` |
+| 22 | Sección 10.11 | `biso doctor` comprueba la invariante de los tres papeles |
+| 23 | Sección 11 | La ayuda de primer nivel lista `ask` y `answer`, y su cifra de líneas |
 
 **`biso prime` y los contratos**
 
 | # | Dónde | Qué |
 |---|---|---|
-| 23 | Sección 9.5 | El reparto pasa a 3.456 y 1.664 con total 5.120; qué bloques van en cada mitad; el orden de recorte; qué número congela el contrato |
-| 24 | Sección 9.6 | De ocho órdenes del ciclo a diez, y de diez reglas a once |
-| 25 | Sección 9.7 | Los dos bloques nuevos, la precedencia, el reparto de `--limit`, y el rótulo de `NEXT UP` |
-| 26 | Secciones 9.9, 10.1 y 10.10 | `defaultStatus` pasa a `initialStatus`; `notStartedHidden` cambia de nombre |
-| 27 | Sección 12.3 | Seis identificadores `code` nuevos: dos del código 6 para los verbos y cuatro del código 2 para `biso init`. Los dos casos de `config set` reutilizan `board_inconsistent`, que ya existe |
-| 28 | Sección 13 | Desde cuándo obliga el contrato de estabilidad |
-| 29 | Sección 15 | De cuatro verbos de ciclo a seis |
+| 24 | Sección 9.3 | `--limit` acota los dos bloques juntos, y qué hace `--limit 0` |
+| 25 | Sección 9.5 | El reparto y el total; qué bloques van en cada mitad; el orden de recorte completo; qué número congela el contrato |
+| 26 | Sección 9.6 | De ocho órdenes del ciclo a diez, y de diez reglas a once |
+| 27 | Sección 9.7 | Los dos bloques, la precedencia, el reparto de `--limit`, los tres renombrados y los anchos de columna |
+| 28 | Sección 9.9 | Las dos listas nuevas del esquema JSON, `defaultStatus` a `initialStatus` y `notStartedHidden` a `hiddenCount` |
+| 29 | Sección 9.11 | La ayuda de `prime` describe el `--limit` nuevo |
+| 30 | Secciones 10.1 y 10.10 | `defaultStatus` e `initial_status` en sus esquemas JSON y en sus ayudas |
+| 31 | Sección 12.1 | La fila `task.write` de la tabla gana los dos verbos |
+| 32 | Sección 12.3 | Siete identificadores `code` nuevos, según el apartado 5.2 |
+| 33 | Sección 13 | Desde cuándo obliga el contrato de estabilidad |
+| 34 | Sección 14 | El arrendamiento aplazado y el requisito 9.4 retirado |
+| 35 | Sección 15 | De cuatro verbos de ciclo a seis |
 
 **Barridos sobre todo el documento**
 
 | # | Qué |
 |---|---|
-| 30 | El tablero de ejemplo pasa a `To Do, In Progress, Done`; desaparece el estado `Blocked` |
-| 31 | Se regeneran los ejemplos de `ls` y de `prime`, que no se escriben a mano |
-| 32 | Se aplica el vocabulario y se retiran las palabras prohibidas |
+| 36 | El tablero de ejemplo pasa a `To Do, In Progress, Done`; desaparecen `Ideas` y `Blocked` |
+| 37 | Se regeneran los ejemplos de `ls` y de `prime`, que no se escriben a mano |
+| 38 | Se aplica el vocabulario y se retiran las palabras prohibidas |
 
-Los cambios 22 y 24 tocan cuatro cuentas publicadas en prosa, y el 9 y el 29 otras tres. Van en la
-misma pasada, porque su patrón de fallo es el que la sección 8 de `DECISIONES.md` señala como
-dominante. Hay una octava fuera de `SPEC.md`: el `CLAUDE.md` del proyecto dice "los quince comandos" y
-el documento dice diecisiete, así que ya estaban descuadrados.
+**Ocho cuentas publicadas en prosa cambian a la vez**, y su patrón de fallo es el que la sección 8 de
+`DECISIONES.md` señala como dominante: los diecisiete comandos y los nueve del ciclo del cambio 10, las
+ocho secciones fijas de `biso get` del cambio 15, que dentro de la sección 10.5 está escrita cuatro
+veces, las treinta líneas del cambio 23, las ocho órdenes y las diez reglas del cambio 26, y los cuatro
+verbos de ciclo del cambio 35. Hay una novena fuera de `SPEC.md`: el `CLAUDE.md` del proyecto dice "los
+quince comandos" y el documento dice diecisiete, así que ya estaban descuadrados.
 
-### 11.2. En `DECISIONES.md`
+### 11.2. Fuera de `SPEC.md`
 
-| # | Dónde | Qué |
+| # | Fichero | Qué |
 |---|---|---|
-| 1 | Sección 9 | Se sustituye entera: los cuatro requisitos pasan a resueltos, aplazado o retirado |
-| 2 | Sección 9.1 | El diagnóstico correcto, la retirada de `default_assignee`, y qué cuesta eso |
-| 3 | Sección 9.4 | Por qué se retira: le falta la evidencia que los otros tres sí traen |
-| 4 | Sección 3 | El presupuesto nuevo, con el reparto y el motivo de no subir el total |
-| 5 | Sección 4 | `default_assignee` entra en la lista de lo que se deja fuera, con su razón |
-| 6 | Sección 6 | Por qué se retira la regla posicional, con la contradicción que la delató |
-| 7 | Sección 6 | Por qué el tablero por defecto no trae `Ideas` |
-| 8 | Nueva | El criterio de estado frente a campo, y por qué la condición no es configurable |
-| 9 | Nueva | Los riesgos conocidos de la sección 12 de este documento |
+| 1 | `DECISIONES.md` sección 9 | Se sustituye entera: los cuatro requisitos pasan a resueltos, aplazado o retirado |
+| 2 | `DECISIONES.md` sección 9.1 | El diagnóstico correcto, la retirada de `default_assignee`, y qué cuesta eso |
+| 3 | `DECISIONES.md` sección 9.4 | Por qué se retira: le falta la evidencia que los otros tres sí traen |
+| 4 | `DECISIONES.md` sección 3 | El presupuesto, el reparto, el orden de recorte y el motivo de no subir el total |
+| 5 | `DECISIONES.md` sección 4 | `default_assignee` entra en la lista de lo que se deja fuera, con su razón |
+| 6 | `DECISIONES.md` sección 6 | Por qué se retira la regla posicional, y por qué el tablero por defecto no trae `Ideas` |
+| 7 | `DECISIONES.md`, nueva | El criterio de estado frente a campo, y por qué la condición no es configurable |
+| 8 | `DECISIONES.md`, nueva | Los riesgos conocidos de la sección 12 de este documento |
+| 9 | `CLAUDE.md` | Su sección de cuatro requisitos sin incorporar queda obsoleta, y su cifra de comandos está mal |
 
 ---
 
 ## 12. Riesgos conocidos y aceptados
 
 **Dos agentes con la misma identidad ven la misma cola.** Dos sesiones con `BISO_ME=@claude` no se
-distinguen entre sí y cogerían la misma tarea. Es exactamente lo que resuelve el arrendamiento, que
-está aplazado, así que hasta entonces el modelo no protege contra eso.
+distinguen entre sí y cogerían la misma tarea. Es lo que resuelve el arrendamiento, que está aplazado.
 
 **Un tablero con `me` en su configuración anula la distinción entre persona y agente.** La clave `me`
-gana sobre `BISO_ME` según la tabla de la sección 3.1, así que en un tablero que la tenga puesta todo
-el mundo es la misma identidad y `--mine` deja de significar nada. Un tablero compartido entre una
-persona y un agente **tiene que dejar `me` sin configurar** y depender de la variable de entorno. Hay
-que escribirlo donde se explica la clave, porque hoy no está y es una trampa silenciosa.
+gana sobre `BISO_ME`, así que en un tablero que la tenga puesta todo el mundo es la misma identidad y
+`--mine` deja de significar nada. Un tablero compartido entre una persona y un agente **tiene que dejar
+`me` sin configurar**. Hay que escribirlo donde se explica la clave, porque hoy no está.
 
 **La persona no tiene canal hacia el agente que se vea en `biso prime`.** El agente pregunta y la
 persona responde, pero si la persona quiere decirle algo por iniciativa propia lo escribe en un
-comentario, y `prime` no muestra comentarios. El agente lo ve al hacer `biso get`, así que el documento
-tiene que decir que ese es el camino.
+comentario, y `prime` no muestra comentarios. El agente lo ve al hacer `biso get`.
+
+**`biso ls` no enseña la pregunta, solo dice qué tareas la tienen.** Es el precio de no meter texto
+largo en el listado. Quien quiera leerlas hace `biso get --section question`, o mira `biso prime`, que
+sí las enseña. El requisito 9.3 queda cubierto donde se mira al arrancar, no en el listado.
 
 **Una pregunta abierta sobre una tarea terminada o archivada desaparece de la vista.** `finish` avisa
 pero no impide, los bloques de `prime` excluyen terminadas y archivadas, y `biso ls` excluye el estado
-terminal por defecto. Así que `biso ls --waiting` no la encuentra sin `--any-status`. Se acepta porque
-la alternativa, impedir cerrar una tarea con una pregunta abierta, empuja a rodear la herramienta, que
-es el fallo que el apartado 10.7 de `SPEC.md` evita a propósito en el caso equivalente de los criterios
-sin marcar.
+terminal por defecto, así que `biso ls --waiting` no la encuentra sin `--any-status`. Se acepta porque
+la alternativa, impedir cerrar una tarea con una pregunta abierta, empuja a rodear la herramienta.
 
-**`--ready` no excluye las aparcadas.** `ready` mira solo dependencias, así que una tarea parada en una
-pregunta sigue siendo `ready` y un agente que elija trabajo con esa bandera, que es lo que su nombre
-invita a hacer, se las lleva. La consulta correcta es la del apartado 10, con `--not-waiting`. Está
-anotado porque el nombre engaña.
+**`--ready` no excluye las aparcadas.** `ready` mira solo dependencias, así que un agente que elija
+trabajo con esa bandera, que es lo que su nombre invita a hacer, se las lleva. La consulta correcta
+lleva `--not-waiting`. Está anotado porque el nombre engaña.
 
-**`ready` y `blocked` siguen siendo complementarios**, dos campos derivados que viajan en el JSON y en
-la ficha para contar un solo hecho. Es anterior a este trabajo y queda como limpieza aparte.
+**`ready` y `blocked` siguen siendo complementarios**, dos campos derivados para un solo hecho. Es
+anterior a este trabajo y queda como limpieza aparte.
