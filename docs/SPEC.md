@@ -1303,7 +1303,7 @@ deja de existir, el comando que lo hace falla, según la sección 10.10.
 
 ```
 Created board "Kex"
-  statuses    To Do (default) | In Progress (active) | Done (terminal)
+  statuses    To Do (initial) | In Progress (active) | Done (terminal)
   types       task, bug, docs
   priorities  high, medium, low
   prefix      TASK
