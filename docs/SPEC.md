@@ -1138,7 +1138,7 @@ THE BOARD IS EMPTY
       "name": "Kex",
       "me": "@claude",
       "statuses": ["Ideas", "To Do", "In Progress", "Blocked", "Done"],
-      "defaultStatus": "Ideas",
+      "initialStatus": "Ideas",
       "activeStatus": "In Progress",
       "terminalStatus": "Done",
       "types": ["idea", "memory", "task", "bug", "docs"],
@@ -1287,11 +1287,11 @@ ha creado.
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
-| El primer estado de `--statuses` | Se guarda como `default_status` |
+| El primer estado de `--statuses` | Se guarda como `initial_status` |
 | El penúltimo estado | Se guarda como `active_status` |
 | El último estado | Se guarda como `terminal_status` |
 | Menos de dos estados | Error 2 |
-| Exactamente dos estados | Válido. El primero es a la vez `default_status` y `active_status`, así que `biso start` no cambia el estado: solo asigna y añade el plan. Se avisa en la salida |
+| Exactamente dos estados | Válido. El primero es a la vez `initial_status` y `active_status`, así que `biso start` no cambia el estado: solo asigna y añade el plan. Se avisa en la salida |
 | `--prefix` con algo que no sean letras | Error 2 |
 | `--at` a un localizador donde no se puede escribir | Error 7 |
 
@@ -1326,7 +1326,7 @@ assigns and records the plan`.
     "board": {
       "name": "Kex",
       "statuses": ["To Do", "In Progress", "Done"],
-      "defaultStatus": "To Do", "activeStatus": "In Progress", "terminalStatus": "Done",
+      "initialStatus": "To Do", "activeStatus": "In Progress", "terminalStatus": "Done",
       "types": ["task", "bug", "docs"],
       "priorities": ["high", "medium", "low"],
       "taskPrefix": "TASK"
@@ -2911,7 +2911,7 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 |---|---|---|
 | `project_name` | texto | el nombre del proyecto |
 | `statuses` | lista, mínimo dos | `To Do, In Progress, Done` |
-| `default_status` | uno de `statuses` | el primero, al crear el tablero |
+| `initial_status` | uno de `statuses` | el primero, al crear el tablero |
 | `active_status` | uno de `statuses` | el penúltimo, al crear el tablero |
 | `terminal_status` | uno de `statuses` | el último, al crear el tablero |
 | `types` | lista | `task, bug, docs` |
@@ -2937,9 +2937,9 @@ final cambie en silencio a dónde va `biso finish`.
 |---|---|
 | Clave inexistente | Error 4, con las tres claves más parecidas |
 | Valor del tipo equivocado, por ejemplo `finish_strict maybe` | Error 3, diciendo qué tipo esperaba |
-| `default_status` a un valor que no está en `statuses` | Error 3 |
+| `initial_status` a un valor que no está en `statuses` | Error 3 |
 | Quitar de `statuses` un estado que alguna tarea usa | Error 6, con cuántas tareas lo usan y en cuáles |
-| Quitar de `statuses` un estado que es `default_status`, `active_status` o `terminal_status` | Error 6, diciendo cuál de los tres y que hay que cambiarlo antes |
+| Quitar de `statuses` un estado que es `initial_status`, `active_status` o `terminal_status` | Error 6, diciendo cuál de los tres y que hay que cambiarlo antes |
 | Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
 | `get` de una clave de lista | Los valores separados por comas, en una línea |
@@ -2956,7 +2956,7 @@ Ideas,To Do,In Progress,Blocked,Done
 $ biso config list
 project_name = Kex
 statuses = Ideas,To Do,In Progress,Blocked,Done
-default_status = Ideas
+initial_status = Ideas
 active_status = In Progress
 terminal_status = Done
 types = idea,memory,task,bug,docs
@@ -2981,7 +2981,7 @@ Solo `config list` acepta `--json`:
     "config": {
       "project_name": "Kex",
       "statuses": ["Ideas", "To Do", "In Progress", "Blocked", "Done"],
-      "default_status": "Ideas",
+      "initial_status": "Ideas",
       "active_status": "In Progress",
       "terminal_status": "Done",
       "types": ["idea", "memory", "task", "bug", "docs"],
@@ -3027,7 +3027,7 @@ No configuration change ever touches a task.
 Keys:
   project_name       board name
   statuses           the columns, in order
-  default_status     status of a new task           (one of statuses)
+  initial_status     status of a new task           (one of statuses)
   active_status      what `biso start` sets         (one of statuses)
   terminal_status    what `biso finish` sets        (one of statuses)
   types              configured task types
@@ -3095,7 +3095,7 @@ imprime fichas de tareas.
 | Tareas que no se pueden leer | no |
 | Claves de extensión no declaradas | no |
 | Estados, tipos, prioridades o proyectos que ya no están configurados | no |
-| `default_status`, `active_status` o `terminal_status` que no están en `statuses` | no |
+| `initial_status`, `active_status` o `terminal_status` que no están en `statuses` | no |
 | Dependencias que apuntan a tareas inexistentes | no |
 | Ciclos de dependencias | no |
 | Ciclos de tarea padre | no |
