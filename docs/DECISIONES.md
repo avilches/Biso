@@ -109,13 +109,14 @@ sus dos comandos más usados juntos.
 A eso hay que sumar la inyección de instrucciones en el fichero de convenciones del repositorio, que
 se paga en todas las sesiones aunque no se toque el tablero.
 
-El mensaje de `biso prime` mide **4.674 bytes**, 3.233 de parte fija y 1.441 de resumen del tablero,
-contra un tope duro de 5.120 repartido en dos mitades de 3.456 y 1.664.
+El mensaje de `biso prime` mide **4.696 bytes**, 3.255 de parte fija y 1.441 de resumen del tablero
+(sección 9.5 de `docs/SPEC.md`), contra un tope duro de 5.120 repartido en dos mitades de 3.456 y
+1.664.
 
 | Magnitud | Herramienta estudiada | `biso` |
 |---|---:|---|
-| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.674 bytes |
-| Media medida por sesión | 3.358 bytes | 4.674 bytes |
+| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.696 bytes |
+| Media medida por sesión | 3.358 bytes | 4.696 bytes |
 | Lecturas obligatorias por sesión | entre 1 y 4 | 1 |
 | Contexto gastado en sesiones que no tocan tareas | la inyección en el fichero de convenciones | 0 |
 
