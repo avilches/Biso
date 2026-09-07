@@ -2417,6 +2417,7 @@ persona asignada**, y añade el plan si se ha pasado.
 | La tarea ya está en el estado activo | Se aplica el resto igual, con `note: TASK-11 was already In Progress` |
 | La tarea ya está en el estado terminal | Error 6, salvo con `--reopen`, que la devuelve al estado activo |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
+| La tarea tiene una pregunta abierta (5.7) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: TASK-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
 | No hay ninguna identidad configurada (3.1) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned` |
 | La tarea ya tiene plan y se pasa `--plan` | Se añade al final, como toda bandera desnuda |
@@ -2679,6 +2680,7 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | Sin `--summary` | Se cierra igual, con `warning: TASK-11 finished without a final summary` |
 | Sin `--summary` y con `--strict` | Error 6 |
 | La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
+| La tarea tiene una pregunta abierta (5.7) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
 | `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos |
 | Varias referencias | Todo o nada |
@@ -2750,6 +2752,228 @@ Examples:
   biso finish TASK-11 --check all --summary "Normalizes CRLF, tests green"
   biso finish TASK-11 --check "covers CRLF" --note "313 tests green"
   biso finish TASK-11 TASK-12 --check all --summary "Both closed by PR 42"
+```
+
+#### 10.7.5. `biso ask`
+
+##### Firma
+
+```
+biso ask <ref> <text>... [--id] [--match] [cualquier bandera de campo de la seccion 8]
+```
+
+##### Parámetros propios
+
+| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|---|
+| `<ref>` | | sí, exactamente una | referencia | | no | no | |
+| `<text>` | | sí | texto largo | | sí, como posicional | no | |
+
+Cada texto es un párrafo propio del cuerpo de la pregunta, igual que en `biso note` (10.7.2). Acepta
+`@fichero` y `-` como cualquier texto largo (4.5).
+
+Se aplican las mismas reglas de posicional que en `biso note`, incluida la del texto que parece un
+identificador (10.7.2). **`biso ask` no acepta `--comment-author`**: el autor de la pregunta es
+siempre la identidad configurada (3.1).
+
+##### Qué hace
+
+Llena el campo `question` (5.7) con el autor y el instante que fija el programa y el texto dado,
+junto con cualquier otra bandera de campo que se haya pasado en la misma escritura. **No cambia el
+estado de la tarea.**
+
+| Caso | Qué pasa |
+|---|---|
+| La tarea no tiene pregunta abierta | Se llena el campo. **No cambia el estado** |
+| La tarea ya tiene una pregunta abierta | Error 6, para que la segunda no borre a la primera en silencio |
+| La tarea está en el estado terminal | Error 6, igual que `biso start`, con la pista de reabrirla |
+| La tarea está archivada | Se hace, con `note: TASK-11 is archived` por stderr, igual que `biso get` |
+| El texto está vacío | Error 3: `error: the question cannot be empty` |
+| Sin identidad configurada (3.1) | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` |
+| Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que `biso note` (10.7.2) |
+| Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
+
+Los dos errores 6 llevan pista:
+
+```
+error: TASK-11 already has an open question
+hint: answer it first with `biso answer TASK-11 <text>`
+```
+
+```
+error: TASK-11 is already Done
+hint: reopen it first with `biso start TASK-11 --reopen`
+```
+
+##### Salida
+
+```
+TASK-11  In Progress  ac 1/2  urgency 15.0
+```
+
+La urgencia queda por debajo de los 19.0 del ejemplo de 5.4 porque el término de actividad exige
+también que no haya pregunta abierta: la tarea sigue en el estado activo, pero `waiting` ya es
+cierto.
+
+##### Códigos de salida
+
+| Desenlace | Código |
+|---|---:|
+| Preguntada | 0 |
+| Ya hay una pregunta abierta, o la tarea ya está en el estado terminal | 6 |
+| Referencia mal formada, banderas incompatibles, posicional que parece un identificador | 2 |
+| Sin identidad configurada | 2 |
+| Pregunta vacía, tarea ilegible | 3 |
+| Referencia inexistente, o fichero de `@` inexistente | 4 |
+| Referencia ambigua | 5 |
+| El almacén falla | 7 |
+| `--dry-run` que no pasa | 9 |
+| No hay tablero | 8 |
+
+##### `biso ask --help`
+
+```
+Usage: biso ask <ref> <text>... [options]
+
+Park ONE task on a question for a person. The task keeps its status, but it
+leaves the IN PROGRESS block of `biso prime` and shows up under WAITING ON A
+PERSON until somebody runs `biso answer`.
+
+Arguments:
+  ref                one task: an id, a bare number or free text
+  text               the question; @file and - work too
+
+Options:
+      --id / --match force <ref> to be an id, or free text
+  -h, --help         show this help
+
+Every field flag of `biso set --help` works here too, but nothing except this
+command and `biso answer` ever writes the question itself.
+
+A task holds one open question at a time. Answer it before asking another.
+
+Exit codes:
+  0  asked          4  not found        7  could not be written
+  2  bad usage      5  ambiguous        8  no board here
+  3  empty question, or unreadable      9  --dry-run did not pass
+  6  already asking, or already finished
+
+Examples:
+  biso ask TASK-11 "Do we normalize binary files too, or only text?"
+  biso ask 11 @/tmp/question.md
+```
+
+#### 10.7.6. `biso answer`
+
+##### Firma
+
+```
+biso answer <ref> <text>... [--id] [--match] [cualquier bandera de campo de la seccion 8]
+```
+
+##### Parámetros propios
+
+| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|---|
+| `<ref>` | | sí, exactamente una | referencia | | no | no | |
+| `<text>` | | sí | texto largo | | sí, como posicional | no | |
+
+Cada texto es un párrafo propio de la respuesta, igual que en `biso ask` (10.7.5) y en `biso note`
+(10.7.2). Acepta `@fichero` y `-` como cualquier texto largo (4.5).
+
+Se aplican las mismas reglas de posicional que en `biso note`, incluida la del texto que parece un
+identificador (10.7.2). **`biso answer` no acepta `--comment-author`**: los dos comentarios que
+escribe van siempre firmados por la identidad configurada (3.1). Quien necesite firmar un comentario
+con otro autor tiene `biso comment --comment-author`, que sigue funcionando como siempre.
+
+##### Qué hace
+
+Vacía el campo `question` (5.7) en una sola escritura, con tres efectos en este orden exacto:
+
+1. Añade al histórico de comentarios (5.2) uno con el `author`, el `askedAt` y el `body` que guardaba
+   el campo: la pregunta se convierte literalmente en un comentario, con su autor y su instante
+   originales (5.3).
+2. Añade detrás un segundo comentario con el texto de la respuesta, firmado por la identidad
+   configurada (3.1) y con el instante de ahora.
+3. Vacía el campo.
+
+**El orden no depende de la línea de comandos, según la regla de 4.9.** Dentro del paso de los
+comentarios, los dos que escribe este verbo van siempre antes que cualquier `--comment` que se haya
+pasado en la misma escritura. El vaciado del campo `question` es un paso propio de `biso answer`,
+posterior a todos los de 4.9, y es siempre el último efecto de la escritura.
+
+Como los comentarios se guardan y se muestran en orden de inserción y no de instante (5.2), el
+comentario de la pregunta queda antes que el de la respuesta aunque su instante sea anterior, y el
+instante de cada uno sigue diciendo la verdad.
+
+| Caso | Qué pasa |
+|---|---|
+| La tarea no tiene pregunta abierta | Error 6, con la pista de usar `biso comment` |
+| Sin texto | Error 2. Una respuesta sin respuesta no cierra nada |
+| Sin identidad configurada (3.1) | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` |
+| Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que `biso note` (10.7.2) |
+| Se pasan además banderas de campo | Se aplican igual, como en cualquier verbo del ciclo |
+| Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
+
+```
+error: TASK-11 has no open question
+hint: use `biso comment` to add a comment
+```
+
+##### Salida
+
+```
+TASK-11  In Progress  ac 1/2  urgency 19.0
+```
+
+La urgencia recupera el término de actividad de 5.4, porque `waiting` vuelve a ser falso.
+
+##### Códigos de salida
+
+| Desenlace | Código |
+|---|---:|
+| Respondida | 0 |
+| La tarea no tiene pregunta abierta | 6 |
+| Referencia mal formada, banderas incompatibles, posicional que parece un identificador, sin texto | 2 |
+| Sin identidad configurada | 2 |
+| Tarea ilegible | 3 |
+| Referencia inexistente | 4 |
+| Referencia ambigua | 5 |
+| El almacén falla | 7 |
+| `--dry-run` que no pasa | 9 |
+| No hay tablero | 8 |
+
+##### `biso answer --help`
+
+```
+Usage: biso answer <ref> <text>... [options]
+
+Answer the open question of ONE task and unpark it. In a single write this
+moves the question into the comments with its original author and time, adds
+your answer behind it, and clears the question.
+
+Arguments:
+  ref                one task: an id, a bare number or free text
+  text               the answer; @file and - work too
+
+Options:
+      --id / --match force <ref> to be an id, or free text
+  -h, --help         show this help
+
+Every field flag of `biso set --help` works here too, so you can answer and
+refine in one call.
+
+Both comments are signed with your configured identity. This command does not
+take --comment-author.
+
+Exit codes:
+  0  answered       4  not found        7  could not be written
+  2  bad usage      5  ambiguous        8  no board here
+  3  unreadable     6  no open question 9  --dry-run did not pass
+
+Examples:
+  biso answer TASK-11 "Only text files. Binary ones are skipped entirely."
+  biso answer 11 "Yes" --ac "A binary file is never touched"
 ```
 
 ---
