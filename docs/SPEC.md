@@ -278,6 +278,8 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 | `warning: TASK-11 has no acceptance criteria` | `--check all` sobre una tarea sin criterios |
 | `warning: 1 task could not be read and was skipped` | ver 4.11 |
 | `warning: <x> is deprecated and will be removed in 2.0` | ver la sección 13 |
+| `warning: TASK-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta |
+| `warning: TASK-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta |
 
 ### 4.4. Codificación y texto
 
@@ -430,7 +432,7 @@ extensión que la configuración ya no declara. La regla es única y depende del
 
 | Tipo de lectura | Qué pasa |
 |---|---|
-| **Lectura dirigida** a esa tarea, es decir, `get`, o `set`, `start`, `note`, `comment`, `finish` y `archive` con una referencia que resuelve a ella | Error 3, con el motivo exacto. No se escribe nada |
+| **Lectura dirigida** a esa tarea, es decir, `get`, o `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y `archive` con una referencia que resuelve a ella | Error 3, con el motivo exacto. No se escribe nada |
 | **Lectura de conjunto**, es decir, `ls`, `prime`, `export`, la resolución de una referencia por texto y cualquier filtro | La tarea se salta, se cuenta, y al final se emite `warning: 1 task could not be read and was skipped` con sus identificadores. El resto del resultado es válido y el código es 0, **salvo en `biso export`, que sale con 6** |
 | `biso doctor` | Se reporta como problema y se sigue con las demás. Nunca aborta |
 
@@ -1310,7 +1312,7 @@ Examples:
 
 ## 10. Los comandos
 
-Diecisiete comandos. Los nueve primeros son el ciclo de trabajo y aparecen en `biso --help`; los ocho
+Diecinueve comandos. Los once primeros son el ciclo de trabajo y aparecen en `biso --help`; los ocho
 restantes son de administración y aparecen en `biso help all`.
 
 | Comando | Qué hace | En `biso --help` |
@@ -1324,6 +1326,8 @@ restantes son de administración y aparecen en `biso help all`.
 | `note` | Añade una nota de implementación | sí |
 | `comment` | Añade un comentario con autor | sí |
 | `finish` | Cierra una tarea | sí |
+| `ask` | Aparca una tarea en una pregunta abierta | sí |
+| `answer` | Responde la pregunta abierta y desaparca la tarea | sí |
 | `archive` | Saca una tarea del tablero activo | no |
 | `export` | Vuelca el tablero en el formato de entrada de `new --from` | no |
 | `init` | Crea un tablero | no |
@@ -1350,9 +1354,9 @@ error: --json does not apply to export
 ```
 
 **Todos los comandos que escriben aceptan todas las banderas de campo de la sección 8**, con el mismo
-nombre y el mismo significado. Eso vale para `new`, `set`, `start`, `note`, `comment`, `finish` y
-`archive`. Lo que distingue a unos de otros no es qué campos aceptan, sino qué hacen por defecto. Las
-tablas de parámetros de cada comando enumeran solo lo que es propio de ese comando.
+nombre y el mismo significado. Eso vale para `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`,
+`answer` y `archive`. Lo que distingue a unos de otros no es qué campos aceptan, sino qué hacen por
+defecto. Las tablas de parámetros de cada comando enumeran solo lo que es propio de ese comando.
 
 ### 10.1. `biso init`
 
@@ -2396,10 +2400,10 @@ warning: --set-plan replaced 412 bytes of existing content
 }
 ```
 
-`kind` es `task.write` para `new`, `set`, `start`, `note`, `comment`, `finish` y `archive`, para que
-quien consuma la salida no tenga que distinguir qué verbo la produjo. `changed` dice qué campos han
-cambiado de verdad, que no es lo mismo que qué banderas se han pasado. En el lote de `new --from`, las
-242 tareas van en `data.tasks` de **un solo sobre**, no en 242 objetos sueltos.
+`kind` es `task.write` para `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y
+`archive`, para que quien consuma la salida no tenga que distinguir qué verbo la produjo. `changed`
+dice qué campos han cambiado de verdad, que no es lo mismo que qué banderas se han pasado. En el lote
+de `new --from`, las 242 tareas van en `data.tasks` de **un solo sobre**, no en 242 objetos sueltos.
 
 #### Códigos de salida
 
@@ -3723,6 +3727,8 @@ Daily work:
   note <ref> TEXT    append an implementation note
   comment <ref> TEXT append a discussion comment
   finish <ref>...    close a task
+  ask <ref> TEXT     park on a question
+  answer <ref> TEXT  answer it and unpark
 
 Global options:
   -C, --cwd <path>   resolve the board from there, instead of cd-ing
@@ -3739,7 +3745,7 @@ More: `biso <command> --help`, and `biso help all` for the administrative
 commands (init, where, archive, export, config, doctor, board, help).
 ```
 
-Son treinta líneas, y no incluyen los ocho comandos de administración.
+Son treinta y dos líneas, y no incluyen los ocho comandos de administración.
 
 ---
 
@@ -3762,7 +3768,7 @@ con esta forma:
 | `task.list` | `ls` | `tasks`, `shown`, `matched`, `hidden`, `truncated`, `skipped`, `sort`, `filters` |
 | `task.get` | `get` | `task` |
 | `task.candidates` | `get` con varias coincidencias | `tasks` |
-| `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `archive` | `tasks`, `warnings` |
+| `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer`, `archive` | `tasks`, `warnings` |
 | `config` | `config list` | `config`. Ejemplo en 10.10 |
 | `doctor` | `doctor` | `problems`, `fixed`. Ejemplo en 10.11 |
 | `error` | cualquier fallo | Ver 12.2 |
@@ -3803,11 +3809,11 @@ agrupada por el código de salida con el que sale cada uno:
 
 | Código de salida | `code` |
 |---:|---|
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses` |
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_project`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous` |
-| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems` |
+| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question` |
 | 7 | `busy`, `io_error`, `file_unreadable`, `no_terminal`, `port_in_use` |
 | 8 | `no_board` |
 | 9 | `batch_invalid`, `dry_run_failed` |
@@ -3832,7 +3838,8 @@ sí está cerrado.
 
 ## 13. El contrato de estabilidad
 
-Lo que se promete mientras la versión mayor sea `1`.
+Lo que se promete mientras la versión mayor sea `1`. **Obliga a partir de la versión 1.0**, que
+todavía no está publicada: hasta que salga, nada de lo de abajo está roto por cambiar.
 
 **No cambia nunca:**
 
@@ -3890,6 +3897,15 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   ocurre con las tareas que existen en una versión del proyecto y no en otra: hoy, la única promesa es
   la de los tres mensajes distintos de la sección 7.3.
 - **No hay sincronización con ningún sistema externo.**
+- **No hay arrendamiento sobre la asignación.** Sería un instante de caducidad sobre una tarea activa
+  y asignada, para detectar a quien la coge y desaparece sin cerrar su sesión. No se escribe un campo
+  que hoy nada mantendría: el nombre, el tipo y quién detecta la caducidad dependen de la decisión de
+  persistencia, que no está tomada.
+- **No hay un papel de estado para descartar, distinto de terminar.** Una tarea hecha y una abandonada
+  hoy comparten el mismo estado terminal. Un papel que obligara a dar un motivo al entrar en él sería
+  barato de añadir cuando hiciera falta, pero a diferencia de los demás requisitos de este modelo no
+  trae ningún caso real en el que la confusión haya costado algo, así que se queda fuera hasta que
+  aparezca uno.
 
 ---
 
@@ -3902,7 +3918,8 @@ En el orden en que cada pieza paga lo que cuesta:
 2. **El algoritmo de coincidencia** de la sección 6.1, que es una función pura de veinte líneas y de
    la que dependen todos los comandos.
 3. **`new`, `ls`, `get` y `set`**, que son el trabajo diario.
-4. **Los cuatro verbos de ciclo** de 10.7, que son azúcar sobre `set` y se escriben encima.
+4. **Los seis verbos de ciclo** de 10.7, `start`, `note`, `comment`, `finish`, `ask` y `answer`, que
+   son azúcar sobre `set` y se escriben encima.
 5. **`prime`**, que es lo que hace que todo lo anterior se use bien sin leer nada más.
 6. **El lote de `new --from` y `export`**, con la prueba de simetría, que es lo que convierte una
    migración en una sola operación.
