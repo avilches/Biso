@@ -173,6 +173,8 @@ Reglas de aplicación, que hay que implementar tal cual:
 | `biso ls --mine` | Error 6: `error: --mine needs an identity; set it with biso config set me <you> or BISO_ME` |
 | `biso start`, autoasignación | No asigna a nadie. Sale `note: no identity configured, task left unassigned` en vez del `note:` de siempre |
 | Autor por defecto de un comentario | Error 2 si no se ha pasado `--comment-author`: `error: --comment-author is required, no identity is configured` |
+| Autor de la pregunta, en `biso ask` | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` (10.7.5) |
+| Autor de la respuesta, en `biso answer` | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` (10.7.6) |
 | La línea `you are` de `biso prime` | `you are     (not set)`, con una nota que remite a `biso config set me` |
 
 ### 3.2. Cómo se elige el tablero
@@ -639,8 +641,8 @@ es la siguiente:
 | Se pasa `--reporter ""` | vacío |
 
 El caso sin identidad no es un error y no imprime nada: a diferencia de `--mine`, de la
-autoasignación de `biso start` y del autor de un comentario, que sí la necesitan y están cubiertos
-por la tabla de 3.1, una tarea sin quien la reporte es válida.
+autoasignación de `biso start`, del autor de un comentario, de `biso ask` y de `biso answer`, que sí
+la necesitan y están cubiertos por la tabla de 3.1, una tarea sin quien la reporte es válida.
 
 En el lote de `biso new --from`, un objeto que trae `reporter` conserva ese valor, y uno que no lo
 trae aplica las mismas reglas de esta tabla.

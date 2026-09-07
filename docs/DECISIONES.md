@@ -323,9 +323,10 @@ requisito de la sección 5 de este documento.
 
 **Una tarea sin quien la reporte es válida.** El campo `reporter` toma la identidad configurada al
 crear la tarea, y si no hay ninguna se queda vacío **sin avisar**. Es deliberadamente distinto de los
-otros tres sitios donde hace falta una identidad: el filtro `--mine` falla, la autoasignación de
-`start` avisa, y el autor de un comentario es un error. La razón es que un tablero de una sola persona
-no tiene por qué configurar su identidad solo para poder crear tareas.
+otros cinco sitios donde hace falta una identidad (tabla de la sección 3.1 de `docs/SPEC.md`): el
+filtro `--mine` falla, la autoasignación de `start` avisa, y el autor de un comentario, `biso ask` y
+`biso answer` son un error. La razón es que un tablero de una sola persona no tiene por qué
+configurar su identidad solo para poder crear tareas.
 
 **`biso export --json` es un error y no una bandera sin efecto.** `export` es el único comando cuya
 salida ya es JSON sin pedirlo, en forma de un objeto por línea, mientras que `--json` significa el
