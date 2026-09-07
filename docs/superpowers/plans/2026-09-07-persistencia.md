@@ -49,7 +49,8 @@ plan no puede llevar huecos. La sexta queda fuera de alcance.
 | Cosa abierta | Valor que se fija | Por qué |
 |---|---|---|
 | Nombre del fichero puntero | `.biso.json` en la raíz del proyecto | Oculto, evidentemente de `biso`, y la extensión declara su formato |
-| Forma del identificador del tablero | 16 caracteres hexadecimales en minúscula, de 64 bits aleatorios | Inmutable, no colisiona entre máquinas, y es corto para imprimirlo en `biso where` |
+| Forma del identificador del tablero | 8 caracteres hexadecimales en minúscula | Va dentro del nombre de la carpeta, así que se lee con los ojos y conviene que sea corto |
+| Nombre de la carpeta del tablero | `<nombre>-<id>`, por ejemplo `kex-3f9a2b1c` | Permite que dos proyectos de la misma máquina se llamen igual, y hace que buscar el tablero sea una sola búsqueda de patrón sin leer la configuración de ninguno |
 | Forma de la instantánea | Dos ficheros en el directorio del tablero, `tasks.ndjson` y `config.json` | La configuración cambia poco y las tareas mucho, así que en ficheros separados los diffs quedan limpios |
 | Nombre del paso de exportar y commitear | `biso snapshot` | Es un sustantivo y dice lo que produce |
 | Cifra del presupuesto de arranque | 25 ms de reloj para `biso ls` y `biso prime` sobre un tablero de 300 tareas | Deja tres veces de margen sobre los 8,7 ms medidos en Go y excluye los lenguajes interpretados, cuyo solo arranque cuesta 24,5 y 33 ms |
@@ -99,13 +100,21 @@ en la raíz del proyecto, que va versionado en git, y que lleva estas claves:
 | Clave | Tipo | Obligatoria | Notas |
 |---|---|---|---|
 | `version` | entero | sí | versión del formato del puntero |
-| `id` | 16 caracteres hexadecimales | sí | identidad del tablero, inmutable |
+| `id` | 8 caracteres hexadecimales | sí | identidad del tablero, inmutable |
 | `path` | ruta | no | solo cuando el tablero no está en la raíz por defecto |
 
 Y las tres reglas: que una clave desconocida es un error, que el `id` manda y el `path` es una pista que
-puede no resolver, y que la búsqueda prueba primero la carpeta con el nombre del tablero dentro de la
-raíz por defecto comprobando que el `id` coincida, y si no la encuentra recorre la raíz por defecto
-buscando ese `id`.
+puede no resolver, y cómo se busca.
+
+**Cómo se busca**, que es el paso que hay que dejar sin ambigüedad. La carpeta de un tablero se llama
+`<nombre>-<id>`, por ejemplo `kex-3f9a2b1c`, así que localizarlo desde el puntero es **una sola búsqueda
+del patrón `*-<id>` en la raíz por defecto**, sin abrir ni leer la configuración de ningún tablero.
+Documentar también las dos cosas que eso resuelve: que dos proyectos de la misma máquina se pueden llamar
+igual sin chocar, y que el puntero sigue resolviendo aunque el tablero se haya renombrado, porque el
+identificador viaja en el nombre de la carpeta.
+
+Y que `biso init` genera el identificador de la fuente de números aleatorios del sistema comprobando que
+no exista ya en la raíz por defecto, que es una lectura de directorio.
 
 - [ ] **Paso 4: Enunciar los dos casos del diseño que faltaban**
 
@@ -279,9 +288,15 @@ si es la misma, no crear una clave nueva, y si es otra, decir en una frase en qu
 
 Escribir la sección del comando con la misma estructura que tienen los demás: firma, tabla de
 parámetros, comportamiento, casos límite, salida literal, esquema JSON, códigos de salida y texto de
-ayuda. El comando cambia el nombre y mueve la carpeta del tablero. Si la carpeta de destino ya existe,
-error 6 y no hace nada. **No toca ningún puntero**, que es la ventaja de haber puesto la identidad en el
-`id`, y conviene decirlo explícitamente en el comportamiento.
+ayuda. El comando cambia el nombre y mueve la carpeta del tablero, **conservando el sufijo del identificador**:
+`kex-3f9a2b1c` pasa a `nuevonombre-3f9a2b1c`. **No toca ningún puntero**, y eso es consecuencia directa
+de que el identificador sea la identidad y viaje en el nombre de la carpeta: conviene decirlo
+explícitamente en el comportamiento.
+
+Como el sufijo se conserva, la carpeta de destino **no puede existir ya** salvo que algo esté corrupto,
+así que ese caso deja de ser un caso de uso normal y pasa a ser un error de entorno, código 7. Un nombre
+nuevo que coincida con el de otro tablero es perfectamente legal y no es un error, porque los sufijos
+difieren.
 
 - [ ] **Paso 3: Comprobar**
 

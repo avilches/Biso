@@ -89,8 +89,8 @@ rellena su paso 4:
 Un fichero pequeño en la raíz del proyecto, **versionado en git**, con dos cosas y la versión de su
 propio formato:
 
-- **`id`**, obligatorio: un identificador **inmutable** que se genera al crear el tablero. Es la
-  identidad, y no se puede cambiar nunca.
+- **`id`**, obligatorio: un identificador **inmutable** de ocho caracteres hexadecimales, generado al
+  crear el tablero. Es la identidad, y no se puede cambiar nunca.
 - **`path`**, opcional: la ruta completa, solo cuando el tablero no está en la raíz por defecto. Puede
   coincidir con el nombre del tablero o no, y da igual.
 
@@ -110,11 +110,30 @@ no es un problema nuevo: cae exactamente en el caso de error que esta sección y
 puntero que nombra un tablero que en esta máquina no está, y `biso init` adopta el `id` para que las dos
 máquinas sigan hablando del mismo tablero.
 
-**Cómo se busca el tablero.** La carpeta se llama como el nombre del tablero, para que la raíz por
-defecto se pueda leer con los ojos y no sea una lista de identificadores opacos. Así que la búsqueda
-prueba primero la carpeta con ese nombre y comprueba que el `id` de dentro coincida con el del puntero.
-Si el nombre cambió y esa carpeta ya no está, recorre la raíz por defecto buscando el `id`, que con unas
-decenas de directorios no cuesta nada.
+**Cómo se llama la carpeta, y cómo se busca.** La carpeta del tablero se llama
+**`<nombre>-<id>`**, por ejemplo `kex-3f9a2b1c`. El identificador nunca es el nombre de la carpeta por sí
+solo: la raíz por defecto se lee con los ojos.
+
+```
+~/.biso/boards/kex-3f9a2b1c/
+~/.biso/boards/biso-7d10e4a2/
+~/.biso/boards/hub-c05b91ff/
+```
+
+Llevar el identificador en el nombre de la carpeta resuelve dos cosas de golpe:
+
+- **Dos proyectos distintos de la misma máquina pueden llamarse igual.** Sin el sufijo, el segundo
+  `biso init` choca con la carpeta del primero y hay que inventar una regla de desambiguación. Con el
+  sufijo no choca nunca.
+- **Encontrar el tablero desde el puntero es una sola búsqueda de patrón** sobre la raíz por defecto,
+  sin abrir ni leer la configuración de ningún tablero. Y como el identificador va en el nombre, sigue
+  resolviendo aunque el nombre haya cambiado: renombrar lleva `kex-3f9a2b1c` a
+  `nuevonombre-3f9a2b1c` y el puntero no se toca.
+
+Por eso el identificador puede ser corto, ya que se lee con los ojos: **ocho caracteres hexadecimales en
+minúscula**, generados por `biso init` de la fuente de números aleatorios del sistema, comprobando que no
+exista ya en la raíz por defecto, que es una lectura de directorio y sale gratis. Es la misma forma que
+usa Beads para sus tareas, así que está probada como legible.
 
 **El formato es JSON, y no YAML.** El motivo no es estético: la experiencia con Backlog.md en esta
 máquina, anotada en la memoria global, es que su interfaz usa camelCase y su fichero snake_case, y que
@@ -457,7 +476,7 @@ Cosas que el plan tiene que resolver y que aquí se dejan enunciadas a propósit
   NDJSON, o un solo fichero con las dos cosas) y qué comando la restaura.
 - **Cómo se llama el fichero puntero.** Su formato ya está decidido en la sección 3 (JSON, con `id`
   obligatorio e inmutable y `path` opcional), pero no su nombre en el disco.
-- **Qué forma tiene el `id` del tablero.** Solo tiene que ser inmutable y no colisionar entre máquinas,
-  así que no hace falta que sea legible; conviene que sea corto porque aparecerá en `biso where`.
+- **Qué se hace si un nombre de tablero, ya con su sufijo, sigue siendo un nombre de carpeta inválido**
+  en el sistema de ficheros, por ejemplo por su longitud o por sus caracteres.
 - **Cómo se llama el paso de exportar y commitear**, y si es un comando o un efecto opcional de otro.
 - **Si el lenguaje se decide ya**, ahora que el presupuesto de arranque acota la lista.
