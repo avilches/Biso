@@ -123,20 +123,33 @@ tablero**, porque es el mismo mecanismo que hace que varias copias de trabajo lo
 del diseño). Y que un tablero cuyo proyecto ya no existe queda huérfano en la raíz por defecto y ningún
 comando de hoy lo ve.
 
-- [ ] **Paso 5: Añadir las claves de configuración de máquina**
+- [ ] **Paso 5: Situar el nombre del tablero en su configuración**
+
+El nombre humano del tablero es una clave de la configuración del tablero, no del puntero, porque un
+nombre es una etiqueta y las etiquetas colisionan entre personas, así que no puede ser la identidad.
+
+**Antes de crear una clave nueva, comprobar si `project_name`, que ya existe en la tabla de la sección
+10.10, es exactamente esta cosa.** Si lo es, no se crea ninguna clave y se documenta que ese es el nombre
+del tablero y el que da nombre a su carpeta. Si es otra cosa, se crea la clave que haga falta y se dice
+en una frase en qué se diferencian.
+
+Esta decisión la necesita la tarea 3, que deriva el prefijo de los identificadores del nombre del
+tablero, así que tiene que quedar resuelta aquí y no más adelante.
+
+- [ ] **Paso 6: Añadir las claves de configuración de máquina**
 
 En la sección 10.10, añadir a la tabla de claves la raíz por defecto y la lista de raíces adicionales,
 con sus tipos y sus valores por defecto, y decir explícitamente que son de máquina y no de tablero,
 porque el resto de esa tabla es configuración del tablero. Respetar el estilo de la tabla existente.
 
-- [ ] **Paso 6: Ajustar `biso init` en la sección 10.1**
+- [ ] **Paso 7: Ajustar `biso init` en la sección 10.1**
 
 `biso init` sin `--at` crea el tablero en la raíz por defecto y escribe el puntero. Con `--at` lo pone
 donde se le diga y escribe el puntero igual, con `path`. Hoy la sección 3.2 dice que el puntero se crea
 "siempre que el tablero no quede dentro del propio proyecto", y esa condición desaparece: el puntero se
 escribe siempre, porque el tablero nunca queda dentro del proyecto.
 
-- [ ] **Paso 7: Comprobar la coherencia**
+- [ ] **Paso 8: Comprobar la coherencia**
 
 ```bash
 grep -c '—' docs/SPEC.md                 # tiene que dar 0
@@ -147,7 +160,7 @@ grep -n '\.biso\.json' docs/SPEC.md      # aparece en 3.2 y en 10.1
 Leer la sección 3.2 entera de una vez y confirmar que las cuatro vías siguen siendo cuatro, que el
 mensaje de código 8 no ha cambiado, y que ninguna frase contradice a otra.
 
-- [ ] **Paso 8: Commit**
+- [ ] **Paso 9: Commit**
 
 ```bash
 git add docs/SPEC.md
@@ -161,7 +174,9 @@ git commit -m "Fija el directorio del tablero, el puntero y la raiz por defecto"
 **Ficheros:**
 - Modificar: `docs/SPEC.md`, sección 3.2
 - Modificar: `docs/SPEC.md`, sección 10.1 "biso init"
-- Modificar: `docs/SPEC.md`, la tabla de códigos de salida donde vive el código 8
+- Modificar: `docs/SPEC.md`, sección 12, la lista de claves `code` del código 8
+
+**No se toca la tabla de códigos de salida de la sección 2**, porque no se añade ningún código nuevo.
 
 **Consume de la tarea 1:** el puntero `.biso.json` y su clave `id`.
 
@@ -270,21 +285,18 @@ git commit -m "Deriva el prefijo del nombre del tablero y lo hace inmutable con 
 ## Tarea 4: El nombre del tablero y `biso rename`
 
 **Ficheros:**
-- Modificar: `docs/SPEC.md`, sección 10.10 (el nombre vive en la configuración del tablero)
-- Modificar: `docs/SPEC.md`, sección 10 (comando nuevo)
+- Crear: `docs/SPEC.md`, **subsección 10.12** para `biso rename`
 
-**Consume de la tarea 1:** el nombre del tablero y su relación con la carpeta.
+**Consume de la tarea 1:** el nombre del tablero, ya situado en la configuración del tablero por el paso
+5 de esa tarea, y su relación con el nombre de la carpeta.
 **Produce para la tarea 5:** el comando `biso rename` y el hecho de que nombre e identidad son
 distintos.
+**Produce para la tarea 10:** un comando administrativo más.
 
-- [ ] **Paso 1: Situar el nombre en la configuración del tablero**
+El número de subsección, 10.12, está asignado de antemano a propósito, porque la tarea 8 también añade
+una subsección de comando y las dos elegirían el mismo número por separado.
 
-Documentar que el nombre humano del tablero es una clave de su configuración, no del puntero, y por qué:
-un nombre es una etiqueta y las etiquetas colisionan entre personas, así que no puede ser la identidad.
-Revisar si `project_name`, que ya existe en la tabla de la sección 10.10, es esta misma cosa o es otra;
-si es la misma, no crear una clave nueva, y si es otra, decir en una frase en qué se diferencian.
-
-- [ ] **Paso 2: Especificar `biso rename`**
+- [ ] **Paso 1: Especificar `biso rename`**
 
 Escribir la sección del comando con la misma estructura que tienen los demás: firma, tabla de
 parámetros, comportamiento, casos límite, salida literal, esquema JSON, códigos de salida y texto de
@@ -298,20 +310,21 @@ así que ese caso deja de ser un caso de uso normal y pasa a ser un error de ent
 nuevo que coincida con el de otro tablero es perfectamente legal y no es un error, porque los sufijos
 difieren.
 
-- [ ] **Paso 3: Comprobar**
+- [ ] **Paso 2: Comprobar**
 
 ```bash
 grep -c '—' docs/SPEC.md    # 0
+grep -n '^### 10\.1[0-9]' docs/SPEC.md   # la 10.12 existe y no duplica ningun numero
 ```
 
 Comparar la sección nueva con la de otro comando de administración, por ejemplo `biso where`, y
 confirmar que tiene las mismas partes en el mismo orden.
 
-- [ ] **Paso 4: Commit**
+- [ ] **Paso 3: Commit**
 
 ```bash
 git add docs/SPEC.md
-git commit -m "Situa el nombre del tablero en su configuracion y especifica biso rename"
+git commit -m "Especifica biso rename"
 ```
 
 ---
@@ -501,10 +514,13 @@ git commit -m "Separa la tarea ilegible de la base de datos que no abre, y ampli
 **Ficheros:**
 - Modificar: `docs/SPEC.md`, sección 10.9 "biso export"
 - Modificar: `docs/SPEC.md`, sección 10.3 "biso new --from"
-- Modificar: `docs/SPEC.md`, sección 10 (comando nuevo `biso snapshot`)
+- Crear: `docs/SPEC.md`, **subsección 10.13** para `biso snapshot`
 - Modificar: `docs/SPEC.md`, sección 10.1 "biso init"
 
 **Consume:** el directorio del tablero de la tarea 1.
+**Produce para la tarea 10:** un comando administrativo más.
+
+El número de subsección, 10.13, está asignado de antemano porque la tarea 4 ya ocupó la 10.12.
 
 - [ ] **Paso 1: Documentar el contenido versionado del directorio del tablero**
 
