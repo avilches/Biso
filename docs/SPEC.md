@@ -1926,7 +1926,7 @@ igual que las demás.
 ```
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
-comentarios. Para eso está `biso get`. Los nueve campos derivados de la sección 5 sí están todos,
+comentarios. Para eso está `biso get`. Los diez campos derivados de la sección 5 sí están todos,
 `blocks` incluido. `truncated` es explícito para que nadie tenga que comparar `shown` con `matched`,
 y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado.
 
