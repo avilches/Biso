@@ -186,8 +186,8 @@ Un proyecto tiene un tablero, y el programa lo encuentra por este orden. Gana el
 3. **El puntero del proyecto**, que es una marca que `biso init` deja en el proyecto y que dice qué
    tablero le corresponde. Se busca en el directorio de trabajo y en sus ancestros, con el tope de la
    regla que cierra esta lista.
-4. **Un tablero que el propio almacenamiento asocia al directorio de trabajo**, buscado con el mismo
-   procedimiento hacia arriba y el mismo tope.
+4. **Un tablero en la raíz por defecto de la máquina** (sección 10.10), el directorio donde
+   `biso init` sin `--at` pone los tableros nuevos.
 
 **El tope de la búsqueda hacia arriba** es la raíz del proyecto, entendida como la raíz del
 repositorio de control de versiones si lo hay, y si no lo hay, el propio directorio de partida. La
@@ -206,10 +206,41 @@ Los cinco exentos no abortan así: `init`, `help`, `--help` y `--version` no nec
 hacer su trabajo, y `biso where` lo necesita pero lo comprueba por su cuenta, con su propio mensaje y
 su propio código 8 cuando no lo encuentra (sección 10.2).
 
-El puntero del paso 3 es lo que permite que varias copias de trabajo del mismo proyecto compartan un
-solo tablero en lugar de tener uno cada una. **`biso init` lo crea siempre que el tablero no quede
-dentro del propio proyecto** (sección 10.1), y `biso where` dice cuál se ha usado y por qué
-(sección 10.2). No hay ningún caso en el que haya que escribirlo a mano.
+**El puntero** es el fichero `.biso.json` en la raíz del proyecto, versionado en git, con estas
+claves:
+
+| Clave | Tipo | Obligatoria | Notas |
+|---|---|---|---|
+| `version` | entero | sí | versión del formato del puntero |
+| `id` | 8 caracteres hexadecimales | sí | identidad del tablero, inmutable |
+| `path` | ruta | no | solo cuando el tablero no está en la raíz por defecto |
+
+Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
+tablero sin ningún paso adicional. Tres reglas gobiernan su lectura:
+
+- Una clave desconocida en el puntero es un error.
+- El `id` manda y el `path` es una pista que puede no resolver.
+- **Cómo se busca**: la carpeta de un tablero se llama `<nombre>-<id>`, por ejemplo `kex-3f9a2b1c`, así
+  que localizarlo a partir del puntero es una sola búsqueda del patrón `*-<id>` en la raíz por defecto,
+  sin abrir ni leer la configuración de ningún tablero.
+
+Eso resuelve dos cosas de golpe: que dos proyectos de la misma máquina se puedan llamar igual sin
+chocar, porque lo que identifica al tablero no es su nombre sino el `id` que lleva en el nombre de su
+carpeta, y que el puntero siga resolviendo aunque el tablero se haya renombrado, porque el
+identificador viaja en el nombre de la carpeta y no en el puntero.
+
+`biso init` genera el `id` de la fuente de números aleatorios del sistema, comprobando que no exista ya
+en la raíz por defecto, que es una lectura de directorio, y escribe el puntero siempre: sin `--at`, con
+el tablero en la raíz por defecto; con `--at`, con el tablero donde se le diga y esa ruta en `path`
+(sección 10.1). `biso where` dice cuál se ha usado y por qué (sección 10.2). No hay ningún caso en el
+que haya que escribirlo a mano.
+
+**Dos proyectos distintos pueden apuntar legalmente al mismo tablero.** No hay forma de distinguir "dos
+copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", porque el mecanismo es
+el mismo puntero, y compartir es precisamente para lo que existe.
+
+**Un tablero cuyo proyecto ya no existe queda huérfano** en la raíz por defecto, y ningún comando de
+hoy lo ve.
 
 ---
 
@@ -1394,7 +1425,7 @@ biso init [<name>] [--at <location>] [--statuses <list>]
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
 | `<name>` | | no | texto | el nombre del proyecto | no | no | |
-| `--at <location>` | | no | localizador | el que el almacenamiento asocia por defecto a este proyecto | no | no | |
+| `--at <location>` | | no | localizador | la raíz por defecto de la máquina (sección 3.2) | no | no | |
 | `--statuses <list>` | | no | lista | `To Do, In Progress, Done` | sí | sí | |
 | `--initial-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--active-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
@@ -1414,10 +1445,11 @@ igual que la bandera global `--board`.
 Crea un tablero vacío con su configuración. **No escribe nunca fuera del tablero**, salvo el puntero
 del proyecto que se describe a continuación.
 
-`init` escribe, además del tablero, **el puntero del proyecto** de la sección 3.2, y lo hace siempre
-que el tablero no quede dentro del propio proyecto, es decir, siempre que se use `--at` apuntando
-fuera. Es la única cosa que `init` escribe fuera del tablero. La salida dice siempre si el puntero se
-ha creado.
+`init` escribe, además del tablero, **el puntero del proyecto** (el fichero `.biso.json` de la
+sección 3.2), y lo escribe siempre, porque el tablero nunca queda dentro del propio proyecto: sin
+`--at`, en la raíz por defecto de la máquina; con `--at`, donde se le diga, con esa ruta en la clave
+`path` del puntero. Es la única cosa que `init` escribe fuera del tablero. La salida siempre confirma
+que el puntero se ha escrito.
 
 **Sin `--statuses`**, el tablero nace con `To Do, In Progress, Done`, con los papeles inicial, activo y
 terminal en ese orden. **Con `--statuses`**, hacen falta las tres banderas de papel,
@@ -1451,7 +1483,7 @@ This project now points at that board.
 Run `biso prime` to see how to use it.
 ```
 
-La última línea sobre el puntero solo aparece cuando el puntero se ha creado.
+Esa última línea aparece siempre, porque `init` escribe el puntero siempre (sección 3.2).
 
 #### El esquema JSON
 
@@ -1469,7 +1501,7 @@ La última línea sobre el puntero solo aparece cuando el puntero se ha creado.
       "priorities": ["high", "medium", "low"],
       "taskPrefix": "TASK"
     },
-    "pointerCreated": false
+    "pointerCreated": true
   }
 }
 ```
@@ -1488,17 +1520,16 @@ La última línea sobre el puntero solo aparece cuando el puntero se ha creado.
 ```
 Usage: biso init [name] [options]
 
-Create a task board for this project. It writes the board and, when the board
-lives outside the project, a pointer inside the project so every copy of the
-project finds the same board. It never writes outside the board otherwise.
+Create a task board for this project. It writes the board and a pointer
+inside the project so every copy of the project finds the same board. It
+never writes outside the board otherwise.
 
 Arguments:
   name                   board name (default: the project directory name)
 
 Options:
-  --at <location>             where the board lives, in whatever form the
-                              storage takes (default: what the storage
-                              associates with this project)
+  --at <location>             where the board lives (default: the machine's
+                              default boards root)
   --statuses <list>           comma-separated, at least three
                               (default: "To Do,In Progress,Done")
   --initial-status <status>   status of a new task (default: "To Do")
@@ -3373,6 +3404,18 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `default_limit` | entero >= 0 | 30 |
 | `finish_strict` | booleano | falso |
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
+| `boards_root` | ruta | `~/.biso/boards` |
+| `boards_extra_roots` | lista de rutas | vacía |
+
+**Las dos últimas claves son de la máquina, no del tablero**: el resto de esta tabla es configuración
+de un tablero concreto, pero `boards_root` (la raíz por defecto de la sección 3.2) y
+`boards_extra_roots` (raíces adicionales para cuando algún tablero vive fuera de ella) valen para todos
+los tableros de esta máquina. Por eso no dependen de tener un tablero resuelto (sección 3.2): se leen y
+se escriben aunque no haya ninguno, porque hace falta conocerlas antes de que exista el primer tablero
+de la máquina.
+
+**`project_name` es el nombre del tablero.** Es la etiqueta humana que da nombre a su carpeta
+(`<nombre>-<id>`, sección 3.2). Cambiarla no toca el `id` del puntero ni ninguna tarea.
 
 **`me` gana sobre `BISO_ME` cuando las dos están puestas.** Por eso un tablero compartido entre una
 persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
