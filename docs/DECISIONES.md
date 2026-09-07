@@ -7,6 +7,9 @@ de cada decisión que podría parecer arbitraria, y la evidencia que la sostiene
 si esa regla existe por algo. Varias de ellas parecen caprichos de estilo y son la respuesta a un
 fallo medido en herramientas reales.
 
+Este documento usa las mismas palabras que la especificación y con el mismo significado; la tabla de
+"Vocabulario de este documento" al principio de `docs/SPEC.md` es la referencia para las dos.
+
 La evidencia viene de dos sitios. El primero es un estudio del uso real de un gestor de tareas por
 agentes automáticos: 856 invocaciones de línea de comandos en 60 sesiones y 10 proyectos a lo largo
 de seis días, con la salida de cada llamada medida en bytes. El segundo es la comparación de dos
