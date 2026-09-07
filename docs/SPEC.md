@@ -2012,7 +2012,7 @@ igual que las demás.
         "acDone": 1,
         "acTotal": 2,
         "dodDone": 0,
-        "dodTotal": 0,
+        "dodTotal": 1,
         "commentCount": 1,
         "urgency": 19.0,
         "blocks": ["TASK-40"],
@@ -2397,17 +2397,19 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 
 Por defecto, **una línea por tarea afectada** con lo que quien llama no sabía: el estado resultante,
 el avance de criterios y la urgencia recalculada. Los tres datos son derivados, y ninguno se puede
-conocer sin leer la tarea.
-
-```
-TASK-11  In Progress  ac 1/2  urgency 19.0
-```
-
-Cuando la tarea tiene definición de hecho, la línea la incluye igual:
+conocer sin leer la tarea. La TASK-11 de los ejemplos tiene además una definición de hecho de un
+elemento, así que su línea trae también el avance de esa segunda lista:
 
 ```
 TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
+
+**Esta es la línea de estado, y la imprimen igual los seis verbos del ciclo de 10.7 y `biso archive`.**
+La única excepción es `biso new`, por el motivo que da 10.3. Cada comando la enseña con su propio
+ejemplo, pero las dos reglas de su forma se dicen aquí y no se repiten: el trozo
+`ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación, y el trozo
+`dod <marcados>/<total>` sale siempre que tenga definición de hecho. Una tarea sin ninguna de las dos
+listas imprime solo el identificador, el estado y la urgencia.
 
 Los avisos van por stderr:
 
@@ -2518,6 +2520,10 @@ Los seis aceptan **todas** las banderas de campo de la sección 8, igual que `se
 subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que el gesto frecuente
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
+Los seis imprimen también la misma línea de estado que `set`, con su forma y sus dos reglas definidas
+en 10.6. Los ejemplos de más abajo son esa línea con los datos de la TASK-11, que tiene dos criterios
+de aceptación y un elemento de definición de hecho.
+
 El ciclo entero de una tarea es esto:
 
 ```
@@ -2566,7 +2572,7 @@ persona asignada**, y añade el plan si se ha pasado.
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 0/2  urgency 19.0
+TASK-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
 ```
 
 ##### Códigos de salida
@@ -2666,7 +2672,7 @@ campo de la sección 8, igual que las demás.
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  urgency 19.0
+TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 ##### Códigos de salida
@@ -2743,7 +2749,7 @@ escritura.
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  urgency 19.0
+TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 Y por stderr, `note: comment #2 by @trello:juan`.
@@ -2957,7 +2963,7 @@ hint: reopen it first with `biso start TASK-11 --reopen`
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  urgency 15.0
+TASK-11  In Progress  ac 1/2  dod 0/1  urgency 15.0
 ```
 
 La urgencia queda por debajo de los 19.0 del ejemplo de 5.4 porque el término de actividad exige
@@ -3091,7 +3097,7 @@ hint: use `biso comment` to add a comment
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  urgency 19.0
+TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 La urgencia recupera el término de actividad de 5.4, porque `waiting` vuelve a ser falso.
@@ -3186,7 +3192,7 @@ hint: `biso archive <ref>` takes it off the board and keeps the history
 #### Salida
 
 ```
-TASK-11  Done  ac 2/2  urgency 0.0  archived
+TASK-11  Done  ac 2/2  dod 1/1  urgency 0.0  archived
 ```
 
 #### Códigos de salida
