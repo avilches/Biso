@@ -431,6 +431,12 @@ su cuerpo es texto largo y el listado no lleva texto largo nunca.
 En 10.9 los cuatro filtros se aceptan igual que el resto de filtros de `ls`, y `question` sí entra en
 lo que escribe `export`, con sus tres partes.
 
+**Y hay que arreglar el guion de la garantía de simetría de esa misma sección**, que hoy invoca
+`biso init Kex --statuses "..."` sin banderas de papel. Desde la tarea 4, esa llamada es un error 2,
+así que el documento estaría publicando como prueba un guion que no se puede ejecutar. Hay que
+añadirle `--initial-status`, `--active-status` y `--terminal-status` con los estados que corresponda.
+No cambies ahí la lista de estados: eso es la tarea 10.
+
 Y en 10.3, que es el otro extremo de la simetría, el formato de lote de `biso new --from` acepta
 `question` como objeto con `author`, `askedAt` y `body`, con `askedAt` opcional. **La línea de ejemplo
 del NDJSON, que el documento presenta como la que lleva todos los tipos compuestos, tiene que
