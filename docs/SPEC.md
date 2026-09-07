@@ -480,7 +480,7 @@ escribe. No dice nada de cómo se guardan.
 | `acceptanceCriteria` | lista de criterios | no | quien llama | sí |
 | `definitionOfDone` | lista de criterios | no | quien llama | sí |
 | `comments` | lista de comentarios | no | quien llama | solo se añade |
-| `question` | registro de tres partes (detalle debajo de esta tabla) | no | mixto, según la parte | sí, solo con `biso ask`, `biso answer`, o al importar |
+| `question` | registro de tres partes | no | mixto, según la parte; ver 5.7 | sí, solo con `biso ask`, `biso answer`, o al importar |
 | `acDone`, `acTotal`, `dodDone`, `dodTotal` | entero, derivado | derivado | el programa | no, se recalculan al leer |
 | `commentCount` | entero, derivado | derivado | el programa | no, se recalcula al leer |
 | `blocks` | lista de referencias, derivado | derivado | el programa | no, se recalcula al leer |
@@ -500,19 +500,6 @@ Cuatro precisiones sobre la mutabilidad:
   clave desconocida (10.3): `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`,
   `blocks`, `ready`, `blocked` y `waiting`. Esta es la única lista de campos derivados del
   documento; las demás secciones remiten a ella.
-
-`question` es un registro de tres partes, con la misma forma que un comentario (5.2):
-
-| Parte | Tipo | Quién la fija |
-|---|---|---|
-| `author` | texto libre | el programa, con la identidad `me`, salvo al importar |
-| `askedAt` | instante UTC | el programa, salvo al importar |
-| `body` | texto largo | quien llama |
-
-Vacío es lo normal. Con contenido significa que la tarea espera la respuesta de una persona, esté en
-el estado que esté, y entonces el derivado `waiting` es cierto; vacío, `waiting` es falso. Lleva tres
-partes y no una sola porque al responderse se convierte literalmente en un comentario, con `biso
-answer`, y para eso hacen falta su autor y su instante originales, no los de quien responde.
 
 ### 5.1. Los criterios y sus claves estables
 
@@ -655,6 +642,21 @@ por la tabla de 3.1, una tarea sin quien la reporte es válida.
 
 En el lote de `biso new --from`, un objeto que trae `reporter` conserva ese valor, y uno que no lo
 trae aplica las mismas reglas de esta tabla.
+
+### 5.7. La pregunta abierta
+
+`question` es un registro de tres partes, con la misma forma que un comentario (5.2):
+
+| Parte | Tipo | Quién la fija |
+|---|---|---|
+| `author` | texto libre | el programa, con la identidad `me`, salvo al importar |
+| `askedAt` | instante UTC | el programa, salvo al importar |
+| `body` | texto largo | quien llama |
+
+Vacío es lo normal. Con contenido significa que la tarea espera la respuesta de una persona, esté en
+el estado que esté, y entonces el derivado `waiting` es cierto; vacío, `waiting` es falso. Lleva tres
+partes y no una sola porque al responderse se convierte literalmente en un comentario, con `biso
+answer`, y para eso hacen falta su autor y su instante originales, no los de quien responde.
 
 ---
 
@@ -851,10 +853,10 @@ campo tiene estas variantes:
 | Escalar | fijar, vaciar |
 | Lista inmutable (comentarios) | solo añadir, `--comment` |
 
-**`question` no entra en esta tabla.** Es un registro de tres partes (5), no una lista, ni un bloque
-de prosa, ni un mapa, ni un escalar, así que ninguna de estas clases lo describe. **Ninguna bandera
-de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación de `biso new
---from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (5).
+**`question` no entra en esta tabla.** Es un registro de tres partes (5.7), no una lista, ni un
+bloque de prosa, ni un mapa, ni un escalar, así que ninguna de estas clases lo describe. **Ninguna
+bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación de
+`biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (5).
 
 **El significado no cambia entre comandos.** `--ac` añade un criterio en `biso new`, en `biso set`, en
 `biso start` y en `biso finish`, y todos los comandos de escritura aceptan todas estas banderas.
