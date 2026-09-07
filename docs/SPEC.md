@@ -3880,7 +3880,7 @@ agrupada por el código de salida con el que sale cada uno:
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_project`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous` |
-| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question` |
+| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity` |
 | 7 | `busy`, `io_error`, `file_unreadable`, `no_terminal`, `port_in_use` |
 | 8 | `no_board` |
 | 9 | `batch_invalid`, `dry_run_failed` |
@@ -3890,6 +3890,13 @@ agrupada por el código de salida con el que sale cada uno:
 nuevo, pero ninguno de los de arriba cambiará de significado, cambiará de código de salida ni
 desaparecerá. Quien ramifique sobre un `code` desconocido debe tratarlo por su código de salida, que
 sí está cerrado.
+
+`missing_identity` (código 2, en `biso ask`, `biso answer` y el autor de un comentario) y
+`mine_requires_identity` (código 6, en `--mine`) son la falta de identidad de la tabla de 3.1, pero
+con dos códigos de salida distintos. No son un mismo concepto duplicado: como esta tabla está
+agrupada por código de salida y ninguno de los dos se mueve nunca, la misma falta de identidad no
+puede compartir un `code` cuando sale con códigos distintos. La asimetría entre los dos códigos es
+anterior a esta rama.
 
 ### 12.4. Números, fechas y ausencias
 
