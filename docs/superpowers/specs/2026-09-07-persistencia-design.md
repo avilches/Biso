@@ -38,8 +38,20 @@ base de datos, no derivados de las tareas presentes:
 - **El identificador más alto que se ha llegado a asignar** (sección 4.11), que es lo que permite
   distinguir `never_allocated` de `not_found` en la sección 7.3.
 - **El contador de claves de criterios de cada tarea**, uno por lista, que solo crece (sección 5.1).
-  Una tarea puede tener los criterios #1 y #3 y ningún #2, así que el contador no se puede deducir del
-  máximo de las claves presentes.
+
+Sobre el contador de criterios conviene ser explícito, porque `max()+1` sobre las claves presentes
+parece bastar y no basta. El caso que lo rompe no son los huecos: una tarea con los criterios #1 y #3
+tiene máximo 3 y el siguiente sería el #4, correcto. Lo que lo rompe es **quitar el de la clave más
+alta**: si la tarea tenía #1, #2 y #3 y se quita el #3, `max()+1` vuelve a dar 3 y la clave se
+reasigna, algo que la sección 5.1 prohíbe expresamente.
+
+Y no es un detalle cosmético, porque la misma sección 5.1 dice que los selectores de la sección 8.4
+trabajan sobre la clave y **nunca** sobre la posición. Un agente que leyó la tarea cuando el #3 era el
+criterio viejo, y que marca el #3 después de esa secuencia, marca en silencio un criterio distinto del
+que creía. Es el mismo fallo que reutilizar el identificador de una tarea, en pequeño, y se arregla
+igual: **enumerar lo presente dice qué existe ahora, no dice qué se usó ya.** Por eso la sección 4.11
+obliga al tablero a recordar el identificador más alto que llegó a asignar, y por eso cada lista de
+criterios necesita su contador.
 
 Los comentarios se guardan con su **orden de inserción explícito**, aparte de su fecha, porque
 `biso answer` añade al final un comentario con un instante pasado (sección 5.2) y ordenar por fecha
@@ -74,8 +86,26 @@ rellena su paso 4:
 
 ### El puntero
 
-Un fichero pequeño en la raíz del proyecto, **versionado en git**, con la identidad del tablero y la
-versión del formato del puntero. Nada más: ni rutas absolutas, ni configuración, ni nada que caduque.
+Un fichero pequeño en la raíz del proyecto, **versionado en git**, con dos cosas y la versión de su
+propio formato:
+
+- **`name`**, obligatorio: la identidad del tablero, un slug. Es también el nombre de su carpeta dentro
+  de la raíz por defecto de la máquina, y de él se deriva el prefijo de los identificadores al crear el
+  tablero (sección 4).
+- **`path`**, opcional: la ruta completa, solo cuando el tablero no está en la raíz por defecto. Puede
+  coincidir con el nombre o no, y da igual.
+
+**El `name` manda y el `path` es una pista.** El nombre es independiente de la máquina y la ruta no lo
+es, así que un fichero versionado que llega a otro ordenador traerá un `path` que allí no existe. Eso no
+es un problema nuevo: cae exactamente en el caso de error que esta sección ya necesitaba, el del puntero
+que nombra un tablero que en esta máquina no está, y `biso init` adopta el `name` para que las dos
+máquinas sigan hablando del mismo tablero.
+
+**El formato es JSON, y no YAML.** El motivo no es estético: la experiencia con Backlog.md en esta
+máquina, anotada en la memoria global, es que su interfaz usa camelCase y su fichero snake_case, y que
+**una clave mal escrita en el YAML se ignora en silencio**. El principio de `biso` es que un valor que no
+existe es siempre un error, así que una clave desconocida en el puntero es un error con su código, no un
+encogimiento de hombros. Y JSON es lo que la herramienta ya habla en todas partes.
 
 Que esté versionado es lo que hace que funcionen tres cosas de golpe:
 
@@ -99,8 +129,21 @@ puntero** en vez de acuñar una nueva, para que las dos máquinas sigan hablando
 
 ## 4. Los identificadores
 
-Se quedan como están en la sección 4.11: `PREFIX-<n>`, `n` entero positivo, crecientes, **con huecos
-permitidos**, y nunca reutilizados.
+Se quedan como están en la sección 4.11: `<PREFIX>-<n>`, `n` entero positivo, crecientes, **con huecos
+permitidos**, y nunca reutilizados. El prefijo ya viene de la configuración, en `task_prefix`, con
+`TASK` por defecto, así que un tablero que quiera identificadores como `KEX-1` no necesita nada nuevo.
+
+**Pero el valor por defecto hay que cambiarlo.** Que dos tableros distintos empiecen los dos en
+`TASK-1` hace que la vista multiproyecto de la sección 10 nazca inservible, salvo que el usuario se
+acuerde de poner un prefijo distinto en cada tablero, que es precisamente la clase de cosa que no hay
+que pedirle. La propuesta es que **`task_prefix` se derive por defecto del nombre del tablero** en
+mayúsculas: un tablero llamado `kex` da `KEX-1` sin que nadie configure nada, y sigue siendo
+configurable para quien quiera otra cosa.
+
+Los dos valores no son la misma cosa aunque uno salga del otro. El nombre del tablero es una etiqueta
+que en principio se podría cambiar; el prefijo está incrustado en cada identificador para siempre y no
+se puede cambiar sin romperlos todos. Así que se deriva al crear el tablero y desde entonces viven
+separados.
 
 No se pasan a identificadores aleatorios, que es la solución de Beads, porque el precio es perder
 poder decir "la tarea 5" en voz alta y no hace falta: aquí hay un solo asignador por tablero, así que
@@ -300,6 +343,10 @@ Esto es el encargo para el plan, no cambios ya hechos:
 9. **Sección 10.10**, configuración: los valores por defecto de la máquina y la lista de raíces.
 10. **Sección 13**, contrato de estabilidad: el presupuesto de arranque se suma a los números
     congelados, o se dice explícitamente que no lo está.
+11. **Sección 4.11 y sección 10.1**: el valor por defecto de `task_prefix` deja de ser `TASK` fijo y se
+    deriva del nombre del tablero, para que dos tableros no colisionen los dos en `TASK-1`. Hay que
+    decidir qué pasa con un nombre que no da un prefijo válido y si el prefijo se puede cambiar después
+    (probablemente no, porque va incrustado en identificadores que no se reutilizan).
 
 ## 14. Lo que queda por decidir dentro de esta decisión
 
@@ -308,6 +355,7 @@ Cosas que el plan tiene que resolver y que aquí se dejan enunciadas a propósit
 - **La cifra del presupuesto de arranque**, que hay que medir en la máquina de referencia y no estimar.
 - **La forma exacta de la instantánea restaurable** (un fichero con la configuración al lado del
   NDJSON, o un solo fichero con las dos cosas) y qué comando la restaura.
-- **El nombre y el formato del fichero puntero.**
+- **Cómo se llama el fichero puntero.** Su formato ya está decidido en la sección 3 (JSON, con `name`
+  obligatorio y `path` opcional), pero no su nombre en el disco.
 - **Cómo se llama el paso de exportar y commitear**, y si es un comando o un efecto opcional de otro.
 - **Si el lenguaje se decide ya**, ahora que el presupuesto de arranque acota la lista.
