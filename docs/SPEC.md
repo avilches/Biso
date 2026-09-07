@@ -2216,6 +2216,18 @@ TASK-11  Normalize CRLF in the diff
 - [ ] #3 Hay un test que lo cubre
 ```
 
+Con `--section question` sobre TASK-60, la tarea con la pregunta abierta del ejemplo de 9.7, la
+sección sale rellena con la misma forma que ya usa `## Comments`: el autor y el instante en una línea
+y el cuerpo debajo.
+
+```
+TASK-60  Confirm the retry budget for the upload endpoint
+
+## Open Question
+@claude, 2026-09-06 09:30
+Should the retry budget be shared with the download endpoint or kept separate?
+```
+
 Con `--explain-urgency`, al final y por stdout:
 
 ```
@@ -2273,8 +2285,9 @@ Es el objeto de `task.list` más los campos del cuerpo:
 ```
 
 `urgencyBreakdown.active` es el único término que no es un número suelto: `value` es el número que
-entra en la suma y `reason` es `null` mientras `value` vale `1.0`, o uno de `"not_active"` y
-`"waiting"` cuando vale `0.0`, según cuál de los dos motivos de 5.4 se aplique.
+entra en la suma, el producto del coeficiente por el factor, igual que en los demás términos.
+`reason` vale `null` cuando el término contribuye, y cuando contribuye `0.0` dice por qué:
+`"not_active"` si el estado no es el activo, y `"waiting"` si lo es pero hay una pregunta abierta.
 
 Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas. Con varias
 coincidencias, `kind` es `task.candidates`, `data.tasks` es la lista y el código es 5.
