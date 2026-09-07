@@ -128,8 +128,9 @@ salida de las escrituras deje de ser un eco y en las llamadas que desaparecen al
 resumen del tablero, que crece con el tablero, no pueda comerse el sitio de las reglas.
 
 **El reparto entre las dos mitades cambió con el modelo de estados, y el total no.** La parte fija
-sube de 3.072 a 3.456 bytes porque el mensaje gana dos órdenes del ciclo y una regla de precedencia
-entre los cuatro bloques de la sección 9.7 de `SPEC.md`; el resumen del tablero baja de 2.048 a 1.664.
+sube de 3.072 a 3.456 bytes porque el bloque `COMMANDS` gana las dos órdenes nuevas del ciclo, `ask` y
+`answer`, y el bloque `RULES` gana una regla más, la undécima, sobre esos dos verbos y sobre qué
+significa una tarea asignada; el resumen del tablero baja de 2.048 a 1.664.
 Eso solo es seguro de hacer porque, a la vez, el orden de recorte del resumen deja de estar incompleto:
 antes nombraba un solo bloque y decía "antes que cualquier otra cosa" sin nombrar ninguna otra, así que
 un tablero con muchas tareas en curso podía rebasar el tope sin que hubiera una conducta definida para
@@ -545,9 +546,10 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   usa `biso get --section question`, o mira el mensaje de arranque, que sí la enseña.
 - **Una pregunta abierta sobre una tarea terminada o archivada desaparece de la vista.** `biso finish`
   avisa pero no impide, los bloques del mensaje de arranque excluyen terminadas y archivadas, y
-  `biso ls` excluye el estado terminal por defecto. Se acepta porque la alternativa, impedir cerrar
-  una tarea con una pregunta abierta, empujaría a rodear la herramienta, el mismo argumento que ya vale
-  en el apartado 6 para `finish` y los criterios sin marcar.
+  `biso ls` excluye el estado terminal por defecto, así que `biso ls --waiting` no la encuentra sin
+  `--any-status`. Se acepta porque la alternativa, impedir cerrar una tarea con una pregunta abierta,
+  empujaría a rodear la herramienta, el mismo argumento que ya vale en el apartado 6 para `finish` y
+  los criterios sin marcar.
 - **El filtro `--ready` no excluye las tareas aparcadas.** Mira solo dependencias, así que un agente
   que elija trabajo con esa bandera, que es justo lo que su nombre invita a hacer, se lleva también las
   que esperan una respuesta. La consulta correcta añade `--not-waiting`. Se anota porque el nombre
