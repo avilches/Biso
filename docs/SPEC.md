@@ -215,7 +215,7 @@ claves:
 | Clave | Tipo | Obligatoria | Notas |
 |---|---|---|---|
 | `version` | entero | sí | versión del formato del puntero |
-| `id` | 8 caracteres hexadecimales | sí | identidad del tablero, inmutable |
+| `id` | 8 caracteres hexadecimales en minúscula | sí | identidad del tablero, inmutable; en mayúsculas el puntero es inválido, no se normaliza |
 | `path` | ruta | no | solo cuando el tablero no está en la raíz por defecto |
 
 Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
@@ -250,6 +250,19 @@ por su cuenta.
 
 **Un tablero cuyo proyecto ya no existe queda huérfano** en la raíz por defecto, y ningún comando de
 hoy lo ve.
+
+**Si el puntero existe pero nombra un tablero que esta máquina no tiene** (lo típico al clonar el
+proyecto en otro ordenador), el mensaje es otro, porque aquí sí hay un puntero. Dice que hay uno, qué
+identificador nombra, y que `biso init` crea el tablero aquí adoptando esa misma identidad:
+
+```
+error: this project's pointer names board 3f9a2b1c, which is not on this machine
+hint: `biso init` creates it here, adopting id 3f9a2b1c
+```
+
+El código de salida sigue siendo 8, porque para quien llama la situación es la misma: no hay tablero
+con el que trabajar, y el remedio también es el mismo, `biso init`. Lo que cambia es la clave `code`
+del sobre JSON (sección 12), que aquí es `pointer_unresolved` en vez de `no_board`.
 
 ---
 
@@ -1457,7 +1470,7 @@ biso init [<name>] [--at <location>] [--statuses <list>]
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
 | `<name>` | | no | texto | el nombre del proyecto | no | no | |
-| `--at <location>` | | no | localizador | la raíz por defecto de la máquina (sección 3.2) | no | no | |
+| `--at <location>` | | no | localizador | la raíz por defecto de la máquina (sección 3.3) | no | no | |
 | `--statuses <list>` | | no | lista | `To Do, In Progress, Done` | sí | sí | |
 | `--initial-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--active-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
@@ -1478,10 +1491,15 @@ Crea un tablero vacío con su configuración. **No escribe nunca fuera del table
 del proyecto que se describe a continuación.
 
 `init` escribe, además del tablero, **el puntero del proyecto** (el fichero `.biso.json` de la
-sección 3.2), y lo escribe siempre, porque el tablero nunca queda dentro del propio proyecto: sin
-`--at`, en la raíz por defecto de la máquina; con `--at`, donde se le diga, con esa ruta en la clave
-`path` del puntero. Es la única cosa que `init` escribe fuera del tablero. La salida siempre confirma
-que el puntero se ha escrito.
+sección 3.2), y lo escribe siempre que no exista ya uno, porque el tablero nunca queda dentro del
+propio proyecto: sin `--at`, en la raíz por defecto de la máquina; con `--at`, donde se le diga, con
+esa ruta en la clave `path` del puntero. Es la única cosa que `init` escribe fuera del tablero. La
+salida siempre confirma que el proyecto apunta al tablero, se haya escrito el puntero en esta llamada
+o ya estuviera ahí de antes.
+
+**Si ya existe un puntero pero el tablero que nombra no está en esta máquina** (sección 3.2), `init`
+no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máquinas sigan hablando del
+mismo tablero. Y no reescribe el puntero, porque ya era correcto.
 
 **Sin `--statuses`**, el tablero nace con `To Do, In Progress, Done`, con los papeles inicial, activo y
 terminal en ese orden. **Con `--statuses`**, hacen falta las tres banderas de papel,
@@ -1515,7 +1533,9 @@ This project now points at that board.
 Run `biso prime` to see how to use it.
 ```
 
-Esa última línea aparece siempre, porque `init` escribe el puntero siempre (sección 3.2).
+La línea "This project now points at that board." aparece siempre, porque el proyecto siempre queda
+apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera escrito de antes
+(sección 3.2).
 
 #### El esquema JSON
 
@@ -3948,7 +3968,7 @@ agrupada por el código de salida con el que sale cada uno:
 | 5 | `ambiguous_reference`, `criterion_ambiguous` |
 | 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity` |
 | 7 | `busy`, `io_error`, `file_unreadable`, `no_terminal`, `port_in_use` |
-| 8 | `no_board` |
+| 8 | `no_board`, `pointer_unresolved` |
 | 9 | `batch_invalid`, `dry_run_failed` |
 | 1 | `internal` |
 
