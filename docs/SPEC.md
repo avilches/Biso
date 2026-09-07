@@ -1173,7 +1173,7 @@ Cómo se calcula el resumen, para que la implementación sea única:
 
 - La línea de recuento del bloque `BOARD` tiene **un número por cada estado configurado**, en el
   orden en que están configurados, y cuenta las tareas no archivadas de ese estado. No hay ninguna
-  categoría inventada como "abiertas" que no se corresponda con una columna del tablero.
+  categoría inventada como "abiertas" que no se corresponda con un estado del tablero.
 - Los cuatro bloques `IN PROGRESS`, `WAITING ON A PERSON`, `ASSIGNED TO YOU` y `NEXT UP` se reparten
   el tablero por esta precedencia, y cada tarea cae en el primero que la acepte:
   1. `WAITING ON A PERSON`, si tiene una pregunta abierta.
@@ -3313,7 +3313,7 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
 
 **Los tres estados especiales son valores explícitos, no posiciones.** Se escriben al crear el tablero
-y **cambiar `statuses` no los mueve nunca**. Esta es la diferencia que evita que añadir una columna al
+y **cambiar `statuses` no los mueve nunca**. Esta es la diferencia que evita que añadir un estado al
 final cambie en silencio a dónde va `biso finish`.
 
 #### Comportamiento, caso a caso
@@ -3412,7 +3412,7 @@ No configuration change ever touches a task.
 
 Keys:
   project_name       board name
-  statuses           the columns, in order
+  statuses           the board statuses, in order
   initial_status     status of a new task           (one of statuses)
   active_status      what `biso start` sets         (one of statuses)
   terminal_status    what `biso finish` sets        (one of statuses)
@@ -3545,8 +3545,9 @@ imprime fichas de tareas.
 Usage: biso doctor [options]
 
 Check the board for duplicate ids, unreadable tasks, undeclared extension keys,
-values that are no longer configured, broken or circular dependencies, repeated
-criterion keys, and a recorded highest id that has fallen behind.
+values that are no longer configured, a broken status-role invariant, broken
+or circular dependencies, repeated criterion keys, and a recorded highest id
+that has fallen behind.
 
 Options:
       --fix      repair what can be repaired without a decision
