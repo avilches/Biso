@@ -142,6 +142,19 @@ configurado para este proyecto, lo que no hay es el tablero.
 Hace falta un mensaje propio que diga eso, y `biso init` en esa situación **adopta la identidad del
 puntero** en vez de acuñar una nueva, para que las dos máquinas sigan hablando del mismo tablero.
 
+### Dos casos más que conviene enunciar antes de que sorprendan
+
+**Dos proyectos distintos pueden apuntar al mismo tablero, y es legal.** No hay forma de distinguir "dos
+copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", porque el mecanismo es el
+mismo fichero puntero, y compartir es precisamente para lo que la sección 3.2 dice que existe. Conviene
+escribirlo para que nadie lo trate luego como un fallo que hay que impedir.
+
+**Un tablero cuyo proyecto ya no existe se queda huérfano y nadie lo ve.** El caso contrario, el puntero
+sin tablero, tiene su error. Este no: si borras el proyecto, su tablero se queda en la raíz por defecto
+para siempre, y `biso doctor` no puede saberlo porque trabaja sobre un tablero, no sobre la raíz. No se
+resuelve aquí, pero se enuncia: la enumeración de la sección 10 es también lo que algún día permitirá
+listarlos y ver los que ya no tienen dueño.
+
 ## 4. Los identificadores
 
 Se quedan como están en la sección 4.11: `<PREFIX>-<n>`, `n` entero positivo, crecientes, **con huecos
@@ -227,6 +240,29 @@ próxima vez que alguien mira, que es cuando importa.
 Lo que sí se guarda es el instante de caducidad y **quién tiene el arrendamiento**. El latido que lo
 renueva no es un proceso periódico: es cualquier escritura que el agente ya hace sobre esa tarea.
 
+### Lo que vence es la reclamación, no el estado
+
+Aquí hay una contradicción con la sección 9.2 de `DECISIONES.md` que hay que resolver a favor de este
+diseño. Esa sección dice que la caducidad, al vencer, **saca la tarea del estado activo** sin tocar la
+asignación. Pero `status` es un campo guardado, con un valor del vocabulario del tablero, y un campo
+derivado no puede cambiar un campo guardado. Si nada escribe, la tarea sigue teniendo el estado activo
+guardado por muy vencido que esté su arrendamiento.
+
+Las dos salidas alternativas son peores:
+
+- **Escritura diferida**, en la que la siguiente escritura cualquiera arrastre el saneamiento de las
+  tareas vencidas, hace que un comando toque tareas que no nombró. Eso rompe la previsibilidad, y además
+  `biso prime`, que no escribe nunca, mostraría un estado que una escritura ajena y posterior cambiaría.
+- **Un proceso que vigile** está descartado en la sección 12.
+
+Así que se separan las dos mitades: **el estado guardado no cambia solo, nunca.** Un campo derivado dice
+que el arrendamiento está vencido, y liberarlo es una operación explícita que ejecuta el agente o una
+persona. Es lo más honesto que se puede afirmar con lo que se sabe: nadie ha tocado esto en mucho tiempo,
+y la tarea sigue donde la dejaron.
+
+**Esto obliga a enmendar la sección 9.2 de `DECISIONES.md`**, cuya frase sobre sacar la tarea del estado
+activo se escribió antes de esta decisión y es la que tiene que ceder.
+
 ### El token de vallado, que sale gratis
 
 El estado del arte avisa de que un arrendamiento sin más deja un agujero: el agente A pierde el
@@ -264,6 +300,12 @@ datos, es la exportación:
 
 - **Se versiona** la exportación en NDJSON de las tareas y **la configuración del tablero**.
 - **Se ignora** el fichero de la base de datos y sus auxiliares de WAL.
+
+**El repositorio de git del directorio del tablero es opcional, y su ausencia no rompe nada.** La
+exportación se escribe igual, y sigue sirviendo para restaurar y para leer con los ojos; lo único que se
+pierde es el historial. Esto importa por dos motivos: `biso` no puede exigir que git esté instalado para
+funcionar, y hay quien no quiere un repositorio más en su máquina. Que `biso init` lo cree o no es una
+decisión de comodidad, no de arquitectura.
 
 Versionar la base de datos sería lo natural y es lo que no se hace, por tres motivos que se suman:
 cada escritura reescribe páginas internas, así que cada commit guardaría una copia completa del
@@ -396,6 +438,15 @@ Esto es el encargo para el plan, no cambios ya hechos:
     puntero. Hay que decidir el nombre del comando y qué hace si la carpeta de destino ya existe.
 14. **Sección 10.2**, `biso where`: tiene que decir también el identificador del tablero y su nombre, no
     solo la ruta, porque ahora son tres cosas distintas.
+15. **La operación de liberar un arrendamiento vencido**, que es explícita y no automática (sección 6).
+    Hay que decidir si es un comando propio o una reparación de `biso doctor --fix`.
+16. **Sección 3.2**: dejar dicho que dos proyectos distintos pueden apuntar legalmente al mismo tablero,
+    porque es el mismo mecanismo que hace que varias copias de trabajo lo compartan.
+
+Y un cambio que no es de `SPEC.md`: **la sección 9.2 de `DECISIONES.md` hay que enmendarla.** Su frase
+sobre que la caducidad saca la tarea del estado activo no se sostiene con esta decisión, porque un campo
+derivado no puede cambiar un campo guardado. Lo que vence es la reclamación, no el estado, y esa
+enmienda tiene que quedar registrada con su motivo y no reescrita sin más.
 
 ## 14. Lo que queda por decidir dentro de esta decisión
 
