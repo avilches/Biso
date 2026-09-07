@@ -1252,9 +1252,11 @@ tablas de parámetros de cada comando enumeran solo lo que es propio de ese coma
 #### Firma
 
 ```
-biso init [<name>] [--at <location>] [--statuses <list>] [--types <list>]
-          [--priorities <list>] [--projects <list>] [--extensions <list>]
-          [--prefix <text>] [--overwrite-config]
+biso init [<name>] [--at <location>] [--statuses <list>]
+          [--initial-status <status>] [--active-status <status>]
+          [--terminal-status <status>] [--types <list>] [--priorities <list>]
+          [--projects <list>] [--extensions <list>] [--prefix <text>]
+          [--overwrite-config]
 ```
 
 #### Parámetros
@@ -1264,6 +1266,9 @@ biso init [<name>] [--at <location>] [--statuses <list>] [--types <list>]
 | `<name>` | | no | texto | el nombre del proyecto | no | no | |
 | `--at <location>` | | no | localizador | el que el almacenamiento asocia por defecto a este proyecto | no | no | |
 | `--statuses <list>` | | no | lista | `To Do, In Progress, Done` | sí | sí | |
+| `--initial-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
+| `--active-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
+| `--terminal-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--types <list>` | | no | lista | `task, bug, docs` | sí | sí | |
 | `--priorities <list>` | | no | lista | `high, medium, low` | sí | sí | |
 | `--projects <list>` | | no | lista | vacía | sí | sí | |
@@ -1284,14 +1289,19 @@ que el tablero no quede dentro del propio proyecto, es decir, siempre que se use
 fuera. Es la única cosa que `init` escribe fuera del tablero. La salida dice siempre si el puntero se
 ha creado.
 
+**Sin `--statuses`**, el tablero nace con `To Do, In Progress, Done`, con los papeles inicial, activo y
+terminal en ese orden. **Con `--statuses`**, hacen falta las tres banderas de papel,
+`--initial-status`, `--active-status` y `--terminal-status`, con los mismos nombres que las claves de
+configuración a las que corresponden.
+
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
-| El primer estado de `--statuses` | Se guarda como `initial_status` |
-| El penúltimo estado | Se guarda como `active_status` |
-| El último estado | Se guarda como `terminal_status` |
-| Menos de dos estados | Error 2 |
-| Exactamente dos estados | Válido. El primero es a la vez `initial_status` y `active_status`, así que `biso start` no cambia el estado: solo asigna y añade el plan. Se avisa en la salida |
+| Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
+| Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
+| Una bandera de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
+| Dos banderas de papel nombran el mismo estado | Error 2, con los dos papeles y el estado que comparten |
+| `--statuses` con menos de tres estados | Error 2, diciendo cuántos hacen falta y por qué |
 | `--prefix` con algo que no sean letras | Error 2 |
 | `--at` a un localizador donde no se puede escribir | Error 7 |
 
@@ -1311,9 +1321,7 @@ This project now points at that board.
 Run `biso prime` to see how to use it.
 ```
 
-La última línea sobre el puntero solo aparece cuando el puntero se ha creado. Con exactamente dos
-estados, se añade además `warning: with two statuses, "start" cannot change the status; it still
-assigns and records the plan`.
+La última línea sobre el puntero solo aparece cuando el puntero se ha creado.
 
 #### El esquema JSON
 
@@ -1358,24 +1366,28 @@ Arguments:
   name                   board name (default: the project directory name)
 
 Options:
-  --at <location>        where the board lives, in whatever form the storage
-                         takes (default: what the storage associates with this
-                         project)
-  --statuses <list>      comma-separated. The first is the default status of a
-                         new task, the second to last is the active one that
-                         `biso start` sets, and the last is the terminal one
-                         that `biso finish` sets. All three are then stored as
-                         explicit values and never move again.
-                         (default: "To Do,In Progress,Done")
-  --types <list>         comma-separated (default: "task,bug,docs")
-  --priorities <list>    comma-separated (default: "high,medium,low")
-  --projects <list>      comma-separated (default: none)
-  --extensions <list>    comma-separated declared external field keys, such as
-                         trello.card (default: none)
-  --prefix <text>        task id prefix, letters only (default: TASK)
-  --overwrite-config     replace the configuration of an existing board,
-                         keeping every task
-  -h, --help             show this help
+  --at <location>             where the board lives, in whatever form the
+                              storage takes (default: what the storage
+                              associates with this project)
+  --statuses <list>           comma-separated, at least three
+                              (default: "To Do,In Progress,Done")
+  --initial-status <status>   status of a new task (default: "To Do")
+  --active-status <status>    what `biso start` sets (default: "In Progress")
+  --terminal-status <status>  what `biso finish` sets (default: "Done")
+  --types <list>              comma-separated (default: "task,bug,docs")
+  --priorities <list>         comma-separated (default: "high,medium,low")
+  --projects <list>           comma-separated (default: none)
+  --extensions <list>         comma-separated declared external field keys,
+                              such as trello.card (default: none)
+  --prefix <text>             task id prefix, letters only (default: TASK)
+  --overwrite-config          replace the configuration of an existing board,
+                              keeping every task
+  -h, --help                  show this help
+
+`--initial-status`, `--active-status` and `--terminal-status` each name one of
+`--statuses`, all three distinct. Giving `--statuses` requires the three
+together; giving any of them without `--statuses` is bad usage. They are then
+stored as explicit values and never move again.
 
 Exit codes:
   0  board created
@@ -1384,7 +1396,9 @@ Exit codes:
 
 Examples:
   biso init
-  biso init Kex --statuses "Ideas,To Do,In Progress,Blocked,Done"
+  biso init Kex --statuses "Ideas,To Do,In Progress,Blocked,Done" \
+      --initial-status "To Do" --active-status "In Progress" \
+      --terminal-status Done
   biso init Kex --at kex-board --prefix KEX --extensions trello.card
 ```
 
@@ -2907,10 +2921,10 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | Clave | Tipo | Por defecto |
 |---|---|---|
 | `project_name` | texto | el nombre del proyecto |
-| `statuses` | lista, mínimo dos | `To Do, In Progress, Done` |
-| `initial_status` | uno de `statuses` | el primero, al crear el tablero |
-| `active_status` | uno de `statuses` | el penúltimo, al crear el tablero |
-| `terminal_status` | uno de `statuses` | el último, al crear el tablero |
+| `statuses` | lista, mínimo tres | `To Do, In Progress, Done` |
+| `initial_status` | uno de `statuses` | `To Do`, al crear el tablero sin `--statuses` |
+| `active_status` | uno de `statuses` | `In Progress`, al crear el tablero sin `--statuses` |
+| `terminal_status` | uno de `statuses` | `Done`, al crear el tablero sin `--statuses` |
 | `types` | lista | `task, bug, docs` |
 | `priorities` | lista | `high, medium, low` |
 | `projects` | lista | vacía |
@@ -2936,6 +2950,8 @@ final cambie en silencio a dónde va `biso finish`.
 | `initial_status` a un valor que no está en `statuses` | Error 3 |
 | Quitar de `statuses` un estado que alguna tarea usa | Error 6, con cuántas tareas lo usan y en cuáles |
 | Quitar de `statuses` un estado que es `initial_status`, `active_status` o `terminal_status` | Error 6, diciendo cuál de los tres y que hay que cambiarlo antes |
+| Dejar `statuses` con menos de tres elementos | Error 6, diciendo cuántos hacen falta |
+| Dar a un papel (`initial_status`, `active_status` o `terminal_status`) el mismo estado que otro papel ya tiene | Error 6, con los dos papeles y el estado que comparten |
 | Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
 | `get` de una clave de lista | Los valores separados por comas, en una línea |
@@ -3090,6 +3106,7 @@ imprime fichas de tareas.
 | Claves de extensión no declaradas | no |
 | Estados, tipos, prioridades o proyectos que ya no están configurados | no |
 | `initial_status`, `active_status` o `terminal_status` que no están en `statuses` | no |
+| `statuses` con menos de tres elementos, o dos de los tres papeles apuntando al mismo estado | no |
 | Dependencias que apuntan a tareas inexistentes | no |
 | Ciclos de dependencias | no |
 | Ciclos de tarea padre | no |
