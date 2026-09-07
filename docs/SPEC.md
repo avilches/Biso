@@ -2387,6 +2387,7 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Una de varias referencias no existe | Error 4, y **no se escribe ninguna**, ni siquiera las buenas |
 | Un `--set-*` pisa contenido no vacío | Se hace, con el aviso de 4.3 diciendo cuántos bytes ha reemplazado |
 | Paso a un estado terminal con criterios sin marcar | Se hace, con aviso |
+| Paso a un estado terminal con una pregunta abierta (5.7) | Se hace, con aviso, igual que en `biso finish` (10.7.4) y como atribuye 4.3 a cualquier llegada al estado terminal |
 | Todas las banderas dejan la tarea igual | Código 0, sin escribir, con `note: TASK-11 unchanged` |
 | `--comment-author` sin `--comment` | Error 2 |
 | `--comment` sin `--comment-author` y sin ninguna identidad configurada (3.1) | Error 2 |
@@ -2456,8 +2457,8 @@ de `new --from`, las 242 tareas van en `data.tasks` de **un solo sobre**, no en 
 Usage: biso set <ref>... [options]
 
 Change any field of one or more tasks, all or nothing. Every flag here means
-the same in `biso new`, `biso start`, `biso note`, `biso comment`,
-`biso finish` and `biso archive`.
+the same in `biso new`, `biso start`, `biso note`, `biso comment`, `biso ask`,
+`biso answer`, `biso finish` and `biso archive`.
 
 The four shapes, and there is no field that breaks them:
   --label X        add one          --set-label X   replace the whole list
@@ -2821,7 +2822,7 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
 | La tarea tiene una pregunta abierta (5.7) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
-| `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos |
+| `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos, incluido el de la pregunta abierta |
 | Varias referencias | Todo o nada |
 
 Quien quiera la política dura tiene `--strict`, y puede fijarla por defecto con
@@ -3372,6 +3373,10 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `default_limit` | entero >= 0 | 30 |
 | `finish_strict` | booleano | falso |
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
+
+**`me` gana sobre `BISO_ME` cuando las dos están puestas.** Por eso un tablero compartido entre una
+persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
+identidad y `--mine` deja de significar nada (sección 11 de `docs/DECISIONES.md`).
 
 **Los tres estados especiales son valores explícitos, no posiciones.** Se escriben al crear el tablero
 y **cambiar `statuses` no los mueve nunca**. Esta es la diferencia que evita que añadir un estado al
