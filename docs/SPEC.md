@@ -502,8 +502,8 @@ Cuatro precisiones sobre la mutabilidad:
 - **Los campos marcados "derivado" en esta tabla no se guardan.** Se calculan al leer, y son
   exactamente los campos que `biso export` no escribe (10.9) y que `biso new --from` rechaza como
   clave desconocida (10.3): `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`,
-  `blocks`, `blocked` y `waiting`. Esta es la única lista de campos derivados del
-  documento; las demás secciones remiten a ella.
+  `blocks`, `blocked` y `waiting`. Esta es la única lista de campos derivados del documento; las demás
+  secciones remiten a ella.
 
 ### 5.1. Los criterios y sus claves estables
 
@@ -1882,8 +1882,9 @@ Reglas de combinación de filtros:
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
 - **`--blocked` es incompatible con `--not-blocked`.** Las dos miran las dependencias sin terminar y
-  no el estado, así que se combinan con cualquier filtro de estado y con los dos de abajo:
-  `--not-blocked --not-waiting` es la consulta que devuelve trabajo que se puede coger ya.
+  no el estado, así que se combinan con cualquier filtro de estado y con los dos pares de abajo.
+  `--not-blocked` por sí sola no dice que la tarea se pueda coger: descarta la que espera a otra
+  tarea, no la que espera una respuesta ni la que ya lleva alguien.
 - **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada una con su
   opuesta.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
   razón de ser: sin ellas, pedir la cola activa obligaría a escribir `-s "In Progress"`, el nombre
@@ -1936,7 +1937,7 @@ Ocho columnas fijas, separadas por dos espacios, en este orden y con estos conte
 | 3 | tipo | `-` |
 | 4 | prioridad | `-` |
 | 5 | título, recortado a **100 caracteres siempre**, con `...` al final si se recorta | nunca lo está |
-| 6 | `ac <marcados>/<total>` | `-` si la tarea no tiene criterios |
+| 6 | `ac <marcados>/<total>` | `-` si la tarea no tiene criterios de aceptación |
 | 7 | primera persona asignada, con `+<n>` si hay más | `-` |
 | 8 | fecha límite | `-` |
 
@@ -2407,12 +2408,15 @@ elemento, así que su línea trae también el avance de esa segunda lista:
 TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
-**Esta es la línea de estado, y la imprimen igual los seis verbos del ciclo de 10.7 y `biso archive`.**
-La única excepción es `biso new`, por el motivo que da 10.3. Cada comando la enseña con su propio
-ejemplo, pero las dos reglas de su forma se dicen aquí y no se repiten: el trozo
-`ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación, y el trozo
-`dod <marcados>/<total>` sale siempre que tenga definición de hecho. Una tarea sin ninguna de las dos
-listas imprime solo el identificador, el estado y la urgencia.
+**Esta es la línea de estado, y la imprimen también los seis verbos del ciclo de 10.7 y
+`biso archive`.** La única excepción es `biso new`, por el motivo que da 10.3. Cada comando la enseña
+con su propio ejemplo, pero las tres reglas de su forma se dicen aquí y no se repiten:
+
+1. El trozo `ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación.
+2. El trozo `dod <marcados>/<total>` sale siempre que tenga definición de hecho. Una tarea sin ninguna
+   de las dos listas imprime solo el identificador, el estado y la urgencia.
+3. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
+   que un comando puede añadirle, y quien lo añade es `biso archive` (10.8).
 
 Los avisos van por stderr:
 
@@ -2523,9 +2527,9 @@ Los seis aceptan **todas** las banderas de campo de la sección 8, igual que `se
 subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que el gesto frecuente
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
-Los seis imprimen también la misma línea de estado que `set`, con su forma y sus dos reglas definidas
-en 10.6. Los ejemplos de más abajo son esa línea con los datos de la TASK-11, que tiene dos criterios
-de aceptación y un elemento de definición de hecho.
+Los seis imprimen también la misma línea de estado que `set`, con la forma y las reglas que define
+10.6. Los ejemplos de más abajo son esa línea con los datos de la TASK-11, que tiene dos criterios de
+aceptación y un elemento de definición de hecho.
 
 El ciclo entero de una tarea es esto:
 
