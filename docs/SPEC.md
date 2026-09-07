@@ -488,7 +488,7 @@ escribe. No dice nada de cómo se guardan.
 | `acDone`, `acTotal`, `dodDone`, `dodTotal` | entero, derivado | derivado | el programa | no, se recalculan al leer |
 | `commentCount` | entero, derivado | derivado | el programa | no, se recalcula al leer |
 | `blocks` | lista de referencias, derivado | derivado | el programa | no, se recalcula al leer |
-| `ready`, `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
+| `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
 
 Cuatro precisiones sobre la mutabilidad:
 
@@ -502,7 +502,7 @@ Cuatro precisiones sobre la mutabilidad:
 - **Los campos marcados "derivado" en esta tabla no se guardan.** Se calculan al leer, y son
   exactamente los campos que `biso export` no escribe (10.9) y que `biso new --from` rechaza como
   clave desconocida (10.3): `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`,
-  `blocks`, `ready`, `blocked` y `waiting`. Esta es la única lista de campos derivados del
+  `blocks`, `blocked` y `waiting`. Esta es la única lista de campos derivados del
   documento; las demás secciones remiten a ella.
 
 ### 5.1. Los criterios y sus claves estables
@@ -1825,7 +1825,7 @@ Examples:
 biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] [--only-archived]
         [--type <v>]... [--priority <v>]... [--project <v>]...
         [-l <label>]... [--label-or <label>]... [-a <@who>]... [--mine] [--unassigned]
-        [-m <milestone>] [-p <ref>] [--ready] [--blocked] [--waiting] [--not-waiting]
+        [-m <milestone>] [-p <ref>] [--blocked] [--not-blocked] [--waiting] [--not-waiting]
         [--active] [--not-active] [--overdue] [--due-before <date>]
         [--search <text>] [--unchecked]
         [--sort <field>] [--reverse] [--limit <n>] [--all] [--ids] [--count]
@@ -1850,8 +1850,8 @@ biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] 
 | `--unassigned` | | no | booleano | falso | no | no | `-a`, `--mine` |
 | `--milestone <m>` | `-m` | no | texto libre | | no | no | |
 | `--parent <ref>` | `-p` | no | referencia | | no | no | |
-| `--ready` | | no | booleano | falso | no | no | `--blocked` |
-| `--blocked` | | no | booleano | falso | no | no | `--ready` |
+| `--blocked` | | no | booleano | falso | no | no | `--not-blocked` |
+| `--not-blocked` | | no | booleano | falso | no | no | `--blocked` |
 | `--waiting` | | no | booleano | falso | no | no | `--not-waiting` |
 | `--not-waiting` | | no | booleano | falso | no | no | `--waiting` |
 | `--active` | | no | booleano | falso | no | no | `--not-active` |
@@ -1881,6 +1881,9 @@ Reglas de combinación de filtros:
 - **El estado terminal se excluye por defecto**, y `--any-status` es la única forma de incluirlo.
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
+- **`--blocked` es incompatible con `--not-blocked`.** Las dos miran las dependencias sin terminar y
+  no el estado, así que se combinan con cualquier filtro de estado y con los dos de abajo:
+  `--not-blocked --not-waiting` es la consulta que devuelve trabajo que se puede coger ya.
 - **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada una con su
   opuesta.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
   razón de ser: sin ellas, pedir la cola activa obligaría a escribir `-s "In Progress"`, el nombre
@@ -2016,7 +2019,6 @@ igual que las demás.
         "commentCount": 1,
         "urgency": 19.0,
         "blocks": ["TASK-40"],
-        "ready": true,
         "blocked": false,
         "waiting": false,
         "archived": false,
@@ -2035,7 +2037,7 @@ igual que las demás.
 ```
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
-comentarios. Para eso está `biso get`. Los diez campos derivados de la sección 5 sí están todos,
+comentarios. Para eso está `biso get`. Los nueve campos derivados de la sección 5 sí están todos,
 `blocks` incluido. `truncated` es explícito para que nadie tenga que comparar `shown` con `matched`,
 y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado.
 
@@ -2077,8 +2079,9 @@ Filters (repeat or comma-separate; same field is OR, different fields are AND):
       --unassigned           assigned to nobody
   -m, --milestone <text>     milestone, matched like any board value
   -p, --parent <ref>         subtasks of this task
-      --ready                nothing unfinished blocks it
       --blocked              something unfinished blocks it
+      --not-blocked          nothing unfinished blocks it; it may still be
+                             waiting on an answer, so add --not-waiting
       --waiting              has an open question
       --not-waiting          has no open question
       --active               in the board's active status
@@ -2113,7 +2116,7 @@ Examples:
   biso ls
   biso ls -s "In Progress" --mine
   biso ls --type bug --priority high --limit 10
-  biso ls --ready --ids
+  biso ls --not-blocked --not-waiting --ids
   biso ls --any-status --archived --all
 ```
 
@@ -3325,7 +3328,7 @@ Its shaping flags (--sort, --limit, --all, --ids, --count) do not apply either.
 line, while --json means the single envelope every other command prints.
 
 Derived fields are never written: urgency, acDone, acTotal, dodDone, dodTotal,
-commentCount, blocks, ready, blocked, waiting.
+commentCount, blocks, blocked, waiting.
 
 Exit codes:
   0  exported       3  a filter value does not exist here
