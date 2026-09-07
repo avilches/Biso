@@ -2479,9 +2479,9 @@ Examples:
 
 ---
 
-### 10.7. Los verbos del ciclo: `start`, `note`, `comment`, `finish`
+### 10.7. Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`
 
-Los cuatro aceptan **todas** las banderas de campo de la sección 8, igual que `set`. No son un
+Los seis aceptan **todas** las banderas de campo de la sección 8, igual que `set`. No son un
 subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que el gesto frecuente
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
