@@ -89,17 +89,32 @@ rellena su paso 4:
 Un fichero pequeño en la raíz del proyecto, **versionado en git**, con dos cosas y la versión de su
 propio formato:
 
-- **`name`**, obligatorio: la identidad del tablero, un slug. Es también el nombre de su carpeta dentro
-  de la raíz por defecto de la máquina, y de él se deriva el prefijo de los identificadores al crear el
-  tablero (sección 4).
+- **`id`**, obligatorio: un identificador **inmutable** que se genera al crear el tablero. Es la
+  identidad, y no se puede cambiar nunca.
 - **`path`**, opcional: la ruta completa, solo cuando el tablero no está en la raíz por defecto. Puede
-  coincidir con el nombre o no, y da igual.
+  coincidir con el nombre del tablero o no, y da igual.
 
-**El `name` manda y el `path` es una pista.** El nombre es independiente de la máquina y la ruta no lo
-es, así que un fichero versionado que llega a otro ordenador traerá un `path` que allí no existe. Eso no
-es un problema nuevo: cae exactamente en el caso de error que esta sección ya necesitaba, el del puntero
-que nombra un tablero que en esta máquina no está, y `biso init` adopta el `name` para que las dos
+**El nombre humano del tablero no va aquí: vive en la configuración del tablero**, junto al prefijo de
+los identificadores. El motivo no es que el puntero se pueda editar (eso vale para cualquier cosa que
+lleve dentro, y el resultado siempre es un error claro de tablero no encontrado, no un daño silencioso).
+El motivo es que **un nombre es una etiqueta humana y las etiquetas colisionan entre personas**: bajo la
+decisión de compartir más adelante, dos máquinas pueden tener cada una un tablero llamado `backend` que
+son tableros distintos. Una etiqueta no puede ser la identidad.
+
+Esa separación tiene una consecuencia buena: **renombrar el tablero no toca ningún puntero**, así que no
+hay que commitear nada en ninguna copia de trabajo para renombrarlo.
+
+**El `id` manda y el `path` es una pista.** El identificador es independiente de la máquina y la ruta no
+lo es, así que un fichero versionado que llega a otro ordenador traerá un `path` que allí no existe. Eso
+no es un problema nuevo: cae exactamente en el caso de error que esta sección ya necesitaba, el del
+puntero que nombra un tablero que en esta máquina no está, y `biso init` adopta el `id` para que las dos
 máquinas sigan hablando del mismo tablero.
+
+**Cómo se busca el tablero.** La carpeta se llama como el nombre del tablero, para que la raíz por
+defecto se pueda leer con los ojos y no sea una lista de identificadores opacos. Así que la búsqueda
+prueba primero la carpeta con ese nombre y comprueba que el `id` de dentro coincida con el del puntero.
+Si el nombre cambió y esa carpeta ya no está, recorre la raíz por defecto buscando el `id`, que con unas
+decenas de directorios no cuesta nada.
 
 **El formato es JSON, y no YAML.** El motivo no es estético: la experiencia con Backlog.md en esta
 máquina, anotada en la memoria global, es que su interfaz usa camelCase y su fichero snake_case, y que
@@ -141,9 +156,34 @@ mayúsculas: un tablero llamado `kex` da `KEX-1` sin que nadie configure nada, y
 configurable para quien quiera otra cosa.
 
 Los dos valores no son la misma cosa aunque uno salga del otro. El nombre del tablero es una etiqueta
-que en principio se podría cambiar; el prefijo está incrustado en cada identificador para siempre y no
-se puede cambiar sin romperlos todos. Así que se deriva al crear el tablero y desde entonces viven
-separados.
+que se puede cambiar, y hay un comando para hacerlo. El prefijo está incrustado en cada identificador
+para siempre. Así que se deriva al crear el tablero y desde entonces viven separados.
+
+### El prefijo no se puede cambiar, y hoy la especificación deja que se cambie
+
+Este es un agujero que hay que cerrar. La sección 10.10 lista `task_prefix` como una clave de
+configuración normal y termina diciendo que **ningún cambio de configuración toca ninguna tarea, nunca**.
+Las dos cosas juntas hacen que `biso config set task_prefix KEX` se acepte hoy y no toque nada, dejando
+un tablero cuyas tareas se llaman `TASK-1` a `TASK-90` y cuya configuración afirma que el prefijo es
+`KEX`. `task_prefix` es la única clave cuyo valor está incrustado en datos que ya existen, y por eso es
+la única a la que esa frase no le sirve.
+
+**La solución es prohibirlo**: error 6 en cuanto el tablero tenga alguna tarea, con la misma forma que ya
+tiene quitar de `statuses` un estado que alguna tarea usa. No un comando amable que lo cambie, y por
+cuatro daños concretos:
+
+- Rompe las referencias que otros sistemas ya apuntaron: mensajes de commit, nombres de rama,
+  descripciones de pull request, y la memoria del propio agente.
+- Rompe el mensaje de la sección 7.3 que dice cuál es el identificador más alto asignado, y la
+  comprobación de identificador mal formado, que tendría que aceptar dos prefijos a la vez.
+- Rompe la simetría de exportar e importar, que preserva los identificadores exactamente: una
+  instantánea vieja devuelve el prefijo antiguo.
+- Y deja el tablero en un estado que ningún mensaje de la especificación sabe describir.
+
+**La salida existe, y es un regalo de la decisión de la sección 8.** Quien de verdad quiera cambiar el
+prefijo exporta, reescribe los identificadores en el NDJSON con cualquier herramienta, y lo importa en un
+tablero nuevo. Es cirugía, explícita y de un solo sentido, y es posible precisamente porque la instantánea
+es texto. Mejor eso que un comando que finja que la operación es segura.
 
 No se pasan a identificadores aleatorios, que es la solución de Beads, porque el precio es perder
 poder decir "la tarea 5" en voz alta y no hace falta: aquí hay un solo asignador por tablero, así que
@@ -344,9 +384,18 @@ Esto es el encargo para el plan, no cambios ya hechos:
 10. **Sección 13**, contrato de estabilidad: el presupuesto de arranque se suma a los números
     congelados, o se dice explícitamente que no lo está.
 11. **Sección 4.11 y sección 10.1**: el valor por defecto de `task_prefix` deja de ser `TASK` fijo y se
-    deriva del nombre del tablero, para que dos tableros no colisionen los dos en `TASK-1`. Hay que
-    decidir qué pasa con un nombre que no da un prefijo válido y si el prefijo se puede cambiar después
-    (probablemente no, porque va incrustado en identificadores que no se reutilizan).
+    deriva del nombre del tablero, para que dos tableros no colisionen los dos en `TASK-1`. Queda por
+    decidir qué pasa con un nombre que no da un prefijo válido.
+12. **Sección 10.10**, y es un agujero que ya existe: `task_prefix` pasa a ser inmutable en cuanto el
+    tablero tenga alguna tarea, con error 6. Hoy se puede cambiar y la propia sección promete que ningún
+    cambio de configuración toca ninguna tarea, así que el tablero queda con las tareas nombradas con el
+    prefijo viejo y la configuración diciendo otro. El mensaje del error remite a la ruta de exportar,
+    reescribir e importar.
+13. **El nombre del tablero y su comando de renombrar**: el nombre vive en la configuración del tablero,
+    no en el puntero, y hay un comando que lo cambia. Renombrar mueve la carpeta y no toca ningún
+    puntero. Hay que decidir el nombre del comando y qué hace si la carpeta de destino ya existe.
+14. **Sección 10.2**, `biso where`: tiene que decir también el identificador del tablero y su nombre, no
+    solo la ruta, porque ahora son tres cosas distintas.
 
 ## 14. Lo que queda por decidir dentro de esta decisión
 
@@ -355,7 +404,9 @@ Cosas que el plan tiene que resolver y que aquí se dejan enunciadas a propósit
 - **La cifra del presupuesto de arranque**, que hay que medir en la máquina de referencia y no estimar.
 - **La forma exacta de la instantánea restaurable** (un fichero con la configuración al lado del
   NDJSON, o un solo fichero con las dos cosas) y qué comando la restaura.
-- **Cómo se llama el fichero puntero.** Su formato ya está decidido en la sección 3 (JSON, con `name`
-  obligatorio y `path` opcional), pero no su nombre en el disco.
+- **Cómo se llama el fichero puntero.** Su formato ya está decidido en la sección 3 (JSON, con `id`
+  obligatorio e inmutable y `path` opcional), pero no su nombre en el disco.
+- **Qué forma tiene el `id` del tablero.** Solo tiene que ser inmutable y no colisionar entre máquinas,
+  así que no hace falta que sea legible; conviene que sea corto porque aparecerá en `biso where`.
 - **Cómo se llama el paso de exportar y commitear**, y si es un comando o un efecto opcional de otro.
 - **Si el lenguaje se decide ya**, ahora que el presupuesto de arranque acota la lista.
