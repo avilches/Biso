@@ -996,8 +996,9 @@ biso prime [--full] [--limit <n>] [--json]
 | `--full` | | no | booleano | falso | no | no | `--json` |
 | `--limit <n>` | | no | entero >= 0 | 5 | no | no | ninguno |
 
-- `--limit` controla cuántas tareas se listan en la sección `NEXT UP`. Con `0`, la sección desaparece
-  y se queda solo el recuento.
+- `--limit` acota juntas las secciones `ASSIGNED TO YOU` y `NEXT UP`: su valor son filas repartidas
+  entre las dos, en ese orden de preferencia, con una sola línea de recuento al final de la última que
+  se imprima. Con `0`, las dos desaparecen y se queda solo esa línea.
 - `--full` añade al final la lista completa de banderas de `biso new` y `biso set`. Es para una
   persona que está aprendiendo la herramienta, no para el arranque de un agente.
 - `--json` es la bandera global de la sección 3, y aquí es lo único que la restringe: no se puede
@@ -1021,22 +1022,35 @@ paralelo desde varias sesiones y mientras otro proceso escribe.
 El mensaje tiene un **tope duro de 5.120 bytes**, que se comprueba en la suite de pruebas y se reparte
 en dos mitades exactas:
 
-- **La parte fija no pasa de 3.072 bytes.** Es la línea de título, `COMMANDS`, `FIELD FLAGS`, `RULES` y
+- **La parte fija no pasa de 3.456 bytes.** Es la línea de título, `COMMANDS`, `FIELD FLAGS`, `RULES` y
   el párrafo final ("Pick one, ..."): nada de esto depende del contenido del tablero.
-- **El resumen del tablero no pasa de 2.048 bytes.** Es el bloque `BOARD` (nombre, recuento por
-  estado, vocabularios, identidad), `IN PROGRESS`, `NEXT UP` y la línea de recorte: todo lo que
-  cambia según qué haya en el tablero.
+- **El resumen del tablero no pasa de 1.664 bytes.** Es el bloque `BOARD` (nombre, recuento por
+  estado, vocabularios, identidad), `IN PROGRESS`, `WAITING ON A PERSON`, `ASSIGNED TO YOU`, `NEXT UP`
+  y la línea de recuento: todo lo que cambia según qué haya en el tablero.
 
 Los bloques no son contiguos entre sí, así que hay líneas en blanco de separación entre ellos: **cada
 línea en blanco se cuenta en la mitad del bloque que la precede.** Con esta regla, la línea en blanco
 que sigue al título es parte fija, la que sigue a `BOARD` es resumen, las que siguen a `COMMANDS`,
-`FIELD FLAGS` y `RULES` son parte fija, y las que siguen a `IN PROGRESS` y a `NEXT UP` son resumen.
+`FIELD FLAGS` y `RULES` son parte fija, y las que siguen a `IN PROGRESS`, `WAITING ON A PERSON`,
+`ASSIGNED TO YOU` y a `NEXT UP` son resumen.
 
-Si el resumen no cupiera en su mitad, se recorta el número de tareas listadas en `NEXT UP` antes que
-cualquier otra cosa, y la línea de recuento lo dice.
+Si el resumen no cupiera en su mitad, el orden de recorte es completo y no deja ningún caso sin
+definir:
+
+1. Se reduce primero el número de filas de `NEXT UP`.
+2. Si no basta, el de `ASSIGNED TO YOU`.
+3. Si no basta, el de `WAITING ON A PERSON`.
+4. Si no basta, el de `IN PROGRESS`.
+5. Si aun así no cupiera, cada uno de los cuatro bloques se reduce a su sola línea de recuento.
+
+Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
 El texto literal de la sección 9.7 ocupa **4.062 bytes** con el tablero del ejemplo: **2.963** de
 parte fija y **1.099** de resumen. Las dos mitades caben dentro de su tope.
+
+**El número que congela el contrato de estabilidad de la sección 13 es el total, 5.120 bytes**, porque
+es el único que quien llama observa. El reparto entre las dos mitades puede cambiar sin romper ese
+contrato.
 
 ### 9.6. Qué entra en el mensaje y qué se relega a `--help`
 
@@ -1045,12 +1059,12 @@ queda fuera lo que se puede consultar en el momento exacto en que hace falta.**
 
 Entra:
 
-- Las ocho órdenes del ciclo de trabajo con su forma de uso. Quien no sabe que existe `biso finish`
+- Las diez órdenes del ciclo de trabajo con su forma de uso. Quien no sabe que existe `biso finish`
   no va a escribir `biso finish --help`.
 - **Los nombres de todas las banderas de campo**, en una rejilla de cinco líneas.
 - El vocabulario real de este tablero, con **el recuento por estado** y con la marca de cuál es el
   estado de las tareas nuevas, cuál el activo y cuál el terminal.
-- Las diez reglas que no son adivinables.
+- Las once reglas que no son adivinables.
 - Los códigos de salida, en dos líneas.
 - El estado del tablero: lo que está en curso y lo más urgente de lo que no ha empezado.
 
@@ -1087,6 +1101,8 @@ COMMANDS  (`biso <cmd> --help` for the detail of any flag)
   biso new "TITLE" [-d TEXT] [--ac TEXT]... [--type T] [--priority P]
   biso start <ref>... [--plan TEXT]
   biso note <ref> "TEXT"
+  biso ask <ref> "QUESTION"
+  biso answer <ref> "TEXT"
   biso finish <ref>... [--summary "TEXT"] [--check all]
   biso set <ref>... [any field flag]
   biso comment <ref> "TEXT" [--comment-author @who]
@@ -1123,6 +1139,9 @@ RULES  (none of these are guessable; they are the whole learning curve)
   9. Long text: a real newline works, and so do -d @file.md and -d - for stdin.
  10. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
      6 precondition not met, 7 environment, 8 no board here, 9 nothing written.
+ 11. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
+     it, writing both into the comments. Ask instead of guessing. A task
+     assigned to you is one a person decided you should do.
 
 IN PROGRESS
   TASK-11  In Progress  bug   high    Normalize CRLF in the diff         ac 1/2  @claude  -
@@ -1144,17 +1163,46 @@ Create a task when the work needs planning or review; do small edits directly.
 
 Cómo se calcula el resumen, para que la implementación sea única:
 
-- La línea de recuento tiene **un número por cada estado configurado**, en el orden en que están
-  configurados, y cuenta las tareas no archivadas de ese estado. No hay ninguna categoría inventada
-  como "abiertas" que no se corresponda con una columna del tablero.
-- `IN PROGRESS` lista las tareas del estado activo, ordenadas por la regla de orden de 10.4, sin
-  límite.
-- `NEXT UP` lista las tareas que no están ni en el estado activo ni en el terminal, ordenadas igual,
-  y corta en `--limit`.
-- La línea de recuento final dice cuántas tareas quedan fuera de `NEXT UP` por el corte.
+- La línea de recuento del bloque `BOARD` tiene **un número por cada estado configurado**, en el
+  orden en que están configurados, y cuenta las tareas no archivadas de ese estado. No hay ninguna
+  categoría inventada como "abiertas" que no se corresponda con una columna del tablero.
+- Los cuatro bloques `IN PROGRESS`, `WAITING ON A PERSON`, `ASSIGNED TO YOU` y `NEXT UP` se reparten
+  el tablero por esta precedencia, y cada tarea cae en el primero que la acepte:
+  1. `WAITING ON A PERSON`, si tiene una pregunta abierta.
+  2. `IN PROGRESS`, si está en el estado activo.
+  3. `ASSIGNED TO YOU`, si está asignada a la identidad configurada.
+  4. `NEXT UP`, el resto.
+  **Ninguna tarea aparece en dos bloques.** Una tarea aparcada no sale en `IN PROGRESS` aunque esté en
+  el estado activo, porque ese bloque significa que alguien está trabajando y ahí no lo está nadie.
+  Los cuatro excluyen las tareas terminadas y las archivadas, igual que hoy.
+- Se imprimen en este orden: `IN PROGRESS`, `WAITING ON A PERSON`, `ASSIGNED TO YOU` y `NEXT UP`.
+  **Un bloque sin filas no se imprime**, ni siquiera su encabezado, que es lo que ya hace `--limit 0`
+  hoy con `NEXT UP`. **Sin identidad configurada, `ASSIGNED TO YOU` no se imprime nunca**, igual que
+  `biso prime` ya tolera hoy no tener identidad imprimiendo `you are (not set)`.
+- `IN PROGRESS` lista las tareas del estado activo sin pregunta abierta, ordenadas por la regla de
+  orden de 10.4, sin límite.
+- `WAITING ON A PERSON` lista las tareas con pregunta abierta, ordenadas igual, sin límite. Cada tarea
+  ocupa **dos líneas**: la fila de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo
+  una línea indentada con la pregunta recortada a **100 caracteres**, la misma cifra exacta que el
+  algoritmo aplica a los títulos. Va en línea propia y no en una novena columna, porque el algoritmo
+  tiene ocho exactas y una regla que dice que la octava nunca se rellena.
+- `ASSIGNED TO YOU` lista las tareas asignadas a la identidad configurada que no estén ya en
+  `WAITING ON A PERSON` ni en `IN PROGRESS`, ordenadas igual. `NEXT UP` lista el resto, ordenadas
+  igual.
+- `ASSIGNED TO YOU` y `NEXT UP` **comparten el límite de `--limit`**: su valor son filas repartidas
+  entre las dos, en ese orden de preferencia, con una sola línea de recuento al final de la última que
+  se imprima. Con `--limit 0` desaparecen los dos y queda solo esa línea. Si cada bloque tuviera su
+  propio límite, el resumen crecería al doble sin que `--limit` lo notara.
+- La línea de recuento dice cuántas tareas quedan fuera de `ASSIGNED TO YOU` y `NEXT UP` juntas por el
+  corte.
 - Las filas usan exactamente el algoritmo de columnas de `biso ls` de la sección 10.4, con una
-  diferencia declarada aquí: el ancho de las columnas 1 a 7 se calcula sobre las filas de
-  `IN PROGRESS` y `NEXT UP` juntas, para que las dos secciones se lean como una sola tabla.
+  diferencia declarada aquí: el ancho de las columnas 1 a 7 se calcula sobre las filas de los cuatro
+  bloques juntas, **sin contar las líneas de pregunta**, que no son filas de la tabla, para que los
+  cuatro bloques se lean como una sola tabla.
+- `NEXT UP` ya no significa "sin empezar": es lo que no cae en ninguno de los tres bloques anteriores.
+  Por eso su rótulo es `NEXT UP  (not assigned to you, by urgency)`, su línea de recuento tiene la
+  forma `N more not shown: 'biso ls --not-active --not-waiting'`, y su clave en el esquema JSON del
+  apartado 9.9 es `hiddenCount`.
 
 ### 9.8. Tablero vacío
 
@@ -1193,12 +1241,22 @@ THE BOARD IS EMPTY
         "type": "bug", "priority": "high", "assignees": ["@claude"], "due": null,
         "acDone": 1, "acTotal": 2, "urgency": 19.0 }
     ],
+    "waitingOnAPerson": [
+      { "id": "TASK-60", "title": "Confirm the retry budget for the upload endpoint",
+        "status": "In Progress", "type": "task", "priority": "high", "assignees": ["@claude"],
+        "due": null, "acDone": 0, "acTotal": 2, "urgency": 15.2 }
+    ],
+    "assignedToYou": [
+      { "id": "TASK-61", "title": "Rewrite the install section", "status": "To Do",
+        "type": "docs", "priority": "medium", "assignees": ["@claude"], "due": null,
+        "acDone": 0, "acTotal": 1, "urgency": 12.4 }
+    ],
     "nextUp": [
       { "id": "TASK-7", "title": "Crash on an empty repository", "status": "To Do",
         "type": "bug", "priority": "high", "assignees": [], "due": "2026-09-08",
         "acDone": 0, "acTotal": 4, "urgency": 18.2 }
     ],
-    "notStartedHidden": 54
+    "hiddenCount": 54
   }
 }
 ```
@@ -1226,7 +1284,8 @@ flight. Run it once at the start of a session. It writes nothing.
 
 Options:
   --full          also list every flag of `biso new` and `biso set` in detail
-  --limit <n>     how many not-started tasks to show (default 5, 0 hides them)
+  --limit <n>     rows shown across ASSIGNED TO YOU and NEXT UP together
+                  (default 5, 0 hides both)
   --json          machine-readable envelope instead of the message
   -h, --help      show this help
 
