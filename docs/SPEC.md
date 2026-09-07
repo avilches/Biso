@@ -480,10 +480,11 @@ escribe. No dice nada de cómo se guardan.
 | `acceptanceCriteria` | lista de criterios | no | quien llama | sí |
 | `definitionOfDone` | lista de criterios | no | quien llama | sí |
 | `comments` | lista de comentarios | no | quien llama | solo se añade |
+| `question` | registro de tres partes (detalle debajo de esta tabla) | no | mixto, según la parte | sí, solo con `biso ask`, `biso answer`, o al importar |
 | `acDone`, `acTotal`, `dodDone`, `dodTotal` | entero, derivado | derivado | el programa | no, se recalculan al leer |
 | `commentCount` | entero, derivado | derivado | el programa | no, se recalcula al leer |
 | `blocks` | lista de referencias, derivado | derivado | el programa | no, se recalcula al leer |
-| `ready`, `blocked` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
+| `ready`, `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
 
 Cuatro precisiones sobre la mutabilidad:
 
@@ -497,8 +498,21 @@ Cuatro precisiones sobre la mutabilidad:
 - **Los campos marcados "derivado" en esta tabla no se guardan.** Se calculan al leer, y son
   exactamente los campos que `biso export` no escribe (10.9) y que `biso new --from` rechaza como
   clave desconocida (10.3): `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`,
-  `blocks`, `ready` y `blocked`. Esta es la única lista de campos derivados del documento; las
-  demás secciones remiten a ella.
+  `blocks`, `ready`, `blocked` y `waiting`. Esta es la única lista de campos derivados del
+  documento; las demás secciones remiten a ella.
+
+`question` es un registro de tres partes, con la misma forma que un comentario (5.2):
+
+| Parte | Tipo | Quién la fija |
+|---|---|---|
+| `author` | texto libre | el programa, con la identidad `me`, salvo al importar |
+| `askedAt` | instante UTC | el programa, salvo al importar |
+| `body` | texto largo | quien llama |
+
+Vacío es lo normal. Con contenido significa que la tarea espera la respuesta de una persona, esté en
+el estado que esté, y entonces el derivado `waiting` es cierto; vacío, `waiting` es falso. Lleva tres
+partes y no una sola porque al responderse se convierte literalmente en un comentario, con `biso
+answer`, y para eso hacen falta su autor y su instante originales, no los de quien responde.
 
 ### 5.1. Los criterios y sus claves estables
 
@@ -537,6 +551,11 @@ Cada comentario tiene autor, instante y cuerpo:
 existe en este tablero, y un sistema externo puede usar su propia convención, por ejemplo
 `@trello:juan`.
 
+**Los comentarios se guardan y se muestran en orden de inserción, no en orden de `createdAt`.** El
+instante de cada uno sigue diciendo la verdad sobre cuándo se escribió, aunque la lista completa no
+quede ordenada por él: `biso answer` añade al final un comentario con un instante pasado, el de la
+pregunta que responde.
+
 ### 5.3. Las fechas
 
 `createdAt`, `updatedAt` y el instante de cada comentario los pone el programa con el reloj del
@@ -544,6 +563,14 @@ sistema, en UTC y con precisión de segundo.
 
 **Se pueden fijar solo al importar**, es decir, en `biso new --from`. En cualquier otro sitio son un
 hecho observado y no un dato que se negocie.
+
+**Una excepción de forma, no de fondo:** `biso answer` escribe el comentario en que se convierte la
+pregunta con el instante en que esa pregunta se hizo, no con el de la respuesta. No negocia nada,
+porque ese instante ya lo había observado el programa al crear la pregunta; solo lo traslada.
+
+`question.askedAt` es una cuarta fecha importable, junto a `createdAt`, `updatedAt` y el instante de
+cada comentario, y sigue la misma regla que ellas: es opcional, y si `biso new --from` no la trae,
+toma el instante de la importación.
 
 ### 5.4. La urgencia
 
@@ -557,7 +584,7 @@ Si el estado de la tarea es el terminal, urgency = 0.0 y no se calcula nada mas.
 En cualquier otro caso:
 
 urgency = 6.0  * prioridad         (high 1.0, medium 0.5, low 0.0, sin prioridad 0.3)
-        + 4.0  * activa            (1.0 si el estado es el activo, 0.0 si no)
+        + 4.0  * activa            (1.0 si el estado es el activo y no hay pregunta abierta, 0.0 si no)
         + 8.0  * bloquea           (1.0 si alguna tarea sin terminar depende de esta)
         - 5.0  * bloqueada         (1.0 si depende de alguna tarea sin terminar)
         + 12.0 * proximidad        (ver la regla siguiente)
@@ -745,10 +772,18 @@ de una referencia como el filtro `--search` de `biso ls` y `biso export`. Busca,
 mayúsculas ni acentos, en:
 
 el título, la descripción, el plan, las notas, el resumen final, el texto de los criterios de
-aceptación, el texto de la definición de hecho, el cuerpo de los comentarios y las etiquetas.
+aceptación, el texto de la definición de hecho, el cuerpo de los comentarios, el cuerpo de la
+pregunta abierta y las etiquetas.
 
 No busca en los identificadores, ni en las referencias, ni en la documentación, ni en los campos de
 extensión.
+
+**Alcanzar el cuerpo de la pregunta abierta tiene dos consecuencias, y ambas se aceptan a
+propósito.** La primera es que la resolución de una referencia por texto también llega ahí, así que
+`biso get "CRLF"` puede resolver a una tarea porque ese texto está en su pregunta. La segunda es que
+una pregunta puede crear una ambigüedad de código 5 donde antes no la había. Lo contrario sería peor:
+que el texto de una pregunta solo se pudiera encontrar al dejar de estar abierta, cuando se convierte
+en comentario, y no mientras espera respuesta.
 
 Cuando se usa para resolver una referencia, y solo entonces, se aplican además estas reglas:
 
@@ -815,6 +850,11 @@ campo tiene estas variantes:
 | Mapa de claves | fijar una clave, quitar una clave, vaciar |
 | Escalar | fijar, vaciar |
 | Lista inmutable (comentarios) | solo añadir, `--comment` |
+
+**`question` no entra en esta tabla.** Es un registro de tres partes (5), no una lista, ni un bloque
+de prosa, ni un mapa, ni un escalar, así que ninguna de estas clases lo describe. **Ninguna bandera
+de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación de `biso new
+--from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (5).
 
 **El significado no cambia entre comandos.** `--ac` añade un criterio en `biso new`, en `biso set`, en
 `biso start` y en `biso finish`, y todos los comandos de escritura aceptan todas estas banderas.
