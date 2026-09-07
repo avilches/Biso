@@ -2043,7 +2043,7 @@ biso get <ref> [--id] [--match] [--section <name>]... [--explain-urgency]
 | `<ref>` | | sí | referencia | | no | no | |
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
-| `--section <name>` | | no | `meta`, `desc`, `ac`, `dod`, `plan`, `notes`, `summary`, `comments` | todas | sí | sí | |
+| `--section <name>` | | no | `meta`, `desc`, `ac`, `dod`, `plan`, `notes`, `summary`, `comments`, `question` | todas | sí | sí | |
 | `--explain-urgency` | | no | booleano | falso | no | no | |
 
 `--section` sirve para pedir solo una parte. `biso get TASK-11 --section ac` imprime los criterios con
@@ -2061,10 +2061,10 @@ La resolución de `<ref>` está en la sección 7 y no se repite. Lo propio de es
 | La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched TASK-11` por stderr |
 | La tarea está archivada | Se imprime, con `note: TASK-11 is archived` por stderr |
 | La tarea no se puede leer | Error 3, según la regla de lectura dirigida de 4.12 |
-| `--section` con un nombre inventado | Error 2, con los ocho nombres válidos |
+| `--section` con un nombre inventado | Error 2, con los nueve nombres válidos |
 | `--section` de una sección vacía | No imprime esa sección, y si no queda ninguna sección que imprimir, la salida está vacía y el código sigue siendo 0 |
 
-**Sin `--section`, la ficha completa imprime siempre las ocho secciones fijas, vacías incluidas,
+**Sin `--section`, la ficha completa imprime siempre las nueve secciones fijas, vacías incluidas,
 marcadas con `(empty)`.** Es solo con `--section` que una sección vacía se omite en vez de imprimirse
 vacía; sin la bandera, omitir una sección la confundiría con una que no se ha pedido.
 
@@ -2108,6 +2108,9 @@ El parser ya normalizaba LF, faltaba CRLF.
 ## Comments
 @avilches, 2026-09-06 10:02
 Esto lo reporto un usuario con un repositorio clonado en Windows.
+
+## Open Question
+(empty)
 ```
 
 Los encabezados de esta salida son un formato de presentación, no un formato de almacenamiento.
@@ -2137,6 +2140,11 @@ urgency 19.0
                                    19.00
 ```
 
+El término `active` vale `1.00` solo si el estado es el activo y la tarea no tiene una pregunta
+abierta (5.7); en cualquier otro caso vale `0.00`, y la etiqueta dice cuál de los dos motivos se
+aplica: `not active` si el estado no es el activo, `active, waiting` si lo es pero la tarea espera una
+respuesta.
+
 Sobre una tarea en el estado terminal, el desglose se sustituye por una línea:
 
 ```
@@ -2164,13 +2172,18 @@ Es el objeto de `task.list` más los campos del cuerpo:
       "notes": "El parser ya normalizaba LF, faltaba CRLF.",
       "summary": null,
       "comments": [ { "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "Esto lo reporto..." } ],
+      "question": null,
       "blocks": ["TASK-40"],
-      "urgencyBreakdown": { "priority": 6.0, "active": 4.0, "blocking": 8.0, "blocked": 0.0,
-                            "due": 0.0, "criteria": 1.0, "age": 0.0 }
+      "urgencyBreakdown": { "priority": 6.0, "active": { "value": 4.0, "reason": null }, "blocking": 8.0,
+                            "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 }
     }
   }
 }
 ```
+
+`urgencyBreakdown.active` es el único término que no es un número suelto: `value` es el número que
+entra en la suma y `reason` es `null` mientras `value` vale `1.0`, o uno de `"not_active"` y
+`"waiting"` cuando vale `0.0`, según cuál de los dos motivos de 5.4 se aplique.
 
 Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas. Con varias
 coincidencias, `kind` es `task.candidates`, `data.tasks` es la lista y el código es 5.
@@ -2197,16 +2210,16 @@ Show one task. <ref> is an id (TASK-11), a bare number (11) or free text
 never picks one for you.
 
 Free text searches the title, description, plan, notes, final summary, the
-text of the criteria and of the definition of done, the body of the comments
-and the labels. A match in the title always wins over a match anywhere else.
-`biso ls --search` uses this same scope.
+text of the criteria and of the definition of done, the body of the comments,
+the body of the open question and the labels. A match in the title always
+wins over a match anywhere else. `biso ls --search` uses this same scope.
 
 Options:
       --id                   force <ref> to be read as an id
       --match                force <ref> to be read as free text
       --section <name>       print only these sections; repeatable or comma
                              separated. One of: meta, desc, ac, dod, plan,
-                             notes, summary, comments
+                             notes, summary, comments, question
       --explain-urgency      show how the urgency number is built
   -h, --help                 show this help
 
