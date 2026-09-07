@@ -1606,7 +1606,7 @@ ignoran. Las claves son las del modelo de datos de la sección 5, en `camelCase`
 Ejemplo de una línea, con todos los tipos compuestos:
 
 ```json
-{"id":"TASK-101","title":"El diff no normaliza CRLF","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["TASK-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"El diff ignora el CRLF","checked":true},{"key":3,"text":"Hay un test","checked":false}],"definitionOfDone":[{"key":1,"text":"Revisado","checked":true}],"comments":[{"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reportado desde Windows"}],"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
+{"id":"TASK-101","title":"El diff no normaliza CRLF","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["TASK-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"El diff ignora el CRLF","checked":true},{"key":3,"text":"Hay un test","checked":false}],"definitionOfDone":[{"key":1,"text":"Revisado","checked":true}],"comments":[{"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reportado desde Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Es un CRLF o tambien un CR suelto?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 ```
 
 Las reglas del lote, todas obligatorias:
@@ -1620,6 +1620,9 @@ Las reglas del lote, todas obligatorias:
   se deduce.
 - **`comments` es una lista de objetos** con `author`, `createdAt` y `body`. `createdAt` es opcional y,
   si falta, se pone el instante de la importación.
+- **`question` se acepta como objeto** con `author`, `askedAt` y `body` (5.7) en el lote de `--from`.
+  `askedAt` es opcional y, si falta, se pone el instante de la importación, igual que `createdAt` en
+  `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.
 - **`id`, `createdAt` y `updatedAt` se aceptan aquí y solo aquí.** Un `id` ya ocupado es un fallo de
   validación; un `id` libre se reserva y el tablero no lo volverá a asignar.
 - **`archived` se acepta como booleano.** Por defecto, si la clave no aparece, la tarea se crea sin
@@ -1701,9 +1704,9 @@ Every other field flag of `biso set --help` is accepted too.
 
 Batch:
       --from <file|->        NDJSON, one task object per line. The only place
-                             where id, createdAt, updatedAt, criterion keys and
-                             comment timestamps can be given. Validated whole
-                             before anything is written.
+                             where id, createdAt, updatedAt, criterion keys,
+                             comment timestamps and question timestamps can be
+                             given. Validated whole before anything is written.
 
 Any text option also takes @file to read a file, or - to read stdin.
 
@@ -1731,7 +1734,8 @@ Examples:
 biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] [--only-archived]
         [--type <v>]... [--priority <v>]... [--project <v>]...
         [-l <label>]... [--label-or <label>]... [-a <@who>]... [--mine] [--unassigned]
-        [-m <milestone>] [-p <ref>] [--ready] [--blocked] [--overdue] [--due-before <date>]
+        [-m <milestone>] [-p <ref>] [--ready] [--blocked] [--waiting] [--not-waiting]
+        [--active] [--not-active] [--overdue] [--due-before <date>]
         [--search <text>] [--unchecked]
         [--sort <field>] [--reverse] [--limit <n>] [--all] [--ids] [--count]
 ```
@@ -1757,6 +1761,10 @@ biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] 
 | `--parent <ref>` | `-p` | no | referencia | | no | no | |
 | `--ready` | | no | booleano | falso | no | no | `--blocked` |
 | `--blocked` | | no | booleano | falso | no | no | `--ready` |
+| `--waiting` | | no | booleano | falso | no | no | `--not-waiting` |
+| `--not-waiting` | | no | booleano | falso | no | no | `--waiting` |
+| `--active` | | no | booleano | falso | no | no | `--not-active` |
+| `--not-active` | | no | booleano | falso | no | no | `--active` |
 | `--overdue` | | no | booleano | falso | no | no | |
 | `--due-before <d>` | | no | `YYYY-MM-DD` | | no | no | |
 | `--search <text>` | | no | texto libre | | no | no | |
@@ -1782,6 +1790,15 @@ Reglas de combinación de filtros:
 - **El estado terminal se excluye por defecto**, y `--any-status` es la única forma de incluirlo.
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
+- **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada una con su
+  opuesta.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
+  razón de ser: sin ellas, pedir la cola activa obligaría a escribir `-s "In Progress"`, el nombre
+  concreto de un tablero concreto, y la misma consulta dejaría de servir en otro. Las cuatro son
+  compatibles con `-s`, con `--not-status` y con `--any-status`, porque filtran sobre el mismo eje sin
+  contradecirse: `-s "To Do" --active` es una lista vacía en unos tableros y no en otros. La regla
+  general: **dos filtros que se contradicen por construcción son incompatibles. Una combinación de
+  filtros válidos que resulte vacía en este tablero es un hecho legítimo sobre el tablero, no un
+  error.**
 
 #### La regla de orden, completa
 
@@ -1910,6 +1927,7 @@ igual que las demás.
         "blocks": ["TASK-40"],
         "ready": true,
         "blocked": false,
+        "waiting": false,
         "archived": false,
         "ext": { "trello.card": "5f2a8c1e3b9d4a7f6e0c2b81" }
       }
@@ -1970,6 +1988,10 @@ Filters (repeat or comma-separate; same field is OR, different fields are AND):
   -p, --parent <ref>         subtasks of this task
       --ready                nothing unfinished blocks it
       --blocked              something unfinished blocks it
+      --waiting              has an open question
+      --not-waiting          has no open question
+      --active               in the board's active status
+      --not-active           not in the active status
       --overdue              past its due date
       --due-before <date>    due before YYYY-MM-DD
       --search <text>        free text; see `biso get --help` for the scope
@@ -3088,11 +3110,12 @@ por defecto: la única bandera de `export` sobre el archivo es `--no-archived`.
 #### La garantía de simetría
 
 La salida es NDJSON, una tarea por línea, con **exactamente** las claves que acepta `biso new --from`,
-en la forma de objeto que esa sección define para los criterios, la definición de hecho y los
-comentarios, e incluyendo `id`, `createdAt`, `updatedAt`, `archived` y las claves estables de cada
-criterio.
+en la forma de objeto que esa sección define para los criterios, la definición de hecho, los
+comentarios y la pregunta abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
+y las claves estables de cada criterio.
 
-**Los únicos campos que no salen son los derivados de la sección 5.**
+**Los únicos campos que no salen son los derivados de la sección 5.** `question` sale en `export` y
+entra de vuelta con `new --from`, con sus tres partes completas.
 
 La garantía que la suite de pruebas comprueba:
 
@@ -3100,6 +3123,7 @@ La garantía que la suite de pruebas comprueba:
 biso export -o copia.ndjson
 biso -C /tmp init nuevo --at /tmp/tablero-nuevo \
      --statuses "Ideas,To Do,In Progress,Blocked,Done" \
+     --initial-status "To Do" --active-status "In Progress" --terminal-status Done \
      --types "idea,memory,task,bug,docs" --extensions trello.card
 biso --board /tmp/tablero-nuevo new --from copia.ndjson
 # los dos tableros son identicos en todos los campos no derivados, incluidos
@@ -3148,7 +3172,7 @@ Its shaping flags (--sort, --limit, --all, --ids, --count) do not apply either.
 line, while --json means the single envelope every other command prints.
 
 Derived fields are never written: urgency, acDone, acTotal, dodDone, dodTotal,
-commentCount, blocks, ready, blocked.
+commentCount, blocks, ready, blocked, waiting.
 
 Exit codes:
   0  exported       3  a filter value does not exist here
