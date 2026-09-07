@@ -272,13 +272,13 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 | `warning: TASK-11 is a dependency of TASK-20, which is not finished` | al archivar una tarea de la que dependen otras vivas |
 | `warning: --clear-label has no effect on a new task` | cualquier `--clear-*` en `biso new` |
 | `warning: TASK-11 has unresolved dependencies: TASK-4 (To Do)` | al empezar una tarea bloqueada |
-| `warning: 212 more tasks match; showing 30 of 242` | en `biso ls`, al recortar |
+| `warning: 28 more tasks match; showing 30 of 58` | en `biso ls`, al recortar |
 | `warning: --label: "urgent" given twice, kept once` | valor repetido en una bandera de lista |
 | `warning: --desc contains a literal \n and no real newline; it will be stored as text` | ver 4.4 |
 | `warning: --note: empty value, nothing was added` | valor vacío en una bandera que añade |
 | `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada |
 | `warning: TASK-11 has no acceptance criteria` | `--check all` sobre una tarea sin criterios |
-| `warning: 1 task could not be read and was skipped` | ver 4.11 |
+| `warning: 1 task could not be read and was skipped` | ver 4.12 |
 | `warning: <x> is deprecated and will be removed in 2.0` | ver la sección 13 |
 | `warning: TASK-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta |
 | `warning: TASK-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta |
@@ -1564,7 +1564,7 @@ remite el error de código 8, y el que hace visible una resolución que de otro 
 board    Kex
 source   project pointer at the root of this project
 me       @claude
-tasks    249 active, 31 archived, highest id ever assigned TASK-290
+tasks    248 active, 31 archived, highest id ever assigned TASK-290
 ```
 
 Y cuando no hay ninguno, por stderr y con código 8:
@@ -1589,7 +1589,7 @@ hint: `biso init` creates one
     "board": "Kex",
     "source": "project pointer at the root of this project",
     "me": "@claude",
-    "counts": { "active": 249, "archived": 31, "highestIdEverAssigned": "TASK-290" }
+    "counts": { "active": 248, "archived": 31, "highestIdEverAssigned": "TASK-290" }
   }
 }
 ```
@@ -1960,7 +1960,7 @@ TASK-23  To Do        docs  medium  Rewrite the install section   ac 0/1  @sara+
 Y por stderr, siempre que se haya recortado:
 
 ```
-warning: 212 more tasks match; showing 30 of 242
+warning: 28 more tasks match; showing 30 of 58
 hint: narrow with -s, --type or -l, or ask for everything with --all
 ```
 
@@ -1974,7 +1974,7 @@ TASK-11
 Con `--count`:
 
 ```
-242
+58
 ```
 
 **No hay agrupación por estado.** El estado es una columna más, para que cada línea se pueda tratar
@@ -2024,8 +2024,8 @@ igual que las demás.
       }
     ],
     "shown": 30,
-    "matched": 242,
-    "hidden": 212,
+    "matched": 58,
+    "hidden": 28,
     "truncated": true,
     "skipped": [],
     "sort": "default",
