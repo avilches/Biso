@@ -2911,9 +2911,18 @@ biso ask <ref> <text>... [--id] [--match] [cualquier bandera de campo de la secc
 Cada texto es un párrafo propio del cuerpo de la pregunta, igual que en `biso note` (10.7.2). Acepta
 `@fichero` y `-` como cualquier texto largo (4.5).
 
-Se aplican las mismas reglas de posicional que en `biso note`, incluida la del texto que parece un
-identificador (10.7.2). **`biso ask` no acepta `--comment-author`**: el autor de la pregunta es
-siempre la identidad configurada (3.1).
+Se aplica la misma regla del texto que parece un identificador que `biso note` (10.7.2): un
+posicional que encaja con la gramática de identificador de la sección 7.1 es error 2. Pero el mensaje
+es propio, porque `biso ask` no tiene una bandera de campo que escriba `question`, así que la única
+salida es `@fichero` o `-`, nunca `--note`:
+
+```
+error: "TASK-2" looks like a task id, and `biso ask` takes only one task
+hint: to write that text literally, use @file or - for stdin
+```
+
+**`biso ask` no acepta `--comment-author`**: el autor de la pregunta es siempre la identidad
+configurada (3.1).
 
 ##### Qué hace
 
@@ -2927,7 +2936,7 @@ estado de la tarea.**
 | La tarea ya tiene una pregunta abierta | Error 6, para que la segunda no borre a la primera en silencio |
 | La tarea está en el estado terminal | Error 6, igual que `biso start`, con la pista de reabrirla |
 | La tarea está archivada | Se hace, con `note: TASK-11 is archived` por stderr, igual que `biso get` |
-| El texto está vacío | Error 3: `error: the question cannot be empty` |
+| El texto está vacío | Error 3: `error: the question cannot be empty`, `code` `empty_scalar_value` (4.6) |
 | Sin identidad configurada (3.1) | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que `biso note` (10.7.2) |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
@@ -3020,8 +3029,17 @@ biso answer <ref> <text>... [--id] [--match] [cualquier bandera de campo de la s
 Cada texto es un párrafo propio de la respuesta, igual que en `biso ask` (10.7.5) y en `biso note`
 (10.7.2). Acepta `@fichero` y `-` como cualquier texto largo (4.5).
 
-Se aplican las mismas reglas de posicional que en `biso note`, incluida la del texto que parece un
-identificador (10.7.2). **`biso answer` no acepta `--comment-author`**: los dos comentarios que
+Se aplica la misma regla del texto que parece un identificador que `biso note` (10.7.2): un
+posicional que encaja con la gramática de identificador de la sección 7.1 es error 2. Pero el mensaje
+es propio, porque `biso answer` no tiene una bandera de campo que escriba `question`, así que la única
+salida es `@fichero` o `-`, nunca `--note`:
+
+```
+error: "TASK-2" looks like a task id, and `biso answer` takes only one task
+hint: to write that text literally, use @file or - for stdin
+```
+
+**`biso answer` no acepta `--comment-author`**: los dos comentarios que
 escribe van siempre firmados por la identidad configurada (3.1). Quien necesite firmar un comentario
 con otro autor tiene `biso comment --comment-author`, que sigue funcionando como siempre.
 
@@ -3048,11 +3066,21 @@ instante de cada uno sigue diciendo la verdad.
 | Caso | Qué pasa |
 |---|---|
 | La tarea no tiene pregunta abierta | Error 6, con la pista de usar `biso comment` |
-| Sin texto | Error 2. Una respuesta sin respuesta no cierra nada |
+| Falta el positional del texto | Error 2. Una respuesta sin respuesta no cierra nada |
+| El texto está vacío (`biso answer TASK-11 ""`) | Error 3: `error: the answer cannot be empty`, `code` `empty_scalar_value` (4.6) |
 | Sin identidad configurada (3.1) | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que `biso note` (10.7.2) |
 | Se pasan además banderas de campo | Se aplican igual, como en cualquier verbo del ciclo |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
+| La tarea está archivada | Se hace, con `note: TASK-11 is archived` por stderr, igual que `biso get` |
+| La tarea está en el estado terminal | Se hace igual que en cualquier otro estado |
+
+**No es simétrico con `biso ask`, y es a propósito.** `ask` sobre una tarea terminada es error 6,
+porque no tiene sentido abrir una pregunta sobre algo que ya está cerrado. Pero responder una pregunta
+que se quedó abierta al cerrar la tarea es la única vía de recuperación que existe: `biso finish`
+avisa sin impedirlo (4.3) y esa pregunta desaparece de los bloques de `biso prime` y del `biso ls` por
+defecto, riesgo que `docs/DECISIONES.md` (sección 11) acepta a propósito. Impedir `answer` sobre una
+tarea terminada cerraría esa única vía.
 
 ```
 error: TASK-11 has no open question
@@ -3073,9 +3101,9 @@ La urgencia recupera el término de actividad de 5.4, porque `waiting` vuelve a 
 |---|---:|
 | Respondida | 0 |
 | La tarea no tiene pregunta abierta | 6 |
-| Referencia mal formada, banderas incompatibles, posicional que parece un identificador, sin texto | 2 |
+| Referencia mal formada, banderas incompatibles, posicional que parece un identificador, falta el texto | 2 |
 | Sin identidad configurada | 2 |
-| Tarea ilegible | 3 |
+| Respuesta vacía, tarea ilegible | 3 |
 | Referencia inexistente | 4 |
 | Referencia ambigua | 5 |
 | El almacén falla | 7 |
@@ -3108,7 +3136,8 @@ take --comment-author.
 Exit codes:
   0  answered       4  not found        7  could not be written
   2  bad usage      5  ambiguous        8  no board here
-  3  unreadable     6  no open question 9  --dry-run did not pass
+  3  empty answer, or unreadable        9  --dry-run did not pass
+  6  no open question
 
 Examples:
   biso answer TASK-11 "Only text files. Binary ones are skipped entirely."
