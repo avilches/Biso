@@ -704,7 +704,7 @@ Con este algoritmo, y para un tablero cuyo estado es `To Do`:
 ### 6.2. El mismo texto vale lo mismo en los dos sentidos
 
 Esta tabla es el contrato, y es la prueba de aceptación que hay que poder ejecutar. Tablero con los
-estados `Ideas`, `To Do`, `In Progress`, `Blocked` y `Done`:
+estados `To Do`, `In Progress` y `Done`:
 
 | Entrada | `biso set TASK-1 -s <v>` | `biso ls -s <v>` |
 |---|---|---|
@@ -719,7 +719,7 @@ El mensaje es el mismo en los dos sentidos:
 
 ```
 error: unknown status: "Pending"
-       valid statuses on this board: Ideas, To Do, In Progress, Blocked, Done
+       valid statuses on this board: To Do, In Progress, Done
 ```
 
 ### 6.3. Qué valida cada filtro, y contra qué
@@ -1045,8 +1045,8 @@ definir:
 
 Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
-El texto literal de la sección 9.7 ocupa **4.062 bytes** con el tablero del ejemplo: **2.963** de
-parte fija y **1.099** de resumen. Las dos mitades caben dentro de su tope.
+El texto literal de la sección 9.7 ocupa **4.674 bytes** con el tablero del ejemplo: **3.233** de
+parte fija y **1.441** de resumen. Las dos mitades caben dentro de su tope.
 
 **El número que congela el contrato de estabilidad de la sección 13 es el total, 5.120 bytes**, porque
 es el único que quien llama observa. El reparto entre las dos mitades puede cambiar sin romper ese
@@ -1089,8 +1089,8 @@ por stderr.
 biso 1.0.0 - the task board of this project. This message is all you need to start.
 
 BOARD  Kex
-  Ideas 12 | To Do 42 | In Progress 3 | Blocked 5 | Done 187
-  new tasks start in Ideas; `biso start` moves to In Progress; `biso finish` to Done
+  To Do 54 | In Progress 4 | Done 190
+  new tasks start in To Do; `biso start` moves to In Progress; `biso finish` to Done
   types       idea, memory, task, bug, docs
   priorities  high, medium, low
   you are     @claude
@@ -1144,17 +1144,23 @@ RULES  (none of these are guessable; they are the whole learning curve)
      assigned to you is one a person decided you should do.
 
 IN PROGRESS
-  TASK-11  In Progress  bug   high    Normalize CRLF in the diff         ac 1/2  @claude  -
-  TASK-52  In Progress  task  low     Document the release checklist     ac 0/1  -        -
-  TASK-40  In Progress  task  medium  Split the config loader            ac 0/2  @claude  -
+  TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
+  TASK-52  In Progress  task  low     Document the release checklist                    ac 0/1  -        -
+  TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
 
-NEXT UP  (not started, not done, by urgency)
-  TASK-7   To Do        bug   high    Crash on an empty repository       ac 0/4  -        2026-09-08
-  TASK-19  To Do        task  high    Retry the upload on 5xx            ac 0/2  -        -
-  TASK-23  Blocked      docs  medium  Rewrite the install section        ac 0/1  -        -
-  TASK-31  To Do        task  medium  Cache the parsed manifest          ac 0/3  -        -
-  TASK-44  Ideas        bug   low     Wrong column width on narrow ttys  ac 0/1  -        -
-  54 more not started: `biso ls --all`
+WAITING ON A PERSON
+  TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
+    Should the retry budget be shared with the download endpoint or kept separate?
+
+ASSIGNED TO YOU
+  TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
+  TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
+
+NEXT UP  (not assigned to you, by urgency)
+  TASK-7   To Do        bug   high    Crash on an empty repository                      ac 0/4  -        2026-09-08
+  TASK-19  To Do        task  high    Retry the upload on 5xx                           ac 0/2  -        -
+  TASK-44  To Do        bug   low     Wrong column width on narrow ttys                 ac 0/1  -        -
+  49 more not shown: `biso ls --not-active --not-waiting`
 
 Pick one, `biso start <ref> --plan "..."`, work, `biso note <ref> "..."` as you go,
 and close with `biso finish <ref> --check all --summary "..."`. That is the loop.
@@ -1227,14 +1233,14 @@ THE BOARD IS EMPTY
     "board": {
       "name": "Kex",
       "me": "@claude",
-      "statuses": ["Ideas", "To Do", "In Progress", "Blocked", "Done"],
-      "initialStatus": "Ideas",
+      "statuses": ["To Do", "In Progress", "Done"],
+      "initialStatus": "To Do",
       "activeStatus": "In Progress",
       "terminalStatus": "Done",
       "types": ["idea", "memory", "task", "bug", "docs"],
       "priorities": ["high", "medium", "low"],
       "extensions": ["trello.card"],
-      "countByStatus": { "Ideas": 12, "To Do": 42, "In Progress": 3, "Blocked": 5, "Done": 187 }
+      "countByStatus": { "To Do": 54, "In Progress": 4, "Done": 190 }
     },
     "inProgress": [
       { "id": "TASK-11", "title": "Normalize CRLF in the diff", "status": "In Progress",
@@ -1256,7 +1262,7 @@ THE BOARD IS EMPTY
         "type": "bug", "priority": "high", "assignees": [], "due": "2026-09-08",
         "acDone": 0, "acTotal": 4, "urgency": 18.2 }
     ],
-    "hiddenCount": 54
+    "hiddenCount": 49
   }
 }
 ```
@@ -1497,11 +1503,14 @@ Exit codes:
 
 Examples:
   biso init
-  biso init Kex --statuses "Ideas,To Do,In Progress,Blocked,Done" \
-      --initial-status "To Do" --active-status "In Progress" \
+  biso init Kex --statuses "Ideas,To Do,In Progress,Done" \
+      --initial-status Ideas --active-status "In Progress" \
       --terminal-status Done
   biso init Kex --at kex-board --prefix KEX --extensions trello.card
 ```
+
+El segundo ejemplo deja `To Do` sin ningún papel a propósito: un tablero puede llevar estados que no
+son ni el inicial, ni el activo, ni el terminal, y eso no rompe nada.
 
 ---
 
@@ -1713,7 +1722,7 @@ Y cuando no, por stderr y con código 9, **con todos los fallos, no solo el prim
 
 ```
 error: 3 of 242 lines are invalid, nothing was written
-  line 47: unknown status: "Pendiente" (valid: Ideas, To Do, In Progress, Blocked, Done)
+  line 47: unknown status: "Pendiente" (valid: To Do, In Progress, Done)
   line 88: unknown key: "trelloCard"
   line 201: title cannot be empty
 ```
@@ -1922,7 +1931,7 @@ rellena a ese ancho, no a uno fijo:
 TASK-7   To Do        bug   high    Crash on an empty repository  ac 0/4  -        2026-09-08
 TASK-11  In Progress  bug   high    Normalize CRLF in the diff    ac 1/2  @claude  -
 TASK-19  To Do        task  high    Retry the upload on 5xx       ac 0/2  -        -
-TASK-23  Blocked      docs  medium  Rewrite the install section   ac 0/1  @sara+1  -
+TASK-23  To Do        docs  medium  Rewrite the install section   ac 0/1  @sara+1  -
 ```
 
 Y por stderr, siempre que se haya recortado:
@@ -1997,7 +2006,7 @@ igual que las demás.
     "truncated": true,
     "skipped": [],
     "sort": "default",
-    "filters": { "status": ["Ideas", "To Do", "In Progress", "Blocked"], "type": [], "label": [] }
+    "filters": { "status": ["To Do", "In Progress"], "type": [], "label": [] }
   }
 }
 ```
@@ -3194,7 +3203,7 @@ La garantía que la suite de pruebas comprueba:
 ```bash
 biso export -o copia.ndjson
 biso -C /tmp init nuevo --at /tmp/tablero-nuevo \
-     --statuses "Ideas,To Do,In Progress,Blocked,Done" \
+     --statuses "To Do,In Progress,Done" \
      --initial-status "To Do" --active-status "In Progress" --terminal-status Done \
      --types "idea,memory,task,bug,docs" --extensions trello.card
 biso --board /tmp/tablero-nuevo new --from copia.ndjson
@@ -3325,12 +3334,12 @@ Ningún cambio de configuración toca ninguna tarea, nunca.
 
 ```
 $ biso config get statuses
-Ideas,To Do,In Progress,Blocked,Done
+To Do,In Progress,Done
 
 $ biso config list
 project_name = Kex
-statuses = Ideas,To Do,In Progress,Blocked,Done
-initial_status = Ideas
+statuses = To Do,In Progress,Done
+initial_status = To Do
 active_status = In Progress
 terminal_status = Done
 types = idea,memory,task,bug,docs
@@ -3354,8 +3363,8 @@ Solo `config list` acepta `--json`:
   "data": {
     "config": {
       "project_name": "Kex",
-      "statuses": ["Ideas", "To Do", "In Progress", "Blocked", "Done"],
-      "initial_status": "Ideas",
+      "statuses": ["To Do", "In Progress", "Done"],
+      "initial_status": "To Do",
       "active_status": "In Progress",
       "terminal_status": "Done",
       "types": ["idea", "memory", "task", "bug", "docs"],
@@ -3435,7 +3444,7 @@ Exit codes:
 
 Examples:
   biso config get active_status
-  biso config set statuses "Ideas,To Do,In Progress,Blocked,Done"
+  biso config set statuses "To Do,In Progress,Done"
   biso config set finish_strict true
   biso config list --json
 ```
@@ -3779,7 +3788,7 @@ proceso es el de la tabla de la sección 2:
     "message": "unknown status: \"Pending\"",
     "field": "status",
     "given": "Pending",
-    "valid": ["Ideas", "To Do", "In Progress", "Blocked", "Done"]
+    "valid": ["To Do", "In Progress", "Done"]
   }
 }
 ```
