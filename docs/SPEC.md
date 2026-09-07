@@ -1781,7 +1781,7 @@ Most used:
       --dod <text>           add a definition-of-done item; repeatable
       --type <value>         configured type
       --priority <value>     configured priority
-  -s, --status <value>       configured status (default: the board default)
+  -s, --status <value>       configured status (default: the initial one)
   -l, --label <value>        add a label; repeatable or comma-separated
   -a, --assignee <@who>      add an assignee; repeatable or comma-separated
       --dep <ref>            add a dependency; validated, repeatable
