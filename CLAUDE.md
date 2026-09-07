@@ -8,8 +8,9 @@ ejecute el programa.
 ## Estado: especificación cerrada, sin una línea de código
 
 Lo que hay es [`docs/SPEC.md`](docs/SPEC.md), y es el documento del que se implementa todo. Define
-los diecinueve comandos con su firma, su tabla de parámetros, su comportamiento en los casos límite, la
-salida literal que imprimen, su esquema JSON, sus códigos de salida y el texto exacto de su ayuda.
+todos los comandos (su recuento vive en la sección 10) con su firma, su tabla de parámetros, su
+comportamiento en los casos límite, la salida literal que imprimen, su esquema JSON, sus códigos de
+salida y el texto exacto de su ayuda.
 Está escrito para que alguien lo implemente entero sin preguntar nada.
 
 **No hay que rediseñar nada por libre.** Si al implementar aparece un caso que la especificación no
@@ -47,9 +48,10 @@ cogió y cuya sesión murió sin liberarla (sección 9.2 de `docs/DECISIONES.md`
 - **El lenguaje de implementación sigue sin decidir**, pero a diferencia de la persistencia no
   bloquea la especificación. El único requisito que sale del documento es que el programa arranque
   rápido, porque un agente lo invoca muchas veces en una sesión.
-- **El mensaje de arranque tiene un tope duro de 5.120 bytes**, repartido en 3.072 para la parte fija
-  y 2.048 para el resumen del tablero. No es un objetivo, es una prueba de la suite. El texto actual
-  ocupa 4.062 bytes.
+- **El mensaje de arranque tiene un tope duro de 5.120 bytes.** No es un objetivo, es una prueba de la
+  suite, y es el único de los números de tamaño que congela el contrato de estabilidad de la sección
+  13 de `docs/SPEC.md`. El reparto entre la parte fija y el resumen, y lo que mide hoy el texto, están
+  en la sección 9.5 de `docs/SPEC.md`.
 - **La simetría entre `biso export` y `biso new --from` es una prueba, no una intención.** Exportar
   un tablero e importarlo en otro vacío tiene que dar dos tableros idénticos campo a campo, con
   identificadores, fechas y claves de criterios incluidas.
