@@ -186,8 +186,11 @@ Un proyecto tiene un tablero, y el programa lo encuentra por este orden. Gana el
 3. **El puntero del proyecto**, que es una marca que `biso init` deja en el proyecto y que dice qué
    tablero le corresponde. Se busca en el directorio de trabajo y en sus ancestros, con el tope de la
    regla que cierra esta lista.
-4. **Un tablero en la raíz por defecto de la máquina** (sección 10.10), el directorio donde
-   `biso init` sin `--at` pone los tableros nuevos.
+
+**La raíz por defecto de la máquina** (sección 3.3) no es una vía más de esta lista: es el
+directorio donde `biso init` sin `--at` crea los tableros nuevos. Volver a encontrar un tablero ya
+creado depende siempre de una de las tres vías de arriba, nunca de adivinar su carpeta dentro de la
+raíz por defecto.
 
 **El tope de la búsqueda hacia arriba** es la raíz del proyecto, entendida como la raíz del
 repositorio de control de versiones si lo hay, y si no lo hay, el propio directorio de partida. La
@@ -239,8 +242,37 @@ que haya que escribirlo a mano.
 copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", porque el mecanismo es
 el mismo puntero, y compartir es precisamente para lo que existe.
 
+**Si el puntero se pierde** (se borra a mano, o el proyecto se clona sin haberlo commiteado antes), la
+recuperación es explícita, nunca automática: `--board` apuntando directamente al tablero, o
+`biso init --at <ruta>` con la ruta del directorio del tablero que ya existe, que escribe un puntero
+nuevo con ese `path` (sección 10.1). Sin uno de los dos, el proyecto no vuelve a encontrar su tablero
+por su cuenta.
+
 **Un tablero cuyo proyecto ya no existe queda huérfano** en la raíz por defecto, y ningún comando de
 hoy lo ve.
+
+---
+
+### 3.3. Configuración de máquina
+
+`biso` necesita, antes de que exista el primer tablero, saber dónde crearlo, y eso no puede depender
+de resolver un tablero con la sección 3.2. Por eso vive en un fichero propio de la máquina,
+`~/.biso/config.json`, que `biso config` (sección 10.10) no gestiona: aquella es la configuración de
+un tablero concreto, y esta es de la máquina entera, independiente de cuántos tableros tenga.
+
+| Clave | Tipo | Por defecto |
+|---|---|---|
+| `boards_root` | ruta | `~/.biso/boards` |
+| `boards_extra_roots` | lista de rutas | vacía |
+
+`boards_root` es la raíz por defecto de la sección 3.2: el directorio donde `biso init` sin `--at`
+crea los tableros nuevos, y donde se busca la carpeta `<nombre>-<id>` de cada puntero.
+`boards_extra_roots` son raíces adicionales, para cuando algún tablero vive fuera de `boards_root`.
+
+Se leen directamente de ese fichero, sin pasar por la resolución de tablero de la sección 3.2, porque
+hace falta conocerlas antes de que exista el primer tablero de la máquina. Y, como en cualquier otro
+sitio de `biso`, **una clave desconocida en este fichero es un error**, nunca algo que se ignore en
+silencio.
 
 ---
 
@@ -3404,15 +3436,6 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `default_limit` | entero >= 0 | 30 |
 | `finish_strict` | booleano | falso |
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
-| `boards_root` | ruta | `~/.biso/boards` |
-| `boards_extra_roots` | lista de rutas | vacía |
-
-**Las dos últimas claves son de la máquina, no del tablero**: el resto de esta tabla es configuración
-de un tablero concreto, pero `boards_root` (la raíz por defecto de la sección 3.2) y
-`boards_extra_roots` (raíces adicionales para cuando algún tablero vive fuera de ella) valen para todos
-los tableros de esta máquina. Por eso no dependen de tener un tablero resuelto (sección 3.2): se leen y
-se escriben aunque no haya ninguno, porque hace falta conocerlas antes de que exista el primer tablero
-de la máquina.
 
 **`project_name` es el nombre del tablero.** Es la etiqueta humana que da nombre a su carpeta
 (`<nombre>-<id>`, sección 3.2). Cambiarla no toca el `id` del puntero ni ninguna tarea.
