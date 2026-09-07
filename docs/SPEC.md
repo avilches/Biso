@@ -1029,13 +1029,13 @@ en dos mitades exactas:
 - **La parte fija no pasa de 3.456 bytes.** Es la línea de título, `COMMANDS`, `FIELD FLAGS`, `RULES` y
   el párrafo final ("Pick one, ..."): nada de esto depende del contenido del tablero.
 - **El resumen del tablero no pasa de 1.664 bytes.** Es el bloque `BOARD` (nombre, recuento por
-  estado, vocabularios, identidad), `IN PROGRESS`, `WAITING ON A PERSON`, `ASSIGNED TO YOU`, `NEXT UP`
+  estado, vocabularios, identidad), `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU`, `NEXT UP`
   y las líneas de recuento: todo lo que cambia según qué haya en el tablero.
 
 Los bloques no son contiguos entre sí, así que hay líneas en blanco de separación entre ellos: **cada
 línea en blanco se cuenta en la mitad del bloque que la precede.** Con esta regla, la línea en blanco
 que sigue al título es parte fija, la que sigue a `BOARD` es resumen, las que siguen a `COMMANDS`,
-`FIELD FLAGS` y `RULES` son parte fija, y las que siguen a `IN PROGRESS`, `WAITING ON A PERSON`,
+`FIELD FLAGS` y `RULES` son parte fija, y las que siguen a `IN PROGRESS`, `NEEDS ANSWER`,
 `ASSIGNED TO YOU` y a `NEXT UP` son resumen.
 
 Si el resumen no cupiera en su mitad, el orden de recorte es completo y no deja ningún caso sin
@@ -1043,20 +1043,20 @@ definir:
 
 1. Se reduce primero el número de filas de `NEXT UP`.
 2. Si no basta, el de `ASSIGNED TO YOU`.
-3. Si no basta, el de `WAITING ON A PERSON`.
+3. Si no basta, el de `NEEDS ANSWER`.
 4. Si no basta, el de `IN PROGRESS`.
 5. Si aun así no cupiera, cada uno de los cuatro bloques se reduce a su sola línea de recuento.
 
 `ASSIGNED TO YOU` y `NEXT UP` comparten la línea de recuento que ya define 9.7. `IN PROGRESS` y
-`WAITING ON A PERSON` llevan cada uno la suya, con el mismo patrón: cuántas tareas del bloque quedan
+`NEEDS ANSWER` llevan cada uno la suya, con el mismo patrón: cuántas tareas del bloque quedan
 fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
-`N more not shown: 'biso ls --active'`, y para `WAITING ON A PERSON` es
+`N more not shown: 'biso ls --active'`, y para `NEEDS ANSWER` es
 `N more not shown: 'biso ls --waiting'`.
 
 Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
-El texto literal de la sección 9.7 ocupa **4.696 bytes** con el tablero del ejemplo: **3.255** de
-parte fija y **1.441** de resumen. Las dos mitades caben dentro de su tope.
+El texto literal de la sección 9.7 ocupa **4.689 bytes** con el tablero del ejemplo: **3.255** de
+parte fija y **1.434** de resumen. Las dos mitades caben dentro de su tope.
 
 **El número que congela el contrato de estabilidad de la sección 13 es el total, 5.120 bytes**, porque
 es el único que quien llama observa. El reparto entre las dos mitades puede cambiar sin romper ese
@@ -1159,7 +1159,7 @@ IN PROGRESS
   TASK-52  In Progress  task  low     Document the release checklist                    ac 0/1  -        -
   TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
 
-WAITING ON A PERSON
+NEEDS ANSWER
   TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
     Should the retry budget be shared with the download endpoint or kept separate?
 
@@ -1183,22 +1183,22 @@ Cómo se calcula el resumen, para que la implementación sea única:
 - La línea de recuento del bloque `BOARD` tiene **un número por cada estado configurado**, en el
   orden en que están configurados, y cuenta las tareas no archivadas de ese estado. No hay ninguna
   categoría inventada como "abiertas" que no se corresponda con un estado del tablero.
-- Los cuatro bloques `IN PROGRESS`, `WAITING ON A PERSON`, `ASSIGNED TO YOU` y `NEXT UP` se reparten
+- Los cuatro bloques `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU` y `NEXT UP` se reparten
   el tablero por esta precedencia, y cada tarea cae en el primero que la acepte:
-  1. `WAITING ON A PERSON`, si tiene una pregunta abierta.
+  1. `NEEDS ANSWER`, si tiene una pregunta abierta.
   2. `IN PROGRESS`, si está en el estado activo.
   3. `ASSIGNED TO YOU`, si está asignada a la identidad configurada.
   4. `NEXT UP`, el resto.
   **Ninguna tarea aparece en dos bloques.** Una tarea aparcada no sale en `IN PROGRESS` aunque esté en
   el estado activo, porque ese bloque significa que alguien está trabajando y ahí no lo está nadie.
   Los cuatro excluyen las tareas terminadas y las archivadas.
-- Se imprimen en este orden: `IN PROGRESS`, `WAITING ON A PERSON`, `ASSIGNED TO YOU` y `NEXT UP`.
+- Se imprimen en este orden: `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU` y `NEXT UP`.
   **Un bloque sin filas no se imprime**, ni siquiera su encabezado. **Sin identidad configurada,
   `ASSIGNED TO YOU` no se imprime nunca**, aunque el resto del mensaje se imprime igual, con
   `you are (not set)` en el bloque `BOARD`.
 - `IN PROGRESS` lista las tareas del estado activo sin pregunta abierta, ordenadas por la regla de
   orden de 10.4, sin límite.
-- `WAITING ON A PERSON` lista las tareas con pregunta abierta, ordenadas igual, sin límite. Cada tarea
+- `NEEDS ANSWER` lista las tareas con pregunta abierta, ordenadas igual, sin límite. Cada tarea
   ocupa **dos líneas**: la fila de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo
   una línea indentada con la pregunta recortada a **100 caracteres**, la misma cifra exacta que el
   algoritmo aplica a los títulos. Los saltos de línea reales del cuerpo se sustituyen por un espacio
@@ -1206,7 +1206,7 @@ Cómo se calcula el resumen, para que la implementación sea única:
   propia y no en una novena columna, porque el algoritmo tiene ocho exactas y una regla que dice que
   la octava nunca se rellena.
 - `ASSIGNED TO YOU` lista las tareas asignadas a la identidad configurada que no estén ya en
-  `WAITING ON A PERSON` ni en `IN PROGRESS`, ordenadas igual. `NEXT UP` lista el resto, ordenadas
+  `NEEDS ANSWER` ni en `IN PROGRESS`, ordenadas igual. `NEXT UP` lista el resto, ordenadas
   igual.
 - `ASSIGNED TO YOU` y `NEXT UP` **comparten el límite de `--limit`**: su valor son filas repartidas
   entre las dos, en ese orden de preferencia, con una sola línea de recuento al final de la última que
@@ -1260,7 +1260,7 @@ THE BOARD IS EMPTY
         "type": "bug", "priority": "high", "assignees": ["@claude"], "due": null,
         "acDone": 1, "acTotal": 2, "urgency": 19.0 }
     ],
-    "waitingOnAPerson": [
+    "needsAnswer": [
       { "id": "TASK-60", "title": "Confirm the retry budget for the upload endpoint",
         "status": "In Progress", "type": "task", "priority": "high", "assignees": ["@claude"],
         "due": null, "acDone": 0, "acTotal": 2, "urgency": 15.2 }
@@ -1285,7 +1285,7 @@ programa no necesita que le expliquen que el nombre desnudo añade.
 
 **Ninguna de las cuatro listas trae el cuerpo de la pregunta**, por el mismo motivo que el esquema de
 `task.list` en 10.4 no trae el cuerpo de la tarea: es texto largo. Lo que sí llevan es la posición de
-cada tarea (en `waitingOnAPerson` o en cualquier otro de los cuatro bloques), que ya dice si está
+cada tarea (en `needsAnswer` o en cualquier otro de los cuatro bloques), que ya dice si está
 aparcada, igual que el campo derivado `waiting` de `task.list`. Quien necesite leer la pregunta usa
 `biso get --section question`.
 

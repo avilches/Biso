@@ -112,14 +112,14 @@ sus dos comandos más usados juntos.
 A eso hay que sumar la inyección de instrucciones en el fichero de convenciones del repositorio, que
 se paga en todas las sesiones aunque no se toque el tablero.
 
-El mensaje de `biso prime` mide **4.696 bytes**, 3.255 de parte fija y 1.441 de resumen del tablero
+El mensaje de `biso prime` mide **4.689 bytes**, 3.255 de parte fija y 1.434 de resumen del tablero
 (sección 9.5 de `docs/SPEC.md`), contra un tope duro de 5.120 repartido en dos mitades de 3.456 y
 1.664.
 
 | Magnitud | Herramienta estudiada | `biso` |
 |---|---:|---|
-| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.696 bytes |
-| Media medida por sesión | 3.358 bytes | 4.696 bytes |
+| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.689 bytes |
+| Media medida por sesión | 3.358 bytes | 4.689 bytes |
 | Lecturas obligatorias por sesión | entre 1 y 4 | 1 |
 | Contexto gastado en sesiones que no tocan tareas | la inyección en el fichero de convenciones | 0 |
 
@@ -149,6 +149,14 @@ ninguna promesa hecha a nadie. La razón es de fondo: un tope que se sube cada v
 ser un tope, y su valor entero está en que obligue a elegir qué entra en el mensaje y qué se relega a
 `--help`. Por eso, si al escribir el texto real de la sección 9.7 los números no cupieran, lo que se
 recorta es contenido, no el tope.
+
+**Esto no es "el tope nunca sube", es "el tope sube solo cuando reducir ya no es posible sin perder
+algo".** La medida de hoy, 4.689 de 5.120 bytes, tiene 431 de margen: nunca hizo falta apretar para
+caber, así que esta regla no se ha puesto a prueba todavía. Si en el futuro un comando nuevo obliga a
+recortar el bloque fijo (`COMMANDS`, `FIELD FLAGS`, `RULES`) y esa reducción sale limpia, sin perder
+información que un agente necesite para arrancar bien, es que había margen y el tope hizo su trabajo.
+Pero si reducir más solo se puede ya a costa de quitar algo así, mantener el tope fijo deja de ser
+disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es lo correcto.
 
 ---
 
@@ -449,7 +457,7 @@ arranque lo destaque en su propio bloque.
 **Queda resuelta, y no con el papel que este apartado imaginaba.** Aplicando el criterio del apartado
 10, una pregunta abierta puede detener una tarea en cualquier punto del camino, así que no podía ser
 un estado: es el campo `question` de la sección 5.7 de `SPEC.md`, con su derivado `waiting`, los
-verbos `biso ask` y `biso answer`, y el bloque `WAITING ON A PERSON` del mensaje de arranque, que es
+verbos `biso ask` y `biso answer`, y el bloque `NEEDS ANSWER` del mensaje de arranque, que es
 exactamente el bloque propio que este apartado pedía.
 
 ### 9.4. Distinguir terminar de descartar: retirado
