@@ -252,37 +252,64 @@ claves:
 |---|---|---|---|
 | `version` | entero | sí | versión del formato del puntero |
 | `id` | 8 caracteres hexadecimales en minúscula | sí | la identidad del tablero, y es inmutable. En mayúsculas el puntero es inválido: no se normaliza |
-| `path` | ruta absoluta o relativa | no | solo cuando el tablero no está en la raíz por defecto |
+| `path` | ruta del directorio del tablero, absoluta o relativa | no | solo cuando el tablero no vive en una de las raíces de la sección 3.3 |
 
 Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
-tablero sin ningún paso adicional. Cuatro reglas gobiernan su lectura:
+tablero sin ningún paso adicional. Seis reglas gobiernan su lectura:
 
 - Una clave desconocida en el puntero es un error.
-- El `id` manda y el `path` es una pista que puede no resolver. **Que la `path` sea relativa no cambia
-  nada de esto**: sigue siendo una pista, y el `id` sigue siendo lo que identifica al tablero.
+- **`path` nombra el directorio del tablero, no el directorio que lo contiene.** Es la ruta que se
+  abre, sin concatenarle nada.
 - **Una `path` relativa se resuelve respecto al directorio que contiene el fichero puntero**, nunca
   respecto al directorio de trabajo. El motivo es el principio de que ningún comportamiento depende de
   dónde se ejecute el programa (sección 1): con la búsqueda hacia arriba de esta misma sección, el
   puntero se encuentra desde cualquier subdirectorio del proyecto, así que resolver contra el
   directorio de trabajo haría que el mismo puntero nombrara tableros distintos según desde qué
-  subdirectorio se llamara, y la mayoría de ellos ni siquiera existiría. Resolver contra el directorio
-  del puntero da siempre el mismo tablero, se llame desde donde se llame.
-- **Cómo se busca**: la carpeta de un tablero se llama `<slug>-<id>`, por ejemplo `kex-3f9a2b1c`, así
-  que localizarlo a partir del puntero es una sola búsqueda del patrón `*-<id>` en la raíz por defecto,
-  sin abrir ni leer la configuración de ningún tablero. El `<slug>` se deriva de `project_name`, nunca
-  es el nombre literal: `project_name` es texto libre, y copiarlo tal cual metería espacios y
-  mayúsculas en una ruta que alguien va a teclear. La derivación reutiliza el mismo paso de
-  `normalizar(x)` (sección 6.1) que ya usa la derivación de `task_prefix` (sección 4.11): pasar el
-  nombre a minúsculas según Unicode y quitarle los diacríticos. Después, cada tirada de caracteres que
-  no sean una letra ASCII ni un dígito ASCII se colapsa en un solo guion, recortando los que queden en
-  los extremos. Así, `Kex` da `kex`, `Mi Proyecto` da `mi-proyecto`, y `Peña 2026` da `pena-2026`.
-  Ningún carácter de `project_name`, incluido un separador de ruta, puede romper el nombre de la
-  carpeta, porque cualquier tirada de ellos se colapsa igual en un guion.
+  subdirectorio se llamara. Una `path` que empiece por `~/` se expande al directorio personal de quien
+  llama antes de resolverla.
+- **El `id` manda y el `path` es solo una pista que puede no resolver**, y esta regla es la que lo hace
+  cierto. Un directorio es el tablero `<id>` cuando contiene el fichero **`<id>.id`**, por ejemplo
+  `3f9a2b1c.id`. Ese fichero es la identidad del tablero en el sistema de ficheros: el mismo `id` está
+  guardado dentro de la base de datos, y el marcador lo repite en su nombre para que encontrar un
+  tablero sea leer nombres de un directorio, sin abrir ninguna base de datos. Lleva dentro la versión
+  del formato del almacén. **Si el nombre del marcador y el `id` de la base de datos discrepan es un
+  error**, y `biso doctor` lo comprueba (10.13).
+- **El nombre de la carpeta del tablero es decorativo, y nadie resuelve nunca por él.** Al crearla,
+  `biso init` la llama `<slug>-<id>`, por ejemplo `kex-3f9a2b1c`, porque eso hace legible un listado de
+  la raíz por defecto. Pero renombrarla no rompe nada, ni la renombra `biso` cuando cambia el nombre
+  del tablero (10.10), ni hay comprobación alguna sobre ella.
+- **Cómo se busca cuando el `path` no resuelve, o cuando no hay `path`**: se recorren la raíz por
+  defecto y después las raíces adicionales (sección 3.3), en ese orden, mirando en cada carpeta si
+  contiene el marcador `<id>.id`. Y una `path` relativa que no resuelve en el directorio del puntero se
+  prueba, tal cual, contra cada uno de sus ancestros hasta el mismo tope que cierra esta sección. Ese
+  último paso es el que hace que un tablero que vive dentro del proyecto se siga encontrando desde una
+  copia de trabajo que no lo tiene, como un worktree de git, donde el puntero está versionado y el
+  directorio del tablero no.
 
-Eso resuelve dos cosas de golpe: que dos proyectos de la misma máquina se puedan llamar igual sin
-chocar, porque lo que identifica al tablero no es su nombre sino el `id` que lleva en el nombre de su
-carpeta, y que el puntero siga resolviendo aunque el tablero se haya renombrado, porque el
-identificador viaja en el nombre de la carpeta y no en el puntero.
+**Si el mismo `id` aparece en dos sitios, es un error** que nombra los dos directorios y no elige
+ninguno, porque elegir sería escribir en un tablero que quien llama no ha nombrado, y dos almacenes con
+la misma identidad es exactamente lo que esta persistencia no admite.
+
+**El `<slug>` del nombre de la carpeta se deriva de `project_name`, nunca es el nombre literal**:
+`project_name` es texto libre, y copiarlo tal cual metería espacios y mayúsculas en una ruta que
+alguien va a teclear. La derivación reutiliza el mismo paso de `normalizar(x)` (sección 6.1) que ya usa
+la derivación de `task_prefix` (sección 4.11): pasar el nombre a minúsculas según Unicode y quitarle
+los diacríticos. Después, cada tirada de caracteres que no sean una letra ASCII ni un dígito ASCII se
+colapsa en un solo guion, recortando los que queden en los extremos. Así, `Kex` da `kex`, `Mi Proyecto`
+da `mi-proyecto`, y `Peña 2026` da `pena-2026`. Ningún carácter de `project_name`, incluido un separador
+de ruta, puede romper el nombre de la carpeta, porque cualquier tirada de ellos se colapsa igual en un
+guion.
+
+Eso resuelve tres cosas de golpe: que dos proyectos de la misma máquina se puedan llamar igual sin
+chocar, porque lo que identifica al tablero no es su nombre sino su `id`; que el puntero siga
+resolviendo aunque alguien renombre la carpeta o mueva el tablero a otra raíz, porque el marcador viaja
+con el tablero y no con su nombre; y que cambiar el nombre de un tablero no toque el sistema de ficheros
+en absoluto (10.10).
+
+**El único caso que sigue pidiendo una corrección a mano** es mover o renombrar a mano el directorio de
+un tablero que vive fuera de las raíces de la sección 3.3, porque entonces su `path` deja de resolver y
+no hay ninguna raíz que recorrer para encontrarlo. Se arregla con `biso init --at <ruta nueva>`, que
+reescribe el puntero adoptando el `id` que ya lleva (10.1).
 
 **El slug y el `task_prefix` arrancan del mismo `project_name` pero fallan por motivos distintos, y
 hay que comprobar los dos.** `"2026"` da un slug válido, `2026`, pero no da ningún prefijo, porque no
@@ -291,22 +318,27 @@ una de las dos derivaciones salga bien no dice nada de la otra, así que ninguna
 comprobaciones sustituye a la otra.
 
 `biso init` genera el `id` de la fuente de números aleatorios del sistema, comprobando que no exista ya
-en la raíz por defecto, que es una lectura de directorio, y escribe el puntero siempre que no exista ya
-uno: sin `--at`, con el tablero en la raíz por defecto; con `--at`, con el tablero donde se le diga y
-esa ruta en `path` (sección 10.1). Cuando ya existe un puntero sin tablero aquí, la excepción es la de
+en ninguna de las raíces de la sección 3.3, que es una lectura de directorio por raíz, y escribe el
+puntero siempre que no exista ya uno: sin `--at`, con el tablero en la raíz por defecto y **sin clave
+`path`**, porque ahí lo encuentra la búsqueda por marcador; con `--at`, con el tablero donde se le diga
+y esa ruta en `path` (sección 10.1). Cuando ya existe un puntero sin tablero aquí, la excepción es la de
 más abajo: adopta el `id` que ya lleva en vez de generar uno nuevo, y no reescribe el puntero. `biso
 where` dice cuál se ha usado y por qué (sección 10.2). No hay ningún caso en el que haya que escribirlo
 a mano.
 
-**De las dos formas de `path`, `init` elige una sola, y no es una preferencia de estilo.** Escribe una
-`path` **relativa** cuando el directorio del tablero queda dentro del directorio donde se escribe el
-puntero, y **absoluta** en cualquier otro caso (sección 10.1). El caso que arregla es el del tablero
-que vive dentro del propio proyecto, que la sección 10.1 permite: ese puntero se versiona con el
-proyecto, y una ruta absoluta como `/Users/avilches/Hub/Projects/Kex/kex-3f9a2b1c` no resuelve en otra
-máquina donde el proyecto viva en otra ruta, ni en otra copia de trabajo de la misma máquina, mientras
-que `kex-3f9a2b1c` resuelve en todas. Un tablero fuera del proyecto no puede aprovechar eso, porque
-ninguna ruta relativa al proyecto lo alcanzaría de forma estable, así que ahí se queda como estaba: en
-absoluto.
+**La forma de la `path` la elige quien llama, con la forma que le da a `--at`** (sección 10.1), y las dos
+sobreviven a cosas distintas. La relativa sobrevive a que el proyecto entero se mueva de sitio con su
+tablero dentro. La absoluta sobrevive a que se trabaje desde una copia del proyecto que vive fuera de
+él. Ninguna de las dos sobrevive a un clon en otra máquina, y conviene no atribuírselo a la relativa,
+porque ahí el directorio del tablero no viaja de ninguna forma.
+
+**El caso que decide entre las dos es dónde viven las copias de trabajo del proyecto**, y es el motivo de
+que la búsqueda por ancestros exista. Un worktree de git recibe el puntero, porque está versionado, y no
+recibe el directorio del tablero, porque está ignorado. Cuando el worktree vive dentro del proyecto, que
+es la convención de esta máquina, la búsqueda por ancestros encuentra el tablero un par de niveles más
+arriba y la ruta relativa funciona. Cuando el worktree vive fuera del proyecto, no hay ancestro común que
+lo contenga y la relativa no puede resolver: ahí hace falta la absoluta, y por eso la elección no puede
+ser del programa.
 
 **Dos proyectos distintos pueden apuntar legalmente al mismo tablero.** No hay forma de distinguir "dos
 copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", porque el mecanismo es
@@ -348,9 +380,17 @@ un tablero concreto, y esta es de la máquina entera, independiente de cuántos 
 | `boards_root` | ruta | `~/.biso/boards` |
 | `boards_extra_roots` | lista de rutas | vacía |
 
-`boards_root` es la raíz por defecto de la sección 3.2: el directorio donde `biso init` sin `--at`
-crea los tableros nuevos, y donde se busca la carpeta `<slug>-<id>` de cada puntero.
-`boards_extra_roots` son raíces adicionales, para cuando algún tablero vive fuera de `boards_root`.
+`boards_root` es la raíz por defecto de la sección 3.2: el directorio donde `biso init` sin `--at` crea
+los tableros nuevos. `boards_extra_roots` son raíces adicionales, para cuando algún tablero vive fuera
+de `boards_root`.
+
+**Las dos se recorren igual, y en un orden declarado**: `boards_root` primero y después
+`boards_extra_roots` en el orden en que estén escritas. Eso vale en los dos sitios que recorren raíces,
+que son la búsqueda de un tablero por su `id` (sección 3.2) y la comprobación de `biso init` de que un
+`id` nuevo no exista ya. El orden solo importa para decir qué se lee antes, nunca para elegir entre dos
+candidatos: **el mismo `id` en dos raíces es un error** (sección 3.2), no una preferencia. Una raíz de la
+lista que no exista o no se pueda leer no es un error, porque una máquina puede tener configurado un
+disco que hoy no está montado: se salta y `biso doctor` la reporta como aviso (10.13).
 
 Se leen directamente de ese fichero, sin pasar por la resolución de tablero de la sección 3.2, porque
 hace falta conocerlas antes de que exista el primer tablero de la máquina. Y, como en cualquier otro
@@ -1697,7 +1737,7 @@ defecto. Las tablas de parámetros de cada comando enumeran solo lo que es propi
 #### Firma
 
 ```
-biso init [<name>] [--at <location>] [--statuses <list>]
+biso init [<name>] [--at <dir>] [--statuses <list>]
           [--initial-status <status>] [--active-status <status>]
           [--terminal-status <status>] [--types <list>] [--priorities <list>]
           [--projects <list>] [--extensions <list>] [--prefix <text>]
@@ -1709,7 +1749,7 @@ biso init [<name>] [--at <location>] [--statuses <list>]
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
 | `<name>` | | no | texto | el nombre del proyecto | no | no | |
-| `--at <location>` | | no | localizador | la raíz por defecto de la máquina (sección 3.3) | no | no | |
+| `--at <dir>` | | no | ruta de un directorio | una carpeta nueva en la raíz por defecto de la máquina (sección 3.3) | no | no | |
 | `--statuses <list>` | | no | lista | `To Do, In Progress, Done` | sí | sí | |
 | `--initial-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--active-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
@@ -1722,8 +1762,11 @@ biso init [<name>] [--at <location>] [--statuses <list>]
 | `--overwrite-config` | | no | booleano | falso | no | no | |
 | `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--projects`, `--extensions`, `--prefix`, `--overwrite-config` |
 
-`--at` acepta el nombre o el localizador de un tablero, en la forma que el almacenamiento imponga,
-igual que la bandera global `--board`.
+**`--at` es la ruta del directorio del tablero que se va a crear, no el directorio donde se crea.** Con
+`--at tablero` el tablero queda en `tablero`, no en `tablero/kex-3f9a2b1c`. Ahí está la diferencia con
+la bandera global `--board`, que nombra un tablero que ya existe: `--at` nombra un sitio. Puede ser
+absoluta o relativa al directorio de trabajo, y **su último componente es el nombre de la carpeta, que
+es decorativo** (sección 3.2), así que `--at tablero` es tan válido como `--at kex-3f9a2b1c`.
 
 #### Comportamiento
 
@@ -1731,35 +1774,46 @@ Crea un tablero vacío con su configuración. **No escribe nunca fuera del table
 del proyecto que se describe a continuación.
 
 **`<name>` es el `project_name` inicial del tablero.** Cambiarlo más adelante es cosa de `biso config
-set project_name`, que también mueve la carpeta del tablero (sección 10.10).
+set project_name`, que no toca el sistema de ficheros (sección 10.10).
 
 `init` escribe, además del tablero, **el puntero del proyecto** (el fichero `.biso.json` de la
 sección 3.2), y lo escribe siempre que no exista ya uno, porque un tablero no se localiza nunca por su
-posición en el disco sino por una de las cuatro vías de la sección 3.2: sin `--at` el tablero va a la
-raíz por defecto de la máquina, y con `--at` donde se le diga, con esa ruta en la clave `path` del
-puntero. Es la única cosa que `init` escribe fuera del tablero. La salida siempre confirma que el
-proyecto apunta al tablero, se haya escrito el puntero en esta llamada o ya estuviera ahí de antes.
+posición en el disco sino por una de las cuatro vías de la sección 3.2. Es la única cosa que `init`
+escribe fuera del tablero. La salida siempre confirma que el proyecto apunta al tablero, se haya escrito
+el puntero en esta llamada o ya estuviera ahí de antes.
 
-**La `path` que `init` escribe es relativa cuando el directorio del tablero queda dentro del directorio
-donde se escribe el puntero, y absoluta en cualquier otro caso.** Con `--at kex-board` llamado desde la
-raíz del proyecto, el puntero lleva `"path": "kex-board"`, y ese puntero sigue resolviendo en cualquier
-copia de trabajo del proyecto y en cualquier otra máquina, que es para lo que se versiona; con `--at
-/Volumes/disco/kex-board` lleva la ruta absoluta, porque no hay ninguna ruta relativa al proyecto que
-llegue ahí de forma estable. La regla es del directorio donde se escribe el puntero, no del directorio
-de trabajo ni del proyecto en ningún otro sentido, porque es ese directorio el que resuelve la ruta
-después (sección 3.2). No hay bandera para elegir la forma: se deriva de dónde queda el tablero, así que
-la misma llamada escribe siempre lo mismo.
+**Sin `--at`, el puntero no lleva clave `path`**: el tablero va a la raíz por defecto de la máquina y
+ahí lo encuentra la búsqueda por marcador de la sección 3.2, así que escribir su ruta sería guardar un
+dato que nadie necesita y que dejaría de valer al cambiar `boards_root`.
+
+**Con `--at`, el puntero lleva la ruta en `path`, con la misma forma en que se dio `--at`**: relativa si
+`--at` era relativa, absoluta si era absoluta. `--at tablero` escribe `"path": "tablero"`;
+`--at /Users/avilches/Hub/Projects/Kex/tablero` escribe esa ruta completa. No hay bandera para elegir la
+forma porque la forma de `--at` ya es la elección, y esa elección es de quien llama y no del programa,
+porque depende de un dato que el programa no tiene: **dónde van a vivir las demás copias de trabajo del
+proyecto.**
+
+La consecuencia práctica hay que decirla, porque es lo único que distingue a las dos formas. Una `path`
+relativa se resuelve contra el directorio del puntero y, si ahí no hay tablero, contra sus ancestros
+(sección 3.2), así que vale en cualquier copia de trabajo que tenga el tablero dentro o por encima: es
+lo que quiere quien pone el tablero dentro del proyecto y trabaja en copias que también viven dentro del
+proyecto, como los worktrees de git en `.claude/worktrees/`. Una `path` absoluta vale desde cualquier
+sitio del disco mientras el proyecto no se mueva, y es lo que hace falta cuando las copias de trabajo
+viven fuera del proyecto: ahí el directorio del tablero no está ni en la copia ni en ninguno de sus
+ancestros, y una ruta relativa no lo alcanzaría. La elección, entonces, es entre sobrevivir a que el
+proyecto se mueva y sobrevivir a que se trabaje desde fuera de él, y solo quien llama sabe cuál de las
+dos le pasa.
 
 **Un `--at` que caiga dentro del proyecto está permitido, y entonces `init` lo dice.** Es una
 configuración legítima, para quien quiera que su tablero viva junto a su proyecto y viaje en la misma
 copia de seguridad, y sigue funcionando igual porque la resolución del tablero no depende de dónde esté
-la carpeta. Es también el caso al que sirve la `path` relativa del párrafo anterior: el puntero que
-`init` escribe aquí no nombra ninguna ruta de esta máquina, así que viaja con el proyecto sin retocarlo.
-Lo que hace falta es que el proyecto no intente versionarla, así que `init` emite por
-stderr `note: the board lives inside this project; add kex-3f9a2b1c/ to its .gitignore`, con el nombre
-real de la carpeta. Es una nota y no un aviso porque no hay nada mal hecho, y `init` **no escribe ese
-`.gitignore`**: el puntero sigue siendo la única cosa que este comando escribe fuera del tablero, y
-tocar el `.gitignore` de un proyecto ajeno sería pasarse de ahí.
+la carpeta. Es el caso al que sirve la `path` relativa del párrafo anterior, y el que la búsqueda por
+ancestros de la sección 3.2 mantiene alcanzable desde una copia de trabajo que no tenga el directorio
+del tablero. Lo que hace falta es que el proyecto no intente versionarla, así que `init` emite por
+stderr `note: the board lives inside this project; add tablero/ to its .gitignore`, con el nombre real
+de la carpeta, que es el que se le acaba de dar en `--at`. Es una nota y no un aviso porque no hay nada
+mal hecho, y `init` **no escribe ese `.gitignore`**: el puntero sigue siendo la única cosa que este
+comando escribe fuera del tablero, y tocar el `.gitignore` de un proyecto ajeno sería pasarse de ahí.
 
 **Si ya existe un puntero pero el tablero que nombra no está en esta máquina** (sección 3.2), `init`
 no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máquinas sigan hablando del
@@ -1796,8 +1850,9 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la tercera vía de 3.2, y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
-| `--at` a un directorio que queda dentro del directorio donde se escribe el puntero | No es un error: el tablero se crea ahí y el puntero lleva una `path` relativa a ese directorio, código 0 |
-| `--at` a un directorio de fuera, incluido cualquier ancestro del directorio donde se escribe el puntero | No es un error: el tablero se crea ahí y el puntero lleva una `path` absoluta, código 0 |
+| `--at` con una ruta relativa | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta relativa, código 0 |
+| `--at` con una ruta absoluta | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta absoluta, código 0 |
+| `--at` con una ruta relativa que sale del proyecto, como `../tableros/kex` | No es un error, y el puntero la guarda tal cual: resuelve mientras la posición relativa entre el puntero y el tablero se mantenga, y el marcador confirma que el directorio al que llega es el tablero que el `id` nombra |
 | `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección 10.10 aplica a `task_prefix` |
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
 | Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
@@ -1806,7 +1861,7 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 | `--statuses` con menos de tres estados | Error 2, diciendo cuántos hacen falta y por qué |
 | `--prefix` con algo que no sean letras | Error 2, `code` `invalid_prefix` |
 | Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección 4.11) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
-| `--at` a un localizador donde no se puede escribir | Error 7 |
+| `--at` a un directorio donde no se puede escribir | Error 7 |
 | `--from` junto con `<name>`, con cualquier bandera de vocabulario, o con `--overwrite-config` | Error 2 |
 | `--from` a un directorio al que le falta `tasks.ndjson`, `config.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
 | `--from` cuyo `config.json` no se puede interpretar como JSON, o lleva una clave desconocida | Error 2, `code` `invalid_snapshot_config` |
@@ -1824,12 +1879,30 @@ ficheros auxiliares. El nombre es fijo y forma parte de la interfaz, no un detal
 lo que hace reconocible un directorio de tablero: la tercera vía de la sección 3.2 se apoya en él, y
 sin un nombre declarado esa vía no sería implementable de una sola manera.
 
+**Junto a él, `init` escribe el marcador de identidad `<id>.id`**, por ejemplo `3f9a2b1c.id`, que es lo
+que permite encontrar el tablero por su identificador leyendo nombres de un directorio, sin abrir
+ninguna base de datos (sección 3.2). Su nombre es el dato; su contenido es
+`{ "storeVersion": 1 }`, la versión del formato del almacén, que no repite el identificador para que no
+haya dos sitios donde pueda decir cosas distintas. El mismo identificador está guardado dentro de la
+base de datos, y esa redundancia es a propósito: es la que permite comprobar que el marcador de un
+directorio corresponde de verdad al tablero que contiene, cosa que `biso doctor` hace (10.13). Los dos
+ficheros, la base de datos y el marcador, son lo único que hace falta para que un directorio sea un
+tablero.
+
 **El directorio del tablero es también, si es posible, su propio repositorio de git, pero `init` no lo
 crea.** Lo que `init` sí escribe es un `.gitignore` que excluye `board.db` y sus dos ficheros
 auxiliares, dejándolo listo para el día en que el directorio llegue a ser un
 repositorio: lo que se versiona entonces es `tasks.ndjson` y `config.json`, los dos ficheros que
 escribe `biso snapshot` (sección 10.14), nunca el binario. Escribir un fichero de texto no es ejecutar
 `git`, así que esto no contradice que `biso snapshot` sea el único comando que ejecuta git.
+
+**El marcador no se excluye, y eso resuelve algo.** Al quedar versionado con la instantánea, el
+identificador del tablero viaja en ella, así que restaurar con `biso init --from <instantánea>` puede
+recuperar la identidad y no solo los datos: el tablero restaurado adopta el `id` que el marcador de la
+instantánea nombra, en vez de acuñar uno nuevo, y por eso el puntero commiteado del proyecto sigue
+valiendo después de restaurar. Sin eso, restaurar en una máquina nueva daba un tablero correcto que el
+proyecto no podía encontrar. Si el `id` de la instantánea ya existe en esta máquina, es el error de
+identidad duplicada de la sección 3.2, no una adopción silenciosa.
 
 **Es `biso snapshot`, no `init`, quien convierte el directorio en un repositorio, y lo hace de forma
 perezosa**: la primera vez que `snapshot` corre sobre un directorio que todavía no es un repositorio
@@ -1865,6 +1938,12 @@ Run `biso prime` to see how to use it.
 La línea "This project now points at that board." aparece siempre, porque el proyecto siempre queda
 apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera escrito de antes
 (sección 3.2).
+
+**Esta invocación emite además la nota del tablero dentro del proyecto**, porque `--at kex-board` es una
+ruta relativa que cae ahí: por stderr sale `note: the board lives inside this project; add kex-board/ to
+its .gitignore`. No está en el bloque de arriba porque ese bloque es stdout, y la nota va por stderr como
+todas (sección 4.3). El puntero que esta llamada escribe es
+`{ "version": 1, "id": "3f9a2b1c", "path": "kex-board" }`.
 
 #### El esquema JSON
 
@@ -1912,8 +1991,10 @@ Arguments:
   name                   board name (default: the project directory name)
 
 Options:
-  --at <location>             where the board lives (default: the machine's
-                              default boards root)
+  --at <dir>                  the board's own directory, not where to put it
+                              (default: a new folder in the machine's default
+                              boards root). A relative path is stored relative
+                              to the pointer; an absolute one is stored as is
   --statuses <list>           comma-separated, at least three
                               (default: "To Do,In Progress,Done")
   --initial-status <status>   status of a new task (default: "To Do")
@@ -1985,11 +2066,10 @@ Sin parámetros propios.
 #### Comportamiento
 
 Dice el identificador del tablero, su nombre, la ruta de su directorio, y cuál de las cuatro vías de la
-sección 3.2 lo ha elegido. Los tres son datos distintos: `biso config set project_name` cambia el
-nombre y, con él, la ruta, porque la carpeta se llama `<slug>-<id>` y el slug se deriva del nombre
-(sección 3.2), pero nunca el identificador, que es el único de los tres que no cambia jamás. Es el
-comando al que remite el error de código 8, y el que hace visible una resolución que de otro modo
-sería invisible.
+sección 3.2 lo ha elegido. Los tres son datos distintos, y merece la pena verlos juntos porque cada uno
+cambia por su cuenta: `biso config set project_name` cambia el nombre y no toca la ruta (10.10), mover el
+directorio a mano cambia la ruta y no toca el nombre, y el identificador no cambia jamás. Es el comando al
+que remite el error de código 8, y el que hace visible una resolución que de otro modo sería invisible.
 
 | Caso | Qué pasa |
 |---|---|
@@ -2004,7 +2084,7 @@ sería invisible.
 ```
 id       3f9a2b1c
 board    Kex
-path     ~/.biso/boards/kex-3f9a2b1c
+path     /Users/avilches/.biso/boards/kex-3f9a2b1c
 source   project pointer at /Users/avilches/Hub/Projects/Kex
 me       @claude
 tasks    248 active, 31 archived, highest id ever assigned TASK-290
@@ -2018,6 +2098,12 @@ literal sería enseñar la pregunta en vez de la respuesta: `where` existe para 
 tablero de verdad, y es el comando al que remiten los errores de código 8, donde una ruta que hay que
 resolver a mano no sirve de nada. La clave `path` del sobre JSON lleva esa misma ruta resuelta, porque
 es el mismo dato en la otra forma.
+
+**Resuelta quiere decir también expandida**, así que la tilde del directorio personal no aparece nunca en
+esta fila ni en la clave del JSON, aunque sí aparezca en el valor por defecto de `boards_root`
+(sección 3.3) y en los ejemplos de esta especificación, donde se escribe para que se lean. `~` es una
+abreviatura que expande el intérprete de órdenes, no una ruta, y una salida que la llevara obligaría a
+quien la consume a expandirla por su cuenta.
 
 La fila `source` nombra el directorio del que salió el puntero, y no solo la vía, porque con la
 búsqueda de la sección 3.2 ese directorio puede ser cualquier ancestro del de trabajo: enseñarlo es lo
@@ -2055,7 +2141,7 @@ hint: `biso init` creates it here, adopting id 3f9a2b1c
   "data": {
     "id": "3f9a2b1c",
     "board": "Kex",
-    "path": "~/.biso/boards/kex-3f9a2b1c",
+    "path": "/Users/avilches/.biso/boards/kex-3f9a2b1c",
     "source": "project pointer at /Users/avilches/Hub/Projects/Kex",
     "me": "@claude",
     "counts": { "active": 248, "archived": 31, "highestIdEverAssigned": "TASK-290" }
@@ -3877,7 +3963,7 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 
 | Clave | Tipo | Por defecto |
 |---|---|---|
-| `project_name` | texto; cambiarla mueve la carpeta del tablero | el nombre del proyecto |
+| `project_name` | texto | el nombre del proyecto |
 | `statuses` | lista, mínimo tres | `To Do, In Progress, Done` |
 | `initial_status` | uno de `statuses` | `To Do`, al crear el tablero sin `--statuses` |
 | `active_status` | uno de `statuses` | `In Progress`, al crear el tablero sin `--statuses` |
@@ -3895,22 +3981,24 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `lease_minutes` | entero > 0 | 240 |
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
 
-**`project_name` es el nombre del tablero, y es la única clave de esta tabla cuyo cambio toca el
-sistema de ficheros.** Cambiarla mueve la carpeta del tablero en la misma operación, en su ubicación
-real (la raíz por defecto o la que diga `path` en el puntero, sección 3.2), conservando el sufijo del
-identificador: `kex-3f9a2b1c` pasa a `nuevonombre-3f9a2b1c`. No toca ningún puntero, porque el tablero
-se localiza por el patrón `*-<id>` y el identificador viaja en el nombre de la carpeta, no en ningún
-fichero aparte. La parte del nombre en la carpeta es el slug de la sección 3.2, decorativo: nadie
-resuelve por él, así que mantenerlo al día es mantener una etiqueta, no mover datos de los que algo
-dependa.
+**`project_name` es el nombre del tablero, y cambiarlo no toca el sistema de ficheros.** Ninguna clave
+de esta tabla lo hace. La carpeta del tablero se queda con el nombre que tenga, aunque sea el slug de un
+nombre anterior, porque ese nombre es decorativo y nadie resuelve por él (sección 3.2): la identidad del
+tablero está en el marcador `<id>.id` y dentro de la base de datos, no en el nombre de la carpeta. Así
+que renombrar un tablero es una escritura en su base de datos y nada más, con la misma transacción y las
+mismas garantías que cualquier otra.
 
-**Ningún carácter de `project_name` puede romper la ruta de la carpeta**, porque lo que entra en ella
-no es el valor literal sino su slug (sección 3.2): cualquier tirada de caracteres que no sean letra ni
-dígito, incluido un separador de ruta (`/`), se colapsa en un guion antes de tocar el sistema de
-ficheros. Los límites de un nombre de carpeta que sí pueden fallar, la longitud o un carácter que un
-sistema de ficheros concreto rechace incluso después de colapsar, no se comprueban por delante, porque
-dependen de dónde vive el tablero: si el sistema de ficheros lo rechaza al mover la carpeta, es el
-mismo error 7 que cualquier otro fallo al escribir.
+**Eso quita de en medio la única operación que no podía ser atómica.** Mover un directorio no cabe dentro
+de una transacción de SQLite, así que renombrar el tablero habría sido escribir la configuración y
+después mover la carpeta, con un estado intermedio observable si la segunda mitad fallaba, un error 7
+propio para el fallo de permisos, y la posibilidad de dejar sin resolver el puntero de un tablero que
+viviera fuera de las raíces de la sección 3.3. Nada de eso existe: no hay dos mitades.
+
+**Ningún carácter de `project_name` puede romper nada, y ahora por un motivo más simple**: no entra en
+ninguna ruta. Sigue habiendo un slug derivado de él (sección 3.2), pero solo se usa para dar nombre a la
+carpeta cuando `biso init` la crea, y ahí el valor ya está comprobado. Un `project_name` cuyo slug quede
+vacío sigue siendo un error, porque el slug es un dato del tablero y la regla de que un valor no válido
+nunca se acepta vale igual.
 
 **Renombrar no toca nunca el `task_prefix`.** Se derivó una vez al crear el tablero y desde entonces
 vive por su cuenta en esa clave. Cambiar `project_name` no lo recalcula, aunque el nombre nuevo diera un
@@ -3918,12 +4006,12 @@ vive por su cuenta en esa clave. Cambiar `project_name` no lo recalcula, aunque 
 que derivar uno (sección 4.11), tampoco es un error aquí, porque `task_prefix` ya está fijado y no se
 recalcula al renombrar.
 
-Una regla parecida vale para `biso init --overwrite-config` (sección 10.1), y solo cuando se da
-`<name>` explícito: si ese `<name>` difiere del `project_name` que el tablero ya tenía,
-`--overwrite-config` mueve la carpeta igual que lo haría `config set project_name`. **Sin `<name>`
-explícito, `project_name` se conserva tal cual estaba**, aunque el valor por defecto de `<name>` sea
-el nombre del directorio del proyecto: ese valor por defecto tiene sentido como punto de partida al
-crear un tablero nuevo, no como instrucción de renombrar uno que ya existe.
+Lo mismo vale para `biso init --overwrite-config` (sección 10.1), y solo cuando se da `<name>`
+explícito: si ese `<name>` difiere del `project_name` que el tablero ya tenía, lo cambia igual que lo
+haría `config set project_name`, y tampoco mueve nada. **Sin `<name>` explícito, `project_name` se
+conserva tal cual estaba**, aunque el valor por defecto de `<name>` sea el nombre del directorio del
+proyecto: ese valor por defecto tiene sentido como punto de partida al crear un tablero nuevo, no como
+instrucción de renombrar uno que ya existe.
 
 **`me` gana sobre `BISO_ME` cuando las dos están puestas.** Por eso un tablero compartido entre una
 persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
@@ -3969,10 +4057,9 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
 | Cambiar `project_name` a un valor vacío, o a uno cuyo slug (sección 3.2) quede vacío tras derivarlo | Error 3, en los dos casos |
-| Cambiar `project_name` al mismo valor que ya tiene | La carpeta no se mueve, porque el nombre no cambia; el `set` se completa igual |
+| Cambiar `project_name` al mismo valor que ya tiene | El `set` se completa igual, con su `note:` |
 | Cambiar `project_name` a un valor que no dejaría ninguna letra para derivar un prefijo | No es error: el `task_prefix` ya está fijado y no se recalcula al renombrar |
-| Cambiar `project_name` en un tablero cuyo puntero lleva `path` (vive fuera de la raíz por defecto) | Se mueve igual, en la ubicación que diga `path` |
-| Cambiar `project_name` sin poder mover la carpeta, por ejemplo por permisos | Error 7 |
+| Cambiar `project_name` en un tablero cuyo puntero lleva `path`, o cuya carpeta ya no se llama como el nombre viejo | No es un caso especial: no se mueve nada y el puntero sigue valiendo, porque nada resuelve por el nombre de la carpeta (sección 3.2) |
 | `get` de una clave de lista | Los valores separados por comas, en una línea |
 | `set` correcto | Sin salida por stdout, con `note:` por stderr diciendo el valor nuevo |
 
@@ -4043,7 +4130,7 @@ Solo `config list` acepta `--json`:
 | Valor de tipo o de dominio incorrecto | 3 |
 | Clave inexistente | 4 |
 | El cambio dejaría el tablero inconsistente | 6 |
-| No se puede escribir la configuración, o mover la carpeta al renombrar `project_name` | 7 |
+| No se puede escribir la configuración | 7 |
 | No hay tablero | 8 |
 
 #### `biso config --help`
@@ -4057,8 +4144,8 @@ Read and change the board configuration. List values are comma-separated.
 No configuration change ever touches a task.
 
 Keys:
-  project_name       board name; changing it moves the board folder too,
-                     keeping the id suffix
+  project_name       board name; changing it never moves anything on disk,
+                     the board folder keeps whatever name it has
   statuses           the board statuses, in order
   initial_status     status of a new task           (one of statuses)
   active_status      what `biso start` sets         (one of statuses)
@@ -4191,16 +4278,17 @@ salida, `Errors:` y `Warnings:`, y el recuento de la primera línea. La palabra 
 el concepto; lo único que cambia es la marca literal.
 
 **Un aviso tiene que ser accionable sin investigar nada**, o no sirve para lo que un agente necesita.
-La regla: dice qué hay y qué se esperaba, con los dos valores literales al lado. Para el nombre de la
-carpeta desparejado, tal como aparece bajo `Warnings:` en la salida de abajo:
+La regla: dice qué hay y qué se esperaba, con los dos valores literales al lado. Para la raíz adicional
+que no se puede leer, tal como aparece bajo `Warnings:` en la salida de abajo:
 
 ```
-board folder is "proyecto-viejo-3f9a2b1c" but project_name is "Kex" (expected "kex-3f9a2b1c")
+extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)
 ```
 
-Ahí el arreglo está a la vista, y se ve además por qué: el sufijo del identificador es idéntico en los
-dos lados, así que lo único que difiere es la parte decorativa. Quien lo lea puede corregirlo o
-proponer la corrección sin abrir nada más.
+Ahí el arreglo está a la vista, y se ve además la consecuencia: no es que algo esté roto, es que un
+tablero que viviera ahí no se encontraría por su identificador mientras esa raíz no se pueda leer. Quien
+lo lea sabe si le importa, montando el disco o quitando la raíz de la configuración de la máquina, sin
+abrir nada más.
 
 **El informe de `biso doctor` viaja entero por stdout, con sus errores y sus avisos juntos.** La
 sección 4.2 dice que stdout lleva lo que un programa consumiría, y el informe es exactamente eso: es
@@ -4227,22 +4315,25 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Ciclos de tarea padre | error | no |
 | Claves de criterio repetidas dentro de una tarea | error | no |
 | El identificador más alto que el tablero recuerda haber asignado (4.11) es menor que el identificador más alto de una tarea existente | error | sí |
-| El nombre de la carpeta del tablero no coincide con el slug (sección 3.2) que le corresponde a `project_name` (alguien la renombró por fuera de `biso`) | aviso | sí, renombrando la carpeta; `project_name` nunca cambia por esto |
+| Falta el marcador `<id>.id` en el directorio del tablero (sección 3.2) | error | sí, escribiéndolo con el `id` que lleva la base de datos |
+| El marcador `<id>.id` nombra un `id` distinto del que lleva la base de datos | error | no, hay que decidir a mano |
+| Una raíz de `boards_extra_roots` (sección 3.3) no existe o no se puede leer | aviso | no, es configuración de la máquina o un disco sin montar |
 | La comprobación de integridad de la base de datos falla (4.12) | error | no, es daño externo; la reparación es restaurar de una copia |
 | El directorio del tablero está en un sistema de ficheros donde el modo WAL de SQLite no es seguro | aviso | no, es una propiedad del sistema de ficheros, no algo que `biso` pueda cambiar |
 | Huecos en la numeración | no es un problema | no son un problema, no se reportan |
 
-**La reparación de la fila del nombre de carpeta renombra la carpeta, nunca cambia `project_name`.**
-El nombre de la carpeta es decorativo y `project_name` es el dato, así que solo hay una dirección que
-no pierda información: la carpeta se ajusta para que vuelva a coincidir con la configuración. Es
-precisamente esa falta de ambigüedad la que permite que `--fix` la repare sola, porque el criterio de
-esta sección es que a `--fix` solo va lo que no exige decisión; si las dos direcciones fueran igual de
-válidas, esta comprobación no sería reparable automáticamente y habría que decidir a mano, como las
-demás filas marcadas "no". Mover la carpeta del tablero a mano para renombrarlo no es un gesto
-soportado: para eso está `biso config set project_name` (sección 10.10), que mueve la carpeta él
-mismo. Y es un aviso, no un error, porque nada se ha vuelto inconsistente ni poco fiable mientras el
-nombre esté desparejado: el tablero sigue siendo el mismo, solo la carpeta que lo contiene tiene un
-nombre viejo.
+**No hay ninguna comprobación sobre el nombre de la carpeta del tablero, y no es un olvido.** El nombre
+es decorativo y nadie resuelve por él (sección 3.2), así que una carpeta con el nombre de un `project_name`
+anterior, o con un nombre que alguien puso a mano, no es un problema del que informar. Denunciarlo sería
+denunciar algo que la sección 10.10 permite explícitamente.
+
+**Las dos filas del marcador se parecen y se reparan al revés, y por eso son dos.** Que falte tiene una
+sola lectura posible: el `id` de verdad es el que lleva la base de datos, y el marcador es su copia en el
+sistema de ficheros, así que escribirlo con ese valor no puede equivocarse y `--fix` lo hace solo. Que
+discrepe no tiene una sola lectura: reescribir el marcador con el `id` de la base de datos dejaría de
+resolver a todos los punteros que nombran el `id` viejo, y reescribir la base de datos cambiaría la
+identidad del tablero. Las dos direcciones pierden algo, así que se decide a mano, con el mismo criterio
+que los identificadores duplicados de la primera fila.
 
 **La comprobación de integridad de la base de datos y el aviso del sistema de ficheros son las dos
 comprobaciones que añade esta misma decisión de persistencia**, y caen cada una en uno de los dos
@@ -4254,40 +4345,41 @@ sección 4.10 exige, pero el tablero de hoy puede estar perfectamente sano. Eso 
 distingue a un aviso de un error, así que es aviso.
 
 **Y la primera tiene una peculiaridad que la separa de las demás filas de error: nunca aparece como
-una línea del informe.** Las otras once comprobaciones de error sí producen una entrada en la lista
+una línea del informe.** Las otras trece comprobaciones de error sí producen una entrada en la lista
 de problemas cuando se disparan, pero esta no, porque cuando se dispara no hay informe de `doctor`
 que mostrarla: hay el abort completo de la sección 4.12, con su propio mensaje y su propio código 8,
 antes de que `doctor` llegue a comprobar nada más (ver la tabla de comportamiento más abajo). La fila
 está en esta tabla para decir que existe como comprobación y cuál es su nivel, no porque vaya a
 verse alguna vez junto a las demás.
 
-Con esto, de las quince filas de la tabla, catorce son problemas (doce errores y dos avisos) y una,
-los huecos en la numeración, no lo es y no se reporta nunca. De esas catorce, solo trece llegan a
+Con esto, de las diecisiete filas de la tabla, dieciséis son problemas (catorce errores y dos avisos) y
+una, los huecos en la numeración, no lo es y no se reporta nunca. De esas dieciséis, solo quince llegan a
 aparecer alguna vez como una línea del informe: la comprobación de integridad de la base de datos es
 la única que, aun siendo un problema real, no se manifiesta ahí, por la razón de arriba.
 
 #### Atomicidad de `--fix` con varias reparaciones
 
 Cuando `--fix` tiene que aplicar más de una reparación de tipo distinto, por ejemplo corregir el
-contador del identificador más alto y renombrar la carpeta del tablero a la vez, no hay una sola
+contador del identificador más alto y escribir el marcador `<id>.id` que falta, no hay una sola
 operación que las cubra a las dos: **las reparaciones de datos van en una sola transacción de la base
-de datos, todo o nada, y el renombrado de la carpeta va después y por separado.** Si el renombrado
+de datos, todo o nada, y la escritura del marcador va después y por separado.** Si esa escritura
 falla, no deshace las reparaciones de datos que ya se aplicaron.
 
-Esto no es una preferencia de diseño, es una imposibilidad: **un renombrado de directorio no puede
-estar dentro de una transacción de SQLite.** Son dos sistemas distintos, el motor de la base de datos
-y el sistema de ficheros, y no existe manera de hacerlos atómicos juntos. Cualquier redacción de esta
-sección que prometiera una atomicidad conjunta estaría prometiendo algo que no se puede implementar.
+Esto no es una preferencia de diseño, es una imposibilidad: **escribir un fichero no puede estar dentro
+de una transacción de SQLite.** Son dos sistemas distintos, el motor de la base de datos y el sistema de
+ficheros, y no existe manera de hacerlos atómicos juntos. Cualquier redacción de esta sección que
+prometiera una atomicidad conjunta estaría prometiendo algo que no se puede implementar. Es la única
+reparación de `--fix` que sale de la base de datos, y por eso esta sección existe.
 
 Y esto no rompe la garantía de la sección 4.10, porque esa sección promete sobre las escrituras del
-tablero, es decir, sobre sus datos, y renombrar la carpeta no cambia ningún dato del tablero: el
-nombre de la carpeta es decorativo, tal como ya establece esta misma sección más arriba. Por eso el
-orden importa y hay que decirlo explícito: primero la transacción de datos, después el renombrado. Si
-el renombrado falla, las reparaciones de datos quedan hechas y son definitivas, el comando termina
-con el código de no poder escribir (7, el mismo de cualquier otro fallo de entorno al reparar), y el
-desajuste de la carpeta vuelve a aparecer como aviso la próxima vez que se ejecute `doctor`, porque
-sigue siendo verdad. Ese desenlace es coherente consigo mismo: no hay ningún dato del tablero
-observado a medias, y lo único que queda pendiente es una reparación que ya se sabe cómo repetir.
+tablero, es decir, sobre sus datos, y el marcador no es un dato del tablero: es una copia de su `id` en
+el sistema de ficheros, puesta ahí para poder encontrarlo sin abrirlo (sección 3.2). Por eso el orden
+importa y hay que decirlo explícito: primero la transacción de datos, después el marcador. Si el
+marcador falla, las reparaciones de datos quedan hechas y son definitivas, el comando termina con el
+código de no poder escribir (7, el mismo de cualquier otro fallo de entorno al reparar), y la falta del
+marcador vuelve a aparecer como error la próxima vez que se ejecute `doctor`, porque sigue siendo verdad.
+Ese desenlace es coherente consigo mismo: no hay ningún dato del tablero observado a medias, y lo único
+que queda pendiente es una reparación que ya se sabe cómo repetir.
 
 #### Comportamiento, caso a caso
 
@@ -4299,7 +4391,7 @@ observado a medias, y lo único que queda pendiente es una reparación que ya se
 | Quedan errores sin reparar | Código 6, aunque se haya reparado algo o se hayan reportado avisos |
 | Una tarea ilegible (4.12) | Se reporta como error y se sigue con las demás. **Nunca aborta** |
 | La base de datos no se puede leer (4.12) | El comando entero aborta con el mensaje y el código 8 de 4.12, antes de comprobar nada más |
-| `--fix` sin poder escribir | Código 7. Si falla el renombrado de carpeta después de la transacción de datos, esta ya quedó aplicada (ver arriba) |
+| `--fix` sin poder escribir | Código 7. Si falla la escritura del marcador después de la transacción de datos, esta ya quedó aplicada (ver arriba) |
 | `--fix --dry-run` | Reporta qué se repararía, sin reparar nada, código 0 |
 
 #### Salida
@@ -4309,7 +4401,7 @@ observado a medias, y lo único que queda pendiente es una reparación que ya se
 Errors:
   TASK-40  dependency TASK-99 does not exist
 Warnings:
-  board folder is "proyecto-viejo-3f9a2b1c" but project_name is "Kex" (expected "kex-3f9a2b1c")
+  extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)
 1 problem fixed
   the highest recorded id was TASK-40 and tasks go up to TASK-52; recorded TASK-52
 ```
@@ -4331,7 +4423,7 @@ grupo vacío no se imprime: si no hay avisos no aparece `Warnings:`, y si no hay
       { "task": "TASK-40", "code": "dependency_not_found", "message": "dependency TASK-99 does not exist" }
     ],
     "warnings": [
-      { "task": null, "code": "board_folder_mismatch", "message": "board folder is \"proyecto-viejo-3f9a2b1c\" but project_name is \"Kex\" (expected \"kex-3f9a2b1c\")" }
+      { "task": null, "code": "extra_root_unreadable", "message": "extra board root \"/Volumes/disco/boards\" cannot be read (skipped when looking up boards by id)" }
     ],
     "fixed": [
       { "code": "highest_id_behind", "message": "the highest recorded id was TASK-40 and tasks go up to TASK-52; recorded TASK-52" }
@@ -4357,10 +4449,11 @@ Usage: biso doctor [options]
 
 Check the board for duplicate ids, unreadable tasks, undeclared extension keys,
 values that are no longer configured, a broken status-role invariant, broken
-or circular dependencies, repeated criterion keys, a recorded highest id that
-has fallen behind, a database that fails its integrity check, a board folder
-name that no longer matches the slug of the board name, and a board directory
-on a filesystem where SQLite's WAL mode is not safe.
+dependencies, dependency cycles, parent cycles, repeated criterion keys, a
+recorded highest id that has fallen behind, a database that fails its integrity
+check, a missing or mismatched <id>.id marker, an extra board root that cannot
+be read, and a board directory on a filesystem where SQLite's WAL mode is not
+safe.
 
 Options:
       --fix      repair what can be repaired without a decision

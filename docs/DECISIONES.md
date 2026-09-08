@@ -776,33 +776,72 @@ reconocer un directorio de tablero, y sin un nombre declarado no habría una sol
 documento hablaba del fichero de la base de datos sin nombrarlo nunca, lo que bastaba mientras nada
 dependiera de reconocerlo desde fuera.
 
-**Por qué la `path` del puntero puede ser relativa, y por qué se resuelve contra el directorio del
-puntero.** La clave `path` era una ruta que se escribía siempre completa, y eso dejaba de funcionar en
-cuanto la sección 10.1 de `SPEC.md` permitió que el tablero viviera dentro del propio proyecto. El
-problema es concreto: el puntero se versiona con el proyecto justamente para que todas las copias de
-trabajo y todas las máquinas encuentren el mismo tablero, pero un puntero que dice
-`/Users/avilches/Hub/Projects/Kex/kex-3f9a2b1c` solo resuelve en el ordenador donde el proyecto está
-en esa ruta exacta, y ni siquiera en un worktree del mismo proyecto en esa misma máquina. Se commiteaba
-una ruta que solo valía para quien la escribió. Con `kex-3f9a2b1c` guardado como ruta relativa, el
-tablero que viaja dentro del proyecto se encuentra en cualquier sitio donde el proyecto se clone, sin
-que nadie retoque nada.
+**Por qué la identidad del tablero vive en un fichero y no en el nombre de su carpeta.** El diseño
+anterior decía dos cosas que no podían ser verdad a la vez: que el nombre de la carpeta del tablero era
+decorativo y que nadie resolvía por él, y que localizar un tablero desde su puntero era buscar el patrón
+`*-<id>` en la raíz por defecto. Lo segundo es resolver por el nombre. De esa contradicción salían tres
+fallos, y los tres se cerraron de golpe sacando el identificador del nombre y metiéndolo en un fichero
+marcador, `<id>.id`, dentro del directorio del tablero.
+
+El primero: `biso config set project_name` movía la carpeta para mantener el slug al día, y prometía no
+tocar ningún puntero "porque el tablero se localiza por el patrón". Eso solo valía para los tableros de
+la raíz por defecto, que es el único sitio donde se buscaba el patrón. Un tablero en cualquier otra parte
+se quedaba con un puntero que nombraba una carpeta ya inexistente y sin ninguna red debajo. El segundo:
+la comprobación de `biso doctor` que avisaba cuando el nombre de la carpeta no coincidía con el slug
+denunciaba como problema un tablero perfectamente sano creado con `--at`, cuyo nombre de carpeta lo había
+elegido quien llamaba, y `--fix` lo "reparaba" renombrando la carpeta, con lo que rompía el puntero que
+`init` acababa de escribir. El tercero: `boards_extra_roots` estaba declarada en la configuración de
+máquina y ninguna regla la leía, porque la búsqueda nombraba solo `boards_root`.
+
+Con el marcador, el nombre de la carpeta es decorativo de verdad. Renombrarla no rompe nada, cambiar el
+nombre del tablero **no toca el sistema de ficheros en absoluto**, la comprobación de `doctor` sobre el
+nombre desaparece porque ya no hay nada que comprobar, y la búsqueda por identificador puede recorrer
+cualquier raíz mirando marcadores, lo que da sentido a las raíces adicionales. **El premio grande es lo
+que se quita**: renombrar un tablero era la única operación del programa que mezclaba una transacción de
+SQLite con un movimiento en el sistema de ficheros, cosa que no puede ser atómica, y por eso arrastraba
+un orden declarado, un estado intermedio observable y un código de error propio. Nada de eso existe ya.
+
+El coste es que buscar un tablero por su identificador pasa de leer un nombre de carpeta a mirar dentro
+de cada carpeta de cada raíz. Sigue sin abrir ninguna base de datos, así que son lecturas de directorio,
+pero con veinte tableros son veintiuna en vez de una, y hay que medirlo contra el presupuesto de la
+sección 4.13 cuando el programa exista. Se descartó a propósito el atajo de buscar primero por el nombre
+y caer al marcador solo si falla: sería más rápido y volvería a poner el mismo dato en dos sitios, que es
+lo que se acaba de quitar.
+
+**Por qué la `path` del puntero puede ser relativa, y por qué la forma la elige quien llama.** Un puntero
+que dice `/Users/avilches/Hub/Projects/Kex/tablero` solo resuelve en el ordenador donde el proyecto está
+en esa ruta exacta, y el puntero se versiona precisamente para que viaje. Con `tablero` guardado como
+ruta relativa, mover el proyecto entero con su tablero dentro no rompe nada.
 
 La ruta relativa **se resuelve contra el directorio que contiene el fichero puntero, nunca contra el
-directorio de trabajo**, y esa mitad de la decisión importa igual que la otra. El puntero se busca
-subiendo desde el directorio de trabajo, así que el mismo fichero se lee desde cualquier subdirectorio
-del proyecto: resolver contra el directorio de trabajo haría que el mismo puntero nombrara un tablero
-distinto por cada subdirectorio desde el que se llamara, y que casi ninguno de ellos existiera. Eso
-rompería el principio de la sección 1 de `SPEC.md` de que ningún comportamiento depende de dónde se
-ejecute el programa, que es el mismo principio del que salen `--cwd` y la propia búsqueda hacia arriba.
+directorio de trabajo.** El puntero se busca subiendo desde el directorio de trabajo, así que el mismo
+fichero se lee desde cualquier subdirectorio del proyecto: resolver contra el directorio de trabajo haría
+que el mismo puntero nombrara un tablero distinto por cada subdirectorio desde el que se llamara, y que
+casi ninguno de ellos existiera. Eso rompería el principio de la sección 1 de `SPEC.md` de que ningún
+comportamiento depende de dónde se ejecute el programa.
 
-Y `init` elige la forma en vez de ofrecerla: relativa cuando el directorio del tablero queda dentro del
-directorio donde se escribe el puntero, absoluta en cualquier otro caso. Se descartó una bandera para
-elegirlo, porque quien llama no tiene ningún dato que el programa no tenga y una elección equivocada
-solo se descubre en otra máquina, que es el peor momento posible. Y se descartó escribir siempre una
-ruta relativa: un tablero en la raíz por defecto de la máquina quedaría como una cadena de `../..`
-colgando de dónde esté hoy el proyecto, que deja de resolver en cuanto el proyecto se mueve y no gana
-nada, porque ese tablero no viaja al clonar de todas formas. La regla no toca nada de lo que el puntero
-ya prometía: el `id` sigue mandando y la `path` sigue siendo una pista que puede no resolver.
+**La primera redacción de esto se apoyaba en un escenario que la desmentía, y conviene dejarlo escrito
+para no repetirlo.** Decía que una ruta absoluta no resuelve "ni siquiera en un worktree del mismo
+proyecto", y es al revés. Un worktree de git recibe el puntero, porque está versionado, y no recibe el
+directorio del tablero, porque el propio `biso init` recomienda ignorarlo y los ficheros ignorados no se
+comparten entre árboles de trabajo. Así que en un worktree la ruta absoluta sigue apuntando al tablero
+real y la relativa apunta dentro del worktree, donde no hay nada. El cambio empeoraba justo el caso con
+el que se justificaba. Y el desenlace era peor que el fallo: el mensaje que sale entonces invita a
+ejecutar `biso init` para adoptar ese identificador, lo que desde un worktree habría creado un segundo
+tablero con el mismo `id`, que es lo único que esta persistencia promete no permitir nunca. El error de
+razonamiento fue tratar un worktree como el proyecto en otra ruta: lo es para lo versionado, pero el
+tablero no está versionado y sigue existiendo en un solo sitio del disco.
+
+De ahí salen las dos piezas que lo arreglan. Una es que la búsqueda pruebe una `path` relativa que no
+resuelve contra cada ancestro del directorio del puntero, que es lo que encuentra el tablero del proyecto
+desde un worktree que viva dentro de él. La otra es que **la forma de la ruta la elija quien llama**, con
+la forma que le dé a `--at`. Se había descartado dar esa elección con el argumento de que quien llama no
+tiene ningún dato que el programa no tenga, y ese argumento era falso: el dato que decide es dónde van a
+vivir las demás copias de trabajo del proyecto, y eso solo lo sabe una persona. Con los worktrees dentro
+del proyecto, que es la convención de esta máquina, la relativa es la buena; con los worktrees fuera del
+proyecto, la única que resuelve es la absoluta, porque el directorio del tablero no está ni en la copia ni
+en ninguno de sus ancestros. No hace falta ninguna bandera nueva para ofrecer esa elección, porque la
+forma de `--at` ya la expresa.
 
 **Por qué el tope de la búsqueda es el directorio personal y no un número de niveles.** La primera
 redacción decía que el recorrido no comprueba ningún directorio con menos de dos componentes de ruta, y
