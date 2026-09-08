@@ -1664,33 +1664,46 @@ Sin parámetros propios.
 
 #### Comportamiento
 
-Dice qué tablero se está usando y por qué regla de la sección 3.2 se ha elegido. Es el comando al que
-remite el error de código 8, y el que hace visible una resolución que de otro modo sería invisible.
+Antes había un solo dato que decir, qué tablero se está usando. Ahora hay tres, porque el nombre, el
+identificador y la ruta de un tablero pueden cambiar por separado (secciones 3.2 y 10.10): dice el
+identificador del tablero, su nombre, la ruta de su directorio, y cuál de las tres vías de la
+sección 3.2 lo ha elegido. Es el comando al que remite el error de código 8, y el que hace visible
+una resolución que de otro modo sería invisible.
 
 | Caso | Qué pasa |
 |---|---|
-| Hay tablero | Lo imprime con la regla que lo eligió, código 0 |
-| No hay tablero | Imprime lo que ha buscado y dónde, código 8 |
+| Hay tablero | Lo imprime con su identificador, su nombre, su ruta y la vía que lo eligió, código 0 |
+| No hay tablero configurado | Imprime lo que ha buscado y dónde, código 8, `code` `no_board` |
+| El puntero nombra un tablero que no está en esta máquina | Imprime que hay un puntero y qué identificador nombra (sección 3.2), código 8, `code` `pointer_unresolved` |
 | Hay más de un candidato | Imprime el elegido y los descartados, con el motivo, código 0 |
 
 #### Salida
 
 ```
+id       3f9a2b1c
 board    Kex
+path     ~/.biso/boards/Kex-3f9a2b1c
 source   project pointer at the root of this project
 me       @claude
 tasks    248 active, 31 archived, highest id ever assigned TASK-290
 ```
 
-Y cuando no hay ninguno, por stderr y con código 8:
+Y cuando no hay ninguno configurado, por stderr y con código 8:
 
 ```
 error: no board here, and none configured for this project
 searched  --board:      not given
           BISO_BOARD:   not set
           pointer:      not found between this directory and the project root
-          local board:  not found between this directory and the project root
 hint: `biso init` creates one
+```
+
+Y cuando el puntero de este proyecto nombra un tablero que esta máquina no tiene, el mismo mensaje
+que da cualquier otro comando en este caso (sección 3.2), por stderr y con código 8:
+
+```
+error: this project's pointer names board 3f9a2b1c, which is not on this machine
+hint: `biso init` creates it here, adopting id 3f9a2b1c
 ```
 
 #### El esquema JSON
@@ -1701,7 +1714,9 @@ hint: `biso init` creates one
   "kind": "where",
   "generatedAt": "2026-09-06T09:12:04Z",
   "data": {
+    "id": "3f9a2b1c",
     "board": "Kex",
+    "path": "~/.biso/boards/Kex-3f9a2b1c",
     "source": "project pointer at the root of this project",
     "me": "@claude",
     "counts": { "active": 248, "archived": 31, "highestIdEverAssigned": "TASK-290" }
@@ -4001,7 +4016,7 @@ con esta forma:
 | `kind` | Lo produce | `data` contiene |
 |---|---|---|
 | `prime` | `prime` | Sección 9.9 |
-| `where` | `where` | `board`, `source`, `me`, `counts`. Ejemplo en 10.2 |
+| `where` | `where` | `id`, `board`, `path`, `source`, `me`, `counts`. Ejemplo en 10.2 |
 | `init` | `init` | `board`, `pointerCreated`. Ejemplo en 10.1 |
 | `task.list` | `ls` | `tasks`, `shown`, `matched`, `hidden`, `truncated`, `skipped`, `sort`, `filters` |
 | `task.get` | `get` | `task` |
