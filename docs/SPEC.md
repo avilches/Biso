@@ -605,6 +605,14 @@ un modelo de hardware concreto, es lo que hace que la prueba dé siempre el mism
 misma versión del código, sin que este documento tenga que llevar ni mantener actualizada una ficha
 técnica de un ordenador que además dejaría de existir o de venderse.
 
+**Para qué sirve la cifra: detectar una regresión en la máquina que ejecuta la suite, no certificar el
+rendimiento de la herramienta sobre un hardware arbitrario.** Quien corra la suite en una máquina
+distinta de la de referencia, más lenta o más rápida, no debe leer el resultado como una afirmación
+sobre `biso`: debe leerlo como una afirmación sobre esa máquina. Un portátil viejo que supere los
+25 ms no dice que la herramienta incumpla su especificación, dice que en ese portátil el número es
+otro; lo que sí dice algo es que el número suba en la propia máquina de referencia de una versión a
+la siguiente, porque ahí el hardware no ha cambiado y lo único que puede haber cambiado es el código.
+
 Tres reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
 
 1. **Ningún comando hace al arrancar trabajo que nadie ha pedido.** Ni una consulta que no alimente
