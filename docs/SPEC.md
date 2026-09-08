@@ -194,9 +194,10 @@ creado depende siempre de una de las tres vías de arriba, nunca de adivinar su 
 raíz por defecto.
 
 **El tope de la búsqueda hacia arriba** es la raíz del proyecto, entendida como la raíz del
-repositorio de control de versiones si lo hay, y si no lo hay, el propio directorio de partida. La
-búsqueda **nunca** sube por encima de la raíz del proyecto ni llega al directorio personal, para que
-un proyecto no encuentre por accidente el tablero de un proyecto hermano.
+repositorio de control de versiones si lo hay (se detecta buscando un directorio `.git` hacia arriba,
+nunca ejecutando `git`), y si no lo hay, el propio directorio de partida. La búsqueda **nunca** sube
+por encima de la raíz del proyecto ni llega al directorio personal, para que un proyecto no encuentre
+por accidente el tablero de un proyecto hermano.
 
 Si nada de eso existe, cualquier comando salvo `init`, `where`, `help`, `--help` y `--version` aborta
 antes de ejecutar su propia lógica, con código 8 y este mensaje por stderr:
@@ -1592,7 +1593,7 @@ biso init [<name>] [--at <location>] [--statuses <list>]
 | `--extensions <list>` | | no | lista | vacía | sí | sí | |
 | `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección 4.11) | no | no | |
 | `--overwrite-config` | | no | booleano | falso | no | no | |
-| `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--projects`, `--extensions`, `--prefix` |
+| `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--projects`, `--extensions`, `--prefix`, `--overwrite-config` |
 
 `--at` acepta el nombre o el localizador de un tablero, en la forma que el almacenamiento imponga,
 igual que la bandera global `--board`.
@@ -1630,8 +1631,16 @@ vocabulario de `config.json` antes de escribir nada y, solo si todo es válido, 
 configuración y después las tareas. Como `config.json` ya trae el nombre del tablero, los estados,
 los tipos, las prioridades, los proyectos, las extensiones y el prefijo del tablero de origen,
 **`--from` es incompatible con `<name>` y con cualquier bandera de vocabulario**: no hay nada que
-decidir, todo viene del fichero. `--at` y `--overwrite-config` siguen valiendo igual que en un `init`
-normal, porque gobiernan dónde queda el tablero nuevo y qué hacer si ya hay uno ahí, no su vocabulario.
+decidir, todo viene del fichero. `--at` sigue valiendo igual que en un `init` normal, porque gobierna
+dónde queda el tablero nuevo, no su vocabulario. **`--overwrite-config` en cambio es incompatible con
+`--from`.** No es una restricción arbitraria: `--overwrite-config` reescribe la configuración de un
+tablero que ya existe sin tocar sus tareas, y `--from` restaura un tablero entero, configuración y
+tareas, en uno nuevo. Combinar las dos sería importar las tareas de la instantánea en un tablero que
+ya tiene las suyas mientras se le cambia el vocabulario, y eso no es restaurar: es fusionar dos
+almacenes, que es justo lo que esta decisión de persistencia rechaza en todas partes. Si el destino de
+`--from` ya tiene un tablero, ese caso ya está cubierto por la primera fila de la tabla siguiente: es
+el mismo Error 2 de "ya hay uno accesible desde aquí", y no hace falta `--overwrite-config` para
+distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno existente.
 
 | Caso | Qué pasa |
 |---|---|
@@ -1645,7 +1654,7 @@ normal, porque gobiernan dónde queda el tablero nuevo y qué hacer si ya hay un
 | `--prefix` con algo que no sean letras | Error 2, `code` `invalid_prefix` |
 | Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección 4.11) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
 | `--at` a un localizador donde no se puede escribir | Error 7 |
-| `--from` junto con `<name>` o con cualquier bandera de vocabulario | Error 2 |
+| `--from` junto con `<name>`, con cualquier bandera de vocabulario, o con `--overwrite-config` | Error 2 |
 | `--from` a un directorio al que le falta `tasks.ndjson`, `config.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
 | `--from` cuyo `config.json` no se puede interpretar como JSON, o lleva una clave desconocida | Error 2, `code` `invalid_snapshot_config` |
 | `--from` cuyo `config.json` tiene el mismo problema que haría fallar con Error 2 a la bandera de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría esa bandera |
@@ -1657,20 +1666,26 @@ normal, porque gobiernan dónde queda el tablero nuevo y qué hacer si ya hay un
 posiciones.** Cambiar `statuses` después no los mueve nunca. Si al cambiar `statuses` uno de los tres
 deja de existir, el comando que lo hace falla, según la sección 10.10.
 
-**El directorio del tablero es también, si es posible, su propio repositorio de git.** `init` intenta
-`git init` ahí mismo y escribe un `.gitignore` que excluye el fichero de la base de datos y sus
-ficheros auxiliares de WAL: lo que queda bajo control de versiones es `tasks.ndjson` y `config.json`,
-los dos ficheros que escribe `biso snapshot` (sección 10.14), nunca el binario. La base de datos no se
-versiona porque cada escritura suya reescribe páginas internas, así que cada commit guardaría una
-copia completa y git no podría diferenciarla de una forma legible.
+**El directorio del tablero es también, si es posible, su propio repositorio de git, pero `init` no lo
+crea.** Lo que `init` sí escribe es un `.gitignore` que excluye el fichero de la base de datos y sus
+ficheros auxiliares de WAL, dejándolo listo para el día en que el directorio llegue a ser un
+repositorio: lo que se versiona entonces es `tasks.ndjson` y `config.json`, los dos ficheros que
+escribe `biso snapshot` (sección 10.14), nunca el binario. Escribir un fichero de texto no es ejecutar
+`git`, así que esto no contradice que `biso snapshot` sea el único comando que ejecuta git.
 
-**El repositorio de git es opcional y su ausencia no rompe nada.** Si `git` no está instalado, o si
-`git init` falla por cualquier motivo, `init` sigue su curso igual: el tablero se crea, y `biso
-snapshot` sigue escribiendo sus dos ficheros y sirviendo para restaurar con `--from`; lo único que se
-pierde es el historial de versiones. `biso` no puede exigir que `git` esté instalado, así que este
-paso nunca hace fallar `init`. Quien quiera añadir git a un tablero que nació sin él puede ejecutar
-`git init` a mano en su directorio en cualquier momento: la siguiente instantánea lo detecta y empieza
-a commitear.
+**Es `biso snapshot`, no `init`, quien convierte el directorio en un repositorio, y lo hace de forma
+perezosa**: la primera vez que `snapshot` corre sobre un directorio que todavía no es un repositorio
+de git, intenta `git init` ahí mismo antes de commitear (sección 10.14). La base de datos no se
+versiona nunca, ni siquiera después de eso, porque cada escritura suya reescribe páginas internas: cada
+commit guardaría una copia completa y git no podría diferenciarla de una forma legible.
+
+**El repositorio de git es opcional y su ausencia no rompe nada.** Si `git` no está instalado,
+`snapshot` sigue escribiendo sus dos ficheros igual y sirviendo para restaurar con `--from`; lo único
+que se pierde es el historial de versiones. `biso` no puede exigir que `git` esté instalado, así que
+esto nunca hace fallar ni a `init` ni a `snapshot` por esta sola razón (la sección 10.14 sí distingue
+un fallo de entorno una vez que el commit se intenta de verdad, con un repositorio ya existente). Quien
+quiera añadir git a un tablero que nació sin él puede ejecutar `git init` a mano en su directorio en
+cualquier momento: la siguiente instantánea lo detecta y empieza a commitear.
 
 #### Salida
 
@@ -1720,7 +1735,7 @@ apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera es
 |---|---:|
 | Tablero creado, o restaurado con `--from` | 0 |
 | Ya existía y no hay `--overwrite-config` | 2 |
-| Argumentos inválidos, incluido un `config.json` de `--from` inválido | 2 |
+| Argumentos inválidos, incluido un `config.json` de `--from` inválido, o `--from` junto con `--overwrite-config` | 2 |
 | `--overwrite-config` cambiaría `task_prefix` con tareas ya creadas | 6 |
 | No se puede escribir | 7 |
 | `--from` a un directorio sin `tasks.ndjson`, sin `config.json`, o sin los dos | 4 |
@@ -1758,7 +1773,9 @@ Options:
   --from <location>           restore a snapshot: the directory where `biso
                               snapshot` wrote tasks.ndjson and config.json.
                               Incompatible with name and with every vocabulary
-                              option, which all come from config.json instead
+                              option (which all come from config.json
+                              instead), and with --overwrite-config: restoring
+                              always creates a new board
   -h, --help                  show this help
 
 `--initial-status`, `--active-status` and `--terminal-status` each name one of
@@ -1766,10 +1783,13 @@ Options:
 together; giving any of them without `--statuses` is bad usage. They are then
 stored as explicit values and never move again.
 
-The board directory is also, when possible, its own git repository: `init`
-runs `git init` there and writes a .gitignore that excludes the database file
-and its WAL auxiliaries, so only tasks.ndjson and config.json are ever
-versioned. Missing git never fails `init`; the board works the same, only its
+The board directory can also become its own git repository, but `init` does
+not create it: `init` only writes a .gitignore that excludes the database
+file and its WAL auxiliaries, so that once a repository exists only
+tasks.ndjson and config.json are ever versioned. `biso snapshot` is the one
+that runs `git init` there, lazily, the first time it runs against a
+directory that is not yet a repository (see `biso snapshot --help`). Missing
+git never fails `init` or `snapshot`; the board works the same, only its
 history is lost.
 
 Exit codes:
@@ -4344,19 +4364,28 @@ que cada commit de una tarea reescribiera también un bloque de configuración i
 
 #### El commit
 
-Si el directorio del tablero es un repositorio de git (10.1: `init` lo intenta crear, y su ausencia
-nunca rompe nada), `snapshot` añade los dos ficheros y hace un commit con el mensaje
-`biso snapshot: 248 tasks` (con el recuento real de cada vez). `--no-commit` escribe los dos ficheros
-igual y no toca git.
+Salvo con `--no-commit`, antes de escribir nada `snapshot` comprueba si el directorio del tablero es
+ya un repositorio de git. **Si no lo es, es `snapshot` quien lo crea**: intenta `git init` ahí mismo,
+de forma perezosa, la primera vez que se ejecuta sobre ese directorio (10.1 ya ha dejado preparado un
+`.gitignore` que excluye la base de datos, así que el primer commit solo añade `tasks.ndjson` y
+`config.json`). Si `git` no está instalado, o si ese `git init` falla por cualquier motivo, `snapshot`
+no lo trata como un error: escribe los dos ficheros igual y salta el commit, exactamente como si el
+directorio nunca hubiera podido llegar a ser un repositorio.
 
-Si el directorio no es un repositorio de git, `snapshot` escribe los dos ficheros igual y no intenta
-commitear: no es un error, es el caso que la 10.1 ya prevé, que git es opcional.
+Si el directorio ya era, o acaba de convertirse en, un repositorio de git, `snapshot` añade los dos
+ficheros y hace un commit con el mensaje `biso snapshot: 248 tasks` (con el recuento real de cada
+vez).
+
+`--no-commit` escribe los dos ficheros igual y no toca git en absoluto: ni comprueba si hay un
+repositorio, ni intenta crear uno, ni commitea.
 
 **Ningún otro comando de `biso` ejecuta nunca `git`.** Invocar `git` cuesta unos 12 milisegundos
 medidos, y el presupuesto de arranque de 25 milisegundos para `biso ls` y `biso prime` sobre un
 tablero de 300 tareas (sección 9) no admite ese coste en el camino caliente de ningún comando. `biso
 snapshot` es la única excepción, precisamente porque quien lo llama ya está pidiendo explícitamente
-una operación de git.
+una operación de git; y es también, por lo mismo, el único comando que llega a convertir el
+directorio del tablero en un repositorio: sin haber corrido nunca `biso snapshot` sin `--no-commit`
+sobre él, ese directorio nunca pasa a serlo.
 
 #### Comportamiento, caso a caso
 
@@ -4364,9 +4393,10 @@ una operación de git.
 |---|---|
 | Repositorio de git, hay cambios desde la última instantánea | Escribe los dos ficheros, commitea, código 0 |
 | Repositorio de git, sin ningún cambio desde la última instantánea | Escribe los dos ficheros (con el mismo contenido de antes) y no hay nada que commitear; `note: nothing to commit, tasks.ndjson and config.json are unchanged since the last snapshot`, código 0 |
-| `--no-commit` | Escribe los dos ficheros, no toca git aunque el directorio sea un repositorio, código 0 |
-| El directorio del tablero no es un repositorio de git | Escribe los dos ficheros, `note: not a git repository, skipping the commit`, código 0 |
-| El commit falla por una razón de entorno (git no configurado, sin permiso para escribir en `.git`, disco lleno) | Los dos ficheros ya han quedado escritos en disco antes de intentar el commit; Error 7, `code` `git_commit_failed`, y la instantánea de ficheros es válida aunque el commit no se haya hecho |
+| `--no-commit` | Escribe los dos ficheros, no toca git en absoluto, código 0 |
+| El directorio no es un repositorio de git, y el `git init` perezoso lo consigue crear | Lo crea, añade los dos ficheros al primer commit, código 0 |
+| El directorio no es un repositorio de git, y `git` no está instalado o el `git init` perezoso falla | Escribe los dos ficheros, `note: not a git repository, skipping the commit`, código 0 |
+| El commit falla por una razón de entorno, con un repositorio ya existente (git no configurado, sin permiso para escribir en `.git`, disco lleno) | Los dos ficheros ya han quedado escritos en disco antes de intentar el commit; Error 7, `code` `git_commit_failed`, y la instantánea de ficheros es válida aunque el commit no se haya hecho |
 | Alguna tarea no se puede leer (4.12) | Se salta, se cuenta, `warning: 1 task could not be read and was skipped`, y el código es 6 en vez de 0, igual que en `biso export` |
 | No se puede escribir alguno de los dos ficheros | Error 7 |
 | No hay tablero | Error 8 |
@@ -4427,23 +4457,26 @@ ilegibles que se han saltado, igual que en `biso ls` (10.4): vacío salvo cuando
 ```
 Usage: biso snapshot [options]
 
-Write tasks.ndjson and config.json into the board's own directory, and commit
-them if that directory is a git repository. This is the file pair that
-`biso init --from` reads back to rebuild a board whole: its tasks, in the same
-shape `biso export` writes, and its configuration, in the same shape
-`biso config list --json` prints.
+Write tasks.ndjson and config.json into the board's own directory, then
+commit them to git. If the directory is not yet a git repository, this
+command creates one, lazily, the first time it runs there; `biso init`
+already leaves a .gitignore ready that excludes the database file. This is
+the file pair that `biso init --from` reads back to rebuild a board whole:
+its tasks, in the same shape `biso export` writes, and its configuration, in
+the same shape `biso config list --json` prints.
 
-biso snapshot is the only command that ever runs git. No other command does:
-invoking git costs about 12ms, more than the 25ms startup budget for biso ls
+biso snapshot is the only command that ever runs git, and the only one that
+turns a board directory into a git repository: no other command does either.
+Invoking git costs about 12ms, more than the 25ms startup budget for biso ls
 and biso prime allows on the hot path.
 
 Options:
       --no-commit    write the files, never touch git
   -h, --help         show this help
 
-If the board directory is not a git repository, the files are written and the
-commit step is silently skipped: git is optional, and its absence never fails
-this command.
+If git is not installed, or creating the repository fails, the files are
+written and the commit step is silently skipped: git is optional, and its
+absence never fails this command.
 
 Exit codes:
   0  written, and committed if that applied
