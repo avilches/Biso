@@ -3469,7 +3469,7 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 
 | Clave | Tipo | Por defecto |
 |---|---|---|
-| `project_name` | texto | el nombre del proyecto |
+| `project_name` | texto; cambiarla mueve la carpeta del tablero | el nombre del proyecto |
 | `statuses` | lista, mínimo tres | `To Do, In Progress, Done` |
 | `initial_status` | uno de `statuses` | `To Do`, al crear el tablero sin `--statuses` |
 | `active_status` | uno de `statuses` | `In Progress`, al crear el tablero sin `--statuses` |
@@ -3486,8 +3486,23 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `finish_strict` | booleano | falso |
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
 
-**`project_name` es el nombre del tablero.** Es la etiqueta humana que da nombre a su carpeta
-(`<nombre>-<id>`, sección 3.2). Cambiarla no toca el `id` del puntero ni ninguna tarea.
+**`project_name` es el nombre del tablero, y es la única clave de esta tabla cuyo cambio toca el
+sistema de ficheros.** Cambiarla mueve la carpeta del tablero en la misma operación, en su ubicación
+real (la raíz por defecto o la que diga `path` en el puntero, sección 3.2), conservando el sufijo del
+identificador: `kex-3f9a2b1c` pasa a `nuevonombre-3f9a2b1c`. No toca ningún puntero, porque el tablero
+se localiza por el patrón `*-<id>` y el identificador viaja en el nombre de la carpeta, no en ningún
+fichero aparte. La parte del nombre en la carpeta es decorativa, nadie resuelve por ella: mantenerla
+al día es mantener una etiqueta, no mover datos de los que algo dependa.
+
+**Renombrar no toca nunca el `task_prefix`.** Se derivó una vez al crear el tablero y desde entonces
+vive por su cuenta en esa clave; cambiar `project_name` no lo recalcula, aunque el nombre nuevo diera
+un prefijo distinto si el tablero se creara hoy. Si el nombre nuevo no deja ninguna letra con la que
+derivar un prefijo (sección 4.11), tampoco es un error aquí: el prefijo ya está fijado y no se
+recalcula al renombrar.
+
+La misma regla vale para `biso init --overwrite-config` (sección 10.1): si el `<name>` resultante
+difiere del `project_name` que el tablero ya tenía, `--overwrite-config` mueve la carpeta igual que lo
+haría `config set project_name`.
 
 **`me` gana sobre `BISO_ME` cuando las dos están puestas.** Por eso un tablero compartido entre una
 persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
@@ -3519,6 +3534,10 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
+| Cambiar `project_name` a un valor vacío | Error 3 |
+| Cambiar `project_name` al mismo valor que ya tiene | La carpeta no se mueve, porque el nombre no cambia; el `set` se completa igual |
+| Cambiar `project_name` a un valor que no dejaría ninguna letra para derivar un prefijo | No es error: el `task_prefix` ya está fijado y no se recalcula al renombrar |
+| Cambiar `project_name` sin poder mover la carpeta, por ejemplo por permisos | Error 7 |
 | `get` de una clave de lista | Los valores separados por comas, en una línea |
 | `set` correcto | Sin salida por stdout, con `note:` por stderr diciendo el valor nuevo |
 
@@ -3587,7 +3606,7 @@ Solo `config list` acepta `--json`:
 | Valor de tipo o de dominio incorrecto | 3 |
 | Clave inexistente | 4 |
 | El cambio dejaría el tablero inconsistente | 6 |
-| No se puede escribir la configuración | 7 |
+| No se puede escribir la configuración, o mover la carpeta al renombrar `project_name` | 7 |
 | No hay tablero | 8 |
 
 #### `biso config --help`
@@ -3601,7 +3620,8 @@ Read and change the board configuration. List values are comma-separated.
 No configuration change ever touches a task.
 
 Keys:
-  project_name       board name
+  project_name       board name; changing it moves the board folder too,
+                     keeping the id suffix
   statuses           the board statuses, in order
   initial_status     status of a new task           (one of statuses)
   active_status      what `biso start` sets         (one of statuses)
@@ -3678,6 +3698,7 @@ imprime fichas de tareas.
 | Ciclos de tarea padre | no |
 | Claves de criterio repetidas dentro de una tarea | no |
 | El identificador más alto que el tablero recuerda haber asignado (4.11) es menor que el identificador más alto de una tarea existente | sí |
+| El nombre de la carpeta del tablero no coincide con `project_name` (alguien la renombró por fuera de `biso`) | sí |
 | Huecos en la numeración | no son un problema, no se reportan |
 
 #### Comportamiento, caso a caso
@@ -3737,8 +3758,9 @@ Usage: biso doctor [options]
 
 Check the board for duplicate ids, unreadable tasks, undeclared extension keys,
 values that are no longer configured, a broken status-role invariant, broken
-or circular dependencies, repeated criterion keys, and a recorded highest id
-that has fallen behind.
+or circular dependencies, repeated criterion keys, a recorded highest id that
+has fallen behind, and a board folder name that no longer matches the board
+name.
 
 Options:
       --fix      repair what can be repaired without a decision
