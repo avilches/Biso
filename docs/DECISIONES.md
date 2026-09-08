@@ -501,6 +501,25 @@ despertar, escribir, y robar de vuelta una tarea que ya había reclamado otro. A
 el arrendamiento ya guarda quién lo tiene y la comprobación es comparar y sustituir dentro de una
 transacción que ya existía por otro motivo (sección 4.10).
 
+**Por qué el arrendamiento se exporta e importa como cualquier otro campo.** Al añadir los dos campos
+guardados quedó sin decir si viajan en `biso export`, y las dos respuestas eran defendibles: dejarlos
+fuera, porque un arrendamiento es la reserva de una sesión concreta en una máquina concreta, o dejarlos
+entrar, porque son campos guardados y no derivados y la garantía de simetría de la sección 10.9 de
+`SPEC.md` promete que todos ellos van y vuelven. Se eligió la segunda, y en rigor no era una elección
+libre: el contrato de estabilidad de la sección 13 de `SPEC.md` ya enuncia esa simetría como una prueba
+de la suite "sobre todos los campos no derivados", sin lista de excepciones, así que dejar fuera el
+arrendamiento habría obligado a abrir una y a mantenerla, que es exactamente la clase de enumeración
+que se desincroniza (apartado 8). La otra razón, la que hace que la primera no salga cara, es que el
+diseño ya toleraba un arrendamiento ajeno: `leaseExpired` se recalcula contra el reloj de
+quien lee, así que el arrendamiento que llega caducado sale caducado y `biso start` lo reclama, y el
+que llega vivo a nombre de otra identidad produce el aviso de la sección 4.3 y nada más, porque `biso
+start` avisa y coge la tarea igual. El caso que de verdad importa, restaurar un respaldo del propio
+tablero, sale además mejor así: la tarea que estaba en marcha sigue constando en marcha y a nombre de
+quien la llevaba, en vez de aparecer activa y sin dueño del arrendamiento. Lo único que hay que
+custodiar es la invariante de que los dos campos solo tienen valor en una tarea activa y asignada, y se
+custodia donde se custodia todo lo demás del lote: en la validación previa de `biso new --from`, que
+rechaza el fichero entero antes de escribir nada.
+
 ### 9.3. Señalar lo que espera a una persona
 
 Se puede configurar un estado tipo `Blocked`, pero es un estado más: `biso prime` no lo distingue, así

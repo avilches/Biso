@@ -666,8 +666,8 @@ escribe. No dice nada de cómo se guardan.
 | `createdAt` | instante UTC | sí | el programa | solo al importar |
 | `updatedAt` | instante UTC | sí | el programa | solo al importar |
 | `archived` | booleano | sí, `false` por defecto | el programa, con `biso archive` | sí, solo con `biso archive` / `--unarchive`, o al importar |
-| `leaseExpiresAt` | instante UTC | no | el programa, a `ahora + lease_minutes` (clave de configuración, 10.10); ver la sexta precisión de abajo para cuándo | sí, ver las precisiones sexta y séptima de abajo |
-| `leaseHolder` | texto de persona | no | el programa, solo con `biso start` (10.7.1); ver la sexta precisión de abajo | sí, solo con `biso start`; ver las precisiones sexta y séptima de abajo |
+| `leaseExpiresAt` | instante UTC | no | el programa, a `ahora + lease_minutes` (clave de configuración, 10.10); ver la sexta precisión de abajo para cuándo | sí, ver las tres últimas precisiones de abajo, o al importar |
+| `leaseHolder` | texto de persona | no | el programa, solo con `biso start` (10.7.1); ver la sexta precisión de abajo | sí, solo con `biso start`, o al importar; ver las tres últimas precisiones de abajo |
 | `urgency` | decimal, derivado | derivado | el programa | no, se recalcula al leer |
 | `ext` | mapa de clave declarada a texto | no | quien llama | sí |
 | `description` | texto largo | no | quien llama | sí |
@@ -684,7 +684,7 @@ escribe. No dice nada de cómo se guardan.
 | `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
 | `leaseExpired` | booleano, derivado | derivado | el programa | no, se recalcula al leer |
 
-Siete precisiones sobre la mutabilidad:
+Ocho precisiones sobre la mutabilidad:
 
 - **"No mutable" significa que ninguna bandera del programa lo cambia.** `updatedAt` lo reescribe el
   programa en cada operación que cambie algo.
@@ -718,8 +718,9 @@ Siete precisiones sobre la mutabilidad:
   mientras el arrendamiento está vencido tampoco lo toca, y lo deja vencido: quien comenta, anota o
   cierra una tarea no ha reclamado nada, y solo `biso start` reclama. Una tarea que llega a activa y
   asignada por una vía distinta de `biso start`, por ejemplo `biso set --status`, no tiene
-  arrendamiento hasta que alguien llame a `biso start` sobre ella: no hay ninguna otra escritura que
-  lo pueda crear.
+  arrendamiento hasta que alguien llame a `biso start` sobre ella: ninguna bandera de campo de la
+  sección 8 lo puede crear, y la única vía que no pasa por `biso start` es la importación, que es de
+  lo que trata la precisión de abajo.
 - **Los dos campos solo tienen valor en una tarea activa y asignada, y se vacían al perder cualquiera
   de las dos condiciones, no solo la primera.** Una escritura que saca la tarea del estado activo
   (`biso finish`, o `biso set --status` a cualquier otro valor) vacía `leaseExpiresAt` y
@@ -727,6 +728,16 @@ Siete precisiones sobre la mutabilidad:
   dos cosas, perder la segunda los vacía igual: `--clear-assignee` o `--rm-assignee` (8.2) sobre una
   tarea activa que se queda sin ninguna persona asignada vacía los dos campos en esa misma escritura,
   sea quien sea quien la haga.
+- **La importación los escribe con el valor que traiga el fichero, y es la única vía que lo hace.** Los
+  dos son campos guardados y no derivados, así que `biso export` los escribe y `biso new --from` los
+  lee de vuelta como cualquier otro, que es lo que hace cierta la garantía de simetría de 10.9 sin una
+  lista de excepciones que mantener. La invariante de la precisión anterior se comprueba al importar:
+  una línea que traiga `leaseExpiresAt` o `leaseHolder` sobre una tarea que no esté a la vez en el
+  estado activo y asignada a alguien es un fallo de validación del lote (10.3), igual que una clave
+  desconocida. Un arrendamiento importado no privilegia a nadie: `leaseExpired` se recalcula contra el
+  reloj de la máquina que lee, así que el que llegue caducado sale caducado y `biso start` lo reclama
+  (10.7.1), y el que llegue vivo a nombre de otra identidad solo produce el aviso de la sección 4.3
+  hasta que caduque.
 
 ### 5.1. Los criterios y sus claves estables
 
@@ -1429,8 +1440,9 @@ Cómo se calcula el resumen, para que la implementación sea única:
   indentada con la forma `lease expired <leaseExpiresAt>, was held by <leaseHolder>`. Es el único de
   los cuatro bloques que la lleva, porque es el único cuya etiqueta afirma que alguien está
   trabajando ahora mismo, y un arrendamiento vencido contradice justo esa afirmación. Esta línea, como
-  la de la pregunta, no cuenta para el ancho de las columnas y no viaja en el esquema JSON de 9.9, que
-  ya deja fuera el cuerpo de la pregunta por el mismo motivo.
+  la de la pregunta, no cuenta para el ancho de las columnas. El hecho que la provoca sí viaja en el
+  esquema JSON de 9.9, como el campo `leaseExpired`, y sus dos detalles no: quien los quiera los pide
+  con `biso get`, igual que pide el cuerpo de la pregunta.
 - `NEEDS ANSWER` lista las tareas con pregunta abierta, ordenadas igual, sin límite. Cada tarea
   ocupa **dos líneas**: la fila de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo
   una línea indentada con la pregunta recortada a **100 caracteres**, la misma cifra exacta que el
@@ -1491,12 +1503,12 @@ THE BOARD IS EMPTY
     "inProgress": [
       { "id": "TASK-11", "title": "Normalize CRLF in the diff", "status": "In Progress",
         "type": "bug", "priority": "high", "assignees": ["@claude"], "due": null,
-        "acDone": 1, "acTotal": 2, "urgency": 19.0 }
+        "acDone": 1, "acTotal": 2, "urgency": 19.0, "leaseExpired": false }
     ],
     "needsAnswer": [
       { "id": "TASK-60", "title": "Confirm the retry budget for the upload endpoint",
         "status": "In Progress", "type": "task", "priority": "high", "assignees": ["@claude"],
-        "due": null, "acDone": 0, "acTotal": 2, "urgency": 15.2 }
+        "due": null, "acDone": 0, "acTotal": 2, "urgency": 15.2, "leaseExpired": false }
     ],
     "assignedToYou": [
       { "id": "TASK-61", "title": "Rewrite the install section", "status": "To Do",
@@ -1521,6 +1533,14 @@ programa no necesita que le expliquen que el nombre desnudo añade.
 cada tarea (en `needsAnswer` o en cualquier otro de los cuatro bloques), que ya dice si está
 aparcada, igual que el campo derivado `waiting` de `task.list`. Quien necesite leer la pregunta usa
 `biso get --section question`.
+
+**`leaseExpired` sale solo en `inProgress` y en `needsAnswer`**, que son los dos únicos bloques que
+pueden contener una tarea en el estado activo, y por tanto los dos únicos donde un arrendamiento puede
+existir: la precedencia de 9.7 manda toda tarea activa a uno de esos dos, así que en `assignedToYou` y
+en `nextUp` el campo sería siempre `false` y no diría nada. Va en el JSON aunque la segunda línea
+indentada del texto salga solo en `inProgress`, porque no es texto largo y esconderlo obligaría a quien
+consume JSON a llamar a `biso get` tarea por tarea para saber algo que el mensaje de texto ya enseña.
+Sus dos detalles, `leaseExpiresAt` y `leaseHolder`, no salen aquí: para eso está `task.list` (10.4).
 
 ### 9.10. Códigos de salida
 
@@ -2055,6 +2075,11 @@ Las reglas del lote, todas obligatorias:
   `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.
 - **`id`, `createdAt` y `updatedAt` se aceptan aquí y solo aquí.** Un `id` ya ocupado es un fallo de
   validación; un `id` libre se reserva y el tablero no lo volverá a asignar.
+- **`leaseExpiresAt` y `leaseHolder` se aceptan aquí con el valor que traiga el fichero**, que es lo
+  que hace cierta la garantía de simetría de 10.9 para ellos dos. La invariante de la sección 5 se
+  comprueba en la validación: una línea que traiga cualquiera de los dos sobre una tarea que no esté a
+  la vez en el estado activo y asignada a alguien es un fallo de validación, y lo dice nombrando la
+  línea y el campo.
 - **Un `id` explícito tiene que llevar el `task_prefix` del tablero de destino.** Si no lo lleva, es
   un fallo de validación, igual que un `id` ya ocupado: es la misma protección que hace inmutable a
   `task_prefix` en la sección 10.10, cerrando la tercera vía hacia el mismo tablero de identificadores
@@ -2360,6 +2385,8 @@ igual que las demás.
         "ordinal": null,
         "createdAt": "2026-09-06T09:12:04Z",
         "updatedAt": "2026-09-06T11:40:18Z",
+        "leaseExpiresAt": "2026-09-06T15:40:18Z",
+        "leaseHolder": "@claude",
         "acDone": 1,
         "acTotal": 2,
         "dodDone": 0,
@@ -2369,6 +2396,7 @@ igual que las demás.
         "blocks": ["TASK-40"],
         "blocked": false,
         "waiting": false,
+        "leaseExpired": false,
         "archived": false,
         "ext": { "trello.card": "5f2a8c1e3b9d4a7f6e0c2b81" }
       }
