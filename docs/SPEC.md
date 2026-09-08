@@ -4568,11 +4568,10 @@ Global options:
   -h, --help         this, or the help of a command
 
 More: `biso <command> --help`, and `biso help all` for the administrative
-commands (init, where, archive, export, config, doctor, board, help,
-snapshot).
+commands (init, where, archive, export, config, doctor, board, help, snapshot).
 ```
 
-Son treinta y tres líneas, y no incluyen los nueve comandos de administración.
+Son treinta y dos líneas, y no incluyen los nueve comandos de administración.
 
 ---
 
