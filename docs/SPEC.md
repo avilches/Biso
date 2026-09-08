@@ -3966,8 +3966,41 @@ riesgo: en ese sistema de ficheros el modo WAL de SQLite no ofrece las garantía
 sección 4.10 exige, pero el tablero de hoy puede estar perfectamente sano. Eso es exactamente lo que
 distingue a un aviso de un error, así que es aviso.
 
-Con esto, de las quince filas de la tabla, catorce son problemas que se reportan (doce errores y dos
-avisos) y una, los huecos en la numeración, no lo es y no se reporta nunca.
+**Y la primera tiene una peculiaridad que la separa de las demás filas de error: nunca aparece como
+una línea del informe.** Las otras once comprobaciones de error sí producen una entrada en la lista
+de problemas cuando se disparan, pero esta no, porque cuando se dispara no hay informe de `doctor`
+que mostrarla: hay el abort completo de la sección 4.12, con su propio mensaje y su propio código 8,
+antes de que `doctor` llegue a comprobar nada más (ver la tabla de comportamiento más abajo). La fila
+está en esta tabla para decir que existe como comprobación y cuál es su nivel, no porque vaya a
+verse alguna vez junto a las demás.
+
+Con esto, de las quince filas de la tabla, catorce son problemas (doce errores y dos avisos) y una,
+los huecos en la numeración, no lo es y no se reporta nunca. De esas catorce, solo trece llegan a
+aparecer alguna vez como una línea del informe: la comprobación de integridad de la base de datos es
+la única que, aun siendo un problema real, no se manifiesta ahí, por la razón de arriba.
+
+#### Atomicidad de `--fix` con varias reparaciones
+
+Cuando `--fix` tiene que aplicar más de una reparación de tipo distinto, por ejemplo corregir el
+contador del identificador más alto y renombrar la carpeta del tablero a la vez, no hay una sola
+operación que las cubra a las dos: **las reparaciones de datos van en una sola transacción de la base
+de datos, todo o nada, y el renombrado de la carpeta va después y por separado.** Si el renombrado
+falla, no deshace las reparaciones de datos que ya se aplicaron.
+
+Esto no es una preferencia de diseño, es una imposibilidad: **un renombrado de directorio no puede
+estar dentro de una transacción de SQLite.** Son dos sistemas distintos, el motor de la base de datos
+y el sistema de ficheros, y no existe manera de hacerlos atómicos juntos. Cualquier redacción de esta
+sección que prometiera una atomicidad conjunta estaría prometiendo algo que no se puede implementar.
+
+Y esto no rompe la garantía de la sección 4.10, porque esa sección promete sobre las escrituras del
+tablero, es decir, sobre sus datos, y renombrar la carpeta no cambia ningún dato del tablero: el
+nombre de la carpeta es decorativo, tal como ya establece esta misma sección más arriba. Por eso el
+orden importa y hay que decirlo explícito: primero la transacción de datos, después el renombrado. Si
+el renombrado falla, las reparaciones de datos quedan hechas y son definitivas, el comando termina
+con el código de no poder escribir (7, el mismo de cualquier otro fallo de entorno al reparar), y el
+desajuste de la carpeta vuelve a aparecer como aviso la próxima vez que se ejecute `doctor`, porque
+sigue siendo verdad. Ese desenlace es coherente consigo mismo: no hay ningún dato del tablero
+observado a medias, y lo único que queda pendiente es una reparación que ya se sabe cómo repetir.
 
 #### Comportamiento, caso a caso
 
@@ -3979,7 +4012,7 @@ avisos) y una, los huecos en la numeración, no lo es y no se reporta nunca.
 | Quedan errores sin reparar | Código 6, aunque se haya reparado algo o se hayan reportado avisos |
 | Una tarea ilegible (4.12) | Se reporta como error y se sigue con las demás. **Nunca aborta** |
 | La base de datos no se puede leer (4.12) | El comando entero aborta con el mensaje y el código 8 de 4.12, antes de comprobar nada más |
-| `--fix` sin poder escribir | Código 7 |
+| `--fix` sin poder escribir | Código 7. Si falla el renombrado de carpeta después de la transacción de datos, esta ya quedó aplicada (ver arriba) |
 | `--fix --dry-run` | Reporta qué se repararía, sin reparar nada, código 0 |
 
 #### Salida
