@@ -39,10 +39,20 @@ cada pieza, con su aritmética, está en la sección 12 de [`docs/DECISIONES.md`
 que enlaza a su vez a [`docs/ESTADO-DEL-ARTE.md`](docs/ESTADO-DEL-ARTE.md), la investigación sobre las
 demás herramientas del espacio y por qué fallan.
 
-**Lo único que sigue abierto, y no bloquea, es el lenguaje de implementación.** El único requisito
-que sale de la especificación es que el programa arranque rápido, con el presupuesto de la sección
-4.13 de `docs/SPEC.md`: 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero de 300
-tareas, cuyo origen está en la sección 13 de `docs/DECISIONES.md`.
+## El lenguaje es Go
+
+El requisito que sale de la especificación es que el programa arranque rápido, con el presupuesto de la
+sección 4.13 de `docs/SPEC.md`: 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero
+de 300 tareas, cuyo origen está en la sección 13 de `docs/DECISIONES.md`. Eso descarta los lenguajes
+interpretados, y entre los compilados la elección es **Go**, no por rendimiento sino por lo que cuesta
+escribir el programa: la ventaja de Rust son seis décimas de milisegundo sobre un presupuesto que ya
+sobra tres veces, y su modelo de propiedad de memoria obliga a rondas de corrección que alargan el ciclo
+sin dejar nada mejor en el producto. El razonamiento completo, con las cifras, está en la sección 14 de
+`docs/DECISIONES.md`.
+
+**Lo primero que la implementación tiene que resolver es cómo habla con SQLite**, porque la elección
+entre el enlace con la biblioteca en C, que obliga a compilar con `cgo`, y la traducción a Go puro
+afecta al arranque y a la distribución del binario, y todavía no está medida contra el presupuesto.
 
 ## Cosas que conviene tener presentes al implementar
 

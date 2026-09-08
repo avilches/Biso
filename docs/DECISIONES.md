@@ -832,6 +832,50 @@ del presupuesto, 25 milisegundos, deja **unas tres veces de margen** sobre ese t
 **La cifra excluye a propósito los lenguajes interpretados.** En la misma máquina, el solo arranque de
 Python 3.14 añade 24,5 milisegundos por delante de cualquier trabajo real, y el de Node 25.6 añade 33.
 Un presupuesto que tuviera que cubrir ese arranque dejaría de medir la herramienta y pasaría a medir el
-lenguaje, así que la cifra se fija mirando el suelo que un lenguaje compilado permite. Eso acota la
-lista de lenguajes candidatos sin cerrarla: el lenguaje de implementación sigue sin decidir (ver
-`CLAUDE.md`), y esta cifra es la condición que cualquier candidato tiene que poder cumplir.
+lenguaje, así que la cifra se fija mirando el suelo que un lenguaje compilado permite. Eso acotó la
+lista de candidatos a los compilados, y el apartado siguiente cierra la elección dentro de esa lista.
+
+---
+
+## 14. El lenguaje de implementación es Go
+
+**Los dos candidatos reales eran Go y Rust**, y la elección es Go. Los dos cumplen el presupuesto del
+apartado anterior con holgura, así que la decisión no se toma por rendimiento: se toma por lo que cuesta
+escribir el programa, porque es lo único que de verdad los separa aquí.
+
+**Por rendimiento la diferencia son seis décimas de milisegundo.** Con las medidas de la sección 12 de
+`docs/ESTADO-DEL-ARTE.md`, sobre el suelo de 5,2 milisegundos que cuesta arrancar cualquier proceso,
+Rust añade 1,6 milisegundos y Go 2,2. Esa diferencia es el **2,4 por ciento** de un presupuesto de 25
+milisegundos que ya sobra tres veces sobre el total medido de 8,7. Para calibrar cuánto es: `rg`, que es
+la herramienta más rápida de las que se midieron instaladas, tarda 7,1 milisegundos, y
+`git --version` tarda 12,3. Ganar seis décimas en un programa cuyo competidor de referencia gasta doce
+milisegundos en imprimir su propia versión no cambia nada que un usuario pueda notar. El presupuesto,
+además, **se midió con un binario de Go**, así que la cifra que la especificación exige no es una
+extrapolación: es lo que el lenguaje elegido hizo en esa máquina.
+
+**Lo que decide es el ciclo de desarrollo, y en particular el ciclo de un agente.** Este documento y
+`SPEC.md` están escritos para que alguien implemente el programa entero sin preguntar, con la
+comprobación frecuente que la sección 15 de `SPEC.md` ordena, y ese alguien va a ser en buena parte un
+agente automático. En ese modo de trabajo, el coste dominante no es el tiempo de ejecución del programa
+sino **el número de vueltas entre escribir y ver el resultado**, y ahí Go gana por dos motivos
+distintos. El primero es que compila muy rápido, así que cada vuelta es corta. El segundo es más
+importante: el modelo de propiedad y préstamo de memoria de Rust es exactamente la clase de cosa que un
+modelo de lenguaje **no acierta a la primera**, y cada fallo obliga a una ronda de corrección que no
+trata del problema que se está resolviendo sino de satisfacer al compilador. Esas rondas se suman, hacen
+falta revisiones constantes, y no dejan nada mejor en el producto: el mismo programa, escrito en Go, no
+las paga.
+
+**El coste de elegir Go se acepta a ojos vistas y aquí queda escrito.** El recolector de basura, que es
+la objeción habitual, no tiene ningún efecto medible en una herramienta cuyo proceso vive milisegundos,
+lee 300 tareas y termina, porque no llega a haber presión de memoria que recoger. El binario es mayor
+que el equivalente en Rust, lo que da igual en algo que se instala una vez. Y se renuncia a las seis
+décimas del párrafo anterior, que es lo que se está comprando.
+
+**Queda una cosa por comprobar al empezar a implementar, y no es del lenguaje sino de su encuentro con
+SQLite.** La persistencia del apartado 12 es una base de datos SQLite, y en Go hay dos formas de hablar
+con ella: un enlace con la biblioteca en C, que obliga a compilar con `cgo` y complica generar binarios
+para otras plataformas, o una traducción de SQLite a Go puro, que compila en cualquier sitio sin
+herramientas de C. La elección entre las dos afecta al arranque y a cómo se distribuye el programa, así
+que **hay que medirla contra el presupuesto de 25 milisegundos antes de comprometerse**, y no está
+medida todavía. Es lo primero que la implementación tiene que resolver, y su resultado pertenece a este
+mismo apartado cuando se sepa.
