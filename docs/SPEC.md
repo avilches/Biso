@@ -3896,26 +3896,34 @@ Lo que `doctor` reporta se divide en dos niveles:
 - **Avisos**: son verdad, merece la pena saberlos, y no rompen nada. **No cambian el código de
   salida.**
 
-**Se llaman avisos y usan el prefijo `warning:`, que el documento ya usa en otros sitios** (sección
-4.3), por ejemplo cuando una tarea no se puede leer y se salta en un comando de conjunto, o cuando el
-arrendamiento de una tarea es de otra identidad. No se inventa una palabra nueva.
+**Se llaman avisos, pero no usan el prefijo `warning:`.** Ese prefijo es de stderr: la sección 4.3
+dice que su tabla es la lista completa de avisos que el programa emite por ahí, y no hay ningún otro.
+El informe de `doctor` va por stdout (ver más abajo por qué), así que para distinguir sus dos niveles
+usa un formato propio, no un token que otra sección ya reserva para otra cosa: el encabezado de la
+salida, `Errors:` y `Warnings:`, y el recuento de la primera línea. La palabra "aviso" sigue nombrando
+el concepto; lo único que cambia es la marca literal.
 
 **Un aviso tiene que ser accionable sin investigar nada**, o no sirve para lo que un agente necesita.
 La regla: dice qué hay y qué se esperaba, con los dos valores literales al lado. Para el nombre de la
-carpeta desparejado:
+carpeta desparejado, tal como aparece bajo `Warnings:` en la salida de abajo:
 
 ```
-warning: board folder is "proyecto-viejo-3f9a2b1c" but project_name is "Kex" (expected "kex-3f9a2b1c")
+board folder is "proyecto-viejo-3f9a2b1c" but project_name is "Kex" (expected "kex-3f9a2b1c")
 ```
 
 Ahí el arreglo está a la vista, y se ve además por qué: el sufijo del identificador es idéntico en los
 dos lados, así que lo único que difiere es la parte decorativa. Quien lo lea puede corregirlo o
 proponer la corrección sin abrir nada más.
 
-**El informe de `biso doctor`, con sus errores y sus avisos, viaja entero por stdout.** No es una
-excepción a la regla de la sección 4.2: esa regla separa los datos de los avisos incidentales de una
-operación que hace otra cosa, y aquí el informe completo es el dato que se ha pedido. Los avisos de
-los demás comandos, los que lista la tabla de la sección 4.3, siguen yendo por stderr sin cambiar.
+**El informe de `biso doctor` viaja entero por stdout, con sus errores y sus avisos juntos.** La
+sección 4.2 dice que stdout lleva lo que un programa consumiría, y el informe es exactamente eso: es
+el resultado que se ha pedido, no un mensaje que acompaña a otro trabajo. Los avisos y las notas de
+la sección 4.3 son mensajes que un comando emite al lado de lo que produce; los hallazgos de `doctor`
+son lo que produce, así que stdout le corresponde por la regla general, no aparte de ella. La sección
+ya lo hacía así antes de esta tarea, cuando un tablero limpio imprime `no problems found` por stdout:
+aquí no se cambia nada, se explica lo que ya era. Los avisos de los demás comandos, los que lista la
+tabla cerrada de la sección 4.3, siguen yendo por stderr sin cambiar, y el informe de `doctor` no le
+añade ninguna fila ni reutiliza su prefijo `warning:`.
 
 #### Qué comprueba
 
@@ -3966,7 +3974,7 @@ avisos) y una, los huecos en la numeración, no lo es y no se reporta nunca.
 | Caso | Qué pasa |
 |---|---|
 | Tablero limpio | `no problems found` por stdout, código 0 |
-| Solo avisos, sin ningún error | Se reportan con `warning:`, código 0 |
+| Solo avisos, sin ningún error | Se reportan bajo `Warnings:`, código 0 |
 | Solo errores reparables, con `--fix` | Se reparan y se reporta cada uno, código 0 |
 | Quedan errores sin reparar | Código 6, aunque se haya reparado algo o se hayan reportado avisos |
 | Una tarea ilegible (4.12) | Se reporta como error y se sigue con las demás. **Nunca aborta** |
@@ -3978,14 +3986,18 @@ avisos) y una, los huecos en la numeración, no lo es y no se reporta nunca.
 
 ```
 1 error found, 1 warning found
+Errors:
   TASK-40  dependency TASK-99 does not exist
-  warning: board folder is "proyecto-viejo-3f9a2b1c" but project_name is "Kex" (expected "kex-3f9a2b1c")
+Warnings:
+  board folder is "proyecto-viejo-3f9a2b1c" but project_name is "Kex" (expected "kex-3f9a2b1c")
 1 problem fixed
   the highest recorded id was TASK-40 and tasks go up to TASK-52; recorded TASK-52
 ```
 
-Cada aviso lleva el prefijo `warning:` delante. Un error no lleva ningún prefijo propio, porque el
-encabezado ya dice cuántos hay de cada nivel.
+Los errores y los avisos se agrupan bajo su propio encabezado, `Errors:` y `Warnings:`; ninguno de
+los dos usa el prefijo `warning:` de stderr, que la sección 4.3 reserva para lo que va por ahí. Un
+grupo vacío no se imprime: si no hay avisos no aparece `Warnings:`, y si no hay errores no aparece
+`Errors:`. `1 problem fixed` cuenta lo reparado aparte, después de los dos grupos.
 
 #### El esquema JSON
 
