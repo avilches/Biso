@@ -550,6 +550,15 @@ de verdad en uno de los dos casos. Si alguna es unambigua y automática, entonce
 el comando que la detecta, no dejarla en `doctor`, y eso hay que reportarlo en el informe aunque no lo
 cambies.
 
+Y una frase más, que sale de una pregunta del usuario sobre si `doctor` iba a ser interactivo:
+**ningún comando de `biso` pregunta nada por la entrada estándar, ni `doctor` con `--fix` ni ninguno otro.**
+La misma orden sirve para una persona y para un agente, y lo único que cambia es quién lee la salida: la
+persona lee el informe, el agente mira el código de salida. El motivo de escribirlo, en vez de dejarlo
+implícito en que la firma no tenga banderas de interacción, es que **un agente que recibe una pregunta se
+queda colgado para siempre**, así que conviene que quien implemente sepa que eso no es una posibilidad que
+se le haya olvidado contemplar. Si la sección 4 ya lo dice de forma general para todos los comandos, basta
+con remitir ahí en vez de repetirlo.
+
 - [ ] **Paso 6: Comprobar**
 
 ```bash
