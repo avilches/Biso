@@ -26,28 +26,26 @@ exportación, y el resto.
 ## El modelo de estados está cerrado
 
 Los cuatro requisitos que lo tocaban ya están decididos: dos resueltos sin ningún papel de estado
-nuevo, uno aplazado a la decisión de persistencia y uno retirado. El detalle, con la evidencia detrás
-de cada decisión, está en la sección 9 de [`docs/DECISIONES.md`](docs/DECISIONES.md).
+nuevo, uno resuelto con la decisión de persistencia ya tomada (el arrendamiento con caducidad) y uno
+retirado. El detalle, con la evidencia detrás de cada decisión, está en la sección 9 de
+[`docs/DECISIONES.md`](docs/DECISIONES.md).
 
-## Lo que falta por decidir, y bloquea
+## La persistencia está decidida
 
-Es una, y hasta que no esté no se puede escribir código de verdad.
+Un tablero es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un
+fichero puntero versionado en git, con una exportación de texto que sí se commitea para el historial
+(`biso snapshot`). Sin daemon, y sin fusionar nunca dos almacenes escritos por separado. El porqué de
+cada pieza, con su aritmética, está en la sección 12 de [`docs/DECISIONES.md`](docs/DECISIONES.md),
+que enlaza a su vez a [`docs/ESTADO-DEL-ARTE.md`](docs/ESTADO-DEL-ARTE.md), la investigación sobre las
+demás herramientas del espacio y por qué fallan.
 
-**Cómo se guardan los datos.** La especificación define la interfaz y el modelo de datos lógico, y
-deliberadamente no dice si detrás hay ficheros, una base de datos o cualquier otra cosa. Donde el
-almacenamiento afecta a lo observable, enuncia el requisito y deja el mecanismo abierto. Al tomar
-esta decisión hay que escribir aparte lo que hoy no tiene respuesta: **qué ocurre con una tarea que
-existe en una versión del proyecto y no en otra**, porque hoy la única promesa son los tres mensajes
-distintos de "no la encuentro" de la sección 7.3. Si la respuesta pasa por git, ahí entra también
-todo lo que la sección 14 deja fuera por depender de esto. **De esta decisión depende también el
-arrendamiento con caducidad** que el modelo de estados aplazó, para detectar una tarea que un agente
-cogió y cuya sesión murió sin liberarla (sección 9.2 de `docs/DECISIONES.md`).
+**Lo único que sigue abierto, y no bloquea, es el lenguaje de implementación.** El único requisito
+que sale de la especificación es que el programa arranque rápido, con el presupuesto de la sección
+4.13 de `docs/SPEC.md`: 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero de 300
+tareas, cuyo origen está en la sección 13 de `docs/DECISIONES.md`.
 
 ## Cosas que conviene tener presentes al implementar
 
-- **El lenguaje de implementación sigue sin decidir**, pero a diferencia de la persistencia no
-  bloquea la especificación. El único requisito que sale del documento es que el programa arranque
-  rápido, porque un agente lo invoca muchas veces en una sesión.
 - **El mensaje de arranque tiene un tope duro de 5.120 bytes.** No es un objetivo, es una prueba de la
   suite, y es el único de los números de tamaño que congela el contrato de estabilidad de la sección
   13 de `docs/SPEC.md`. El reparto entre la parte fija y el resumen, y lo que mide hoy el texto, están

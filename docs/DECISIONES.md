@@ -176,19 +176,20 @@ disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es
   consulta sin que se vea en la línea de comandos. Es la clase de estado invisible que hace que quien
   lee un listado saque conclusiones falsas, y contradice el principio 1. Se descarta a propósito y no
   por olvido.
-- **Todo lo relativo al control de versiones.** No porque el problema no exista: se midió que un
-  commit automático por llamada convierte el ciclo de una tarea en siete commits, seis de ellos con el
-  mensaje idéntico. Está fuera porque presupone que las tareas son ficheros versionados, y esa
-  decisión está abierta. **Cuando se decida cómo persiste el sistema, este problema hay que volver a
-  resolverlo**, y la forma la da el diseño actual sin tocar nada: si cerrar una tarea es una llamada,
-  es una unidad de cambio, y su mensaje puede decir qué pasó.
-- **La visibilidad entre versiones del proyecto.** Se midieron cinco fallos reales relacionados con
-  copias de trabajo paralelas: dos "tarea no encontrada" sobre tareas que existían en otra rama, tres
-  volcados de pila al intentar leer de una rama remota, y un error de identificador ambiguo. Resolver
-  eso exige nombrar el sistema de control de versiones, así que **queda explícitamente sin resolver
-  hasta que se decida la persistencia**. Lo que sí está, y es independiente del almacenamiento, son
-  los tres mensajes distintos de "no la encuentro" y la garantía de que ninguna lectura de conjunto
-  aborta por una tarea que no se puede leer.
+- **El commit automático por cada llamada.** Se midió que convierte el ciclo de una tarea en siete
+  commits, seis de ellos con el mensaje idéntico. Presuponía que las tareas eran ficheros versionados
+  del propio proyecto, y esa premisa se descarta entera con la decisión de persistencia (sección 12):
+  el tablero vive en un almacén aparte, y lo único que se versiona es la instantánea de texto que
+  `biso snapshot` escribe cuando quien llama lo pide, un solo commit por invocación y nunca uno por
+  cada escritura de tarea.
+- **La visibilidad entre versiones del proyecto.** Se habían medido cinco fallos reales de las copias
+  de trabajo paralelas de otras herramientas: dos "tarea no encontrada" sobre tareas que existían en
+  otra rama, tres volcados de pila al leer de una rama remota, y un identificador ambiguo. La decisión
+  de persistencia (sección 12) no los resuelve, los disuelve: el tablero no vive en el árbol de
+  trabajo, así que una tarea cerrada está cerrada y no hay una rama de la que leerla ni una remota que
+  le falte. Lo que queda, y sigue siendo independiente del almacenamiento, son los tres mensajes
+  distintos de "no la encuentro" de la sección 7.3 de `SPEC.md` y la garantía de que ninguna lectura de
+  conjunto aborta por una tarea que no se puede leer.
 - **La sincronización con sistemas externos.** No está, pero sí están las cuatro piezas que la hacen
   posible, y esa es la única razón por la que existen: las claves declaradas de `ext` para guardar la
   identidad de la tarea en el otro sistema, el autor libre en los comentarios, las fechas fijables al
@@ -526,8 +527,9 @@ conclusión es que la necesidad se cubre mejor con un tipo más en el vocabulari
 una entidad y un comando propios.
 
 **Una forma concreta de guardar los datos**, con un directorio por entidad para que añadir un
-comentario no reescriba nada de lo demás. No se descarta: es una opción razonada para la decisión de
-persistencia, que sigue abierta.
+comentario no reescriba nada de lo demás. La decisión de persistencia (sección 12) no la adopta: una
+base de datos SQLite da la misma propiedad, una escritura por tarea sin reescribir el tablero entero, y
+además la transacción que un directorio de ficheros habría tenido que construir a mano.
 
 ### 9.6. Un contraste que conviene mirar antes de implementar
 
@@ -602,3 +604,92 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   engaña.
 - **`--ready` y `--blocked` siguen siendo complementarios**, dos campos derivados de un solo hecho. Es
   anterior a este trabajo y queda como limpieza aparte.
+
+---
+
+## 12. La decisión de persistencia
+
+La especificación dejaba deliberadamente abierto cómo se guardan los datos. La decisión es: un tablero
+es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un fichero
+puntero versionado en git (`.biso.json`, sección 3.2 de `SPEC.md`), con una exportación de texto que sí
+se commitea para el historial (`biso snapshot`, sección 10.14 de `SPEC.md`). Sin daemon, y sin fusionar
+nunca dos almacenes escritos por separado.
+
+La evidencia detrás de cada pieza de esta decisión, con sus enlaces, está en
+[`docs/ESTADO-DEL-ARTE.md`](ESTADO-DEL-ARTE.md), el inventario de las herramientas del espacio y el
+catálogo de sus fallos. Lo que sigue aquí es el porqué de cada pieza, no la evidencia en bruto.
+
+**Por qué el tablero no se versiona con el código.** Cualquier herramienta que guarde las tareas como
+ficheros del árbol de trabajo hereda su peor propiedad: el estado se bifurca con la rama, así que una
+incidencia cerrada en una rama vuelve a aparecer abierta al volver a la principal (sección 2 de
+`docs/ESTADO-DEL-ARTE.md`). Sacar el tablero del árbol de trabajo no resuelve ese problema, lo disuelve:
+una tarea cerrada está cerrada, no cerrada en esta rama, porque no hay una rama que la contenga. El
+precio es que el tablero no viaja al clonar el proyecto en otra máquina, y se paga a propósito a cambio
+de que el estado de una tarea sea uno solo.
+
+**Por qué no hay daemon, y por qué el motivo es aritmético y no de gusto.** El coste dominante de una
+invocación de `biso` es arrancar un proceso, no el trabajo que hace una vez arrancado: la sección 12 de
+`docs/ESTADO-DEL-ARTE.md` mide el suelo del sistema en 5,2 milisegundos y el trabajo real de leer,
+ordenar e imprimir 300 tareas en 8,7 milisegundos con un binario de Go. Un daemon solo puede ahorrar la
+segunda cifra, no la primera, porque el cliente que hablaría con él por un socket es también un proceso y
+paga el mismo suelo de arranque para lanzarse. Así que un daemon competiría por uno o dos milisegundos de
+unos ocho, pagando a cambio una arquitectura entera: un proceso de fondo que hay que arrancar, vigilar y
+matar, y que si se cuelga hace fallar también las lecturas que la sección 4.10 de `SPEC.md` promete que
+nunca fallan por una escritura en curso. Beads tuvo uno, hacía una sola cosa, y se eliminó por completo
+al cambiar de motor; quien lo reemplazó por algo más simple cuenta que se pasaba varias veces por semana
+peleándose con él (sección 11 de `docs/ESTADO-DEL-ARTE.md`).
+
+**Por qué el texto es una salida, y nunca un canal de vuelta.** `biso snapshot` escribe `tasks.ndjson` y
+`config.json` para que el historial de git cuente lo que pasó y para que `biso init --from` pueda
+reconstruir el tablero entero en otra máquina, pero nada dentro de `biso` vuelve a leer esos ficheros
+como si fueran la verdad. Beads documenta por qué esa asimetría es obligatoria y no una elección
+estética: su importación es solo de inserción y actualización, y no puede saber si un registro ausente
+en el texto fue borrado a propósito o simplemente no se llegó a exportar (sección 10 de
+`docs/ESTADO-DEL-ARTE.md`). Tratar el texto como una fuente además de como una salida reintroduce esa
+ambigüedad en `biso`, así que no se hace nunca: la base de datos es la única verdad, y `export` y
+`snapshot` son su proyección de solo lectura hacia fuera.
+
+**Por qué nunca se sincroniza fusionando dos almacenes escritos por separado.** Es el sitio donde se
+han estrellado todas las herramientas del espacio, de formas distintas pero con la misma raíz: dos
+copias de trabajo que asignan el mismo identificador a tareas distintas (sección 1 de
+`docs/ESTADO-DEL-ARTE.md`), un bloqueo de fichero que no cruza remotos de git (sección 4), y un fichero
+de log que se fusiona por unión de líneas y resucita las que se habían borrado, porque una fusión de
+texto concatena y solo quita duplicados exactos, sin razonar sobre qué falta ni por qué (sección 10). La
+respuesta seria de ese último problema, sustituir el motor por uno con fusión a nivel de celda, es la que
+tomó Beads, y es coherente pero cara. `biso` no la necesita porque no la tiene que resolver: un tablero
+vive en una sola máquina y no hay una segunda copia escribible con la que fusionarse, así que la
+comprobación de identidad de la sección 4.10 de `SPEC.md` basta y no hace falta un algoritmo de fusión.
+
+**Por qué `--fix` no es una comodidad, sino el consentimiento.** Esta decisión añade a `biso doctor`
+(sección 10.11 de `SPEC.md`) las dos comprobaciones que no existían antes de que hubiera una base de
+datos real detrás del tablero: la integridad de esa base de datos, y el aviso de un sistema de ficheros
+donde el modo WAL de SQLite no da las garantías de atomicidad que la sección 4.10 de `SPEC.md` exige.
+Las dos son daño externo puro, porque nada dentro de `biso` corrompe su propia base de datos ni decide
+en qué disco vive el tablero, y por eso ninguna de las dos es reparable ni con `--fix`: la integridad se
+repara restaurando de una copia, fuera de `biso` por completo, y el sistema de ficheros no es algo que
+la herramienta pueda cambiar. Que aparezcan justo con esta decisión confirma la regla que ya ordenaba el
+resto de `doctor`, en vez de ponerla a prueba: `--fix` es el único sitio de todo `biso` donde quien
+llama dice "te autorizo a escribir cosas que no te he pedido una por una", y solo entra ahí lo que de
+verdad se puede arreglar sin decidir por alguien; lo que no, se reporta y se deja donde está.
+
+---
+
+## 13. El origen de la cifra de 25 milisegundos
+
+El tope de bytes del mensaje de arranque (apartado 3) trae su medida. El presupuesto de arranque de la
+sección 4.13 de `SPEC.md`, 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero de
+300 tareas, no la tenía escrita en ningún sitio, y esta sección es esa medida.
+
+**Medido en la misma máquina que documenta `docs/ESTADO-DEL-ARTE.md`** (Apple M3 Max, macOS 26.5.2, 300
+iteraciones, sección 12 de ese documento). El suelo del sistema operativo para arrancar cualquier
+proceso, sin ejecutar ninguna línea propia todavía, es **5,2 milisegundos**. Un binario de Go añade
+**2,2 milisegundos** encima de ese suelo. Y un programa en Go que lee 300 tareas, las ordena y las
+imprime tardó **8,7 milisegundos en total**, suelo, arranque de Go y trabajo real incluidos. La cifra
+del presupuesto, 25 milisegundos, deja **unas tres veces de margen** sobre ese total medido.
+
+**La cifra excluye a propósito los lenguajes interpretados.** En la misma máquina, el solo arranque de
+Python 3.14 añade 24,5 milisegundos por delante de cualquier trabajo real, y el de Node 25.6 añade 33.
+Un presupuesto que tuviera que cubrir ese arranque dejaría de medir la herramienta y pasaría a medir el
+lenguaje, así que la cifra se fija mirando el suelo que un lenguaje compilado permite. Eso acota la
+lista de lenguajes candidatos sin cerrarla: el lenguaje de implementación sigue sin decidir (ver
+`CLAUDE.md`), y esta cifra es la condición que cualquier candidato tiene que poder cumplir.

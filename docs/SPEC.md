@@ -9,12 +9,13 @@ El destinatario principal de `biso` es un agente automático que trabaja dentro 
 salida es predecible, los errores son distinguibles por su código sin leer el mensaje, y ningún
 comportamiento depende de dónde se ejecute el programa.
 
-**Qué define este documento y qué no.** Define la interfaz del programa y el modelo de datos lógico
-de una tarea. **No define cómo ni dónde se guardan los datos.** No se menciona ningún formato de
-fichero, ninguna base de datos, ninguna ruta ni ningún nombre de fichero de tarea, porque esa
-decisión está abierta y la especificación no debe atarla. Donde el almacenamiento importa para el
-comportamiento observable, este documento enuncia el requisito (por ejemplo, que dos procesos
-simultáneos no puedan asignar el mismo identificador) y deja el mecanismo a quien implemente.
+**Qué define este documento y qué no.** Define la interfaz del programa y el modelo de datos lógico de
+una tarea, no el porqué de cómo se guardan los datos: esa decisión, con su razonamiento y su evidencia,
+vive en `docs/DECISIONES.md` (sección 12), y este documento no la repite. Aquí aparece el mecanismo
+solo donde afecta al comportamiento observable, como el fichero puntero `.biso.json` (sección 3.2) o la
+base de datos SQLite que `biso doctor` comprueba (sección 10.11); donde no lo afecta, este documento
+enuncia el requisito (por ejemplo, que dos procesos simultáneos no puedan asignar el mismo
+identificador) y deja el resto del mecanismo fuera de aquí.
 
 El modelo de tarea es compatible con el de Backlog.md, de modo que se puede importar y exportar entre
 las dos herramientas sin perder campos.
@@ -613,6 +614,13 @@ sobre `biso`: debe leerlo como una afirmación sobre esa máquina. Un portátil 
 otro; lo que sí dice algo es que el número suba en la propia máquina de referencia de una versión a
 la siguiente, porque ahí el hardware no ha cambiado y lo único que puede haber cambiado es el código.
 
+**La composición del tablero de 300 tareas es indiferente, y por eso no se fija.** No importa cuántas
+estén en cada estado, ni si alguna tiene una pregunta abierta o un arrendamiento vencido: ninguno de
+los dos comandos se ramifica según el contenido de una tarea concreta, así que su coste crece de forma
+esencialmente lineal con el número de tareas y no con su composición. Fijar un reparto arbitrario no
+añadiría ninguna garantía que esta razón no dé ya, y la ambigüedad se cierra con la explicación, no con
+una tabla de reparto que nadie necesita reproducir.
+
 Tres reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
 
 1. **Ningún comando hace al arrancar trabajo que nadie ha pedido.** Ni una consulta que no alimente
@@ -1041,8 +1049,7 @@ note: the highest id ever assigned here is TASK-90
 
 ```
 error: TASK-53 is not on this board
-note: TASK-53 was assigned at some point, so it was archived and then removed, or it belongs
-      to a version of the project that this board does not have
+note: TASK-53 was assigned at some point, so it was archived and then removed
 hint: `biso ls --archived` lists what is archived
 ```
 
@@ -4732,12 +4739,16 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   dice.
 - **No hay servidor de integración ni protocolo de herramientas.** La interfaz de la versión 1.0 es
   esta línea de comandos y su salida JSON.
-- **No hay nada sobre control de versiones.** Ni commits automáticos, ni ramas, ni la posibilidad de
-  ver una tarea que existe en otra versión del proyecto. Todo eso depende de cómo se guarden los
-  datos, y este documento no lo decide. Cuando esa decisión se tome, hará falta especificar aparte qué
-  ocurre con las tareas que existen en una versión del proyecto y no en otra: hoy, la única promesa es
-  la de los tres mensajes distintos de la sección 7.3.
+- **No hay una interfaz multiproyecto.** Cada invocación resuelve un único tablero (sección 3.2), y no
+  hay ningún comando que lea o agregue varios a la vez, aunque la máquina entera tenga más de uno
+  (sección 3.3): quien necesite verlos juntos los recorre uno por uno desde fuera.
+- **No hay exportación al formato de Backlog.md.** `biso export` escribe el mismo formato que lee
+  `biso new --from`, y traducir a un formato ajeno es trabajo de un conversor aparte, no de este
+  comando.
 - **No hay sincronización con ningún sistema externo.**
+- **No hay sincronización entre máquinas.** Un tablero vive en la máquina donde se creó, y lo que
+  cruza a otra es la instantánea que deja `biso snapshot` en git, para reconstruirlo entero, no para
+  mantener dos copias vivas al día (sección 12 de `docs/DECISIONES.md`).
 - **No hay un papel de estado para descartar, distinto de terminar.** Una tarea hecha y una abandonada
   hoy comparten el mismo estado terminal. Un papel que obligara a dar un motivo al entrar en él sería
   barato de añadir cuando hiciera falta, pero a diferencia de los demás requisitos de este modelo no
