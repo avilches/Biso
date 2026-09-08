@@ -112,14 +112,14 @@ sus dos comandos más usados juntos.
 A eso hay que sumar la inyección de instrucciones en el fichero de convenciones del repositorio, que
 se paga en todas las sesiones aunque no se toque el tablero.
 
-El mensaje de `biso prime` mide **4.689 bytes**, 3.255 de parte fija y 1.434 de resumen del tablero
+El mensaje de `biso prime` mide **4.746 bytes**, 3.255 de parte fija y 1.491 de resumen del tablero
 (sección 9.5 de `docs/SPEC.md`), contra un tope duro de 5.120 repartido en dos mitades de 3.456 y
 1.664.
 
 | Magnitud | Herramienta estudiada | `biso` |
 |---|---:|---|
-| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.689 bytes |
-| Media medida por sesión | 3.358 bytes | 4.689 bytes |
+| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.746 bytes |
+| Media medida por sesión | 3.358 bytes | 4.746 bytes |
 | Lecturas obligatorias por sesión | entre 1 y 4 | 1 |
 | Contexto gastado en sesiones que no tocan tareas | la inyección en el fichero de convenciones | 0 |
 
@@ -151,7 +151,7 @@ ser un tope, y su valor entero está en que obligue a elegir qué entra en el me
 recorta es contenido, no el tope.
 
 **Esto no es "el tope nunca sube", es "el tope sube solo cuando reducir ya no es posible sin perder
-algo".** La medida de hoy, 4.689 de 5.120 bytes, tiene 431 de margen: nunca hizo falta apretar para
+algo".** La medida de hoy, 4.746 de 5.120 bytes, tiene 374 de margen: nunca hizo falta apretar para
 caber, así que esta regla no se ha puesto a prueba todavía. Si en el futuro un comando nuevo obliga a
 recortar el bloque fijo (`COMMANDS`, `FIELD FLAGS`, `RULES`) y esa reducción sale limpia, sin perder
 información que un agente necesite para arrancar bien, es que había margen y el tope hizo su trabajo.
@@ -434,13 +434,42 @@ que libere la tarea cuya sesión murió. Arrendar sería asignar con esa caducid
 activa, y reclamarla sería la misma escritura que hoy hace `biso start`, así que la decisión de este
 apartado sigue encajando con la del 9.1 aunque aquel, al final, no trajera ningún papel nuevo.
 
-**Esta depende de cómo se persistan los datos** y conviene tomarla con esa.
+**Esta dependía de cómo se persistan los datos**, y se cerró con esa decisión tomada.
 
-**Queda aplazada, y la forma ya está decidida.** Un instante de caducidad sobre una tarea activa y
-asignada, que al vencer saca la tarea del estado activo sin tocar la asignación, porque lo que caduca
-es "estoy en ello" y no "esto es tuyo". Lo que falta, el nombre y el tipo del campo, cómo se renueva
-mientras se trabaja y quién detecta la caducidad sin que cueste caro, depende de cómo se persistan los
-datos, y se anota en la sección 14 de `SPEC.md` para que no se dé por olvidado.
+**Cerrada, con una enmienda a lo que este apartado decía antes.** La redacción aplazada decía que la
+caducidad, al vencer, "saca la tarea del estado activo sin tocar la asignación". Esa frase no se
+sostiene y es la que cede: `status` es un campo guardado, con un valor del vocabulario del tablero, y
+un campo derivado no puede cambiar un campo guardado. Si nada escribe, la tarea sigue teniendo el
+estado activo guardado por muy vencido que esté su arrendamiento.
+
+Lo que se guarda es el instante de caducidad (`leaseExpiresAt`) y quién tiene el arrendamiento
+(`leaseHolder`), los dos sin valor salvo en una tarea activa y asignada (sección 5 de `SPEC.md`). Lo
+que caduca sigue siendo, como decía la redacción original, "estoy en ello" y no "esto es tuyo": el
+campo derivado `leaseExpired` dice que el arrendamiento venció, pero el estado guardado no cambia
+solo, nunca. Liberarlo es una escritura explícita, y sigue sin hacer falta un comando nuevo para eso:
+es la misma que ya hace `biso start`, que reclama el arrendamiento vencido a favor de quien llama
+comprobando quién lo tenía dentro de la misma transacción, para que el tenedor viejo no la recupere al
+despertar (sección 10.7.1 de `SPEC.md`). Con un arrendamiento vivo de otra identidad, `biso start`
+avisa y la coge igual: el mismo "avisa, no impide" que ya aplicaba a las dependencias sin terminar y a
+la pregunta abierta.
+
+**Por qué se enmienda en vez de reescribirse sin más.** La redacción aplazada no decía cómo se
+liberaba una caducidad, y la lectura más directa de "saca la tarea del estado activo" es una
+escritura diferida: que la siguiente escritura cualquiera, o un proceso de fondo, arrastrara el
+saneamiento de las tareas vencidas. Esa vía se descarta explícitamente al tomar esta decisión, en la
+sección 6 del diseño de persistencia, porque haría que un comando tocara tareas que no nombró, y
+porque `biso prime`, que no escribe nunca, mostraría un estado que una escritura ajena y posterior
+podría cambiar. No es que la decisión siempre hubiera sido la de hoy: es que la única forma de
+sostenerla, al escribirla de verdad, obligaba a mover la contradicción con `status` a otro sitio en
+vez de resolverla.
+
+**Lo que aporta el estado del arte, mirado al cerrar esta decisión.** El patrón tiene nombre propio
+fuera de aquí: un arrendamiento con caducidad, renovado por latido, para evitar la doble reclamación.
+Y la pieza que le faltaba a la redacción aplazada, la que un artículo que formaliza el patrón señala
+como la que cierra el agujero, es la comprobación del tenedor: sin ella, el tenedor viejo puede
+despertar, escribir, y robar de vuelta una tarea que ya había reclamado otro. Aquí sale gratis, porque
+el arrendamiento ya guarda quién lo tiene y la comprobación es comparar y sustituir dentro de una
+transacción que ya existía por otro motivo (sección 4.10).
 
 ### 9.3. Señalar lo que espera a una persona
 
@@ -544,7 +573,10 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
 
 - **Dos agentes con la misma identidad ven la misma cola.** Dos sesiones con el mismo `BISO_ME` no se
   distinguen entre sí, y las dos podrían coger la misma tarea a la vez. Es exactamente lo que resuelve
-  el arrendamiento del apartado 9.2, que está aplazado.
+  el arrendamiento del apartado 9.2: la segunda sesión ve el aviso de que el arrendamiento está vivo y
+  a nombre de esa misma identidad, pero `biso start` avisa y la coge igual, así que dos sesiones que
+  comparten identidad siguen pudiendo pisarse. El arrendamiento defiende de una sesión muerta, no de
+  dos sesiones vivas con el mismo nombre.
 - **Un tablero con la clave `me` configurada anula la distinción entre persona y agente.** La clave
   `me` gana sobre `BISO_ME`, así que en un tablero que la tenga puesta todo el mundo comparte
   identidad y `--mine` deja de significar nada. Un tablero compartido entre una persona y un agente

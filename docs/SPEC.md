@@ -36,7 +36,7 @@ escribe.
 | **activo**, activa | El papel del estado que escribe el agente al coger la tarea | `active_status` |
 | **terminal**, terminada | El papel del estado final | `terminal_status` |
 | **asignación** | Quién debe hacer la tarea. Es el gesto con el que una persona encarga trabajo | `assignees` |
-| **arrendamiento** | Hasta cuándo vale la reserva de un agente sobre una tarea activa. No es un estado | pendiente de la persistencia |
+| **arrendamiento** | Hasta cuándo vale la reserva de un agente sobre una tarea activa. No es un estado | `leaseExpiresAt`, `leaseHolder`, `leaseExpired` |
 | **pregunta abierta**, aparcada | Lo que detiene una tarea a la espera de una persona. No es un estado | `question`, `waiting` |
 | **archivada** | Fuera del tablero activo sin perder nada. No es un estado | `archived` |
 | **bloqueada** | Depende de alguna tarea sin terminar. Solo dependencias, nunca personas | `blocked` |
@@ -374,6 +374,7 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 | `warning: <x> is deprecated and will be removed in 2.0` | ver la sección 13 |
 | `warning: TASK-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta |
 | `warning: TASK-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta |
+| `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al empezar una tarea cuyo arrendamiento está vivo y es de otra identidad (9.2 de `DECISIONES.md`, 10.7.1) |
 
 ### 4.4. Codificación y texto
 
@@ -580,6 +581,8 @@ escribe. No dice nada de cómo se guardan.
 | `createdAt` | instante UTC | sí | el programa | solo al importar |
 | `updatedAt` | instante UTC | sí | el programa | solo al importar |
 | `archived` | booleano | sí, `false` por defecto | el programa, con `biso archive` | sí, solo con `biso archive` / `--unarchive`, o al importar |
+| `leaseExpiresAt` | instante UTC | no | el programa, en cada escritura sobre una tarea activa y asignada | sí, se renueva con cada escritura sobre la tarea mientras siga activa, y se vacía al salir del estado activo |
+| `leaseHolder` | texto de persona | no | el programa, con la identidad de quien llama, en cada escritura sobre una tarea activa y asignada | sí, se reescribe junto con `leaseExpiresAt` y se vacía con él |
 | `urgency` | decimal, derivado | derivado | el programa | no, se recalcula al leer |
 | `ext` | mapa de clave declarada a texto | no | quien llama | sí |
 | `description` | texto largo | no | quien llama | sí |
@@ -594,8 +597,9 @@ escribe. No dice nada de cómo se guardan.
 | `commentCount` | entero, derivado | derivado | el programa | no, se recalcula al leer |
 | `blocks` | lista de referencias, derivado | derivado | el programa | no, se recalcula al leer |
 | `ready`, `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
+| `leaseExpired` | booleano, derivado | derivado | el programa | no, se recalcula al leer |
 
-Cuatro precisiones sobre la mutabilidad:
+Cinco precisiones sobre la mutabilidad:
 
 - **"No mutable" significa que ninguna bandera del programa lo cambia.** `updatedAt` lo reescribe el
   programa en cada operación que cambie algo.
@@ -607,8 +611,16 @@ Cuatro precisiones sobre la mutabilidad:
 - **Los campos marcados "derivado" en esta tabla no se guardan.** Se calculan al leer, y son
   exactamente los campos que `biso export` no escribe (10.9) y que `biso new --from` rechaza como
   clave desconocida (10.3): `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`,
-  `blocks`, `ready`, `blocked` y `waiting`. Esta es la única lista de campos derivados del
-  documento; las demás secciones remiten a ella.
+  `blocks`, `ready`, `blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos
+  derivados del documento; las demás secciones remiten a ella.
+- **`leaseExpired` no cambia el `status` guardado, nunca.** Dice que el arrendamiento de una tarea
+  activa venció, pero el estado guardado sigue siendo el activo hasta que alguien lo cambia con una
+  escritura explícita: lo que vence es la reclamación, no el estado (sección 9.2 de
+  `DECISIONES.md`). No hay una escritura diferida que la saque del estado activo por su cuenta,
+  porque eso haría que un comando tocara tareas que no nombró, y porque `biso prime`, que no escribe
+  nunca, mostraría un estado que una escritura ajena y posterior podría cambiar. Liberar el
+  arrendamiento vencido es la reclamación explícita que hace `biso start` (10.7.1), no un efecto
+  secundario de ningún otro comando.
 
 ### 5.1. Los criterios y sus claves estables
 
@@ -1160,8 +1172,8 @@ fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 
 Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
-El texto literal de la sección 9.7 ocupa **4.689 bytes** con el tablero del ejemplo: **3.255** de
-parte fija y **1.434** de resumen. Las dos mitades caben dentro de su tope.
+El texto literal de la sección 9.7 ocupa **4.746 bytes** con el tablero del ejemplo: **3.255** de
+parte fija y **1.491** de resumen. Las dos mitades caben dentro de su tope.
 
 **El número que congela el contrato de estabilidad de la sección 13 es el total, 5.120 bytes**, porque
 es el único que quien llama observa. El reparto entre las dos mitades puede cambiar sin romper ese
@@ -1266,6 +1278,7 @@ RULES  (none of these are guessable; they are the whole learning curve)
 IN PROGRESS
   TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
   TASK-52  In Progress  task  low     Document the release checklist                    ac 0/1  -        -
+    lease expired 2026-09-05T09:00:00Z, was held by @bob
   TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
 
 NEEDS ANSWER
@@ -1306,7 +1319,13 @@ Cómo se calcula el resumen, para que la implementación sea única:
   `ASSIGNED TO YOU` no se imprime nunca**, aunque el resto del mensaje se imprime igual, con
   `you are (not set)` en el bloque `BOARD`.
 - `IN PROGRESS` lista las tareas del estado activo sin pregunta abierta, ordenadas por la regla de
-  orden de 10.4, sin límite.
+  orden de 10.4, sin límite. Cada tarea cuyo arrendamiento está vencido (el campo derivado
+  `leaseExpired` de la sección 5) lleva, igual que `NEEDS ANSWER` con su pregunta, una segunda línea
+  indentada con la forma `lease expired <leaseExpiresAt>, was held by <leaseHolder>`. Es el único de
+  los cuatro bloques que la lleva, porque es el único cuya etiqueta afirma que alguien está
+  trabajando ahora mismo, y un arrendamiento vencido contradice justo esa afirmación. Esta línea, como
+  la de la pregunta, no cuenta para el ancho de las columnas y no viaja en el esquema JSON de 9.9, que
+  ya deja fuera el cuerpo de la pregunta por el mismo motivo.
 - `NEEDS ANSWER` lista las tareas con pregunta abierta, ordenadas igual, sin límite. Cada tarea
   ocupa **dos líneas**: la fila de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo
   una línea indentada con la pregunta recortada a **100 caracteres**, la misma cifra exacta que el
@@ -1325,8 +1344,8 @@ Cómo se calcula el resumen, para que la implementación sea única:
   corte.
 - Las filas usan exactamente el algoritmo de columnas de `biso ls` de la sección 10.4, con una
   diferencia declarada aquí: el ancho de las columnas 1 a 7 se calcula sobre las filas de los cuatro
-  bloques juntas, **sin contar las líneas de pregunta**, que no son filas de la tabla, para que los
-  cuatro bloques se lean como una sola tabla.
+  bloques juntas, **sin contar las líneas de pregunta ni las de arrendamiento vencido**, que no son
+  filas de la tabla, para que los cuatro bloques se lean como una sola tabla.
 - `NEXT UP` es lo que no cae en ninguno de los tres bloques anteriores, no "lo que no ha empezado".
   Por eso su rótulo es `NEXT UP  (not assigned to you, by urgency)`, su línea de recuento tiene la
   forma `N more not shown: 'biso ls --not-active --not-waiting'`, y su clave en el esquema JSON del
@@ -2180,7 +2199,7 @@ igual que las demás.
 ```
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
-comentarios. Para eso está `biso get`. Los diez campos derivados de la sección 5 sí están todos,
+comentarios. Para eso está `biso get`. Los once campos derivados de la sección 5 sí están todos,
 `blocks` incluido. `truncated` es explícito para que nadie tenga que comparar `shown` con `matched`,
 y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado.
 
@@ -2694,8 +2713,9 @@ persona y `--set-assignee` reemplaza la lista.
 
 ##### Qué hace
 
-Tres cosas en una escritura: pone el estado activo, **asigna la tarea a `me` si no tiene ninguna
-persona asignada**, y añade el plan si se ha pasado.
+Cuatro cosas en una escritura: pone el estado activo, **asigna la tarea a `me` si no tiene ninguna
+persona asignada**, renueva el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección 5) a favor de
+quien llama, y añade el plan si se ha pasado.
 
 | Caso | Qué pasa |
 |---|---|
@@ -2703,8 +2723,10 @@ persona asignada**, y añade el plan si se ha pasado.
 | La tarea ya está en el estado terminal | Error 6, salvo con `--reopen`, que la devuelve al estado activo |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
 | La tarea tiene una pregunta abierta (5.7) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
+| El arrendamiento de la tarea está vencido (`leaseExpired`, sección 5) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, para que el tenedor viejo no la recupere al despertar |
+| El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: TASK-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
-| No hay ninguna identidad configurada (3.1) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned` |
+| No hay ninguna identidad configurada (3.1) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
 | La tarea ya tiene plan y se pasa `--plan` | Se añade al final, como toda bandera desnuda |
 | Varias referencias | Todo o nada |
 
@@ -2733,8 +2755,8 @@ TASK-11  In Progress  ac 0/2  urgency 19.0
 ```
 Usage: biso start <ref>... [options]
 
-Take one or more tasks: move them to the active status, assign them to you if
-nobody has them, and record a plan. One call.
+Take one or more tasks: move them to the active status, claim the lease for
+you, assign them to you if nobody has them, and record a plan. One call.
 
 Options:
       --plan <text>      add to the implementation plan; repeatable, and takes
@@ -2747,7 +2769,9 @@ Options:
 
 Every field flag of `biso set --help` works here too.
 
-Unresolved dependencies produce a warning, not an error: you decide.
+Unresolved dependencies produce a warning, not an error: you decide. Taking
+over a live lease held by someone else is the same: it warns, it does not
+refuse.
 
 Exit codes:
   0  started        4  not found        7  the board could not be written
@@ -4173,10 +4197,6 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   ocurre con las tareas que existen en una versión del proyecto y no en otra: hoy, la única promesa es
   la de los tres mensajes distintos de la sección 7.3.
 - **No hay sincronización con ningún sistema externo.**
-- **No hay arrendamiento sobre la asignación.** Sería un instante de caducidad sobre una tarea activa
-  y asignada, para detectar a quien la coge y desaparece sin cerrar su sesión. No se escribe un campo
-  que hoy nada mantendría: el nombre, el tipo y quién detecta la caducidad dependen de la decisión de
-  persistencia, que no está tomada.
 - **No hay un papel de estado para descartar, distinto de terminar.** Una tarea hecha y una abandonada
   hoy comparten el mismo estado terminal. Un papel que obligara a dar un motivo al entrar en él sería
   barato de añadir cuando hiciera falta, pero a diferencia de los demás requisitos de este modelo no
