@@ -1528,7 +1528,6 @@ configuración a las que corresponden.
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
-| `--overwrite-config` con un `<name>` (el dado, o el que se derive por defecto del nombre del proyecto) que no coincide con el `project_name` que el tablero ya tiene | Error 2, `code` `rename_required`: la misma restricción que `biso config set project_name` (sección 10.10), remite a `biso rename`. No depende de si el tablero tiene tareas |
 | `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección 10.10 aplica a `task_prefix` |
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
 | Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
@@ -1592,7 +1591,6 @@ apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera es
 | Tablero creado | 0 |
 | Ya existía y no hay `--overwrite-config` | 2 |
 | Argumentos inválidos | 2 |
-| `--overwrite-config` cambiaría `project_name` | 2 |
 | `--overwrite-config` cambiaría `task_prefix` con tareas ya creadas | 6 |
 | No se puede escribir | 7 |
 
@@ -1634,8 +1632,7 @@ stored as explicit values and never move again.
 
 Exit codes:
   0  board created
-  2  bad usage, a board already reachable from here, or --overwrite-config
-     changing project_name (use `biso rename` for that)
+  2  bad usage, or a board is already reachable from here
   6  --overwrite-config would change task_prefix on a board with tasks
   7  cannot write there
 
@@ -3472,7 +3469,7 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 
 | Clave | Tipo | Por defecto |
 |---|---|---|
-| `project_name` | texto, no se cambia con `set` | el nombre del proyecto |
+| `project_name` | texto | el nombre del proyecto |
 | `statuses` | lista, mínimo tres | `To Do, In Progress, Done` |
 | `initial_status` | uno de `statuses` | `To Do`, al crear el tablero sin `--statuses` |
 | `active_status` | uno de `statuses` | `In Progress`, al crear el tablero sin `--statuses` |
@@ -3490,15 +3487,7 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
 
 **`project_name` es el nombre del tablero.** Es la etiqueta humana que da nombre a su carpeta
-(`<nombre>-<id>`, sección 3.2). **No se cambia con `biso config set`**: hacerlo sin mover la carpeta
-dejaría el nombre de la carpeta mintiendo sobre el tablero que contiene, y moverla desde `config set`
-sería un efecto secundario sorprendente en un comando cuyo contrato es no tocar más que la
-configuración. Por eso `biso config set project_name <valor>` termina en error, remitiendo a
-`biso rename` (sección 10.14), que cambia el nombre y mueve la carpeta a la vez, sin tocar el `id`
-del puntero ni ninguna tarea. La misma restricción vale para `biso init --overwrite-config`
-(sección 10.1): reescribir la configuración de un tablero existente nunca cambia el `project_name`
-que ya tenía, se dé `<name>` explícito o no, y a diferencia de `task_prefix` esto no depende de si el
-tablero tiene tareas.
+(`<nombre>-<id>`, sección 3.2). Cambiarla no toca el `id` del puntero ni ninguna tarea.
 
 **`me` gana sobre `BISO_ME` cuando las dos están puestas.** Por eso un tablero compartido entre una
 persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
@@ -3521,7 +3510,6 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Caso | Qué pasa |
 |---|---|
 | Clave inexistente | Error 4, con las tres claves más parecidas |
-| `set project_name <valor>` | Error 2, `code` `rename_required`, remitiendo a `biso rename` (mensaje completo más abajo) |
 | Valor del tipo equivocado, por ejemplo `finish_strict maybe` | Error 3, diciendo qué tipo esperaba |
 | `initial_status` a un valor que no está en `statuses` | Error 3 |
 | Quitar de `statuses` un estado que alguna tarea usa | Error 6, con cuántas tareas lo usan y en cuáles |
@@ -3535,17 +3523,6 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | `set` correcto | Sin salida por stdout, con `note:` por stderr diciendo el valor nuevo |
 
 Ningún cambio de configuración toca ninguna tarea, nunca.
-
-#### `biso config set project_name` no existe, y su ausencia está especificada
-
-`biso config set project_name <valor>` termina con código 2 y este mensaje por stderr, en vez de
-escribir la clave:
-
-```
-error: project_name cannot be changed with config set
-hint: `biso rename <new-name>` changes it and moves the board's folder to
-      match, so the two never fall out of sync
-```
 
 #### Salida
 
@@ -3606,7 +3583,7 @@ Solo `config list` acepta `--json`:
 | Desenlace | Código |
 |---|---:|
 | Hecho | 0 |
-| Sintaxis, `--json` fuera de `list`, o `set project_name` | 2 |
+| Sintaxis, o `--json` fuera de `list` | 2 |
 | Valor de tipo o de dominio incorrecto | 3 |
 | Clave inexistente | 4 |
 | El cambio dejaría el tablero inconsistente | 6 |
@@ -3624,7 +3601,7 @@ Read and change the board configuration. List values are comma-separated.
 No configuration change ever touches a task.
 
 Keys:
-  project_name       board name; not settable here, see `biso rename --help`
+  project_name       board name
   statuses           the board statuses, in order
   initial_status     status of a new task           (one of statuses)
   active_status      what `biso start` sets         (one of statuses)
@@ -3650,16 +3627,13 @@ never moves them; if a change would remove one of them, it fails and says so.
 Removing any configured value that a task still uses is refused, never applied
 silently.
 
-There is no `config set project_name`. Use `biso rename` instead.
-
 Options:
       --json         machine-readable output, `list` only
   -h, --help         show this help
 
 Exit codes:
   0  done            4  no such key
-  2  bad usage, or `set project_name` (use `biso rename`)
-                     6  the change would leave the board inconsistent
+  2  bad usage       6  the change would leave the board inconsistent
   3  bad value       7  the configuration could not be written
                      8  no board here
 
@@ -4147,7 +4121,7 @@ agrupada por el código de salida con el que sale cada uno:
 
 | Código de salida | `code` |
 |---:|---|
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `missing_name`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `rename_required`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `missing_name`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses` |
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_project`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous` |
