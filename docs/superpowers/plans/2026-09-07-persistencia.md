@@ -530,16 +530,46 @@ Este paso sale de un criterio del usuario: **prefiere que los comandos se arregl
 a una llamada que vas a tener que hacer de todas formas.** Tiene razón, y hay que dejarlo escrito como
 regla, porque hoy la sección no dice qué entra en `doctor` y qué no.
 
-La regla, en la sección 10.11: **ningún comando remite a `biso doctor` para algo que podía arreglar él
-mismo.** Si el arreglo no necesita ninguna decisión, el comando que detecta el problema lo arregla y sigue,
-avisando con un `warning:` si merece la pena saberlo. Sale a `doctor` solo lo que cae en uno de estos dos
-casos, y conviene enunciarlos:
+La regla, en la sección 10.11: **ningún comando remite a `biso doctor` para algo que podía arreglar dentro
+de lo que ya se le pidió.** Si el arreglo no necesita ninguna decisión y cae dentro del trabajo que el
+comando iba a hacer de todas formas, lo arregla y sigue, avisando con un `warning:` si merece la pena
+saberlo. El ejemplo que ya se cumple: el contador del identificador más alto lo repara `biso new` por
+necesidad, porque para asignar el siguiente tiene que saber el máximo de verdad, y eso no es reparar de
+paso sino hacer bien su trabajo.
+
+**Y hay que decir por qué los demás comandos no reparan lo que se encuentran**, porque es la pregunta
+inmediata y tiene tres respuestas, las tres apoyadas en promesas que el documento ya hace:
+
+- **Casi ningún comando ve nada que arreglar.** `biso get` lee una tarea y no puede detectar que otra
+  tenga una dependencia rota. Lo que hace útil a `doctor` no es saber reparar, es mirar el tablero entero.
+- **Los comandos de lectura no pueden escribir.** La sección 4.10 promete que las lecturas nunca fallan
+  por una escritura en curso y nunca la bloquean, y la 9.4 que `biso prime` no escribe nunca y es seguro
+  en paralelo. Un `ls` o un `prime` que repararan al pasar necesitarían acceso exclusivo, podrían esperar
+  cinco segundos y fallar con código 7, y se perdería justo la garantía de los dos comandos que un agente
+  llama sin parar.
+- **Un comando de escritura tiene permiso para lo que se le pidió, no para más.** Y no es solo cuestión
+  de sorpresa: con el todo o nada de la sección 4.10, si `biso set` cambiara un título y además repara
+  otra cosa, y la reparación falla, habría que decidir si se deshace el título, o sea una transacción que
+  abarca dos intenciones sin relación.
+
+Eso le da a `--fix` su sentido exacto, y conviene escribirlo así: **`--fix` no es una comodidad, es el
+consentimiento.** Es donde quien llama dice "te autorizo a escribir cosas que no te he pedido una por
+una", y es precisamente la autorización que ningún otro comando tiene.
+
+Sale a `doctor` solo lo que cae en uno de estos dos casos, y conviene enunciarlos:
 
 - **Lo que necesita una decisión humana**, porque hay más de un arreglo válido y elegir por tu cuenta
   destruiría información. Un ciclo de dependencias es el ejemplo: no se puede adivinar qué arista sobra. La
   sección ya lista varias así, marcadas como no reparables.
 - **Lo que solo pasa por daño externo**, porque nada dentro de `biso` lo produce: una base de datos
   corrupta, una carpeta que alguien movió a mano, un fichero que perdió sus permisos.
+
+Y de ahí sale el corolario que hace falta para que las dos reglas no se peleen: **un comando que tropieza
+con un problema reparable que no le toca arreglar lo dice con un `warning:` y nombra `biso doctor --fix`.**
+Eso no es mandarte a una llamada que ibas a hacer igual, que es lo que hay que evitar: es contarte algo
+que no sabías y que no ibas a descubrir por tu cuenta. La regla que se prohíbe es remitir a `doctor` para
+algo que el comando ya tenía permiso para arreglar; avisar de lo que no puede tocar es lo contrario de
+esconderlo.
 
 Y queda una tercera razón para que `doctor` exista, que no es de reparación y hay que decirla: es el único
 sitio donde se puede preguntar **"le pasa algo a este tablero"** sin haber intentado antes una operación.
