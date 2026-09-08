@@ -178,12 +178,12 @@ En `subagent-driven-development`, sección "Setup":
 Esa bitácora vive en `<raíz-del-repo>/.superpowers/sdd/<nombre-del-plan>/progress.md`, la crea el
 script `scripts/sdd-workspace PLAN_FILE` del propio plugin, y su formato está fijado:
 
-- Primera línea de identidad: `# SDD ledger — plan: <ruta del plan>`
+- Primera línea de identidad: `# SDD ledger - plan: <ruta del plan>`
 - Una línea por tarea completada: `Task <N>: complete (commits <base7>..<head7>, review clean)`
 - Una línea por ronda de arreglo: `Task <N>: fix round <R>/5 (<X> addressed, <Y> open; commits ...)`
 - Una línea por decisión tomada en nombre del humano:
-  `Ruling: <qué decidí> — <por qué> — <qué cuesta si me equivoco>`
-- Hallazgos aparcados: `Task <N>: parked — <hallazgo> — Ruling: <por qué el código se queda>`
+  `Ruling: <qué decidí> - <por qué> - <qué cuesta si me equivoco>`
+- Hallazgos aparcados: `Task <N>: parked - <hallazgo> - Ruling: <por qué el código se queda>`
 
 Y en su sección "Finish", dos órdenes consecutivas:
 
@@ -253,7 +253,7 @@ sesión con Superpowers. Inventario de lo que se usa:
 | Cada `Ruling:` de la bitácora | Una decisión tomada en tu nombre | `biso comment <ref> "Ruling: qué, por qué, y qué cuesta si me equivoco"` |
 | `systematic-debugging` descarta una hipótesis (fases 1 a 3) | Lo que más se pierde al compactar | `biso note <ref> "Descartado X porque Y"` |
 | `systematic-debugging` acumula tres arreglos fallidos (fase 4.5) | Hay que cuestionar la arquitectura con una persona | `biso ask <ref> "..."` |
-| Una revisión deja un hallazgo aparcado | `Task N: parked — ...` | Tarea hija con `--parent <ref>`, o `--note` si es menor |
+| Una revisión deja un hallazgo aparcado | `Task N: parked - ...` | Tarea hija con `--parent <ref>`, o `--note` si es menor |
 | `verification-before-completion` da el visto bueno | La evidencia de que está en verde | Es la puerta previa al `finish`, no una escritura propia |
 | `finishing-a-development-branch` presenta su menú | Tres opciones, decide la persona | Si no hay persona: `biso ask`. Si la hay y elige: `biso finish <ref> --check all --summary "..."` |
 
