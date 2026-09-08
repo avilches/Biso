@@ -4598,6 +4598,7 @@ con esta forma:
 | `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer`, `archive` | `tasks`, `warnings` |
 | `config` | `config list` | `config`. Ejemplo en 10.10 |
 | `doctor` | `doctor` | `problems`, `warnings`, `fixed`. Ejemplo en 10.11 |
+| `snapshot` | `snapshot` | `tasks`, `files`, `committed`, `commit`, `skipped`. Ejemplo en 10.14 |
 | `error` | cualquier fallo | Ver 12.2 |
 
 Un lote de doscientas cuarenta y dos tareas es **un solo sobre** con doscientas cuarenta y dos
