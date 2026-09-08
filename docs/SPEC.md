@@ -1555,7 +1555,7 @@ Examples:
 
 ## 10. Los comandos
 
-Diecinueve comandos. Los once primeros son el ciclo de trabajo y aparecen en `biso --help`; los ocho
+Veinte comandos. Los once primeros son el ciclo de trabajo y aparecen en `biso --help`; los nueve
 restantes son de administración y aparecen en `biso help all`. De esos once, diez son los que 9.6
 cuenta como "las órdenes del ciclo de trabajo" del bloque `COMMANDS` de `biso prime`: `prime` es el
 undécimo, y no se lista a sí mismo en su propio mensaje.
@@ -1581,6 +1581,7 @@ undécimo, y no se lista a sí mismo en su propio mensaje.
 | `doctor` | Comprueba y repara la integridad | no |
 | `board` | Abre la interfaz interactiva | no |
 | `help` | La ayuda de primer nivel y la de cada comando | no |
+| `snapshot` | Escribe la instantánea del tablero en su propio directorio y la commitea a git | no |
 
 **Las banderas globales de la sección 3 valen en todos ellos y no se repiten en las tablas de
 parámetros de cada comando.** Un comando solo las menciona cuando le impone una restricción
@@ -4316,7 +4317,7 @@ biso help [<command> | all]
 |---|---|
 | Sin argumento | Imprime la ayuda de primer nivel de la sección 11, igual que `biso --help` |
 | Con un nombre de comando | Imprime la ayuda de ese comando, igual que `biso <cmd> --help` |
-| Con `all` | Imprime la ayuda de primer nivel más la lista de los ocho comandos de administración, cada uno con su línea |
+| Con `all` | Imprime la ayuda de primer nivel más la lista de los nueve comandos de administración, cada uno con su línea |
 | Con un nombre que no existe | Error 4, con los tres nombres más parecidos |
 
 `biso help` funciona **sin tablero**.
@@ -4335,6 +4336,7 @@ Administration:
   doctor             check the board, and repair what can be repaired
   board              open the interactive board
   help [cmd|all]     this
+  snapshot           write tasks.ndjson and config.json, then commit them to git
 ```
 
 #### Códigos de salida
@@ -4350,7 +4352,7 @@ Administration:
 Usage: biso help [command|all]
 
 Print the top-level help, or the help of one command, or the top-level help
-plus the eight administrative commands with `all`. Works without a board.
+plus the nine administrative commands with `all`. Works without a board.
 
 Arguments:
   command        a command name, or `all`
@@ -4566,10 +4568,11 @@ Global options:
   -h, --help         this, or the help of a command
 
 More: `biso <command> --help`, and `biso help all` for the administrative
-commands (init, where, archive, export, config, doctor, board, help).
+commands (init, where, archive, export, config, doctor, board, help,
+snapshot).
 ```
 
-Son treinta y dos líneas, y no incluyen los ocho comandos de administración.
+Son treinta y tres líneas, y no incluyen los nueve comandos de administración.
 
 ---
 
