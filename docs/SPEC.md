@@ -681,7 +681,7 @@ escribe. No dice nada de cómo se guardan.
 | `acDone`, `acTotal`, `dodDone`, `dodTotal` | entero, derivado | derivado | el programa | no, se recalculan al leer |
 | `commentCount` | entero, derivado | derivado | el programa | no, se recalcula al leer |
 | `blocks` | lista de referencias, derivado | derivado | el programa | no, se recalcula al leer |
-| `ready`, `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
+| `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
 | `leaseExpired` | booleano, derivado | derivado | el programa | no, se recalcula al leer |
 
 Siete precisiones sobre la mutabilidad:
@@ -696,8 +696,8 @@ Siete precisiones sobre la mutabilidad:
 - **Los campos marcados "derivado" en esta tabla no se guardan.** Se calculan al leer, y son
   exactamente los campos que `biso export` no escribe (10.9) y que `biso new --from` rechaza como
   clave desconocida (10.3): `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`,
-  `blocks`, `ready`, `blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos
-  derivados del documento; las demás secciones remiten a ella.
+  `blocks`, `blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos derivados del
+  documento; las demás secciones remiten a ella.
 - **`leaseExpired` no cambia el `status` guardado, nunca.** Dice que el arrendamiento de una tarea
   activa venció, pero el estado guardado sigue siendo el activo hasta que alguien lo cambia con una
   escritura explícita: lo que vence es la reclamación, no el estado (sección 9.2 de
@@ -2172,7 +2172,7 @@ Examples:
 biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] [--only-archived]
         [--type <v>]... [--priority <v>]... [--project <v>]...
         [-l <label>]... [--label-or <label>]... [-a <@who>]... [--mine] [--unassigned]
-        [-m <milestone>] [-p <ref>] [--ready] [--blocked] [--waiting] [--not-waiting]
+        [-m <milestone>] [-p <ref>] [--blocked] [--not-blocked] [--waiting] [--not-waiting]
         [--active] [--not-active] [--overdue] [--due-before <date>]
         [--search <text>] [--unchecked]
         [--sort <field>] [--reverse] [--limit <n>] [--all] [--ids] [--count]
@@ -2197,8 +2197,8 @@ biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] 
 | `--unassigned` | | no | booleano | falso | no | no | `-a`, `--mine` |
 | `--milestone <m>` | `-m` | no | texto libre | | no | no | |
 | `--parent <ref>` | `-p` | no | referencia | | no | no | |
-| `--ready` | | no | booleano | falso | no | no | `--blocked` |
-| `--blocked` | | no | booleano | falso | no | no | `--ready` |
+| `--blocked` | | no | booleano | falso | no | no | `--not-blocked` |
+| `--not-blocked` | | no | booleano | falso | no | no | `--blocked` |
 | `--waiting` | | no | booleano | falso | no | no | `--not-waiting` |
 | `--not-waiting` | | no | booleano | falso | no | no | `--waiting` |
 | `--active` | | no | booleano | falso | no | no | `--not-active` |
@@ -2228,6 +2228,10 @@ Reglas de combinación de filtros:
 - **El estado terminal se excluye por defecto**, y `--any-status` es la única forma de incluirlo.
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
+- **`--blocked` es incompatible con `--not-blocked`.** Las dos miran las dependencias sin terminar y
+  no el estado, así que se combinan con cualquier filtro de estado y con los dos pares de abajo.
+  `--not-blocked` por sí sola no dice que la tarea se pueda coger: descarta la que espera a otra
+  tarea, no la que espera una respuesta ni la que ya lleva alguien.
 - **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada una con su
   opuesta.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
   razón de ser: sin ellas, pedir la cola activa obligaría a escribir `-s "In Progress"`, el nombre
@@ -2280,7 +2284,7 @@ Ocho columnas fijas, separadas por dos espacios, en este orden y con estos conte
 | 3 | tipo | `-` |
 | 4 | prioridad | `-` |
 | 5 | título, recortado a **100 caracteres siempre**, con `...` al final si se recorta | nunca lo está |
-| 6 | `ac <marcados>/<total>` | `-` si la tarea no tiene criterios |
+| 6 | `ac <marcados>/<total>` | `-` si la tarea no tiene criterios de aceptación |
 | 7 | primera persona asignada, con `+<n>` si hay más | `-` |
 | 8 | fecha límite | `-` |
 
@@ -2359,11 +2363,10 @@ igual que las demás.
         "acDone": 1,
         "acTotal": 2,
         "dodDone": 0,
-        "dodTotal": 0,
+        "dodTotal": 1,
         "commentCount": 1,
         "urgency": 19.0,
         "blocks": ["TASK-40"],
-        "ready": true,
         "blocked": false,
         "waiting": false,
         "archived": false,
@@ -2382,7 +2385,7 @@ igual que las demás.
 ```
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
-comentarios. Para eso está `biso get`. Los once campos derivados de la sección 5 sí están todos,
+comentarios. Para eso está `biso get`. Los diez campos derivados de la sección 5 sí están todos,
 `blocks` incluido. `truncated` es explícito para que nadie tenga que comparar `shown` con `matched`,
 y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado.
 
@@ -2424,8 +2427,9 @@ Filters (repeat or comma-separate; same field is OR, different fields are AND):
       --unassigned           assigned to nobody
   -m, --milestone <text>     milestone, matched like any board value
   -p, --parent <ref>         subtasks of this task
-      --ready                nothing unfinished blocks it
       --blocked              something unfinished blocks it
+      --not-blocked          nothing unfinished blocks it; it may still be
+                             waiting on an answer, so add --not-waiting
       --waiting              has an open question
       --not-waiting          has no open question
       --active               in the board's active status
@@ -2460,7 +2464,7 @@ Examples:
   biso ls
   biso ls -s "In Progress" --mine
   biso ls --type bug --priority high --limit 10
-  biso ls --ready --ids
+  biso ls --not-blocked --not-waiting --ids
   biso ls --any-status --archived --all
 ```
 
@@ -2744,17 +2748,22 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 
 Por defecto, **una línea por tarea afectada** con lo que quien llama no sabía: el estado resultante,
 el avance de criterios y la urgencia recalculada. Los tres datos son derivados, y ninguno se puede
-conocer sin leer la tarea.
-
-```
-TASK-11  In Progress  ac 1/2  urgency 19.0
-```
-
-Cuando la tarea tiene definición de hecho, la línea la incluye igual:
+conocer sin leer la tarea. La TASK-11 de los ejemplos tiene además una definición de hecho de un
+elemento, así que su línea trae también el avance de esa segunda lista:
 
 ```
 TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
+
+**Esta es la línea de estado, y la imprimen también los seis verbos del ciclo de 10.7 y
+`biso archive`.** La única excepción es `biso new`, por el motivo que da 10.3. Cada comando la enseña
+con su propio ejemplo, pero las tres reglas de su forma se dicen aquí y no se repiten:
+
+1. El trozo `ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación.
+2. El trozo `dod <marcados>/<total>` sale siempre que tenga definición de hecho. Una tarea sin ninguna
+   de las dos listas imprime solo el identificador, el estado y la urgencia.
+3. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
+   que un comando puede añadirle, y quien lo añade es `biso archive` (10.8).
 
 Los avisos van por stderr:
 
@@ -2871,6 +2880,10 @@ quien llama ya es `leaseHolder`, renuevan `leaseExpiresAt`; si no lo es y el arr
 no tocan ninguno de los dos campos y avisan; y si no lo es y está vencido, lo dejan vencido. Ninguno
 de los cinco fija ni transfiere `leaseHolder`: solo `start` reclama.
 
+Los seis imprimen también la misma línea de estado que `set`, con la forma y las reglas que define
+10.6. Los ejemplos de más abajo son esa línea con los datos de la TASK-11, que tiene dos criterios de
+aceptación y un elemento de definición de hecho.
+
 El ciclo entero de una tarea es esto:
 
 ```
@@ -2924,7 +2937,7 @@ pasado.
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 0/2  urgency 19.0
+TASK-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
 ```
 
 ##### Códigos de salida
@@ -3026,7 +3039,7 @@ campo de la sección 8, igual que las demás.
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  urgency 19.0
+TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 ##### Códigos de salida
@@ -3103,7 +3116,7 @@ escritura.
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  urgency 19.0
+TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 Y por stderr, `note: comment #2 by @trello:juan`.
@@ -3317,7 +3330,7 @@ hint: reopen it first with `biso start TASK-11 --reopen`
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  urgency 15.0
+TASK-11  In Progress  ac 1/2  dod 0/1  urgency 15.0
 ```
 
 La urgencia queda por debajo de los 19.0 del ejemplo de 5.4 porque el término de actividad exige
@@ -3451,7 +3464,7 @@ hint: use `biso comment` to add a comment
 ##### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  urgency 19.0
+TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 La urgencia recupera el término de actividad de 5.4, porque `waiting` vuelve a ser falso.
@@ -3546,7 +3559,7 @@ hint: `biso archive <ref>` takes it off the board and keeps the history
 #### Salida
 
 ```
-TASK-11  Done  ac 2/2  urgency 0.0  archived
+TASK-11  Done  ac 2/2  dod 1/1  urgency 0.0  archived
 ```
 
 #### Códigos de salida
@@ -3688,7 +3701,7 @@ Its shaping flags (--sort, --limit, --all, --ids, --count) do not apply either.
 line, while --json means the single envelope every other command prints.
 
 Derived fields are never written: urgency, acDone, acTotal, dodDone, dodTotal,
-commentCount, blocks, ready, blocked, waiting, leaseExpired.
+commentCount, blocks, blocked, waiting, leaseExpired.
 
 Exit codes:
   0  exported       3  a filter value does not exist here

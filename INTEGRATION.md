@@ -326,13 +326,13 @@ necesita diseño, lo correcto es que se pare, y se pierde el turno.
 
 ### 6.4. La política de despacho que se deduce
 
-1. Despachar solo tareas listas: `biso ls --ready --not-waiting` (los dos filtros existen, sección
-   10.4 de `docs/SPEC.md`, junto con `--blocked`, `--active`, `--not-active`, `--mine` y
+1. Despachar solo tareas listas: `biso ls --not-blocked --not-waiting` (los dos filtros existen,
+   sección 10.4 de `docs/SPEC.md`, junto con `--blocked`, `--active`, `--not-active`, `--mine` y
    `--unassigned`).
 2. Exigir además que **la puerta de diseño esté cerrada**, que en la práctica significa que la tarea
    ya lleva un `--doc` con su plan. Una tarea sin plan es trabajo de diseño y va a una persona.
 3. Cuando el agente choque con una puerta a mitad de faena, la salida no es adivinar sino
-   `biso ask`, que deja la tarea aparcada y visible en el bloque `WAITING ON A PERSON` del `prime`
+   `biso ask`, que deja la tarea aparcada y visible en el bloque `NEEDS ANSWER` del `prime`
    sin que nadie tenga que abrir nada.
 4. Las cuatro cosas que paran a `subagent-driven-development` (una operación irreversible o
    destructiva, una acción sensible de seguridad, un efecto fuera del worktree como mezclar o
@@ -506,7 +506,7 @@ regenerarlos y a comprobar que coinciden carácter a carácter.
 - `docs/SPEC.md` sección 5, el modelo de datos y sus campos.
 - `docs/SPEC.md` secciones 9.1, 9.5, 9.6 y 9.7, el mensaje de arranque, su presupuesto y su texto
   literal.
-- `docs/SPEC.md` sección 10.4, los filtros de `biso ls`, incluidos `--ready` y `--waiting`.
+- `docs/SPEC.md` sección 10.4, los filtros de `biso ls`, incluidos `--not-blocked` y `--waiting`.
 - `docs/SPEC.md` sección 13, el contrato de estabilidad, que congela el tope de 5.120 bytes.
 - `docs/SPEC.md` sección 14, lo que se deja fuera a propósito.
 - `docs/DECISIONES.md` sección 3, el presupuesto del mensaje de arranque y la decisión de sustituir

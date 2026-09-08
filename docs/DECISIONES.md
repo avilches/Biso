@@ -308,8 +308,36 @@ cuesta una llamada.
 **10.4, por qué el filtro de etiquetas es el único que combina sus valores con "y".** Porque el uso
 normal de varias etiquetas es acotar, no ampliar.
 
+**10.4, por qué el filtro de dependencias es `--blocked` y `--not-blocked`, y no `--ready`.** El hecho
+que se calcula es uno solo, que alguna dependencia esté sin terminar, así que se nombra una vez y su
+negación se forma con el mismo prefijo que los otros dos pares booleanos de `biso ls`,
+`--waiting`/`--not-waiting` y `--active`/`--not-active`. El nombre `ready` sobraba por dos motivos
+distintos. El primero es que hacía viajar el mismo hecho dos veces en el JSON, como `ready` y como
+`blocked`, y dos campos que dicen lo mismo acaban divergiendo. El segundo es que prometía más de lo
+que cumplía: miraba solo dependencias, así que `biso ls --ready` devolvía también las tareas aparcadas
+en una pregunta, que es justo lo que un agente no puede coger. De los dos nombres sobrevive `blocked`
+porque ya tiene entrada propia en la tabla de vocabulario de `docs/SPEC.md`, porque da nombre al
+término `urgency.blocked` de la fórmula de urgencia, y porque nombra el hecho que de verdad se calcula.
+Y el nombre nuevo tampoco promete estar lista para trabajar, porque ninguna bandera sola puede: eso
+son varios filtros, y cuántos depende de qué se busque. Descartar lo bloqueado y lo aparcado son dos,
+`--not-blocked --not-waiting`; quien quiera además tarea sin empezar añade `--not-active`, que es el
+filtro con el que el propio mensaje de arranque describe su bloque `NEXT UP` (9.7); y quien la quiera
+sin dueño, `--unassigned`. El cambio quita una clave del JSON y renombra una bandera,
+que son las dos cosas que el contrato de estabilidad de 13 promete no tocar nunca, y por eso se hace
+ahora: ese contrato obliga a partir de la versión 1.0 y todavía no hay ninguna versión publicada.
+Después de 1.0 esta limpieza ya no se podría hacer.
+
 **10.6, por qué `set` no repite en su tabla las banderas de campo.** Porque repetirlas invitaría a que
 divergieran, que es como se rompen los documentos largos.
+
+**10.6, por qué la línea de estado encoge cuando la tarea no tiene criterios, en vez de imprimir un
+guion como hace el listado.** Las dos salidas parecen contradecirse y no lo hacen, porque no son la
+misma clase de cosa. El listado de 10.4 es una tabla: sus columnas se rellenan al ancho del valor más
+largo de la llamada, así que una celda vacía tiene que ocupar su sitio o las filas de abajo se
+descolocan, y para eso está el guion. La línea de estado sale una por tarea afectada, sin ancho
+compartido y sin nada que alinear debajo, de modo que un hueco no descoloca nada y un guion solo
+añadiría un símbolo más que interpretar. Quien quiera los contadores siempre, estén las listas vacías
+o no, pide `--json`, que trae los cuatro como números.
 
 **10.7, por qué `finish` avisa de los criterios sin marcar y no lo impide.** Un criterio puede haber
 quedado obsoleto, y un comando que no deja cerrar empuja a rodearlo con `set`, que es como se aprende
@@ -598,12 +626,12 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   `--any-status`. Se acepta porque la alternativa, impedir cerrar una tarea con una pregunta abierta,
   empujaría a rodear la herramienta, el mismo argumento que ya vale en el apartado 6 para `finish` y
   los criterios sin marcar.
-- **El filtro `--ready` no excluye las tareas aparcadas.** Mira solo dependencias, así que un agente
-  que elija trabajo con esa bandera, que es justo lo que su nombre invita a hacer, se lleva también las
-  que esperan una respuesta. La consulta correcta añade `--not-waiting`. Se anota porque el nombre
-  engaña.
-- **`--ready` y `--blocked` siguen siendo complementarios**, dos campos derivados de un solo hecho. Es
-  anterior a este trabajo y queda como limpieza aparte.
+- **El filtro de dependencias no excluye las tareas aparcadas.** `--not-blocked` mira solo
+  dependencias, así que un agente que elija trabajo únicamente con esa bandera se lleva también las
+  que esperan una respuesta. La consulta correcta añade `--not-waiting`, y así lo dicen tanto la
+  descripción de la bandera como el ejemplo de la ayuda de `biso ls`. El riesgo se queda, pero
+  encogido: el nombre ya no promete que la tarea esté lista para trabajar, solo que no esté bloqueada,
+  que es lo que mide. El porqué del nombre está en el apartado 6.
 
 ---
 
