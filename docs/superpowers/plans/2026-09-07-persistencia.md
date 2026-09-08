@@ -27,9 +27,9 @@ Valen para todas las tareas y no se repiten en cada una.
   banderas, los textos de ayuda, los mensajes de error y las claves JSON van en inglés.
 - **Nunca em-dash**, en ningún texto. Se comprueba con `grep -c '—' <fichero>`, que tiene que dar 0.
 - **Los mensajes de commit no llevan coautoría** ni mención de haber sido generados por un agente.
-- **Los mensajes de commit llevan su ortografía española completa, con todas sus tildes y su eñe.**
-  Nunca se sustituye un carácter acentuado por su equivalente en ASCII, ni en el asunto ni en el
-  cuerpo. Las plantillas de mensaje de cada tarea ya vienen bien acentuadas: se copian tal cual.
+- **Las tildes de un mensaje de commit no son un requisito y no son un hallazgo.** La prosa de la
+  documentación sí lleva su ortografía completa, pero el asunto o el cuerpo de un commit sin
+  acentos no se reporta como defecto ni se arregla. Decidido por el usuario el 2026-09-07.
 - **El mensaje de `biso prime` tiene un tope duro de 5.120 bytes**, repartido en 3.456 de parte fija y
   1.664 de resumen (sección 9.5). La medida de hoy es 4.689 bytes en total, 3.255 de parte fija y
   1.434 de resumen, con 431 de margen. **Cualquier cambio en el texto literal de la sección 9.7 obliga
