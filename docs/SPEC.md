@@ -931,6 +931,13 @@ porque ese instante ya lo había observado el programa al crear la pregunta; sol
 cada comentario, y sigue la misma regla que ellas: es opcional, y si `biso new --from` no la trae,
 toma el instante de la importación.
 
+**`leaseExpiresAt` es la quinta fecha importable y es la única que no sigue esa regla**, así que se
+cuenta aparte a propósito. Si no viene, no se rellena con nada: la tarea llega sin arrendamiento, que
+es lo que significa no traerlo. Rellenarla con el instante de la importación crearía un arrendamiento
+que nadie ha reclamado, y encima a nombre de nadie, porque `leaseHolder` no es una fecha y no tiene
+ningún valor por defecto que ponerle. Los dos vienen juntos o no viene ninguno (precisión octava de
+esta misma sección).
+
 ### 5.4. La urgencia
 
 `urgency` es un decimal derivado que se recalcula en cada lectura y **nunca se guarda**. Es el segundo
