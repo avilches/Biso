@@ -497,7 +497,15 @@ consiga es cosa de quien implemente.
 ### 4.11. Identificadores
 
 - Un identificador es `<PREFIX>-<n>`, con `n` entero positivo. `PREFIX` viene de la configuración
-  (`task_prefix`, por defecto `TASK`).
+  (`task_prefix`).
+- **`task_prefix` no tiene un valor fijo por defecto: se deriva del nombre del tablero
+  (`project_name`) en mayúsculas.** Dos tableros con `TASK` como valor fijo colisionarían los dos en
+  `TASK-1`, y eso haría inservible cualquier vista que junte tareas de varios proyectos.
+- **La derivación quita del nombre los caracteres que no son letras y pasa el resto a mayúsculas**,
+  así que un tablero llamado `mi-proyecto-2` da el prefijo `MIPROYECTO`. Si al quitarlos no queda
+  ninguna letra, como en un tablero llamado `2026`, `biso init` no se inventa un valor: falla y pide
+  el prefijo explícitamente con `--prefix` (error 2, `code` `invalid_prefix`, sección 12.3), la misma
+  clave que ya cubre un `--prefix` con algo que no sean letras (sección 10.1).
 - **Un identificador no se reutiliza jamás**, ni después de archivar una tarea ni después de
   eliminarla por cualquier vía.
 - Los identificadores se asignan de forma creciente, pero **la especificación no promete que la
@@ -1481,7 +1489,7 @@ biso init [<name>] [--at <location>] [--statuses <list>]
 | `--priorities <list>` | | no | lista | `high, medium, low` | sí | sí | |
 | `--projects <list>` | | no | lista | vacía | sí | sí | |
 | `--extensions <list>` | | no | lista | vacía | sí | sí | |
-| `--prefix <text>` | | no | texto de solo letras | `TASK` | no | no | |
+| `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección 4.11) | no | no | |
 | `--overwrite-config` | | no | booleano | falso | no | no | |
 
 `--at` acepta el nombre o el localizador de un tablero, en la forma que el almacenamiento imponga,
@@ -1516,7 +1524,8 @@ configuración a las que corresponden.
 | Una bandera de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
 | Dos banderas de papel nombran el mismo estado | Error 2, con los dos papeles y el estado que comparten |
 | `--statuses` con menos de tres estados | Error 2, diciendo cuántos hacen falta y por qué |
-| `--prefix` con algo que no sean letras | Error 2 |
+| `--prefix` con algo que no sean letras | Error 2, `code` `invalid_prefix` |
+| Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección 4.11) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
 | `--at` a un localizador donde no se puede escribir | Error 7 |
 
 **Los tres estados especiales se guardan como valores explícitos en la configuración, no como
@@ -1594,7 +1603,8 @@ Options:
   --projects <list>           comma-separated (default: none)
   --extensions <list>         comma-separated declared external field keys,
                               such as trello.card (default: none)
-  --prefix <text>             task id prefix, letters only (default: TASK)
+  --prefix <text>             task id prefix, letters only (default: derived
+                              from the board name, uppercased)
   --overwrite-config          replace the configuration of an existing board,
                               keeping every task
   -h, --help                  show this help
@@ -3453,7 +3463,7 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `labels` | lista | vacía |
 | `assignees` | lista | vacía |
 | `extensions` | lista | vacía |
-| `task_prefix` | texto de solo letras | `TASK` |
+| `task_prefix` | texto de solo letras | se deriva de `project_name` en mayúsculas (sección 4.11) |
 | `me` | texto de persona | `BISO_ME` si está definida |
 | `default_limit` | entero >= 0 | 30 |
 | `finish_strict` | booleano | falso |
@@ -3470,6 +3480,12 @@ identidad y `--mine` deja de significar nada (sección 11 de `docs/DECISIONES.md
 y **cambiar `statuses` no los mueve nunca**. Esta es la diferencia que evita que añadir un estado al
 final cambie en silencio a dónde va `biso finish`.
 
+**`task_prefix` es inmutable en cuanto el tablero tiene alguna tarea.** Es la única clave cuyo valor
+queda incrustado en datos que ya existen, porque cada identificador ya asignado lleva el prefijo
+grabado. Mientras el tablero está vacío no hay ningún identificador con el que pueda entrar en
+conflicto, así que cambiarla funciona sin más; en cuanto existe una sola tarea, cambiarla es error 6
+(tabla de abajo), con el mismo motivo por el que no se toca `statuses` en uso.
+
 #### Comportamiento, caso a caso
 
 | Caso | Qué pasa |
@@ -3483,6 +3499,7 @@ final cambie en silencio a dónde va `biso finish`.
 | Dar a un papel (`initial_status`, `active_status` o `terminal_status`) el mismo estado que otro papel ya tiene | Error 6, con los dos papeles y el estado que comparten |
 | Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
+| Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
 | `get` de una clave de lista | Los valores separados por comas, en una línea |
 | `set` correcto | Sin salida por stdout, con `note:` por stderr diciendo el valor nuevo |
 
@@ -3576,7 +3593,8 @@ Keys:
   labels             labels that filters accept on top of the ones in use
   assignees          assignees that filters accept on top of the ones in use
   extensions         declared external field keys, such as trello.card
-  task_prefix        id prefix, letters only (default TASK)
+  task_prefix        id prefix, letters only (default: derived from
+                     project_name); immutable once the board has a task
   me                 who you are, for --mine and for comment authorship
   default_limit      how many rows `biso ls` prints (default 30)
   finish_strict      make `biso finish` refuse an incomplete task
