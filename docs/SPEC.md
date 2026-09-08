@@ -233,10 +233,12 @@ carpeta, y que el puntero siga resolviendo aunque el tablero se haya renombrado,
 identificador viaja en el nombre de la carpeta y no en el puntero.
 
 `biso init` genera el `id` de la fuente de números aleatorios del sistema, comprobando que no exista ya
-en la raíz por defecto, que es una lectura de directorio, y escribe el puntero siempre: sin `--at`, con
-el tablero en la raíz por defecto; con `--at`, con el tablero donde se le diga y esa ruta en `path`
-(sección 10.1). `biso where` dice cuál se ha usado y por qué (sección 10.2). No hay ningún caso en el
-que haya que escribirlo a mano.
+en la raíz por defecto, que es una lectura de directorio, y escribe el puntero siempre que no exista ya
+uno: sin `--at`, con el tablero en la raíz por defecto; con `--at`, con el tablero donde se le diga y
+esa ruta en `path` (sección 10.1). Cuando ya existe un puntero sin tablero aquí, la excepción es la de
+más abajo: adopta el `id` que ya lleva en vez de generar uno nuevo, y no reescribe el puntero. `biso
+where` dice cuál se ha usado y por qué (sección 10.2). No hay ningún caso en el que haya que escribirlo
+a mano.
 
 **Dos proyectos distintos pueden apuntar legalmente al mismo tablero.** No hay forma de distinguir "dos
 copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", porque el mecanismo es
