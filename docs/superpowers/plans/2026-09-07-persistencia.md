@@ -27,6 +27,9 @@ Valen para todas las tareas y no se repiten en cada una.
   banderas, los textos de ayuda, los mensajes de error y las claves JSON van en inglés.
 - **Nunca em-dash**, en ningún texto. Se comprueba con `grep -c '—' <fichero>`, que tiene que dar 0.
 - **Los mensajes de commit no llevan coautoría** ni mención de haber sido generados por un agente.
+- **Los mensajes de commit llevan su ortografía española completa, con todas sus tildes y su eñe.**
+  Nunca se sustituye un carácter acentuado por su equivalente en ASCII, ni en el asunto ni en el
+  cuerpo. Las plantillas de mensaje de cada tarea ya vienen bien acentuadas: se copian tal cual.
 - **El mensaje de `biso prime` tiene un tope duro de 5.120 bytes**, repartido en 3.456 de parte fija y
   1.664 de resumen (sección 9.5). La medida de hoy es 4.689 bytes en total, 3.255 de parte fija y
   1.434 de resumen, con 431 de margen. **Cualquier cambio en el texto literal de la sección 9.7 obliga
@@ -164,7 +167,7 @@ mensaje de código 8 no ha cambiado, y que ninguna frase contradice a otra.
 
 ```bash
 git add docs/SPEC.md
-git commit -m "Fija el directorio del tablero, el puntero y la raiz por defecto"
+git commit -m "Fija el directorio del tablero, el puntero y la raíz por defecto"
 ```
 
 ---
@@ -220,7 +223,7 @@ Confirmar que los dos mensajes coexisten y que cada uno dice cuándo aplica.
 
 ```bash
 git add docs/SPEC.md
-git commit -m "Da su propio error al puntero que nombra un tablero que no esta en esta maquina"
+git commit -m "Da su propio error al puntero que nombra un tablero que no está en esta máquina"
 ```
 
 ---
@@ -453,7 +456,7 @@ grep -n '4\.689\|3\.255\|1\.434' docs/SPEC.md docs/DECISIONES.md  # si cambiaron
 
 ```bash
 git add docs/SPEC.md docs/DECISIONES.md
-git commit -m "Cierra el arrendamiento con caducidad: lo que vence es la reclamacion, no el estado"
+git commit -m "Cierra el arrendamiento con caducidad: lo que vence es la reclamación, no el estado"
 ```
 
 ---
@@ -504,7 +507,7 @@ tipos de lectura sigue cuadrando.
 
 ```bash
 git add docs/SPEC.md
-git commit -m "Separa la tarea ilegible de la base de datos que no abre, y amplia biso doctor"
+git commit -m "Separa la tarea ilegible de la base de datos que no abre, y amplía biso doctor"
 ```
 
 ---
@@ -570,7 +573,7 @@ manuales.
 
 ```bash
 git add docs/SPEC.md
-git commit -m "Anade la configuracion a la instantanea y especifica biso snapshot y la restauracion"
+git commit -m "Añade la configuración a la instantánea y especifica biso snapshot y la restauración"
 ```
 
 ---
@@ -618,7 +621,7 @@ grep -n '25 ms\|25 milisegundos' docs/SPEC.md   # la cifra aparece igual en todo
 
 ```bash
 git add docs/SPEC.md
-git commit -m "Convierte el arranque rapido en un requisito con cifra y con prueba"
+git commit -m "Convierte el arranque rápido en un requisito con cifra y con prueba"
 ```
 
 ---
@@ -726,7 +729,7 @@ esta tarea no ha terminado. Revisar en particular la tabla de identidad de la se
 
 ```bash
 git add docs/SPEC.md docs/DECISIONES.md CLAUDE.md
-git commit -m "Cierra la seccion 14 y actualiza los documentos que apuntaban a la decision pendiente"
+git commit -m "Cierra la sección 14 y actualiza los documentos que apuntaban a la decisión pendiente"
 ```
 
 ---
