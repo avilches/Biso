@@ -1509,6 +1509,9 @@ igual que la bandera global `--board`.
 Crea un tablero vacío con su configuración. **No escribe nunca fuera del tablero**, salvo el puntero
 del proyecto que se describe a continuación.
 
+**`<name>` es el `project_name` inicial del tablero.** Cambiarlo más adelante es cosa de `biso config
+set project_name`, que también mueve la carpeta del tablero (sección 10.10).
+
 `init` escribe, además del tablero, **el puntero del proyecto** (el fichero `.biso.json` de la
 sección 3.2), y lo escribe siempre que no exista ya uno, porque el tablero nunca queda dentro del
 propio proyecto: sin `--at`, en la raíz por defecto de la máquina; con `--at`, donde se le diga, con
@@ -3494,15 +3497,25 @@ se localiza por el patrón `*-<id>` y el identificador viaja en el nombre de la 
 fichero aparte. La parte del nombre en la carpeta es decorativa, nadie resuelve por ella: mantenerla
 al día es mantener una etiqueta, no mover datos de los que algo dependa.
 
+**`project_name` tiene que poder ser un nombre de carpeta.** No puede contener un separador de ruta
+(`/`), porque dejaría de nombrar una sola carpeta y pasaría a describir un camino: ese valor es error
+3. Los demás límites de un nombre de carpeta (la longitud, u otro carácter que un sistema de ficheros
+concreto rechace) no se comprueban por delante, porque dependen de dónde vive el tablero: si el
+sistema de ficheros lo rechaza al mover la carpeta, es el mismo error 7 que cualquier otro fallo al
+escribir.
+
 **Renombrar no toca nunca el `task_prefix`.** Se derivó una vez al crear el tablero y desde entonces
 vive por su cuenta en esa clave; cambiar `project_name` no lo recalcula, aunque el nombre nuevo diera
 un prefijo distinto si el tablero se creara hoy. Si el nombre nuevo no deja ninguna letra con la que
 derivar un prefijo (sección 4.11), tampoco es un error aquí: el prefijo ya está fijado y no se
 recalcula al renombrar.
 
-La misma regla vale para `biso init --overwrite-config` (sección 10.1): si el `<name>` resultante
-difiere del `project_name` que el tablero ya tenía, `--overwrite-config` mueve la carpeta igual que lo
-haría `config set project_name`.
+Una regla parecida vale para `biso init --overwrite-config` (sección 10.1), y solo cuando se da
+`<name>` explícito: si ese `<name>` difiere del `project_name` que el tablero ya tenía,
+`--overwrite-config` mueve la carpeta igual que lo haría `config set project_name`. **Sin `<name>`
+explícito, `project_name` se conserva tal cual estaba**, aunque el valor por defecto de `<name>` sea
+el nombre del directorio del proyecto: ese valor por defecto tiene sentido como punto de partida al
+crear un tablero nuevo, no como instrucción de renombrar uno que ya existe.
 
 **`me` gana sobre `BISO_ME` cuando las dos están puestas.** Por eso un tablero compartido entre una
 persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
@@ -3536,7 +3549,9 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
 | Cambiar `project_name` a un valor vacío | Error 3 |
 | Cambiar `project_name` al mismo valor que ya tiene | La carpeta no se mueve, porque el nombre no cambia; el `set` se completa igual |
+| Cambiar `project_name` a un valor con un separador de ruta (`/`) | Error 3 |
 | Cambiar `project_name` a un valor que no dejaría ninguna letra para derivar un prefijo | No es error: el `task_prefix` ya está fijado y no se recalcula al renombrar |
+| Cambiar `project_name` en un tablero cuyo puntero lleva `path` (vive fuera de la raíz por defecto) | Se mueve igual, en la ubicación que diga `path` |
 | Cambiar `project_name` sin poder mover la carpeta, por ejemplo por permisos | Error 7 |
 | `get` de una clave de lista | Los valores separados por comas, en una línea |
 | `set` correcto | Sin salida por stdout, con `note:` por stderr diciendo el valor nuevo |
@@ -3698,8 +3713,17 @@ imprime fichas de tareas.
 | Ciclos de tarea padre | no |
 | Claves de criterio repetidas dentro de una tarea | no |
 | El identificador más alto que el tablero recuerda haber asignado (4.11) es menor que el identificador más alto de una tarea existente | sí |
-| El nombre de la carpeta del tablero no coincide con `project_name` (alguien la renombró por fuera de `biso`) | sí |
+| El nombre de la carpeta del tablero no coincide con `project_name` (alguien la renombró por fuera de `biso`) | sí, renombrando la carpeta; `project_name` nunca cambia por esto |
 | Huecos en la numeración | no son un problema, no se reportan |
+
+**La reparación de la fila anterior renombra la carpeta, nunca cambia `project_name`.** El nombre de
+la carpeta es decorativo y `project_name` es el dato, así que solo hay una dirección que no pierda
+información: la carpeta se ajusta para que vuelva a coincidir con la configuración. Es precisamente
+esa falta de ambigüedad la que permite que `--fix` la repare sola, porque el criterio de esta sección
+es que a `--fix` solo va lo que no exige decisión; si las dos direcciones fueran igual de válidas, esta
+comprobación no sería reparable automáticamente y habría que decidir a mano, como las demás filas
+marcadas "no". Mover la carpeta del tablero a mano para renombrarlo no es un gesto soportado: para eso
+está `biso config set project_name` (sección 10.10), que mueve la carpeta él mismo.
 
 #### Comportamiento, caso a caso
 
