@@ -1664,11 +1664,11 @@ Sin parámetros propios.
 
 #### Comportamiento
 
-Antes había un solo dato que decir, qué tablero se está usando. Ahora hay tres, porque el nombre, el
-identificador y la ruta de un tablero pueden cambiar por separado (secciones 3.2 y 10.10): dice el
-identificador del tablero, su nombre, la ruta de su directorio, y cuál de las tres vías de la
-sección 3.2 lo ha elegido. Es el comando al que remite el error de código 8, y el que hace visible
-una resolución que de otro modo sería invisible.
+Dice el identificador del tablero, su nombre, la ruta de su directorio, y cuál de las tres vías de la
+sección 3.2 lo ha elegido. Los tres son datos distintos: `biso config set project_name` cambia el
+nombre y, con él, la ruta, porque la carpeta se llama `<nombre>-<id>` (sección 10.10), pero nunca el
+identificador, que es el único de los tres que no cambia jamás (sección 3.2). Es el comando al que
+remite el error de código 8, y el que hace visible una resolución que de otro modo sería invisible.
 
 | Caso | Qué pasa |
 |---|---|
