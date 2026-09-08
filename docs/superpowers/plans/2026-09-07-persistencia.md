@@ -62,7 +62,11 @@ plan no puede llevar huecos. La sexta queda fuera de alcance.
 Y una decisión que reduce el trabajo: **liberar un arrendamiento vencido no necesita comando nuevo.**
 La sección 9.2 de `DECISIONES.md` ya dice que reclamar una tarea sería la misma escritura que hace
 `biso start`, así que quien la reclama libera el arrendamiento vencido en la misma transacción, con la
-comprobación del tenedor dentro. Así el plan añade solo dos comandos, `biso snapshot` y `biso rename`.
+comprobación del tenedor dentro.
+
+Y otra que lo reduce más: **renombrar un tablero tampoco necesita comando nuevo.** Si el nombre es una
+clave de su configuración, la forma de cambiarlo es escribir esa clave, y `biso config set project_name`
+mueve la carpeta en la misma operación. Así que **el plan añade un solo comando en total, `biso snapshot`**.
 
 ---
 
@@ -285,49 +289,75 @@ git commit -m "Deriva el prefijo del nombre del tablero y lo hace inmutable con 
 
 ---
 
-## Tarea 4: El nombre del tablero y `biso rename`
+## Tarea 4: Renombrar un tablero, sin comando nuevo
+
+**No hay comando `biso rename`.** Una versión anterior de este plan lo añadía, y se descartó: si el
+nombre del tablero es una clave de su configuración, la forma de cambiarlo es escribir esa clave, y un
+comando aparte para una operación que ya tiene su sitio es superficie de más. La decisión y su motivo
+están en el ledger de la ejecución.
 
 **Ficheros:**
-- Crear: `docs/SPEC.md`, **subsección 10.14** para `biso rename`
+- Modificar: `docs/SPEC.md`, sección 10.10 "biso config", tabla de claves y tabla de casos
+- Modificar: `docs/SPEC.md`, sección 10.11 "biso doctor"
 
-**Consume de la tarea 1:** el nombre del tablero, ya situado en la configuración del tablero por el paso
-5 de esa tarea, y su relación con el nombre de la carpeta.
-**Produce para la tarea 5:** el comando `biso rename` y el hecho de que nombre e identidad son
-distintos.
-**Produce para la tarea 10:** un comando administrativo más.
+**Consume de la tarea 1:** el nombre del tablero, situado en `project_name` por el paso 5 de esa tarea,
+y su relación con el nombre de la carpeta.
+**Produce para la tarea 8:** que la subsección de comando libre es la **10.14**, porque esta tarea ya no
+ocupa ninguna.
+**Produce para la tarea 10:** nada. Esta tarea no añade ningún comando, así que el recuento solo crece
+por la tarea 8.
 
-El número de subsección, 10.14, está asignado de antemano a propósito, porque la tarea 8 también añade
-una subsección de comando y las dos elegirían el mismo número por separado.
+- [ ] **Paso 1: Que `biso config set project_name` renombre la carpeta**
 
-- [ ] **Paso 1: Especificar `biso rename`**
+Documentar en la sección 10.10 que cambiar `project_name` **mueve la carpeta del tablero en la misma
+operación**, conservando el sufijo del identificador: `kex-3f9a2b1c` pasa a `nuevonombre-3f9a2b1c`. Y que
+**no toca ningún puntero**, porque el tablero se localiza por el patrón `*-<id>` y el identificador viaja
+en el nombre de la carpeta.
 
-Escribir la sección del comando con la misma estructura que tienen los demás: firma, tabla de
-parámetros, comportamiento, casos límite, salida literal, esquema JSON, códigos de salida y texto de
-ayuda. El comando cambia el nombre y mueve la carpeta del tablero, **conservando el sufijo del identificador**:
-`kex-3f9a2b1c` pasa a `nuevonombre-3f9a2b1c`. **No toca ningún puntero**, y eso es consecuencia directa
-de que el identificador sea la identidad y viaje en el nombre de la carpeta: conviene decirlo
-explícitamente en el comportamiento.
+Esa clave rompe la uniformidad de la tabla, porque es la única cuyo cambio toca el sistema de ficheros, así
+que **su fila tiene que decirlo** y no dejar que un lector lo descubra por sorpresa. Justificar en una
+frase por qué no pasa nada: la parte del nombre en la carpeta es decorativa, nadie resuelve por ella, así
+que mantenerla en su sitio es mantener una etiqueta, no mover datos de los que algo dependa.
 
-Como el sufijo se conserva, la carpeta de destino **no puede existir ya** salvo que algo esté corrupto,
-así que ese caso deja de ser un caso de uso normal y pasa a ser un error de entorno, código 7. Un nombre
-nuevo que coincida con el de otro tablero es perfectamente legal y no es un error, porque los sufijos
-difieren.
+Casos límite que hay que resolver, y ninguno puede quedar para que se lo invente quien implemente: el
+nombre nuevo igual al que ya tiene, el nombre vacío, un nombre que no da un prefijo válido (que **no** es
+un error aquí, porque el prefijo ya está fijado y no se recalcula al renombrar, y eso hay que decirlo), un
+tablero que está fuera de la raíz por defecto porque su puntero lleva `path`, y una carpeta que no se puede
+mover por permisos, que es un fallo de entorno con código 7.
 
-- [ ] **Paso 2: Comprobar**
+Y la pregunta que un lector se va a hacer y que tiene que quedar contestada: **renombrar no toca nunca el
+prefijo de los identificadores.** Se derivó una vez al crear el tablero y desde entonces vive por su
+cuenta en `task_prefix`, que además es inmutable en cuanto hay alguna tarea.
+
+- [ ] **Paso 2: Cerrar la puerta de atrás de `biso init --overwrite-config`**
+
+Si esa bandera puede cambiar `project_name` sobre un tablero que ya existe, la carpeta se quedaría con el
+nombre viejo. Comprobarlo y resolverlo con la misma forma que ya se usó para `task_prefix`. Si resulta que
+ya está cerrado, decirlo en el informe en vez de tocar nada.
+
+- [ ] **Paso 3: Que `biso doctor` cubra la carpeta desparejada**
+
+Añadir a la lista de comprobaciones de la sección 10.11 que el nombre de la carpeta no case con
+`project_name`, y que **es reparable automáticamente**, en el estilo con el que esa sección ya marca lo
+reparable. Es el único camino por el que puede desparejarse una vez que el paso 1 renombra sola: que
+alguien mueva la carpeta por fuera de `biso`.
+
+- [ ] **Paso 4: Comprobar**
 
 ```bash
 grep -c '—' docs/SPEC.md    # 0
-grep -n '^### 10\.1[0-9]' docs/SPEC.md   # la 10.14 existe y no duplica ningun numero
+grep -n 'biso rename' docs/SPEC.md   # no debe quedar ninguna
+grep -n '^### 10\.1[0-9]' docs/SPEC.md   # sigue llegando a la 10.13, sin subsecciones nuevas
 ```
 
-Comparar la sección nueva con la de otro comando de administración, por ejemplo `biso where`, y
-confirmar que tiene las mismas partes en el mismo orden.
+Releer enteras la 10.10 y la 10.11 y confirmar que la tabla de claves, la tabla de casos y la lista de
+comprobaciones de `doctor` dicen lo mismo sobre esta clave.
 
-- [ ] **Paso 3: Commit**
+- [ ] **Paso 5: Commit**
 
 ```bash
 git add docs/SPEC.md
-git commit -m "Especifica biso rename"
+git commit -m "Renombra el tablero desde la configuración, sin comando aparte"
 ```
 
 ---
@@ -494,7 +524,33 @@ si el directorio del tablero está en un sistema de ficheros donde el modo WAL d
 Decir para cada una si es reparable automáticamente, como hace el resto de la lista. La segunda no lo es:
 es un aviso.
 
-- [ ] **Paso 5: Comprobar**
+- [ ] **Paso 5: Escribir para qué sirve `biso doctor`, y para qué no**
+
+Este paso sale de un criterio del usuario: **prefiere que los comandos se arreglen solos antes que remitir
+a una llamada que vas a tener que hacer de todas formas.** Tiene razón, y hay que dejarlo escrito como
+regla, porque hoy la sección no dice qué entra en `doctor` y qué no.
+
+La regla, en la sección 10.11: **ningún comando remite a `biso doctor` para algo que podía arreglar él
+mismo.** Si el arreglo no necesita ninguna decisión, el comando que detecta el problema lo arregla y sigue,
+avisando con un `warning:` si merece la pena saberlo. Sale a `doctor` solo lo que cae en uno de estos dos
+casos, y conviene enunciarlos:
+
+- **Lo que necesita una decisión humana**, porque hay más de un arreglo válido y elegir por tu cuenta
+  destruiría información. Un ciclo de dependencias es el ejemplo: no se puede adivinar qué arista sobra. La
+  sección ya lista varias así, marcadas como no reparables.
+- **Lo que solo pasa por daño externo**, porque nada dentro de `biso` lo produce: una base de datos
+  corrupta, una carpeta que alguien movió a mano, un fichero que perdió sus permisos.
+
+Y queda una tercera razón para que `doctor` exista, que no es de reparación y hay que decirla: es el único
+sitio donde se puede preguntar **"le pasa algo a este tablero"** sin haber intentado antes una operación.
+Eso es un diagnóstico que se corre cuando se sospecha, no una llamada que ibas a hacer igual.
+
+Al escribirlo, **repasa la lista de comprobaciones que ya tiene la sección** y comprueba que cada una cae
+de verdad en uno de los dos casos. Si alguna es unambigua y automática, entonces lo que hay que arreglar es
+el comando que la detecta, no dejarla en `doctor`, y eso hay que reportarlo en el informe aunque no lo
+cambies.
+
+- [ ] **Paso 6: Comprobar**
 
 ```bash
 grep -c '—' docs/SPEC.md    # 0
@@ -503,11 +559,11 @@ grep -c '—' docs/SPEC.md    # 0
 Leer la sección 4.12 entera y confirmar que los dos casos se distinguen sin ambigüedad y que la tabla de
 tipos de lectura sigue cuadrando.
 
-- [ ] **Paso 6: Commit**
+- [ ] **Paso 7: Commit**
 
 ```bash
 git add docs/SPEC.md
-git commit -m "Separa la tarea ilegible de la base de datos que no abre, y amplía biso doctor"
+git commit -m "Separa la tarea ilegible de la base de datos que no abre, y acota para qué sirve biso doctor"
 ```
 
 ---
@@ -517,13 +573,16 @@ git commit -m "Separa la tarea ilegible de la base de datos que no abre, y ampl�
 **Ficheros:**
 - Modificar: `docs/SPEC.md`, sección 10.9 "biso export"
 - Modificar: `docs/SPEC.md`, sección 10.3 "biso new --from"
-- Crear: `docs/SPEC.md`, **subsección 10.15** para `biso snapshot`
+- Crear: `docs/SPEC.md`, **subsección 10.14** para `biso snapshot`
 - Modificar: `docs/SPEC.md`, sección 10.1 "biso init"
 
 **Consume:** el directorio del tablero de la tarea 1.
 **Produce para la tarea 10:** un comando administrativo más.
 
-El número de subsección, 10.15, está asignado de antemano porque la tarea 4 ya ocupó la 10.14. Las dos van al final de la sección 10, que ya llega a la 10.13 con `biso help`: no se renumera ninguna subsección existente, porque eso tocaría cada referencia cruzada del documento.
+El número de subsección, 10.14, es el siguiente libre: la sección 10 llega hoy a la 10.13 con `biso help`,
+y la tarea 4 dejó de añadir ninguna subsección al descartarse `biso rename`. **No se renumera ninguna
+subsección existente**, porque eso tocaría cada referencia cruzada del documento. `biso snapshot` es el
+único comando que esta rama añade.
 
 - [ ] **Paso 1: Documentar el contenido versionado del directorio del tablero**
 
@@ -649,9 +708,13 @@ los ocho nombres dentro del bloque de ayuda.
 
 - [ ] **Paso 2: Actualizar los cuatro con los comandos nuevos**
 
-Con `biso snapshot` y `biso rename`, los administrativos pasan de ocho a diez y el total de diecinueve a
-veintiuno. Actualizar la lista literal de nombres dentro del bloque de ayuda **en el orden que ese bloque
-ya usa**, no alfabéticamente si no lo estaba.
+**El único comando que esta rama añade es `biso snapshot`**, porque `biso rename` se descartó. Así que los
+administrativos pasan de ocho a nueve y el total de diecinueve a veinte. Actualizar la lista literal de
+nombres dentro del bloque de ayuda **en el orden que ese bloque ya usa**, no alfabéticamente si no lo
+estaba.
+
+Antes de cambiar las cifras, **cuéntalas tú sobre el documento** en vez de fiarte de estos números: entre
+que se escribió este plan y que llegas aquí, alguna tarea puede haber añadido o quitado algo.
 
 - [ ] **Paso 3: Recontar las líneas del bloque de ayuda**
 
