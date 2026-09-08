@@ -236,6 +236,12 @@ tablero sin ningún paso adicional. Tres reglas gobiernan su lectura:
   separador de ruta, puede romper el nombre de la carpeta, porque cualquier tirada de ellos se colapsa
   igual en un guion.
 
+**El slug y el `task_prefix` arrancan del mismo `project_name` pero fallan por motivos distintos, y
+hay que comprobar los dos.** `"2026"` da un slug válido, `2026`, pero no da ningún prefijo, porque no
+le queda ninguna letra ASCII (sección 4.11); `"///"` da un slug vacío y también un prefijo vacío. Que
+una de las dos derivaciones salga bien no dice nada de la otra, así que ninguna de las dos
+comprobaciones sustituye a la otra.
+
 Eso resuelve dos cosas de golpe: que dos proyectos de la misma máquina se puedan llamar igual sin
 chocar, porque lo que identifica al tablero no es su nombre sino el `id` que lleva en el nombre de su
 carpeta, y que el puntero siga resolviendo aunque el tablero se haya renombrado, porque el
@@ -3574,7 +3580,7 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
-| Cambiar `project_name` a un valor vacío | Error 3 |
+| Cambiar `project_name` a un valor vacío, o a uno cuyo slug (sección 3.2) quede vacío tras derivarlo | Error 3, en los dos casos |
 | Cambiar `project_name` al mismo valor que ya tiene | La carpeta no se mueve, porque el nombre no cambia; el `set` se completa igual |
 | Cambiar `project_name` a un valor que no dejaría ninguna letra para derivar un prefijo | No es error: el `task_prefix` ya está fijado y no se recalcula al renombrar |
 | Cambiar `project_name` en un tablero cuyo puntero lleva `path` (vive fuera de la raíz por defecto) | Se mueve igual, en la ubicación que diga `path` |
