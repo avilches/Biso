@@ -18,7 +18,9 @@ enuncia el requisito (por ejemplo, que dos procesos simultáneos no puedan asign
 identificador) y deja el resto del mecanismo fuera de aquí.
 
 El modelo de tarea es compatible con el de Backlog.md, de modo que se puede importar y exportar entre
-las dos herramientas sin perder campos.
+las dos herramientas sin perder campos. **La compatibilidad es de modelo de datos y no de formato de
+fichero**: los campos se corresponden uno a uno, pero `biso` no lee ni escribe los ficheros Markdown de
+esa herramienta, y no hay ninguna intención de que lo haga (sección 14).
 
 **Convención de idioma.** La prosa de este documento va en español. Todo lo que es interfaz del
 programa (nombres de comando, banderas, textos de ayuda, mensajes de error, claves JSON y claves de
@@ -249,7 +251,7 @@ claves:
 | Clave | Tipo | Obligatoria | Notas |
 |---|---|---|---|
 | `version` | entero | sí | versión del formato del puntero |
-| `id` | 8 caracteres hexadecimales en minúscula | sí | identidad del tablero, inmutable; en mayúsculas el puntero es inválido, no se normaliza |
+| `id` | 8 caracteres hexadecimales en minúscula | sí | la identidad del tablero, y es inmutable. En mayúsculas el puntero es inválido: no se normaliza |
 | `path` | ruta | no | solo cuando el tablero no está en la raíz por defecto |
 
 Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
@@ -657,7 +659,11 @@ Tres reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
 1. **Ningún comando hace al arrancar trabajo que nadie ha pedido.** Ni una consulta que no alimente
    una línea de lo que esa invocación va a imprimir, ni una comprobación de más, ni una llamada de
    red: todo lo que no sirve a la salida de la llamada concreta se paga en cada una de las muchas
-   veces que un agente ejecuta el programa a lo largo de una sesión, se haya pedido o no.
+   veces que un agente ejecuta el programa a lo largo de una sesión, se haya pedido o no. El ejemplo
+   documentado está en este documento y no en otra herramienta: la resolución del tablero llevaba una
+   comprobación de un `.git` en cada directorio del camino hacia arriba, para frenar la búsqueda del
+   puntero, y se retiró al ver que además de costar comprobaciones en cada llamada no protegía de lo
+   que pretendía (sección 12 de `DECISIONES.md`).
 2. **Ningún comando ejecuta git en su camino caliente.** `biso snapshot` es la única excepción, y así
    lo dice la sección 10.14. Invocar `git` cuesta unos 12 milisegundos medidos, casi la mitad de este
    presupuesto entero gastada en una sola llamada. Este presupuesto es además la razón por la que la
@@ -742,10 +748,13 @@ Ocho precisiones sobre la mutabilidad:
 - **Renovar `leaseExpiresAt` y fijar o transferir `leaseHolder` son cosas distintas, y solo la
   segunda pasa por `biso start`.** Cualquier escritura sobre una tarea activa y asignada renueva
   `leaseExpiresAt` a `ahora + lease_minutes` (10.10), pero solo cuando quien llama ya es
-  `leaseHolder`. Si la tarea no tiene arrendamiento todavía, escribir sobre ella no lo crea: fijarlo
-  por primera vez es parte de lo que hace `biso start`, igual que reclamarlo vencido o tomarlo de
-  otra identidad (10.7.1). Una escritura de una identidad distinta de `leaseHolder` mientras el
-  arrendamiento está vivo no toca ninguno de los dos campos: avisa con el mismo
+  `leaseHolder`. **Cualquier escritura son todas**, sin ninguna excepción: los seis verbos del ciclo
+  (10.7), `biso set` (10.6) y `biso archive` (10.8), que son los ocho comandos que llegan a escribir
+  sobre una tarea que ya existe. Se nombran aquí porque una regla general que no nombra a nadie invita
+  a buscarle excepciones donde no las hay. Si la tarea no tiene arrendamiento todavía, escribir sobre
+  ella no lo crea: fijarlo por primera vez es parte de lo que hace `biso start`, igual que reclamarlo
+  vencido o tomarlo de otra identidad (10.7.1). Una escritura de una identidad distinta de
+  `leaseHolder` mientras el arrendamiento está vivo no toca ninguno de los dos campos: avisa con el mismo
   `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` de 10.7.1 y de la tabla de
   la sección 4.3, y el resto de la escritura se hace igual. Una escritura de una identidad distinta
   mientras el arrendamiento está vencido tampoco lo toca, y lo deja vencido: quien comenta, anota o
@@ -1361,9 +1370,10 @@ Se queda fuera, y va a `biso <cmd> --help`:
 Esto es exactamente lo que `biso prime` imprime por stdout con un tablero de ejemplo. No imprime nada
 por stderr.
 
-**Ese tablero fija `task_prefix` a `TASK` explícitamente**, en vez de dejarlo en su valor por defecto
-(sección 4.11), para que los identificadores de todos los ejemplos de este documento no dependan del
-nombre que le toque al tablero de turno. De paso queda demostrado que la clave se puede fijar a mano.
+**Ese tablero fija `task_prefix` a `TASK` explícitamente**, en vez de dejar que se derive de
+`project_name` como haría por defecto (sección 4.11), para que los identificadores de todos los ejemplos
+de este documento no dependan del nombre que le toque al tablero de turno. De paso queda demostrado que
+`task_prefix` se puede fijar a mano.
 
 ```
 biso 1.0.0 - the task board of this project. This message is all you need to start.
@@ -1754,6 +1764,7 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la tercera vía de 3.2, y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
+| Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
 | `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección 10.10 aplica a `task_prefix` |
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
@@ -3861,9 +3872,9 @@ dependen de dónde vive el tablero: si el sistema de ficheros lo rechaza al move
 mismo error 7 que cualquier otro fallo al escribir.
 
 **Renombrar no toca nunca el `task_prefix`.** Se derivó una vez al crear el tablero y desde entonces
-vive por su cuenta en esa clave; cambiar `project_name` no lo recalcula, aunque el nombre nuevo diera
-un prefijo distinto si el tablero se creara hoy. Si el nombre nuevo no deja ninguna letra con la que
-derivar un prefijo (sección 4.11), tampoco es un error aquí: el prefijo ya está fijado y no se
+vive por su cuenta en esa clave. Cambiar `project_name` no lo recalcula, aunque el nombre nuevo diera un
+`task_prefix` distinto si el tablero se creara hoy. Y si el nombre nuevo no deja ninguna letra con la
+que derivar uno (sección 4.11), tampoco es un error aquí, porque `task_prefix` ya está fijado y no se
 recalcula al renombrar.
 
 Una regla parecida vale para `biso init --overwrite-config` (sección 10.1), y solo cuando se da
