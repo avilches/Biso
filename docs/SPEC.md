@@ -591,6 +591,36 @@ sola corrupción puede llevarse por delante más de una tarea a la vez, o el tab
 especificación dice las cosas incómodas en voz alta en vez de esconderlas: ese es el coste real de
 guardar los datos en una base de datos, frente a la alternativa de un fichero por tarea.
 
+### 4.13. El presupuesto de arranque
+
+**`biso ls` y `biso prime` sobre un tablero de 300 tareas terminan en menos de 25 milisegundos de
+reloj.** Es una regla transversal y no solo de esos dos comandos: ninguno de los demás tiene un motivo
+para tardar más que ellos. Es una prueba de la suite, no una aspiración, y se mide en la máquina de
+referencia.
+
+**La máquina de referencia es la que ejecuta la suite de integración continua del proyecto.** Una
+cifra de tiempo sin una máquina no se puede comprobar, porque la misma llamada tarda lo que tarde el
+hardware que la ejecuta. Fijar la máquina de referencia como la del propio CI, en vez de describir aquí
+un modelo de hardware concreto, es lo que hace que la prueba dé siempre el mismo veredicto para la
+misma versión del código, sin que este documento tenga que llevar ni mantener actualizada una ficha
+técnica de un ordenador que además dejaría de existir o de venderse.
+
+Tres reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
+
+1. **Ningún comando hace al arrancar trabajo que nadie ha pedido.** Ni una consulta que no alimente
+   una línea de lo que esa invocación va a imprimir, ni una comprobación de más, ni una llamada de
+   red: todo lo que no sirve a la salida de la llamada concreta se paga en cada una de las muchas
+   veces que un agente ejecuta el programa a lo largo de una sesión, se haya pedido o no.
+2. **Ningún comando ejecuta git en su camino caliente.** `biso snapshot` es la única excepción, y ya
+   está dicho dos veces en este documento: la sección 3.2 detecta la raíz del proyecto buscando un
+   directorio `.git`, nunca ejecutando `git`, y la sección 10.14 dice que `biso snapshot` es el único
+   comando que llega a invocarlo alguna vez. Invocar `git` cuesta unos 12 milisegundos medidos, casi la
+   mitad de este presupuesto entero gastada en una sola llamada.
+3. **La palanca mayor no es que cada llamada sea más rápida: es que haga falta hacer menos llamadas.**
+   Para eso existe `biso prime` (sección 9), que sustituye el ciclo entero de leer guías sueltas y
+   encadenar comandos por un solo mensaje al principio de la sesión; `docs/DECISIONES.md`, sección 3,
+   mide lo que cuesta la alternativa de no tenerlo.
+
 ---
 
 ## 5. El modelo de datos de una tarea
@@ -4381,7 +4411,7 @@ repositorio, ni intenta crear uno, ni commitea.
 
 **Ningún otro comando de `biso` ejecuta nunca `git`.** Invocar `git` cuesta unos 12 milisegundos
 medidos, y el presupuesto de arranque de 25 milisegundos para `biso ls` y `biso prime` sobre un
-tablero de 300 tareas (sección 9) no admite ese coste en el camino caliente de ningún comando. `biso
+tablero de 300 tareas (sección 4.13) no admite ese coste en el camino caliente de ningún comando. `biso
 snapshot` es la única excepción, precisamente porque quien lo llama ya está pidiendo explícitamente
 una operación de git; y es también, por lo mismo, el único comando que llega a convertir el
 directorio del tablero en un repositorio: sin haber corrido nunca `biso snapshot` sin `--no-commit`
@@ -4657,6 +4687,13 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
   con el tiempo.
 - Los coeficientes por defecto de la urgencia. La estructura de la fórmula, no.
 - Los valores por defecto de la configuración, salvo los que este documento fija dentro de un comando.
+- **El presupuesto de arranque de 25 milisegundos de la sección 4.13.** No es de la misma naturaleza
+  que el tope de bytes de arriba: los 5.120 bytes son una propiedad del texto, así que cualquiera los
+  mide y siempre dan lo mismo, mientras que los 25 milisegundos son una propiedad de la máquina de
+  referencia. Congelar en este contrato un número que depende del hardware haría que la herramienta
+  incumpliera su propia promesa al ejecutarse en un ordenador más lento, sin que nadie hubiera cambiado
+  una línea de código. Sigue siendo una prueba de la suite y sigue teniendo que fallar ante una
+  regresión real: lo que no es, es una promesa de versión a versión.
 
 **Cómo se anuncia una retirada.** Nada se quita sin un ciclo completo de aviso: primero la
 funcionalidad emite `warning: <x> is deprecated and will be removed in 2.0` durante al menos una
