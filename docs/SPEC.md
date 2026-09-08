@@ -764,7 +764,7 @@ escribe. No dice nada de cómo se guardan.
 | `updatedAt` | instante UTC | sí | el programa | solo al importar |
 | `archived` | booleano | sí, `false` por defecto | el programa, con `biso archive` | sí, solo con `biso archive` / `--unarchive`, o al importar |
 | `leaseExpiresAt` | instante UTC | no | el programa, a `ahora + lease_minutes` (clave de configuración, 10.10); ver la sexta precisión de abajo para cuándo | sí, ver las tres últimas precisiones de abajo, o al importar |
-| `leaseHolder` | texto de persona | no | el programa, solo con `biso start` (10.7.1); ver la sexta precisión de abajo | sí, solo con `biso start`, o al importar; ver las tres últimas precisiones de abajo |
+| `leaseHolder` | texto de persona | no | el programa, solo con `biso start` (10.7.1) y con `biso new --start` (10.3); ver la sexta precisión de abajo | sí, solo con esos dos, o al importar; ver las tres últimas precisiones de abajo |
 | `urgency` | decimal, derivado | derivado | el programa | no, se recalcula al leer |
 | `ext` | mapa de clave declarada a texto | no | quien llama | sí |
 | `description` | texto largo | no | quien llama | sí |
@@ -795,49 +795,83 @@ Ocho precisiones sobre la mutabilidad:
   clave desconocida (10.3): `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`,
   `blocks`, `blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos derivados del
   documento; las demás secciones remiten a ella.
-- **`leaseExpired` no cambia el `status` guardado, nunca.** Dice que el arrendamiento de una tarea
+- **`leaseExpired` no cambia el `status` guardado, nunca.** Vale cierto cuando `leaseExpiresAt`
+  tiene valor y ese instante es anterior al reloj de quien lee, y **vale falso cuando
+  `leaseExpiresAt` está vacío**, que es el caso de toda tarea sin arrendamiento: no hay ningún
+  estado en el que este derivado se quede sin valor, porque un derivado que no se pudiera calcular
+  es justo lo que el principio 1 de la sección 1 no admite. Dice que el arrendamiento de una tarea
   activa venció, pero el estado guardado sigue siendo el activo hasta que alguien lo cambia con una
   escritura explícita: lo que vence es la reclamación, no el estado (sección 9.2 de
-  `DECISIONES.md`). No hay una escritura diferida que la saque del estado activo por su cuenta,
-  porque eso haría que un comando tocara tareas que no nombró, y porque `biso prime`, que no escribe
-  nunca, mostraría un estado que una escritura ajena y posterior podría cambiar. Liberar el
-  arrendamiento vencido es la reclamación explícita que hace `biso start` (10.7.1), no un efecto
-  secundario de ningún otro comando.
+  `DECISIONES.md`). No hay una escritura diferida que la saque del estado activo por su cuenta, porque
+  eso haría que un comando tocara tareas que no nombró, y porque `biso prime`, que no escribe nunca,
+  mostraría un estado que una escritura ajena y posterior podría cambiar. Liberar el arrendamiento
+  vencido es la reclamación explícita que hace `biso start` (10.7.1), no un efecto secundario de
+  ningún otro comando.
 - **Renovar `leaseExpiresAt` y fijar o transferir `leaseHolder` son cosas distintas, y solo la
-  segunda pasa por `biso start`.** Cualquier escritura sobre una tarea activa y asignada renueva
-  `leaseExpiresAt` a `ahora + lease_minutes` (10.10), pero solo cuando quien llama ya es
-  `leaseHolder`. **Cualquier escritura son todas**, sin ninguna excepción: los seis verbos del ciclo
-  (10.7), `biso set` (10.6) y `biso archive` (10.8), que son los ocho comandos que llegan a escribir
-  sobre una tarea que ya existe. Se nombran aquí porque una regla general que no nombra a nadie invita
-  a buscarle excepciones donde no las hay. Si la tarea no tiene arrendamiento todavía, escribir sobre
-  ella no lo crea: fijarlo por primera vez es parte de lo que hace `biso start`, igual que reclamarlo
-  vencido o tomarlo de otra identidad (10.7.1). Una escritura de una identidad distinta de
-  `leaseHolder` mientras el arrendamiento está vivo no toca ninguno de los dos campos: avisa con el mismo
+  segunda pasa por `biso start` o por su atajo `biso new --start`.** Cualquier escritura sobre una
+  tarea activa y asignada renueva `leaseExpiresAt` a `ahora + lease_minutes` (10.10), pero solo
+  cuando quien llama ya es `leaseHolder`. **Cualquier escritura son todas**, sin ninguna excepción:
+  los seis verbos del ciclo (10.7), `biso set` (10.6) y `biso archive` (10.8), que son los ocho
+  comandos que llegan a escribir sobre una tarea que ya existe. Se nombran aquí porque una regla
+  general que no nombra a nadie invita a buscarle excepciones donde no las hay. **Una escritura que
+  no cambia ningún campo renueva igual**: `biso set` con todas sus banderas dando el valor que la
+  tarea ya tiene sale con código 0 y con `note: TASK-11 unchanged` (10.6), y aun así renueva
+  `leaseExpiresAt`, porque sigue siendo una escritura del tenedor sobre su tarea y el latido no
+  puede depender de si los valores coincidían por casualidad. Esa renovación no toca `updatedAt`,
+  porque ningún campo de la tarea ha cambiado, y deja vacía la lista `changed` del esquema JSON de
+  10.6; la nota sigue siendo cierta, porque habla de los campos de la tarea y ninguno cambió. Si la
+  tarea no tiene arrendamiento todavía, escribir sobre ella no lo crea: fijarlo por primera vez es
+  parte de lo que hace `biso start`, igual que reclamarlo vencido o tomarlo de otra identidad
+  (10.7.1). Una escritura de una identidad distinta de `leaseHolder` mientras el arrendamiento está
+  vivo no toca ninguno de los dos campos: avisa con el mismo
   `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` de 10.7.1 y de la tabla de
-  la sección 4.3, y el resto de la escritura se hace igual. Una escritura de una identidad distinta
-  mientras el arrendamiento está vencido tampoco lo toca, y lo deja vencido: quien comenta, anota o
-  cierra una tarea no ha reclamado nada, y solo `biso start` reclama. Una tarea que llega a activa y
-  asignada por una vía distinta de `biso start`, por ejemplo `biso set --status`, no tiene
-  arrendamiento hasta que alguien llame a `biso start` sobre ella: ninguna bandera de campo de la
-  sección 8 lo puede crear, y la única vía que no pasa por `biso start` es la importación, que es de
-  lo que trata la precisión de abajo.
-- **Los dos campos solo tienen valor en una tarea activa y asignada, y se vacían al perder cualquiera
-  de las dos condiciones, no solo la primera.** Una escritura que saca la tarea del estado activo
-  (`biso finish`, o `biso set --status` a cualquier otro valor) vacía `leaseExpiresAt` y
-  `leaseHolder` en esa misma escritura. Y como la condición que los sostiene es la conjunción de las
-  dos cosas, perder la segunda los vacía igual: `--clear-assignee` o `--rm-assignee` (8.2) sobre una
-  tarea activa que se queda sin ninguna persona asignada vacía los dos campos en esa misma escritura,
-  sea quien sea quien la haga.
-- **La importación los escribe con el valor que traiga el fichero, y es la única vía que lo hace.** Los
-  dos son campos guardados y no derivados, así que `biso export` los escribe y `biso new --from` los
-  lee de vuelta como cualquier otro, que es lo que hace cierta la garantía de simetría de 10.9 sin una
-  lista de excepciones que mantener. La invariante de la precisión anterior se comprueba al importar:
-  una línea que traiga `leaseExpiresAt` o `leaseHolder` sobre una tarea que no esté a la vez en el
-  estado activo y asignada a alguien es un fallo de validación del lote (10.3), igual que una clave
-  desconocida. Un arrendamiento importado no privilegia a nadie: `leaseExpired` se recalcula contra el
-  reloj de la máquina que lee, así que el que llegue caducado sale caducado y `biso start` lo reclama
-  (10.7.1), y el que llegue vivo a nombre de otra identidad solo produce el aviso de la sección 4.3
-  hasta que caduque.
+  la sección 4.3, y el resto de la escritura se hace igual. **Con una sola excepción, y es que esa
+  misma escritura rompa la invariante de la precisión siguiente**: si deja la tarea fuera del estado
+  activo, sin ninguna persona asignada o archivada, los dos campos se vacían en esa misma escritura,
+  sea quien sea quien la haga, y el aviso de que el arrendamiento era de otra identidad se emite
+  igual. Una escritura de una identidad distinta mientras el arrendamiento está vencido tampoco lo
+  toca, y lo deja vencido: quien comenta, anota o cierra una tarea no ha reclamado nada. **Reclamar
+  es de `biso start` (10.7.1) y de su atajo `biso new --start` (10.3), y de nadie más**, con una
+  excepción que hay que nombrar porque sin ella la frase sería falsa: `biso start -s <estado>` con
+  un estado que no es el activo no fija arrendamiento, ya que fijarlo ahí rompería la invariante de
+  la precisión siguiente, y deja los dos campos como los dejaría cualquier otra escritura. Una tarea
+  que llega a activa y asignada por cualquier otra vía no tiene arrendamiento hasta que alguien
+  llame a `biso start` sobre ella, y esas vías son exactamente dos: las banderas de campo de la
+  sección 8, por ejemplo `biso set --status`, ninguna de las cuales lo puede crear, y la
+  importación, que es de lo que trata la última precisión.
+- **Los dos campos solo tienen valor en una tarea activa y asignada, y se vacían al perder
+  cualquiera de las dos condiciones, no solo la primera.** Una escritura que saca la tarea del
+  estado activo (`biso finish`, o `biso set --status` a cualquier otro valor) vacía
+  `leaseExpiresAt` y `leaseHolder` en esa misma escritura. Y como la condición que los sostiene es
+  la conjunción de las dos cosas, perder la segunda los vacía igual: `--clear-assignee` o
+  `--rm-assignee` (8.2) sobre una tarea activa que se queda sin ninguna persona asignada vacía los
+  dos campos en esa misma escritura, sea quien sea quien la haga. **`biso archive` (10.8) los vacía
+  también**, aunque `archived` no sea un estado y archivar no saque la tarea del estado activo:
+  archivar es dejar de trabajar en la tarea, y un arrendamiento es la afirmación de que alguien está
+  trabajando ahora, así que conservarlo lo guardaría donde nadie lo ve, porque `biso prime` y
+  `biso ls` excluyen las archivadas por defecto, y `--unarchive` la devolvería al tablero semanas
+  después a nombre de una sesión que ya murió. **Esta precisión gana siempre sobre la anterior, y
+  por eso la invariante se enuncia aquí y el aviso allí.** Cuando quien escribe no es
+  `leaseHolder`, el aviso de que el arrendamiento es de otra identidad se emite igual, pero los dos
+  campos se vacían: `@sara` haciendo `biso finish TASK-11` sobre una tarea arrendada por `@claude` la
+  deja terminada y sin arrendamiento. Con la precedencia al revés quedaría una tarea terminada con un
+  arrendamiento vivo, que es exactamente lo que la última precisión rechaza al importar, así que
+  `biso export` produciría un fichero que su propio `biso init --from` rechaza y la prueba de
+  simetría de la sección 13 fallaría (sección 9.2 de `DECISIONES.md`). **Y los dos campos van
+  siempre juntos**: ninguna escritura, y tampoco la importación, deja uno con valor y el otro vacío.
+- **La importación los escribe con el valor que traiga el fichero, y es la única vía que lo hace.**
+  Los dos son campos guardados y no derivados, así que `biso export` los escribe y `biso new --from`
+  los lee de vuelta como cualquier otro, que es lo que hace cierta la garantía de simetría de 10.9
+  sin una lista de excepciones que mantener. La invariante de la precisión anterior se comprueba al
+  importar, y en sus dos mitades. Una línea que traiga `leaseExpiresAt` o `leaseHolder` sobre una
+  tarea que no esté a la vez en el estado activo y asignada a alguien es un fallo de validación del
+  lote (10.3), igual que una clave desconocida. Y una línea que traiga uno de los dos campos y no el
+  otro es el mismo fallo, con el mismo trato: los dos vienen juntos o no viene ninguno, porque un
+  `leaseHolder` sin `leaseExpiresAt` sería un arrendamiento que no caduca nunca, y un
+  `leaseExpiresAt` sin `leaseHolder` una reserva de nadie. Un arrendamiento importado no privilegia
+  a nadie: `leaseExpired` se recalcula contra el reloj de la máquina que lee, así que el que llegue
+  caducado sale caducado y `biso start` lo reclama (10.7.1), y el que llegue vivo a nombre de otra
+  identidad solo produce el aviso de la sección 4.3 hasta que caduque.
 
 ### 5.1. Los criterios y sus claves estables
 
@@ -1543,7 +1577,7 @@ Cómo se calcula el resumen, para que la implementación sea única:
   trabajando ahora mismo, y un arrendamiento vencido contradice justo esa afirmación. Esta línea, como
   la de la pregunta, no cuenta para el ancho de las columnas. El hecho que la provoca sí viaja en el
   esquema JSON de 9.9, como el campo `leaseExpired`, y sus dos detalles no: quien los quiera los pide
-  con `biso get`, igual que pide el cuerpo de la pregunta.
+  con `biso get`, que los imprime en su línea `lease` (10.5), igual que pide el cuerpo de la pregunta.
 - `NEEDS ANSWER` lista las tareas con pregunta abierta, ordenadas igual, sin límite. Cada tarea
   ocupa **dos líneas**: la fila de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo
   una línea indentada con la pregunta recortada a **100 caracteres**, la misma cifra exacta que el
@@ -1641,7 +1675,8 @@ existir: la precedencia de 9.7 manda toda tarea activa a uno de esos dos, así q
 en `nextUp` el campo sería siempre `false` y no diría nada. Va en el JSON aunque la segunda línea
 indentada del texto salga solo en `inProgress`, porque no es texto largo y esconderlo obligaría a quien
 consume JSON a llamar a `biso get` tarea por tarea para saber algo que el mensaje de texto ya enseña.
-Sus dos detalles, `leaseExpiresAt` y `leaseHolder`, no salen aquí: para eso está `task.list` (10.4).
+Sus dos detalles, `leaseExpiresAt` y `leaseHolder`, no salen aquí: para eso está `task.list` (10.4), y
+en texto la línea `lease` de la ficha de `biso get` (10.5).
 
 ### 9.10. Códigos de salida
 
@@ -2202,7 +2237,12 @@ desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad 
 `--doc`, `--dep`, `-m/--milestone`, `-p/--parent`, `--due`, `--ordinal`, `--project`, `--reporter`,
 `--ext`, `--plan`, `--note`, `--summary` y `--comment`.
 
-- **`--start`** crea la tarea directamente en el estado activo y asignada a `me`.
+- **`--start`** crea la tarea directamente en el estado activo, asignada a `me` y con el arrendamiento
+  tomado a favor de quien llama (`leaseExpiresAt` y `leaseHolder`, sección 5), exactamente como lo haría
+  `biso start` sobre ella. Es el atajo de esas dos llamadas, así que la equivalencia tiene que ser real:
+  si `--start` dejara la tarea activa y asignada sin arrendamiento, `biso new "X" --start` y
+  `biso new "X"` seguido de `biso start` darían dos tareas distintas. Es, junto con `biso start`, la
+  única vía que fija `leaseHolder` fuera de la importación.
 - **`--comment` funciona al crear**, igual que en cualquier otro comando de escritura.
 - **`--plan`, `--note` y `--summary` no están restringidos por el estado.** Se pueden escribir al
   crear, en cualquier estado.
@@ -2222,6 +2262,8 @@ desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad 
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
 | `--due` en el pasado | Se acepta, con aviso |
 | `-d @fichero` que no existe | Error 4 |
+| `--start` sin ninguna identidad configurada (3.1) y sin `-a` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (sección 5). Es el mismo caso que la fila equivalente de `biso start` (10.7.1) |
+| `--start` con `-a @sara` y una identidad configurada distinta | La tarea queda asignada a `@sara` y el arrendamiento es de quien llama, igual que en `biso start`: quien lo toma es quien escribe, no quien figura en `assignees` |
 | Todo bien | Se crea la tarea, código 0 |
 
 #### Salida
@@ -2273,9 +2315,16 @@ Las reglas del lote, todas obligatorias:
   validación; un `id` libre se reserva y el tablero no lo volverá a asignar.
 - **`leaseExpiresAt` y `leaseHolder` se aceptan aquí con el valor que traiga el fichero**, que es lo
   que hace cierta la garantía de simetría de 10.9 para ellos dos. La invariante de la sección 5 se
-  comprueba en la validación: una línea que traiga cualquiera de los dos sobre una tarea que no esté a
-  la vez en el estado activo y asignada a alguien es un fallo de validación, y lo dice nombrando la
-  línea y el campo.
+  comprueba en la validación, en sus dos mitades, y cada una es un fallo que nombra la línea y el campo.
+  Una línea que traiga cualquiera de los dos sobre una tarea que no esté a la vez en el estado activo y
+  asignada a alguien es un fallo de validación. Y una línea que traiga uno de los dos y no el otro
+  también lo es, aunque la tarea esté activa y asignada: los dos campos van juntos, porque
+  `leaseExpired` se calcula comparando `leaseExpiresAt` con el reloj de quien lee y con ese campo vacío
+  no habría nada que comparar. Los dos fallos se ven así:
+  ```
+  line 14: leaseHolder on a task that is not both active and assigned
+  line 31: leaseHolder given without leaseExpiresAt; the two go together
+  ```
 - **Un `id` explícito tiene que llevar el `task_prefix` del tablero de destino.** Si no lo lleva, es
   un fallo de validación, igual que un `id` ya ocupado: es la misma protección que hace inmutable a
   `task_prefix` en la sección 10.10, cerrando la tercera vía hacia el mismo tablero de identificadores
@@ -2357,7 +2406,7 @@ Most used:
       --comment <text>       add a discussion comment; repeatable
       --plan <text>          implementation plan
       --start                create it already in the active status, assigned
-                             to you
+                             to you, with the lease claimed for you
 
 Every other field flag of `biso set --help` is accepted too.
 
@@ -2745,6 +2794,7 @@ labels     parser               milestone  -
 parent     -                    due        -
 created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     TASK-40
+lease      2026-09-06 15:40     holder     @claude
 refs       docs/bugs/BUG-02.md
 docs       -
 files      -
@@ -2780,6 +2830,19 @@ Esto lo reporto un usuario con un repositorio clonado en Windows.
 ```
 
 Los encabezados de esta salida son un formato de presentación, no un formato de almacenamiento.
+
+**La línea `lease` sale solo cuando la tarea tiene arrendamiento**, y entonces sale con sus dos campos:
+`lease` es `leaseExpiresAt`, con el mismo formato de instante que `created` y `updated`, y `holder` es
+`leaseHolder` (sección 5). Los dos aparecen y desaparecen juntos, porque la sección 5 no admite uno sin
+el otro. Pertenece al bloque de metadatos, así que la trae `--section meta` y no ninguna otra sección.
+Es la única línea condicional de ese bloque, y por eso va al final de las líneas de dos campos: así
+ninguna de las de arriba cambia de sitio según la tarea. Eso no choca con la regla de que la ficha
+completa imprime las nueve secciones aunque estén vacías, porque lo condicional es una línea del bloque
+y no el bloque. Una tarea sin arrendamiento **no imprime la línea**, en vez de imprimirla con dos
+guiones, porque eso pondría dos guiones en la ficha de casi todas las tareas del tablero y la ausencia
+de la línea dice lo mismo. Esta es la única forma de ver los dos campos sin `--json`: `biso prime` no
+los trae (9.7) y `biso ls` tampoco (10.4). Si el arrendamiento está vencido, el instante ya lo dice y la
+ficha no añade ninguna marca; el derivado `leaseExpired` ya calculado está en `--json`.
 
 Con `--section ac`, solo el encabezado con el identificador y el título, y la sección pedida:
 
@@ -2963,7 +3026,8 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Un `--set-*` pisa contenido no vacío | Se hace, con el aviso de 4.3 diciendo cuántos bytes ha reemplazado |
 | Paso a un estado terminal con criterios sin marcar | Se hace, con aviso |
 | Paso a un estado terminal con una pregunta abierta (5.7) | Se hace, con aviso, igual que en `biso finish` (10.7.4) y como atribuye 4.3 a cualquier llegada al estado terminal |
-| Todas las banderas dejan la tarea igual | Código 0, sin escribir, con `note: TASK-11 unchanged` |
+| Todas las banderas dejan la tarea igual | Código 0, con `note: TASK-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (sexta precisión de la sección 5) |
+| `--status` a un estado que no es el activo, `--clear-assignee` o `--rm-assignee` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de 4.3 (séptima precisión de la sección 5) |
 | `--comment-author` sin `--comment` | Error 2 |
 | `--comment` sin `--comment-author` y sin ninguna identidad configurada (3.1) | Error 2 |
 | La tarea no se puede leer | Error 3, y no se escribe nada |
@@ -3099,10 +3163,14 @@ subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
 Los seis son escrituras sobre la tarea, así que a los cinco que no son `start` (`note`, `comment`,
-`finish`, `ask`, `answer`) les aplica la regla general de la sección 5 sin ninguna excepción: si
-quien llama ya es `leaseHolder`, renuevan `leaseExpiresAt`; si no lo es y el arrendamiento está vivo,
-no tocan ninguno de los dos campos y avisan; y si no lo es y está vencido, lo dejan vencido. Ninguno
-de los cinco fija ni transfiere `leaseHolder`: solo `start` reclama.
+`finish`, `ask`, `answer`) les aplica la regla general de la sección 5: si quien llama ya es
+`leaseHolder`, renuevan `leaseExpiresAt`; si no lo es y el arrendamiento está vivo, no tocan ninguno de
+los dos campos y avisan; y si no lo es y está vencido, lo dejan vencido. Ninguno de los cinco fija ni
+transfiere `leaseHolder`: reclamar es de `start`, y de `biso new --start` al crear (10.3).
+**Y por encima de todo eso está la invariante**: la escritura que saca la tarea del estado activo o la
+deja sin ninguna persona asignada vacía los dos campos, sea quien sea quien la haga, así que
+`biso finish` los vacía siempre y el aviso de un arrendamiento ajeno no lo impide (séptima precisión de
+la sección 5).
 
 Los seis imprimen también la misma línea de estado que `set`, con la forma y las reglas que define
 10.6. Los ejemplos de más abajo son esa línea con los datos de la TASK-11, que tiene dos criterios de
@@ -3142,8 +3210,9 @@ persona y `--set-assignee` reemplaza la lista.
 Cuatro cosas en una escritura: pone el estado activo, **asigna la tarea a `me` si no tiene ninguna
 persona asignada**, toma el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección 5) a favor de
 quien llama (renovándolo si ya era suyo, reclamándolo si estaba vencido, o tomándolo si era de otra
-identidad: es el único comando que hace las tres cosas, sección 5), y añade el plan si se ha
-pasado.
+identidad: es el único comando que hace las tres cosas sobre una tarea que ya existe, sección 5), y
+añade el plan si se ha pasado. Con `-s` a un estado que no es el activo no hay arrendamiento que tomar,
+y la fila correspondiente de la tabla dice qué pasa entonces.
 
 | Caso | Qué pasa |
 |---|---|
@@ -3153,6 +3222,7 @@ pasado.
 | La tarea tiene una pregunta abierta (5.7) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
 | El arrendamiento de la tarea está vencido (`leaseExpired`, sección 5) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, para que el tenedor viejo no la recupere al despertar |
 | El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
+| `-s` con un estado que no es el activo, por ejemplo `biso start TASK-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (séptima precisión de la sección 5). Fijarlo ahí rompería la invariante de que los dos campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: TASK-1 was moved to To Do, no lease was claimed` |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: TASK-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
 | No hay ninguna identidad configurada (3.1) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
 | La tarea ya tiene plan y se pasa `--plan` | Se añade al final, como toda bandera desnuda |
@@ -3190,7 +3260,8 @@ Options:
       --plan <text>      add to the implementation plan; repeatable, and takes
                          @file and - like every text option
   -a, --assignee <@who>  add an assignee (--set-assignee replaces the list)
-  -s, --status <value>   use another status instead of the active one
+  -s, --status <value>   use another status instead of the active one; no lease
+                         is claimed then, a lease only exists on an active task
       --reopen           allow starting a task that is already finished
       --id / --match     force <ref> to be an id, or free text
   -h, --help             show this help
@@ -3419,6 +3490,8 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
 | La tarea tiene una pregunta abierta (5.7) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
+| La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de 4.3 de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los dos campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (séptima precisión de la sección 5) |
+| La tarea tiene el arrendamiento y `-s` la lleva a otro estado que tampoco es el activo | Los dos campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
 | `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos, incluido el de la pregunta abierta |
 | Varias referencias | Todo o nada |
 
@@ -3765,7 +3838,8 @@ Saca la tarea del tablero activo. **La tarea sigue existiendo**, su identificado
 |---|---|
 | Ya estaba archivada | Código 0, con un `note:`, sin escribir |
 | Otras tareas vivas dependen de ella | Aviso con la lista, se archiva igual |
-| `--unarchive` | La devuelve al tablero con el estado que tenía |
+| La tarea tiene arrendamiento, vivo o vencido | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea (séptima precisión de la sección 5). Si estaba vivo y era de otra identidad, sale además el aviso de 4.3 |
+| `--unarchive` | La devuelve al tablero con el estado que tenía, y sin arrendamiento: si vuelve al estado activo, quien quiera trabajar en ella lo toma con `biso start` |
 | Varias referencias | Todo o nada |
 
 #### `biso delete` no existe, y su ausencia está especificada
@@ -4314,6 +4388,7 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Ciclos de dependencias | error | no |
 | Ciclos de tarea padre | error | no |
 | Claves de criterio repetidas dentro de una tarea | error | no |
+| `leaseExpiresAt` o `leaseHolder` con valor en una tarea que no está a la vez en el estado activo y asignada, o uno de los dos con valor y el otro vacío | error | sí, vaciando los dos |
 | El identificador más alto que el tablero recuerda haber asignado (4.11) es menor que el identificador más alto de una tarea existente | error | sí |
 | Falta el marcador `<id>.id` en el directorio del tablero (sección 3.2) | error | sí, escribiéndolo con el `id` que lleva la base de datos |
 | El marcador `<id>.id` nombra un `id` distinto del que lleva la base de datos | error | no, hay que decidir a mano |
@@ -4326,6 +4401,28 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 es decorativo y nadie resuelve por él (sección 3.2), así que una carpeta con el nombre de un `project_name`
 anterior, o con un nombre que alguien puso a mano, no es un problema del que informar. Denunciarlo sería
 denunciar algo que la sección 10.10 permite explícitamente.
+
+**La fila del arrendamiento repara en una sola dirección, y por eso `--fix` la hace solo.** Los dos
+campos son lo que sobra, y el estado y la lista de personas asignadas son el dato: vaciarlos deja la
+tarea exactamente como estaba, mientras que arreglarla al revés, poniéndola activa o asignándole a
+alguien para justificar el arrendamiento, cambiaría el trabajo del tablero para salvar una reserva que
+ya no vale. La invariante que comprueba es la de la séptima precisión de la sección 5, la misma que
+`biso new --from` aplica al importar (10.3), y cae en el segundo de los dos casos de arriba: ninguna
+escritura de `biso` la puede romper, así que si un tablero llega a ese estado es por daño externo, como
+una base de datos escrita a mano, restaurada a medias o venida de otra versión. Sin `--fix` sale bajo
+`Errors:`:
+
+```
+  TASK-52  has a lease but is not both active and assigned
+```
+
+Y con `--fix`, en el grupo de lo reparado:
+
+```
+  TASK-52 had a lease but was not both active and assigned; cleared leaseExpiresAt and leaseHolder
+```
+
+Su `code` en el JSON es `lease_invariant` en los dos sitios.
 
 **Las dos filas del marcador se parecen y se reparan al revés, y por eso son dos.** Que falte tiene una
 sola lectura posible: el `id` de verdad es el que lleva la base de datos, y el marcador es su copia en el
@@ -4345,17 +4442,17 @@ sección 4.10 exige, pero el tablero de hoy puede estar perfectamente sano. Eso 
 distingue a un aviso de un error, así que es aviso.
 
 **Y la primera tiene una peculiaridad que la separa de las demás filas de error: nunca aparece como
-una línea del informe.** Las otras trece comprobaciones de error sí producen una entrada en la lista
+una línea del informe.** Las otras catorce comprobaciones de error sí producen una entrada en la lista
 de problemas cuando se disparan, pero esta no, porque cuando se dispara no hay informe de `doctor`
 que mostrarla: hay el abort completo de la sección 4.12, con su propio mensaje y su propio código 8,
 antes de que `doctor` llegue a comprobar nada más (ver la tabla de comportamiento más abajo). La fila
 está en esta tabla para decir que existe como comprobación y cuál es su nivel, no porque vaya a
 verse alguna vez junto a las demás.
 
-Con esto, de las diecisiete filas de la tabla, dieciséis son problemas (catorce errores y dos avisos) y
-una, los huecos en la numeración, no lo es y no se reporta nunca. De esas dieciséis, solo quince llegan a
-aparecer alguna vez como una línea del informe: la comprobación de integridad de la base de datos es
-la única que, aun siendo un problema real, no se manifiesta ahí, por la razón de arriba.
+Con esto, de las dieciocho filas de la tabla, diecisiete son problemas (quince errores y dos avisos) y
+una, los huecos en la numeración, no lo es y no se reporta nunca. De esas diecisiete, solo dieciséis
+llegan a aparecer alguna vez como una línea del informe: la comprobación de integridad de la base de
+datos es la única que, aun siendo un problema real, no se manifiesta ahí, por la razón de arriba.
 
 #### Atomicidad de `--fix` con varias reparaciones
 
@@ -4449,11 +4546,11 @@ Usage: biso doctor [options]
 
 Check the board for duplicate ids, unreadable tasks, undeclared extension keys,
 values that are no longer configured, a broken status-role invariant, broken
-dependencies, dependency cycles, parent cycles, repeated criterion keys, a
-recorded highest id that has fallen behind, a database that fails its integrity
-check, a missing or mismatched <id>.id marker, an extra board root that cannot
-be read, and a board directory on a filesystem where SQLite's WAL mode is not
-safe.
+dependencies, dependency cycles, parent cycles, repeated criterion keys, a lease
+on a task that is not both active and assigned, a recorded highest id that has
+fallen behind, a database that fails its integrity check, a missing or
+mismatched <id>.id marker, an extra board root that cannot be read, and a board
+directory on a filesystem where SQLite's WAL mode is not safe.
 
 Options:
       --fix      repair what can be repaired without a decision

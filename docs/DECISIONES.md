@@ -517,8 +517,59 @@ start` avisa y coge la tarea igual. El caso que de verdad importa, restaurar un 
 tablero, sale además mejor así: la tarea que estaba en marcha sigue constando en marcha y a nombre de
 quien la llevaba, en vez de aparecer activa y sin dueño del arrendamiento. Lo único que hay que
 custodiar es la invariante de que los dos campos solo tienen valor en una tarea activa y asignada, y se
-custodia donde se custodia todo lo demás del lote: en la validación previa de `biso new --from`, que
-rechaza el fichero entero antes de escribir nada.
+custodia en dos sitios: en la validación previa de `biso new --from`, donde se custodia todo lo demás
+del lote y que rechaza el fichero entero antes de escribir nada, y en `biso doctor`, que la comprueba
+como comprueba las demás invariantes del tablero y la repara con `--fix` vaciando los dos campos
+(sección 10.11 de `SPEC.md`). El segundo hace falta porque la importación no es la única forma de que
+una base de datos llegue a incumplirla: puede venir escrita a mano, restaurada a medias o de otra
+versión, y sin esa comprobación la única invariante que este apartado dice que hay que custodiar sería
+la única que `doctor` no mira.
+
+**La invariante gana siempre sobre el aviso de un arrendamiento ajeno, y esa precedencia hay que
+escribirla.** Las dos reglas se enfrentan en un caso corriente: `@claude` tiene el arrendamiento vivo de
+una tarea y `@sara` ejecuta `biso finish` sobre ella. Una regla dice que la escritura de otra identidad
+no toca ninguno de los dos campos, y solo avisa; la otra dice que la escritura que saca la tarea del
+estado activo los vacía. Manda la segunda, y el aviso se emite igual. El argumento no es de gusto: la
+primera regla es una cortesía hacia el tenedor y la segunda es la invariante de la que dependen la
+validación del lote y `doctor`, así que con la precedencia al revés quedaría una tarea terminada con un
+arrendamiento vivo, y `biso export` de ese tablero produciría un fichero que su propio
+`biso init --from` rechazaría, rompiendo la prueba de simetría de la sección 13 de `SPEC.md`. Por el
+mismo argumento, `biso archive` vacía también los dos campos, aunque `archived` no sea un estado y
+archivar no saque la tarea del estado activo: un arrendamiento afirma que alguien está trabajando ahora,
+y archivar es dejar de trabajar, así que conservarlo lo esconde donde nadie lo ve (`biso prime` y
+`biso ls` excluyen las archivadas) hasta que `--unarchive` lo devuelve semanas después a nombre de una
+sesión muerta.
+
+**Una escritura que no cambia ningún campo también late, y esto es lo que un implementador desharía
+creyendo que optimiza.** `biso set` con todas sus banderas dando el valor que la tarea ya tiene sale con
+código 0 y con `note: TASK-11 unchanged`, y aun así renueva `leaseExpiresAt` si quien llama es el
+tenedor. Salta a la vista el atajo contrario, no escribir nada cuando no hay nada que escribir, y es un
+error: el latido de este arrendamiento no es un comando propio, es cualquier escritura que el agente ya
+hace, y si la renovación dependiera de que algún valor hubiera cambiado de verdad, un agente que repite
+una escritura idempotente creería estar latiendo sin latir, y perdería la tarea al vencer el plazo por
+haber hecho justo lo que la especificación le dice que basta. Lo que no cambia en ese caso es
+`updatedAt`, porque ningún campo de la tarea cambió, y la lista `changed` del JSON sale vacía: la
+renovación es un hecho del arrendamiento, no una modificación de la tarea, y la nota sigue siendo cierta
+porque habla de la tarea.
+
+**Y `biso new --start` reclama el arrendamiento, porque es el atajo de dos llamadas y la equivalencia
+tiene que ser real.** La sección 6 justifica esa bandera como el ahorro de `biso new` más `biso start`;
+si creara la tarea activa y asignada pero sin arrendamiento, las dos vías darían dos tareas distintas y
+la única forma de saberlo sería leer la letra pequeña. La excepción simétrica es `biso start -s` con un
+estado que no es el activo: ahí no se fija arrendamiento, porque fijarlo rompería la invariante de
+arriba, y hay que nombrarla explícitamente para que la frase "solo `start` reclama" no se lea como una
+regla sin excepciones.
+
+**Dos remates que la primera redacción dejó a medias.** El primero: los dos campos ya se podían pedir
+con `biso get --json`, y el mensaje de arranque remitía a `biso get` para verlos, pero su ficha de texto
+no tenía dónde enseñarlos, así que la remisión era falsa para quien no pide JSON. Ahora la ficha imprime
+una línea `lease` con los dos, y solo cuando la tarea tiene arrendamiento, porque una fila con dos
+guiones aparecería en la ficha de casi todas las tareas del tablero (sección 10.5 de `SPEC.md`). El
+segundo: la validación rechazaba los dos campos sobre una tarea que no estuviera activa y asignada, pero
+no rechazaba que llegara uno solo de los dos, y con `leaseExpiresAt` vacío el derivado `leaseExpired`
+comparaba un instante que no existe contra el reloj. Los dos campos van juntos o no viene ninguno, y
+`leaseExpired` es falso cuando no hay `leaseExpiresAt`: un derivado tiene que valer algo en todos los
+tableros posibles, no solo en los que se importaron bien.
 
 ### 9.3. Señalar lo que espera a una persona
 
