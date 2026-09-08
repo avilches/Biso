@@ -223,9 +223,18 @@ tablero sin ningún paso adicional. Tres reglas gobiernan su lectura:
 
 - Una clave desconocida en el puntero es un error.
 - El `id` manda y el `path` es una pista que puede no resolver.
-- **Cómo se busca**: la carpeta de un tablero se llama `<nombre>-<id>`, por ejemplo `kex-3f9a2b1c`, así
+- **Cómo se busca**: la carpeta de un tablero se llama `<slug>-<id>`, por ejemplo `kex-3f9a2b1c`, así
   que localizarlo a partir del puntero es una sola búsqueda del patrón `*-<id>` en la raíz por defecto,
   sin abrir ni leer la configuración de ningún tablero.
+- **El `<slug>` se deriva de `project_name`, nunca es el nombre literal**: `project_name` es texto
+  libre, y copiarlo tal cual metería espacios y mayúsculas en una ruta que alguien va a teclear. La
+  derivación reutiliza el mismo paso de `normalizar(x)` (sección 6.1) que ya usa la derivación de
+  `task_prefix` (sección 4.11): pasar el nombre a minúsculas según Unicode y quitarle los diacríticos.
+  Después, cada tirada de caracteres que no sean una letra ASCII ni un dígito se colapsa en un solo
+  guion, recortando los que queden en los extremos. Así, `Kex` da `kex`, `Mi Proyecto` da
+  `mi-proyecto`, y `Peña 2026` da `pena-2026`. Ningún carácter de `project_name`, incluido un
+  separador de ruta, puede romper el nombre de la carpeta, porque cualquier tirada de ellos se colapsa
+  igual en un guion.
 
 Eso resuelve dos cosas de golpe: que dos proyectos de la misma máquina se puedan llamar igual sin
 chocar, porque lo que identifica al tablero no es su nombre sino el `id` que lleva en el nombre de su
@@ -281,7 +290,7 @@ un tablero concreto, y esta es de la máquina entera, independiente de cuántos 
 | `boards_extra_roots` | lista de rutas | vacía |
 
 `boards_root` es la raíz por defecto de la sección 3.2: el directorio donde `biso init` sin `--at`
-crea los tableros nuevos, y donde se busca la carpeta `<nombre>-<id>` de cada puntero.
+crea los tableros nuevos, y donde se busca la carpeta `<slug>-<id>` de cada puntero.
 `boards_extra_roots` son raíces adicionales, para cuando algún tablero vive fuera de `boards_root`.
 
 Se leen directamente de ese fichero, sin pasar por la resolución de tablero de la sección 3.2, porque
@@ -1666,9 +1675,10 @@ Sin parámetros propios.
 
 Dice el identificador del tablero, su nombre, la ruta de su directorio, y cuál de las tres vías de la
 sección 3.2 lo ha elegido. Los tres son datos distintos: `biso config set project_name` cambia el
-nombre y, con él, la ruta, porque la carpeta se llama `<nombre>-<id>` (sección 10.10), pero nunca el
-identificador, que es el único de los tres que no cambia jamás (sección 3.2). Es el comando al que
-remite el error de código 8, y el que hace visible una resolución que de otro modo sería invisible.
+nombre y, con él, la ruta, porque la carpeta se llama `<slug>-<id>` y el slug se deriva del nombre
+(sección 3.2), pero nunca el identificador, que es el único de los tres que no cambia jamás. Es el
+comando al que remite el error de código 8, y el que hace visible una resolución que de otro modo
+sería invisible.
 
 | Caso | Qué pasa |
 |---|---|
@@ -1682,7 +1692,7 @@ remite el error de código 8, y el que hace visible una resolución que de otro 
 ```
 id       3f9a2b1c
 board    Kex
-path     ~/.biso/boards/Kex-3f9a2b1c
+path     ~/.biso/boards/kex-3f9a2b1c
 source   project pointer at the root of this project
 me       @claude
 tasks    248 active, 31 archived, highest id ever assigned TASK-290
@@ -1716,7 +1726,7 @@ hint: `biso init` creates it here, adopting id 3f9a2b1c
   "data": {
     "id": "3f9a2b1c",
     "board": "Kex",
-    "path": "~/.biso/boards/Kex-3f9a2b1c",
+    "path": "~/.biso/boards/kex-3f9a2b1c",
     "source": "project pointer at the root of this project",
     "me": "@claude",
     "counts": { "active": 248, "archived": 31, "highestIdEverAssigned": "TASK-290" }
@@ -3509,15 +3519,17 @@ sistema de ficheros.** Cambiarla mueve la carpeta del tablero en la misma operac
 real (la raíz por defecto o la que diga `path` en el puntero, sección 3.2), conservando el sufijo del
 identificador: `kex-3f9a2b1c` pasa a `nuevonombre-3f9a2b1c`. No toca ningún puntero, porque el tablero
 se localiza por el patrón `*-<id>` y el identificador viaja en el nombre de la carpeta, no en ningún
-fichero aparte. La parte del nombre en la carpeta es decorativa, nadie resuelve por ella: mantenerla
-al día es mantener una etiqueta, no mover datos de los que algo dependa.
+fichero aparte. La parte del nombre en la carpeta es el slug de la sección 3.2, decorativo: nadie
+resuelve por él, así que mantenerlo al día es mantener una etiqueta, no mover datos de los que algo
+dependa.
 
-**`project_name` tiene que poder ser un nombre de carpeta.** No puede contener un separador de ruta
-(`/`), porque dejaría de nombrar una sola carpeta y pasaría a describir un camino: ese valor es error
-3. Los demás límites de un nombre de carpeta (la longitud, u otro carácter que un sistema de ficheros
-concreto rechace) no se comprueban por delante, porque dependen de dónde vive el tablero: si el
-sistema de ficheros lo rechaza al mover la carpeta, es el mismo error 7 que cualquier otro fallo al
-escribir.
+**Ningún carácter de `project_name` puede romper la ruta de la carpeta**, porque lo que entra en ella
+no es el valor literal sino su slug (sección 3.2): cualquier tirada de caracteres que no sean letra ni
+dígito, incluido un separador de ruta (`/`), se colapsa en un guion antes de tocar el sistema de
+ficheros. Los límites de un nombre de carpeta que sí pueden fallar, la longitud o un carácter que un
+sistema de ficheros concreto rechace incluso después de colapsar, no se comprueban por delante, porque
+dependen de dónde vive el tablero: si el sistema de ficheros lo rechaza al mover la carpeta, es el
+mismo error 7 que cualquier otro fallo al escribir.
 
 **Renombrar no toca nunca el `task_prefix`.** Se derivó una vez al crear el tablero y desde entonces
 vive por su cuenta en esa clave; cambiar `project_name` no lo recalcula, aunque el nombre nuevo diera
@@ -3564,7 +3576,6 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
 | Cambiar `project_name` a un valor vacío | Error 3 |
 | Cambiar `project_name` al mismo valor que ya tiene | La carpeta no se mueve, porque el nombre no cambia; el `set` se completa igual |
-| Cambiar `project_name` a un valor con un separador de ruta (`/`) | Error 3 |
 | Cambiar `project_name` a un valor que no dejaría ninguna letra para derivar un prefijo | No es error: el `task_prefix` ya está fijado y no se recalcula al renombrar |
 | Cambiar `project_name` en un tablero cuyo puntero lleva `path` (vive fuera de la raíz por defecto) | Se mueve igual, en la ubicación que diga `path` |
 | Cambiar `project_name` sin poder mover la carpeta, por ejemplo por permisos | Error 7 |
