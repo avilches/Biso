@@ -374,9 +374,10 @@ frases y esa vivía en una celda.
 
 Salen de un diseño anterior de gestor de tareas que no llegó a escribirse, y de la evidencia que
 aquel diseño recogió sobre la herramienta que usaba esta máquina antes. Los cuatro tocaban el modelo
-de estados y se decidieron a la vez: dos quedan resueltos sin ningún papel de estado nuevo, uno queda
-aplazado a la decisión de persistencia, y uno se retira. El criterio que ordenó las cuatro decisiones,
-y que conviene aplicar la próxima vez que alguien proponga un papel de estado, está en el apartado 10.
+de estados y se decidieron a la vez: dos quedan resueltos sin ningún papel de estado nuevo, uno se
+resuelve con la enmienda de la decisión de persistencia (9.2), y uno se retira. El criterio que ordenó
+las cuatro decisiones, y que conviene aplicar la próxima vez que alguien proponga un papel de estado,
+está en el apartado 10.
 
 ### 9.1. Distinguir el encargo de la ejecución: resuelto sin estado nuevo
 

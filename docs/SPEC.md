@@ -374,7 +374,7 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 | `warning: <x> is deprecated and will be removed in 2.0` | ver la sección 13 |
 | `warning: TASK-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta |
 | `warning: TASK-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta |
-| `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al empezar una tarea cuyo arrendamiento está vivo y es de otra identidad (9.2 de `DECISIONES.md`, 10.7.1) |
+| `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al escribir sobre una tarea cuyo arrendamiento está vivo y es de otra identidad, con `biso start` o con cualquier otra escritura (sección 5, 9.2 de `DECISIONES.md`, 10.7.1) |
 
 ### 4.4. Codificación y texto
 
@@ -581,8 +581,8 @@ escribe. No dice nada de cómo se guardan.
 | `createdAt` | instante UTC | sí | el programa | solo al importar |
 | `updatedAt` | instante UTC | sí | el programa | solo al importar |
 | `archived` | booleano | sí, `false` por defecto | el programa, con `biso archive` | sí, solo con `biso archive` / `--unarchive`, o al importar |
-| `leaseExpiresAt` | instante UTC | no | el programa, en cada escritura sobre una tarea activa y asignada, a `ahora + lease_minutes` (clave de configuración, 10.10) | sí, se renueva con cada escritura sobre la tarea mientras siga activa, y se vacía al salir del estado activo |
-| `leaseHolder` | texto de persona | no | el programa, con la identidad de quien llama, en cada escritura sobre una tarea activa y asignada | sí, se reescribe junto con `leaseExpiresAt` y se vacía con él |
+| `leaseExpiresAt` | instante UTC | no | el programa, a `ahora + lease_minutes` (clave de configuración, 10.10); ver la sexta precisión de abajo para cuándo | sí, ver las precisiones sexta y séptima de abajo |
+| `leaseHolder` | texto de persona | no | el programa, solo con `biso start` (10.7.1); ver la sexta precisión de abajo | sí, solo con `biso start`; ver las precisiones sexta y séptima de abajo |
 | `urgency` | decimal, derivado | derivado | el programa | no, se recalcula al leer |
 | `ext` | mapa de clave declarada a texto | no | quien llama | sí |
 | `description` | texto largo | no | quien llama | sí |
@@ -599,7 +599,7 @@ escribe. No dice nada de cómo se guardan.
 | `ready`, `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
 | `leaseExpired` | booleano, derivado | derivado | el programa | no, se recalcula al leer |
 
-Cinco precisiones sobre la mutabilidad:
+Siete precisiones sobre la mutabilidad:
 
 - **"No mutable" significa que ninguna bandera del programa lo cambia.** `updatedAt` lo reescribe el
   programa en cada operación que cambie algo.
@@ -621,6 +621,27 @@ Cinco precisiones sobre la mutabilidad:
   nunca, mostraría un estado que una escritura ajena y posterior podría cambiar. Liberar el
   arrendamiento vencido es la reclamación explícita que hace `biso start` (10.7.1), no un efecto
   secundario de ningún otro comando.
+- **Renovar `leaseExpiresAt` y fijar o transferir `leaseHolder` son cosas distintas, y solo la
+  segunda pasa por `biso start`.** Cualquier escritura sobre una tarea activa y asignada renueva
+  `leaseExpiresAt` a `ahora + lease_minutes` (10.10), pero solo cuando quien llama ya es
+  `leaseHolder`. Si la tarea no tiene arrendamiento todavía, escribir sobre ella no lo crea: fijarlo
+  por primera vez es parte de lo que hace `biso start`, igual que reclamarlo vencido o tomarlo de
+  otra identidad (10.7.1). Una escritura de una identidad distinta de `leaseHolder` mientras el
+  arrendamiento está vivo no toca ninguno de los dos campos: avisa con el mismo
+  `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` de 10.7.1 y de la tabla de
+  la sección 4.3, y el resto de la escritura se hace igual. Una escritura de una identidad distinta
+  mientras el arrendamiento está vencido tampoco lo toca, y lo deja vencido: quien comenta, anota o
+  cierra una tarea no ha reclamado nada, y solo `biso start` reclama. Una tarea que llega a activa y
+  asignada por una vía distinta de `biso start`, por ejemplo `biso set --status`, no tiene
+  arrendamiento hasta que alguien llame a `biso start` sobre ella: no hay ninguna otra escritura que
+  lo pueda crear.
+- **Los dos campos solo tienen valor en una tarea activa y asignada, y se vacían al perder cualquiera
+  de las dos condiciones, no solo la primera.** Una escritura que saca la tarea del estado activo
+  (`biso finish`, o `biso set --status` a cualquier otro valor) vacía `leaseExpiresAt` y
+  `leaseHolder` en esa misma escritura. Y como la condición que los sostiene es la conjunción de las
+  dos cosas, perder la segunda los vacía igual: `--clear-assignee` o `--rm-assignee` (8.2) sobre una
+  tarea activa que se queda sin ninguna persona asignada vacía los dos campos en esa misma escritura,
+  sea quien sea quien la haga.
 
 ### 5.1. Los criterios y sus claves estables
 
@@ -2682,6 +2703,12 @@ Los seis aceptan **todas** las banderas de campo de la sección 8, igual que `se
 subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que el gesto frecuente
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
+Los seis son escrituras sobre la tarea, así que a los cinco que no son `start` (`note`, `comment`,
+`finish`, `ask`, `answer`) les aplica la regla general de la sección 5 sin ninguna excepción: si
+quien llama ya es `leaseHolder`, renuevan `leaseExpiresAt`; si no lo es y el arrendamiento está vivo,
+no tocan ninguno de los dos campos y avisan; y si no lo es y está vencido, lo dejan vencido. Ninguno
+de los cinco fija ni transfiere `leaseHolder`: solo `start` reclama.
+
 El ciclo entero de una tarea es esto:
 
 ```
@@ -2714,8 +2741,10 @@ persona y `--set-assignee` reemplaza la lista.
 ##### Qué hace
 
 Cuatro cosas en una escritura: pone el estado activo, **asigna la tarea a `me` si no tiene ninguna
-persona asignada**, renueva el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección 5) a favor de
-quien llama, y añade el plan si se ha pasado.
+persona asignada**, toma el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección 5) a favor de
+quien llama (renovándolo si ya era suyo, reclamándolo si estaba vencido, o tomándolo si era de otra
+identidad: es el único comando que hace las tres cosas, sección 5), y añade el plan si se ha
+pasado.
 
 | Caso | Qué pasa |
 |---|---|
