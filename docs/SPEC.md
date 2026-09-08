@@ -225,27 +225,26 @@ tablero sin ningún paso adicional. Tres reglas gobiernan su lectura:
 - El `id` manda y el `path` es una pista que puede no resolver.
 - **Cómo se busca**: la carpeta de un tablero se llama `<slug>-<id>`, por ejemplo `kex-3f9a2b1c`, así
   que localizarlo a partir del puntero es una sola búsqueda del patrón `*-<id>` en la raíz por defecto,
-  sin abrir ni leer la configuración de ningún tablero.
-- **El `<slug>` se deriva de `project_name`, nunca es el nombre literal**: `project_name` es texto
-  libre, y copiarlo tal cual metería espacios y mayúsculas en una ruta que alguien va a teclear. La
-  derivación reutiliza el mismo paso de `normalizar(x)` (sección 6.1) que ya usa la derivación de
-  `task_prefix` (sección 4.11): pasar el nombre a minúsculas según Unicode y quitarle los diacríticos.
-  Después, cada tirada de caracteres que no sean una letra ASCII ni un dígito se colapsa en un solo
-  guion, recortando los que queden en los extremos. Así, `Kex` da `kex`, `Mi Proyecto` da
-  `mi-proyecto`, y `Peña 2026` da `pena-2026`. Ningún carácter de `project_name`, incluido un
-  separador de ruta, puede romper el nombre de la carpeta, porque cualquier tirada de ellos se colapsa
-  igual en un guion.
+  sin abrir ni leer la configuración de ningún tablero. El `<slug>` se deriva de `project_name`, nunca
+  es el nombre literal: `project_name` es texto libre, y copiarlo tal cual metería espacios y
+  mayúsculas en una ruta que alguien va a teclear. La derivación reutiliza el mismo paso de
+  `normalizar(x)` (sección 6.1) que ya usa la derivación de `task_prefix` (sección 4.11): pasar el
+  nombre a minúsculas según Unicode y quitarle los diacríticos. Después, cada tirada de caracteres que
+  no sean una letra ASCII ni un dígito ASCII se colapsa en un solo guion, recortando los que queden en
+  los extremos. Así, `Kex` da `kex`, `Mi Proyecto` da `mi-proyecto`, y `Peña 2026` da `pena-2026`.
+  Ningún carácter de `project_name`, incluido un separador de ruta, puede romper el nombre de la
+  carpeta, porque cualquier tirada de ellos se colapsa igual en un guion.
+
+Eso resuelve dos cosas de golpe: que dos proyectos de la misma máquina se puedan llamar igual sin
+chocar, porque lo que identifica al tablero no es su nombre sino el `id` que lleva en el nombre de su
+carpeta, y que el puntero siga resolviendo aunque el tablero se haya renombrado, porque el
+identificador viaja en el nombre de la carpeta y no en el puntero.
 
 **El slug y el `task_prefix` arrancan del mismo `project_name` pero fallan por motivos distintos, y
 hay que comprobar los dos.** `"2026"` da un slug válido, `2026`, pero no da ningún prefijo, porque no
 le queda ninguna letra ASCII (sección 4.11); `"///"` da un slug vacío y también un prefijo vacío. Que
 una de las dos derivaciones salga bien no dice nada de la otra, así que ninguna de las dos
 comprobaciones sustituye a la otra.
-
-Eso resuelve dos cosas de golpe: que dos proyectos de la misma máquina se puedan llamar igual sin
-chocar, porque lo que identifica al tablero no es su nombre sino el `id` que lleva en el nombre de su
-carpeta, y que el puntero siga resolviendo aunque el tablero se haya renombrado, porque el
-identificador viaja en el nombre de la carpeta y no en el puntero.
 
 `biso init` genera el `id` de la fuente de números aleatorios del sistema, comprobando que no exista ya
 en la raíz por defecto, que es una lectura de directorio, y escribe el puntero siempre que no exista ya
@@ -3745,7 +3744,7 @@ imprime fichas de tareas.
 | Ciclos de tarea padre | no |
 | Claves de criterio repetidas dentro de una tarea | no |
 | El identificador más alto que el tablero recuerda haber asignado (4.11) es menor que el identificador más alto de una tarea existente | sí |
-| El nombre de la carpeta del tablero no coincide con `project_name` (alguien la renombró por fuera de `biso`) | sí, renombrando la carpeta; `project_name` nunca cambia por esto |
+| El nombre de la carpeta del tablero no coincide con el slug (sección 3.2) que le corresponde a `project_name` (alguien la renombró por fuera de `biso`) | sí, renombrando la carpeta; `project_name` nunca cambia por esto |
 | Huecos en la numeración | no son un problema, no se reportan |
 
 **La reparación de la fila anterior renombra la carpeta, nunca cambia `project_name`.** El nombre de
@@ -3815,8 +3814,8 @@ Usage: biso doctor [options]
 Check the board for duplicate ids, unreadable tasks, undeclared extension keys,
 values that are no longer configured, a broken status-role invariant, broken
 or circular dependencies, repeated criterion keys, a recorded highest id that
-has fallen behind, and a board folder name that no longer matches the board
-name.
+has fallen behind, and a board folder name that no longer matches the slug of
+the board name.
 
 Options:
       --fix      repair what can be repaired without a decision
