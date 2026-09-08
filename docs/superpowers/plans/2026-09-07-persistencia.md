@@ -575,6 +575,48 @@ Y queda una tercera razón para que `doctor` exista, que no es de reparación y 
 sitio donde se puede preguntar **"le pasa algo a este tablero"** sin haber intentado antes una operación.
 Eso es un diagnóstico que se corre cuando se sospecha, no una llamada que ibas a hacer igual.
 
+### `doctor` reporta errores y avisos, y solo los errores sacan el código 6
+
+Decidido por el usuario. Hoy `doctor` cuenta todo como "problema", y "quedan problemas sin reparar"
+significa salir con código 6. Eso convierte cualquier detalle cosmético en una alarma, y **un agente que
+recibe un 6 cree que al tablero le pasa algo grave**. Gastar la credibilidad del 6 en cosas que no rompen
+nada es caro, porque la próxima vez que aparezca de verdad ya no significará lo mismo.
+
+Así que la sección 10.11 pasa a distinguir dos niveles:
+
+- **Errores**: dejan el tablero inconsistente, o hacen imposible una operación, o vuelven un dato poco
+  fiable. Si queda alguno sin reparar, el código de salida es 6, como hasta ahora.
+- **Avisos**: son verdad, merece la pena saberlos, y no rompen nada. **No cambian el código de salida.**
+
+**Se llaman avisos y usan el prefijo `warning:`, que el documento ya usa** en otros sitios, por ejemplo
+cuando una tarea no se puede leer y se salta en un comando de conjunto. No se inventa una palabra nueva: se
+reutiliza el vocabulario que la herramienta ya tiene.
+
+**Un aviso tiene que ser accionable sin investigar nada**, o no sirve para lo que un agente necesita. La
+regla: dice qué hay y qué se esperaba, con los dos valores literales al lado. Para el nombre de la carpeta
+desparejado, algo con esta forma:
+
+```
+warning: board folder is "proyecto-viejo-3f9a2b1c" but project_name is "Kex" (expected "kex-3f9a2b1c")
+```
+
+Ahí el arreglo está a la vista, y se ve además por qué: **el sufijo del identificador es idéntico en los dos
+lados**, así que lo único que difiere es la parte decorativa. Quien lo lea puede corregirlo o proponer la
+corrección sin abrir nada más.
+
+**Clasifica las trece comprobaciones que ya tiene la tabla, una por una**, y añade la columna o la marca que
+haga falta para que se vea a qué nivel pertenece cada una. Con lo decidido hasta ahora, dos son avisos y no
+errores: el nombre de la carpeta desparejado, que la tarea 4 dejó como problema reparable, y el directorio
+del tablero en un sistema de ficheros donde el modo WAL no es seguro, que añade el paso 4 de esta tarea.
+**Que el concepto tenga exactamente dos miembros y los dos sean reales es la señal de que se gana el sitio**;
+si al clasificar te sale que solo hay uno, o que hay ocho, dilo en el informe porque entonces la línea está
+mal trazada.
+
+Y hay tres cosas que cambian con esto y que no se pueden quedar atrás: la tabla de comportamiento caso a
+caso, que hoy dice "quedan problemas sin reparar" y pasa a hablar de errores; la salida de ejemplo, que hoy
+dice "2 problems found" y tiene que enseñar las dos clases; y la tabla de códigos de salida, donde el 6 deja
+de dispararlo cualquier hallazgo.
+
 Al escribirlo, **repasa la lista de comprobaciones que ya tiene la sección** y comprueba que cada una cae
 de verdad en uno de los dos casos. Si alguna es unambigua y automática, entonces lo que hay que arreglar es
 el comando que la detecta, no dejarla en `doctor`, y eso hay que reportarlo en el informe aunque no lo
