@@ -475,8 +475,8 @@ wc -c /tmp/prime-nuevo.txt
 ```
 
 Y actualizar **las cuatro cifras a la vez**: el total, la parte fija y el resumen en la sección 9.5 y en
-la 9.7 de `SPEC.md`, y las mismas cifras en la sección 3 de `DECISIONES.md`. Las de hoy son 4.689 en
-total, 3.255 de parte fija y 1.434 de resumen, contra un tope de 5.120 con 431 de margen. **Nunca
+la 9.7 de `SPEC.md`, y las mismas cifras en la sección 3 de `DECISIONES.md`. **Mide tú las de partida
+sobre el documento vivo**, en vez de tomarlas de este plan, que se quedó viejo una vez. **Nunca
 estimar**: este es el patrón de fallo que el propio proyecto identificó como el más frecuente.
 
 - [ ] **Paso 8: Comprobar**
