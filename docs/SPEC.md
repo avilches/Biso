@@ -1181,6 +1181,10 @@ Se queda fuera, y va a `biso <cmd> --help`:
 Esto es exactamente lo que `biso prime` imprime por stdout con un tablero de ejemplo. No imprime nada
 por stderr.
 
+**Ese tablero fija `task_prefix` a `TASK` explícitamente**, en vez de dejarlo en su valor por defecto
+(sección 4.11), para que los identificadores de todos los ejemplos de este documento no dependan del
+nombre que le toque al tablero de turno. De paso queda demostrado que la clave se puede fijar a mano.
+
 ```
 biso 1.0.0 - the task board of this project. This message is all you need to start.
 
@@ -1624,7 +1628,7 @@ Examples:
   biso init Kex --statuses "Ideas,To Do,In Progress,Done" \
       --initial-status Ideas --active-status "In Progress" \
       --terminal-status Done
-  biso init Kex --at kex-board --prefix KEX --extensions trello.card
+  biso init Kex --at kex-board --prefix TASK --extensions trello.card
 ```
 
 El segundo ejemplo deja `To Do` sin ningún papel a propósito: un tablero puede llevar estados que no
