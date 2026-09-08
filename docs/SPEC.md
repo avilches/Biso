@@ -506,6 +506,11 @@ consiga es cosa de quien implemente.
   ninguna letra, como en un tablero llamado `2026`, `biso init` no se inventa un valor: falla y pide
   el prefijo explícitamente con `--prefix` (error 2, `code` `invalid_prefix`, sección 12.3), la misma
   clave que ya cubre un `--prefix` con algo que no sean letras (sección 10.1).
+- **"Letra" no incluye los diacríticos**, para que un nombre de tablero con cualquier carácter
+  Unicode derive un prefijo predecible. La derivación pasa primero el nombre por el paso de
+  `normalizar(x)` (sección 6.1) que quita los acentos, las diéresis y las cedillas, y solo entonces
+  se queda con lo que sean letras ASCII. Así un tablero llamado `Peña` deriva `PENA`, y uno llamado
+  `Café` deriva `CAFE`.
 - **Un identificador no se reutiliza jamás**, ni después de archivar una tarea ni después de
   eliminarla por cualquier vía.
 - Los identificadores se asignan de forma creciente, pero **la especificación no promete que la
@@ -1523,6 +1528,7 @@ configuración a las que corresponden.
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
+| `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección 10.10 aplica a `task_prefix` |
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
 | Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
 | Una bandera de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
@@ -1537,6 +1543,11 @@ posiciones.** Cambiar `statuses` después no los mueve nunca. Si al cambiar `sta
 deja de existir, el comando que lo hace falla, según la sección 10.10.
 
 #### Salida
+
+Esto es lo que imprime la tercera invocación de los ejemplos de ayuda,
+`biso init Kex --at kex-board --prefix TASK --extensions trello.card` (con `--json` para el esquema
+de más abajo). El prefijo sale `TASK` porque lo fija `--prefix`, no porque se derive del nombre
+`Kex`, que sin esa bandera daría `KEX` (sección 4.11).
 
 ```
 Created board "Kex"
@@ -1580,6 +1591,7 @@ apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera es
 | Tablero creado | 0 |
 | Ya existía y no hay `--overwrite-config` | 2 |
 | Argumentos inválidos | 2 |
+| `--overwrite-config` cambiaría `task_prefix` con tareas ya creadas | 6 |
 | No se puede escribir | 7 |
 
 #### `biso init --help`
@@ -1621,6 +1633,7 @@ stored as explicit values and never move again.
 Exit codes:
   0  board created
   2  bad usage, or a board is already reachable from here
+  6  --overwrite-config would change task_prefix on a board with tasks
   7  cannot write there
 
 Examples:
@@ -3488,7 +3501,9 @@ final cambie en silencio a dónde va `biso finish`.
 queda incrustado en datos que ya existen, porque cada identificador ya asignado lleva el prefijo
 grabado. Mientras el tablero está vacío no hay ningún identificador con el que pueda entrar en
 conflicto, así que cambiarla funciona sin más; en cuanto existe una sola tarea, cambiarla es error 6
-(tabla de abajo), con el mismo motivo por el que no se toca `statuses` en uso.
+(tabla de abajo), con el mismo motivo por el que no se toca `statuses` en uso. La misma regla vale
+para `biso init --overwrite-config` (sección 10.1): reescribir la configuración de un tablero con
+tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` explícito o no.
 
 #### Comportamiento, caso a caso
 
