@@ -185,20 +185,48 @@ Un proyecto tiene un tablero, y el programa lo encuentra por este orden. Gana el
 
 1. La bandera `--board`.
 2. La variable `BISO_BOARD`.
-3. **El puntero del proyecto**, que es una marca que `biso init` deja en el proyecto y que dice qué
+3. **El directorio de trabajo, cuando es el directorio de un tablero.** Se reconoce porque contiene
+   el fichero `board.db`, y entonces el tablero es ese y no se busca nada más.
+4. **El puntero del proyecto**, que es una marca que `biso init` deja en el proyecto y que dice qué
    tablero le corresponde. Se busca en el directorio de trabajo y en sus ancestros, con el tope de la
    regla que cierra esta lista.
 
 **La raíz por defecto de la máquina** (sección 3.3) no es una vía más de esta lista: es el
 directorio donde `biso init` sin `--at` crea los tableros nuevos. Volver a encontrar un tablero ya
-creado depende siempre de una de las tres vías de arriba, nunca de adivinar su carpeta dentro de la
-raíz por defecto.
+creado depende siempre de una de las cuatro vías de arriba, nunca de mirar las carpetas de la raíz por
+defecto a ver cuál le pega a este proyecto.
 
-**El tope de la búsqueda hacia arriba** es la raíz del proyecto, entendida como la raíz del
-repositorio de control de versiones si lo hay (se detecta buscando un directorio `.git` hacia arriba,
-nunca ejecutando `git`), y si no lo hay, el propio directorio de partida. La búsqueda **nunca** sube
-por encima de la raíz del proyecto ni llega al directorio personal, para que un proyecto no encuentre
-por accidente el tablero de un proyecto hermano.
+**La tercera vía no adivina nada, y por eso no contradice el párrafo anterior.** Un directorio que
+contiene `board.db` es ese tablero y no puede ser otro, y la configuración completa de un tablero vive
+dentro de ese mismo fichero, con su nombre y su `task_prefix` incluidos (sección 10.10), así que ahí no
+falta ningún dato que el puntero tuviera que aportar: el puntero solo sirve para encontrar un tablero,
+y quien ya está dentro de él no tiene nada que encontrar. Es también la más específica de las cuatro, y
+de ahí que gane al puntero: quien ejecuta un comando dentro de un tablero se refiere a ese, no al del
+proyecto que quizá lo contenga.
+
+**El tope de la búsqueda hacia arriba es el directorio personal de quien llama**, el que dice la
+variable `HOME`, cuando el directorio de trabajo está dentro de él: el recorrido comprueba ese
+directorio y no sube más, sea cual sea su ruta. Desde `/Users/avilches/Hub/Projects/Biso/src` sube
+hasta `/Users/avilches` y para ahí, sin llegar a `/Users` ni a la raíz, y con un directorio personal
+en `/root` pararía en `/root`.
+
+**Cuando el directorio de trabajo cae fuera del directorio personal**, o cuando `HOME` no está
+definido, el tope es el segundo componente de la ruta, de modo que desde `/Volumes/disco/proyecto` para
+en `/Volumes/disco` y desde `/opt/proyecto/src` para en `/opt/proyecto`. Es el mismo criterio de la
+regla de arriba aplicado donde no hay directorio personal que lo exprese: no salir del área de trabajo
+de quien llama. El número no sale de contar niveles por costumbre, sino de que el primer componente de
+una ruta absoluta es siempre un directorio del sistema o el contenedor de los directorios personales de
+todo el mundo, y un puntero ahí no puede estar a propósito, solo por accidente.
+
+**Nada en esta búsqueda depende de git.** No se busca la raíz de ningún repositorio, no se para al
+encontrar un `.git`, y no se ejecuta `git` para preguntarlo. La razón es que la sección 10.14 declara
+que git es opcional y que un tablero funciona igual sin él: una búsqueda que frenara en un `.git`
+pondría la respuesta a cuál es mi tablero en manos de una herramienta ajena, y además una que la
+cambiaría sin avisar, porque es `biso snapshot` quien crea un `.git` en el directorio del tablero la
+primera vez que se ejecuta, de modo que el mismo comando en el mismo sitio respondería una cosa antes
+y otra después. El precio de no tener ese freno es que un proyecto sin puntero propio hereda el del
+proyecto que lo contenga, si lo hay, y se acepta a propósito: la sección 12 de `DECISIONES.md` dice por
+qué, y `biso where` enseña siempre de qué directorio salió el puntero que ha resuelto.
 
 Si nada de eso existe, cualquier comando salvo `init`, `where`, `help`, `--help` y `--version` aborta
 antes de ejecutar su propia lógica, con código 8 y este mensaje por stderr:
@@ -212,7 +240,10 @@ Los cinco exentos no abortan así: `init`, `help`, `--help` y `--version` no nec
 hacer su trabajo, y `biso where` lo necesita pero lo comprueba por su cuenta, con su propio mensaje y
 su propio código 8 cuando no lo encuentra (sección 10.2).
 
-**El puntero** es el fichero `.biso.json` en la raíz del proyecto, versionado en git, con estas
+**El puntero** es el fichero `.biso.json` que `biso init` escribe en el directorio desde el que se le
+llama, que es la raíz del proyecto en el uso normal, y que se versiona con el proyecto. Nada obliga a
+que esté en la raíz, porque la búsqueda de arriba lo encuentra en cualquier ancestro; ponerlo en la
+raíz es lo que hace que lo vean todos los subdirectorios y todas las copias de trabajo. Tiene estas
 claves:
 
 | Clave | Tipo | Obligatoria | Notas |
@@ -627,11 +658,13 @@ Tres reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
    una línea de lo que esa invocación va a imprimir, ni una comprobación de más, ni una llamada de
    red: todo lo que no sirve a la salida de la llamada concreta se paga en cada una de las muchas
    veces que un agente ejecuta el programa a lo largo de una sesión, se haya pedido o no.
-2. **Ningún comando ejecuta git en su camino caliente.** `biso snapshot` es la única excepción, y ya
-   está dicho dos veces en este documento: la sección 3.2 detecta la raíz del proyecto buscando un
-   directorio `.git`, nunca ejecutando `git`, y la sección 10.14 dice que `biso snapshot` es el único
-   comando que llega a invocarlo alguna vez. Invocar `git` cuesta unos 12 milisegundos medidos, casi la
-   mitad de este presupuesto entero gastada en una sola llamada.
+2. **Ningún comando ejecuta git en su camino caliente.** `biso snapshot` es la única excepción, y así
+   lo dice la sección 10.14. Invocar `git` cuesta unos 12 milisegundos medidos, casi la mitad de este
+   presupuesto entero gastada en una sola llamada. Este presupuesto es además la razón por la que la
+   resolución del tablero de la sección 3.2 no mira git en absoluto, ni siquiera leyendo ficheros:
+   frenar la búsqueda del puntero donde un repositorio empieza obligaría a respetar su `.gitignore`
+   para que el freno significara algo, y eso no se puede reimplementar de forma fiable ni preguntar sin
+   invocar `git`.
 3. **La palanca mayor no es que cada llamada sea más rápida: es que haga falta hacer menos llamadas.**
    Para eso existe `biso prime` (sección 9), que sustituye el ciclo entero de leer guías sueltas y
    encadenar comandos por un solo mensaje al principio de la sesión; `docs/DECISIONES.md`, sección 3,
@@ -1673,11 +1706,20 @@ del proyecto que se describe a continuación.
 set project_name`, que también mueve la carpeta del tablero (sección 10.10).
 
 `init` escribe, además del tablero, **el puntero del proyecto** (el fichero `.biso.json` de la
-sección 3.2), y lo escribe siempre que no exista ya uno, porque el tablero nunca queda dentro del
-propio proyecto: sin `--at`, en la raíz por defecto de la máquina; con `--at`, donde se le diga, con
-esa ruta en la clave `path` del puntero. Es la única cosa que `init` escribe fuera del tablero. La
-salida siempre confirma que el proyecto apunta al tablero, se haya escrito el puntero en esta llamada
-o ya estuviera ahí de antes.
+sección 3.2), y lo escribe siempre que no exista ya uno, porque un tablero no se localiza nunca por su
+posición en el disco sino por una de las cuatro vías de la sección 3.2: sin `--at` el tablero va a la
+raíz por defecto de la máquina, y con `--at` donde se le diga, con esa ruta en la clave `path` del
+puntero. Es la única cosa que `init` escribe fuera del tablero. La salida siempre confirma que el
+proyecto apunta al tablero, se haya escrito el puntero en esta llamada o ya estuviera ahí de antes.
+
+**Un `--at` que caiga dentro del proyecto está permitido, y entonces `init` lo dice.** Es una
+configuración legítima, para quien quiera que su tablero viva junto a su proyecto y viaje en la misma
+copia de seguridad, y sigue funcionando igual porque la resolución del tablero no depende de dónde esté
+la carpeta. Lo que hace falta es que el proyecto no intente versionarla, así que `init` emite por
+stderr `note: the board lives inside this project; add kex-3f9a2b1c/ to its .gitignore`, con el nombre
+real de la carpeta. Es una nota y no un aviso porque no hay nada mal hecho, y `init` **no escribe ese
+`.gitignore`**: el puntero sigue siendo la única cosa que este comando escribe fuera del tablero, y
+tocar el `.gitignore` de un proyecto ajeno sería pasarse de ahí.
 
 **Si ya existe un puntero pero el tablero que nombra no está en esta máquina** (sección 3.2), `init`
 no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máquinas sigan hablando del
@@ -1711,6 +1753,8 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
+| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la tercera vía de 3.2, y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
+| `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
 | `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección 10.10 aplica a `task_prefix` |
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
 | Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
@@ -1732,9 +1776,14 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 posiciones.** Cambiar `statuses` después no los mueve nunca. Si al cambiar `statuses` uno de los tres
 deja de existir, el comando que lo hace falla, según la sección 10.10.
 
+**El fichero de la base de datos se llama `board.db`**, con `board.db-wal` y `board.db-shm` como sus
+ficheros auxiliares. El nombre es fijo y forma parte de la interfaz, no un detalle interno, porque es
+lo que hace reconocible un directorio de tablero: la tercera vía de la sección 3.2 se apoya en él, y
+sin un nombre declarado esa vía no sería implementable de una sola manera.
+
 **El directorio del tablero es también, si es posible, su propio repositorio de git, pero `init` no lo
-crea.** Lo que `init` sí escribe es un `.gitignore` que excluye el fichero de la base de datos y sus
-ficheros auxiliares de WAL, dejándolo listo para el día en que el directorio llegue a ser un
+crea.** Lo que `init` sí escribe es un `.gitignore` que excluye `board.db` y sus dos ficheros
+auxiliares, dejándolo listo para el día en que el directorio llegue a ser un
 repositorio: lo que se versiona entonces es `tasks.ndjson` y `config.json`, los dos ficheros que
 escribe `biso snapshot` (sección 10.14), nunca el binario. Escribir un fichero de texto no es ejecutar
 `git`, así que esto no contradice que `biso snapshot` sea el único comando que ejecuta git.
@@ -1892,7 +1941,7 @@ Sin parámetros propios.
 
 #### Comportamiento
 
-Dice el identificador del tablero, su nombre, la ruta de su directorio, y cuál de las tres vías de la
+Dice el identificador del tablero, su nombre, la ruta de su directorio, y cuál de las cuatro vías de la
 sección 3.2 lo ha elegido. Los tres son datos distintos: `biso config set project_name` cambia el
 nombre y, con él, la ruta, porque la carpeta se llama `<slug>-<id>` y el slug se deriva del nombre
 (sección 3.2), pero nunca el identificador, que es el único de los tres que no cambia jamás. Es el
@@ -1902,6 +1951,7 @@ sería invisible.
 | Caso | Qué pasa |
 |---|---|
 | Hay tablero | Lo imprime con su identificador, su nombre, su ruta y la vía que lo eligió, código 0 |
+| El directorio de trabajo es el propio directorio del tablero | Lo imprime igual, con la tercera vía de 3.2 en `source` y `path` apuntando al directorio de trabajo, código 0 |
 | No hay tablero configurado | Imprime lo que ha buscado y dónde, código 8, `code` `no_board` |
 | El puntero nombra un tablero que no está en esta máquina | Imprime que hay un puntero y qué identificador nombra (sección 3.2), código 8, `code` `pointer_unresolved` |
 | Hay más de un candidato | Imprime el elegido y los descartados, con el motivo, código 0 |
@@ -1912,10 +1962,16 @@ sería invisible.
 id       3f9a2b1c
 board    Kex
 path     ~/.biso/boards/kex-3f9a2b1c
-source   project pointer at the root of this project
+source   project pointer at /Users/avilches/Hub/Projects/Kex
 me       @claude
 tasks    248 active, 31 archived, highest id ever assigned TASK-290
 ```
+
+La fila `source` nombra el directorio del que salió el puntero, y no solo la vía, porque con la
+búsqueda de la sección 3.2 ese directorio puede ser cualquier ancestro del de trabajo: enseñarlo es lo
+que hace visible de un vistazo el caso de haber heredado el puntero de un proyecto que contiene a este.
+Con las otras tres vías la fila dice cuál fue, `--board`, `BISO_BOARD` o `the working directory is this
+board`.
 
 Y cuando no hay ninguno configurado, por stderr y con código 8:
 
@@ -1923,7 +1979,9 @@ Y cuando no hay ninguno configurado, por stderr y con código 8:
 error: no board here, and none configured for this project
 searched  --board:      not given
           BISO_BOARD:   not set
-          pointer:      not found between this directory and the project root
+          this directory: not a board
+          pointer:      not found between this directory and /Users/avilches,
+                        which is where the search stops (3.2)
 hint: `biso init` creates one
 ```
 
@@ -1946,7 +2004,7 @@ hint: `biso init` creates it here, adopting id 3f9a2b1c
     "id": "3f9a2b1c",
     "board": "Kex",
     "path": "~/.biso/boards/kex-3f9a2b1c",
-    "source": "project pointer at the root of this project",
+    "source": "project pointer at /Users/avilches/Hub/Projects/Kex",
     "me": "@claude",
     "counts": { "active": 248, "archived": 31, "highestIdEverAssigned": "TASK-290" }
   }

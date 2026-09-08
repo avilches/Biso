@@ -719,6 +719,73 @@ resto de `doctor`, en vez de ponerla a prueba: `--fix` es el único sitio de tod
 llama dice "te autorizo a escribir cosas que no te he pedido una por una", y solo entra ahí lo que de
 verdad se puede arreglar sin decidir por alguien; lo que no, se reporta y se deja donde está.
 
+**Por qué la búsqueda del puntero no frena en la raíz de un repositorio, ni sabe que git existe.** El
+puntero se busca subiendo desde el directorio de trabajo, y lo primero que se escribió fue que el
+recorrido paraba en la raíz del proyecto, detectada buscando un directorio `.git` hacia arriba. La idea
+era proteger de que un proyecto encontrara el tablero de otro que lo contuviera. Se retira, y conviene
+saber por qué, porque parece una protección gratis y no lo es.
+
+El primer motivo es que hace que la resolución del tablero dependa de una herramienta que este mismo
+documento declara opcional. La sección 10.14 de `SPEC.md` dice que git puede no estar instalado y que
+un tablero funciona igual sin él, y a la vez el freno haría que la respuesta a cuál es mi tablero
+saliera de si existe cierto directorio que crea git. El segundo es peor, porque no es de principios sino
+de comportamiento observable: es `biso snapshot` quien convierte el directorio del tablero en un
+repositorio, de forma perezosa y la primera vez que se ejecuta, así que con el freno puesto el mismo
+comando en el mismo directorio contestaba una cosa antes de la primera instantánea y otra después, sin
+que nadie hubiera cambiado ninguna configuración. El tercero es que el freno estaba mal escrito de una
+forma que solo se ve al ir a implementarlo: en un worktree de git y en un submódulo, `.git` no es un
+directorio sino un fichero, de modo que la raíz de un worktree nunca se habría detectado y el recorrido
+se habría pasado de largo hasta el repositorio que lo contiene. Como en esta máquina los worktrees viven
+dentro del propio checkout, el efecto habría sido que un `biso` ejecutado en un worktree resolviera el
+puntero del checkout principal.
+
+Y el cuarto motivo es que el freno no protegía de lo que decía proteger. El caso que preocupaba es un
+proyecto anidado en otro que sí tiene tablero, y ahí el puntero del proyecto de fuera está en el mismo
+directorio donde el freno habría parado, así que el freno llega tarde y el puntero se hereda igual. La
+única regla que de verdad lo evitaría es respetar el `.gitignore` del proyecto de fuera, porque en el
+caso real que motivó la discusión ese fichero excluye la carpeta del proyecto de dentro. Eso está
+descartado por el presupuesto de la sección 4.13 de `SPEC.md`: interpretar un `.gitignore` de verdad no
+se puede reimplementar de forma fiable, y preguntárselo a git cuesta 12 milisegundos medidos de los 25
+que hay para todo.
+
+**Lo que se acepta a cambio, dicho claro.** Un proyecto sin puntero propio hereda el del proyecto que lo
+contenga, si lo hay. Se acepta porque es una situación poco frecuente, porque cuando ocurre lo razonable
+es que se note en vez de que se adivine, y porque tiene un remedio que no necesita ninguna regla nueva:
+mover el tablero de fuera a un subdirectorio que no esté en la línea de subida, que es exactamente lo
+que hubo que hacer con Backlog.md en esta máquina por el mismo motivo. Que se note es cosa de dos
+salidas que ya existen: el bloque `BOARD` del mensaje de arranque dice el nombre del tablero en su
+primera línea, así que un agente que empieza la sesión con `biso prime` ve enseguida cuál le ha tocado,
+y `biso where` dice en su fila `source` el directorio concreto del que salió el puntero. Se descartó
+emitir además una nota en cada comando: saldría también en el caso normal de trabajar desde un
+subdirectorio del propio proyecto, que es la inmensa mayoría de las llamadas, y una nota que sale
+siempre enseña a ignorarla.
+
+**Por qué estar dentro del directorio del tablero es una vía de resolución y no un error.** Antes de
+decidir lo de arriba se consideró lo contrario, que un comando ejecutado dentro del directorio de un
+tablero fallara siempre, con el argumento de que ese directorio es almacenamiento y no un proyecto. Se
+descarta porque ahí no falta ningún dato: la configuración completa de un tablero, con su nombre y su
+`task_prefix`, vive dentro de su propia base de datos, y el puntero solo sirve para encontrar un tablero,
+cosa que quien ya está dentro de él no necesita. Un directorio que contiene `board.db` es ese tablero y
+no puede ser otro, así que no hay nada que adivinar, y es un hecho más específico que cualquier puntero
+heredado, de donde sale que gane al puntero en el orden de la sección 3.2. Esta vía se lleva por delante
+el otro motivo que tenía el freno de git para existir, porque el caso que hacía falta proteger ahora se
+resuelve solo.
+
+**Por qué el nombre `board.db` es interfaz y no un detalle interno.** La vía de arriba necesita
+reconocer un directorio de tablero, y sin un nombre declarado no habría una sola forma de hacerlo. El
+documento hablaba del fichero de la base de datos sin nombrarlo nunca, lo que bastaba mientras nada
+dependiera de reconocerlo desde fuera.
+
+**Por qué el tope de la búsqueda es el directorio personal y no un número de niveles.** La primera
+redacción decía que el recorrido no comprueba ningún directorio con menos de dos componentes de ruta, y
+funcionaba, pero por casualidad: acierta solo mientras el directorio personal tenga esa profundidad. Con
+un directorio personal en `/root`, que es el del superusuario, el tope habría caído por debajo de él y un
+puntero puesto ahí no se habría leído nunca. La regla dice ahora lo que quiere decir, que el recorrido no
+sale del directorio personal de quien llama, y guarda el número solo para el caso en que no haya
+directorio personal que lo exprese, con el trabajo fuera de la home o sin `HOME` definido. El primer
+componente de una ruta absoluta es siempre un directorio del sistema o el contenedor de los directorios
+personales de todo el mundo, así que un puntero ahí no puede estar a propósito.
+
 ---
 
 ## 13. El origen de la cifra de 25 milisegundos
