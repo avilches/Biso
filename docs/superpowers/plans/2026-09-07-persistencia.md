@@ -31,10 +31,15 @@ Valen para todas las tareas y no se repiten en cada una.
   documentación sí lleva su ortografía completa, pero el asunto o el cuerpo de un commit sin
   acentos no se reporta como defecto ni se arregla. Decidido por el usuario el 2026-09-07.
 - **El mensaje de `biso prime` tiene un tope duro de 5.120 bytes**, repartido en 3.456 de parte fija y
-  1.664 de resumen (sección 9.5). La medida de hoy es 4.689 bytes en total, 3.255 de parte fija y
-  1.434 de resumen, con 431 de margen. **Cualquier cambio en el texto literal de la sección 9.7 obliga
-  a recalcular con `wc -c`, nunca a estimar**, y a actualizar las cifras en `SPEC.md` y en
+  1.664 de resumen (sección 9.5). **Cualquier cambio en el texto literal de la sección 9.7 obliga a
+  recalcular con `wc -c`, nunca a estimar**, y a actualizar las cifras en `SPEC.md` y en
   `DECISIONES.md` a la vez.
+
+  **No te fíes de ninguna cifra de este plan para saber cuánto mide hoy: mídelo.** La tarea 6 movió el
+  total de 4.689 a 4.746 bytes al añadir el arrendamiento, y este párrafo se quedó con la cifra vieja
+  durante tres tareas, hasta que la tarea 9 lo detectó. Localiza el bloque **por sus vallas de código,
+  nunca por números de línea**, porque a otra tarea le dio una cifra falsa por medir con posiciones
+  desactualizadas. La medida que valga es la que saques tú del documento vivo.
 - **Los ejemplos de salida se generan, no se escriben a mano.** Si cambia la salida de un comando, su
   ejemplo se regenera y se comprueba carácter a carácter.
 - **Un valor que no existe es siempre un error**, se esté escribiendo o leyendo. Ningún filtro mal
