@@ -288,7 +288,7 @@ git commit -m "Deriva el prefijo del nombre del tablero y lo hace inmutable con 
 ## Tarea 4: El nombre del tablero y `biso rename`
 
 **Ficheros:**
-- Crear: `docs/SPEC.md`, **subsección 10.12** para `biso rename`
+- Crear: `docs/SPEC.md`, **subsección 10.14** para `biso rename`
 
 **Consume de la tarea 1:** el nombre del tablero, ya situado en la configuración del tablero por el paso
 5 de esa tarea, y su relación con el nombre de la carpeta.
@@ -296,7 +296,7 @@ git commit -m "Deriva el prefijo del nombre del tablero y lo hace inmutable con 
 distintos.
 **Produce para la tarea 10:** un comando administrativo más.
 
-El número de subsección, 10.12, está asignado de antemano a propósito, porque la tarea 8 también añade
+El número de subsección, 10.14, está asignado de antemano a propósito, porque la tarea 8 también añade
 una subsección de comando y las dos elegirían el mismo número por separado.
 
 - [ ] **Paso 1: Especificar `biso rename`**
@@ -317,7 +317,7 @@ difieren.
 
 ```bash
 grep -c '—' docs/SPEC.md    # 0
-grep -n '^### 10\.1[0-9]' docs/SPEC.md   # la 10.12 existe y no duplica ningun numero
+grep -n '^### 10\.1[0-9]' docs/SPEC.md   # la 10.14 existe y no duplica ningun numero
 ```
 
 Comparar la sección nueva con la de otro comando de administración, por ejemplo `biso where`, y
@@ -517,13 +517,13 @@ git commit -m "Separa la tarea ilegible de la base de datos que no abre, y ampl�
 **Ficheros:**
 - Modificar: `docs/SPEC.md`, sección 10.9 "biso export"
 - Modificar: `docs/SPEC.md`, sección 10.3 "biso new --from"
-- Crear: `docs/SPEC.md`, **subsección 10.13** para `biso snapshot`
+- Crear: `docs/SPEC.md`, **subsección 10.15** para `biso snapshot`
 - Modificar: `docs/SPEC.md`, sección 10.1 "biso init"
 
 **Consume:** el directorio del tablero de la tarea 1.
 **Produce para la tarea 10:** un comando administrativo más.
 
-El número de subsección, 10.13, está asignado de antemano porque la tarea 4 ya ocupó la 10.12.
+El número de subsección, 10.15, está asignado de antemano porque la tarea 4 ya ocupó la 10.14. Las dos van al final de la sección 10, que ya llega a la 10.13 con `biso help`: no se renumera ninguna subsección existente, porque eso tocaría cada referencia cruzada del documento.
 
 - [ ] **Paso 1: Documentar el contenido versionado del directorio del tablero**
 
