@@ -894,6 +894,30 @@ proyecto, la única que resuelve es la absoluta, porque el directorio del tabler
 en ninguno de sus ancestros. No hace falta ninguna bandera nueva para ofrecer esa elección, porque la
 forma de `--at` ya la expresa.
 
+**Por qué guardar siempre la ruta absoluta se consideró y se descartó.** Es tentador, porque una ruta
+absoluta contiene más información que una relativa y por tanto se puede degradar: si no resuelve, todavía
+queda su último componente para probarlo contra el directorio del puntero, con lo que hasta mover el
+proyecto se sobreviviría, y no habría dos formas ni ninguna elección que explicar. Se descartó por lo que
+cuesta en el fichero que se commitea: una ruta absoluta lleva al repositorio el nombre de usuario y la
+estructura de directorios de quien ejecutó `init`, y eso queda en el historial de un fichero que otras
+personas ven. La elección se conserva porque es de verdad del usuario, y el coste de conservarla es una
+nota y una regla de búsqueda, no un mecanismo.
+
+**Y por qué la nota es una nota y no un aviso.** La sección 4.3 de `SPEC.md` reserva `warning:` para lo
+que está mal hecho o es arriesgado, y su tabla de avisos es cerrada. Guardar una ruta relativa no está mal
+hecho: es la elección correcta para quien tiene sus worktrees dentro del proyecto, que es el caso normal.
+La nota está redactada como hecho más consecuencia, y no como el consejo de "considera usar rutas
+absolutas", porque un consejo obliga a quien lo lee a averiguar si le aplica, mientras que decir qué se ha
+guardado y qué no va a funcionar hace que quien trabaja así se reconozca y el resto pueda seguir.
+
+**La condición de la nota nombra dos cosas y las dos hacen falta.** Una copia de trabajo que vive fuera
+del proyecto se queda sin el directorio del tablero solo porque git lo ignora, que es lo que la otra nota
+de `init` recomienda hacer. Al escribirlo apareció el caso contrario, que no estaba cubierto: si nadie
+ignora esa carpeta, la copia de trabajo recibe el marcador y los dos ficheros de texto pero nunca
+`board.db`, porque el `.gitignore` que `init` escribe dentro del tablero lo excluye siempre. Queda un
+directorio que parece el tablero y no lo es, así que la resolución exige las dos cosas, el marcador y la
+base de datos, y sigue buscando cuando falta la segunda.
+
 **Por qué el tope de la búsqueda es el directorio personal y no un número de niveles.** La primera
 redacción decía que el recorrido no comprueba ningún directorio con menos de dos componentes de ruta, y
 funcionaba, pero por casualidad: acierta solo mientras el directorio personal tenga esa profundidad. Con

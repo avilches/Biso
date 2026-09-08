@@ -206,6 +206,13 @@ y quien ya está dentro de él no tiene nada que encontrar. Es también la más 
 de ahí que gane al puntero: quien ejecuta un comando dentro de un tablero se refiere a ese, no al del
 proyecto que quizá lo contenga.
 
+**Esta vía se conforma con la base de datos y no pide el marcador, y no es un descuido.** Buscar el
+tablero de un `id` concreto sí exige las dos cosas, porque ahí la pregunta es cuál de varios directorios
+es el que se busca y el marcador es lo único que la contesta. Aquí no hay nada que elegir: el directorio
+ya está señalado con el dedo, y un tablero al que le falte el marcador tiene que poder abrirse
+precisamente para que `biso doctor --fix` se lo devuelva (10.13). Exigirlo también aquí dejaría sin
+arreglo el único estado que ese arreglo existe para arreglar.
+
 **El tope de la búsqueda hacia arriba es el directorio personal de quien llama**, el que dice la
 variable `HOME`, cuando el directorio de trabajo está dentro de él: el recorrido comprueba ese
 directorio y no sube más, sea cual sea su ruta. Desde `/Users/avilches/Hub/Projects/Biso/src` sube
@@ -255,7 +262,7 @@ claves:
 | `path` | ruta del directorio del tablero, absoluta o relativa | no | solo cuando el tablero no vive en una de las raíces de la sección 3.3 |
 
 Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
-tablero sin ningún paso adicional. Seis reglas gobiernan su lectura:
+tablero sin ningún paso adicional. Siete reglas gobiernan su lectura:
 
 - Una clave desconocida en el puntero es un error.
 - **`path` nombra el directorio del tablero, no el directorio que lo contiene.** Es la ruta que se
@@ -269,11 +276,17 @@ tablero sin ningún paso adicional. Seis reglas gobiernan su lectura:
   llama antes de resolverla.
 - **El `id` manda y el `path` es solo una pista que puede no resolver**, y esta regla es la que lo hace
   cierto. Un directorio es el tablero `<id>` cuando contiene el fichero **`<id>.id`**, por ejemplo
-  `3f9a2b1c.id`. Ese fichero es la identidad del tablero en el sistema de ficheros: el mismo `id` está
-  guardado dentro de la base de datos, y el marcador lo repite en su nombre para que encontrar un
-  tablero sea leer nombres de un directorio, sin abrir ninguna base de datos. Lleva dentro la versión
-  del formato del almacén. **Si el nombre del marcador y el `id` de la base de datos discrepan es un
-  error**, y `biso doctor` lo comprueba (10.13).
+  `3f9a2b1c.id`, **y también la base de datos**. Ese fichero es la identidad del tablero en el sistema
+  de ficheros: el mismo `id` está guardado dentro de la base de datos, y el marcador lo repite en su
+  nombre para que encontrar un tablero sea leer nombres de un directorio, sin abrir ninguna base de
+  datos. Lleva dentro la versión del formato del almacén. **Si el nombre del marcador y el `id` de la
+  base de datos discrepan es un error**, y `biso doctor` lo comprueba (10.13).
+- **Un directorio con el marcador pero sin la base de datos no es un tablero, y la búsqueda sigue.** No
+  es un caso rebuscado: es lo que recibe una copia de trabajo de un proyecto que versionó el directorio
+  de su tablero, porque el `.gitignore` que `init` escribe ahí dentro excluye siempre la base de datos y
+  nunca el marcador (10.1). Saltarlo y seguir buscando es lo que encuentra el tablero de verdad un nivel
+  más arriba. Si la búsqueda acaba sin nada, el error nombra ese directorio, porque explica el fallo
+  mejor que decir solo que no se encontró el tablero.
 - **El nombre de la carpeta del tablero es decorativo, y nadie resuelve nunca por él.** Al crearla,
   `biso init` la llama `<slug>-<id>`, por ejemplo `kex-3f9a2b1c`, porque eso hace legible un listado de
   la raíz por defecto. Pero renombrarla no rompe nada, ni la renombra `biso` cuando cambia el nombre
@@ -1846,6 +1859,21 @@ ancestros, y una ruta relativa no lo alcanzaría. La elección, entonces, es ent
 proyecto se mueva y sobrevivir a que se trabaje desde fuera de él, y solo quien llama sabe cuál de las
 dos le pasa.
 
+**Por eso `init` lo dice cuando guarda una ruta relativa**, y solo entonces, con esta nota por stderr:
+
+```
+note: the location is stored as the relative path "tablero". A working copy
+      outside this project will not have that folder while git ignores it, so
+      it will not find the board: use an absolute --at if you work that way
+```
+
+La condición que la nota nombra es la exacta, y las dos mitades hacen falta: una copia de trabajo que
+viva fuera del proyecto solo se queda sin el directorio del tablero **porque git lo ignora**, que es lo
+que la otra nota de este comando recomienda hacer. Sin lo segundo, la carpeta viajaría con la copia y la
+ruta relativa resolvería. La nota no dice "considera usar rutas absolutas" a secas porque quien lo leyera
+no sabría si le aplica: diciendo qué se ha guardado y qué no va a funcionar, quien trabaja así se
+reconoce y el resto puede seguir.
+
 **Un `--at` que caiga dentro del proyecto está permitido, y entonces `init` lo dice.** Es una
 configuración legítima, para quien quiera que su tablero viva junto a su proyecto y viaje en la misma
 copia de seguridad, y sigue funcionando igual porque la resolución del tablero no depende de dónde esté
@@ -1856,6 +1884,19 @@ stderr `note: the board lives inside this project; add tablero/ to its .gitignor
 de la carpeta, que es el que se le acaba de dar en `--at`. Es una nota y no un aviso porque no hay nada
 mal hecho, y `init` **no escribe ese `.gitignore`**: el puntero sigue siendo la única cosa que este
 comando escribe fuera del tablero, y tocar el `.gitignore` de un proyecto ajeno sería pasarse de ahí.
+
+**Con `--at` relativo dentro del proyecto salen las dos notas, en este orden**, y se quedan separadas
+porque dicen cosas de naturaleza distinta: la primera pide algo ahora, y la segunda avisa de una
+consecuencia que solo le ocurrirá a quien trabaje desde fuera del proyecto. Juntarlas en un solo mensaje
+haría que quien no está en ese caso tuviera que leer la condición para descartarla.
+
+**Y hay que decir qué pasa si nadie ignora esa carpeta**, porque es el otro lado de la nota y no es
+inofensivo. El `.gitignore` que `init` escribe dentro del tablero excluye siempre la base de datos, así
+que versionar el directorio del tablero versiona su marcador y sus dos ficheros de texto, pero nunca
+`board.db`. Una copia de trabajo recibiría entonces un directorio con el marcador correcto y sin base de
+datos: **eso no es un tablero**, y la resolución de la sección 3.2 no lo acepta como tal, sigue buscando
+en los ancestros y en las raíces, y así encuentra el tablero de verdad. Si no lo encuentra en ninguna
+parte, el error nombra ese directorio a medias, porque es la pista de lo que ha pasado.
 
 **Si ya existe un puntero pero el tablero que nombra no está en esta máquina** (sección 3.2), `init`
 no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máquinas sigan hablando del
@@ -1981,10 +2022,18 @@ La línea "This project now points at that board." aparece siempre, porque el pr
 apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera escrito de antes
 (sección 3.2).
 
-**Esta invocación emite además la nota del tablero dentro del proyecto**, porque `--at kex-board` es una
-ruta relativa que cae ahí: por stderr sale `note: the board lives inside this project; add kex-board/ to
-its .gitignore`. No está en el bloque de arriba porque ese bloque es stdout, y la nota va por stderr como
-todas (sección 4.3). El puntero que esta llamada escribe es
+**Esta invocación emite además las dos notas**, porque `--at kex-board` es una ruta relativa que cae
+dentro del proyecto, que es justo el caso que las dispara. Por stderr sale esto, en este orden:
+
+```
+note: the board lives inside this project; add kex-board/ to its .gitignore
+note: the location is stored as the relative path "kex-board". A working copy
+      outside this project will not have that folder while git ignores it, so
+      it will not find the board: use an absolute --at if you work that way
+```
+
+No están en el bloque de arriba porque ese bloque es stdout, y las notas van por stderr como todas
+(sección 4.3). El puntero que esta llamada escribe es
 `{ "version": 1, "id": "3f9a2b1c", "path": "kex-board" }`.
 
 #### El esquema JSON
@@ -2064,14 +2113,23 @@ Options:
 together; giving any of them without `--statuses` is bad usage. They are then
 stored as explicit values and never move again.
 
+With --at the board can live inside the project itself, which is fine. Two
+things follow, and `init` says both when it applies. Have the project ignore
+that folder in git, so its database is never versioned. And mind the form of
+the path: a relative --at is stored relative to the pointer and resolves from
+any working copy that has the folder inside it or above it, which is the case
+for git worktrees kept under the project; a working copy that lives outside
+the project has no such folder, precisely because git ignores it, so pass an
+absolute --at if you work that way.
+
 The board directory can also become its own git repository, but `init` does
 not create it: `init` only writes a .gitignore that excludes the database
 file and its WAL auxiliaries, so that once a repository exists only
-tasks.ndjson and config.json are ever versioned. `biso snapshot` is the one
-that runs `git init` there, lazily, the first time it runs against a
-directory that is not yet a repository (see `biso snapshot --help`). Missing
-git never fails `init` or `snapshot`; the board works the same, only its
-history is lost.
+tasks.ndjson, config.json and the <id>.id marker are ever versioned. `biso
+snapshot` is the one that runs `git init` there, lazily, the first time it
+runs against a directory that is not yet a repository (see `biso snapshot
+--help`). Missing git never fails `init` or `snapshot`; the board works the
+same, only its history is lost.
 
 Exit codes:
   0  board created, or restored with --from
