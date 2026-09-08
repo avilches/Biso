@@ -3898,6 +3898,125 @@ Examples:
 
 ---
 
+### 10.14. `biso rename`
+
+#### Firma
+
+```
+biso rename <new-name>
+```
+
+#### Parámetros
+
+| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|---|
+| `<new-name>` | | sí | texto | | no | no | |
+
+#### Comportamiento
+
+Cambia el nombre humano del tablero, la clave `project_name` de su configuración (sección 10.10), y
+mueve el directorio del tablero para que siga llamándose `<nombre>-<id>` con el nombre nuevo,
+**conservando el sufijo del identificador**: `kex-3f9a2b1c` pasa a `nuevonombre-3f9a2b1c`.
+
+**No toca el puntero del proyecto**, y es consecuencia directa de que la identidad del tablero sea el
+`id` y no el nombre: localizar el tablero desde el puntero es buscar el patrón `*-<id>` en la raíz por
+defecto (sección 3.2), una búsqueda que no depende en absoluto del nombre. Por eso renombrar no rompe
+la resolución de ningún proyecto que apunte a este tablero, ni de este ni de ningún otro que lo
+comparta.
+
+**Tampoco toca `task_prefix`.** El prefijo se derivó una sola vez del nombre al crear el tablero
+(sección 4.11) y desde entonces vive por su cuenta en la configuración, así que renombrar el tablero,
+tenga tareas o no, nunca cambia el prefijo de los identificadores ya asignados ni de los que se
+asignen después. Esta es la diferencia con `task_prefix`, que sí es inmutable en cuanto el tablero
+tiene alguna tarea (sección 10.10): el nombre se puede cambiar siempre, y cambiarlo nunca recalcula el
+prefijo.
+
+| Caso | Qué pasa |
+|---|---|
+| Nombre nuevo vacío o solo espacios | Error 2, `code` `missing_name`: `error: name cannot be empty` |
+| Nombre nuevo igual, carácter a carácter, al que el tablero ya tiene | Código 0, con un `note:`, sin escribir ni la configuración ni el directorio |
+| Nombre nuevo igual al de otro tablero de la máquina | Se acepta sin aviso: los identificadores de sus carpetas difieren y no hay colisión posible |
+| El tablero tiene tareas | Se acepta igual: renombrar nunca toca `task_prefix` |
+| El directorio de destino (`<nombre-nuevo>-<id>`) ya existe | Error 7: el `id` es propio de este tablero y nunca se repite, así que esto solo pasa si el entorno está corrupto, y deja de ser un caso de uso normal |
+| `--print` | No añade nada, porque `rename` no imprime fichas de tareas |
+
+#### Salida
+
+Por defecto, sin salida por stdout, con un `note:` por stderr:
+
+```
+$ biso rename Nix
+note: renamed board "Kex" to "Nix", folder moved to nix-3f9a2b1c
+```
+
+Y cuando el nombre no cambia:
+
+```
+$ biso rename Kex
+note: board is already named "Kex"
+```
+
+Con `--quiet`, ninguna salida por stdout: no hay identificador de tarea que imprimir, igual que en
+`biso config set` (sección 10.10).
+
+#### El esquema JSON
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "rename",
+  "generatedAt": "2026-09-06T09:12:04Z",
+  "data": {
+    "board": { "name": "Nix", "previousName": "Kex", "folder": "nix-3f9a2b1c" },
+    "renamed": true
+  }
+}
+```
+
+`renamed` es `false` cuando el nombre nuevo era, carácter a carácter, el que ya tenía: la operación
+termina en código 0 igual, pero sin haber escrito nada.
+
+#### Códigos de salida
+
+| Desenlace | Código |
+|---|---:|
+| Renombrado, o ya se llamaba así | 0 |
+| Nombre vacío, o bandera desconocida | 2 |
+| El directorio de destino ya existe | 7 |
+| No hay tablero | 8 |
+| `--dry-run` que no pasa | 9 |
+
+#### `biso rename --help`
+
+```
+Usage: biso rename <new-name> [options]
+
+Change the board's name and move its folder to match, keeping the id suffix:
+kex-3f9a2b1c becomes newname-3f9a2b1c. Never touches the project pointer,
+because locating the board from it never depends on the name. Never touches
+task_prefix either: it was derived once from the name and lives on its own
+from then on, whether the board has tasks or not.
+
+Arguments:
+  new-name       the board's new name
+
+Options:
+  -h, --help     show this help
+
+Exit codes:
+  0  renamed, or already had that name
+  2  bad usage, or the name is empty
+  7  the destination folder already exists
+  8  no board here
+  9  --dry-run did not pass
+
+Examples:
+  biso rename Nix
+  biso rename "Payments API"
+```
+
+---
+
 ## 11. La ayuda de primer nivel
 
 `biso --help` y `biso help` imprimen esto, y solo esto:
@@ -3957,6 +4076,7 @@ con esta forma:
 | `prime` | `prime` | Sección 9.9 |
 | `where` | `where` | `board`, `source`, `me`, `counts`. Ejemplo en 10.2 |
 | `init` | `init` | `board`, `pointerCreated`. Ejemplo en 10.1 |
+| `rename` | `rename` | `board`, `renamed`. Ejemplo en 10.14 |
 | `task.list` | `ls` | `tasks`, `shown`, `matched`, `hidden`, `truncated`, `skipped`, `sort`, `filters` |
 | `task.get` | `get` | `task` |
 | `task.candidates` | `get` con varias coincidencias | `tasks` |
@@ -4001,7 +4121,7 @@ agrupada por el código de salida con el que sale cada uno:
 
 | Código de salida | `code` |
 |---:|---|
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `missing_name`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses` |
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_project`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous` |
