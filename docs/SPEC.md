@@ -252,13 +252,21 @@ claves:
 |---|---|---|---|
 | `version` | entero | sí | versión del formato del puntero |
 | `id` | 8 caracteres hexadecimales en minúscula | sí | la identidad del tablero, y es inmutable. En mayúsculas el puntero es inválido: no se normaliza |
-| `path` | ruta | no | solo cuando el tablero no está en la raíz por defecto |
+| `path` | ruta absoluta o relativa | no | solo cuando el tablero no está en la raíz por defecto |
 
 Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
-tablero sin ningún paso adicional. Tres reglas gobiernan su lectura:
+tablero sin ningún paso adicional. Cuatro reglas gobiernan su lectura:
 
 - Una clave desconocida en el puntero es un error.
-- El `id` manda y el `path` es una pista que puede no resolver.
+- El `id` manda y el `path` es una pista que puede no resolver. **Que la `path` sea relativa no cambia
+  nada de esto**: sigue siendo una pista, y el `id` sigue siendo lo que identifica al tablero.
+- **Una `path` relativa se resuelve respecto al directorio que contiene el fichero puntero**, nunca
+  respecto al directorio de trabajo. El motivo es el principio de que ningún comportamiento depende de
+  dónde se ejecute el programa (sección 1): con la búsqueda hacia arriba de esta misma sección, el
+  puntero se encuentra desde cualquier subdirectorio del proyecto, así que resolver contra el
+  directorio de trabajo haría que el mismo puntero nombrara tableros distintos según desde qué
+  subdirectorio se llamara, y la mayoría de ellos ni siquiera existiría. Resolver contra el directorio
+  del puntero da siempre el mismo tablero, se llame desde donde se llame.
 - **Cómo se busca**: la carpeta de un tablero se llama `<slug>-<id>`, por ejemplo `kex-3f9a2b1c`, así
   que localizarlo a partir del puntero es una sola búsqueda del patrón `*-<id>` en la raíz por defecto,
   sin abrir ni leer la configuración de ningún tablero. El `<slug>` se deriva de `project_name`, nunca
@@ -290,6 +298,16 @@ más abajo: adopta el `id` que ya lleva en vez de generar uno nuevo, y no reescr
 where` dice cuál se ha usado y por qué (sección 10.2). No hay ningún caso en el que haya que escribirlo
 a mano.
 
+**De las dos formas de `path`, `init` elige una sola, y no es una preferencia de estilo.** Escribe una
+`path` **relativa** cuando el directorio del tablero queda dentro del directorio donde se escribe el
+puntero, y **absoluta** en cualquier otro caso (sección 10.1). El caso que arregla es el del tablero
+que vive dentro del propio proyecto, que la sección 10.1 permite: ese puntero se versiona con el
+proyecto, y una ruta absoluta como `/Users/avilches/Hub/Projects/Kex/kex-3f9a2b1c` no resuelve en otra
+máquina donde el proyecto viva en otra ruta, ni en otra copia de trabajo de la misma máquina, mientras
+que `kex-3f9a2b1c` resuelve en todas. Un tablero fuera del proyecto no puede aprovechar eso, porque
+ninguna ruta relativa al proyecto lo alcanzaría de forma estable, así que ahí se queda como estaba: en
+absoluto.
+
 **Dos proyectos distintos pueden apuntar legalmente al mismo tablero.** No hay forma de distinguir "dos
 copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", porque el mecanismo es
 el mismo puntero, y compartir es precisamente para lo que existe.
@@ -297,8 +315,8 @@ el mismo puntero, y compartir es precisamente para lo que existe.
 **Si el puntero se pierde** (se borra a mano, o el proyecto se clona sin haberlo commiteado antes), la
 recuperación es explícita, nunca automática: `--board` apuntando directamente al tablero, o
 `biso init --at <ruta>` con la ruta del directorio del tablero que ya existe, que escribe un puntero
-nuevo con ese `path` (sección 10.1). Sin uno de los dos, el proyecto no vuelve a encontrar su tablero
-por su cuenta.
+nuevo con ese `path`, relativa o absoluta según la regla de arriba (sección 10.1). Sin uno de los dos,
+el proyecto no vuelve a encontrar su tablero por su cuenta.
 
 **Un tablero cuyo proyecto ya no existe queda huérfano** en la raíz por defecto, y ningún comando de
 hoy lo ve.
@@ -1722,10 +1740,22 @@ raíz por defecto de la máquina, y con `--at` donde se le diga, con esa ruta en
 puntero. Es la única cosa que `init` escribe fuera del tablero. La salida siempre confirma que el
 proyecto apunta al tablero, se haya escrito el puntero en esta llamada o ya estuviera ahí de antes.
 
+**La `path` que `init` escribe es relativa cuando el directorio del tablero queda dentro del directorio
+donde se escribe el puntero, y absoluta en cualquier otro caso.** Con `--at kex-board` llamado desde la
+raíz del proyecto, el puntero lleva `"path": "kex-board"`, y ese puntero sigue resolviendo en cualquier
+copia de trabajo del proyecto y en cualquier otra máquina, que es para lo que se versiona; con `--at
+/Volumes/disco/kex-board` lleva la ruta absoluta, porque no hay ninguna ruta relativa al proyecto que
+llegue ahí de forma estable. La regla es del directorio donde se escribe el puntero, no del directorio
+de trabajo ni del proyecto en ningún otro sentido, porque es ese directorio el que resuelve la ruta
+después (sección 3.2). No hay bandera para elegir la forma: se deriva de dónde queda el tablero, así que
+la misma llamada escribe siempre lo mismo.
+
 **Un `--at` que caiga dentro del proyecto está permitido, y entonces `init` lo dice.** Es una
 configuración legítima, para quien quiera que su tablero viva junto a su proyecto y viaje en la misma
 copia de seguridad, y sigue funcionando igual porque la resolución del tablero no depende de dónde esté
-la carpeta. Lo que hace falta es que el proyecto no intente versionarla, así que `init` emite por
+la carpeta. Es también el caso al que sirve la `path` relativa del párrafo anterior: el puntero que
+`init` escribe aquí no nombra ninguna ruta de esta máquina, así que viaja con el proyecto sin retocarlo.
+Lo que hace falta es que el proyecto no intente versionarla, así que `init` emite por
 stderr `note: the board lives inside this project; add kex-3f9a2b1c/ to its .gitignore`, con el nombre
 real de la carpeta. Es una nota y no un aviso porque no hay nada mal hecho, y `init` **no escribe ese
 `.gitignore`**: el puntero sigue siendo la única cosa que este comando escribe fuera del tablero, y
@@ -1766,6 +1796,8 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la tercera vía de 3.2, y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
+| `--at` a un directorio que queda dentro del directorio donde se escribe el puntero | No es un error: el tablero se crea ahí y el puntero lleva una `path` relativa a ese directorio, código 0 |
+| `--at` a un directorio de fuera, incluido cualquier ancestro del directorio donde se escribe el puntero | No es un error: el tablero se crea ahí y el puntero lleva una `path` absoluta, código 0 |
 | `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección 10.10 aplica a `task_prefix` |
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
 | Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
@@ -1977,6 +2009,15 @@ source   project pointer at /Users/avilches/Hub/Projects/Kex
 me       @claude
 tasks    248 active, 31 archived, highest id ever assigned TASK-290
 ```
+
+**La fila `path` es siempre la ruta ya resuelta del directorio del tablero, nunca el texto literal que
+lleve el puntero.** Cuando el puntero trae una `path` relativa (sección 3.2), `where` la enseña resuelta
+contra el directorio del puntero, que es el que la fila `source` nombra justo debajo, así que las dos
+filas juntas dicen a la vez dónde está el tablero y de dónde salió esa respuesta. Enseñar el texto
+literal sería enseñar la pregunta en vez de la respuesta: `where` existe para contestar dónde está el
+tablero de verdad, y es el comando al que remiten los errores de código 8, donde una ruta que hay que
+resolver a mano no sirve de nada. La clave `path` del sobre JSON lleva esa misma ruta resuelta, porque
+es el mismo dato en la otra forma.
 
 La fila `source` nombra el directorio del que salió el puntero, y no solo la vía, porque con la
 búsqueda de la sección 3.2 ese directorio puede ser cualquier ancestro del de trabajo: enseñarlo es lo

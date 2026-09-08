@@ -776,6 +776,34 @@ reconocer un directorio de tablero, y sin un nombre declarado no habría una sol
 documento hablaba del fichero de la base de datos sin nombrarlo nunca, lo que bastaba mientras nada
 dependiera de reconocerlo desde fuera.
 
+**Por qué la `path` del puntero puede ser relativa, y por qué se resuelve contra el directorio del
+puntero.** La clave `path` era una ruta que se escribía siempre completa, y eso dejaba de funcionar en
+cuanto la sección 10.1 de `SPEC.md` permitió que el tablero viviera dentro del propio proyecto. El
+problema es concreto: el puntero se versiona con el proyecto justamente para que todas las copias de
+trabajo y todas las máquinas encuentren el mismo tablero, pero un puntero que dice
+`/Users/avilches/Hub/Projects/Kex/kex-3f9a2b1c` solo resuelve en el ordenador donde el proyecto está
+en esa ruta exacta, y ni siquiera en un worktree del mismo proyecto en esa misma máquina. Se commiteaba
+una ruta que solo valía para quien la escribió. Con `kex-3f9a2b1c` guardado como ruta relativa, el
+tablero que viaja dentro del proyecto se encuentra en cualquier sitio donde el proyecto se clone, sin
+que nadie retoque nada.
+
+La ruta relativa **se resuelve contra el directorio que contiene el fichero puntero, nunca contra el
+directorio de trabajo**, y esa mitad de la decisión importa igual que la otra. El puntero se busca
+subiendo desde el directorio de trabajo, así que el mismo fichero se lee desde cualquier subdirectorio
+del proyecto: resolver contra el directorio de trabajo haría que el mismo puntero nombrara un tablero
+distinto por cada subdirectorio desde el que se llamara, y que casi ninguno de ellos existiera. Eso
+rompería el principio de la sección 1 de `SPEC.md` de que ningún comportamiento depende de dónde se
+ejecute el programa, que es el mismo principio del que salen `--cwd` y la propia búsqueda hacia arriba.
+
+Y `init` elige la forma en vez de ofrecerla: relativa cuando el directorio del tablero queda dentro del
+directorio donde se escribe el puntero, absoluta en cualquier otro caso. Se descartó una bandera para
+elegirlo, porque quien llama no tiene ningún dato que el programa no tenga y una elección equivocada
+solo se descubre en otra máquina, que es el peor momento posible. Y se descartó escribir siempre una
+ruta relativa: un tablero en la raíz por defecto de la máquina quedaría como una cadena de `../..`
+colgando de dónde esté hoy el proyecto, que deja de resolver en cuanto el proyecto se mueve y no gana
+nada, porque ese tablero no viaja al clonar de todas formas. La regla no toca nada de lo que el puntero
+ya prometía: el `id` sigue mandando y la `path` sigue siendo una pista que puede no resolver.
+
 **Por qué el tope de la búsqueda es el directorio personal y no un número de niveles.** La primera
 redacción decía que el recorrido no comprueba ningún directorio con menos de dos componentes de ruta, y
 funcionaba, pero por casualidad: acierta solo mientras el directorio personal tenga esa profundidad. Con
