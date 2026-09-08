@@ -2472,7 +2472,7 @@ igual que las demás.
 {
   "schemaVersion": 1,
   "kind": "task.list",
-  "generatedAt": "2026-09-06T09:12:04Z",
+  "generatedAt": "2026-09-06T13:26:41Z",
   "data": {
     "tasks": [
       {
@@ -2752,7 +2752,7 @@ Es el objeto de `task.list` más los campos del cuerpo:
 {
   "schemaVersion": 1,
   "kind": "task.get",
-  "generatedAt": "2026-09-06T09:12:04Z",
+  "generatedAt": "2026-09-06T13:31:09Z",
   "data": {
     "task": {
       "id": "TASK-11",
