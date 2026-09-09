@@ -18,6 +18,12 @@ cubre, lo correcto es añadirlo a la especificación y luego implementarlo, no r
 código. Y si una regla parece arbitraria, su razón está en
 [`docs/DECISIONES.md`](docs/DECISIONES.md) antes de cambiarla.
 
+**Y antes de dar por hueca una laguna, hay que mirar
+[`docs/PENDIENTES.md`](docs/PENDIENTES.md)**, que es la lista de lo que queda por cerrar: los rincones
+donde la especificación todavía no decide, las frases que dicen algo falso sin cambiar el
+comportamiento, y las decisiones aplazadas a propósito. Nada de eso impide empezar a implementar, y
+saber que ya está anotado evita volver a descubrirlo. Cuando se cierre una entrada, se quita de ahí.
+
 Su sección 15 dice por dónde empezar, en el orden en que cada pieza paga lo que cuesta: el modelo de
 datos, el algoritmo de coincidencia (una función pura de la que dependen todos los comandos), los
 cuatro comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
