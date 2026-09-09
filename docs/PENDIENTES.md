@@ -16,7 +16,11 @@ buscó decisiones que no se sostuvieran contra un escenario concreto.
 
 **Cuando una entrada se cierra, se quita de aquí.** El 2026-09-09 se cerraron las dos de la sección que
 señalaba lo que el documento vendía mejor de lo que era, diez de las incoherencias de la sección 3, y las
-dos decisiones que esperaban al usuario. Una advertencia que se pagó caro entonces y conviene no repetir:
+dos decisiones que esperaban al usuario. Y una se cerró por una vía que conviene recordar, porque no es
+la habitual: el hueco de `--board` no se rellenó, se disolvió al retirar la bandera, cuando se vio que
+`-C` ya llegaba a todo lo que ella prometía. La sección 12 de `DECISIONES.md` guarda el porqué. Merece la
+pena preguntarse lo mismo ante cada entrada que queda: si el hueco existe porque falta decidir algo, o
+porque sobra la cosa que lo abre. Una advertencia que se pagó caro entonces y conviene no repetir:
 al revisar este documento se descubrió que **sus propios recuentos estaban desincronizados tres veces**,
 que es exactamente el fallo que él denuncia como dominante en la especificación. No escribas aquí una
 frase que cuente elementos sin contarlos.
@@ -26,17 +30,6 @@ frase que cuente elementos sin contarlos.
 ## 1. Huecos que un implementador tendría que rellenar solo
 
 Son los que más valen, porque cada uno es un sitio donde dos personas escribirían programas distintos.
-
-**`--board` sigue descrito como una cadena opaca.** La sección 3 dice que acepta "el nombre o el
-localizador de un tablero, en la forma que el almacenamiento imponga". Eso era razonable mientras la
-persistencia estuviera sin decidir, y ahora deja sin decir si admite el nombre, el identificador de ocho
-hexadecimales o una ruta, sobre qué raíces busca, y qué pasa cuando el nombre encaja con dos tableros de
-la máquina, que es un caso que la sección 3.2 declara legal. Tampoco hay ningún `code` para "el tablero
-que has nombrado no existe": `no_board` dice otra cosa. **Hay una propuesta sobre la mesa**, que es partir
-la bandera en tres (`--board-folder` para una ruta, admitiendo tanto el directorio del tablero como el del
-proyecto que lo apunta, `--board-id` y `--board-name`), con lo que no hace falta ninguna regla que adivine
-la forma del valor y desaparece la ambigüedad. Antes de cerrarla se quiere ver cómo lo resuelven las demás
-herramientas del espacio. *(De la persistencia.)*
 
 **La instantánea que "cruza a otra máquina" no tiene camino para cruzar.** La sección 14 dice que lo que
 viaja es la instantánea que `biso snapshot` deja en git, pero ese repositorio vive dentro del directorio

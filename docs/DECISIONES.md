@@ -958,6 +958,87 @@ directorio personal que lo exprese, con el trabajo fuera de la home o sin `HOME`
 componente de una ruta absoluta es siempre un directorio del sistema o el contenedor de los directorios
 personales de todo el mundo, así que un puntero ahí no puede estar a propósito.
 
+**Por qué se retiran la bandera `--board` y la variable `BISO_BOARD`.** Eran las dos primeras de las
+cuatro vías por las que la sección 3.2 de `SPEC.md` encontraba un tablero, y la tabla de banderas
+globales las resumía como "Usa ese tablero directamente, sin buscar", con un valor que la sección 3
+describía como "el nombre o el localizador de un tablero, en la forma que el almacenamiento imponga".
+Esa vaguedad se sostenía mientras la persistencia estuviera sin decidir. Con la persistencia ya decidida
+había que contestar si el valor era un nombre, un identificador de ocho hexadecimales o una ruta, sobre
+qué raíces buscaba y qué pasaba cuando encajaba con dos tableros de la máquina. La respuesta no es
+elegir una de las tres formas, ni partir la bandera en tres: es que la bandera ya no hace falta. El
+razonamiento tiene cuatro patas, y las cuatro hacen falta.
+
+**La primera: lo que `--board` prometía ya lo daba `-C`.** La bandera `--cwd`, con su forma corta `-C`,
+dice "resuelve el tablero desde ahí, sin cambiar el directorio del proceso", y la resolución que arranca
+desde ese directorio ya reconoce las dos cosas que alguien querría nombrar. Si el directorio contiene
+`board.db`, la vía del directorio de trabajo dice que el tablero es ese y no se busca nada más. Si el
+directorio es el de un proyecto, la vía del puntero lee su `.biso.json` ahí o en cualquier ancestro. Así
+que `-C <directorio del tablero>` y `-C <directorio del proyecto>` cubren juntos todo lo que la bandera
+retirada podía nombrar sin ambigüedad. Y para fijarlo durante una sesión entera, que era el único uso
+propio de `BISO_BOARD` frente a la bandera, ya está `BISO_CWD`, que la sección 3.1 declara equivalente a
+`--cwd` con la bandera ganando.
+
+**La segunda: por qué no se sustituye por una bandera que acepte el nombre del tablero.** Es la pata que
+más falta va a hacer, porque nombrar el tablero por su nombre es lo primero que se le ocurre a
+cualquiera. El obstáculo es que **el nombre de un tablero no está en el sistema de ficheros**. Lo que hay
+en el disco es una carpeta llamada `<slug>-<id>`, y ese trozo legible es decorativo a propósito: la
+sección 3.2 dice que nadie resuelve nunca por él, y la 10.10 dice que cambiar `project_name`, que es el
+nombre del tablero, no toca el sistema de ficheros en absoluto. De ahí que el slug pueda ser el de un
+nombre anterior y no haya nada que lo corrija, ni falta que hace. El nombre de verdad vive dentro de la
+base de datos, junto con el resto de la configuración. Resolver por nombre sería, entonces, abrir la base
+de datos de cada carpeta de cada raíz para preguntarle cómo se llama, y eso choca de frente con el
+presupuesto de la sección 4.13, que da 25 milisegundos para todo: con veinte tableros son veinte
+aperturas de SQLite antes de empezar a hacer el trabajo que se ha pedido, y eso es exactamente el trabajo
+que nadie ha pedido que la primera regla de esa misma sección prohíbe. La salida evidente, guardar el
+nombre en el fichero marcador para poder leerlo sin abrir ninguna base de datos, reintroduce justo lo que
+el rediseño de la identidad acababa de quitar: que renombrar un tablero vuelva a escribir en el sistema
+de ficheros, con lo que vuelve el mismo dato en dos sitios y la posibilidad de que discrepen. Y aunque
+todo eso saliera gratis, el nombre no sirve para elegir, porque no es único: la sección 3.2 declara legal
+que dos proyectos de la misma máquina se llamen igual, y lo declara como una de las tres cosas que
+resuelve de golpe sacar la identidad del nombre, precisamente porque lo que identifica a un tablero es su
+`id` y no cómo se llama.
+
+**La tercera: por qué tampoco una bandera que acepte el identificador.** Aquí no hay ningún obstáculo
+técnico, hay algo peor: no hay ningún caso de uso que se sostenga. El identificador de ocho hexadecimales
+no aparece en el trabajo diario, porque las tareas se nombran con `<PREFIX>-<n>` y ese prefijo se deriva
+de `project_name`, no del `id` del tablero (sección 4.11), así que nadie lo tiene delante ni lo teclea. El
+único momento en que el `id` manda es cuando el puntero lo trae y su `path` no resuelve, y ahí la
+búsqueda **ya recorre sola** la raíz por defecto y las raíces adicionales mirando el marcador `<id>.id` de
+cada carpeta, sin que nadie tenga que pasar ninguna bandera. El otro caso imaginable, que un mensaje de
+error te enseñe un identificador y quieras usarlo, es precisamente aquel en el que ese tablero **no está
+en esta máquina**, que es lo que el error `pointer_unresolved` dice con todas las letras: ninguna bandera
+alcanza un tablero que no existe en el disco.
+
+**La cuarta: la garantía que se pierde, y por qué no valía una bandera para conservarla.** Hay una
+diferencia real entre las dos banderas, y conviene no disimularla. `--board` prometía usar ese tablero
+directamente, sin buscar, mientras que `-C` sí sube por los ancestros, de modo que apuntar con `-C` a un
+directorio equivocado puede terminar en silencio en el tablero del proyecto que lo contenga. Parece un
+argumento para conservar la bandera, y se cae solo en cuanto se lee la sección 3.2 entera, porque ese
+riesgo ya está aceptado en el caso general: "El precio de no tener ese freno es que un proyecto sin
+puntero propio hereda el del proyecto que lo contenga, si lo hay, y se acepta a propósito". Añadir una
+bandera cuyo único valor fuera evitar en un caso concreto un riesgo que la especificación acepta a
+propósito en el caso general sería incoherente, y encima daría la impresión de que el caso general está
+protegido cuando no lo está. Lo que sí hace visible el caso, y ya existe, es `biso where`, cuya fila
+`source` nombra el directorio del que salió el puntero, y el bloque `BOARD` del mensaje de arranque, que
+dice el nombre del tablero en su primera línea.
+
+Cómo eligen su almacén las demás herramientas del espacio, y las de fuera de él, está en la sección de
+`docs/ESTADO-DEL-ARTE.md` que cierra su parte 1. El resumen es que ninguna acepta el nombre legible de un
+almacén para elegirlo, que todas apuntan con una ruta, y que las dos que sí admiten un nombre lo hacen
+en una bandera aparte de la de la ruta y contra un registro previo que lo declara.
+
+**Y la consecuencia que esto deja, que conviene ver antes de tocar nada.** Con las dos vías retiradas
+quedan dos, y la primera, la que reconoce un directorio como tablero porque contiene `board.db`, deja de
+ser una comodidad y pasa a ser **la única forma que queda de tocar un tablero al que el proyecto actual
+no apunta sin escribir antes en el disco**, siempre para una sola invocación y con `-C` apuntando a su
+directorio. Cuando se decidió, se justificó solo con que ahí no hay nada que adivinar; ahora carga además
+con este trabajo. Se nota en el puntero perdido, donde la sección 3.2 ofrecía dos remedios, `--board`
+apuntando al tablero o `biso init --at`, y ha quedado con uno solo, que escribe un puntero nuevo en el
+proyecto. Quien en el futuro quiera endurecer esa vía, por ejemplo exigiéndole también el marcador
+`<id>.id` como hace la búsqueda por identificador, tiene que saber que estaría cerrando la última puerta
+que queda, y que la propia sección 3.2 la deja abierta a propósito para que `biso doctor --fix` pueda
+devolver un marcador que falte.
+
 ---
 
 ## 13. El origen de la cifra de 25 milisegundos

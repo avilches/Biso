@@ -131,7 +131,6 @@ comando puede redefinir ninguna de ellas ni cambiar su significado.
 | Bandera | Corta | Tipo | Por defecto | Qué hace |
 |---|---|---|---|---|
 | `--cwd <path>` | `-C` | ruta | el directorio actual | Resuelve el tablero desde ahí, sin cambiar el directorio del proceso |
-| `--board <name>` | | localizador | el que se resuelva | Usa ese tablero directamente, sin buscar |
 | `--json` | | booleano | falso | Toda la salida de datos es JSON, en el sobre de la sección 12 |
 | `--quiet` | `-q` | booleano | falso | Reduce la salida a lo mínimo. Ver más abajo |
 | `--print` | | booleano | falso | Después de escribir, imprime la ficha completa de cada tarea afectada |
@@ -156,16 +155,12 @@ Reglas de aplicación, que hay que implementar tal cual:
   `error:`.** Silenciar un aviso es cosa de quien llama, con `2>/dev/null`. **En un comando de
   lectura no hay identificadores afectados que imprimir**, así que ahí `--quiet` no cambia stdout: solo
   suprime las líneas `note:` de stderr, igual que en un comando de escritura.
-- **`--board` acepta el nombre o el localizador de un tablero**, en la forma que el almacenamiento
-  imponga. El programa lo trata como una cadena opaca que identifica un tablero, y `biso where` la
-  imprime.
 
 ### 3.1. Variables de entorno
 
 | Variable | Equivale a | Precedencia |
 |---|---|---|
 | `BISO_CWD` | `--cwd` | la bandera gana |
-| `BISO_BOARD` | `--board` | la bandera gana |
 | `BISO_ME` | la identidad de quien llama, para `--mine` y para el autor por defecto de los comentarios | la clave `me` de la configuración gana; si no está, esta variable |
 | `BISO_LIMIT` | el límite por defecto de `biso ls` | `--limit` gana, luego esta variable, luego la clave `default_limit`, luego 30 |
 | `NO_COLOR` | `--color never`, si está definida con cualquier valor | `--color` gana |
@@ -185,26 +180,32 @@ Reglas de aplicación, que hay que implementar tal cual:
 
 Un proyecto tiene un tablero, y el programa lo encuentra por este orden. Gana el primero que exista:
 
-1. La bandera `--board`.
-2. La variable `BISO_BOARD`.
-3. **El directorio de trabajo, cuando es el directorio de un tablero.** Se reconoce porque contiene
+1. **El directorio de trabajo, cuando es el directorio de un tablero.** Se reconoce porque contiene
    el fichero `board.db`, y entonces el tablero es ese y no se busca nada más.
-4. **El puntero del proyecto**, que es una marca que `biso init` deja en el proyecto y que dice qué
+2. **El puntero del proyecto**, que es una marca que `biso init` deja en el proyecto y que dice qué
    tablero le corresponde. Se busca en el directorio de trabajo y en sus ancestros, con el tope de la
    regla que cierra esta lista.
 
+**Las dos parten del directorio de trabajo**, que es el directorio actual salvo que la bandera global
+`-C` o la variable `BISO_CWD` digan otro (sección 3). Por eso `-C` es lo único que hace falta para
+trabajar contra otro tablero sin moverse: apuntando al directorio de un tablero se llega por la
+primera vía, y apuntando a un proyecto cualquiera se llega por la segunda, al tablero que ese
+proyecto tenga.
+
 **La raíz por defecto de la máquina** (sección 3.3) no es una vía más de esta lista: es el
 directorio donde `biso init` sin `--at` crea los tableros nuevos. Volver a encontrar un tablero ya
-creado depende siempre de una de las cuatro vías de arriba, nunca de mirar las carpetas de la raíz por
+creado depende siempre de una de las dos vías de arriba, nunca de mirar las carpetas de la raíz por
 defecto a ver cuál le pega a este proyecto.
 
-**La tercera vía no adivina nada, y por eso no contradice el párrafo anterior.** Un directorio que
+**La primera vía no adivina nada, y por eso no contradice el párrafo anterior.** Un directorio que
 contiene `board.db` es ese tablero y no puede ser otro, y la configuración completa de un tablero vive
 dentro de ese mismo fichero, con su nombre y su `task_prefix` incluidos (sección 10.10), así que ahí no
 falta ningún dato que el puntero tuviera que aportar: el puntero solo sirve para encontrar un tablero,
-y quien ya está dentro de él no tiene nada que encontrar. Es también más específica que el puntero, y
-de ahí que le gane: quien ejecuta un comando dentro de un tablero se refiere a ese, no al del proyecto
-que quizá lo contenga.
+y quien ya está dentro de él no tiene nada que encontrar.
+
+**Y de ahí sale el orden entre las dos**, que al quedar solo dos es toda la precedencia que existe:
+estar dentro de un tablero es más específico que apuntar a uno desde un proyecto, así que quien
+ejecuta un comando dentro de un tablero se refiere a ese, no al del proyecto que quizá lo contenga.
 
 **Esta vía se conforma con la base de datos y no pide el marcador, y no es un descuido.** Buscar el
 tablero de un `id` concreto sí exige las dos cosas, porque ahí la pregunta es cuál de varios directorios
@@ -358,10 +359,16 @@ copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", 
 el mismo puntero, y compartir es precisamente para lo que existe.
 
 **Si el puntero se pierde** (se borra a mano, o el proyecto se clona sin haberlo commiteado antes), la
-recuperación es explícita, nunca automática: `--board` apuntando directamente al tablero, o
-`biso init --at <ruta>` con la ruta del directorio del tablero que ya existe, que escribe un puntero
-nuevo con ese `path`, relativa o absoluta según la regla de arriba (sección 10.1). Sin uno de los dos,
-el proyecto no vuelve a encontrar su tablero por su cuenta.
+recuperación es explícita, nunca automática, y consiste en una sola cosa: `biso init --at <ruta>` con
+la ruta del directorio del tablero que ya existe, que escribe un puntero nuevo con ese `path`,
+relativa o absoluta según la regla de arriba (sección 10.1). Es lo único que arregla el proyecto,
+porque es lo único que deja el puntero otra vez donde lo ven todos sus subdirectorios y todas sus
+copias de trabajo.
+
+**Trabajar con `-C <directorio del tablero>` no es la otra mitad de esa recuperación, sino lo que se
+puede hacer mientras tanto**: llega al tablero por la primera vía, pero solo en la llamada en la que
+se escribe, y no deja nada apuntado, así que el comando siguiente vuelve a no encontrar nada. Sin
+escribir el puntero, el proyecto no vuelve a encontrar su tablero por su cuenta.
 
 **Un tablero cuyo proyecto ya no existe queda huérfano** en la raíz por defecto, y ningún comando de
 hoy lo ve.
@@ -1824,9 +1831,10 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 | `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--projects`, `--extensions`, `--prefix`, `--overwrite-config` |
 
 **`--at` es la ruta del directorio del tablero que se va a crear, no el directorio donde se crea.** Con
-`--at tablero` el tablero queda en `tablero`, no en `tablero/kex-3f9a2b1c`. Ahí está la diferencia con
-la bandera global `--board`, que nombra un tablero que ya existe: `--at` nombra un sitio. Puede ser
-absoluta o relativa al directorio de trabajo, y **su último componente es el nombre de la carpeta, que
+`--at tablero` el tablero queda en `tablero`, no en `tablero/kex-3f9a2b1c`. Es la misma convención que
+la clave `path` del puntero, que también nombra el directorio del tablero y no el que lo contiene
+(sección 3.2), y no es casualidad: la ruta que recibe `--at` es exactamente la que se escribe en esa
+clave, con la misma forma. Puede ser absoluta o relativa al directorio de trabajo, y **su último componente es el nombre de la carpeta, que
 es decorativo** (sección 3.2), así que `--at tablero` es tan válido como `--at kex-3f9a2b1c`.
 
 #### Comportamiento
@@ -1839,7 +1847,7 @@ set project_name`, que no toca el sistema de ficheros (sección 10.10).
 
 `init` escribe, además del tablero, **el puntero del proyecto** (el fichero `.biso.json` de la
 sección 3.2), y lo escribe siempre que no exista ya uno, porque un tablero no se localiza nunca por su
-posición en el disco sino por una de las cuatro vías de la sección 3.2. Es la única cosa que `init`
+posición en el disco sino por una de las dos vías de la sección 3.2. Es la única cosa que `init`
 escribe fuera del tablero. La salida siempre confirma que el proyecto apunta al tablero, se haya escrito
 el puntero en esta llamada o ya estuviera ahí de antes.
 
@@ -1938,7 +1946,7 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
-| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la tercera vía de 3.2, y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
+| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de 3.2, y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
 | `--at` con una ruta relativa | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta relativa, código 0 |
@@ -1967,7 +1975,7 @@ deja de existir, el comando que lo hace falla, según la sección 10.10.
 
 **El fichero de la base de datos se llama `board.db`**, con `board.db-wal` y `board.db-shm` como sus
 ficheros auxiliares. El nombre es fijo y forma parte de la interfaz, no un detalle interno, porque es
-lo que hace reconocible un directorio de tablero: la tercera vía de la sección 3.2 se apoya en él, y
+lo que hace reconocible un directorio de tablero: la primera vía de la sección 3.2 se apoya en él, y
 sin un nombre declarado esa vía no sería implementable de una sola manera.
 
 **Junto a él, `init` escribe el marcador de identidad `<id>.id`**, por ejemplo `3f9a2b1c.id`, que es lo
@@ -2173,7 +2181,7 @@ Sin parámetros propios.
 
 #### Comportamiento
 
-Dice el identificador del tablero, su nombre, la ruta de su directorio, y cuál de las cuatro vías de la
+Dice el identificador del tablero, su nombre, la ruta de su directorio, y cuál de las dos vías de la
 sección 3.2 lo ha elegido. Los tres son datos distintos, y merece la pena verlos juntos porque cada uno
 cambia por su cuenta: `biso config set project_name` cambia el nombre y no toca la ruta (10.10), mover el
 directorio a mano cambia la ruta y no toca el nombre, y el identificador no cambia jamás. Es el comando al
@@ -2182,7 +2190,7 @@ que remite el error de código 8, y el que hace visible una resolución que de o
 | Caso | Qué pasa |
 |---|---|
 | Hay tablero | Lo imprime con su identificador, su nombre, su ruta y la vía que lo eligió, código 0 |
-| El directorio de trabajo es el propio directorio del tablero | Lo imprime igual, con la tercera vía de 3.2 en `source` y `path` apuntando al directorio de trabajo, código 0 |
+| El directorio de trabajo es el propio directorio del tablero | Lo imprime igual, con la primera vía de 3.2 en `source` y `path` apuntando al directorio de trabajo, código 0 |
 | No hay tablero configurado | Imprime lo que ha buscado y dónde, código 8, `code` `no_board` |
 | El puntero nombra un tablero que no está en esta máquina | Imprime que hay un puntero y qué identificador nombra (sección 3.2), código 8, `code` `pointer_unresolved` |
 | Hay más de un candidato | Imprime el elegido y los descartados, con el motivo, código 0 |
@@ -2216,18 +2224,16 @@ quien la consume a expandirla por su cuenta.
 La fila `source` nombra el directorio del que salió el puntero, y no solo la vía, porque con la
 búsqueda de la sección 3.2 ese directorio puede ser cualquier ancestro del de trabajo: enseñarlo es lo
 que hace visible de un vistazo el caso de haber heredado el puntero de un proyecto que contiene a este.
-Con las otras tres vías la fila dice cuál fue, `--board`, `BISO_BOARD` o `the working directory is this
-board`.
+Con la otra vía no hay ningún directorio del que salir, porque el tablero es el directorio de trabajo,
+y la fila dice `the working directory is this board`.
 
 Y cuando no hay ninguno configurado, por stderr y con código 8:
 
 ```
 error: no board here, and none configured for this project
-searched  --board:      not given
-          BISO_BOARD:   not set
-          this directory: not a board
-          pointer:      not found between this directory and /Users/avilches,
-                        which is where the search stops (3.2)
+searched  this directory: not a board
+          pointer:        not found between this directory and /Users/avilches,
+                          which is where the search stops (3.2)
 hint: `biso init` creates one
 ```
 
@@ -4994,7 +5000,6 @@ Daily work:
 
 Global options:
   -C, --cwd <path>   resolve the board from there, instead of cd-ing
-      --board <name> use this board directly
       --json         machine-readable output
   -q, --quiet        print only ids
       --print        print the whole record after writing
@@ -5007,7 +5012,7 @@ More: `biso <command> --help`, and `biso help all` for the administrative
 commands (init, where, archive, export, config, doctor, board, help, snapshot).
 ```
 
-Son treinta y dos líneas, y no incluyen los nueve comandos de administración.
+Son treinta y una líneas, y no incluyen los nueve comandos de administración.
 
 ---
 
@@ -5168,6 +5173,10 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   dice.
 - **No hay servidor de integración ni protocolo de herramientas.** La interfaz de la versión 1.0 es
   esta línea de comandos y su salida JSON.
+- **No hay ninguna bandera ni variable de entorno que nombre un tablero.** El tablero se elige por
+  las dos vías de la sección 3.2, y `-C` ya alcanza tanto el directorio de un tablero como el de un
+  proyecto que apunte a uno, así que una bandera para nombrarlo no añadiría nada (sección 3 de
+  `docs/DECISIONES.md`).
 - **No hay una interfaz multiproyecto.** Cada invocación resuelve un único tablero (sección 3.2), y no
   hay ningún comando que lea o agregue varios a la vez, aunque la máquina entera tenga más de uno
   (sección 3.3): quien necesite verlos juntos los recorre uno por uno desde fuera.

@@ -3,7 +3,9 @@
 Investigado el 2026-09-07 para tomar la decisión de persistencia de `biso`
 ([diseño](superpowers/specs/2026-09-07-persistencia-design.md)).
 
-La primera mitad es un inventario de las herramientas del espacio. La segunda es un catálogo de
+La primera mitad es un inventario de las herramientas del espacio, y se cierra con una comparación
+aparte: cómo se le dice a cada una que trabaje con un almacén distinto del que encuentra sola, donde
+entran también herramientas de fuera del espacio. La segunda es un catálogo de
 problemas: cada uno con quién lo sufre, la evidencia con su enlace, y la respuesta de `biso`. La
 segunda mitad es la que sirve para explicar la herramienta a alguien que viene de otra.
 
@@ -166,6 +168,70 @@ Shrimp Task Manager** (`https://github.com/cjo4m06/mcp-shrimp-task-manager`, 2.1
 guarda en `tasks.json` y hace algo poco común, inicializar un repositorio de git dentro de su propio
 directorio de datos y commitear tras cada cambio; y **taskboard**
 (`https://github.com/tcarac/taskboard`, 29 estrellas), explícitamente SQLite y binario único.
+
+## Cómo se apunta a un almacén distinto del que la herramienta encuentra sola
+
+Todo lo anterior dice dónde guarda los datos cada herramienta. Esto es lo otro: cómo se le dice a una
+herramienta que trabaje con un almacén que no es el que habría encontrado por su cuenta. Investigado el
+2026-09-09 sobre documentación oficial, y sobre el código en el único caso en que la documentación no
+llega, `restic`. Aquí entran también herramientas de fuera del espacio de la gestión de tareas, porque
+el problema es el mismo y las maduras llevan más tiempo tropezando con él.
+
+**La conclusión, primero: al almacén se apunta con una ruta, no con un nombre.** Ninguna de las
+herramientas miradas acepta el nombre legible de un almacén para elegirlo. Los nombres solo aparecen
+donde existe un registro previo que los declara, como los contextos de `kubectl` o los sockets con
+nombre de `tmux`, y siempre en una bandera distinta de la de la ruta, con una regla escrita que dice
+cuál gana cuando se dan las dos, y gana la ruta. El segundo patrón es igual de consistente: la vía a
+otro almacén se reparte en varias banderas estrechas, cada una con su variable de entorno, en vez de una
+sola cadena que lo admita todo.
+
+**git.** Tres mandos independientes: `-C` cambia el directorio de partida, `--git-dir` nombra el
+almacén y `--work-tree` la copia de trabajo, y los dos últimos tienen su variable, `GIT_DIR` y
+`GIT_WORK_TREE`. `-C` se aplica antes que los otros dos, así que sus rutas se resuelven contra él. La
+propia documentación avisa de que dar `--git-dir` apaga el descubrimiento hacia arriba. No hay ninguna
+forma de nombrar un repositorio local por un nombre: solo rutas.
+
+**gh.** Una sola bandera, `-R, --repo`, con una sola gramática, `[HOST/]OWNER/REPO`. No admite ni una
+URL, ni el nombre de un remoto, ni una ruta local. No tiene equivalente de `-C`, y lo piden desde 2020
+en `https://github.com/cli/cli/issues/2228`, que sigue sin resolver. Qué gana entre la bandera y la
+variable `GH_REPO` no está dicho en su documentación, así que aquí no se afirma.
+
+**Taskwarrior.** Su `data.location` es una ruta, `TASKDATA` la sobrescribe, y la línea de comandos gana
+sobre las dos con `rc.data.location=`. Lo que más importa para comparar es otra cosa: su concepto de
+contexto **no elige almacén**. Es un filtro permanente sobre el mismo conjunto de datos, así que quien
+viene de ahí puede esperar que cambiar de contexto cambie de almacén, cuando lo que cambia es la vista.
+
+**Backlog.md.** No tiene ninguna bandera general para esto. Localiza por raíz de git más la carpeta
+`backlog/`, y su directorio se fija al inicializar y a partir de ahí es de solo lectura. Sus tropiezos
+están documentados y encajan con problemas que este documento ya cataloga:
+`https://github.com/MrLesk/Backlog.md/issues/466` pide precisamente un argumento o una variable de
+entorno para apuntar a otro sitio, `https://github.com/MrLesk/Backlog.md/issues/446` cuenta que
+ejecutarlo en un subdirectorio creaba una carpeta nueva en vez de encontrar la de arriba, y
+`https://github.com/MrLesk/Backlog.md/issues/558` y `https://github.com/MrLesk/Backlog.md/issues/689`
+son su servidor escribiendo en el repositorio principal en vez de en el worktree desde el que se lanzó.
+
+**Beads.** Tres vías, todas rutas, ordenadas por grano: `BEADS_DIR` fuerza el directorio del almacén y
+apaga el descubrimiento, `BD_DB` apunta al fichero de base de datos, y `--db` lo sobrescribe para una
+sola invocación. Sus fallos en esta zona son de la misma familia que los de Backlog.md:
+`https://github.com/gastownhall/beads/issues/6222` es un `GIT_DIR` heredado del entorno que envenena la
+resolución, y `https://github.com/gastownhall/beads/issues/6353` es su sincronización escribiendo en el
+repositorio equivocado.
+
+**El contraejemplo que mide lo que cuesta la cadena polimórfica es `restic`**, que sí tiene una sola
+bandera, `-r`, capaz de admitir una ruta local, un servidor y varios servicios de almacenamiento. Lo
+paga por escrito y en su propio código: si la cadena no es una ruta existente y contiene dos puntos hay
+que decidir si eso es un esquema o parte de un nombre, y ese caso está marcado como ambiguo; hace falta
+además un caso especial para las unidades de Windows, donde `C:` no es ningún esquema; y su mensaje de
+error tiene que enseñar al usuario un prefijo `local:` que nadie escribiría por su cuenta, solo para
+poder desambiguar lo que la gramática única no distingue. Una sola bandera que lo admite todo no ahorra
+las reglas, las esconde dentro y las paga en mensajes de error.
+
+**Dos precedentes de desempate.** `kubectl` separa `--kubeconfig`, que es una ruta, de `--context`, que
+es un nombre, y documenta dos cadenas de precedencia distintas para cada uno; el nombre solo significa
+algo dentro del fichero que la ruta selecciona. `tmux` separa `-L`, que es el nombre de un socket dentro
+de su directorio, de `-S`, que es la ruta completa del socket, y documenta que dar `-S` hace que `-L`
+se ignore. En los dos casos el nombre existe porque hay un registro previo donde buscarlo, y en los dos
+la ruta gana.
 
 ---
 
