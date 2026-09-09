@@ -113,7 +113,7 @@ A eso hay que sumar la inyección de instrucciones en el fichero de convenciones
 se paga en todas las sesiones aunque no se toque el tablero.
 
 El mensaje de `biso prime` mide **4.746 bytes**, 3.255 de parte fija y 1.491 de resumen del tablero
-(sección 9.5 de `docs/SPEC.md`), contra un tope duro de 5.120 repartido en dos mitades de 3.456 y
+(sección 9.5 de `docs/SPEC.md`), contra un tope duro de 5.120 repartido en dos partes de 3.456 y
 1.664.
 
 | Magnitud | Herramienta estudiada | `biso` |
@@ -128,10 +128,10 @@ coste pasa a ser fijo, conocido y acotado por una prueba, en vez de depender de 
 leer el agente, y el peor caso cae a menos de un tercio. El ahorro grande no está aquí, está en que la
 salida de las escrituras deje de ser un eco y en las llamadas que desaparecen al fusionar el ciclo.
 
-**El tope es una prueba de la suite, no un objetivo.** Y el reparto en dos mitades existe para que el
+**El tope es una prueba de la suite, no un objetivo.** Y el reparto en dos partes existe para que el
 resumen del tablero, que crece con el tablero, no pueda comerse el sitio de las reglas.
 
-**El reparto entre las dos mitades cambió con el modelo de estados, y el total no.** La parte fija
+**El reparto entre las dos partes cambió con el modelo de estados, y el total no.** La parte fija
 sube de 3.072 a 3.456 bytes porque el bloque `COMMANDS` gana las dos órdenes nuevas del ciclo, `ask` y
 `answer`, y el bloque `RULES` gana una regla más, la undécima, sobre esos dos verbos y sobre qué
 significa una tarea asignada; el resumen del tablero baja de 2.048 a 1.664.
@@ -140,7 +140,7 @@ antes nombraba un solo bloque y decía "antes que cualquier otra cosa" sin nombr
 un tablero con muchas tareas en curso podía rebasar el tope sin que hubiera una conducta definida para
 ese caso. Con los cinco pasos completos que trae ahora la sección 9.5 de `SPEC.md`, el resumen ya no
 crece sin límite, y darle menos sitio cuesta filas mostradas, no correcciones. La parte fija, en
-cambio, no se puede recortar sola: o cabe entera o hay que quitar contenido a mano, así que es la mitad
+cambio, no se puede recortar sola: o cabe entera o hay que quitar contenido a mano, así que es la parte
 que necesita más margen.
 
 **El tope total, 5.120 bytes, no se mueve, y el motivo no es de contrato.** El contrato de estabilidad
@@ -478,10 +478,10 @@ que caduca sigue siendo, como decía la redacción original, "estoy en ello" y n
 campo derivado `leaseExpired` dice que el arrendamiento venció, pero el estado guardado no cambia
 solo, nunca. Liberarlo es una escritura explícita, y sigue sin hacer falta un comando nuevo para eso:
 es la misma que ya hace `biso start`, que reclama el arrendamiento vencido a favor de quien llama
-comprobando quién lo tenía dentro de la misma transacción, para que el tenedor viejo no la recupere al
-despertar (sección 10.7.1 de `SPEC.md`). Con un arrendamiento vivo de otra identidad, `biso start`
-avisa y la coge igual: el mismo "avisa, no impide" que ya aplicaba a las dependencias sin terminar y a
-la pregunta abierta.
+comprobando quién lo tenía dentro de la misma transacción, para que el tenedor viejo no lo recupere con
+su siguiente escritura al despertar (sección 10.7.1 de `SPEC.md`). Con un arrendamiento vivo de otra
+identidad, `biso start` avisa y la coge igual: el mismo "avisa, no impide" que ya aplicaba a las
+dependencias sin terminar y a la pregunta abierta.
 
 **Por qué se enmienda en vez de reescribirse sin más.** La redacción aplazada no decía cómo se
 liberaba una caducidad, y la lectura más directa de "saca la tarea del estado activo" es una
@@ -495,11 +495,29 @@ vez de resolverla.
 
 **Lo que aporta el estado del arte, mirado al cerrar esta decisión.** El patrón tiene nombre propio
 fuera de aquí: un arrendamiento con caducidad, renovado por latido, para evitar la doble reclamación.
-Y la pieza que le faltaba a la redacción aplazada, la que un artículo que formaliza el patrón señala
-como la que cierra el agujero, es la comprobación del tenedor: sin ella, el tenedor viejo puede
-despertar, escribir, y robar de vuelta una tarea que ya había reclamado otro. Aquí sale gratis, porque
-el arrendamiento ya guarda quién lo tiene y la comprobación es comparar y sustituir dentro de una
-transacción que ya existía por otro motivo (sección 4.10).
+La pieza que le faltaba a la redacción aplazada es la comprobación del tenedor, y la idea viene de un
+artículo que formaliza el patrón: propone el límite de tiempo **más un token de vallado que rechace las
+escrituras del propietario antiguo** (sección 6 de `docs/ESTADO-DEL-ARTE.md`, con su enlace). Sin nada
+de eso, el tenedor viejo puede despertar, escribir, y robar de vuelta una tarea que ya había reclamado
+otro. Comprobar quién lo tiene sale gratis aquí, porque el arrendamiento ya guarda ese dato y la
+comprobación es comparar y sustituir dentro de una transacción que ya existía por otro motivo
+(sección 4.10).
+
+**Pero lo que se implementa no es ese token de vallado, y apartarse de él es deliberado.** Un token de
+vallado rechaza la escritura entera de quien ya no es el propietario. `biso` la acepta: la escritura de
+una identidad que no es `leaseHolder` se hace igual y solo deja intactos los dos campos del
+arrendamiento, con el aviso de la sección 4.3 de `SPEC.md` (sexta precisión de la sección 5). Así que el
+agujero que el artículo cierra aquí queda entreabierto: el tenedor viejo que despierta puede comentar,
+anotar o cerrar la tarea que otro reclamó, y si vuelve a llamar a `biso start` se la lleva de vuelta,
+con aviso y sin impedimento. Se acepta porque rechazar la escritura sería lo único de todo el programa
+que impide trabajar por el estado en que está una tarea: las dependencias sin terminar avisan, la
+pregunta abierta avisa, y un arrendamiento ajeno avisa igual, por el motivo del apartado 6, que un
+bloqueo de flujo no evita el trabajo duplicado y sí empuja a rodear la herramienta. Lo que la
+comprobación del tenedor sí cierra, y es lo que se gana, son las dos cosas que el aviso no puede dar:
+que una escritura de otra identidad nunca renueve el plazo ajeno ni se atribuya el arrendamiento, y que
+de dos reclamaciones simultáneas de un arrendamiento vencido solo gane una, porque `biso start`
+comprueba dentro de su propia transacción que seguía vencido. La diferencia con el artículo queda
+anotada como riesgo aceptado en el apartado 11.
 
 **Por qué el arrendamiento se exporta e importa como cualquier otro campo.** Al añadir los dos campos
 guardados quedó sin decir si viajan en `biso export`, y las dos respuestas eran defendibles: dejarlos
@@ -678,6 +696,17 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   a nombre de esa misma identidad, pero `biso start` avisa y la coge igual, así que dos sesiones que
   comparten identidad siguen pudiendo pisarse. El arrendamiento defiende de una sesión muerta, no de
   dos sesiones vivas con el mismo nombre.
+- **El tenedor viejo de un arrendamiento no tiene prohibido escribir.** El artículo que formaliza el
+  patrón propone, junto a la caducidad, un token de vallado que rechace las escrituras del propietario
+  antiguo (sección 6 de `docs/ESTADO-DEL-ARTE.md`), y `biso` hace a propósito algo más débil: la
+  escritura de una identidad que no es `leaseHolder` se acepta entera y solo deja intactos
+  `leaseExpiresAt` y `leaseHolder`, con el aviso de la sección 4.3 de `SPEC.md`. Un agente que despierta
+  después de que otro reclamara su tarea puede comentarla, anotarla o cerrarla, y con `biso start`
+  llevársela de vuelta. Se acepta por coherencia con "avisa, no impide", el mismo argumento del apartado
+  6 que vale para las dependencias sin terminar y para la pregunta abierta: un bloqueo de flujo no evita
+  el trabajo duplicado, solo empuja a rodear la herramienta. Lo que el arrendamiento sí garantiza es que
+  una tarea no se quede cogida para siempre, que nadie renueve ni se atribuya un arrendamiento ajeno, y
+  que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una (apartado 9.2).
 - **Un tablero con la clave `me` configurada anula la distinción entre persona y agente.** La clave
   `me` gana sobre `BISO_ME`, así que en un tablero que la tenga puesta todo el mundo comparte
   identidad y `--mine` deja de significar nada. Un tablero compartido entre una persona y un agente
@@ -727,10 +756,11 @@ de que el estado de una tarea sea uno solo.
 
 **Por qué no hay daemon, y por qué el motivo es aritmético y no de gusto.** El coste dominante de una
 invocación de `biso` es arrancar un proceso, no el trabajo que hace una vez arrancado: la sección 12 de
-`docs/ESTADO-DEL-ARTE.md` mide el suelo del sistema en 5,2 milisegundos y el trabajo real de leer,
-ordenar e imprimir 300 tareas en 8,7 milisegundos con un binario de Go. Un daemon solo puede ahorrar la
-segunda cifra, no la primera, porque el cliente que hablaría con él por un socket es también un proceso y
-paga el mismo suelo de arranque para lanzarse. Así que un daemon competiría por uno o dos milisegundos de
+`docs/ESTADO-DEL-ARTE.md` mide el suelo del sistema en 5,2 milisegundos y el total de leer, ordenar e
+imprimir 300 tareas en 8,7 milisegundos con un binario de Go, suelo incluido y leyendo un JSON en vez de
+la base de datos (apartado 13). Un daemon solo puede ahorrar lo que hay por encima del suelo, no el
+suelo, porque el cliente que hablaría con él por un socket es también un proceso y paga el mismo suelo de
+arranque para lanzarse. Así que un daemon competiría por uno o dos milisegundos de
 unos ocho, pagando a cambio una arquitectura entera: un proceso de fondo que hay que arrancar, vigilar y
 matar, y que si se cuelga hace fallar también las lecturas que la sección 4.10 de `SPEC.md` promete que
 nunca fallan por una escritura en curso. Beads tuvo uno, hacía una sola cosa, y se eliminó por completo
@@ -939,9 +969,18 @@ sección 4.13 de `SPEC.md`, 25 milisegundos de reloj para `biso ls` y `biso prim
 **Medido en la misma máquina que documenta `docs/ESTADO-DEL-ARTE.md`** (Apple M3 Max, macOS 26.5.2, 300
 iteraciones, sección 12 de ese documento). El suelo del sistema operativo para arrancar cualquier
 proceso, sin ejecutar ninguna línea propia todavía, es **5,2 milisegundos**. Un binario de Go añade
-**2,2 milisegundos** encima de ese suelo. Y un programa en Go que lee 300 tareas, las ordena y las
-imprime tardó **8,7 milisegundos en total**, suelo, arranque de Go y trabajo real incluidos. La cifra
-del presupuesto, 25 milisegundos, deja **unas tres veces de margen** sobre ese total medido.
+**2,2 milisegundos** encima de ese suelo. Y un programa en Go que lee 300 tareas **de un fichero
+JSON**, las ordena y las imprime tardó **8,7 milisegundos en total**, suelo, arranque de Go y trabajo
+real incluidos. La cifra del presupuesto, 25 milisegundos, deja **unas tres veces de margen** sobre ese
+total medido.
+
+**Y hay que decir con qué se midió ese total, porque no es el almacén que se acabó eligiendo.** Los
+8,7 milisegundos salen de leer un fichero JSON, no la base de datos SQLite que decide el apartado 12,
+que en aquel momento todavía no estaba decidida. La medida vale para lo que se usó: fijar un
+presupuesto que un lenguaje compilado cumple de sobra y que un interpretado no cumple. Lo que no es es
+una medida del programa terminado: abrir el fichero de la base de datos, preparar sentencias y recorrer
+índices no cuesta lo mismo que leer un fichero de texto de una vez. Así que las tres veces de margen
+son margen sobre esa carga, y la del almacén real está sin medir; el apartado 14 dice cuándo se sabrá.
 
 **La cifra excluye a propósito los lenguajes interpretados.** En la misma máquina, el solo arranque de
 Python 3.14 añade 24,5 milisegundos por delante de cualquier trabajo real, y el de Node 25.6 añade 33.
@@ -953,19 +992,24 @@ lista de candidatos a los compilados, y el apartado siguiente cierra la elecció
 
 ## 14. El lenguaje de implementación es Go
 
-**Los dos candidatos reales eran Go y Rust**, y la elección es Go. Los dos cumplen el presupuesto del
-apartado anterior con holgura, así que la decisión no se toma por rendimiento: se toma por lo que cuesta
-escribir el programa, porque es lo único que de verdad los separa aquí.
+**Los dos candidatos reales eran Go y Rust**, y la elección es Go. Los dos cumplen con holgura el
+presupuesto del apartado anterior en la única carga que hay medida, y los separa menos de un
+milisegundo, así que la decisión no se toma por rendimiento: se toma por lo que cuesta escribir el
+programa, porque es lo único que de verdad los separa aquí.
 
 **Por rendimiento la diferencia son seis décimas de milisegundo.** Con las medidas de la sección 12 de
 `docs/ESTADO-DEL-ARTE.md`, sobre el suelo de 5,2 milisegundos que cuesta arrancar cualquier proceso,
 Rust añade 1,6 milisegundos y Go 2,2. Esa diferencia es el **2,4 por ciento** de un presupuesto de 25
-milisegundos que ya sobra tres veces sobre el total medido de 8,7. Para calibrar cuánto es: `rg`, que es
+milisegundos que sobra tres veces sobre el total medido de 8,7, que es lo que cuesta leer 300 tareas de
+un JSON y no lo que costará leerlas de SQLite (apartado 13). El margen puede encogerse cuando se mida
+el almacén de verdad, pero las seis décimas no dependen de eso: son el arranque del propio binario, la
+misma cifra fija sea cual sea el trabajo que venga después. Para calibrar cuánto es: `rg`, que es
 la herramienta más rápida de las que se midieron instaladas, tarda 7,1 milisegundos, y
 `git --version` tarda 12,3. Ganar seis décimas en un programa cuyo competidor de referencia gasta doce
 milisegundos en imprimir su propia versión no cambia nada que un usuario pueda notar. El presupuesto,
-además, **se midió con un binario de Go**, así que la cifra que la especificación exige no es una
-extrapolación: es lo que el lenguaje elegido hizo en esa máquina.
+además, **se midió con un binario de Go**, así que la cifra que la especificación exige no se extrapola
+de otro lenguaje: es lo que el lenguaje elegido hizo en esa máquina, con la carga que el apartado 13
+dice.
 
 **Lo que decide es el ciclo de desarrollo, y en particular el ciclo de un agente.** Este documento y
 `SPEC.md` están escritos para que alguien implemente el programa entero sin preguntar, con la
@@ -991,5 +1035,9 @@ con ella: un enlace con la biblioteca en C, que obliga a compilar con `cgo` y co
 para otras plataformas, o una traducción de SQLite a Go puro, que compila en cualquier sitio sin
 herramientas de C. La elección entre las dos afecta al arranque y a cómo se distribuye el programa, así
 que **hay que medirla contra el presupuesto de 25 milisegundos antes de comprometerse**, y no está
-medida todavía. Es lo primero que la implementación tiene que resolver, y su resultado pertenece a este
-mismo apartado cuando se sepa.
+medida todavía. Es la misma laguna que el apartado 13 declara al dar la cifra de 8,7 milisegundos: el
+margen que hoy se puede enseñar es el de leer un JSON, y el de leer el almacén real no se conocerá hasta
+que esta medición exista. No cambia la elección de lenguaje, porque lo que la decide es el coste de
+escribir el programa y no el rendimiento, y porque las dos formas de hablar con SQLite son de Go; lo que
+cambia es cuánta confianza merece hoy la frase "sobra tres veces". Es lo primero que la implementación
+tiene que resolver, y su resultado pertenece a este mismo apartado cuando se sepa.

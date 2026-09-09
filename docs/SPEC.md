@@ -202,9 +202,9 @@ defecto a ver cuál le pega a este proyecto.
 contiene `board.db` es ese tablero y no puede ser otro, y la configuración completa de un tablero vive
 dentro de ese mismo fichero, con su nombre y su `task_prefix` incluidos (sección 10.10), así que ahí no
 falta ningún dato que el puntero tuviera que aportar: el puntero solo sirve para encontrar un tablero,
-y quien ya está dentro de él no tiene nada que encontrar. Es también la más específica de las cuatro, y
-de ahí que gane al puntero: quien ejecuta un comando dentro de un tablero se refiere a ese, no al del
-proyecto que quizá lo contenga.
+y quien ya está dentro de él no tiene nada que encontrar. Es también más específica que el puntero, y
+de ahí que le gane: quien ejecuta un comando dentro de un tablero se refiere a ese, no al del proyecto
+que quizá lo contenga.
 
 **Esta vía se conforma con la base de datos y no pide el marcador, y no es un descuido.** Buscar el
 tablero de un `id` concreto sí exige las dos cosas, porque ahí la pregunta es cuál de varios directorios
@@ -1252,8 +1252,14 @@ bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y l
 **El significado no cambia entre comandos.** `--ac` añade un criterio en `biso new`, en `biso set`, en
 `biso start` y en `biso finish`, y todos los comandos de escritura aceptan todas estas banderas.
 
-La regla tiene **una sola desviación de nombre en todo el programa**: el añadido de notas se llama
-`--note`, en singular, y su sustitución se llama `--set-notes`, en plural.
+La regla tiene **dos desviaciones de nombre en todo el programa**, y las dos son de forma: ninguna
+cambia lo que la bandera hace, pero en las dos el nombre no se deduce entero del campo. La primera es
+el número gramatical de las notas: el añadido se llama `--note`, en singular, y su sustitución se llama
+`--set-notes`, en plural. La segunda es el sufijo de las marcas: marcar un criterio de aceptación es
+`--check` y marcar un elemento de la definición de hecho es `--check-dod`, o sea que el nombre desnudo
+está reservado para los criterios y solo la otra lista lleva el sufijo del campo, aunque las demás
+banderas de las dos lo lleven siempre (`--ac` y `--dod`, `--rm-ac` y `--rm-dod`). Lo mismo vale para
+`--uncheck` frente a `--uncheck-dod`.
 
 ### 8.2. Campos de lista
 
@@ -1411,7 +1417,7 @@ paralelo desde varias sesiones y mientras otro proceso escribe.
 ### 9.5. El presupuesto de tamaño
 
 El mensaje tiene un **tope duro de 5.120 bytes**, que se comprueba en la suite de pruebas y se reparte
-en dos mitades exactas:
+en dos partes que suman exactamente ese tope:
 
 - **La parte fija no pasa de 3.456 bytes.** Es la línea de título, `COMMANDS`, `FIELD FLAGS`, `RULES` y
   el párrafo final ("Pick one, ..."): nada de esto depende del contenido del tablero.
@@ -1420,12 +1426,12 @@ en dos mitades exactas:
   y las líneas de recuento: todo lo que cambia según qué haya en el tablero.
 
 Los bloques no son contiguos entre sí, así que hay líneas en blanco de separación entre ellos: **cada
-línea en blanco se cuenta en la mitad del bloque que la precede.** Con esta regla, la línea en blanco
-que sigue al título es parte fija, la que sigue a `BOARD` es resumen, las que siguen a `COMMANDS`,
-`FIELD FLAGS` y `RULES` son parte fija, y las que siguen a `IN PROGRESS`, `NEEDS ANSWER`,
-`ASSIGNED TO YOU` y a `NEXT UP` son resumen.
+línea en blanco se cuenta en la parte a la que pertenece el bloque que la precede.** Con esta regla,
+la línea en blanco que sigue al título es parte fija, la que sigue a `BOARD` es resumen, las que
+siguen a `COMMANDS`, `FIELD FLAGS` y `RULES` son parte fija, y las que siguen a `IN PROGRESS`,
+`NEEDS ANSWER`, `ASSIGNED TO YOU` y a `NEXT UP` son resumen.
 
-Si el resumen no cupiera en su mitad, el orden de recorte es completo y no deja ningún caso sin
+Si el resumen no cupiera en su parte, el orden de recorte es completo y no deja ningún caso sin
 definir:
 
 1. Se reduce primero el número de filas de `NEXT UP`.
@@ -1443,10 +1449,10 @@ fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
 El texto literal de la sección 9.7 ocupa **4.746 bytes** con el tablero del ejemplo: **3.255** de
-parte fija y **1.491** de resumen. Las dos mitades caben dentro de su tope.
+parte fija y **1.491** de resumen. Las dos partes caben dentro de su tope.
 
 **El número que congela el contrato de estabilidad de la sección 13 es el total, 5.120 bytes**, porque
-es el único que quien llama observa. El reparto entre las dos mitades puede cambiar sin romper ese
+es el único que quien llama observa. El reparto entre las dos partes puede cambiar sin romper ese
 contrato.
 
 ### 9.6. Qué entra en el mensaje y qué se relega a `--help`
@@ -1921,8 +1927,10 @@ dónde queda el tablero nuevo, no su vocabulario. **`--overwrite-config` en camb
 `--from`.** No es una restricción arbitraria: `--overwrite-config` reescribe la configuración de un
 tablero que ya existe sin tocar sus tareas, y `--from` restaura un tablero entero, configuración y
 tareas, en uno nuevo. Combinar las dos sería importar las tareas de la instantánea en un tablero que
-ya tiene las suyas mientras se le cambia el vocabulario, y eso no es restaurar: es fusionar dos
-almacenes, que es justo lo que esta decisión de persistencia rechaza en todas partes. Si el destino de
+ya tiene las suyas mientras se le cambia el vocabulario, y eso no es restaurar: es dejar el destino
+como una segunda copia viva del tablero de origen, escritas las dos por separado, que es justo lo que
+esta decisión de persistencia rechaza. Importar tareas en un tablero que ya las tiene sí está
+permitido, y lo hace `biso new --from`; lo que no existe es la copia paralela. Si el destino de
 `--from` ya tiene un tablero, ese caso ya está cubierto por la primera fila de la tabla siguiente: es
 el mismo Error 2 de "ya hay uno accesible desde aquí", y no hace falta `--overwrite-config` para
 distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno existente.
@@ -2293,7 +2301,7 @@ biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de la
 |---|---|---|---|---|---|---|---|
 | `<title>` | | sí, salvo con `--from` | texto | | no | no | `--from` |
 | `--start` | | no | booleano | falso | no | no | `-s`, `--from` |
-| `--from <file>` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
+| `--from <file\|->` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
 
 Todas las banderas de campo de la sección 8 valen aquí. En una tarea nueva no hay nada que sustituir
 ni que quitar, así que `--set-*`, `--rm-*` y `--clear-*` se aceptan y hacen lo mismo que el nombre
@@ -2579,7 +2587,7 @@ Reglas de combinación de filtros:
 
 #### La regla de orden, completa
 
-`--sort` sin valor aplica el orden por defecto, que es esta tupla, en este orden y sin excepciones:
+Sin `--sort` se aplica el orden por defecto, que es esta tupla, en este orden y sin excepciones:
 
 1. Las tareas que tienen `ordinal` van antes que las que no lo tienen.
 2. Entre las que lo tienen, `ordinal` ascendente.
@@ -2857,6 +2865,7 @@ priority   high                 urgency    19.0
 assignees  @claude              reporter   @avilches
 labels     parser               milestone  -
 parent     -                    due        -
+project    -                    ordinal    -
 created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     TASK-40
 lease      2026-09-06 15:40     holder     @claude
@@ -3265,6 +3274,8 @@ biso start <ref>... [--plan <text>] [-a <@who>]... [-s <v>] [--reopen]
 | `<ref>` | | sí, una o más | referencia | | sí | no | |
 | `--status <v>` | `-s` | no | vocabulario | `active_status` | no | no | |
 | `--reopen` | | no | booleano | falso | no | no | |
+| `--id` | | no | booleano | falso | no | no | `--match` |
+| `--match` | | no | booleano | falso | no | no | `--id` |
 
 `--plan` y `-a/--assignee` son las banderas de campo de la sección 8, con su significado de siempre:
 **las dos añaden**. `--plan` añade al plan existente y `--set-plan` lo reemplaza; `-a` añade una
@@ -3285,7 +3296,7 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | La tarea ya está en el estado terminal | Error 6, salvo con `--reopen`, que la devuelve al estado activo |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
 | La tarea tiene una pregunta abierta (5.7) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
-| El arrendamiento de la tarea está vencido (`leaseExpired`, sección 5) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, para que el tenedor viejo no la recupere al despertar |
+| El arrendamiento de la tarea está vencido (`leaseExpired`, sección 5) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (sexta precisión de la sección 5), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección 11 de `DECISIONES.md` |
 | El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
 | `-s` con un estado que no es el activo, por ejemplo `biso start TASK-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (séptima precisión de la sección 5). Fijarlo ahí rompería la invariante de que los dos campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: TASK-1 was moved to To Do, no lease was claimed` |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: TASK-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
@@ -3363,6 +3374,8 @@ biso note <ref> [<text>...] [--id] [--match] [cualquier bandera de campo de la s
 |---|---|---|---|---|---|---|---|
 | `<ref>` | | sí, exactamente una | referencia | | no | no | |
 | `<text>` | | sí, salvo con `--note` | texto largo | | sí, como posicional | no | |
+| `--id` | | no | booleano | falso | no | no | `--match` |
+| `--match` | | no | booleano | falso | no | no | `--id` |
 
 Cada texto es un párrafo propio en la sección de notas. Aceptan `@fichero` y `-` como cualquier texto
 largo.
@@ -3466,6 +3479,8 @@ biso comment <ref> [<text>...] [--comment-author <@who>]
 | `<ref>` | | sí, exactamente una | referencia | | no | no | |
 | `<text>` | | sí, salvo con `--comment` | texto largo | | sí | no | |
 | `--comment-author <@who>` | | no | texto libre | `me` | no | no | |
+| `--id` | | no | booleano | falso | no | no | `--match` |
+| `--match` | | no | booleano | falso | no | no | `--id` |
 
 Se aplican las mismas reglas de posicional que en `biso note`, incluida la del texto que parece un
 identificador. El autor es texto libre, no se valida contra nada y no interpreta el `@` inicial. **Sin
@@ -3537,6 +3552,8 @@ biso finish <ref>... [--summary <text>] [--check <sel>]... [--check-dod <sel>]..
 | `--status <v>` | `-s` | no | vocabulario | `terminal_status` | no | no | |
 | `--strict` | | no | booleano | el valor de `finish_strict` | no | no | `--no-checks` |
 | `--no-checks` | | no | booleano | falso | no | no | `--strict` |
+| `--id` | | no | booleano | falso | no | no | `--match` |
+| `--match` | | no | booleano | falso | no | no | `--id` |
 
 `--summary`, `--check`, `--check-dod`, `--note` y `--file` son las banderas de campo de siempre.
 
@@ -3643,6 +3660,8 @@ biso ask <ref> <text>... [--id] [--match] [cualquier bandera de campo de la secc
 |---|---|---|---|---|---|---|---|
 | `<ref>` | | sí, exactamente una | referencia | | no | no | |
 | `<text>` | | sí | texto largo | | sí, como posicional | no | |
+| `--id` | | no | booleano | falso | no | no | `--match` |
+| `--match` | | no | booleano | falso | no | no | `--id` |
 
 Cada texto es un párrafo propio del cuerpo de la pregunta, igual que en `biso note` (10.7.2). Acepta
 `@fichero` y `-` como cualquier texto largo (4.5).
@@ -3720,8 +3739,8 @@ cierto.
 Usage: biso ask <ref> <text>... [options]
 
 Park ONE task on a question for a person. The task keeps its status, but it
-leaves the IN PROGRESS block of `biso prime` and shows up under WAITING ON A
-PERSON until somebody runs `biso answer`.
+leaves the IN PROGRESS block of `biso prime` and shows up under NEEDS ANSWER
+until somebody runs `biso answer`.
 
 Arguments:
   ref                one task: an id, a bare number or free text
@@ -3761,6 +3780,8 @@ biso answer <ref> <text>... [--id] [--match] [cualquier bandera de campo de la s
 |---|---|---|---|---|---|---|---|
 | `<ref>` | | sí, exactamente una | referencia | | no | no | |
 | `<text>` | | sí | texto largo | | sí, como posicional | no | |
+| `--id` | | no | booleano | falso | no | no | `--match` |
+| `--match` | | no | booleano | falso | no | no | `--id` |
 
 Cada texto es un párrafo propio de la respuesta, igual que en `biso ask` (10.7.5) y en `biso note`
 (10.7.2). Acepta `@fichero` y `-` como cualquier texto largo (4.5).
@@ -3895,6 +3916,8 @@ biso archive <ref>... [--unarchive] [--id] [--match]
 |---|---|---|---|---|---|---|---|
 | `<ref>` | | sí, una o más | referencia | | sí | no | |
 | `--unarchive` | | no | booleano | falso | no | no | |
+| `--id` | | no | booleano | falso | no | no | `--match` |
+| `--match` | | no | booleano | falso | no | no | `--id` |
 
 Saca la tarea del tablero activo. **La tarea sigue existiendo**, su identificador sigue reservado,
 `biso get` la encuentra avisando de que está archivada, y `biso ls --archived` la lista.
@@ -3979,7 +4002,7 @@ biso export [-o <file|->] [--no-archived] [cualquier filtro de biso ls, salvo --
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
-| `--out <file>` | `-o` | no | ruta o `-` | `-`, es decir stdout | no | no | |
+| `--out <file\|->` | `-o` | no | ruta o `-` | `-`, es decir stdout | no | no | |
 | `--no-archived` | | no | booleano | falso | no | no | |
 | filtros de `ls` | | no | | | | | `--sort`, `--limit`, `--all`, `--ids`, `--count`, `--archived`, `--only-archived` |
 

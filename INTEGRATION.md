@@ -178,12 +178,17 @@ En `subagent-driven-development`, sección "Setup":
 Esa bitácora vive en `<raíz-del-repo>/.superpowers/sdd/<nombre-del-plan>/progress.md`, la crea el
 script `scripts/sdd-workspace PLAN_FILE` del propio plugin, y su formato está fijado:
 
-- Primera línea de identidad: `# SDD ledger - plan: <ruta del plan>`
+- Primera línea de identidad: `# SDD ledger — plan: <ruta del plan>`
 - Una línea por tarea completada: `Task <N>: complete (commits <base7>..<head7>, review clean)`
 - Una línea por ronda de arreglo: `Task <N>: fix round <R>/5 (<X> addressed, <Y> open; commits ...)`
 - Una línea por decisión tomada en nombre del humano:
-  `Ruling: <qué decidí> - <por qué> - <qué cuesta si me equivoco>`
-- Hallazgos aparcados: `Task <N>: parked - <hallazgo> - Ruling: <por qué el código se queda>`
+  `Ruling: <qué decidí> — <por qué> — <qué cuesta si me equivoco>`
+- Hallazgos aparcados: `Task <N>: parked — <hallazgo> — Ruling: <por qué el código se queda>`
+
+Los separadores de esas líneas llevan el em-dash real (—) que usa el plugin, y son la única
+excepción a la regla de este repositorio de no escribir nunca un em-dash: ese texto no lo genera
+`biso` ni lo redacta este documento, sino que reproduce literalmente una convención ajena, y
+cambiarlo por un guion normal haría que la cita no coincidiera con un `progress.md` de verdad.
 
 Y en su sección "Finish", dos órdenes consecutivas:
 
@@ -376,11 +381,11 @@ Comprobado además que hoy `docs/SPEC.md` no contiene ni una sola aparición de 
 
 De la sección 9.5 de `docs/SPEC.md` y de la 3 de `docs/DECISIONES.md`:
 
-| Mitad | Tope | Ocupado hoy | Libre |
+| Parte | Tope | Ocupado hoy | Libre |
 |---|---:|---:|---:|
 | Parte fija (título, `COMMANDS`, `FIELD FLAGS`, `RULES`, cierre) | 3.456 | 3.255 | **201** |
-| Resumen del tablero (`BOARD` y los cuatro bloques) | 1.664 | 1.441 | **223** |
-| **Total** | **5.120** | **4.696** | **424** |
+| Resumen del tablero (`BOARD` y los cuatro bloques) | 1.664 | 1.491 | **173** |
+| **Total** | **5.120** | **4.746** | **374** |
 
 Dos restricciones que hay que respetar al proponer texto:
 
@@ -394,7 +399,7 @@ Dos restricciones que hay que respetar al proponer texto:
 ### 7.4. La frase propuesta
 
 Cabe en el párrafo de cierre, que es donde ya vive el bucle. Unos 160 bytes de los 201 libres de la
-mitad fija:
+parte fija:
 
 ```
 Everything a later session needs lives in the task: --doc for a design or plan
@@ -442,7 +447,7 @@ es completo para trabajo pequeño, pero no dice dónde viven los documentos ni l
 exactamente lo que se pierde cuando la sesión muere.
 
 En contra: el `prime` enseña la herramienta, no el proceso del proyecto, y "la tarea es el registro
-duradero" es proceso. Y son 160 de los 201 bytes libres de la mitad fija, que es la que no se puede
+duradero" es proceso. Y son 160 de los 201 bytes libres de la parte fija, que es la que no se puede
 recortar sola.
 
 Las dos alternativas si la respuesta es que no:
@@ -456,15 +461,37 @@ Las dos alternativas si la respuesta es que no:
 
 ## 9. Riesgos y cabos sueltos
 
-- **La decisión de persistencia está abierta y afecta a todo esto.** `CLAUDE.md` dice que es lo
-  único que bloquea escribir código, y que al tomarla hay que responder qué ocurre con una tarea que
-  existe en una versión del proyecto y no en otra. Si el tablero acabara viviendo dentro del
-  repositorio y versionado, **una tarea creada desde un worktree podría no verse desde `main`**, y
-  entonces el registro duradero deja de serlo justo cuando más falta hace. Es el riesgo más serio
-  de este diseño y no se puede cerrar hasta esa decisión.
-- **El arrendamiento con caducidad, aplazado en la sección 9.2 de `docs/DECISIONES.md`, existe
-  precisamente para el fallo que motiva este documento**: detectar una tarea que un agente cogió y
-  cuya sesión murió sin liberarla. Cuando se retome, conviene mirarlo a la vez que esto.
+- **El riesgo que esta lista llamaba "el más serio de este diseño" está cerrado, y conviene saber
+  cómo.** Decía que si el tablero acabara viviendo dentro del repositorio y versionado, una tarea
+  creada desde un worktree podría no verse desde `main`, y que entonces el registro duradero dejaría
+  de serlo justo cuando más falta hace. Estaba bien identificado: es la peor propiedad de las
+  herramientas que guardan las tareas como ficheros del árbol de trabajo, donde el estado se bifurca
+  con la rama y una incidencia cerrada en una rama reaparece abierta en la principal. La sección 12
+  de `docs/DECISIONES.md` no lo mitiga, lo elimina: un tablero es una base de datos SQLite en un
+  directorio propio **fuera** del proyecto, localizada por el fichero puntero versionado
+  `.biso.json`, así que no hay ninguna rama que contenga la tarea y un worktree ve exactamente el
+  mismo tablero que `main`. Esa es la propiedad de la que depende todo este documento, y ya no hay
+  que esperar a nadie para darla por buena. Lo que `CLAUDE.md` señala hoy como lo primero que hay que
+  resolver antes de escribir código no es la persistencia, sino cómo habla el programa con SQLite, y
+  eso no afecta a nada de lo que se propone aquí.
+- **El riesgo nuevo que aparece al cerrar esa decisión: el tablero ya no viaja, y los documentos
+  sí.** El precio declarado de sacar el tablero del árbol de trabajo es que no se clona con el
+  proyecto, y lo único que cruza a git es la exportación de texto de `biso snapshot` (sección 10.14
+  de `docs/SPEC.md`). Eso toca de lleno al argumento de la sección 4.1: los `Ruling:` que se rescatan
+  de la bitácora antes del `rm -rf` pasan a vivir en una base de datos local a una máquina, así que
+  la frase de Superpowers "la historia de git es el registro ahora" solo vuelve a ser cierta cuando
+  alguien ejecuta `biso snapshot` y commitea su salida. Sin ese paso, la integración cambia perder
+  las decisiones al morir la sesión por perderlas al morir la máquina, que es mucho mejor pero no es
+  lo que promete la sección 4.1. Tanto la política de despacho de 6.4 como la skill propia de 7.5
+  deberían contar el `snapshot` como parte del cierre.
+- **El arrendamiento con caducidad existe precisamente para el fallo que motiva este documento**:
+  detectar una tarea que un agente cogió y cuya sesión murió sin liberarla. La sección 9.2 de
+  `docs/DECISIONES.md` ya lo resuelve, dentro de un capítulo titulado "El modelo de estados: cuatro
+  requisitos, cerrados": se guardan `leaseExpiresAt` y `leaseHolder`, un plazo vencido no saca la
+  tarea del estado activo por sí solo, y quien reclama una tarea vencida lo hace con el mismo
+  `biso start` de siempre. Lo que este documento todavía no aprovecha es que el latido no es un
+  comando aparte: cualquier escritura del agente renueva el plazo, así que el bucle de `biso note`
+  de la sección 5.4 ya sirve de latido sin añadir ni una llamada.
 - **Superpowers puede cambiar bajo los pies.** La versión la fija el marketplace oficial, no
   nosotros. Cualquier acuerdo que dependa de rutas internas suyas (`.superpowers/sdd/...`) hay que
   darlo por frágil. Las rutas de `docs/superpowers/specs` y `docs/superpowers/plans` son más
@@ -484,8 +511,8 @@ En este orden, y ninguno de los pasos depende de que exista una línea de códig
    `home/.claude/.gitignore`, que es el paso que se olvida). Esto no toca la especificación de
    `biso` y se puede probar en cuanto exista el CLI.
 2. **La frase del `prime`**, si la decisión de la sección 8 es que sí: editar la salida literal de
-   la sección 9.7 de `docs/SPEC.md`, **recalcular los bytes de las dos mitades** y actualizar los
-   números de la 9.5 y de la sección 3 de `docs/DECISIONES.md`, que hoy dicen 3.255 y 4.696.
+   la sección 9.7 de `docs/SPEC.md`, **recalcular los bytes de las dos partes** y actualizar los
+   números de la 9.5 y de la sección 3 de `docs/DECISIONES.md`, que hoy dicen 3.255 y 4.746.
 3. **La entrada en `docs/DECISIONES.md`** explicando por qué esa frase entra y por qué no se nombra
    a Superpowers. Sin eso, la siguiente sesión que vea la frase la puede quitar por parecer ajena al
    resto del mensaje.
@@ -511,7 +538,7 @@ regenerarlos y a comprobar que coinciden carácter a carácter.
 - `docs/SPEC.md` sección 14, lo que se deja fuera a propósito.
 - `docs/DECISIONES.md` sección 3, el presupuesto del mensaje de arranque y la decisión de sustituir
   las guías de instrucciones.
-- `docs/DECISIONES.md` sección 9.2, el arrendamiento aplazado.
+- `docs/DECISIONES.md` sección 9.2, el arrendamiento con caducidad, ya decidido.
 
 **Fuera de este repositorio:**
 

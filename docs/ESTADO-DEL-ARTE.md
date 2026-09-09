@@ -283,8 +283,14 @@ vocabulario en el título (`https://github.com/xorbitsai/xagent/issues/1230`).
 **Qué hace `biso`.** El arrendamiento vencido es **un campo derivado**, no un suceso: una tarea activa
 cuyo instante de caducidad ya pasó. No hace falta nada que vigile, porque se sabe la próxima vez que
 alguien mira, que es cuando importa. El latido que lo renueva es cualquier escritura que el agente ya
-hace. Y el token de vallado sale gratis: el arrendamiento guarda quién lo tiene, y una escritura que
-presume tenerlo lo comprueba dentro de la misma transacción.
+hace. De las dos piezas que propone el artículo se lleva entera la caducidad, y del token de vallado
+solo la mitad: el arrendamiento guarda quién lo tiene, y `biso start` compara ese dato dentro de la
+misma transacción, de modo que nadie renueva ni se atribuye un arrendamiento ajeno y de dos
+reclamaciones simultáneas de uno vencido solo gana una. Lo que no hace es rechazar la escritura del
+tenedor antiguo, que es la otra mitad del token: la acepta entera y solo deja intactos los dos campos
+del arrendamiento, avisando por stderr, así que quien despierta tarde puede comentar, anotar o cerrar la
+tarea que otro ya reclamó. La sección 9.2 de `docs/DECISIONES.md` cuenta por qué se aparta a propósito,
+y su apartado 11 lo anota como riesgo aceptado.
 
 ## 7. El agente escribe mal el formato y se traga datos
 
@@ -463,9 +469,13 @@ el agente decida cuánto tablero leer.
 
 # Parte 3. Lo que la gente quiere conservar, y lo que rechaza
 
-De todo el ruido salen tres cosas que nadie quiere perder: **el grafo de dependencias**, **un comando
-que diga qué tarea está lista**, y **poder fichar una tarea de forma atómica**. Las tres están ya en la
-especificación de `biso` como `dependencies`, `biso ls --ready` y `biso start`.
+De todo el ruido salen tres cosas que nadie quiere perder: **el grafo de dependencias**, **poder dejar
+fuera del listado lo que no se puede coger ahora**, y **poder fichar una tarea de forma atómica**. Las
+tres están ya en la especificación de `biso` como `dependencies`, como los filtros que se combinan en
+`biso ls --not-blocked --not-waiting`, y como `biso start`. La segunda no es una sola bandera a
+propósito: ninguna puede decir por sí misma que una tarea esté lista, porque cuántos filtros hace falta
+descartar depende de qué se busque, y la sección 6 de `docs/DECISIONES.md` cuenta por qué se retiró el
+nombre `--ready`, que lo prometía sin poder cumplirlo.
 
 Y dos que rechaza de forma consistente: **el proceso en segundo plano** y **el almacén opaco**. El
 primero está descartado. El segundo es la tensión real de esta decisión, y la respuesta es que el

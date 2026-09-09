@@ -14,6 +14,13 @@ La mayoría salió de dos revisiones completas de la rama de persistencia, hecha
 mecánica, que verificó recuentos, referencias cruzadas, ejemplos y códigos de salida, y una de fondo, que
 buscó decisiones que no se sostuvieran contra un escenario concreto.
 
+**Cuando una entrada se cierra, se quita de aquí.** El 2026-09-09 se cerraron las dos de la sección que
+señalaba lo que el documento vendía mejor de lo que era, diez de las incoherencias de la sección 3, y las
+dos decisiones que esperaban al usuario. Una advertencia que se pagó caro entonces y conviene no repetir:
+al revisar este documento se descubrió que **sus propios recuentos estaban desincronizados tres veces**,
+que es exactamente el fallo que él denuncia como dominante en la especificación. No escribas aquí una
+frase que cuente elementos sin contarlos.
+
 ---
 
 ## 1. Huecos que un implementador tendría que rellenar solo
@@ -25,19 +32,30 @@ localizador de un tablero, en la forma que el almacenamiento imponga". Eso era r
 persistencia estuviera sin decidir, y ahora deja sin decir si admite el nombre, el identificador de ocho
 hexadecimales o una ruta, sobre qué raíces busca, y qué pasa cuando el nombre encaja con dos tableros de
 la máquina, que es un caso que la sección 3.2 declara legal. Tampoco hay ningún `code` para "el tablero
-que has nombrado no existe": `no_board` dice otra cosa. *(De la persistencia.)*
+que has nombrado no existe": `no_board` dice otra cosa. **Hay una propuesta sobre la mesa**, que es partir
+la bandera en tres (`--board-folder` para una ruta, admitiendo tanto el directorio del tablero como el del
+proyecto que lo apunta, `--board-id` y `--board-name`), con lo que no hace falta ninguna regla que adivine
+la forma del valor y desaparece la ambigüedad. Antes de cerrarla se quiere ver cómo lo resuelven las demás
+herramientas del espacio. *(De la persistencia.)*
 
 **La instantánea que "cruza a otra máquina" no tiene camino para cruzar.** La sección 14 dice que lo que
 viaja es la instantánea que `biso snapshot` deja en git, pero ese repositorio vive dentro del directorio
 del tablero, que está fuera del proyecto y no tiene remoto, y ningún comando hace push ni añade uno. El
 historial es estrictamente local. Hay que decir que publicar ese directorio es trabajo de quien lo use, o
-dar la vía. *(De la persistencia.)*
+dar la vía. **Tiene una consecuencia que se ve desde `INTEGRATION.md`**: las decisiones que un agente toma
+en nombre de su humano, que son el argumento más fuerte de ese documento a favor de guardarlas como
+comentarios de `biso`, pasan de morir con la sesión a morir con la máquina, y la frase de Superpowers de
+que "la historia de git es el registro ahora" solo vuelve a ser cierta cuando alguien ejecuta `snapshot` y
+commitea. *(De la persistencia.)*
 
 **Dos `biso snapshot` simultáneos no están cubiertos.** Es el único comando que escribe ficheros de texto
 con nombre fijo en una ubicación compartida, y no aparece en ninguna de las seis garantías de la sección
 4.10, que hablan de escrituras del tablero. Dos llamadas a la vez pueden entrelazar la escritura de
 `tasks.ndjson` y sus dos `git commit` chocan en `index.lock`. Hace falta exigir escritura por fichero
-temporal y renombrado atómico, y decir qué código sale cuando el commit choca. *(De la persistencia.)*
+temporal y renombrado atómico, y decir qué código sale cuando el commit choca. **Y hay una mitad más
+pequeña del mismo hueco**: `snapshot` escribe dos ficheros y la especificación no dice qué queda en disco
+si el primero se escribe y el segundo no, porque ninguna de las seis garantías habla de ficheros.
+*(De la persistencia.)*
 
 **El código de salida 8 significa tres cosas con tres remedios distintos**: no hay tablero (ejecuta
 `init`), el puntero nombra uno ausente (ejecuta `init`, adopta el identificador) y la base de datos está
@@ -50,7 +68,8 @@ solo aparece con `--json`. El tercer caso lo añadió la persistencia y es el qu
 con código 8 recomendando restaurar de una copia, y la sección 10.1 dice que si ya hay un tablero
 accesible desde aquí, `init` da error 2. No está dicho cuál gana cuando alguien ejecuta
 `biso init --from <instantánea>` en ese directorio, que es exactamente lo que el mensaje le acaba de
-sugerir. *(De la persistencia.)*
+sugerir. **Y el mensaje empeora el enredo**: dice "restaura de una copia" sin nombrar `biso init --from`,
+que es el único mecanismo de restauración que la especificación define. *(De la persistencia.)*
 
 **Restaurar la instantánea de otra persona fija su identidad como la del tablero.** El `config.json` que
 escribe `biso snapshot` lleva `me` y `default_limit`, así que un `init --from` sobre la instantánea de un
@@ -67,7 +86,10 @@ de columnas que no queda comprobada carácter a carácter. *(Anterior.)*
 **Nada dice cómo se alinean las columnas con texto que no es de anchura sencilla.** La sección 4.4 obliga a
 UTF-8 y los títulos son texto libre, así que una tarea puede llevar ideogramas, emoji o marcas
 combinantes. El algoritmo define el ancho como "la longitud del valor más largo" sin decir si se cuentan
-puntos de código, grafemas o celdas de terminal, que es lo único que alinea de verdad. *(Anterior.)*
+puntos de código, grafemas o celdas de terminal, que es lo único que alinea de verdad. Ninguna de esas
+palabras aparece en ningún documento del proyecto, así que no hay ni una pista de intención. Ojo al
+decidir: la sección 4.1 prohíbe expresamente mirar el terminal para decidir qué se imprime, lo que cierra
+la puerta a adaptarse a su ancho pero no resuelve en qué unidad se cuenta. *(Anterior.)*
 
 **`--print` y `--dry-run` no tienen comportamiento definido en `biso init` ni en `biso config set`.** No
 están en la lista de comandos de lectura, así que se aceptan, pero los dos comandos escriben sin afectar a
@@ -76,7 +98,7 @@ ninguna tarea y `--print` está definido como "la ficha completa de cada tarea a
 **`biso board` y `biso help` aceptan `--json` y no tienen sobre.** La sección 3 dice que las banderas
 globales valen para todos los comandos y que las restricciones adicionales "son exactamente cuatro en todo
 el documento", ninguna de las cuales los cubre, pero la tabla de `kind` de la sección 12.1 no tiene fila
-para ellos y no hay esquema en ninguna parte. *(Anterior, heredado al declarar el "exactamente cuatro".)*
+para ellos y no hay esquema en ninguna parte. *(Anterior.)*
 
 ---
 
@@ -101,79 +123,49 @@ que la implementación tiene que resolver. *(De la persistencia.)*
 
 ---
 
-## 3. Dos cosas que el documento presenta mejor de lo que son
+## 3. Incoherencias que no cambian el comportamiento
 
-**Los 8,7 milisegundos se midieron leyendo un JSON, no una base de datos SQLite.** La sección 12 de
-`docs/ESTADO-DEL-ARTE.md` lo dice literalmente; la sección 13 de `docs/DECISIONES.md` recoge la cifra sin
-la mitad que dice de dónde lee, y sobre ella construye las "tres veces de margen" que la sección 14 usa
-dos veces para apoyar la elección de Go. La cifra no está inventada, pero mide otra carga de trabajo. Una
-frase que lo diga refuerza el párrafo final de la sección 14, que ya admite que el controlador de SQLite
-está sin medir. *(De la persistencia.)*
-
-**El token de vallado que se cita no es el que se implementa.** La sección 9.2 de `DECISIONES.md` presenta
-la comprobación del tenedor como el token de vallado del artículo citado, que "rechaza las escrituras del
-propietario antiguo". Lo que `biso` hace es aceptar la escritura del tenedor viejo y solo negarse a tocar
-los dos campos del arrendamiento, con un aviso. Es coherente con el "avisa, no impide" que gobierna todo
-el resto, pero entonces hay que decirlo así en vez de decir que cierra el agujero, y la lista de riesgos
-aceptados de la sección 11 debería llevar esta fila. *(De la persistencia.)*
-
----
-
-## 4. Incoherencias que no cambian el comportamiento
-
-Ninguna hace fallar una implementación, pero cada una es una frase que dice algo falso.
+Ninguna hace fallar una implementación, pero cada una es una frase que dice algo falso. Las siete que
+quedan necesitan elegir entre dos arreglos válidos, y por eso no cayeron con las otras diez.
 
 - **`leaseExpired` sale en dos de los cuatro bloques del JSON de `biso prime`** y no en los otros dos, con
   su razón escrita (ahí valdría siempre `false`). La sección 12.4 promete que todas las claves
   documentadas aparecen siempre "para que nadie tenga que distinguir entre no está y no tiene valor", que
-  es exactamente la distinción que esto obliga a hacer. *(De la persistencia.)*
-- **La ficha de `biso get` no tiene fila para `project` ni para `ordinal`**, que son campos escalares de la
-  misma clase que `milestone` y `parent`, que sí la tienen. *(Anterior.)*
-- **`INTEGRATION.md` lleva las cifras del mensaje de arranque de antes del arrendamiento**: dice 1.441 de
-  resumen y 4.696 de total, cuando las secciones que cita dicen 1.491 y 4.746. Y sigue describiendo el
-  arrendamiento como "aplazado en la sección 9.2", que dejó de ser cierto. *(De la persistencia.)*
-- **Un reparto de 3.456 y 1.664 no son "dos mitades exactas"**, como dicen cuatro sitios. Es un 67,5 y un
-  32,5 por ciento. La palabra correcta es partes. *(Anterior.)*
-- **La sección 3.2 llama a la tercera vía "la más específica de las cuatro"** aunque pierda contra
-  `--board` y `BISO_BOARD`. El razonamiento que sigue solo necesita que sea más específica que el puntero.
+  es exactamente la distinción que esto obliga a hacer. O sale en los cuatro, o la promesa se matiza.
   *(De la persistencia.)*
-- **`biso ask --help` dice que la tarea aparece bajo `WAITING ON A PERSON`** y el bloque se llama
-  `NEEDS ANSWER` en las diecinueve veces que sale en el documento. *(Anterior.)*
-- **`docs/ESTADO-DEL-ARTE.md` cita `biso ls --ready`** como una de las tres cosas que nadie quiere perder,
-  y esa bandera se retiró en favor de `--blocked` y `--not-blocked`. *(Anterior.)*
-- **La fila `tasks` de `biso where` usa "active" con el sentido de "no archivada"**, cuando la tabla de
-  vocabulario reserva esa palabra para el papel del estado. *(Anterior.)*
-- **La sección 10.4 dice que "`--sort` sin valor aplica el orden por defecto"** y debería decir "sin
-  `--sort`", porque `--sort` sin valor es `missing_value`, código 2. *(Anterior.)*
-- **La firma de `biso export` escribe `-o <file|->` y su tabla titula la fila `--out <file>`.** El resto
-  del documento pone las dos formas juntas en la firma. *(Anterior.)*
 - **`urgencyBreakdown` aparece en el ejemplo JSON de `biso get` sin decir que necesita
-  `--explain-urgency`**, mientras que para el texto sí se dice. *(Anterior.)*
+  `--explain-urgency`**, mientras que para el texto sí se dice. Choca con la misma promesa de la 12.4 que
+  la entrada anterior, y conviene decidirlas juntas: puede que la distinción que salve las dos sea que una
+  clave varíe según los datos, que es lo que la promesa prohíbe, frente a variar según lo que quien llama
+  ha pedido, que es otra cosa. *(Anterior.)*
+- **La fila `tasks` de `biso where` usa "active" con el sentido de "no archivada"**, cuando la tabla de
+  vocabulario reserva esa palabra para el papel del estado. Cuidado: la clave JSON `active` está congelada
+  por el contrato de estabilidad de la sección 13, así que el texto y el JSON no se pueden arreglar igual.
+  *(Anterior.)*
 - **La línea de estado de `biso finish` no es alcanzable desde el ciclo que el documento enseña**: muestra
   `dod 1/1`, y la invocación del ciclo no lleva `--check-dod`, así que diría `dod 0/1`. Los ejemplos de
-  salida se generan, así que hay que arreglar uno de los dos. *(Anterior.)*
+  salida se generan, así que hay que arreglar uno de los dos. El mismo `dod 1/1` sale también en la salida
+  de `biso archive`, y las otras cinco líneas de estado del documento sí dicen `dod 0/1`. *(Anterior.)*
 - **El informe de `biso doctor` no dice si un error ya reparado cuenta en el recuento de la primera
-  línea.** El ejemplo dice "1 error found" y "1 problem fixed" habiendo encontrado dos. *(Anterior.)*
-- **`--id` y `--match` están en la tabla de parámetros de `get` y de `set` y no en la de los otros siete
-  comandos que las aceptan**, aunque su firma y su ayuda las lleven. *(Anterior.)*
-- **La afirmación de que hay "una sola desviación de nombre en todo el programa" no se sostiene**: marcar
-  un criterio es `--check` y marcar un elemento de la definición de hecho es `--check-dod`, así que una
-  lleva el sufijo del campo y la otra no. Y la rejilla `FIELD FLAGS` del mensaje de arranque, de la que se
-  dice que lleva "los nombres de todas las banderas de campo", no incluye `--check-dod` ni
-  `--uncheck-dod`, que son justo los que no se pueden adivinar. *(Anterior.)*
+  línea.** El ejemplo dice "1 error found" y "1 problem fixed" habiendo encontrado dos, y el código de
+  salida 0 se documenta como "nada iba mal, o todo error encontrado se reparó", que presupone que sí suma.
+  *(Anterior.)*
+- **La rejilla `FIELD FLAGS` del mensaje de arranque no incluye `--check-dod` ni `--uncheck-dod`**, que son
+  justo los que no se pueden adivinar, mientras la sección 9.6 promete que lleva "los nombres de todas las
+  banderas de campo". Añadirlos engorda la parte fija del mensaje, que tiene 201 bytes libres de los que
+  `INTEGRATION.md` ya ha reservado unos 160, así que hay que medir antes de escribir. *(Anterior.)*
 - **`--milestone` es el único filtro de texto libre que no valida.** La sección 6 de `DECISIONES.md`
   explica por qué las etiquetas y las personas no tienen vocabulario cerrado al escribir pero sus filtros
   sí validan, y ese argumento no distingue en nada al hito. Hoy un hito mal escrito devuelve una lista
-  vacía, que es el fallo que el principio 1 existe para evitar. *(Anterior, y es la única grieta que le
-  queda al principio que el proyecto pone primero.)*
-- **El argumento contra combinar `--overwrite-config` con `--from`** dice que fusionar dos almacenes "es
-  justo lo que esta decisión de persistencia rechaza en todas partes", y no es en todas partes:
-  `biso new --from` sobre un tablero con tareas está permitido y es, por cualquier lectura llana, fusionar.
-  Lo que la decisión rechaza son dos copias vivas escritas por separado. *(De la persistencia.)*
+  vacía, que es el fallo que el principio 1 existe para evitar. **Corrección de una creencia anterior**:
+  no es la única grieta de ese principio, porque la bandera `--unchecked` de `biso ls` ya apaga a propósito
+  la comprobación de etiquetas y personas, así que con ella una etiqueta mal escrita devuelve también una
+  lista vacía. La pregunta no es si el principio admite excepciones, que ya admite una declarada, sino si
+  la del hito debe declararse igual o desaparecer. *(Anterior.)*
 
 ---
 
-## 5. Decisiones aplazadas a propósito
+## 4. Decisiones aplazadas a propósito
 
 **El controlador de SQLite.** Es lo primero que la implementación tiene que resolver, y está en el
 `CLAUDE.md`: el enlace con la biblioteca en C obliga a compilar con `cgo` y complica generar binarios para
@@ -195,13 +187,29 @@ actualice solo.
 
 ---
 
-## 6. Dos cosas que necesitan una decisión de quien manda
+## 5. Huecos que aparecieron al cerrar los demás
 
-**Las plantillas del ledger de `INTEGRATION.md`.** Sus cuatro em-dash se sustituyeron por guiones normales
-para cumplir la regla del repositorio, pero ese fichero presenta el formato como fijado por el plugin de
-Superpowers, y el ledger real que existe en la máquina sí los lleva. Nada consume ese formato, así que no
-se rompe nada, pero el documento ya no cita el formato ajeno carácter a carácter.
+Salieron el 2026-09-09, mientras se arreglaban las incoherencias de la sección 3, y ninguno estaba
+apuntado antes. Se listan aparte porque todavía no se ha decidido si entran en esta ronda.
 
-**El identificador `lease_invariant`**, que nombra la comprobación nueva de `biso doctor`, se inventó al
-escribirla. Los códigos de los hallazgos de `doctor` no están enumerados en la sección 12.3, así que no
-hubo lista que actualizar, pero el nombre no viene de ninguna parte y se puede cambiar.
+**El error de identidad duplicada de tablero no existe.** Dos sitios distintos de la especificación
+remiten a "el error de que el mismo `id` aparezca en dos raíces", uno en la sección 3.3 y otro en la 10.1
+al hablar de `init --from`, y ese error no está escrito en ninguna parte: no tiene mensaje literal, ni
+código de salida, ni identificador de la clave `code`. `biso doctor` tampoco lo comprueba, y su tabla de
+dieciocho filas está cerrada y contada, así que añadir la comprobación obliga a tocar tres frases que la
+cuentan.
+
+**No hay mensaje literal para "ya hay un tablero accesible desde aquí"**, que es con diferencia el error
+más probable de `biso init`. Tiene código 2 y el `code` `board_exists`, pero ningún texto, mientras los
+otros dos errores de resolución de tablero sí lo tienen.
+
+**El ejemplo de texto de `biso config list` omite cuatro claves que su propio esquema JSON incluye**
+(`projects`, `labels`, `assignees` y los siete coeficientes de `urgency`). Como el `config.json` que
+escribe `biso snapshot` se define por referencia a ese esquema, la ambigüedad se propaga al fichero que
+`init --from` lee de vuelta, y la prueba de simetría promete "toda su configuración" ejemplificando solo
+cuatro cosas.
+
+**`ESTADO-DEL-ARTE.md` afirma que `biso` distingue por diseño quién escribió qué**, y la lista de riesgos
+aceptados de la sección 11 de `DECISIONES.md` reconoce que un tablero con la clave `me` configurada anula
+esa distinción, porque entonces todo el mundo comparte identidad. Las dos frases no pueden ser ciertas a
+la vez.
