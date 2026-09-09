@@ -112,14 +112,14 @@ sus dos comandos más usados juntos.
 A eso hay que sumar la inyección de instrucciones en el fichero de convenciones del repositorio, que
 se paga en todas las sesiones aunque no se toque el tablero.
 
-El mensaje de `biso prime` mide **4.746 bytes**, 3.255 de parte fija y 1.491 de resumen del tablero
+El mensaje de `biso prime` mide **4.818 bytes**, 3.327 de parte fija y 1.491 de resumen del tablero
 (sección 9.5 de `docs/SPEC.md`), contra un tope duro de 5.120 repartido en dos partes de 3.456 y
 1.664.
 
 | Magnitud | Herramienta estudiada | `biso` |
 |---|---:|---|
-| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.746 bytes |
-| Media medida por sesión | 3.358 bytes | 4.746 bytes |
+| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.818 bytes |
+| Media medida por sesión | 3.358 bytes | 4.818 bytes |
 | Lecturas obligatorias por sesión | entre 1 y 4 | 1 |
 | Contexto gastado en sesiones que no tocan tareas | la inyección en el fichero de convenciones | 0 |
 
@@ -151,8 +151,11 @@ ser un tope, y su valor entero está en que obligue a elegir qué entra en el me
 recorta es contenido, no el tope.
 
 **Esto no es "el tope nunca sube", es "el tope sube solo cuando reducir ya no es posible sin perder
-algo".** La medida de hoy, 4.746 de 5.120 bytes, tiene 374 de margen: nunca hizo falta apretar para
-caber, así que esta regla no se ha puesto a prueba todavía. Si en el futuro un comando nuevo obliga a
+algo".** La medida de hoy, 4.818 de 5.120 bytes, tiene 302 de margen: nunca hizo falta apretar para
+caber, así que esta regla no se ha puesto a prueba todavía. Pero el margen que de verdad manda no es
+ese, sino el de la parte fija, que con las dos banderas nuevas `--check-dod` y `--uncheck-dod` en la
+rejilla de `FIELD FLAGS` ha bajado a **129 bytes** de los 3.456: cualquier texto nuevo en el bloque
+fijo tiene que caber ahí, no en los 302 del total. Si en el futuro un comando nuevo obliga a
 recortar el bloque fijo (`COMMANDS`, `FIELD FLAGS`, `RULES`) y esa reducción sale limpia, sin perder
 información que un agente necesite para arrancar bien, es que había margen y el tope hizo su trabajo.
 Pero si reducir más solo se puede ya a costa de quitar algo así, mantener el tope fijo deja de ser
@@ -164,9 +167,12 @@ disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es
 
 - **Los hitos como entidad.** En el estudio, el comando de crear hitos se usó 22 veces, pero los
   comandos de documentos y de decisiones no se usaron ni una sola vez en seis días. `biso` conserva el
-  hito como campo de texto libre de la tarea y no crea una entidad con ciclo de vida propio. Cuidado
-  con una tentación concreta: declarar que el hito es texto libre y a la vez que la bandera valida
-  contra "los hitos definidos" es contradictorio, porque nada puede llenar ese conjunto.
+  hito como campo de la tarea y no crea una entidad con ciclo de vida propio: no hay comando que cree
+  un hito, ni clave de configuración que lo declare, ni fecha ni estado propios. Que no haya entidad
+  no quiere decir que la bandera no valide, y conviene no confundir las dos cosas: `--milestone`
+  valida contra el conjunto de hitos que las tareas usan de hecho (6.3 de `SPEC.md`), que es derivado
+  y se llena solo. Lo que sí sería contradictorio es hacerla validar contra "los hitos definidos",
+  porque nada declara ese conjunto y nadie podría llenarlo.
 - **El servidor de integración.** En 1.280 transcripciones no hubo una sola llamada al servidor de
   herramientas que la herramienta estudiada ofrece, pese a estar disponible. Al analizarlo se vio que
   arregla buena parte de los errores de parámetros y **ninguno** de los problemas de granularidad. Las
@@ -246,14 +252,32 @@ Cada entrada dice la sección de la especificación a la que corresponde.
 **6.1, por qué no hay coincidencia por prefijo ni por parecido al resolver una referencia.** Una regla
 que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
 
-**6.3, por qué las tareas archivadas cuentan en el conjunto de etiquetas y personas contra el que
-validan los filtros.** Es lo que impide que un filtro que hoy funciona deje de funcionar mañana por
-archivar la última tarea que lo usaba.
+**6.3, por qué las tareas archivadas cuentan en los conjuntos de etiquetas, personas e hitos contra
+los que validan los filtros.** Es lo que impide que un filtro que hoy funciona deje de funcionar
+mañana por archivar la última tarea que lo usaba.
 
-**6.3, por qué las etiquetas y las personas no tienen vocabulario cerrado al escribir, pero sus
-filtros sí validan.** No tienen vocabulario cerrado porque su utilidad es que se puedan inventar sobre
-la marcha. Y validar al leer no es una asimetría con la escritura: es la aplicación del principio 1,
-que dice que un filtro que no puede encajar con nada es un error y no una respuesta vacía.
+**6.3, por qué las etiquetas, las personas y los hitos no tienen vocabulario cerrado al escribir, pero
+sus filtros sí validan.** No tienen vocabulario cerrado porque su utilidad es que se puedan inventar
+sobre la marcha. Y validar al leer no es una asimetría con la escritura: es la aplicación del
+principio 1, que dice que un filtro que no puede encajar con nada es un error y no una respuesta
+vacía.
+
+**6.3, por qué el hito validaba y ahora valida.** El hito era la excepción, con un `--milestone` que
+nunca fallaba y devolvía una lista vacía ante cualquier errata. La razón que se daba era que no hay
+entidad de hito, pero el argumento del párrafo de arriba no distingue en nada al hito de la etiqueta:
+las dos son texto que quien llama se inventa, ninguna de las dos se declara antes de usarla, y en las
+dos una errata al filtrar produce exactamente el fallo que el principio 1 existe para evitar. Lo que
+hacía falta no era una entidad, sino un conjunto contra el que comparar, y ese conjunto ya estaba
+ahí sin que nadie lo escribiera: los hitos que las tareas llevan de hecho. Con eso, **el hito era la
+última asimetría del principio 1 dentro de la especificación, y deja de serlo.**
+
+La excepción que queda, la bandera `--unchecked`, no es de la misma clase y por eso se conserva. La
+diferencia está en quién decide: una asimetría es el programa el que decide callar, sin que quien
+llama lo sepa ni pueda evitarlo, mientras que `--unchecked` la pide quien llama, en la misma línea de
+comandos, y quien la escribe está declarando que acepta una lista vacía sin garantía. Un
+comportamiento que se pide no engaña a nadie. Por eso `--unchecked` pasa a apagar también la
+comprobación del hito: dejar el hito fuera de la escapatoria declarada crearía una asimetría nueva
+justo al quitar la vieja.
 
 **7.3, por qué los tres mensajes de "no la encuentro" son distintos.** Porque las tres situaciones
 piden acciones distintas de quien llama: corregir la sintaxis, dejar de buscar, o mirar en el archivo.

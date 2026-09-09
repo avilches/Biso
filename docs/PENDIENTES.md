@@ -16,7 +16,8 @@ buscó decisiones que no se sostuvieran contra un escenario concreto.
 
 **Cuando una entrada se cierra, se quita de aquí.** El 2026-09-09 se cerraron las dos de la sección que
 señalaba lo que el documento vendía mejor de lo que era, diez de las incoherencias de la sección 3, y las
-dos decisiones que esperaban al usuario. Y una se cerró por una vía que conviene recordar, porque no es
+dos decisiones que esperaban al usuario, y ese mismo día seis más de esa sección, que necesitaban elegir
+entre dos arreglos válidos. Y una se cerró por una vía que conviene recordar, porque no es
 la habitual: el hueco de `--board` no se rellenó, se disolvió al retirar la bandera, cuando se vio que
 `-C` ya llegaba a todo lo que ella prometía. La sección 12 de `DECISIONES.md` guarda el porqué. Merece la
 pena preguntarse lo mismo ante cada entrada que queda: si el hueco existe porque falta decidir algo, o
@@ -118,43 +119,14 @@ que la implementación tiene que resolver. *(De la persistencia.)*
 
 ## 3. Incoherencias que no cambian el comportamiento
 
-Ninguna hace fallar una implementación, pero cada una es una frase que dice algo falso. Las siete que
-quedan necesitan elegir entre dos arreglos válidos, y por eso no cayeron con las otras diez.
+Ninguna hace fallar una implementación, pero cada una es una frase que dice algo falso. Queda una, y
+sigue abierta porque la clave que discute está congelada por el contrato de estabilidad, así que el
+texto y el JSON no se pueden arreglar de la misma forma.
 
-- **`leaseExpired` sale en dos de los cuatro bloques del JSON de `biso prime`** y no en los otros dos, con
-  su razón escrita (ahí valdría siempre `false`). La sección 12.4 promete que todas las claves
-  documentadas aparecen siempre "para que nadie tenga que distinguir entre no está y no tiene valor", que
-  es exactamente la distinción que esto obliga a hacer. O sale en los cuatro, o la promesa se matiza.
-  *(De la persistencia.)*
-- **`urgencyBreakdown` aparece en el ejemplo JSON de `biso get` sin decir que necesita
-  `--explain-urgency`**, mientras que para el texto sí se dice. Choca con la misma promesa de la 12.4 que
-  la entrada anterior, y conviene decidirlas juntas: puede que la distinción que salve las dos sea que una
-  clave varíe según los datos, que es lo que la promesa prohíbe, frente a variar según lo que quien llama
-  ha pedido, que es otra cosa. *(Anterior.)*
 - **La fila `tasks` de `biso where` usa "active" con el sentido de "no archivada"**, cuando la tabla de
   vocabulario reserva esa palabra para el papel del estado. Cuidado: la clave JSON `active` está congelada
   por el contrato de estabilidad de la sección 13, así que el texto y el JSON no se pueden arreglar igual.
   *(Anterior.)*
-- **La línea de estado de `biso finish` no es alcanzable desde el ciclo que el documento enseña**: muestra
-  `dod 1/1`, y la invocación del ciclo no lleva `--check-dod`, así que diría `dod 0/1`. Los ejemplos de
-  salida se generan, así que hay que arreglar uno de los dos. El mismo `dod 1/1` sale también en la salida
-  de `biso archive`, y las otras cinco líneas de estado del documento sí dicen `dod 0/1`. *(Anterior.)*
-- **El informe de `biso doctor` no dice si un error ya reparado cuenta en el recuento de la primera
-  línea.** El ejemplo dice "1 error found" y "1 problem fixed" habiendo encontrado dos, y el código de
-  salida 0 se documenta como "nada iba mal, o todo error encontrado se reparó", que presupone que sí suma.
-  *(Anterior.)*
-- **La rejilla `FIELD FLAGS` del mensaje de arranque no incluye `--check-dod` ni `--uncheck-dod`**, que son
-  justo los que no se pueden adivinar, mientras la sección 9.6 promete que lleva "los nombres de todas las
-  banderas de campo". Añadirlos engorda la parte fija del mensaje, que tiene 201 bytes libres de los que
-  `INTEGRATION.md` ya ha reservado unos 160, así que hay que medir antes de escribir. *(Anterior.)*
-- **`--milestone` es el único filtro de texto libre que no valida.** La sección 6 de `DECISIONES.md`
-  explica por qué las etiquetas y las personas no tienen vocabulario cerrado al escribir pero sus filtros
-  sí validan, y ese argumento no distingue en nada al hito. Hoy un hito mal escrito devuelve una lista
-  vacía, que es el fallo que el principio 1 existe para evitar. **Corrección de una creencia anterior**:
-  no es la única grieta de ese principio, porque la bandera `--unchecked` de `biso ls` ya apaga a propósito
-  la comprobación de etiquetas y personas, así que con ella una etiqueta mal escrita devuelve también una
-  lista vacía. La pregunta no es si el principio admite excepciones, que ya admite una declarada, sino si
-  la del hito debe declararse igual o desaparecer. *(Anterior.)*
 
 ---
 
@@ -201,6 +173,14 @@ otros dos errores de resolución de tablero sí lo tienen.
 escribe `biso snapshot` se define por referencia a ese esquema, la ambigüedad se propaga al fichero que
 `init --from` lee de vuelta, y la prueba de simetría promete "toda su configuración" ejemplificando solo
 cuatro cosas.
+
+**El sobre de error tiene cuatro claves que varían según los datos.** Al reescribir la promesa de la
+sección 12.4 quedó dicho con todas las letras que ninguna clave va ni viene según los datos, y que la
+única excepción son las que gobierna una bandera, porque quien llama sabe qué ha escrito. El sobre de
+error de la sección 12.2 incumple eso: `field`, `given`, `valid` y `details` aparecen o no según qué
+error sea. Es la única tensión que le queda a la promesa recién escrita, y no se tocó porque quedaba
+fuera del encargo. Puede que la salida sea documentarlas por `code`, o admitir que un sobre de error no
+es una salida de datos y gobernarlo aparte.
 
 **`ESTADO-DEL-ARTE.md` afirma que `biso` distingue por diseño quién escribió qué**, y la lista de riesgos
 aceptados de la sección 11 de `DECISIONES.md` reconoce que un tablero con la clave `me` configurada anula

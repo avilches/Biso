@@ -383,9 +383,15 @@ De la sección 9.5 de `docs/SPEC.md` y de la 3 de `docs/DECISIONES.md`:
 
 | Parte | Tope | Ocupado hoy | Libre |
 |---|---:|---:|---:|
-| Parte fija (título, `COMMANDS`, `FIELD FLAGS`, `RULES`, cierre) | 3.456 | 3.255 | **201** |
+| Parte fija (título, `COMMANDS`, `FIELD FLAGS`, `RULES`, cierre) | 3.456 | 3.327 | **129** |
 | Resumen del tablero (`BOARD` y los cuatro bloques) | 1.664 | 1.491 | **173** |
-| **Total** | **5.120** | **4.746** | **374** |
+| **Total** | **5.120** | **4.818** | **302** |
+
+**El hueco de la parte fija se ha encogido y eso cambia lo que se puede proponer.** Las banderas
+`--check-dod` y `--uncheck-dod` entraron en la rejilla de `FIELD FLAGS`, y con ellas la parte fija
+pasó de 3.255 a 3.327 bytes: de los 201 libres que había quedan 129. El resumen del tablero no se ha
+movido, así que el total baja de 374 a 302 libres. Los 302 no sirven para medir texto nuevo del
+bloque fijo, porque las dos partes tienen tope propio y el resumen no cede el suyo.
 
 Dos restricciones que hay que respetar al proponer texto:
 
@@ -396,18 +402,39 @@ Dos restricciones que hay que respetar al proponer texto:
   aprieta deja de ser un tope ... si los números no cupieran, lo que se recorta es contenido, no el
   tope".
 
-### 7.4. La frase propuesta
+### 7.4. La frase propuesta, que hoy ya no cabe
 
-Cabe en el párrafo de cierre, que es donde ya vive el bucle. Unos 160 bytes de los 201 libres de la
-parte fija:
+Su sitio natural es el párrafo de cierre, que es donde ya vive el bucle:
 
 ```
 Everything a later session needs lives in the task: --doc for a design or plan
 file, --note for a decision, ask when a person must choose. Keep no notes elsewhere.
 ```
 
-Alternativa, si se prefiere como regla numerada en vez de en el cierre: sería la duodécima del
-bloque `RULES`, y entonces hay que contar también el prefijo de numeración y su sangría.
+Ese texto mide **164 bytes** con su salto de línea final, y la parte fija tiene hoy **129 libres**.
+Cuando este apartado se escribió había 201 y por eso decía que cabía; con las dos banderas nuevas de
+`FIELD FLAGS` ya no cabe, y le faltan 35 bytes. No es un número que corregir: es que la propuesta, tal
+como está escrita, no entra.
+
+La regla del proyecto sobre qué cede cuando el presupuesto aprieta ya está citada en 7.3, y viene de
+`docs/DECISIONES.md`: lo que se recorta es contenido, no el tope. Así que subir los 3.456 de la parte
+fija para hacerle sitio a esta frase no es una de las opciones. Quedan tres, y **elegir entre ellas es
+decisión de la sección 8, no de este apartado**:
+
+1. **Recortar la frase** hasta 129 bytes o menos, aceptando que pierde detalle. Los 35 bytes de más
+   salen, por ejemplo, de dejar de nombrar los dos usos de `--doc` ("a design or plan file") o de
+   suprimir la última oración, que es la que cierra la puerta a escribir notas en otro sitio y
+   probablemente sea la parte que más aporta.
+2. **Recortar otra cosa del bloque fijo** para hacerle sitio: alguna de las once reglas, o una línea
+   de `COMMANDS`. Esto es exactamente el caso que `docs/DECISIONES.md` describe como la prueba de
+   fuego del tope, y solo vale si esa reducción sale limpia; si para meter la frase hay que quitar
+   algo que un agente necesita para arrancar, la que sobra es la frase.
+3. **Dejarla fuera del mensaje**, y quedarse con las dos alternativas que la sección 8 ya lista: la
+   skill propia, o el texto de las tareas.
+
+Una advertencia sobre la variante que se proponía antes: meterla como regla numerada, la duodécima
+del bloque `RULES`, no ahorra nada, porque hay que sumarle el prefijo de numeración y la sangría. Con
+129 bytes libres, esa variante está aún más lejos de caber que la del cierre.
 
 **Lo que no cabe, y no debe caber, es la tabla de correspondencia de la sección 5.2.**
 
@@ -447,8 +474,22 @@ es completo para trabajo pequeño, pero no dice dónde viven los documentos ni l
 exactamente lo que se pierde cuando la sesión muere.
 
 En contra: el `prime` enseña la herramienta, no el proceso del proyecto, y "la tarea es el registro
-duradero" es proceso. Y son 160 de los 201 bytes libres de la parte fija, que es la que no se puede
-recortar sola.
+duradero" es proceso.
+
+**Y hay algo más que ha cambiado desde que se escribió esta pregunta: ya no es solo que la frase
+tenga que merecer el sitio, es que el sitio no existe.** Cuando este documento planteó la duda, la
+parte fija tenía 201 bytes libres y la frase medía unos 160, así que la única cuestión era si valía la
+pena gastarlos. Hoy la parte fija tiene 129 libres y la frase mide 164: **la propuesta, con el tamaño
+que tiene, no entra**. La pregunta abierta pasa a tener dos mitades, y la primera hay que contestarla
+antes que la segunda:
+
+1. ¿Se le hace sitio? Recortando la frase a 129 bytes o menos, o recortando algo del bloque fijo para
+   que quepa entera. El apartado 7.4 detalla las dos vías y lo que cuesta cada una.
+2. Si se le hace sitio, ¿lo merece? Que es la pregunta original, con sus argumentos a favor y en
+   contra intactos.
+
+Subir el tope no está entre las salidas: la regla del proyecto, citada en 7.3, es que lo que se
+recorta es contenido y no el tope.
 
 Las dos alternativas si la respuesta es que no:
 
@@ -510,9 +551,11 @@ En este orden, y ninguno de los pasos depende de que exista una línea de códig
    tabla de la sección 5.2, siguiendo el procedimiento de su `CLAUDE.md` (incluida la excepción en
    `home/.claude/.gitignore`, que es el paso que se olvida). Esto no toca la especificación de
    `biso` y se puede probar en cuanto exista el CLI.
-2. **La frase del `prime`**, si la decisión de la sección 8 es que sí: editar la salida literal de
-   la sección 9.7 de `docs/SPEC.md`, **recalcular los bytes de las dos partes** y actualizar los
-   números de la 9.5 y de la sección 3 de `docs/DECISIONES.md`, que hoy dicen 3.255 y 4.746.
+2. **La frase del `prime`**, si la decisión de la sección 8 es que sí: primero dejarla en 129 bytes o
+   menos, o recortar antes lo que haga falta del bloque fijo, porque con su tamaño de hoy no cabe;
+   luego editar la salida literal de la sección 9.7 de `docs/SPEC.md`, **recalcular los bytes de las
+   dos partes** y actualizar los números de la 9.5 y de la sección 3 de `docs/DECISIONES.md`, que hoy
+   dicen 3.327 y 4.818.
 3. **La entrada en `docs/DECISIONES.md`** explicando por qué esa frase entra y por qué no se nombra
    a Superpowers. Sin eso, la siguiente sesión que vea la frase la puede quitar por parecer ajena al
    resto del mensaje.

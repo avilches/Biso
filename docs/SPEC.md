@@ -769,7 +769,7 @@ escribe. No dice nada de cómo se guardan.
 | `type` | uno del vocabulario de tipos | no | quien llama | sí |
 | `priority` | uno del vocabulario de prioridades | no | quien llama | sí |
 | `project` | uno del vocabulario de proyectos | no | quien llama | sí |
-| `milestone` | texto libre | no | quien llama | sí |
+| `milestone` | texto de hito | no | quien llama | sí |
 | `parent` | referencia a otra tarea | no | quien llama | sí |
 | `assignees` | lista de textos de persona | no | quien llama | sí |
 | `reporter` | texto de persona | no | el programa al crear, o quien llama; ver 5.6 | sí |
@@ -1128,8 +1128,8 @@ error: unknown status: "Pending"
 | `--status`, `--type`, `--priority`, `--project` | el vocabulario configurado | error 3 |
 | `--label` y `--label-or` | el conjunto de etiquetas del tablero, definido abajo | error 3, con las cinco más parecidas |
 | `--assignee` | el conjunto de personas del tablero, definido abajo | error 3, con las cinco más parecidas |
+| `--milestone` | el conjunto de hitos del tablero, definido abajo | error 3, con las cinco más parecidas |
 | `--parent` | la resolución de referencias de la sección 7 | error 2, 4 o 5 |
-| `--milestone` | nada, es texto libre; se compara con la regla de 6.1 | nunca falla, puede no devolver nada |
 | `--search` | nada, es texto libre | nunca falla |
 
 **El conjunto de etiquetas del tablero** es la unión de las etiquetas declaradas en la clave `labels`
@@ -1140,11 +1140,23 @@ Los valores de `reporter` no entran en este conjunto**, porque no hay ningún fi
 persona que solo ha reportado tareas y nunca las ha tenido asignadas no pertenece al conjunto contra
 el que valida `--assignee`.
 
-**Las etiquetas y las personas no tienen vocabulario cerrado al escribir.** Escribir una etiqueta nueva
-la incorpora al conjunto, y a partir de ese momento filtrar por ella funciona.
+**El conjunto de hitos del tablero es solo derivado**: son los valores de `milestone` que lleva
+cualquier tarea del tablero, **archivadas y terminadas incluidas**, y nada más. Es el único de los
+tres que no tiene mitad declarada, porque no existe ninguna clave `milestones` en la configuración
+(10.10) ni ninguna bandera de `biso init` que la escriba, así que **un hito existe exactamente
+mientras alguna tarea lo lleve escrito**. Un tablero en el que ninguna tarea tiene hito tiene el
+conjunto vacío, y entonces cualquier `--milestone` es error 3; el mensaje lo dice tal cual, sin
+sugerencias, porque no hay ninguna que ofrecer.
 
-Está la bandera `--unchecked` de `biso ls` y `biso export`, que apaga la comprobación de etiquetas y
-personas y solo esa; no cambia ninguna otra cosa.
+**Ni las etiquetas, ni las personas, ni los hitos tienen vocabulario cerrado al escribir.** Escribir
+una etiqueta nueva la incorpora al conjunto, y a partir de ese momento filtrar por ella funciona. Con
+el hito pasa lo mismo: `biso set TASK-1 -m "v1.2"` es lo que hace que `v1.2` exista para
+`biso ls -m "v1.2"`, y la última tarea que deja de llevarlo lo saca del conjunto.
+
+Está la bandera `--unchecked` de `biso ls` y `biso export`, que apaga **las tres comprobaciones contra
+estos conjuntos, las de etiquetas, personas e hitos, y ninguna otra**: los vocabularios configurados
+de `--status`, `--type`, `--priority` y `--project` siguen validando, y `--parent` sigue resolviendo
+su referencia. La bandera no cambia ninguna otra cosa.
 
 ---
 
@@ -1455,7 +1467,7 @@ fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 
 Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
-El texto literal de la sección 9.7 ocupa **4.746 bytes** con el tablero del ejemplo: **3.255** de
+El texto literal de la sección 9.7 ocupa **4.818 bytes** con el tablero del ejemplo: **3.327** de
 parte fija y **1.491** de resumen. Las dos partes caben dentro de su tope.
 
 **El número que congela el contrato de estabilidad de la sección 13 es el total, 5.120 bytes**, porque
@@ -1518,7 +1530,7 @@ COMMANDS  (`biso <cmd> --help` for the detail of any flag)
   biso note <ref> "TEXT"
   biso ask <ref> "QUESTION"
   biso answer <ref> "TEXT"
-  biso finish <ref>... [--summary "TEXT"] [--check all]
+  biso finish <ref>... [--summary "TEXT"] [--check all] [--check-dod all]
   biso set <ref>... [any field flag]
   biso comment <ref> "TEXT" [--comment-author @who]
 
@@ -1527,7 +1539,7 @@ FIELD FLAGS  (same names, same meaning, in every command above that writes)
   -l --label  -d --desc    --ac     --dod       --plan         --note
   --summary   --dep        --ref    --doc       --file         -m --milestone
   -p --parent --due        --ordinal --ext K=V  --reporter     --comment
-  --check     --uncheck
+  --check     --uncheck             --check-dod --uncheck-dod
 
 RULES  (none of these are guessable; they are the whole learning curve)
   1. Every write goes through biso. Nothing else touches the board.
@@ -1580,8 +1592,9 @@ NEXT UP  (not assigned to you, by urgency)
   49 more not shown: `biso ls --not-active --not-waiting`
 
 Pick one, `biso start <ref> --plan "..."`, work, `biso note <ref> "..."` as you go,
-and close with `biso finish <ref> --check all --summary "..."`. That is the loop.
-Create a task when the work needs planning or review; do small edits directly.
+and close with `biso finish <ref> --check all --check-dod all --summary "..."`.
+That is the loop. Create a task when the work needs planning or review; do small
+edits directly.
 ```
 
 Cómo se calcula el resumen, para que la implementación sea única:
@@ -1681,12 +1694,12 @@ THE BOARD IS EMPTY
     "assignedToYou": [
       { "id": "TASK-61", "title": "Rewrite the install section", "status": "To Do",
         "type": "docs", "priority": "medium", "assignees": ["@claude"], "due": null,
-        "acDone": 0, "acTotal": 1, "urgency": 12.4 }
+        "acDone": 0, "acTotal": 1, "urgency": 12.4, "leaseExpired": false }
     ],
     "nextUp": [
       { "id": "TASK-7", "title": "Crash on an empty repository", "status": "To Do",
         "type": "bug", "priority": "high", "assignees": [], "due": "2026-09-08",
-        "acDone": 0, "acTotal": 4, "urgency": 18.2 }
+        "acDone": 0, "acTotal": 4, "urgency": 18.2, "leaseExpired": false }
     ],
     "hiddenCount": 49
   }
@@ -1702,10 +1715,12 @@ cada tarea (en `needsAnswer` o en cualquier otro de los cuatro bloques), que ya 
 aparcada, igual que el campo derivado `waiting` de `task.list`. Quien necesite leer la pregunta usa
 `biso get --section question`.
 
-**`leaseExpired` sale solo en `inProgress` y en `needsAnswer`**, que son los dos únicos bloques que
-pueden contener una tarea en el estado activo, y por tanto los dos únicos donde un arrendamiento puede
-existir: la precedencia de 9.7 manda toda tarea activa a uno de esos dos, así que en `assignedToYou` y
-en `nextUp` el campo sería siempre `false` y no diría nada. Va en el JSON aunque la segunda línea
+**`leaseExpired` sale en los cuatro bloques**, y en `assignedToYou` y en `nextUp` vale siempre `false`.
+Esos dos bloques no pueden contener ninguna tarea en el estado activo, que es la única clase de tarea
+en la que un arrendamiento puede existir: la precedencia de 9.7 manda toda tarea activa a `inProgress`
+o a `needsAnswer`. Quien implemente puede apoyarse en ese valor constante, pero la clave se emite igual,
+porque la regla de 12.4 prohíbe que una clave aparezca o desaparezca según los datos y quien lee esta
+salida no sabe de antemano en qué bloque va a caer una tarea. Va en el JSON aunque la segunda línea
 indentada del texto salga solo en `inProgress`, porque no es texto largo y esconderlo obligaría a quien
 consume JSON a llamar a `biso get` tarea por tarea para saber algo que el mensaje de texto ya enseña.
 Sus dos detalles, `leaseExpiresAt` y `leaseHolder`, no salen aquí: para eso está `task.list` (10.4), y
@@ -2544,7 +2559,7 @@ biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] 
 | `--assignee <@w>` | `-a` | no | persona | | sí | sí | `--mine`, `--unassigned` |
 | `--mine` | | no | booleano | falso | no | no | `-a`, `--unassigned` |
 | `--unassigned` | | no | booleano | falso | no | no | `-a`, `--mine` |
-| `--milestone <m>` | `-m` | no | texto libre | | no | no | |
+| `--milestone <m>` | `-m` | no | hito | | no | no | |
 | `--parent <ref>` | `-p` | no | referencia | | no | no | |
 | `--blocked` | | no | booleano | falso | no | no | `--not-blocked` |
 | `--not-blocked` | | no | booleano | falso | no | no | `--blocked` |
@@ -2572,8 +2587,9 @@ Reglas de combinación de filtros:
   `--assignee` y `--label-or`.
 - **`-l/--label` es la única que se combina con `y`.** `-l frontend -l bug` son las que llevan las
   dos. Para el `o` está `--label-or`, que valida igual.
-- **`--unchecked` apaga la comprobación de existencia de `-l`, `--label-or` y `-a`, y solo esa.** No
-  cambia cómo se combinan ni afecta a ningún otro filtro. Los vocabularios cerrados siguen validando.
+- **`--unchecked` apaga la comprobación de existencia de `-l`, `--label-or`, `-a` y `-m`, y ninguna
+  otra.** No cambia cómo se combinan ni afecta a ningún otro filtro. Los vocabularios configurados
+  siguen validando, y `-p/--parent` sigue resolviendo su referencia.
 - **El estado terminal se excluye por defecto**, y `--any-status` es la única forma de incluirlo.
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
@@ -2613,7 +2629,7 @@ ordenadas por identificador.
 | Caso | Qué pasa |
 |---|---|
 | Filtro con un valor fuera del vocabulario | Error 3, con la lista de válidos |
-| `-l` con una etiqueta que no existe en el tablero | Error 3, con las cinco más parecidas |
+| `-l` con una etiqueta, `-a` con una persona o `-m` con un hito que el tablero no tiene | Error 3, con las cinco más parecidas |
 | Lo mismo con `--unchecked` | Se acepta, y probablemente no devuelve nada |
 | Filtro válido sin resultados | Ninguna línea por stdout, `note: no tasks match` por stderr, código **0** |
 | Hay más resultados que el límite | Se imprimen los primeros y sale el aviso de recorte |
@@ -2789,8 +2805,9 @@ Filters (repeat or comma-separate; same field is OR, different fields are AND):
       --overdue              past its due date
       --due-before <date>    due before YYYY-MM-DD
       --search <text>        free text; see `biso get --help` for the scope
-      --unchecked            do not check that the labels and assignees you
-                             filter by exist on the board; nothing else changes
+      --unchecked            do not check that the labels, assignees and
+                             milestones you filter by exist on the board;
+                             nothing else changes
 
 Shape:
       --sort <field>         urgency, id, ordinal, due, updated, created, title
@@ -3001,6 +3018,11 @@ Es el objeto de `task.list` más los campos del cuerpo:
   }
 }
 ```
+
+**`urgencyBreakdown` solo sale con `--explain-urgency`**, igual que el desglose de la salida de texto, y
+el ejemplo de arriba es el de una llamada que la lleva. Es la única clave de todo el documento que una
+bandera añade, y la excepción a la regla de las claves siempre presentes está declarada en 12.4, junto
+con la otra cosa que `biso get` hace con sus banderas: recortar `data.task` con `--section`.
 
 `urgencyBreakdown.active` es el único término que no es un número suelto: `value` es el número que
 entra en la suma, el producto del coeficiente por el factor, igual que en los demás términos.
@@ -3261,7 +3283,7 @@ El ciclo entero de una tarea es esto:
 ```
 biso start  TASK-11 --plan "1. Leer el parser. 2. Anadir el caso CRLF."
 biso note   TASK-11 "El parser ya normalizaba LF, faltaba CRLF"
-biso finish TASK-11 --check all --summary "Normaliza CRLF en el diff, verificado con las pruebas."
+biso finish TASK-11 --check all --check-dod all --summary "Normaliza CRLF en el diff, verificado con las pruebas."
 ```
 
 #### 10.7.1. `biso start`
@@ -3647,7 +3669,7 @@ Exit codes:
                                         8  no board here
 
 Examples:
-  biso finish TASK-11 --check all --summary "Normalizes CRLF, tests green"
+  biso finish TASK-11 --check all --check-dod all --summary "Normalizes CRLF"
   biso finish TASK-11 --check "covers CRLF" --note "313 tests green"
   biso finish TASK-11 TASK-12 --check all --summary "Both closed by PR 42"
 ```
@@ -4588,19 +4610,32 @@ que queda pendiente es una reparación que ya se sabe cómo repetir.
 #### Salida
 
 ```
-1 error found, 1 warning found
+2 errors found, 1 warning found
 Errors:
   TASK-40  dependency TASK-99 does not exist
 Warnings:
   extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)
-1 problem fixed
+1 error fixed
   the highest recorded id was TASK-40 and tasks go up to TASK-52; recorded TASK-52
 ```
 
 Los errores y los avisos se agrupan bajo su propio encabezado, `Errors:` y `Warnings:`; ninguno de
 los dos usa el prefijo `warning:` de stderr, que la sección 4.3 reserva para lo que va por ahí. Un
 grupo vacío no se imprime: si no hay avisos no aparece `Warnings:`, y si no hay errores no aparece
-`Errors:`. `1 problem fixed` cuenta lo reparado aparte, después de los dos grupos.
+`Errors:`. `1 error fixed` cuenta lo reparado aparte, después de los dos grupos.
+
+**El recuento de la primera línea es de lo que la comprobación encontró, esté reparado o no**, así que
+no cambia según se haya pedido `--fix` o no: el mismo tablero dice `2 errors found` con `--fix` y sin
+él. Lo que cambia con `--fix` es dónde sale cada error. **Un error reparado no se lista dos veces: sale
+solo en el grupo de lo reparado, y desaparece de `Errors:`**, que es siempre la lista de lo que queda
+por hacer, y por eso puede ser más corta que el número de la primera línea. La resta la explica la
+línea de lo reparado, que por eso dice `error` y no `problem`: `2 errors found` arriba, uno bajo
+`Errors:` y `1 error fixed` abajo cuadran a la vista sin que quien lee tenga que suponer nada. La
+misma cuenta es la que sostiene el código de salida 0 de más abajo, "nothing wrong, or every error
+found was fixed": lo encontrado y lo reparado se cuentan sobre el mismo conjunto.
+
+Los avisos no tienen esa distinción porque ninguno es reparable (ver la tabla de comprobaciones), así
+que `Warnings:` siempre los lista todos y su recuento siempre coincide con su lista.
 
 #### El esquema JSON
 
@@ -4622,6 +4657,13 @@ grupo vacío no se imprime: si no hay avisos no aparece `Warnings:`, y si no hay
   }
 }
 ```
+
+No hay ninguna clave de recuento: los tres números de la salida de texto se sacan de la longitud de
+las tres listas, y hay que sacarlos igual que los saca el texto. **`problems` son los errores que
+quedan, no todos los que se encontraron**, porque un error reparado se mueve a `fixed`, así que
+`2 errors found` de la primera línea es `len(problems) + len(fixed)`, y `1 warning found` es
+`len(warnings)`. Con esto un consumidor del JSON llega exactamente al mismo número que imprime el
+texto, en vez de a uno menor.
 
 #### Códigos de salida
 
@@ -5078,7 +5120,7 @@ agrupada por el código de salida con el que sale cada uno:
 | Código de salida | `code` |
 |---:|---|
 | 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config` |
-| 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_project`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
+| 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_project`, `unknown_label`, `unknown_assignee`, `unknown_milestone`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous` |
 | 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity` |
@@ -5104,9 +5146,18 @@ anterior a esta rama.
 - Las fechas son ISO 8601 en UTC terminadas en `Z`, con precisión de segundo. Nunca hora local, nunca
   sin zona. `due` es la excepción, porque es un día y no un instante, y viaja como `YYYY-MM-DD`.
 - `urgency` es un decimal con un solo dígito tras el punto.
-- Un campo sin valor es `null`, nunca la cadena vacía ni la ausencia de la clave. **Todas las claves
-  documentadas aparecen siempre**, para que nadie tenga que distinguir entre "no está" y "no tiene
-  valor".
+- Un campo sin valor es `null`, nunca la cadena vacía ni la ausencia de la clave. **Ninguna clave va ni
+  viene según los datos**: la que está documentada para un `kind` aparece siempre que se emite ese
+  `kind`, valga lo que valga, para que nadie tenga que distinguir entre "no está" y "no tiene valor".
+- **La única excepción son las claves que gobierna una bandera**, y se sostiene porque quien llama sabe
+  qué banderas ha escrito: no tiene que mirar la salida para averiguar qué va a encontrarse en ella. Lo
+  que la regla de arriba prohíbe es lo otro, que la presencia de una clave dependa de los datos, que es
+  justo lo que el consumidor no puede prever. Estas son todas las que hay en el documento:
+
+  | Clave | `kind` | La bandera que la gobierna |
+  |---|---|---|
+  | `data.task.urgencyBreakdown` | `task.get` | Solo aparece con `--explain-urgency` (10.5) |
+  | Las demás claves de `data.task` | `task.get` | Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas, y ninguna otra (10.5) |
 - Una lista vacía es `[]` y un mapa vacío es `{}`, nunca `null`.
 
 ---
@@ -5163,9 +5214,11 @@ el formato de `export` es el de `new --from` y los dos están en este contrato.
 Nombrar lo que no está evita que alguien lo dé por olvidado.
 
 - **No hay `biso delete`.** Está especificado que no existe y qué contesta si se intenta (10.8).
-- **No hay entidades de hito, documento ni decisión.** El hito es un campo de texto libre de la tarea,
-  no una entidad con ciclo de vida propio, y por eso `-m/--milestone` no valida contra ninguna lista.
-  La documentación se apunta con `--doc`, que es una lista de textos.
+- **No hay entidades de hito, documento ni decisión.** El hito es un campo de la tarea y no una
+  entidad con ciclo de vida propio: no se crea, no se cierra, no tiene fecha ni descripción, y no hay
+  ninguna clave de configuración que lo declare. Eso no impide que `-m/--milestone` valide al filtrar,
+  porque el conjunto contra el que valida es derivado de lo que las tareas usan (6.3) y no una lista
+  que haya que mantener aparte. La documentación se apunta con `--doc`, que es una lista de textos.
 - **No hay contextos de sesión**, es decir, filtros por defecto guardados que cambien lo que devuelve
   una consulta sin que se vea en la línea de comandos.
 - **No hay recurrencia, ni seguimiento de tiempo, ni subtareas con numeración propia.** Una subtarea
