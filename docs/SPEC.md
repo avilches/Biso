@@ -106,8 +106,10 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 | 7 | `ENVIRONMENT` | Falla el entorno, no la petición | el almacén no responde, no hay permisos, no se puede adquirir el acceso exclusivo, no hay terminal donde hace falta |
 | 8 | `NO_BOARD` | No hay tablero accesible desde donde se ha llamado | cualquier comando fuera de un tablero, salvo `init`, `help`, `--help` y `--version`, que no necesitan uno; `biso where` también devuelve 8 cuando no encuentra ninguno |
 | 9 | `VALIDATION` | Una validación previa ha fallado y **no se ha escrito nada** | `biso new --from tareas.ndjson` con la línea 47 inválida |
+| 10 | `DAMAGED` | El tablero está donde tiene que estar, y su almacén no se puede leer | `board.db` que no abre, o que falla su comprobación de integridad (4.12) |
+| 11 | `AMBIGUOUS_BOARD` | El mismo identificador de tablero aparece en dos sitios, y elegir uno sería escribir en el que nadie ha nombrado | dos raíces de la sección 3.3 con una carpeta que lleva el mismo marcador (3.2) |
 
-Cuatro reglas que acompañan a la tabla:
+Cinco reglas que acompañan a la tabla:
 
 - **El código 9 garantiza que no se ha escrito nada.** Si un comando termina con 9, el tablero está
   exactamente como estaba antes. Por eso una validación fallida dentro de un lote se reporta como 9 y
@@ -120,6 +122,16 @@ Cuatro reglas que acompañan a la tabla:
   siempre dice cuál de las dos ha ocurrido.
 - **El código 1 es un fallo del programa, no de quien llama.** La reacción correcta es informar, no
   reintentar con otros parámetros.
+- **Los códigos 8, 10 y 11 son los tres desenlaces malos de resolver el tablero, y son tres porque el
+  remedio de cada uno es otro.** Con el 8 no hay tablero y `biso init` lo crea; con el 10 el tablero
+  está ahí y hay que reconstruirlo desde una instantánea con `biso init --from`, que es lo único que lo
+  arregla; con el 11 hay dos y hay que quitar o renombrar uno de los dos directorios a mano. Por eso el
+  daño del almacén no comparte número con la ausencia de tablero, aunque para quien llama las tres
+  frases empiecen igual: quien ramifica sobre el número tiene que poder elegir el remedio sin leer el
+  mensaje, que es el principio de la sección 1. **Ni el 10 ni el 11 aparecen en la tabla de códigos de
+  salida de cada comando**, porque no son desenlaces propios de ninguno sino del tablero entero, igual
+  que el 1. La excepción es `biso where`, que existe justamente para explicar la resolución y los lleva
+  los dos en su tabla (10.2).
 
 ---
 
@@ -141,13 +153,27 @@ comando puede redefinir ninguna de ellas ni cambiar su significado.
 
 Reglas de aplicación, que hay que implementar tal cual:
 
-- **`--print` y `--dry-run` solo tienen sentido en los comandos que escriben.** En `prime`, `where`,
-  `ls`, `get`, `export`, `snapshot`, `config get`, `config list`, `board`, `help` y `biso doctor` sin
-  `--fix` son un error de uso con código 2 y el mensaje `error: <flag> does not apply to a read-only
-  command`, con `<flag>` igual a `--print` o `--dry-run` según cuál se haya usado. No se ignoran en
-  silencio. `biso doctor --fix` es la excepción: con `--fix` es un comando de escritura, y sus dos
-  banderas se comportan como en cualquier otro (10.11). `snapshot` (10.14) entra en esta lista por el
-  mismo motivo que `export`: escribe ficheros, pero ninguno de los dos toca ninguna tarea.
+- **Ninguna de las dos se ignora nunca en silencio**, y las dos son error de uso con código 2 allí
+  donde no tienen nada que hacer. Lo que cambia es dónde es eso, porque cada una está definida sobre
+  una cosa distinta: `--print` sobre las tareas que una escritura afecta, y `--dry-run` sobre la
+  validación que precede a una escritura.
+- **`--dry-run` es error 2 en los comandos de lectura.** En `prime`, `where`, `ls`, `get`, `export`,
+  `snapshot`, `config get`, `config list`, `board`, `help` y `biso doctor` sin `--fix`, con el mensaje
+  `error: --dry-run does not apply to a read-only command`. `biso doctor --fix` es la excepción: con
+  `--fix` es un comando de escritura y la bandera se comporta como en cualquier otro (10.11).
+  `snapshot` (10.14) entra en la lista por el mismo motivo que `export`, que escriben ficheros y no
+  tocan ninguna tarea.
+- **`--dry-run` sí vale en `biso init` y en `biso config set`**, que escriben sin tocar ninguna tarea
+  existente y tienen los dos algo que validar antes: `init --from` valida la instantánea entera contra
+  el vocabulario que ella misma trae, y sale 0 si habría funcionado y 9 si no, que es exactamente lo
+  que la definición de la bandera promete; `config set` valida el valor contra el tablero. Validar en
+  seco la restauración de un tablero de doscientas tareas sin crear nada es el caso donde más vale, así
+  que dejarla fuera de `init` sería perder lo mejor que tiene.
+- **`--print` es error 2 en todos esos comandos y también en `biso init` y `biso config set`**, con el
+  mensaje `error: --print does not apply to a command that affects no task`. Ninguno de los dos afecta
+  a ninguna tarea que existiera antes: `config set` no toca ninguna nunca, e `init --from` las crea de
+  cero en un tablero que acaba de nacer, así que imprimir doscientas fichas recién importadas no
+  informa de nada que no diga ya `biso ls`.
 - **`--json` es incompatible con `--quiet`** y con `--print`, porque los tres piden formas distintas
   de la misma salida. Cualquier pareja de las tres da código 2.
 - **`--quiet` reduce stdout a los identificadores afectados**, uno por línea, y además suprime las
@@ -228,13 +254,13 @@ de quien llama. El número no sale de contar niveles por costumbre, sino de que 
 una ruta absoluta es siempre un directorio del sistema o el contenedor de los directorios personales de
 todo el mundo, y un puntero ahí no puede estar a propósito, solo por accidente.
 
-**Nada en esta búsqueda depende de git.** No se busca la raíz de ningún repositorio, no se para al
-encontrar un `.git`, y no se ejecuta `git` para preguntarlo. La razón es que la sección 10.14 declara
-que git es opcional y que un tablero funciona igual sin él: una búsqueda que frenara en un `.git`
-pondría la respuesta a cuál es mi tablero en manos de una herramienta ajena, y además una que la
-cambiaría sin avisar, porque es `biso snapshot` quien crea un `.git` en el directorio del tablero la
-primera vez que se ejecuta, de modo que el mismo comando en el mismo sitio respondería una cosa antes
-y otra después. El precio de no tener ese freno es que un proyecto sin puntero propio hereda el del
+**Nada en esta búsqueda depende del control de versiones.** No se busca la raíz de ningún repositorio,
+no se para al encontrar la marca de uno, y no se ejecuta ningún programa para preguntarlo. La razón es
+que la sección 10.14 declara que el control de versiones es opcional y que un tablero funciona igual sin
+él: una búsqueda que frenara donde empieza un repositorio pondría la respuesta a cuál es mi tablero en
+manos de una herramienta ajena, y además una que la cambiaría sin avisar, porque es `biso snapshot` quien
+crea el repositorio del tablero la primera vez que se ejecuta, de modo que el mismo comando en el mismo
+sitio respondería una cosa antes y otra después. El precio de no tener ese freno es que un proyecto sin puntero propio hereda el del
 proyecto que lo contenga, si lo hay, y se acepta a propósito: la sección 12 de `DECISIONES.md` dice por
 qué, y `biso where` enseña siempre de qué directorio salió el puntero que ha resuelto.
 
@@ -284,7 +310,7 @@ tablero sin ningún paso adicional. Siete reglas gobiernan su lectura:
   base de datos discrepan es un error**, y `biso doctor` lo comprueba (10.13).
 - **Un directorio con el marcador pero sin la base de datos no es un tablero, y la búsqueda sigue.** No
   es un caso rebuscado: es lo que recibe una copia de trabajo de un proyecto que versionó el directorio
-  de su tablero, porque el `.gitignore` que `init` escribe ahí dentro excluye siempre la base de datos y
+  de su tablero, porque el fichero de exclusión que `init` escribe ahí dentro excluye siempre la base de datos y
   nunca el marcador (10.1). Saltarlo y seguir buscando es lo que encuentra el tablero de verdad un nivel
   más arriba. Si la búsqueda acaba sin nada, el error nombra ese directorio, porque explica el fallo
   mejor que decir solo que no se encontró el tablero.
@@ -302,7 +328,23 @@ tablero sin ningún paso adicional. Siete reglas gobiernan su lectura:
 
 **Si el mismo `id` aparece en dos sitios, es un error** que nombra los dos directorios y no elige
 ninguno, porque elegir sería escribir en un tablero que quien llama no ha nombrado, y dos almacenes con
-la misma identidad es exactamente lo que esta persistencia no admite.
+la misma identidad es exactamente lo que esta persistencia no admite. Sale con **código 11**
+(`AMBIGUOUS_BOARD`, sección 2), con la clave `code` `ambiguous_board_id`, y con este mensaje por stderr:
+
+```
+error: board 3f9a2b1c is in two places, and biso will not choose between them
+        /Users/avilches/.biso/boards/kex-3f9a2b1c
+        /Volumes/work/boards/kex-3f9a2b1c
+hint: rename or remove one of the two directories
+```
+
+Tiene su propio código de salida y no el 8 porque su remedio no se parece a los otros dos: aquí no
+falta un tablero que `biso init` pueda crear, sobra uno que solo una persona puede decidir cuál es. El
+error lo da cualquier comando que tenga que resolver el tablero, y también `biso init`, que recorre las
+mismas raíces para comprobar que el `id` que va a acuñar o a adoptar no exista ya (10.1). **`biso
+doctor` no lo comprueba**, y no es un olvido: para llegar a ejecutarse, `doctor` necesita un tablero
+resuelto, así que en un tablero duplicado aborta con este mismo error antes de comprobar nada, igual
+que hace con la base de datos ilegible de la sección 4.12.
 
 **El `<slug>` del nombre de la carpeta se deriva de `project_name`, nunca es el nombre literal**:
 `project_name` es texto libre, y copiarlo tal cual metería espacios y mayúsculas en una ruta que
@@ -399,6 +441,8 @@ un tablero concreto, y esta es de la máquina entera, independiente de cuántos 
 |---|---|---|
 | `boards_root` | ruta | `~/.biso/boards` |
 | `boards_extra_roots` | lista de rutas | vacía |
+| `vcs` | `git`, `none` o `custom` | `git` |
+| `vcs_custom` | objeto, y solo con `vcs` igual a `custom` | ausente |
 
 `boards_root` es la raíz por defecto de la sección 3.2: el directorio donde `biso init` sin `--at` crea
 los tableros nuevos. `boards_extra_roots` son raíces adicionales, para cuando algún tablero vive fuera
@@ -416,6 +460,37 @@ Se leen directamente de ese fichero, sin pasar por la resolución de tablero de 
 hace falta conocerlas antes de que exista el primer tablero de la máquina. Y, como en cualquier otro
 sitio de `biso`, **una clave desconocida en este fichero es un error**, nunca algo que se ignore en
 silencio.
+
+**`vcs` es el sistema de control de versiones con el que `biso snapshot` guarda el historial de la
+instantánea** (sección 10.14), y lo único de esta configuración que llega a hacer que `biso` ejecute un
+programa ajeno. Vive aquí y no en la configuración de un tablero porque dice qué herramienta hay
+instalada en esta máquina, no cómo es un tablero: así no viaja en la instantánea, y restaurar la de otra persona no le impone a nadie el sistema
+del ordenador de origen. Vale para todos los tableros de la máquina.
+
+- **`git`** es el valor por defecto y el único sistema que `biso` trae aprendido en la versión 1.0. Su
+  receta completa, con las dos preguntas que le hace al repositorio y las tres órdenes que le da, está
+  en la sección 10.14, que es la única que lo ejecuta.
+- **`none`** deja a `biso snapshot` escribiendo sus dos ficheros y nada más: no busca repositorio, no
+  crea ninguno y no ejecuta ningún programa. Es lo que hay que poner en una máquina sin git, o cuando
+  el historial de la instantánea no interesa.
+- **`custom`** es el escape para un sistema que `biso` no conoce, y entonces `vcs_custom` declara las
+  órdenes. Con él, **`biso` no averigua nada del repositorio**: ejecuta la orden en el directorio del
+  tablero y mira su código de salida, y de ahí salen las dos únicas cosas que puede decir después, si
+  la orden fue bien o si falló. Por eso una instantánea con `custom` nunca lleva identificador de
+  revisión en su salida, ni distingue el caso de no haber nada que guardar.
+
+`vcs_custom` tiene estas claves, y una desconocida es un error como en cualquier otro sitio:
+
+| Clave | Tipo | Obligatoria | Qué es |
+|---|---|---|---|
+| `commit` | lista de argumentos | sí | la orden que guarda una revisión |
+| `publish` | lista de argumentos | no | la orden que la publica, y sin ella `--vcs push` es error 2 |
+| `ignore_file` | nombre de fichero | no | el fichero de exclusión que `biso init` escribe dentro del tablero (10.1) |
+
+En `commit` y en `publish`, `{message}` se sustituye por el mensaje que `biso` compone (`biso snapshot:
+248 tasks`) y `{files}` por los ficheros de la instantánea, cada uno como un argumento propio. Las dos
+se ejecutan con el directorio del tablero como directorio de trabajo, y un código de salida distinto de
+cero es error 7 con la clave `code` `vcs_commit_failed`.
 
 ---
 
@@ -623,6 +698,12 @@ consiga es cosa de quien implemente.
    ```
 6. **Las lecturas nunca fallan por culpa de una escritura en curso**, y nunca la bloquean.
 
+**Las seis hablan de las escrituras del tablero, y hay un solo comando que escribe ficheros de texto con
+nombre fijo, `biso snapshot`.** Sus garantías son otras y están en la sección 10.14: cada fichero se
+escribe en un temporal y se renombra encima, los dos temporales se completan antes de renombrar
+ninguno, y el comando no toma ningún acceso exclusivo, precisamente para que una copia no pueda hacer
+fallar a la escritura de una tarea. Ninguna de las seis de aquí queda tocada por eso.
+
 ### 4.11. Identificadores
 
 - Un identificador es `<PREFIX>-<n>`, con `n` entero positivo. `PREFIX` viene de la configuración
@@ -686,13 +767,24 @@ escritura o `biso doctor`: el comando aborta entero, sin escribir nada, con este
 
 ```
 error: board 3f9a2b1c's database could not be read
-hint: it did not open, or it failed its integrity check; there is no automatic repair, restore it from a backup
+hint: it did not open, or it failed its integrity check, and there is no automatic repair
+hint: rebuild it in place with `biso init --from <snapshot dir>`, which keeps its id
 ```
 
-El código de salida es **8**, el mismo `NO_BOARD` de la sección 2 y el mismo que usa un puntero que no
-resuelve (sección 3.2): para quien llama la situación es igual, no hay tablero con el que trabajar. Lo
-que distingue este caso es la clave `code` del sobre JSON (sección 12.3), que aquí es
-`database_unreadable`.
+El código de salida es **10** (`DAMAGED`, sección 2), y no el 8 de la ausencia de tablero, porque el
+remedio es otro: aquí el tablero está donde tiene que estar y lo que hay que hacer es reconstruirlo, no
+crearlo. La clave `code` del sobre JSON (sección 12.3) es `database_unreadable`.
+
+**El código 10 puede salir de cualquier comando, y por eso no se repite en la tabla de códigos de
+salida de cada uno.** Esas tablas dicen los desenlaces propios del comando; este no lo es de ninguno, es
+el del tablero entero, igual que el 1 de un fallo del programa, que tampoco aparece en ellas.
+
+**Y el remedio se puede teclear tal cual, porque el segundo `hint` nombra el comando que lo hace.** Un
+directorio cuya base de datos no abre no cuenta como tablero accesible para `biso init`, así que
+`biso init --from` reconstruye ahí mismo en vez de dar el error 2 de "ya hay uno" (10.1), y adopta el
+`id` que nombra el marcador de la instantánea, de modo que el puntero commiteado del proyecto sigue
+valiendo. Es también lo que necesita un clon recién traído a otra máquina, que llega con el directorio
+del tablero versionado y sin base de datos dentro.
 
 #### Lo que se pierde al pasar de un fichero por tarea a una base de datos compartida
 
@@ -742,13 +834,15 @@ Tres reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
    comprobación de un `.git` en cada directorio del camino hacia arriba, para frenar la búsqueda del
    puntero, y se retiró al ver que además de costar comprobaciones en cada llamada no protegía de lo
    que pretendía (sección 12 de `DECISIONES.md`).
-2. **Ningún comando ejecuta git en su camino caliente.** `biso snapshot` es la única excepción, y así
-   lo dice la sección 10.14. Invocar `git` cuesta unos 12 milisegundos medidos, casi la mitad de este
-   presupuesto entero gastada en una sola llamada. Este presupuesto es además la razón por la que la
-   resolución del tablero de la sección 3.2 no mira git en absoluto, ni siquiera leyendo ficheros:
-   frenar la búsqueda del puntero donde un repositorio empieza obligaría a respetar su `.gitignore`
-   para que el freno significara algo, y eso no se puede reimplementar de forma fiable ni preguntar sin
-   invocar `git`.
+2. **Ningún comando ejecuta un programa ajeno en su camino caliente.** `biso snapshot` es la única
+   excepción, y así lo dice la sección 10.14. Invocar `git`, que es el sistema de control de versiones
+   por defecto, cuesta unos 12 milisegundos medidos, casi la mitad de este presupuesto entero gastada en
+   una sola llamada. Este presupuesto es además la razón por la que la resolución del tablero de la
+   sección 3.2 no mira el control de versiones en absoluto, ni siquiera leyendo ficheros: frenar la
+   búsqueda del puntero donde un repositorio empieza obligaría a respetar sus reglas de exclusión para
+   que el freno significara algo, y eso no se puede reimplementar de forma fiable ni preguntar sin
+   invocar el programa. Que `biso snapshot` sí haga esas dos preguntas (10.14) no contradice nada:
+   ese comando ya está fuera del camino caliente por definición.
 3. **La palanca mayor no es que cada llamada sea más rápida: es que haga falta hacer menos llamadas.**
    Para eso existe `biso prime` (sección 9), que sustituye el ciclo entero de leer guías sueltas y
    encadenar comandos por un solo mensaje al principio de la sesión; `docs/DECISIONES.md`, sección 3,
@@ -1626,7 +1720,7 @@ Cómo se calcula el resumen, para que la implementación sea única:
   con `biso get`, que los imprime en su línea `lease` (10.5), igual que pide el cuerpo de la pregunta.
 - `NEEDS ANSWER` lista las tareas con pregunta abierta, ordenadas igual, sin límite. Cada tarea
   ocupa **dos líneas**: la fila de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo
-  una línea indentada con la pregunta recortada a **100 caracteres**, la misma cifra exacta que el
+  una línea indentada con la pregunta recortada a **100 celdas**, con la misma regla exacta que el
   algoritmo aplica a los títulos. Los saltos de línea reales del cuerpo se sustituyen por un espacio
   antes de recortar, y el recorte usa el mismo sufijo `...` que 10.4 usa para los títulos. Va en línea
   propia y no en una novena columna, porque el algoritmo tiene ocho exactas y una regla que dice que
@@ -1792,14 +1886,14 @@ undécimo, y no se lista a sí mismo en su propio mensaje.
 | `doctor` | Comprueba y repara la integridad | no |
 | `board` | Abre la interfaz interactiva | no |
 | `help` | La ayuda de primer nivel y la de cada comando | no |
-| `snapshot` | Escribe la instantánea del tablero en su propio directorio y la commitea a git | no |
+| `snapshot` | Escribe la instantánea del tablero en su propio directorio y la guarda en el control de versiones | no |
 
 **Las banderas globales de la sección 3 valen en todos ellos y no se repiten en las tablas de
 parámetros de cada comando.** Un comando solo las menciona cuando le impone una restricción
 adicional, y esas restricciones son exactamente cuatro en todo el documento: `prime --full` no se
 combina con `--json`, `config` solo acepta `--json` en su subcomando `list`, `export` rechaza
-`--json` con código 2, y `--print` con `--dry-run` no valen en los comandos de lectura según la
-regla de la sección 3.
+`--json` con código 2, y `--print` y `--dry-run` no valen donde no tienen nada que hacer, cada una
+en su propia lista, según la regla de la sección 3.
 
 El caso de `export` merece una línea, porque es el único comando cuya salida ya es JSON sin pedirlo:
 son objetos JSON, uno por línea, y `--json` pide el sobre único de la sección 12, que es otra forma
@@ -1908,21 +2002,43 @@ configuración legítima, para quien quiera que su tablero viva junto a su proye
 copia de seguridad, y sigue funcionando igual porque la resolución del tablero no depende de dónde esté
 la carpeta. Es el caso al que sirve la `path` relativa del párrafo anterior, y el que la búsqueda por
 ancestros de la sección 3.2 mantiene alcanzable desde una copia de trabajo que no tenga el directorio
-del tablero. Lo que hace falta es que el proyecto no intente versionarla, así que `init` emite por
-stderr `note: the board lives inside this project; add tablero/ to its .gitignore`, con el nombre real
-de la carpeta, que es el que se le acaba de dar en `--at`. Es una nota y no un aviso porque no hay nada
-mal hecho, y `init` **no escribe ese `.gitignore`**: el puntero sigue siendo la única cosa que este
-comando escribe fuera del tablero, y tocar el `.gitignore` de un proyecto ajeno sería pasarse de ahí.
+del tablero. Lo que queda por decidir es si el proyecto versiona esa carpeta o la ignora, y **las dos
+cosas funcionan y llevan a sitios distintos**, así que `init` no recomienda ninguna: dice cuáles son,
+por stderr y con el nombre real de la carpeta, que es el que se le acaba de dar en `--at`.
+
+```
+note: the board lives inside this project. Ignore tablero/ and the board keeps
+      its own history; version it and the snapshot travels with your code.
+      Either way the database stays out, tablero/.gitignore excludes it
+```
+
+Es una nota y no un aviso porque no hay nada mal hecho, y `init` **no toca el fichero de exclusión del
+proyecto** en ninguno de los dos casos: el puntero sigue siendo la única cosa que este comando escribe
+fuera del tablero, y tocar la configuración de un proyecto ajeno sería pasarse de ahí.
+
+**La última línea de esa nota nombra el fichero de exclusión que `init` acaba de escribir dentro del
+tablero**, que es el del sistema configurado en la máquina, `.gitignore` con el valor por defecto. Con
+`vcs` en `none` no se escribe ninguno, así que esa línea no sale y la nota se queda en las dos primeras:
+sin fichero de exclusión, quien versione la carpeta se llevaría también la base de datos, y decir lo
+contrario sería mentir.
+
+**Las dos salidas de esa elección cambian dónde acaba el historial**, y por eso merece la pena decirlas
+juntas. Ignorar la carpeta deja al tablero con su propio repositorio, el que `biso snapshot` crea de
+forma perezosa la primera vez que corre ahí (10.14), y publicarlo es entonces un trabajo aparte.
+Versionarla mete los dos ficheros de la instantánea en el repositorio del código, así que `snapshot`
+guarda su revisión ahí mismo, junto a los cambios del proyecto, y la instantánea cruza a otra máquina
+con él sin que nadie configure nada. La base de datos no entra en ninguno de los dos casos.
 
 **Con `--at` relativo dentro del proyecto salen las dos notas, en este orden**, y se quedan separadas
-porque dicen cosas de naturaleza distinta: la primera pide algo ahora, y la segunda avisa de una
-consecuencia que solo le ocurrirá a quien trabaje desde fuera del proyecto. Juntarlas en un solo mensaje
-haría que quien no está en ese caso tuviera que leer la condición para descartarla.
+porque dicen cosas de naturaleza distinta: la primera describe una elección que se toma ahora, y la
+segunda avisa de una consecuencia que solo le ocurrirá a quien trabaje desde fuera del proyecto.
+Juntarlas en un solo mensaje haría que quien no está en ese caso tuviera que leer la condición para
+descartarla.
 
-**Y hay que decir qué pasa si nadie ignora esa carpeta**, porque es el otro lado de la nota y no es
-inofensivo. El `.gitignore` que `init` escribe dentro del tablero excluye siempre la base de datos, así
-que versionar el directorio del tablero versiona su marcador y sus dos ficheros de texto, pero nunca
-`board.db`. Una copia de trabajo recibiría entonces un directorio con el marcador correcto y sin base de
+**Y hay que decir qué pasa en la mitad que versiona la carpeta**, porque tiene una consecuencia que no
+se ve venir. El fichero de exclusión que `init` escribe dentro del tablero excluye siempre la base de
+datos, así que versionar el directorio del tablero versiona su marcador y sus dos ficheros de texto,
+pero nunca `board.db`. Una copia de trabajo recibiría entonces un directorio con el marcador correcto y sin base de
 datos: **eso no es un tablero**, y la resolución de la sección 3.2 no lo acepta como tal, sigue buscando
 en los ancestros y en las raíces, y así encuentra el tablero de verdad. Si no lo encuentra en ninguna
 parte, el error nombra ese directorio a medias, porque es la pista de lo que ha pasado.
@@ -1938,11 +2054,11 @@ configuración a las que corresponden.
 
 **`--from <location>` restaura una instantánea, en vez de crear un tablero en blanco.** `<location>`
 es el directorio de un tablero que ha escrito `biso snapshot` (sección 10.14), es decir, el que
-contiene `tasks.ndjson` y `config.json`. En una sola invocación, `init --from` hace lo que sería
-crear el tablero con la configuración de `config.json` e importar `tasks.ndjson` con las mismas
+contiene `snapshot.ndjson` y `board.json`. En una sola invocación, `init --from` hace lo que sería
+crear el tablero con la configuración de `board.json` e importar `snapshot.ndjson` con las mismas
 reglas del lote de `biso new --from` (sección 10.3): valida el fichero de tareas entero contra el
-vocabulario de `config.json` antes de escribir nada y, solo si todo es válido, escribe primero la
-configuración y después las tareas. Como `config.json` ya trae el nombre del tablero, los estados,
+vocabulario de `board.json` antes de escribir nada y, solo si todo es válido, escribe primero la
+configuración y después las tareas. Como `board.json` ya trae el nombre del tablero, los estados,
 los tipos, las prioridades, los proyectos, las extensiones y el prefijo del tablero de origen,
 **`--from` es incompatible con `<name>` y con cualquier bandera de vocabulario**: no hay nada que
 decidir, todo viene del fichero. `--at` sigue valiendo igual que en un `init` normal, porque gobierna
@@ -1958,9 +2074,25 @@ permitido, y lo hace `biso new --from`; lo que no existe es la copia paralela. S
 el mismo Error 2 de "ya hay uno accesible desde aquí", y no hace falta `--overwrite-config` para
 distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno existente.
 
+**El error de que ya hay un tablero es el más probable de este comando, y este es su mensaje**, con
+código 2 y la clave `code` `board_exists`. Nombra el tablero y su ruta, porque lo que quien llama
+necesita saber es cuál se ha encontrado, y remite a los dos caminos que hay desde ahí:
+
+```
+error: this project already has board 3f9a2b1c, at /Users/avilches/.biso/boards/kex-3f9a2b1c
+hint: `biso where` says which rule picked it
+hint: --overwrite-config rewrites its configuration and never touches its tasks
+```
+
+**`--dry-run` vale en este comando** (sección 3), y es donde más sirve: valida los argumentos y, con
+`--from`, la instantánea entera contra el vocabulario que ella misma trae, sin crear ni escribir nada,
+y sale 0 si habría funcionado y 9 si no. `--print`, en cambio, es error 2, porque ninguna tarea que
+existiera antes queda afectada.
+
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
+| El directorio de destino tiene una base de datos que no se puede leer (4.12) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 10 nombra, y también lo que necesita un clon traído a otra máquina, que llega con la carpeta versionada y sin base de datos |
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de 3.2, y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
@@ -1977,12 +2109,13 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 | Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección 4.11) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
 | `--at` a un directorio donde no se puede escribir | Error 7 |
 | `--from` junto con `<name>`, con cualquier bandera de vocabulario, o con `--overwrite-config` | Error 2 |
-| `--from` a un directorio al que le falta `tasks.ndjson`, `config.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
-| `--from` cuyo `config.json` no se puede interpretar como JSON, o lleva una clave desconocida | Error 2, `code` `invalid_snapshot_config` |
-| `--from` cuyo `config.json` tiene el mismo problema que haría fallar con Error 2 a la bandera de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría esa bandera |
-| `--from` cuyo `tasks.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
-| `--from` cuyo `config.json` declara un vocabulario que ninguna tarea de `tasks.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `config.json`, tenga tareas que lo usen entero o no |
-| `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `config.json` no hace válido | Error 9, la misma regla del lote de `biso new --from` (sección 10.3), con el detalle de qué falta línea a línea |
+| `--from` a un directorio al que le falta `snapshot.ndjson`, `board.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
+| `--from` cuyo `board.json` no se puede interpretar como JSON, o lleva una clave desconocida | Error 2, `code` `invalid_snapshot_config` |
+| `--from` cuyo `board.json` tiene el mismo problema que haría fallar con Error 2 a la bandera de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría esa bandera |
+| `--from` cuyo `snapshot.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
+| `--from` cuyo `board.json` declara un vocabulario que ninguna tarea de `snapshot.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `board.json`, tenga tareas que lo usen entero o no |
+| `--from` cuyo `board.json` trae `me` o `default_limit`, porque se escribió a mano o con una versión anterior | No es un error, y tampoco se importan: `biso snapshot` no las escribe (10.14) y `init --from` no las lee, con `note: me and default_limit are not restored, they belong to whoever uses the board`. No son claves desconocidas, así que no caen en el error 2 de la fila de arriba |
+| `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `board.json` no hace válido | Error 9, la misma regla del lote de `biso new --from` (sección 10.3), con el detalle de qué falta línea a línea |
 
 **Los tres estados especiales se guardan como valores explícitos en la configuración, no como
 posiciones.** Cambiar `statuses` después no los mueve nunca. Si al cambiar `statuses` uno de los tres
@@ -2003,12 +2136,19 @@ directorio corresponde de verdad al tablero que contiene, cosa que `biso doctor`
 ficheros, la base de datos y el marcador, son lo único que hace falta para que un directorio sea un
 tablero.
 
-**El directorio del tablero es también, si es posible, su propio repositorio de git, pero `init` no lo
-crea.** Lo que `init` sí escribe es un `.gitignore` que excluye `board.db` y sus dos ficheros
-auxiliares, dejándolo listo para el día en que el directorio llegue a ser un
-repositorio: lo que se versiona entonces es `tasks.ndjson` y `config.json`, los dos ficheros que
-escribe `biso snapshot` (sección 10.14), nunca el binario. Escribir un fichero de texto no es ejecutar
-`git`, así que esto no contradice que `biso snapshot` sea el único comando que ejecuta git.
+**El directorio del tablero es también, si es posible, su propio repositorio, pero `init` no lo crea.**
+Lo que `init` sí escribe es el **fichero de exclusión del sistema de control de versiones que la máquina tenga
+configurado** (sección 3.3), con `board.db` y sus dos ficheros auxiliares dentro, dejándolo listo para
+el día en que el directorio llegue a ser un repositorio: lo que se versiona entonces es
+`snapshot.ndjson`, `board.json` y el marcador, nunca el binario. Con `git`, ese fichero es
+`.gitignore`; con `custom`, el que declare la clave `ignore_file`, y ninguno si no la declara; con
+`none`, ninguno, porque no hay nada de lo que excluirse. Escribir un fichero de texto no es ejecutar
+ningún programa, así que esto no contradice que `biso snapshot` sea el único que lo hace.
+
+**Si alguien cambia la clave `vcs` después, ese fichero se queda con el nombre del sistema anterior**, y
+`biso` no lo renombra ni escribe otro: `init` solo se ejecuta una vez por tablero, y adivinar cuándo hay
+que reescribir un fichero de exclusión ajeno sería pasarse. Quien cambie de sistema tiene que escribir a
+mano el fichero que el nuevo espere, con las tres líneas de la base de datos.
 
 **El marcador no se excluye, y eso resuelve algo.** Al quedar versionado con la instantánea, el
 identificador del tablero viaja en ella, así que restaurar con `biso init --from <instantánea>` puede
@@ -2019,18 +2159,21 @@ proyecto no podía encontrar. Si el `id` de la instantánea ya existe en esta m�
 identidad duplicada de la sección 3.2, no una adopción silenciosa.
 
 **Es `biso snapshot`, no `init`, quien convierte el directorio en un repositorio, y lo hace de forma
-perezosa**: la primera vez que `snapshot` corre sobre un directorio que todavía no es un repositorio
-de git, intenta `git init` ahí mismo antes de commitear (sección 10.14). La base de datos no se
-versiona nunca, ni siquiera después de eso, porque cada escritura suya reescribe páginas internas: cada
-commit guardaría una copia completa y git no podría diferenciarla de una forma legible.
+perezosa**: la primera vez que `snapshot` corre sobre un directorio que no está en ninguno, crea ahí el
+del sistema de control de versiones configurado antes de guardar la revisión (sección 10.14). Y si el
+directorio ya está dentro del repositorio del proyecto, que es el caso de un tablero versionado con el
+código, no crea ninguno: la revisión va a ese. La base de datos no se versiona nunca, ni siquiera
+después de eso, porque cada escritura suya reescribe páginas internas: cada revisión guardaría una copia
+completa y ningún sistema podría diferenciarla de una forma legible.
 
-**El repositorio de git es opcional y su ausencia no rompe nada.** Si `git` no está instalado,
+**El repositorio es opcional y su ausencia no rompe nada.** Si el sistema configurado no está instalado,
 `snapshot` sigue escribiendo sus dos ficheros igual y sirviendo para restaurar con `--from`; lo único
-que se pierde es el historial de versiones. `biso` no puede exigir que `git` esté instalado, así que
-esto nunca hace fallar ni a `init` ni a `snapshot` por esta sola razón (la sección 10.14 sí distingue
-un fallo de entorno una vez que el commit se intenta de verdad, con un repositorio ya existente). Quien
-quiera añadir git a un tablero que nació sin él puede ejecutar `git init` a mano en su directorio en
-cualquier momento: la siguiente instantánea lo detecta y empieza a commitear.
+que se pierde es el historial. `biso` no puede exigir que haya un sistema de control de versiones instalado, así
+que esto nunca hace fallar ni a `init` ni a `snapshot` por esta sola razón (la sección 10.14 sí
+distingue un fallo de entorno una vez que la revisión se intenta de verdad, con un repositorio ya
+existente). Quien quiera dar historial a un tablero que nació sin él puede crear el repositorio a mano
+en su directorio en cualquier momento: la siguiente instantánea lo detecta y empieza a guardar
+revisiones.
 
 #### Salida
 
@@ -2057,7 +2200,9 @@ apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera es
 dentro del proyecto, que es justo el caso que las dispara. Por stderr sale esto, en este orden:
 
 ```
-note: the board lives inside this project; add kex-board/ to its .gitignore
+note: the board lives inside this project. Ignore kex-board/ and the board keeps
+      its own history; version it and the snapshot travels with your code.
+      Either way the database stays out, kex-board/.gitignore excludes it
 note: the location is stored as the relative path "kex-board". A working copy
       outside this project will not have that folder while git ignores it, so
       it will not find the board: use an absolute --at if you work that way
@@ -2094,11 +2239,11 @@ No están en el bloque de arriba porque ese bloque es stdout, y las notas van po
 |---|---:|
 | Tablero creado, o restaurado con `--from` | 0 |
 | Ya existía y no hay `--overwrite-config` | 2 |
-| Argumentos inválidos, incluido un `config.json` de `--from` inválido, o `--from` junto con `--overwrite-config` | 2 |
+| Argumentos inválidos, incluido un `board.json` de `--from` inválido, o `--from` junto con `--overwrite-config` | 2 |
 | `--overwrite-config` cambiaría `task_prefix` con tareas ya creadas | 6 |
 | No se puede escribir | 7 |
-| `--from` a un directorio sin `tasks.ndjson`, sin `config.json`, o sin los dos | 4 |
-| El lote de `tasks.ndjson` de `--from` falla su validación | 9 |
+| `--from` a un directorio sin `snapshot.ndjson`, sin `board.json`, o sin los dos | 4 |
+| El lote de `snapshot.ndjson` de `--from` falla su validación | 9 |
 
 #### `biso init --help`
 
@@ -2132,9 +2277,9 @@ Options:
   --overwrite-config          replace the configuration of an existing board,
                               keeping every task
   --from <location>           restore a snapshot: the directory where `biso
-                              snapshot` wrote tasks.ndjson and config.json.
+                              snapshot` wrote snapshot.ndjson and board.json.
                               Incompatible with name and with every vocabulary
-                              option (which all come from config.json
+                              option (which all come from board.json
                               instead), and with --overwrite-config: restoring
                               always creates a new board
   -h, --help                  show this help
@@ -2145,30 +2290,33 @@ together; giving any of them without `--statuses` is bad usage. They are then
 stored as explicit values and never move again.
 
 With --at the board can live inside the project itself, which is fine. Two
-things follow, and `init` says both when it applies. Have the project ignore
-that folder in git, so its database is never versioned. And mind the form of
-the path: a relative --at is stored relative to the pointer and resolves from
-any working copy that has the folder inside it or above it, which is the case
-for git worktrees kept under the project; a working copy that lives outside
-the project has no such folder, precisely because git ignores it, so pass an
-absolute --at if you work that way.
+things follow, and `init` says both when it applies. Decide whether the
+project ignores that folder or versions it: ignore it and the board keeps a
+history of its own, version it and its snapshot travels with your code. The
+database stays out either way. And mind the form of the path: a relative --at
+is stored relative to the pointer and resolves from any working copy that has
+the folder inside it or above it, which is the case for worktrees kept under
+the project; a working copy that lives outside the project has no such
+folder, precisely because it is ignored, so pass an absolute --at if you work
+that way.
 
-The board directory can also become its own git repository, but `init` does
-not create it: `init` only writes a .gitignore that excludes the database
-file and its WAL auxiliaries, so that once a repository exists only
-tasks.ndjson, config.json and the <id>.id marker are ever versioned. `biso
-snapshot` is the one that runs `git init` there, lazily, the first time it
-runs against a directory that is not yet a repository (see `biso snapshot
---help`). Missing git never fails `init` or `snapshot`; the board works the
-same, only its history is lost.
+The board directory can also become a repository of its own, but `init` does
+not create it: `init` only writes the ignore file of the version control
+system this machine is configured for (the vcs key, .gitignore with git),
+holding the database file and its WAL auxiliaries, so that once a repository
+exists only snapshot.ndjson, board.json and the <id>.id marker are ever
+versioned. `biso snapshot` is the one that creates that repository, lazily,
+the first time it runs against a directory that is in none (see `biso
+snapshot --help`). Missing version control never fails `init` or `snapshot`;
+the board works the same, only its history is lost.
 
 Exit codes:
   0  board created, or restored with --from
   2  bad usage, or a board is already reachable from here
-  4  --from points at a directory missing tasks.ndjson, config.json, or both
+  4  --from points at a directory missing snapshot.ndjson, board.json, or both
   6  --overwrite-config would change task_prefix on a board with tasks
   7  cannot write there
-  9  --from's tasks.ndjson failed batch validation
+  9  --from's snapshot.ndjson failed batch validation
 
 Examples:
   biso init
@@ -2209,6 +2357,8 @@ que remite el error de código 8, y el que hace visible una resolución que de o
 | No hay tablero configurado | Imprime lo que ha buscado y dónde, código 8, `code` `no_board` |
 | El puntero nombra un tablero que no está en esta máquina | Imprime que hay un puntero y qué identificador nombra (sección 3.2), código 8, `code` `pointer_unresolved` |
 | Hay más de un candidato | Imprime el elegido y los descartados, con el motivo, código 0 |
+| El mismo `id` aparece en dos raíces | Imprime los dos directorios y no elige ninguno, código 11, `code` `ambiguous_board_id` (sección 3.2) |
+| La base de datos del tablero no se puede leer | El mensaje de la sección 4.12, código 10, `code` `database_unreadable`. `where` no lo esquiva: para decir qué tablero está en uso hay que abrirlo |
 
 #### Salida
 
@@ -2218,7 +2368,7 @@ board    Kex
 path     /Users/avilches/.biso/boards/kex-3f9a2b1c
 source   project pointer at /Users/avilches/Hub/Projects/Kex
 me       @claude
-tasks    248 active, 31 archived, highest id ever assigned TASK-290
+tasks    248 not archived, 31 archived, highest id ever assigned TASK-290
 ```
 
 **La fila `path` es siempre la ruta ya resuelta del directorio del tablero, nunca el texto literal que
@@ -2260,6 +2410,12 @@ error: this project's pointer names board 3f9a2b1c, which is not on this machine
 hint: `biso init` creates it here, adopting id 3f9a2b1c
 ```
 
+**La fila de recuentos dice "not archived" y no "active", y la clave JSON se llama `notArchived` por lo
+mismo.** La tabla de vocabulario de este documento reserva "active" para el papel del estado, el que
+`biso start` usa, y una tarea sin archivar puede estar en cualquiera de los estados, incluido el
+terminal. Llamarla activa haría que la misma palabra significara dos cosas en el mismo documento, y en
+la fila donde más confunde, porque justo al lado hay un recuento de estados.
+
 #### El esquema JSON
 
 ```json
@@ -2273,7 +2429,7 @@ hint: `biso init` creates it here, adopting id 3f9a2b1c
     "path": "/Users/avilches/.biso/boards/kex-3f9a2b1c",
     "source": "project pointer at /Users/avilches/Hub/Projects/Kex",
     "me": "@claude",
-    "counts": { "active": 248, "archived": 31, "highestIdEverAssigned": "TASK-290" }
+    "counts": { "notArchived": 248, "archived": 31, "highestIdEverAssigned": "TASK-290" }
   }
 }
 ```
@@ -2284,6 +2440,8 @@ hint: `biso init` creates it here, adopting id 3f9a2b1c
 |---|---:|
 | Tablero encontrado | 0 |
 | No hay tablero | 8 |
+| Su base de datos no se puede leer | 10 |
+| El mismo `id` está en dos raíces | 11 |
 
 #### `biso where --help`
 
@@ -2300,6 +2458,8 @@ Options:
 Exit codes:
   0  a board is in use
   8  no board here
+  10 its database could not be read
+  11 the same board id is in two places
 
 Examples:
   biso where
@@ -2425,7 +2585,7 @@ Las reglas del lote, todas obligatorias:
   mixtos que esa inmutabilidad ya evita en las otras dos (cambiar `--prefix` a mano, o renombrar el
   tablero). No es una restricción nueva sobre la simetría: exportar un tablero y restaurarlo con
   `biso snapshot` y `biso init --from` (10.9, 10.14) trae también su `task_prefix`, así que los `id`
-  de su `tasks.ndjson` siempre lo llevan puesto.
+  de su `snapshot.ndjson` siempre lo llevan puesto.
 - **`archived` se acepta como booleano.** Por defecto, si la clave no aparece, la tarea se crea sin
   archivar. Ningún otro comando tiene una bandera de campo para él: fuera de la importación,
   archivar se hace con `biso archive`.
@@ -2648,19 +2808,38 @@ Ocho columnas fijas, separadas por dos espacios, en este orden y con estos conte
 | 2 | estado | nunca lo está |
 | 3 | tipo | `-` |
 | 4 | prioridad | `-` |
-| 5 | título, recortado a **100 caracteres siempre**, con `...` al final si se recorta | nunca lo está |
+| 5 | título, recortado a **100 celdas siempre**, con `...` al final si se recorta | nunca lo está |
 | 6 | `ac <marcados>/<total>` | `-` si la tarea no tiene criterios de aceptación |
 | 7 | primera persona asignada, con `+<n>` si hay más | `-` |
 | 8 | fecha límite | `-` |
 
 **El formato se calcula así, en dos pasos, siempre en este orden:**
 
-1. El título de cada tarea se recorta primero a 100 caracteres, con `...` al final si se ha
-   recortado. Esto pasa antes de calcular ningún ancho de columna.
-2. Para cada una de las columnas 1 a 7, el ancho de esa columna es la longitud del valor más largo
+1. El título de cada tarea se recorta primero a 100 celdas, **contando los tres puntos**, así que la
+   cadena que se imprime no pasa nunca de 100: un título más largo deja 97 celdas suyas y `...`
+   detrás. Esto pasa antes de calcular ningún ancho de columna.
+2. Para cada una de las columnas 1 a 7, el ancho de esa columna es la anchura del valor más largo
    que le corresponde entre las filas que se van a imprimir en esta llamada, y cada valor se rellena
    con espacios a la derecha hasta ese ancho. **La columna 8 nunca se rellena**, porque es la última
    y no hay nada después que alinear.
+
+**La unidad de los dos pasos es la celda de un terminal monoespaciado, no el carácter.** Un título es
+texto libre en UTF-8 (4.4), así que puede llevar ideogramas, emoji o acentos combinantes, y esas tres
+cosas ocupan en pantalla algo distinto de lo que suman sus puntos de código: una marca combinante mide
+cero celdas porque se pinta sobre la letra anterior, un ideograma de Asia oriental o un emoji miden dos,
+y todo lo demás mide una. La tabla que lo dice es la de Unicode, la de anchura de Asia oriental más la
+categoría de las marcas combinantes, y contar en cualquier otra unidad desalinea la tabla en cuanto un
+título deja de ser ASCII.
+
+**Medir en celdas no es mirar el terminal, así que no contradice la sección 4.1.** La anchura de un
+carácter es una propiedad de Unicode, la misma en cualquier máquina y con cualquier ventana, y por eso
+la salida sigue sin depender de dónde se ejecute el programa. Lo que 4.1 prohíbe es lo otro: preguntar
+cuántas columnas tiene la ventana, o si hay color, para decidir qué se imprime.
+
+**Y el recorte nunca parte un grafema por la mitad.** Si cortar exactamente en la celda 97 separaría una
+letra de su acento combinante, o partiría un emoji compuesto, se corta en la frontera anterior, así que
+el título recortado puede medir 96 o 95 celdas en vez de 97. La promesa es el tope, nunca la longitud
+exacta: la cadena impresa no pasa de 100 celdas.
 
 Entre columna y columna van siempre **dos espacios literales**, se haya rellenado o no la columna
 anterior. Con estas cuatro tareas, el título más largo mide 28 caracteres y por eso la columna 5 se
@@ -4052,14 +4231,14 @@ y las claves estables de cada criterio.
 entra de vuelta con `new --from`, con sus tres partes completas.
 
 `export` solo lleva las tareas: reconstruir un tablero entero, con su vocabulario y no solo con sus
-datos, es lo que hace `biso snapshot` (10.14), cuyo `tasks.ndjson` tiene exactamente esta misma forma
+datos, es lo que hace `biso snapshot` (10.14), cuyo `snapshot.ndjson` tiene exactamente esta misma forma
 y se lee de vuelta con el `--from` de `biso init` (10.1), no con el de `biso new`.
 
 La garantía que la suite de pruebas comprueba:
 
 ```bash
 biso snapshot
-# escribe tasks.ndjson y config.json en ~/.biso/boards/kex-3f9a2b1c, el propio
+# escribe snapshot.ndjson y board.json en ~/.biso/boards/kex-3f9a2b1c, el propio
 # directorio del tablero de origen (biso where lo muestra en su fila "path")
 biso -C /tmp init --at /tmp/tablero-nuevo --from ~/.biso/boards/kex-3f9a2b1c
 # los dos tableros son identicos en todos los campos no derivados, incluidos
@@ -4071,9 +4250,9 @@ El `init` se ejecuta con `-C /tmp`, fuera del proyecto de origen, exactamente co
 anterior de esta prueba: así su puntero de proyecto no choca con el que el proyecto de origen ya
 tiene.
 
-`biso init --from` lee el vocabulario del propio `config.json` de la instantánea, así que el tablero
+`biso init --from` lee el vocabulario del propio `board.json` de la instantánea, así que el tablero
 de destino no necesita declarar nada a mano: nace con el mismo `task_prefix`, los mismos estados y
-los mismos tipos que el de origen, y por eso la importación de su `tasks.ndjson` nunca falla por
+los mismos tipos que el de origen, y por eso la importación de su `snapshot.ndjson` nunca falla por
 vocabulario distinto. Comparar esto con la vía manual de `biso new --from` (10.3): esa sigue
 existiendo para importar un NDJSON suelto en un tablero cuyo vocabulario ya se ha declarado por
 separado, pero ya no es la única manera de reconstruir un tablero entero.
@@ -4269,13 +4448,32 @@ active_status = In Progress
 terminal_status = Done
 types = idea,memory,task,bug,docs
 priorities = high,medium,low
+projects =
+labels =
+assignees =
 extensions = trello.card
 task_prefix = TASK
 me = @claude
 default_limit = 30
 finish_strict = false
 lease_minutes = 240
+urgency.priority = 6.0
+urgency.active = 4.0
+urgency.blocking = 8.0
+urgency.blocked = -5.0
+urgency.due = 12.0
+urgency.criteria = 1.0
+urgency.age = 0.5
 ```
+
+**`config list` imprime las veintitrés claves, siempre, en el orden de la tabla de claves de arriba**, y
+los siete coeficientes de la urgencia con el nombre con el que `config set` los acepta, uno por línea.
+Lo que `list` enseña es exactamente el conjunto de claves que `set` admite, y por eso no puede haber
+ninguna que solo se vea con `--json`: una clave escondida es una clave que nadie sabe que puede cambiar.
+
+**Una lista vacía se imprime como la clave, el igual y nada detrás**, que es lo mismo que hace
+`config get` de una lista vacía, así que las tres listas que nacen vacías (`projects`, `labels` y
+`assignees`) aparecen igual en un tablero recién creado.
 
 #### El esquema JSON
 
@@ -4560,7 +4758,7 @@ distingue a un aviso de un error, así que es aviso.
 **Y la primera tiene una peculiaridad que la separa de las demás filas de error: nunca aparece como
 una línea del informe.** Las otras catorce comprobaciones de error sí producen una entrada en la lista
 de problemas cuando se disparan, pero esta no, porque cuando se dispara no hay informe de `doctor`
-que mostrarla: hay el abort completo de la sección 4.12, con su propio mensaje y su propio código 8,
+que mostrarla: hay el abort completo de la sección 4.12, con su propio mensaje y su propio código 10,
 antes de que `doctor` llegue a comprobar nada más (ver la tabla de comportamiento más abajo). La fila
 está en esta tabla para decir que existe como comprobación y cuál es su nivel, no porque vaya a
 verse alguna vez junto a las demás.
@@ -4603,7 +4801,7 @@ que queda pendiente es una reparación que ya se sabe cómo repetir.
 | Solo errores reparables, con `--fix` | Se reparan y se reporta cada uno, código 0 |
 | Quedan errores sin reparar | Código 6, aunque se haya reparado algo o se hayan reportado avisos |
 | Una tarea ilegible (4.12) | Se reporta como error y se sigue con las demás. **Nunca aborta** |
-| La base de datos no se puede leer (4.12) | El comando entero aborta con el mensaje y el código 8 de 4.12, antes de comprobar nada más |
+| La base de datos no se puede leer (4.12) | El comando entero aborta con el mensaje y el código 10 de 4.12, antes de comprobar nada más |
 | `--fix` sin poder escribir | Código 7. Si falla la escritura del marcador después de la transacción de datos, esta ya quedó aplicada (ver arriba) |
 | `--fix --dry-run` | Reporta qué se repararía, sin reparar nada, código 0 |
 
@@ -4673,7 +4871,8 @@ texto, en vez de a uno menor.
 | Quedan errores | 6 |
 | Sintaxis | 2 |
 | No se puede escribir al reparar | 7 |
-| No hay tablero, o su base de datos no se puede leer (4.12) | 8 |
+| No hay tablero | 8 |
+| Su base de datos no se puede leer (4.12) | 10 |
 
 #### `biso doctor --help`
 
@@ -4702,7 +4901,7 @@ Only remaining errors produce exit code 6.
 
 An unreadable task is reported and skipped, never a reason to stop. A database
 that cannot be opened, or that fails its integrity check, is not a finding: the
-whole command fails instead, with exit code 8.
+whole command fails instead, with exit code 10.
 Gaps in the id sequence are normal and are not reported.
 
 Exit codes:
@@ -4710,7 +4909,8 @@ Exit codes:
   2  bad usage
   6  errors remain
   7  cannot write while fixing
-  8  no board here, or its database could not be read
+  8  no board here
+  10 its database could not be read
 
 Examples:
   biso doctor
@@ -4749,6 +4949,27 @@ abrirla, ni la abre nadie por su cuenta.
 Board at http://127.0.0.1:6420. Ctrl-C to stop.
 ```
 
+#### El esquema JSON
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "board",
+  "generatedAt": "2026-09-06T09:12:04Z",
+  "data": {
+    "url": "http://127.0.0.1:6420",
+    "port": 6420,
+    "opened": true
+  }
+}
+```
+
+**El sobre se imprime al arrancar, no al terminar**, que es la única diferencia de este comando con
+todos los demás en JSON: los otros escriben su salida cuando han acabado, y este se queda corriendo
+hasta que alguien lo pare, así que el sobre sale en cuanto el servidor escucha. Es lo que necesita un
+guion que lo arranque con `--no-open` y tenga que saber a qué dirección apuntar. `opened` dice si se ha
+abierto un navegador, y es `false` con `--no-open`.
+
 #### Códigos de salida
 
 | Desenlace | Código |
@@ -4770,6 +4991,7 @@ terminal.
 Options:
       --port <n>   port to listen on, 1024 to 65535 (default 6420)
       --no-open    print the address and do not open a browser
+      --json       machine-readable envelope, printed when the server starts
   -h, --help       show this help
 
 Exit codes:
@@ -4820,8 +5042,35 @@ Administration:
   doctor             check the board, and repair what can be repaired
   board              open the interactive board
   help [cmd|all]     this
-  snapshot           write tasks.ndjson and config.json, then commit them to git
+  snapshot           write snapshot.ndjson and board.json, then record them
 ```
+
+#### El esquema JSON
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "help",
+  "generatedAt": "2026-09-06T09:12:04Z",
+  "data": {
+    "commands": [
+      { "name": "prime", "summary": "print the session briefing" },
+      { "name": "new", "summary": "create a task" }
+    ]
+  }
+}
+```
+
+**En JSON, este comando emite la lista de comandos con su resumen de una línea, y nunca la ayuda en
+prosa.** Un texto de ayuda es prosa escrita para leerse, con sus ejemplos y sus párrafos, y meterla en
+una clave sería mover el problema de analizarla a otro sitio; la lista de comandos, en cambio, es un dato
+y es lo que le sirve a un agente para descubrir la interfaz sin leer nada. Los resúmenes son los mismos
+que imprime la ayuda de primer nivel (sección 11).
+
+`biso help --json` y `biso help all --json` traen la lista entera, y `biso help <comando> --json` la trae
+con un solo elemento, el de ese comando. La clave `commands` está siempre y siempre es una lista, así que
+nadie tiene que mirar el argumento para saber qué forma va a recibir. La ayuda completa de un comando se
+sigue pidiendo como siempre, sin `--json`, con `biso help <comando>` o `biso <comando> --help`.
 
 #### Códigos de salida
 
@@ -4838,8 +5087,15 @@ Usage: biso help [command|all]
 Print the top-level help, or the help of one command, or the top-level help
 plus the nine administrative commands with `all`. Works without a board.
 
+With --json this prints the command list and its one-line summaries, never
+the prose help: a help text is written to be read, and the list is the part
+that is data.
+
 Arguments:
   command        a command name, or `all`
+
+Options:
+      --json     machine-readable envelope with the command list
 
 Exit codes:
   0  help printed
@@ -4858,93 +5114,193 @@ Examples:
 #### Firma
 
 ```
-biso snapshot [--no-commit]
+biso snapshot [--vcs <mode>]
 ```
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
-| `--no-commit` | | no | booleano | falso | no | no | ninguno |
+| `--vcs <mode>` | | no | `none`, `commit` o `push` | `commit` | no | no | ninguno |
 
 **`biso snapshot` no cambia ningún dato del tablero**, así que la sección 3 lo clasifica junto a
 `export` entre los comandos donde `--print` y `--dry-run` son error de uso con código 2: no hay
 ninguna tarea afectada que imprimir, ni ninguna escritura de tarea que simular.
 
 **No tiene bandera `-o`/`--out`.** A diferencia de `export`, que escribe donde se le diga,
-`snapshot` escribe siempre en el propio directorio del tablero (10.1), con nombre fijo: `tasks.ndjson`
-y `config.json`. Es la instantánea del tablero para sí mismo, no un volcado a otra parte; para volcar
-a otra parte está `export`.
+`snapshot` escribe siempre en el propio directorio del tablero (10.1), con nombre fijo:
+`snapshot.ndjson` y `board.json`. Es la instantánea del tablero para sí mismo, no un volcado a otra
+parte; para volcar a otra parte está `export`.
 
 #### Qué escribe, y por qué esos dos ficheros
 
-`tasks.ndjson` tiene exactamente la forma que fija la garantía de simetría de `biso export` (10.9):
+`snapshot.ndjson` tiene exactamente la forma que fija la garantía de simetría de `biso export` (10.9):
 una tarea por línea, con las mismas claves, incluidos los identificadores, las fechas y las claves de
-criterio. `config.json` es la configuración completa del tablero, en la misma forma que imprime
+criterio. `board.json` es la configuración del tablero, en la misma forma que imprime
 `biso config list --json` (10.10): todas las claves de vocabulario, `task_prefix` y las demás.
 
+**Con dos excepciones, `me` y `default_limit`, que no se escriben nunca.** Las dos son preferencias de
+quien usa el tablero y no propiedades suyas, y la primera hace daño de verdad al viajar: restaurar la
+instantánea de otra persona con `biso init --from` dejaría su identidad configurada como la del tablero,
+y un tablero con `me` puesto anula `--mine`, porque entonces todo el mundo comparte identidad (sección
+11 de `DECISIONES.md`). Un tablero restaurado nace por tanto sin identidad y con el límite por defecto,
+y quien restaura pone la suya con `biso config set me`. La garantía de simetría de 10.9 sigue cubriendo
+todo lo demás y **no cuenta estas dos claves**, que es la única cosa que exportar e importar no
+reproduce campo a campo.
+
 Los dos ficheros son los que después lee `biso init --from` (10.1) para reconstruir el tablero
-entero. Van en dos ficheros separados, y no en uno solo, para que los diffs de git queden legibles: la
+entero. Van en dos ficheros separados, y no en uno solo, para que los diffs queden legibles: la
 configuración cambia pocas veces y las tareas cambian todo el rato, así que mezclarlas habría hecho
-que cada commit de una tarea reescribiera también un bloque de configuración idéntico.
+que cada revisión de una tarea reescribiera también un bloque de configuración idéntico.
 
-#### El commit
+#### Cómo se escriben, y qué pasa si el segundo falla
 
-Salvo con `--no-commit`, antes de escribir nada `snapshot` comprueba si el directorio del tablero es
-ya un repositorio de git. **Si no lo es, es `snapshot` quien lo crea**: intenta `git init` ahí mismo,
-de forma perezosa, la primera vez que se ejecuta sobre ese directorio (10.1 ya ha dejado preparado un
-`.gitignore` que excluye la base de datos, así que el primer commit solo añade `tasks.ndjson` y
-`config.json`). Si `git` no está instalado, o si ese `git init` falla por cualquier motivo, `snapshot`
-no lo trata como un error: escribe los dos ficheros igual y salta el commit, exactamente como si el
-directorio nunca hubiera podido llegar a ser un repositorio.
+**Cada fichero se escribe en un temporal del mismo directorio y se renombra encima del anterior**, que
+es una operación atómica del sistema de ficheros, así que nadie lee nunca medio `snapshot.ndjson`.
 
-Si el directorio ya era, o acaba de convertirse en, un repositorio de git, `snapshot` añade los dos
-ficheros y hace un commit con el mensaje `biso snapshot: 248 tasks` (con el recuento real de cada
-vez).
+**Y los dos temporales se escriben completos antes de renombrar ninguno de los dos.** De ese orden
+depende lo único que se puede prometer aquí: si falla la escritura, por disco lleno o por permisos, los
+dos ficheros anteriores quedan intactos, no se intenta guardar ninguna revisión, y el código es 7. Entre
+el primer renombrado y el segundo queda una ventana de un instante en la que el par no es coherente, y
+esta especificación lo dice en vez de prometer una atomicidad de dos ficheros que el sistema de ficheros
+no da.
 
-`--no-commit` escribe los dos ficheros igual y no toca git en absoluto: ni comprueba si hay un
-repositorio, ni intenta crear uno, ni commitea.
+**`snapshot` no toma ningún acceso exclusivo**, ni el de las escrituras de tareas ni uno propio. Es una
+lectura del tablero, y las lecturas nunca bloquean a nadie (4.10, punto 6): una instantánea de un
+tablero grande no puede hacer fallar a un `biso set` que llegue a la vez. Lo que sí puede pasar es que
+dos instantáneas simultáneas choquen al guardar la revisión, porque el sistema de control de versiones
+se protege con su propia marca de bloqueo; entonces una de las dos sale con código 7 y su mensaje dice
+que basta volver a llamar. Los ficheros de las dos quedan enteros de todos modos, porque cada una
+escribió su temporal.
 
-**Ningún otro comando de `biso` ejecuta nunca `git`.** Invocar `git` cuesta unos 12 milisegundos
-medidos, y el presupuesto de arranque de 25 milisegundos para `biso ls` y `biso prime` sobre un
-tablero de 300 tareas (sección 4.13) no admite ese coste en el camino caliente de ningún comando. `biso
-snapshot` es la única excepción, precisamente porque quien lo llama ya está pidiendo explícitamente
-una operación de git; y es también, por lo mismo, el único comando que llega a convertir el
-directorio del tablero en un repositorio: sin haber corrido nunca `biso snapshot` sin `--no-commit`
-sobre él, ese directorio nunca pasa a serlo.
+#### El sistema de control de versiones
+
+El sistema lo dice la clave `vcs` de la configuración de máquina (sección 3.3), con `git` por defecto,
+`none` para no ejecutar nada y `custom` para uno que `biso` no conoce. La bandera `--vcs` de este
+comando elige qué se hace en esta llamada, y no cambia esa configuración:
+
+| `--vcs` | Qué hace |
+|---|---|
+| `none` | Escribe los dos ficheros y no ejecuta nada, ni siquiera para preguntar |
+| `commit` (por defecto) | Escribe los dos ficheros y guarda una revisión con el sistema configurado |
+| `push` | Lo anterior y además publica, con la orden de publicar de ese sistema |
+
+Con `vcs` igual a `none` en la configuración, `commit` y `push` no tienen a quién pedírselo: los dos
+escriben los ficheros y emiten `note: vcs is set to none, skipping the commit`, con código 0.
+
+**Ningún otro comando de `biso` ejecuta nunca un programa ajeno.** Invocar el sistema de control de
+versiones cuesta unos 12 milisegundos medidos, y el presupuesto de arranque de 25 milisegundos para
+`biso ls` y `biso prime` sobre un tablero de 300 tareas (sección 4.13) no admite ese coste en el camino
+caliente de ningún comando. `biso snapshot` es la única excepción, precisamente porque quien lo llama ya
+está pidiendo explícitamente esa operación; y es también, por lo mismo, el único comando que llega a
+crear un repositorio: sin haber corrido nunca `biso snapshot` con `commit` o con `push` sobre él, el
+directorio de un tablero nunca pasa a ser uno.
+
+#### Dónde va la revisión, y cómo se decide
+
+El directorio del tablero puede estar en tres situaciones distintas, y **`snapshot` las distingue
+preguntándole al propio sistema**, no adivinando por el disco. La receta de cada sistema del catálogo
+trae esas dos preguntas: si hay un repositorio que contenga a este directorio y cuál es su raíz, y si
+ese repositorio ignora la carpeta del tablero. Con eso:
+
+| Situación | Dónde va la revisión |
+|---|---|
+| La raíz del repositorio es el propio directorio del tablero | Ahí. Es el caso de un tablero que ya tiene historial propio |
+| La raíz está por encima y el repositorio **no** ignora la carpeta del tablero | En ese repositorio, que es el del proyecto. La instantánea queda versionada junto al código y viaja con él, con su remoto incluido |
+| La raíz está por encima y el repositorio **sí** ignora la carpeta, o no hay ningún repositorio | En un repositorio propio del tablero, que `snapshot` crea de forma perezosa la primera vez |
+
+**La receta de `git` es esta, entera**, porque es el único sistema del catálogo en la versión 1.0 y la
+especificación no puede dejar a quien implemente adivinándola. Son las dos preguntas de arriba y tres
+órdenes:
+
+| Pregunta u orden | Qué se ejecuta, con el directorio del tablero como directorio de trabajo |
+|---|---|
+| ¿Hay un repositorio que lo contenga, y cuál es su raíz? | `git rev-parse --show-toplevel`, cuyo fallo significa que no hay ninguno |
+| ¿Ese repositorio ignora la carpeta del tablero? | `git check-ignore` con la ruta del directorio |
+| Crear el repositorio propio | `git init` |
+| Guardar la revisión | `git add` con los tres ficheros nombrados por su ruta, y después `git commit` con el mensaje de abajo |
+| Publicar | `git push` en el repositorio donde haya ido la revisión |
+
+El identificador que la salida devuelve es el del commit que resulta, completo en el JSON y abreviado en
+el texto, y el caso de "no hay nada que guardar" es el que reconoce el propio `git commit` cuando no hay
+cambios que registrar.
+
+**Preguntar por la exclusión es lo que separa los dos casos de un tablero que vive dentro del
+proyecto**, y no se puede deducir mirando el sistema de ficheros: las dos situaciones tienen los mismos
+ficheros en los mismos sitios, y lo único que las diferencia es una línea en el fichero de exclusión del
+proyecto. Sin esa pregunta, un tablero ignorado acabaría con su revisión pedida al repositorio del
+código, que no puede añadir lo que ignora.
+
+**El tablero dentro del proyecto y versionado con él es el único caso en el que la instantánea cruza a
+otra máquina sin que nadie configure nada**, porque el repositorio del proyecto ya tiene remoto. En los
+demás, el historial del tablero es estrictamente local hasta que alguien le añada uno a mano, y entonces
+`--vcs push` lo publica. Publicar no es trabajo de `biso` mientras no se le pida: la sección 14 lo dice.
+
+**Y hay que decir qué arrastra `--vcs push` cuando la revisión ha ido al repositorio del proyecto**:
+publica esa rama entera, así que se lleva también los commits de código que estuvieran pendientes.
+Es lo que la bandera promete, y quien la escribe ya está pidiendo publicar, así que `biso` no se niega
+ni publica a medias; lo que hace es no ponerla por defecto, que es el motivo de que el valor por defecto
+sea `commit`.
+
+**Con `custom` no hay ninguna de esas dos preguntas.** `biso` ejecuta la orden `commit` que declare la
+configuración, en el directorio del tablero, y mira su código de salida; dónde acabe la revisión es cosa
+de esa orden. Por eso una instantánea con `custom` no lleva identificador de revisión en su salida.
+
+#### Qué entra en la revisión
+
+Tres ficheros, nombrados uno a uno: **`snapshot.ndjson`, `board.json` y el marcador `<id>.id`.** No se
+añade el directorio entero, para que un fichero que alguien deje ahí a mano no se cuele en el historial.
+
+El marcador entra porque es lo que hace que la identidad del tablero viaje con la instantánea: al leerla
+de vuelta, `biso init --from` adopta ese `id` en vez de acuñar uno nuevo, y por eso el puntero
+commiteado del proyecto sigue valiendo después de restaurar (10.1). La base de datos no entra nunca, y
+de eso se encarga el fichero de exclusión que `init` dejó escrito dentro del tablero, no este comando.
+
+El mensaje de la revisión es `biso snapshot: 248 tasks`, con el recuento real de cada vez.
 
 #### Comportamiento, caso a caso
 
 | Caso | Qué pasa |
 |---|---|
-| Repositorio de git, hay cambios desde la última instantánea | Escribe los dos ficheros, commitea, código 0 |
-| Repositorio de git, sin ningún cambio desde la última instantánea | Escribe los dos ficheros (con el mismo contenido de antes) y no hay nada que commitear; `note: nothing to commit, tasks.ndjson and config.json are unchanged since the last snapshot`, código 0 |
-| `--no-commit` | Escribe los dos ficheros, no toca git en absoluto, código 0 |
-| El directorio no es un repositorio de git, y el `git init` perezoso lo consigue crear | Lo crea, añade los dos ficheros al primer commit, código 0 |
-| El directorio no es un repositorio de git, y `git` no está instalado o el `git init` perezoso falla | Escribe los dos ficheros, `note: not a git repository, skipping the commit`, código 0 |
-| El commit falla por una razón de entorno, con un repositorio ya existente (git no configurado, sin permiso para escribir en `.git`, disco lleno) | Los dos ficheros ya han quedado escritos en disco antes de intentar el commit; Error 7, `code` `git_commit_failed`, y la instantánea de ficheros es válida aunque el commit no se haya hecho |
+| Hay repositorio y hay cambios desde la última instantánea | Escribe los dos ficheros, guarda la revisión, código 0 |
+| Hay repositorio y no hay ningún cambio desde la última instantánea | Escribe los dos ficheros (con el mismo contenido de antes) y no hay nada que guardar; `note: nothing to commit, snapshot.ndjson and board.json are unchanged since the last snapshot`, código 0 |
+| `--vcs none`, o la clave `vcs` en `none` | Escribe los dos ficheros y no ejecuta nada, código 0 |
+| El directorio del tablero no está en ningún repositorio, y crearlo funciona | Lo crea, mete los tres ficheros en la primera revisión, código 0 |
+| El directorio del tablero está dentro del repositorio del proyecto, que no lo ignora | Guarda la revisión ahí, con los tres ficheros nombrados por su ruta, código 0 |
+| El sistema configurado no está instalado, o crear el repositorio falla | Escribe los dos ficheros, `note: no version control here, skipping the commit`, código 0 |
+| La revisión falla por una razón de entorno, con un repositorio ya existente (sistema sin configurar, sin permiso, disco lleno, otra instantánea guardando a la vez) | Los dos ficheros ya han quedado escritos antes de intentarlo; Error 7, `code` `vcs_commit_failed`, y el mensaje dice que nada se ha perdido y que basta volver a llamar |
+| `--vcs push` y la publicación falla | Los ficheros están escritos y la revisión guardada; Error 7, `code` `vcs_push_failed` |
+| `--vcs push` con `vcs` igual a `custom` y sin orden `publish` declarada | Error 2, `code` `vcs_push_unavailable`, antes de escribir nada |
 | Alguna tarea no se puede leer (4.12) | Se salta, se cuenta, `warning: 1 task could not be read and was skipped`, y el código es 6 en vez de 0, igual que en `biso export` |
-| No se puede escribir alguno de los dos ficheros | Error 7 |
+| No se puede escribir alguno de los dos ficheros | Error 7, con los dos ficheros anteriores intactos y sin intentar la revisión |
 | No hay tablero | Error 8 |
 
 #### Salida
 
 ```
-Snapshot written: tasks.ndjson, config.json (248 tasks)
-Committed a1b2c3d to git
+Snapshot written: snapshot.ndjson, board.json (248 tasks)
+Committed a1b2c3d to the board's own repository
 ```
 
-Sin ningún cambio que commitear, la primera línea por stdout y la nota por stderr:
+Cuando la revisión va al repositorio que contiene al tablero, la segunda línea lo nombra, porque es el
+dato que distingue este caso y el que alguien querrá comprobar:
 
 ```
-Snapshot written: tasks.ndjson, config.json (248 tasks)
+Snapshot written: snapshot.ndjson, board.json (248 tasks)
+Committed a1b2c3d to /Users/avilches/Hub/Projects/Kex, the repository this board lives in
+```
+
+Con `--vcs push`, una tercera línea dice que se ha publicado. Sin nada que guardar, la primera línea por
+stdout y la nota por stderr:
+
+```
+Snapshot written: snapshot.ndjson, board.json (248 tasks)
 ```
 
 ```
-note: nothing to commit, tasks.ndjson and config.json are unchanged since the last snapshot
+note: nothing to commit, snapshot.ndjson and board.json are unchanged since the last snapshot
 ```
 
-Con `--no-commit`, o si el directorio no es un repositorio de git, la salida por stdout es solo la
-primera línea; en el segundo caso, además, la nota `note: not a git repository, skipping the commit`
-por stderr.
+Con `--vcs none`, o si no hay sistema instalado, la salida por stdout es solo la primera línea; en el
+segundo caso, además, la nota `note: no version control here, skipping the commit` por stderr.
 
 #### El esquema JSON
 
@@ -4955,25 +5311,32 @@ por stderr.
   "generatedAt": "2026-09-06T09:12:04Z",
   "data": {
     "tasks": 248,
-    "files": ["tasks.ndjson", "config.json"],
+    "files": ["snapshot.ndjson", "board.json"],
+    "vcs": "git",
     "committed": true,
     "commit": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    "repository": "/Users/avilches/.biso/boards/kex-3f9a2b1c",
+    "pushed": false,
     "skipped": []
   }
 }
 ```
 
-`commit` es `null` cuando `committed` es `false`. `skipped` lleva los identificadores de las tareas
-ilegibles que se han saltado, igual que en `biso ls` (10.4): vacío salvo cuando el código de salida es 6.
+`vcs` es el sistema que se ha usado en esta llamada, y vale `none` cuando no se ha ejecutado nada.
+`commit` y `repository` son `null` cuando `committed` es `false`, y `commit` también con `custom`, que
+no devuelve identificador. `repository` es la raíz del repositorio donde ha ido la revisión, que es lo
+que dice en qué caso de los tres se estaba. `pushed` es `false` salvo con `--vcs push` cumplido.
+`skipped` lleva los identificadores de las tareas ilegibles que se han saltado, igual que en `biso ls`
+(10.4): vacío salvo cuando el código de salida es 6.
 
 #### Códigos de salida
 
 | Desenlace | Código |
 |---|---:|
-| Escrito, y commiteado si procedía | 0 |
-| Sintaxis | 2 |
+| Escrito, y guardado si procedía | 0 |
+| Sintaxis, o `--vcs push` sin orden de publicar configurada | 2 |
 | Alguna tarea se ha saltado por ilegible | 6 |
-| No se puede escribir alguno de los dos ficheros, o el commit falla por una razón de entorno | 7 |
+| No se pueden escribir los ficheros, o falla la revisión o la publicación | 7 |
 | No hay tablero | 8 |
 
 #### `biso snapshot --help`
@@ -4981,37 +5344,45 @@ ilegibles que se han saltado, igual que en `biso ls` (10.4): vacío salvo cuando
 ```
 Usage: biso snapshot [options]
 
-Write tasks.ndjson and config.json into the board's own directory, then
-commit them to git. If the directory is not yet a git repository, this
-command creates one, lazily, the first time it runs there; `biso init`
-already leaves a .gitignore ready that excludes the database file. This is
-the file pair that `biso init --from` reads back to rebuild a board whole:
-its tasks, in the same shape `biso export` writes, and its configuration, in
-the same shape `biso config list --json` prints.
+Write snapshot.ndjson and board.json into the board's own directory, then
+record them with the version control system this machine is configured for
+(the vcs key, git by default). Those two files and the <id>.id marker are
+what `biso init --from` reads back to rebuild a board whole: its tasks, in
+the same shape `biso export` writes, its configuration, in the same shape
+`biso config list --json` prints, and its identity.
 
-biso snapshot is the only command that ever runs git, and the only one that
-turns a board directory into a git repository: no other command does either.
-Invoking git costs about 12ms, more than the 25ms startup budget for biso ls
-and biso prime allows on the hot path.
+Where the revision lands follows the board's directory. If it is a
+repository of its own, there. If it sits inside another repository that does
+not ignore it, in that one, beside the code, which is what makes the
+snapshot travel to other machines on its own. Otherwise this command creates
+the board its own repository, lazily, the first time it runs there.
+
+biso snapshot is the only command that ever runs another program, and the
+only one that creates a repository. Invoking version control costs about
+12ms, more than the 25ms startup budget for biso ls and biso prime allows on
+the hot path.
 
 Options:
-      --no-commit    write the files, never touch git
+      --vcs <mode>   none, commit or push (default commit)
   -h, --help         show this help
 
-If git is not installed, or creating the repository fails, the files are
-written and the commit step is silently skipped: git is optional, and its
-absence never fails this command.
+The two files are always written, whatever version control does. If it is
+not installed, or creating the repository fails, the commit is skipped with
+a note: it is optional, and its absence never fails this command. A commit
+that fails once it is really attempted is an error, nothing is lost, and
+running this command again after fixing the reason is all it takes.
 
 Exit codes:
-  0  written, and committed if that applied
-  2  bad usage
+  0  written, and recorded if that applied
+  2  bad usage, or --vcs push with no publish command configured
   6  some task was skipped, unreadable
-  7  cannot write there, or the commit failed for an environment reason
+  7  cannot write there, or the commit or the push failed
   8  no board here
 
 Examples:
   biso snapshot
-  biso snapshot --no-commit
+  biso snapshot --vcs none
+  biso snapshot --vcs push
 ```
 
 ---
@@ -5080,7 +5451,9 @@ con esta forma:
 | `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer`, `archive` | `tasks`, `warnings` |
 | `config` | `config list` | `config`. Ejemplo en 10.10 |
 | `doctor` | `doctor` | `problems`, `warnings`, `fixed`. Ejemplo en 10.11 |
-| `snapshot` | `snapshot` | `tasks`, `files`, `committed`, `commit`, `skipped`. Ejemplo en 10.14 |
+| `snapshot` | `snapshot` | `tasks`, `files`, `vcs`, `committed`, `commit`, `repository`, `pushed`, `skipped`. Ejemplo en 10.14 |
+| `board` | `board` | `url`, `port`, `opened`. Ejemplo en 10.12, y se imprime al arrancar el servidor |
+| `help` | `help` | `commands`, con el nombre y el resumen de cada uno. Ejemplo en 10.13 |
 | `error` | cualquier fallo | Ver 12.2 |
 
 Un lote de doscientas cuarenta y dos tareas es **un solo sobre** con doscientas cuarenta y dos
@@ -5112,6 +5485,23 @@ proceso es el de la tabla de la sección 2:
 Cuando un solo comando produce varios fallos, como un lote inválido, `error.details` es una lista de
 objetos con la misma forma, uno por fallo, y `error.code` es `batch_invalid`.
 
+**Un sobre de error no es una salida de datos, y se gobierna aparte de la promesa de la sección 12.4.**
+Esa promesa existe porque quien consume una salida de datos no puede prever qué habrá dentro, así que
+tiene derecho a que la forma no dependa del contenido. En un error sí puede preverlo, porque lo primero
+que hace es leer `code`, y cada `code` trae siempre las mismas claves. Estas son las tres que están en
+todos los errores y las cuatro de detalle, con la regla de cuándo acompañan:
+
+| Clave | En qué errores aparece |
+|---|---|
+| `exitCode`, `code`, `message` | En todos, siempre |
+| `field` y `given` | En los que nombran una bandera, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran una bandera |
+| `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs` |
+| `details` | Solo en `batch_invalid` y en `dry_run_failed`, y es una lista de objetos de esta misma forma, uno por fallo |
+
+Las cuatro de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
+comprobable: quien ramifica sobre `unknown_status` sabe que va a tener `field`, `given` y `valid`, y
+quien ramifica sobre `busy` sabe que no va a tener ninguna de las cuatro.
+
 ### 12.3. Los identificadores de error
 
 Un `code` estable es lo que permite ramificar sin analizar prosa. Esta es la lista de la versión 1.0,
@@ -5119,14 +5509,16 @@ agrupada por el código de salida con el que sale cada uno:
 
 | Código de salida | `code` |
 |---:|---|
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `vcs_push_unavailable` |
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_project`, `unknown_label`, `unknown_assignee`, `unknown_milestone`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous` |
 | 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity` |
-| 7 | `busy`, `io_error`, `file_unreadable`, `no_terminal`, `port_in_use`, `git_commit_failed` |
-| 8 | `no_board`, `pointer_unresolved`, `database_unreadable` |
+| 7 | `busy`, `io_error`, `file_unreadable`, `no_terminal`, `port_in_use`, `vcs_commit_failed`, `vcs_push_failed` |
+| 8 | `no_board`, `pointer_unresolved` |
 | 9 | `batch_invalid`, `dry_run_failed` |
+| 10 | `database_unreadable` |
+| 11 | `ambiguous_board_id` |
 | 1 | `internal` |
 
 **La lista es ampliable y las entradas son permanentes.** Una versión posterior puede añadir un `code`
@@ -5159,6 +5551,9 @@ anterior a esta rama.
   | `data.task.urgencyBreakdown` | `task.get` | Solo aparece con `--explain-urgency` (10.5) |
   | Las demás claves de `data.task` | `task.get` | Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas, y ninguna otra (10.5) |
 - Una lista vacía es `[]` y un mapa vacío es `{}`, nunca `null`.
+- **Todo lo de arriba gobierna las salidas de datos, y el sobre de error se gobierna aparte** (12.2). La
+  razón es que quien consume una salida de datos no puede prever qué habrá dentro, y quien recibe un
+  error sí: lo primero que lee es `code`, y cada `code` trae siempre las mismas claves.
 
 ---
 
@@ -5178,7 +5573,9 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
   cambian de tipo.
 - El algoritmo de coincidencia de la sección 6.1, idéntico al leer y al escribir.
 - La simetría entre `biso export` y `biso new --from` sobre todos los campos no derivados, que es una
-  prueba de la suite y no una intención.
+  prueba de la suite y no una intención. La de `biso snapshot` con `biso init --from` cubre además la
+  configuración del tablero, **con la excepción declarada de `me` y `default_limit`**, que no viajan en
+  la instantánea (10.14) y por tanto tampoco están en esta promesa.
 - La estabilidad de las claves de los criterios: una clave asignada no se reasigna nunca.
 - El tope de tamaño del mensaje de `biso prime`.
 
@@ -5238,8 +5635,13 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   comando.
 - **No hay sincronización con ningún sistema externo.**
 - **No hay sincronización entre máquinas.** Un tablero vive en la máquina donde se creó, y lo que
-  cruza a otra es la instantánea que deja `biso snapshot` en git, para reconstruirlo entero, no para
-  mantener dos copias vivas al día (sección 12 de `docs/DECISIONES.md`).
+  cruza a otra es la instantánea que deja `biso snapshot`, para reconstruirlo entero con
+  `biso init --from`, no para mantener dos copias vivas al día (sección 12 de `docs/DECISIONES.md`).
+  **Cómo cruza depende de dónde viva el tablero, y las dos vías están especificadas** (10.14): un
+  tablero versionado dentro del proyecto viaja con él y con el remoto que el proyecto ya tenga, sin que
+  nadie configure nada, y un tablero con su propio repositorio viaja cuando alguien le da un remoto y
+  `biso snapshot --vcs push` lo publica. Lo que no hay es ningún remoto que `biso` configure por su
+  cuenta, ni forma de fusionar dos almacenes escritos por separado.
 - **No hay un papel de estado para descartar, distinto de terminar.** Una tarea hecha y una abandonada
   hoy comparten el mismo estado terminal. Un papel que obligara a dar un motivo al entrar en él sería
   barato de añadir cuando hiciera falta, pero a diferencia de los demás requisitos de este modelo no
@@ -5252,17 +5654,26 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
 
 En el orden en que cada pieza paga lo que cuesta:
 
-1. **El modelo de datos lógico** de la sección 5, con las claves estables de los criterios y el
+1. **El almacén**: abrir o crear la base de datos, el modo WAL y la transacción dentro de la que
+   ocurre cualquier escritura, que es de lo que dependen las seis garantías de la sección 4.10. **Aquí
+   se mide el presupuesto de arranque de la sección 4.13** con el mecanismo de acceso que se haya
+   elegido, porque esa prueba no se puede escribir antes de que el almacén exista, y la elección del
+   mecanismo se decide midiendo contra ella.
+2. **El modelo de datos lógico** de la sección 5, con las claves estables de los criterios y el
    rechazo explícito de lo desconocido.
-2. **El algoritmo de coincidencia** de la sección 6.1, que es una función pura de veinte líneas y de
+3. **El algoritmo de coincidencia** de la sección 6.1, que es una función pura de veinte líneas y de
    la que dependen todos los comandos.
-3. **`new`, `ls`, `get` y `set`**, que son el trabajo diario.
-4. **Los seis verbos de ciclo** de 10.7, `start`, `note`, `comment`, `finish`, `ask` y `answer`, que
+4. **`init` y `where`**, que son crear un tablero y saber cuál es. Van aquí y no al final porque no hay
+   forma de ejecutar ni de probar el paso siguiente sin un tablero, y crear un tablero es `init`.
+5. **`new`, `ls`, `get` y `set`**, que son el trabajo diario.
+6. **Los seis verbos de ciclo** de 10.7, `start`, `note`, `comment`, `finish`, `ask` y `answer`, que
    son azúcar sobre `set` y se escriben encima.
-5. **`prime`**, que es lo que hace que todo lo anterior se use bien sin leer nada más.
-6. **El lote de `new --from` y `export`**, con la prueba de simetría, que es lo que convierte una
-   migración en una sola operación.
-7. **El resto**: `init`, `where`, `archive`, `config`, `doctor`, `board` y `help`.
+7. **`prime`**, que es lo que hace que todo lo anterior se use bien sin leer nada más.
+8. **El lote de `new --from`, `export`, `snapshot` e `init --from`**, los cuatro juntos porque la prueba
+   de simetría los necesita a la vez: exportar un tablero e importarlo tiene que dar dos tableros
+   idénticos campo a campo, y lo mismo una instantánea restaurada.
+9. **El resto**: `archive`, `config`, `doctor`, `board` y `help`.
 
 Las garantías de la sección 4.10 no son un paso de esta lista: hay que respetarlas desde el primer
-comando que escriba.
+comando que escriba. El paso 1 es el que da las herramientas para respetarlas, no una excepción a esa
+regla.

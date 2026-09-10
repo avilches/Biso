@@ -517,14 +517,22 @@ Las dos alternativas si la respuesta es que no:
   eso no afecta a nada de lo que se propone aquí.
 - **El riesgo nuevo que aparece al cerrar esa decisión: el tablero ya no viaja, y los documentos
   sí.** El precio declarado de sacar el tablero del árbol de trabajo es que no se clona con el
-  proyecto, y lo único que cruza a git es la exportación de texto de `biso snapshot` (sección 10.14
+  proyecto, y lo único que cruza es la exportación de texto de `biso snapshot` (sección 10.14
   de `docs/SPEC.md`). Eso toca de lleno al argumento de la sección 4.1: los `Ruling:` que se rescatan
   de la bitácora antes del `rm -rf` pasan a vivir en una base de datos local a una máquina, así que
   la frase de Superpowers "la historia de git es el registro ahora" solo vuelve a ser cierta cuando
-  alguien ejecuta `biso snapshot` y commitea su salida. Sin ese paso, la integración cambia perder
+  alguien ejecuta `biso snapshot`. Sin ese paso, la integración cambia perder
   las decisiones al morir la sesión por perderlas al morir la máquina, que es mucho mejor pero no es
   lo que promete la sección 4.1. Tanto la política de despacho de 6.4 como la skill propia de 7.5
   deberían contar el `snapshot` como parte del cierre.
+- **Y hay una configuración en la que ese riesgo desaparece del todo, que conviene tener presente
+  aquí**: si el tablero se crea dentro del proyecto con `biso init --at` y el proyecto versiona esa
+  carpeta, la revisión de la instantánea va al repositorio del código y viaja con su remoto, sin que
+  nadie configure nada (sección 10.14 de `docs/SPEC.md`). La base de datos sigue quedando fuera,
+  porque el fichero de exclusión que `init` escribe dentro del tablero la excluye siempre, así que la
+  propiedad de la que depende este documento, que un worktree vea el mismo tablero que `main`, se
+  conserva igual. En esa configuración, "la historia de git es el registro ahora" vuelve a ser cierta
+  en cuanto alguien ejecuta `biso snapshot`, y lo que cruza a otra máquina cruza con el proyecto.
 - **El arrendamiento con caducidad existe precisamente para el fallo que motiva este documento**:
   detectar una tarea que un agente cogió y cuya sesión murió sin liberarla. La sección 9.2 de
   `docs/DECISIONES.md` ya lo resuelve, dentro de un capítulo titulado "El modelo de estados: cuatro

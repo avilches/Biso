@@ -516,8 +516,13 @@ agente. Una discusión formal pide poder bloquear issues generados por Copilot y
 indicación visible de que fuera generado, ni en la interfaz ni en la interfaz de programación
 (`https://github.com/orgs/community/discussions/159749`).
 
-**Qué hace `biso`.** Es local y no tiene cuota. Y distingue por diseño quién escribió qué, con autor en
-los comentarios y en la pregunta abierta.
+**Qué hace `biso`.** Es local y no tiene cuota. Y distingue quién escribió qué **mientras cada quien
+tenga su propia identidad**, con autor en los comentarios y en la pregunta abierta. Esa condición hay que
+decirla, porque un tablero con la clave `me` configurada la destruye: `me` gana sobre `BISO_ME`, así que
+ahí todo el mundo comparte identidad y la distinción deja de existir, lo que la sección 11 de
+`DECISIONES.md` anota como riesgo aceptado. Un tablero compartido entre una persona y un agente tiene que
+dejar `me` sin configurar, y de la vía por la que esa clave llegaba sin que nadie la eligiera, restaurar
+la instantánea de otra persona, ya se encarga `biso snapshot`, que no la escribe.
 
 ## 16. El agente deja de mirar el tablero cuando el proyecto crece
 

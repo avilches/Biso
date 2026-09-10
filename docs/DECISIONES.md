@@ -734,7 +734,11 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
 - **Un tablero con la clave `me` configurada anula la distinción entre persona y agente.** La clave
   `me` gana sobre `BISO_ME`, así que en un tablero que la tenga puesta todo el mundo comparte
   identidad y `--mine` deja de significar nada. Un tablero compartido entre una persona y un agente
-  tiene que dejar `me` sin configurar.
+  tiene que dejar `me` sin configurar. **Lo único que se ha cerrado de este riesgo es la vía por la que
+  llegaba sin que nadie lo decidiera**: la instantánea de `biso snapshot` no escribe `me` (ni
+  `default_limit`), así que restaurar el tablero de otra persona con `biso init --from` ya no hereda su
+  identidad, y el tablero restaurado nace sin ninguna. Configurarla sigue siendo posible, y sigue
+  teniendo esta consecuencia.
 - **La persona no tiene un canal hacia el agente que se vea en el mensaje de arranque.** El agente
   pregunta con `biso ask` y la persona responde con `biso answer`, pero si la persona quiere decirle
   algo por iniciativa propia lo escribe en un comentario, y el mensaje de arranque no muestra
@@ -762,9 +766,9 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
 
 La especificación dejaba deliberadamente abierto cómo se guardan los datos. La decisión es: un tablero
 es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un fichero
-puntero versionado en git (`.biso.json`, sección 3.2 de `SPEC.md`), con una exportación de texto que sí
-se commitea para el historial (`biso snapshot`, sección 10.14 de `SPEC.md`). Sin daemon, y sin fusionar
-nunca dos almacenes escritos por separado.
+puntero versionado con el proyecto (`.biso.json`, sección 3.2 de `SPEC.md`), con una exportación de texto
+que sí se guarda en el control de versiones para el historial (`biso snapshot`, sección 10.14 de
+`SPEC.md`). Sin daemon, y sin fusionar nunca dos almacenes escritos por separado.
 
 La evidencia detrás de cada pieza de esta decisión, con sus enlaces, está en
 [`docs/ESTADO-DEL-ARTE.md`](ESTADO-DEL-ARTE.md), el inventario de las herramientas del espacio y el
@@ -791,8 +795,8 @@ nunca fallan por una escritura en curso. Beads tuvo uno, hacía una sola cosa, y
 al cambiar de motor; quien lo reemplazó por algo más simple cuenta que se pasaba varias veces por semana
 peleándose con él (sección 11 de `docs/ESTADO-DEL-ARTE.md`).
 
-**Por qué el texto es una salida, y nunca un canal de vuelta.** `biso snapshot` escribe `tasks.ndjson` y
-`config.json` para que el historial de git cuente lo que pasó y para que `biso init --from` pueda
+**Por qué el texto es una salida, y nunca un canal de vuelta.** `biso snapshot` escribe `snapshot.ndjson` y
+`board.json` para que el historial de git cuente lo que pasó y para que `biso init --from` pueda
 reconstruir el tablero entero en otra máquina, pero nada dentro de `biso` vuelve a leer esos ficheros
 como si fueran la verdad. Beads documenta por qué esa asimetría es obligatoria y no una elección
 estética: su importación es solo de inserción y actualización, y no puede saber si un registro ausente
@@ -965,12 +969,17 @@ absolutas", porque un consejo obliga a quien lo lee a averiguar si le aplica, mi
 guardado y qué no va a funcionar hace que quien trabaja así se reconozca y el resto pueda seguir.
 
 **La condición de la nota nombra dos cosas y las dos hacen falta.** Una copia de trabajo que vive fuera
-del proyecto se queda sin el directorio del tablero solo porque git lo ignora, que es lo que la otra nota
-de `init` recomienda hacer. Al escribirlo apareció el caso contrario, que no estaba cubierto: si nadie
-ignora esa carpeta, la copia de trabajo recibe el marcador y los dos ficheros de texto pero nunca
-`board.db`, porque el `.gitignore` que `init` escribe dentro del tablero lo excluye siempre. Queda un
-directorio que parece el tablero y no lo es, así que la resolución exige las dos cosas, el marcador y la
-base de datos, y sigue buscando cuando falta la segunda.
+del proyecto se queda sin el directorio del tablero solo porque el proyecto lo ignora, que es una de las
+dos salidas que la otra nota de `init` describe. Al escribirlo apareció el caso contrario, que no estaba
+cubierto: si nadie ignora esa carpeta, la copia de trabajo recibe el marcador y los dos ficheros de texto
+pero nunca `board.db`, porque el fichero de exclusión que `init` escribe dentro del tablero lo excluye
+siempre. Queda un directorio que parece el tablero y no lo es, así que la resolución exige las dos cosas,
+el marcador y la base de datos, y sigue buscando cuando falta la segunda.
+
+**Y esa otra nota dejó de recomendar y pasó a contar las dos salidas**, porque al mirar el caso contrario
+se vio que no era el accidente que la primera redacción suponía, sino la configuración que hace que la
+instantánea cruce a otra máquina sola: un tablero versionado dentro del proyecto viaja con el remoto que
+el proyecto ya tiene. Recomendar ignorar la carpeta habría sido recomendar renunciar a eso sin decirlo.
 
 **Por qué el tope de la búsqueda es el directorio personal y no un número de niveles.** La primera
 redacción decía que el recorrido no comprueba ningún directorio con menos de dos componentes de ruta, y
@@ -1062,6 +1071,84 @@ proyecto. Quien en el futuro quiera endurecer esa vía, por ejemplo exigiéndole
 `<id>.id` como hace la búsqueda por identificador, tiene que saber que estaría cerrando la última puerta
 que queda, y que la propia sección 3.2 la deja abierta a propósito para que `biso doctor --fix` pueda
 devolver un marcador que falte.
+
+### 12.1. El control de versiones, la instantánea y los códigos que salieron de ahí
+
+Todo este apartado sale de una sola pregunta que la especificación tenía mal contestada: la sección 14 de
+`SPEC.md` decía que lo que cruza a otra máquina es la instantánea, y ningún comando le daba una vía para
+cruzar, porque el repositorio donde vive está fuera del proyecto y no tiene remoto.
+
+**Por qué el sistema de control de versiones es configurable, y no git a secas.** Cablear git habría
+dejado sin historial a cualquiera que use otro sistema, y no por una limitación real: lo único que `biso`
+necesita de él son cuatro operaciones, ver si un directorio está en un repositorio, crear uno, guardar una
+revisión y publicarla. La clave `vcs` de la sección 3.3 de `SPEC.md` las nombra, con `git` por defecto
+porque es el dominante y el único medido, `none` para no ejecutar nada y `custom` para el resto. El
+catálogo existe porque un sistema conocido permite decir cosas que un comando opaco no puede: el
+identificador de la revisión, que no había nada que guardar, y en qué repositorio ha acabado. Con `custom`
+el contrato se reduce a lo único honesto, ejecutar la orden y mirar su código de salida, y la salida en
+JSON lo refleja llevando `null` donde no puede saber.
+
+**Por qué la clave vive en la configuración de la máquina y no en la del tablero.** Dice qué herramienta
+hay instalada aquí, no cómo es un tablero, y esa diferencia tiene una consecuencia concreta: la
+configuración del tablero es la que viaja en la instantánea, así que puesta ahí, restaurar la instantánea
+de otra persona le impondría el sistema del ordenador de origen. Es el mismo error que la clave `me`, que
+en esta misma ronda se sacó de la instantánea por exactamente esa razón.
+
+**Por qué la revisión va donde vive el tablero, y por qué hay que preguntar por la exclusión.** Un tablero
+puede estar en tres situaciones, y las tres tienen los mismos ficheros en el mismo sitio: ser su propio
+repositorio, estar dentro del repositorio del proyecto, o no estar en ninguno. Lo único que distingue la
+segunda de tener el directorio ignorado es una línea en el fichero de exclusión del proyecto, así que
+adivinarlo mirando el disco es imposible y `snapshot` lo pregunta (10.14 de `SPEC.md`). El caso que
+justifica el trabajo es el bueno: cuando el proyecto versiona la carpeta del tablero, la revisión va al
+repositorio del código y la instantánea cruza a otra máquina con el proyecto, sin que nadie configure un
+remoto. Leída al pie de la letra, la redacción anterior habría creado ahí un repositorio dentro de otro
+repositorio, que es el peor de los resultados posibles.
+
+**El riesgo que se acepta con `--vcs push` en ese caso.** Publicar el repositorio del proyecto arrastra
+también los commits de código que estuvieran pendientes en esa rama. Se acepta porque es lo que la bandera
+promete y porque quien la escribe ya está pidiendo publicar: negarse a hacerlo, o hacerlo a medias, sería
+sorprender a quien pidió una cosa clara. La alternativa que se descartó, error de uso en ese caso, rompía
+un guion que llame igual desde varios proyectos configurados de formas distintas.
+
+**Por qué la instantánea guarda tres ficheros y no dos.** El marcador `<id>.id` entra en la revisión
+porque es lo que hace que la identidad del tablero viaje, y de eso depende que el puntero commiteado del
+proyecto siga valiendo después de restaurar. La redacción anterior se contradecía: decía que el marcador
+quedaba versionado y a la vez que la revisión añadía solo los dos ficheros de datos. Se nombran los tres
+uno a uno, y no el directorio entero, para que un fichero que alguien deje ahí a mano no acabe en el
+historial.
+
+**Por qué `snapshot` no toma ningún acceso exclusivo.** Es una lectura, y la sección 4.10 de `SPEC.md`
+promete que una lectura nunca hace fallar a una escritura. Si tomara el acceso exclusivo de las
+escrituras, una copia podría hacer terminar con error a un `biso set` que llegara a la vez, que es un daño
+sobre el trabajo diario. Sin él, el único desenlace malo es que dos instantáneas simultáneas choquen al
+guardar la revisión, y ese daño cae sobre una copia que se puede repetir: sale con el código 7 y su
+mensaje dice que basta volver a llamar. Un acceso exclusivo propio de este comando evitaría también ese
+choque, y se descartó por lo que cuesta especificar bien un fichero de bloqueo persistente y la limpieza
+de los que deja atrás un proceso que muere, para un caso que solo ocurre si dos sesiones terminan en el
+mismo segundo sobre el mismo tablero.
+
+**Por qué el daño de la base de datos estrena el código 10 en vez de compartir el 8.** El 8 promete un
+remedio, `biso init` crea el tablero, y con la base de datos dañada ese remedio no arregla nada: hay que
+reconstruir desde una instantánea. Tres situaciones con tres remedios no pueden compartir número si el
+principio de la sección 1 de `SPEC.md` dice que quien llama ramifica sobre el número sin leer el mensaje.
+Y como el remedio ahora tiene un comando que lo hace, el mensaje lo nombra en vez de decir "restaura de
+una copia": `biso init --from` reconstruye en el sitio, adoptando el `id` del marcador, y para eso hubo
+que declarar que un directorio cuya base de datos no abre no cuenta como tablero accesible.
+
+**Por qué el identificador duplicado estrena el 11 en vez de reusar el 5.** El 5 es la referencia que
+encaja con más de una entidad, y en la práctica siempre habla de una tarea: quien lo recibe afina la
+referencia. Aquí no hay ninguna referencia que afinar, hay dos directorios en el disco con la misma
+identidad, y el remedio es renombrar o quitar uno. Compartir el número habría obligado a leer el mensaje
+para saber cuál de los dos remedios aplicar, que es justo lo que los códigos existen para evitar.
+
+**Por qué las columnas se miden en celdas de terminal.** Los títulos son texto libre en UTF-8, y contar
+puntos de código desalinea la tabla en cuanto aparece un acento combinante, un ideograma o un emoji,
+porque lo que suman en pantalla no es lo que suman como caracteres. La celda es la única unidad que
+alinea de verdad, y medirla no contradice la prohibición de mirar el terminal de la sección 4.1 de
+`SPEC.md`: la anchura de un carácter es una propiedad de Unicode, igual en cualquier máquina, mientras
+que lo que 4.1 prohíbe es preguntarle a la ventana cuántas columnas tiene. El recorte del título usa la
+misma unidad y no parte nunca un grafema, así que la promesa es un tope de 100 celdas y no una longitud
+exacta.
 
 ---
 
