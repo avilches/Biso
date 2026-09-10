@@ -87,3 +87,19 @@ afecta al arranque y a la distribución del binario, y todavía no está medida 
 - **Nunca em-dash**, en ningún texto: ni en documentación, ni en código, ni en mensajes de commit.
 - **Los mensajes de commit y las descripciones de PR no llevan coautoría** ni mención de haber sido
   generados por un agente.
+
+## El sitio de documentación
+
+Los cuatro documentos de `docs/` se sirven como un sitio navegable con MkDocs y el tema Material,
+definido en `mkdocs.yml`. Es utillaje de documentación, no parte del programa: no toca el código
+Go ni cambia el contenido de los `.md`, que siguen siendo la fuente de verdad. Las dependencias de
+Python están fijadas con versión exacta en `docs-requirements.txt`.
+
+Se ejecuta con `uv` (ya instalado en esta máquina) sin crear un entorno virtual dentro del
+repositorio ni instalar nada en el Python del sistema: `uv` resuelve las dependencias fijadas a un
+caché propio y las descarta al terminar.
+
+- Servir en local con recarga automática al editar los `.md`:
+  `uv run --with-requirements docs-requirements.txt --no-project mkdocs serve`
+- Construir el sitio estático en `site/` (no se versiona, ver `.gitignore`):
+  `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict`

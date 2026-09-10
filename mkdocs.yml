@@ -1,0 +1,61 @@
+site_name: biso
+site_description: Especificacion y decisiones de diseno de biso, el CLI de gestion de tareas
+docs_dir: docs
+
+# docs/superpowers/ guarda los documentos de diseno y los planes de las sesiones de
+# brainstorming. Se publican, porque ESTADO-DEL-ARTE.md enlaza a uno de ellos, pero no
+# entran en el menu lateral para no mezclarlos con los cuatro documentos principales.
+not_in_nav: |
+  superpowers/
+
+theme:
+  name: material
+  language: es
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Cambiar a modo oscuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Cambiar a modo claro
+  features:
+    - content.code.copy
+    - navigation.top
+    - navigation.tracking
+    - navigation.sections
+    - toc.follow
+    - search.suggest
+    - search.highlight
+
+plugins:
+  - search:
+      lang: es
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Inicio: index.md
+  - Especificacion: SPEC.md
+  - Decisiones de diseno: DECISIONES.md
+  - Estado del arte: ESTADO-DEL-ARTE.md
+  - Pendientes: PENDIENTES.md

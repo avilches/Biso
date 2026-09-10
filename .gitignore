@@ -1,3 +1,7 @@
 # Espacio de trabajo temporal de las skills de Superpowers: ledger, briefs e
 # informes de una ejecucion por subagentes. No es documentacion del proyecto.
 .superpowers/
+
+# Sitio generado por MkDocs a partir de docs/*.md. Se reconstruye con
+# `uv run --with-requirements docs-requirements.txt --no-project mkdocs build`.
+site/

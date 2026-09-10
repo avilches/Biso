@@ -1698,10 +1698,10 @@ Cómo se calcula el resumen, para que la implementación sea única:
   categoría inventada como "abiertas" que no se corresponda con un estado del tablero.
 - Los cuatro bloques `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU` y `NEXT UP` se reparten
   el tablero por esta precedencia, y cada tarea cae en el primero que la acepte:
-  1. `NEEDS ANSWER`, si tiene una pregunta abierta.
-  2. `IN PROGRESS`, si está en el estado activo.
-  3. `ASSIGNED TO YOU`, si está asignada a la identidad configurada.
-  4. `NEXT UP`, el resto.
+    1. `NEEDS ANSWER`, si tiene una pregunta abierta.
+    2. `IN PROGRESS`, si está en el estado activo.
+    3. `ASSIGNED TO YOU`, si está asignada a la identidad configurada.
+    4. `NEXT UP`, el resto.
   **Ninguna tarea aparece en dos bloques.** Una tarea aparcada no sale en `IN PROGRESS` aunque esté en
   el estado activo, porque ese bloque significa que alguien está trabajando y ahí no lo está nadie.
   Los cuatro excluyen las tareas terminadas y las archivadas.
@@ -2482,7 +2482,7 @@ biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de la
 |---|---|---|---|---|---|---|---|
 | `<title>` | | sí, salvo con `--from` | texto | | no | no | `--from` |
 | `--start` | | no | booleano | falso | no | no | `-s`, `--from` |
-| `--from <file\|->` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
+| `--from <file|->` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
 
 Todas las banderas de campo de la sección 8 valen aquí. En una tarea nueva no hay nada que sustituir
 ni que quitar, así que `--set-*`, `--rm-*` y `--clear-*` se aceptan y hacen lo mismo que el nombre
@@ -4209,7 +4209,7 @@ biso export [-o <file|->] [--no-archived] [cualquier filtro de biso ls, salvo --
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
-| `--out <file\|->` | `-o` | no | ruta o `-` | `-`, es decir stdout | no | no | |
+| `--out <file|->` | `-o` | no | ruta o `-` | `-`, es decir stdout | no | no | |
 | `--no-archived` | | no | booleano | falso | no | no | |
 | filtros de `ls` | | no | | | | | `--sort`, `--limit`, `--all`, `--ids`, `--count`, `--archived`, `--only-archived` |
 
