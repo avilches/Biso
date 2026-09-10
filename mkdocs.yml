@@ -39,6 +39,13 @@ plugins:
   - search:
       lang: es
 
+# Un enlace a un fichero que no existe o a un ancla que no existe pasa a ser un aviso, y con
+# --strict, un fallo de build. Es lo que sostiene la convencion de citar por el titulo de la
+# seccion en vez de por su numero: una referencia rota deja de ser un error silencioso.
+validation:
+  anchors: warn
+  unrecognized_links: warn
+
 markdown_extensions:
   - admonition
   - attr_list
@@ -46,6 +53,11 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+      # Sin esto, el titulo "Codigos de salida" genera el ancla "codigos-de-salida", sin los
+      # acentos, y un enlace que los lleve falla. Con el slugify de pymdownx las anclas
+      # conservan los acentos, quedan legibles y coinciden con las que genera GitHub, asi que
+      # un enlace funciona igual en el sitio y leyendo el fichero en crudo.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {kwds: {case: lower}}
   - pymdownx.superfences
   - pymdownx.highlight
   - pymdownx.inlinehilite
