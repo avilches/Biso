@@ -2,7 +2,7 @@
 
 Este documento cierra los cuatro requisitos que la sección 9 de [`DECISIONES.md`](../../DECISIONES.md)
 dejó identificados y sin incorporar. No es la especificación: es la decisión y su razón, escrita para
-que aplicarla a [`SPEC.md`](../../SPEC.md) y a `DECISIONES.md` sea mecánico. La sección 11 es la lista
+que aplicarla a [`SPEC.md`](../../spec/index.md) y a `DECISIONES.md` sea mecánico. La sección 11 es la lista
 de esos cambios, uno a uno.
 
 Lo que decide, en una frase: **ningún papel de estado nuevo, un campo nuevo con dos verbos, y el

@@ -7,7 +7,7 @@ ejecute el programa.
 
 Esta documentación reúne los cuatro documentos del proyecto:
 
-- **[Especificación](SPEC.md)**: define todos los comandos con su firma, sus parámetros, su
+- **[Especificación](spec/index.md)**: define todos los comandos con su firma, sus parámetros, su
   comportamiento en los casos límite, la salida literal que imprimen, su esquema JSON y sus códigos
   de salida. Es el documento del que se implementa todo.
 - **[Decisiones de diseño](DECISIONES.md)**: la razón de cada decisión de la especificación que

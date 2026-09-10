@@ -75,7 +75,42 @@ markdown_extensions:
 
 nav:
   - Inicio: index.md
-  - Especificacion: SPEC.md
+  - Especificacion:
+    - "biso: especificacion del CLI de gestion de tareas": spec/index.md
+    - Vocabulario de esta especificacion: spec/vocabulario.md
+    - Los principios: spec/principios.md
+    - Codigos de salida: spec/codigos-de-salida.md
+    - Banderas globales, entorno y configuracion de maquina: spec/invocacion.md
+    - Como se elige el tablero: spec/resolucion-del-tablero.md
+    - Terminal, flujos de salida y codificacion: spec/salida-y-terminal.md
+    - Como se pasa un valor: spec/valores-de-entrada.md
+    - Orden de escritura, concurrencia y datos danados: spec/garantias.md
+    - El modelo de datos de una tarea: spec/modelo-de-datos.md
+    - Los presupuestos de arranque y de tamano: spec/presupuestos.md
+    - Los vocabularios del tablero y la regla de validacion: spec/vocabularios.md
+    - Como se resuelve una referencia a una tarea: spec/referencias.md
+    - Las familias de banderas: spec/familias-de-banderas.md
+    - Comandos:
+      - Los comandos: spec/cmd/index.md
+      - biso prime, el arranque de una sesion: spec/cmd/prime.md
+      - biso init: spec/cmd/init.md
+      - biso where: spec/cmd/where.md
+      - biso new: spec/cmd/new.md
+      - biso ls: spec/cmd/ls.md
+      - biso get: spec/cmd/get.md
+      - biso set: spec/cmd/set.md
+      - "Los verbos del ciclo: start, note, comment, finish, ask, answer": spec/cmd/verbos-del-ciclo.md
+      - biso archive: spec/cmd/archive.md
+      - biso export: spec/cmd/export.md
+      - biso config: spec/cmd/config.md
+      - biso doctor: spec/cmd/doctor.md
+      - biso board: spec/cmd/board.md
+      - "La ayuda: biso help y biso --help": spec/cmd/help.md
+      - biso snapshot: spec/cmd/snapshot.md
+    - El contrato JSON: spec/contrato-json.md
+    - El contrato de estabilidad: spec/estabilidad.md
+    - Lo que se deja fuera a proposito: spec/fuera-de-alcance.md
+    - Por donde empezar a implementar: spec/por-donde-empezar.md
   - Decisiones de diseno: DECISIONES.md
   - Estado del arte: ESTADO-DEL-ARTE.md
   - Pendientes: PENDIENTES.md
