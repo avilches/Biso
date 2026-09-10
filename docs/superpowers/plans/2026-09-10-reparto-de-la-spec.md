@@ -473,7 +473,7 @@ que aparecen en la tabla.
 | `docs/spec/salida-y-terminal.md` | 511-598 | 88 | Terminal, flujos de salida y codificación |
 | `docs/spec/valores-de-entrada.md` | 599-674 | 76 | Cómo se pasa un valor |
 | `docs/spec/garantias.md` | 675-721, 746-812 | 114 | Orden de escritura, concurrencia y datos dañados |
-| `docs/spec/modelo-de-datos.md` | 722-745, 868-1170 | 327 | El modelo de datos de una tarea |
+| `docs/spec/modelo-de-datos.md` | 868-1170, 722-745 | 327 | El modelo de datos de una tarea |
 | `docs/spec/presupuestos.md` | 813-867, 1545-1585 | 96 | Los presupuestos de arranque y de tamaño |
 | `docs/spec/vocabularios.md` | 1171-1271 | 101 | Los vocabularios del tablero y la regla de validación |
 | `docs/spec/referencias.md` | 1272-1352 | 81 | Cómo se resuelve una referencia a una tarea |
@@ -507,7 +507,9 @@ Las cinco mudanzas que no son un corte limpio, y que el diseño justifica:
 - **La resolución del tablero** (3.2) sale de dentro de las banderas globales, que se quedan con el
   resto de la sección 3 en `invocacion.md`, también con un hueco en medio.
 - **Los identificadores** (4.11, líneas 722-745) se van con el modelo de datos, porque hablan de los
-  identificadores de las tareas.
+  identificadores de las tareas. Van **al final** del fichero, detrás de la sección 5 entera, y por eso su
+  rango es el segundo de esa fila: si fueran delante, una subsección quedaría por encima de la
+  introducción de su propia sección.
 - **La ayuda se reúne**: el comando `biso help` (10.13) y la ayuda de primer nivel (sección 11) van al
   mismo fichero.
 - **La introducción de las reglas transversales** (líneas 507-510) va a `docs/spec/index.md`, porque
@@ -604,12 +606,13 @@ docs/spec/vocabulario.md: 31-63
 docs/spec/principios.md: 65-91
 ```
 
-y así con los 34. **Fíjate en que los rangos del manifiesto empiezan una línea después que en la tabla**
-cuando esa primera línea es el encabezado que pasa a ser el H1, porque el H1 lo escribes tú y no se copia.
-Para `index.md` el rango empieza en 2 porque la línea 1 es el H1 del documento, que sí se conserva pero se
-escribe como H1 del fichero. Para `garantias.md`, `salida-y-terminal.md`, `valores-de-entrada.md` y
-`presupuestos.md`, cuyos H1 nacen de la nada, **no se salta ninguna línea**: sus rangos empiezan donde dice
-la tabla, porque el encabezado viejo se conserva como subsección.
+y así con los 34.
+
+**Los rangos del manifiesto son exactamente los de la tabla, sin quitar ni añadir una línea.** No te
+compliques pensando si hay que saltarse la línea del encabezado: la comparación por fichero solo mira
+líneas de contenido y descarta los encabezados, así que da igual que el rango incluya la línea del
+encabezado viejo o no. Que el encabezado se copie o se sustituya por el H1 es asunto del `sed` del paso 1,
+y quien lo comprueba es la comparación de encabezados del paso 5 con su tabla de excepciones.
 
 - [ ] **Step 4: Comprobar que cada fichero lleva lo que le toca**
 
