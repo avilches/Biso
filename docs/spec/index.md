@@ -23,7 +23,8 @@ del mecanismo fuera de aquí.
 El modelo de tarea es compatible con el de Backlog.md, de modo que se puede importar y exportar entre
 las dos herramientas sin perder campos. **La compatibilidad es de modelo de datos y no de formato de
 fichero**: los campos se corresponden uno a uno, pero `biso` no lee ni escribe los ficheros Markdown de
-esa herramienta, y no hay ninguna intención de que lo haga.
+esa herramienta, y no hay ninguna intención de que lo haga, como consta en
+[Lo que se deja fuera a propósito](fuera-de-alcance.md).
 
 **Convención de idioma.** La prosa de estos documentos va en español. Todo lo que es interfaz del
 programa (nombres de comando, banderas, textos de ayuda, mensajes de error, claves JSON y claves de
@@ -35,41 +36,53 @@ escribe.
 El orden de la barra lateral no es alfabético: cada parte presupone la anterior, así que conviene
 leerlas en ese orden la primera vez y usarlas como referencia suelta las siguientes.
 
-**Los fundamentos, antes que cualquier regla concreta.** [Vocabulario de esta especificación](vocabulario.md)
+### Los fundamentos, antes que cualquier regla concreta
+
+[Vocabulario de esta especificación](vocabulario.md)
 fija los nombres en español que usa el resto de los documentos y su equivalente en la interfaz.
 [Los principios](principios.md) son las reglas de las que el resto de la especificación es
 consecuencia, así que conviene tenerlas presentes antes de leer un comando. [Códigos de salida](codigos-de-salida.md)
 es la tabla global a la que apela cualquier comportamiento en un caso límite: sin haberla visto, una
 referencia a un código concreto en otra página no dice nada.
 
-**Cómo se invoca el programa, antes de tocar ningún dato.** [Banderas globales, entorno y configuración
+### Cómo se invoca el programa, antes de tocar ningún dato
+
+[Banderas globales, entorno y configuración
 de máquina](invocacion.md) y [Cómo se elige el tablero](resolucion-del-tablero.md) explican qué pasa
 antes de que el programa llegue a interpretar el comando: qué banderas valen para todos, y con qué
 tablero va a trabajar. [Terminal, flujos de salida y codificación](salida-y-terminal.md) y [Cómo se
-pasa un valor](valores-de-entrada.md) cierran ese bloque: qué imprime el programa según haya terminal
+pasa un valor](valores-de-entrada.md) terminan ese bloque: qué imprime el programa según haya terminal
 de por medio o no, y de qué formas se le puede pasar el valor de cualquier bandera. Ninguna de estas
 páginas depende de un comando concreto.
 
-**El modelo de datos, con las reglas que lo escriben.** [Orden de escritura, concurrencia y datos
+### El modelo de datos, con las reglas que lo escriben
+
+[Orden de escritura, concurrencia y datos
 dañados](garantias.md) dice qué garantiza el programa antes de que aparezca ningún campo. [El modelo de
 datos de una tarea](modelo-de-datos.md) es la lista de esos campos. [Los presupuestos de arranque y de
 tamaño](presupuestos.md) son los límites que ese modelo y el arranque del programa tienen que respetar.
 [Los vocabularios del tablero y la regla de validación](vocabularios.md) cierra el bloque explicando
 cómo se valida el valor de los campos que tienen un vocabulario cerrado.
 
-**La gramática de la entrada que comparten los comandos.** [Cómo se resuelve una referencia a una
+### La gramática de la entrada que comparten los comandos
+
+[Cómo se resuelve una referencia a una
 tarea](referencias.md) y [Las familias de banderas](familias-de-banderas.md) definen de una vez la
 forma que tiene nombrar una tarea y la forma que tiene cada bandera de escritura. Estas reglas valen
 para todos los comandos y no se repiten en cada uno: un comando solo las menciona cuando se aparta de
 ellas, y ninguno lo hace salvo donde se diga.
 
-**Los comandos, empezando por `prime`.** [Los comandos](cmd/index.md) explica cómo se agrupan y cuáles
+### Los comandos, empezando por `prime`
+
+[Los comandos](cmd/index.md) explica cómo se agrupan y cuáles
 aparecen en `biso --help` frente a `biso help all`. El primero de la lista es [`biso prime`](cmd/prime.md),
 el comando con el que arranca una sesión y que resume el estado del tablero; el resto de los comandos
 sigue después, en el orden de la barra lateral.
 
-**Al final, los contratos y lo que falta.** [El contrato JSON](contrato-json.md) y [El contrato de
+### Al final, los contratos y lo que falta
+
+[El contrato JSON](contrato-json.md) y [El contrato de
 estabilidad](estabilidad.md) dicen qué forma no cambia mientras la versión mayor sea `1`.
 [Lo que se deja fuera a propósito](fuera-de-alcance.md) nombra lo que la especificación decide no
 tener, para que nadie lo dé por olvidado. Y [Por dónde empezar a implementar](por-donde-empezar.md)
-cierra la especificación con el orden en que cada pieza del programa paga lo que cuesta.
+remata la especificación con el orden en que cada pieza del programa paga lo que cuesta.
