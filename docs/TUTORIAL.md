@@ -1,7 +1,7 @@
 <!--
   Fichero generado. No lo edites a mano: se sobrescribe entero cada vez que se
-  ejecuta tutorial/generar.py.
-  Se regenera con: uv run --with-requirements docs-requirements.txt --no-project python tutorial/generar.py
+  ejecuta tutorial/generate.py.
+  Se regenera con: uv run --with-requirements docs-requirements.txt --no-project python tutorial/generate.py
 -->
 
 # Tutorial de biso por escenarios
@@ -12,7 +12,7 @@
     cualquier cambio se pierde en la siguiente generación. Para regenerarla:
 
     ```
-    uv run --with-requirements docs-requirements.txt --no-project python tutorial/generar.py
+    uv run --with-requirements docs-requirements.txt --no-project python tutorial/generate.py
     ```
 
 ## Conceptos

@@ -87,9 +87,16 @@ de `docs/SPEC.md` es el almacén, y su decisión de controlador está tomada.
 
 - **El trabajo va en un worktree**, en `.claude/worktrees/<rama>`, nunca editando `main`
   directamente.
-- **La documentación y los comentarios van en español.** Los identificadores del código y todo lo que
-  es interfaz del programa (comandos, banderas, textos de ayuda, mensajes de error, claves JSON) van
-  en inglés.
+- **La documentación va en español**: `docs/`, este fichero, y los ficheros de fixtures del
+  tutorial, que son documentación con forma de datos.
+- **El código fuente va entero en inglés, sea Go o Python.** No es solo cuestión de los
+  identificadores: los comentarios, los docstrings y los mensajes que la propia herramienta imprime
+  van también en inglés. Un fichero `.go` o `.py` no lleva ni una palabra en español.
+  La única excepción son las cadenas en español que un generador emite **dentro** de un documento,
+  porque eso es contenido de la documentación y no del código; van agrupadas en un sitio y marcadas
+  como tales, no repartidas por el fichero.
+- **Todo lo que es interfaz del programa va en inglés**: comandos, banderas, textos de ayuda,
+  mensajes de error y claves JSON.
 - **Nunca em-dash**, en ningún texto: ni en documentación, ni en código, ni en mensajes de commit.
 - **Los mensajes de commit y las descripciones de PR no llevan coautoría** ni mención de haber sido
   generados por un agente.
@@ -112,7 +119,7 @@ caché propio y las descarta al terminar.
 `docs/TUTORIAL.md` es la única excepción a "los `.md` son la fuente de verdad": es producto
 generado a partir de los fixtures de `tutorial/escenarios/` y de `tutorial/conceptos.md`, y no se
 edita a mano (lleva su propia cabecera que lo recuerda). Se regenera con:
-`uv run --with-requirements docs-requirements.txt --no-project python tutorial/generar.py`
+`uv run --with-requirements docs-requirements.txt --no-project python tutorial/generate.py`
 
 ## El tutorial y sus tres herramientas
 
@@ -127,13 +134,13 @@ especificación, lo derivado es lo que hay que revisar.
 
 Tres scripts, los tres con el mismo prefijo de `uv` que MkDocs:
 
-- `python tutorial/generar.py` escribe `docs/TUTORIAL.md`. Valida los fixtures y **falla** si a un
+- `python tutorial/generate.py` escribe `docs/TUTORIAL.md`. Valida los fixtures y **falla** si a un
   paso le falta el código de salida o si `origen` no tiene una de las dos formas admitidas.
-- `python tutorial/urgencia.py` calcula la urgencia de cada tarea del tablero de ejemplo según la
+- `python tutorial/urgency.py` calcula la urgencia de cada tarea del tablero de ejemplo según la
   sección 5.4, con el desglose de cada término, y las ordena por la regla de `biso ls`. Existe para
   que ningún fixture tenga que hacer esa aritmética a mano: los escenarios ordenan listas por
   urgencia y ese orden hay que poder reproducirlo.
-- `python tutorial/continuidad.py` comprueba que los contadores del tablero encadenan entre
+- `python tutorial/continuity.py` comprueba que los contadores del tablero encadenan entre
   escenarios consecutivos, o sea que lo que uno entrega es lo que el siguiente recibe. Sale 1 si no
   cuadran. Ya cazó un desfase de uno que cuatro escenarios arrastraban.
 

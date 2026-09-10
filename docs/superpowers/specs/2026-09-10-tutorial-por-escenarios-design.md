@@ -29,7 +29,7 @@ y reutilizará la misma maquinaria de fixtures que se define aquí.
 
 1. **Los fixtures**, en `tutorial/escenarios/NN-nombre.yaml`: un fichero por escenario, donde cada paso
    declara el comando, su salida esperada, su código de salida y la prosa que lo acompaña.
-2. **El generador**, `tutorial/generar.py`: convierte los fixtures en `docs/TUTORIAL.md`.
+2. **El generador**, `tutorial/generate.py`: convierte los fixtures en `docs/TUTORIAL.md`.
 3. **La página**, `docs/TUTORIAL.md`: producto generado, entra en el sitio de MkDocs que ya existe y
    **no se edita a mano**. Lleva una cabecera que lo dice.
 
@@ -171,7 +171,7 @@ barato que hace visible una rotura de continuidad sin ejecutar nada.
 
 ## El generador
 
-`tutorial/generar.py`, sin dependencias fuera de la biblioteca estándar más el `PyYAML` que ya arrastra
+`tutorial/generate.py`, sin dependencias fuera de la biblioteca estándar más el `PyYAML` que ya arrastra
 MkDocs. Lee los ficheros de `tutorial/escenarios/` en orden, y escribe `docs/TUTORIAL.md`.
 
 Por cada escenario emite: el título como sección, la situación como prosa, lo que enseña como un aviso
@@ -203,7 +203,7 @@ Cualquier atajo en el formato que hoy parezca inofensivo se paga entonces.
 
 Cinco encargos en paralelo, más una revisión al final:
 
-- **El generador**: `tutorial/generar.py`, el fichero de inventario inicial y la sección de conceptos.
+- **El generador**: `tutorial/generate.py`, el fichero de inventario inicial y la sección de conceptos.
 - **Escenarios 1 a 3**: llegar, crear, orientarse.
 - **Escenarios 4 a 6**: asignar, empezar, el arrendamiento.
 - **Escenarios 7 a 10**: la vida de `TASK-19` hasta que se cierra.
@@ -225,8 +225,8 @@ ensena que `biso delete` no existe, cuyo mensaje la especificacion da literal.
 
 **Hay tres herramientas y no una.** Ademas del generador hicieron falta dos comprobadores, y los dos
 por el mismo motivo: habia numeros en los fixtures que nadie podia verificar leyendo un solo fichero.
-`tutorial/urgencia.py` calcula la urgencia de cada tarea desde `tutorial/tablero.yaml` con el
-desglose de cada termino, y `tutorial/continuidad.py` comprueba que los contadores del tablero
+`tutorial/urgency.py` calcula la urgencia de cada tarea desde `tutorial/tablero.yaml` con el
+desglose de cada termino, y `tutorial/continuity.py` comprueba que los contadores del tablero
 encadenan entre escenarios. El segundo cazo un desfase de uno que cuatro escenarios arrastraban por
 no contar la `TASK-62` que crea el escenario 2.
 
