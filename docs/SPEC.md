@@ -177,8 +177,9 @@ Reglas de aplicación, que hay que implementar tal cual:
 - **`--json` es incompatible con `--quiet`** y con `--print`, porque los tres piden formas distintas
   de la misma salida. Cualquier pareja de las tres da código 2.
 - **`--quiet` reduce stdout a los identificadores afectados**, uno por línea, y además suprime las
-  líneas informativas de stderr que empiezan por `note:`. **Nunca suprime un `warning:` ni un
-  `error:`.** Silenciar un aviso es cosa de quien llama, con `2>/dev/null`. **En un comando de
+  líneas informativas de stderr que empiezan por `note:`. **Nunca suprime un `warning:`, un `error:` ni
+  la salida reenviada de un programa ajeno** (4.3). Silenciar un aviso es cosa de quien llama, con
+  `2>/dev/null`. **En un comando de
   lectura no hay identificadores afectados que imprimir**, así que ahí `--quiet` no cambia stdout: solo
   suprime las líneas `note:` de stderr, igual que en un comando de escritura.
 
@@ -488,9 +489,17 @@ del ordenador de origen. Vale para todos los tableros de la máquina.
 | `ignore_file` | nombre de fichero | no | el fichero de exclusión que `biso init` escribe dentro del tablero (10.1) |
 
 En `commit` y en `publish`, `{message}` se sustituye por el mensaje que `biso` compone (`biso snapshot:
-248 tasks`) y `{files}` por los ficheros de la instantánea, cada uno como un argumento propio. Las dos
-se ejecutan con el directorio del tablero como directorio de trabajo, y un código de salida distinto de
-cero es error 7 con la clave `code` `vcs_commit_failed`.
+248 tasks`), y `{files}` por los tres ficheros que entran en la revisión, cada uno como un argumento
+propio: `snapshot.ndjson`, `board.json` y el marcador `<id>.id`, siempre en ese orden y siempre como ruta
+relativa al directorio del tablero, sin `./` delante.
+
+**Son los tres que nombra la sección 10.14, y no los dos de la clave `files` del JSON de `biso
+snapshot`**, que son solo los que ese comando escribe. Los dos nombres se parecen y los dos conjuntos son
+distintos, así que conviene leerlos juntos antes de escribir una orden.
+
+Un código de salida distinto de cero es error 7 con la clave `code` `vcs_commit_failed`. Cómo se ejecutan
+las dos órdenes, qué se hace con lo que escriban y por qué no hay tiempo máximo de espera lo dice la
+sección 10.14, en un apartado que vale igual para `git` y para `custom`.
 
 ---
 
@@ -534,12 +543,18 @@ redirigirlo a `/dev/null` no pierde ni un solo aviso.
 
 ### 4.3. Notas y avisos
 
-Hay dos clases de mensaje que no son errores, las dos por stderr, y las dos dejan el código de salida
-en 0:
+Hay tres clases de línea que no son errores, las tres por stderr:
 
 - **`note:`** es información de contexto. `--quiet` la suprime.
 - **`warning:`** es algo que quien llama necesita saber y que no impide la operación. **Nunca se
   suprime.**
+- **La salida de un programa ajeno**, prefijada con el nombre del sistema de control de versiones y dos
+  puntos, o sea `git:` o `custom:`. Solo la emite `biso snapshot`, que es el único comando que ejecuta
+  otro programa, y las reglas de cuándo aparece están en la sección 10.14. **Nunca se suprime**, tampoco
+  con `--quiet`: de una línea que `biso` no ha escrito no puede juzgar si sobra.
+
+Las dos primeras dejan el código de salida en 0. La tercera acompaña igual a una operación que va bien
+que a una que falla, y ahí el código lo decide el resultado de la orden, nunca la línea.
 
 Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 
@@ -5256,6 +5271,51 @@ de eso se encarga el fichero de exclusión que `init` dejó escrito dentro del t
 
 El mensaje de la revisión es `biso snapshot: 248 tasks`, con el recuento real de cada vez.
 
+#### Cómo se ejecutan las órdenes
+
+Esto vale igual para `git` y para `custom`, porque no es de un sistema concreto sino de ejecutar un
+programa que no es `biso`.
+
+**Todas se ejecutan con el directorio del tablero como directorio de trabajo, y con la entrada estándar
+cerrada y sin terminal.** Lo segundo evita el único cuelgue que de verdad ocurre: una orden esperando una
+contraseña o una confirmación que nadie va a escribir. Con la entrada cerrada falla en vez de esperar, y
+ese fallo se cuenta como cualquier otro.
+
+**No hay tiempo máximo de espera, y es deliberado.** `biso` no puede interrumpir con seguridad una orden
+que está a medio escribir en un repositorio ajeno, y un `push` legítimo contra un repositorio grande por
+una red lenta tarda lo que tarda. Matar el proceso a mano no pierde nada, porque los dos ficheros de la
+instantánea ya están escritos antes de que se ejecute la primera orden, que es la misma promesa que hace
+la tabla de casos límite de aquí abajo.
+
+**Lo que las órdenes escriben se reenvía por stderr**, línea a línea, cada una prefijada con el valor de
+la clave `vcs` y dos puntos, o sea `git:` o `custom:`. Se reenvían las dos corrientes de la orden, la
+estándar y la de error, porque las dos llevan cosas que quien llama querrá leer: `git commit` escribe su
+resumen por la estándar y `git push` su progreso por la de error, así que quedarse con una sola pierde la
+mitad. **El orden relativo entre las dos corrientes no está garantizado**; el de las líneas dentro de cada
+una sí. Las líneas en blanco se descartan, y una última línea sin salto final cuenta como línea.
+
+Nada de eso va nunca por stdout, que la sección 4.2 reserva para los datos, y `--quiet` no lo suprime,
+por el motivo que da la sección 4.3.
+
+**Y tiene una consecuencia visible que no es un fallo**: cuando no hay nada que guardar, la línea que
+`git commit` escribe por su cuenta se reenvía igual, así que sale al lado de la nota que `biso` emite
+para decir lo mismo. Se deja así a propósito, porque recortar la salida de un programa ajeno para que no
+repita lo que `biso` ya dice obligaría a reconocer sus mensajes uno a uno, y eso es justo lo que la
+receta de un sistema no debe hacer: la receta le pregunta cosas y mira códigos de salida, nunca lee lo
+que escribe.
+
+**La salida de las dos preguntas de la receta sí se descarta**, y es la única asimetría. Sus fallos son
+respuestas legítimas: `git rev-parse --show-toplevel` falla cuando no hay ningún repositorio, y
+`git check-ignore` termina distinto de cero cuando la carpeta no está ignorada. Reenviar eso llenaría de
+un `fatal: not a git repository` alarmante el camino normal de cualquier tablero que viva fuera de un
+repositorio. Se reenvía, por tanto, solo lo que escriben las órdenes que actúan: `init`, `add`, `commit` y
+`push` en `git`, y `commit` y `publish` en `custom`.
+
+**Con `--json` no van por stderr.** Ahí stderr lleva el sobre de error (12.2) y no puede llevar además
+texto suelto, así que esas líneas van dentro del sobre: en `data.vcsOutput` cuando la operación acaba
+bien, y en `error.vcsOutput` cuando falla. Es una lista de cadenas, una por línea, y **ahí van sin el
+prefijo**, que existe solo para separarlas a la vista en un terminal.
+
 #### Comportamiento, caso a caso
 
 | Caso | Qué pasa |
@@ -5302,6 +5362,14 @@ note: nothing to commit, snapshot.ndjson and board.json are unchanged since the 
 Con `--vcs none`, o si no hay sistema instalado, la salida por stdout es solo la primera línea; en el
 segundo caso, además, la nota `note: no version control here, skipping the commit` por stderr.
 
+Y por stderr sale también lo que hayan escrito las órdenes, prefijado, antes de cualquier nota y de la
+línea de error si la hay:
+
+```
+git: [main a1b2c3d] biso snapshot: 248 tasks
+git:  3 files changed, 12 insertions(+), 4 deletions(-)
+```
+
 #### El esquema JSON
 
 ```json
@@ -5317,6 +5385,7 @@ segundo caso, además, la nota `note: no version control here, skipping the comm
     "commit": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
     "repository": "/Users/avilches/.biso/boards/kex-3f9a2b1c",
     "pushed": false,
+    "vcsOutput": ["[main a1b2c3d] biso snapshot: 248 tasks", " 3 files changed, 12 insertions(+), 4 deletions(-)"],
     "skipped": []
   }
 }
@@ -5328,6 +5397,13 @@ no devuelve identificador. `repository` es la raíz del repositorio donde ha ido
 que dice en qué caso de los tres se estaba. `pushed` es `false` salvo con `--vcs push` cumplido.
 `skipped` lleva los identificadores de las tareas ilegibles que se han saltado, igual que en `biso ls`
 (10.4): vacío salvo cuando el código de salida es 6.
+
+`files` son los dos ficheros que este comando escribe, **no los tres que entran en la revisión**: el
+marcador `<id>.id` ya estaba ahí y lo escribió `biso init`. El `{files}` de la configuración de `custom`
+(3.3) sí son los tres, y son dos conjuntos distintos con nombres parecidos.
+
+`vcsOutput` son las líneas que escribieron las órdenes que se ejecutaron, sin el prefijo que llevan en el
+modo de texto, y está vacía cuando no se ha ejecutado ninguna.
 
 #### Códigos de salida
 
@@ -5371,6 +5447,11 @@ not installed, or creating the repository fails, the commit is skipped with
 a note: it is optional, and its absence never fails this command. A commit
 that fails once it is really attempted is an error, nothing is lost, and
 running this command again after fixing the reason is all it takes.
+
+Whatever those commands print is forwarded on stderr, prefixed with the
+system name, and never suppressed. There is no timeout: interrupting a
+half-written revision is not safe, and nothing is lost by killing this
+command, since both files are on disk before the first one runs.
 
 Exit codes:
   0  written, and recorded if that applied
@@ -5451,7 +5532,7 @@ con esta forma:
 | `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer`, `archive` | `tasks`, `warnings` |
 | `config` | `config list` | `config`. Ejemplo en 10.10 |
 | `doctor` | `doctor` | `problems`, `warnings`, `fixed`. Ejemplo en 10.11 |
-| `snapshot` | `snapshot` | `tasks`, `files`, `vcs`, `committed`, `commit`, `repository`, `pushed`, `skipped`. Ejemplo en 10.14 |
+| `snapshot` | `snapshot` | `tasks`, `files`, `vcs`, `committed`, `commit`, `repository`, `pushed`, `vcsOutput`, `skipped`. Ejemplo en 10.14 |
 | `board` | `board` | `url`, `port`, `opened`. Ejemplo en 10.12, y se imprime al arrancar el servidor |
 | `help` | `help` | `commands`, con el nombre y el resumen de cada uno. Ejemplo en 10.13 |
 | `error` | cualquier fallo | Ver 12.2 |
@@ -5489,7 +5570,7 @@ objetos con la misma forma, uno por fallo, y `error.code` es `batch_invalid`.
 Esa promesa existe porque quien consume una salida de datos no puede prever qué habrá dentro, así que
 tiene derecho a que la forma no dependa del contenido. En un error sí puede preverlo, porque lo primero
 que hace es leer `code`, y cada `code` trae siempre las mismas claves. Estas son las tres que están en
-todos los errores y las cuatro de detalle, con la regla de cuándo acompañan:
+todos los errores y las cinco de detalle, con la regla de cuándo acompañan:
 
 | Clave | En qué errores aparece |
 |---|---|
@@ -5497,10 +5578,11 @@ todos los errores y las cuatro de detalle, con la regla de cuándo acompañan:
 | `field` y `given` | En los que nombran una bandera, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran una bandera |
 | `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs` |
 | `details` | Solo en `batch_invalid` y en `dry_run_failed`, y es una lista de objetos de esta misma forma, uno por fallo |
+| `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió la orden que falló (10.14) |
 
-Las cuatro de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
+Las cinco de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
 comprobable: quien ramifica sobre `unknown_status` sabe que va a tener `field`, `given` y `valid`, y
-quien ramifica sobre `busy` sabe que no va a tener ninguna de las cuatro.
+quien ramifica sobre `busy` sabe que no va a tener ninguna de las cinco.
 
 ### 12.3. Los identificadores de error
 

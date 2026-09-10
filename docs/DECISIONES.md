@@ -1152,6 +1152,70 @@ exacta.
 
 ---
 
+### 12.2. Cómo se ejecuta el sistema de control de versiones
+
+Cerrada la ronda que hizo configurable el sistema de control de versiones, quedaban tres rincones del
+contrato de `vcs_custom` sin decidir: qué se hacía con lo que las órdenes escribieran, si había un tiempo
+máximo de espera, y si `{files}` daba rutas relativas o absolutas.
+
+**Lo primero que salió al mirarlos fue que dos de los tres no eran de `custom`.** Le pasan igual a `git`:
+si `git commit` falla porque un hook lo rechaza o porque nadie ha configurado una identidad, la pregunta
+de qué se hace con lo que ese `git` escribió es exactamente la misma. Así que las reglas se escribieron
+una sola vez, en un apartado de la sección 10.14 de `SPEC.md` que vale para los dos sistemas, y `custom`
+las hereda. Sale más corto que un contrato paralelo por sistema y deja menos rincones donde volver a
+decidir lo mismo.
+
+**La salida se reenvía siempre, y por stderr.** Las tres opciones eran descartarla, reenviarla solo al
+fallar y reenviarla siempre. Descartarla deja a quien depura sin saber por qué su hook rechazó el commit,
+que es justo el caso en el que alguien va a leer esa salida. Reenviarla solo al fallar pierde el aviso
+legítimo de una orden que acaba bien, y si algo escribe un programa ajeno, `biso` no está en posición de
+juzgar si sobra. Se eligió reenviarla siempre, y **reenviar las dos corrientes de la orden, no solo la de
+error**, porque `git commit` escribe su resumen por la estándar y `git push` su progreso por la de error:
+quedarse con una sola pierde la mitad de lo útil. El precio es que el orden relativo entre las dos
+corrientes no se puede garantizar, y el documento lo dice en vez de prometer algo que no se cumple.
+
+Por stdout no va nunca nada, porque la sección 4.2 de `SPEC.md` lo reserva para los datos. Y con `--json`
+tampoco va por stderr, donde la sección 12.2 de `SPEC.md` pone el sobre de error: ahí las líneas entran en
+el propio sobre, en `data.vcsOutput` o en `error.vcsOutput`. Eso añadió una quinta clave de detalle a la
+tabla de esa sección de `SPEC.md`, que ya se gobierna aparte del contrato de estabilidad de las salidas de
+datos precisamente para poder crecer.
+
+**`--quiet` no las suprime**, por el mismo motivo por el que la sección 4.3 nunca suprime un `warning:`.
+`--quiet` calla las líneas `note:` porque las escribió `biso`, que sabe que son trivia; de una línea que
+escribió un programa ajeno no puede saberlo. Quien quiera silencio tiene el `2>/dev/null` que esa misma
+sección ya nombra.
+
+**La salida de las dos preguntas de la receta sí se descarta, y es la única asimetría.** Apareció al
+escribir la regla: `git rev-parse --show-toplevel` falla cuando no hay ningún repositorio y
+`git check-ignore` termina distinto de cero cuando la carpeta no está ignorada, y las dos cosas son
+respuestas normales, no fallos. Reenviarlas habría puesto un `fatal: not a git repository` alarmante en el
+camino normal de cualquier tablero que viva fuera de un repositorio, que es el caso más común. Se reenvía,
+por tanto, lo que escriben las órdenes que actúan, y no lo que escriben las que preguntan.
+
+**No hay tiempo máximo de espera, y es una decisión, no un olvido.** La alternativa era un tope, uno solo
+o uno por orden, y se descartó por dos razones. La primera es que `biso` no puede interrumpir con
+seguridad una orden que está a medio escribir en un repositorio ajeno: matarla a mitad es peor que
+esperarla. La segunda es que un `push` legítimo contra un repositorio grande por una red lenta tarda
+minutos, así que cualquier tope lo bastante corto para proteger de un cuelgue rompería un uso normal. Y lo
+que de verdad cuelga una orden para siempre no es que sea lenta, es que espere una entrada que nadie va a
+dar: eso se resuelve ejecutándola con la entrada estándar cerrada y sin terminal, con lo que falla en vez
+de esperar. Matar el proceso a mano tampoco cuesta nada, porque los dos ficheros de la instantánea ya
+están escritos antes de que se ejecute la primera orden.
+
+**`{files}` da rutas relativas al directorio del tablero.** Las absolutas funcionan aunque la orden se
+cambie de directorio por su cuenta, pero meten la ruta de una máquina concreta en cualquier sitio donde la
+orden la escriba, como un mensaje de commit o un registro, y hacen que la misma configuración no valga en
+dos máquinas. Se eligieron relativas, sin `./` delante, que es además lo que ya hace la receta de `git`, y
+quien necesite absolutas puede envolver su orden en un script. Se descartó una clave nueva para elegir
+entre las dos, por no añadir una decisión que nadie ha pedido.
+
+**Y al escribirlo apareció un error del documento.** La sección 3.3 decía que `{files}` se sustituía por
+"los ficheros de la instantánea", pero la revisión lleva tres ficheros (`snapshot.ndjson`, `board.json` y
+el marcador `<id>.id`) mientras que la clave `files` del JSON de `biso snapshot` enseña solo los dos que
+ese comando escribe. Eran dos conjuntos distintos con nombres casi iguales, y no había manera de saber si
+`{files}` eran dos o tres. Son los tres, los mismos que entran en la revisión, y ahora las dos secciones
+lo dicen y se nombran la una a la otra.
+
 ## 13. El origen de la cifra de 25 milisegundos
 
 El tope de bytes del mensaje de arranque (apartado 3) trae su medida. El presupuesto de arranque de la

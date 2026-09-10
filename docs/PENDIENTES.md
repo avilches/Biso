@@ -10,8 +10,15 @@ y decisiones aplazadas a propósito.
 revisiones de la rama de persistencia: los nueve huecos que un implementador habría tenido que rellenar
 solo, el orden de implementación de la sección 15, la última incoherencia de vocabulario y los cinco
 huecos que habían aparecido al cerrar los demás. La sección 12.1 de `DECISIONES.md` guarda el porqué de
-los que llevaban una decisión de fondo detrás, y la sección 4 de aquí conserva las decisiones que siguen
+los que llevaban una decisión de fondo detrás, y la sección 2 de aquí conserva las decisiones que siguen
 aplazadas a propósito.
+
+Ese mismo día se cerró después **el contrato de ejecución del sistema de control de versiones**, que era
+el primero de los tres huecos que la ronda había abierto: qué se hace con lo que escriben las órdenes, si
+hay tiempo máximo de espera y qué rutas da `{files}`. Las reglas quedaron en un apartado de la sección
+10.14 de `SPEC.md` que vale igual para `git` y para `custom`, y el porqué en la sección 12.2 de
+`DECISIONES.md`. De paso salió un error real del documento, que `{files}` y la clave `files` del JSON de
+`snapshot` nombraban conjuntos distintos de ficheros sin decirlo.
 
 Dos cosas que se aprendieron por el camino y conviene no volver a aprender. La primera: **ante cada hueco
 merece la pena preguntarse si existe porque falta decidir algo o porque sobra la cosa que lo abre.** El
@@ -26,15 +33,8 @@ exactamente el fallo que él denuncia como dominante en la especificación.
 
 ## 1. Huecos que abrió la ronda del control de versiones
 
-Los tres salieron el 2026-09-09, al hacer configurable el sistema de control de versiones, y ninguno
+Los dos salieron el 2026-09-09, al hacer configurable el sistema de control de versiones, y ninguno
 impide implementar la versión 1.0 con `git`, que es el valor por defecto y el único camino medido.
-
-**El contrato de `vcs_custom` es el mínimo, y tiene tres rincones sin decidir.** La sección 3.3 dice que
-`biso` ejecuta la orden en el directorio del tablero y mira su código de salida, y eso basta para saber si
-fue bien. No está dicho qué pasa con lo que esa orden escriba por su salida estándar y por su salida de
-error, ni si hay un tiempo máximo de espera antes de darla por colgada, ni si `{files}` se sustituye por
-rutas relativas al directorio del tablero o absolutas. Las tres se pueden contestar de dos maneras
-razonables, así que dos implementaciones distintas harían cosas distintas.
 
 **El catálogo tiene un solo miembro conocido, así que la palabra promete más de lo que hay.** `git` es el
 único sistema cuya receta está escrita, y la de cualquier otro (Mercurial, Jujutsu, Subversion) no existe:
