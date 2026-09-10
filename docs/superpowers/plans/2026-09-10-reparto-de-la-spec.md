@@ -800,7 +800,7 @@ Run: `uv run --with-requirements docs-requirements.txt --no-project mkdocs build
 Expected: código 0. Los enlaces internos siguen siendo texto plano con números, así que la validación no
 tiene nada que objetar todavía.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A docs/spec docs/SPEC.md docs/index.md mkdocs.yml tools/
@@ -847,71 +847,205 @@ git commit -m "Escribe la portada de la especificacion con su orden de lectura"
 
 ## Task 5: Las referencias internas de `docs/spec/`
 
-Son 215, y ahora que el documento está partido muchas cruzan de fichero. Esta tarea sí cambia líneas, y su
-prueba es el build.
+**Son 374, no 211.** La primera versión de este plan contaba solo las que llevan la palabra "sección"
+delante, y esas son menos de la mitad. Las otras dos formas no la llevan, así que un `grep` de la palabra
+las deja pasar todas y la comprobación da verde sobre un trabajo a medio hacer. Medido el 2026-09-10 con el
+comprobador que esta tarea construye.
 
 **Files:**
-- Modify: todos los ficheros de `docs/spec/` y `docs/spec/cmd/`
+- Create: `tools/comprobar_referencias.py`
+- Modify: `docs/DECISIONES.md`, solo sus líneas de encabezado
+- Modify: todos los ficheros de `docs/spec/` y de `docs/spec/cmd/`
 
 **Interfaces:**
-- Consumes: la validación de anclas de la tarea 2.
+- Consumes: `tools/mapa-de-secciones.txt` de la tarea 3, y la validación de anclas de la tarea 2.
+- Produces: `tools/comprobar_referencias.py`, que es la puerta de esta tarea y también de la tarea 6.
 
-- [ ] **Step 1: Inventariar las referencias que quedan**
+### Las tres formas en que aparece una referencia
+
+| Forma | Ejemplo real | Cuántas hay en `docs/spec/` |
+|---|---|---|
+| Con la palabra delante | `la sección 10.4` | 211 |
+| Número desnudo entre paréntesis | `` `biso start` (10.7.1) `` | 120 |
+| Número desnudo en la prosa | `ver 5.6`, `la precedencia de 10.7` | el resto |
+
+Por eso el comprobador no busca la palabra sino el número, y para no confundir un número de sección con un
+dato del documento solo se fija en los números que de verdad son una sección, que los lee del mapa. Los
+números con punto son inequívocos; los de una sola cifra solo cuentan cuando llevan la palabra delante,
+porque un `1` suelto aparece por todas partes.
+
+- [ ] **Step 1: Escribir el comprobador y anotar la cifra de partida**
+
+Crea `tools/comprobar_referencias.py` con esto, que ya está verificado sobre el reparto real:
+
+```python
+#!/usr/bin/env python3
+"""Busca referencias a secciones por su numero, que el reparto tiene que haber convertido en enlaces.
+
+No basta con buscar la palabra "seccion": las referencias aparecen de tres formas distintas, y las
+dos que no llevan esa palabra son mas de la mitad. Se ven en docs/spec/ del 2026-09-10:
+
+    la seccion 10.4        con la palabra delante
+    (10.4)                 numero desnudo entre parentesis
+    ver 10.4               numero desnudo en prosa
+
+Por eso este comprobador no busca la palabra sino el numero, y para no confundir un numero de
+seccion con un dato del documento (un valor de urgencia, una version, una cifra de una formula)
+solo se fija en los numeros que de verdad son una seccion, que los lee de
+tools/mapa-de-secciones.txt.
+
+Se ejecuta:
+
+    python tools/comprobar_referencias.py docs/spec/*.md docs/spec/cmd/*.md
+
+Termina con codigo 0 si no queda ninguna referencia por numero sin declarar y 1 si queda alguna.
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+CERCA_RE = re.compile(r"^\s*```")
+MAPA_PATH = Path("tools/mapa-de-secciones.txt")
+
+
+def numeros_de_seccion(ruta: Path) -> set[str]:
+    """Los numeros de seccion que existian en el documento viejo, del mapa del reparto."""
+    numeros: set[str] = set()
+    for linea in ruta.read_text(encoding="utf-8").splitlines():
+        limpia = linea.strip()
+        if not limpia or limpia.startswith("#"):
+            continue
+        numeros.add(limpia.split()[0])
+    return numeros
+
+
+def referencias_por_numero(ruta: Path, numeros: set[str]) -> list[tuple[int, str]]:
+    """Cada aparicion de un numero de seccion como palabra suelta, fuera de bloques de codigo."""
+    # Los numeros con punto son inequivocos: "10.4" no es un dato de ningun documento. Los de una
+    # sola cifra si lo son, porque "1" o "2" aparecen por todas partes como numeros normales, asi
+    # que esos solo cuentan cuando llevan delante la palabra que los declara como seccion.
+    compuestos = sorted((n for n in numeros if "." in n), key=len, reverse=True)
+    simples = sorted((n for n in numeros if "." not in n), key=len, reverse=True)
+    patron = re.compile(
+        r"(?<![\w.])(" + "|".join(re.escape(n) for n in compuestos) + r")(?![\w.])"
+        r"|(?:secci[oó]n|apartado)s?\s+(" + "|".join(re.escape(n) for n in simples) + r")(?![\w.])",
+        re.IGNORECASE,
+    )
+    encontradas: list[tuple[int, str]] = []
+    dentro_de_bloque = False
+    for numero, linea in enumerate(ruta.read_text(encoding="utf-8").splitlines(), start=1):
+        if CERCA_RE.match(linea):
+            dentro_de_bloque = not dentro_de_bloque
+            continue
+        if dentro_de_bloque:
+            continue
+        for coincidencia in patron.finditer(linea):
+            encontradas.append((numero, coincidencia.group(1) or coincidencia.group(2)))
+    return encontradas
+
+
+def main(argv: list[str]) -> int:
+    numeros = numeros_de_seccion(MAPA_PATH)
+    total = 0
+    por_fichero: dict[str, int] = {}
+    for nombre in argv[1:]:
+        ruta = Path(nombre)
+        hallazgos = referencias_por_numero(ruta, numeros)
+        if hallazgos:
+            por_fichero[nombre] = len(hallazgos)
+            for linea, seccion in hallazgos:
+                print(f"{ruta}:{linea}: referencia por numero: {seccion}")
+            total += len(hallazgos)
+    print(f"\ntotal: {total} referencias por numero", file=sys.stderr)
+    for nombre, cuantas in sorted(por_fichero.items(), key=lambda x: -x[1]):
+        print(f"  {nombre}: {cuantas}", file=sys.stderr)
+    return 1 if total else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+```
+
+Y anota cuántas hay antes de empezar:
 
 ```bash
-grep -rEn "(secci[oó]n|apartado)s? +[0-9]+(\.[0-9]+)*" docs/spec/ | wc -l
+python3 tools/comprobar_referencias.py docs/spec/*.md docs/spec/cmd/*.md
 ```
 
-Anota el número de partida. Al terminar la tarea tiene que ser cero.
+Expected: código 1, y unas 374 referencias repartidas en 33 ficheros. Es tu lista de trabajo.
 
-- [ ] **Step 2: Reescribirlas una por una**
+- [ ] **Step 2: Quitar el número a los encabezados de `docs/DECISIONES.md`**
 
-La forma es la del diseño:
+Va aquí y no más adelante porque siete de las referencias de `docs/spec/` apuntan a una sección de ese
+documento, y el ancla de un encabezado sale de su texto entero, número incluido: la de `## 12. La decisión
+de persistencia` es `12-la-decisión-de-persistencia`, y se rompe en cuanto alguien renumere. Si escribes
+esos enlaces antes de quitar los números, escribes enlaces que nacen condenados.
 
-```markdown
-la sección ["Cómo se elige el tablero"](resolucion-del-tablero.md#cómo-se-elige-el-tablero)
-```
-
-Reglas:
-
-**El destino de cada número te lo da `tools/mapa-de-secciones.txt`, que generó la tarea 3.** No lo deduzcas
-ni lo inventes: búscalo ahí. Cada línea tiene el número de sección, el destino ya montado con su ancla, y
-entre comillas el título, que es el texto que va dentro del enlace. Así:
-
-```
-3.2     resolucion-del-tablero.md  "Cómo se elige el tablero"
-4.11    modelo-de-datos.md#identificadores  "Identificadores"
-10.4    cmd/ls.md  "`biso ls`"
-10.13   cmd/help.md#biso-help  "`biso help`"
-```
-
-Un destino sin ancla es una sección que ahora es un fichero entero, y entonces el enlace va al fichero.
-
-Reglas de la ruta, que el mapa no lleva porque depende de dónde esté el fichero que cita:
-
-- Dentro del mismo fichero, solo el ancla: `["El algoritmo de coincidencia"](#el-algoritmo-de-coincidencia)`.
-- Desde otro fichero de `docs/spec/`, la ruta tal cual la da el mapa.
-- Desde `docs/spec/cmd/` hacia `docs/spec/`, un nivel arriba: `../resolucion-del-tablero.md#...`.
-- Desde `docs/spec/cmd/` hacia otro fichero de `cmd/`, sin el prefijo: `ls.md#...`.
-
-- [ ] **Step 3: Comprobar que no queda ninguna por número**
+Quítales el número dejando el título intacto, en los encabezados de todos los niveles, sin tocar ninguna
+otra línea de ese fichero. Su orden de lectura pasa a ser el orden en que están sus secciones.
 
 ```bash
-grep -rEn "(secci[oó]n|apartado)s? +[0-9]+(\.[0-9]+)*" docs/spec/
+grep -nE "^#{2,4} [0-9]" docs/DECISIONES.md
 ```
 
 Expected: sin salida.
 
-- [ ] **Step 4: Construir el sitio, que es donde se ve si algún ancla está mal**
+- [ ] **Step 3: Reescribir las referencias, fichero a fichero**
 
-Run: `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict`
-Expected: código 0. Cada aviso que salga nombra el fichero y el ancla que no existe. Arréglalos y vuelve a
-construir hasta que esté en verde.
+**El destino de cada número te lo da `tools/mapa-de-secciones.txt`.** No lo deduzcas: búscalo ahí. Cada
+línea tiene el número, el destino ya montado con su ancla, y entre comillas el título de la sección. Un
+destino sin ancla es una sección que ahora es un fichero entero.
+
+Las siete que apuntan a `DECISIONES.md` no están en ese mapa, porque son otra numeración: para esas, mira
+el título de la sección en `docs/DECISIONES.md` y monta el ancla con la misma regla.
+
+La forma del enlace, según de dónde salga:
+
+- Dentro del mismo fichero, solo el ancla: `["El algoritmo de coincidencia"](#el-algoritmo-de-coincidencia)`.
+- Desde otro fichero de `docs/spec/`, la ruta tal cual la da el mapa.
+- Desde `docs/spec/cmd/` hacia `docs/spec/`, un nivel arriba: `../garantias.md#...`.
+- Desde `docs/spec/cmd/` hacia otro de `cmd/`, sin prefijo: `ls.md#...`.
+- Hacia `DECISIONES.md`, dos niveles arriba desde `cmd/` y uno desde `docs/spec/`.
+
+Y la redacción, que es donde hay que tener criterio:
+
+- Cuando la frase dice "la sección 10.4", el enlace sustituye al número y el texto del enlace es el
+  título: `la sección ["\`biso ls\`"](cmd/ls.md)`. Si "la sección" sobra al leerlo, quítala.
+- Cuando el número va desnudo entre paréntesis, como `` `biso start` (10.7.1) ``, lo natural es que el
+  paréntesis desaparezca y el enlace se ponga sobre lo que ya se nombra:
+  `` [`biso start`](cmd/verbos-del-ciclo.md#biso-start) ``. No dejes un paréntesis con un enlace dentro
+  repitiendo lo que la frase acaba de decir.
+- Cuando el número va desnudo en la prosa, como `ver 5.6`, el enlace se come el número y el texto es el
+  título de la sección.
+- **En las tablas, cuidado con el ancho**: una celda que decía `ver 5.6` pasa a ser mucho más larga. Eso
+  está bien y no hay que evitarlo, pero no metas el enlace dentro de un bloque de código de la celda.
+
+**Trabaja en el orden en que el comprobador lista los ficheros, de más referencias a menos**, y vuelve a
+ejecutarlo cada vez que acabes uno para no perder la cuenta.
+
+- [ ] **Step 4: Comprobar las dos redes**
+
+```bash
+python3 tools/comprobar_referencias.py docs/spec/*.md docs/spec/cmd/*.md
+```
+
+Expected: `total: 0 referencias por numero`, código 0.
+
+```bash
+uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict
+```
+
+Expected: código 0. Cada aviso nombra el fichero y el ancla que no existe, así que arréglalos y vuelve a
+construir hasta que esté en verde. **Esta es la comprobación que de verdad valida los enlaces**: la
+anterior solo dice que ya no queda ningún número.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add docs/spec
+git add tools/comprobar_referencias.py docs/spec docs/DECISIONES.md
 git commit -m "Convierte en enlaces por titulo las referencias internas de la especificacion"
 ```
 
@@ -1137,30 +1271,7 @@ ruta que corresponda al sitio de cada fichero: los de `docs/` apuntan a `spec/..
 `docs/PENDIENTES.md` y 6 en `bench/sqlite-driver/README.md`. En `docs/index.md`, actualiza además la lista
 de documentos del proyecto.
 
-- [ ] **Step 6: Quitar el número a los encabezados de `docs/DECISIONES.md`**
-
-Esto no lo pedía el plan al escribirse y hace falta, por una razón que solo se ve al intentar enlazar a ese
-documento. Sus encabezados son del tipo `## 12. La decisión de persistencia`, y el ancla que genera un
-encabezado sale de su texto entero, número incluido: `12-la-decisión-de-persistencia`. Un enlace que use esa
-ancla se rompe en cuanto alguien renumere, que es exactamente la enfermedad que este trabajo viene a curar,
-reproducida un nivel más abajo. Y la tarea 9 va a reordenar ese documento, así que la renumeración va a
-ocurrir de verdad.
-
-Quítales el número dejando el título intacto, en los encabezados de todos los niveles, y sin tocar ninguna
-otra línea. El orden de lectura del documento pasa a ser el orden en que están sus secciones, que es lo que
-ya es en la práctica.
-
-```bash
-grep -nE "^#{2,4} [0-9]+" docs/DECISIONES.md
-```
-
-Expected: sin salida.
-
-**Y ahora sí, remata los enlaces entrantes que apuntan a una sección concreta de ese documento**, con el
-ancla que sale del título ya sin número. `docs/spec/index.md` tiene uno que la tarea 4 dejó a propósito
-apuntando al documento entero, esperando este momento.
-
-- [ ] **Step 7: Comprobar las dos redes**
+- [ ] **Step 6: Comprobar las dos redes**
 
 ```bash
 python3 tools/comprobar_enlaces.py CLAUDE.md INTEGRATION.md bench/sqlite-driver/README.md bench/sqlite-driver/RESULTADOS.md
@@ -1170,15 +1281,18 @@ Expected: `todos los enlaces relativos resuelven`, código 0.
 Run: `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict`
 Expected: código 0.
 
-- [ ] **Step 8: Comprobar que no queda ninguna referencia por número en ningún documento vivo**
+- [ ] **Step 7: Comprobar que no queda ninguna referencia por número en ningún documento vivo**
 
 ```bash
-grep -rEn "(secci[oó]n|apartado)s? +[0-9]+(\.[0-9]+)*" --include="*.md" . | grep -v "^./docs/superpowers/"
+python3 tools/comprobar_referencias.py CLAUDE.md INTEGRATION.md docs/DECISIONES.md \
+    docs/PENDIENTES.md docs/ESTADO-DEL-ARTE.md docs/index.md \
+    bench/sqlite-driver/README.md bench/sqlite-driver/RESULTADOS.md
 ```
 
-Expected: sin salida.
+Expected: `total: 0 referencias por numero`, código 0. **Usa el comprobador de la tarea 5 y no un `grep` de
+la palabra "sección"**, porque dos de las tres formas en que aparece una referencia no llevan esa palabra.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add tools CLAUDE.md INTEGRATION.md bench/sqlite-driver docs
@@ -1469,7 +1583,7 @@ Expected: `ninguna frase cuenta elementos del documento sin declararlo`, código
 Run: `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict`
 Expected: código 0.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add tools docs
@@ -1623,7 +1737,8 @@ Antes de dar el trabajo por terminado, las ocho a la vez:
       dirección que el comprobador vigila.
 - [ ] `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict` termina con 0.
 - [ ] `python3 tools/comprobar_enlaces.py` termina con 0 sobre los cuatro ficheros de fuera de `docs/`.
-- [ ] `grep` de "sección N.N" y "apartado N.N" no encuentra nada fuera de `docs/superpowers/`.
+- [ ] `python3 tools/comprobar_referencias.py` termina con 0 sobre todos los documentos vivos, que es la
+      comprobación que caza las tres formas y no solo la que lleva la palabra "sección".
 - [ ] `python3 tools/comprobar_recuentos.py` termina con 0 sobre todos los documentos vivos.
 - [ ] El párrafo de `biso doctor` ya no encadena números, y se le puede añadir una fila a su tabla sin
       tocar prosa.
