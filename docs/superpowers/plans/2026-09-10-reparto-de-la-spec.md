@@ -800,7 +800,7 @@ Run: `uv run --with-requirements docs-requirements.txt --no-project mkdocs build
 Expected: código 0. Los enlaces internos siguen siendo texto plano con números, así que la validación no
 tiene nada que objetar todavía.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add -A docs/spec docs/SPEC.md docs/index.md mkdocs.yml tools/
@@ -1137,7 +1137,30 @@ ruta que corresponda al sitio de cada fichero: los de `docs/` apuntan a `spec/..
 `docs/PENDIENTES.md` y 6 en `bench/sqlite-driver/README.md`. En `docs/index.md`, actualiza además la lista
 de documentos del proyecto.
 
-- [ ] **Step 6: Comprobar las dos redes**
+- [ ] **Step 6: Quitar el número a los encabezados de `docs/DECISIONES.md`**
+
+Esto no lo pedía el plan al escribirse y hace falta, por una razón que solo se ve al intentar enlazar a ese
+documento. Sus encabezados son del tipo `## 12. La decisión de persistencia`, y el ancla que genera un
+encabezado sale de su texto entero, número incluido: `12-la-decisión-de-persistencia`. Un enlace que use esa
+ancla se rompe en cuanto alguien renumere, que es exactamente la enfermedad que este trabajo viene a curar,
+reproducida un nivel más abajo. Y la tarea 9 va a reordenar ese documento, así que la renumeración va a
+ocurrir de verdad.
+
+Quítales el número dejando el título intacto, en los encabezados de todos los niveles, y sin tocar ninguna
+otra línea. El orden de lectura del documento pasa a ser el orden en que están sus secciones, que es lo que
+ya es en la práctica.
+
+```bash
+grep -nE "^#{2,4} [0-9]+" docs/DECISIONES.md
+```
+
+Expected: sin salida.
+
+**Y ahora sí, remata los enlaces entrantes que apuntan a una sección concreta de ese documento**, con el
+ancla que sale del título ya sin número. `docs/spec/index.md` tiene uno que la tarea 4 dejó a propósito
+apuntando al documento entero, esperando este momento.
+
+- [ ] **Step 7: Comprobar las dos redes**
 
 ```bash
 python3 tools/comprobar_enlaces.py CLAUDE.md INTEGRATION.md bench/sqlite-driver/README.md bench/sqlite-driver/RESULTADOS.md
@@ -1147,7 +1170,7 @@ Expected: `todos los enlaces relativos resuelven`, código 0.
 Run: `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict`
 Expected: código 0.
 
-- [ ] **Step 7: Comprobar que no queda ninguna referencia por número en ningún documento vivo**
+- [ ] **Step 8: Comprobar que no queda ninguna referencia por número en ningún documento vivo**
 
 ```bash
 grep -rEn "(secci[oó]n|apartado)s? +[0-9]+(\.[0-9]+)*" --include="*.md" . | grep -v "^./docs/superpowers/"
@@ -1155,7 +1178,7 @@ grep -rEn "(secci[oó]n|apartado)s? +[0-9]+(\.[0-9]+)*" --include="*.md" . | gre
 
 Expected: sin salida.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add tools CLAUDE.md INTEGRATION.md bench/sqlite-driver docs
@@ -1484,11 +1507,22 @@ en ese caso anótala como excepción para el paso 4.
 **Condensa solo donde dos párrafos digan literalmente lo mismo.** El valor de este documento es la
 evidencia que guarda, y resumir evidencia es perderla.
 
-- [ ] **Step 3: Renumerar los encabezados según el orden nuevo**
+**Y si al reagrupar cambias el título de una sección, mira antes quién la cita.** Los enlaces entrantes usan
+el título como ancla, así que renombrar una sección los rompe. Eso no es motivo para no renombrar: es motivo
+para arreglar los enlaces en la misma pasada, y `mkdocs build --strict` más el comprobador de enlaces te
+dicen cuáles son.
 
-Las secciones de `DECISIONES.md` se quedan numeradas, porque siguen siendo un solo documento y su número es
-su orden de lectura. Lo que cambia es que ya nadie las cita por ese número: las referencias entrantes que la
-tarea 6 reescribió apuntan a su título.
+- [ ] **Step 3: Comprobar que los encabezados ya no llevan número**
+
+La tarea 6 se los quitó, y por eso este documento se puede reordenar sin romper ningún enlace entrante. Si
+al reagrupar has creado algún encabezado nuevo, no le pongas número tampoco. El orden de lectura de este
+documento es el orden en que están sus secciones, no una numeración que haya que mantener a mano.
+
+```bash
+grep -nE "^#{2,4} [0-9]+" docs/DECISIONES.md
+```
+
+Expected: sin salida.
 
 - [ ] **Step 4: Comprobar que no se ha perdido nada**
 
