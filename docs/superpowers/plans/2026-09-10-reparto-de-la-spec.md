@@ -449,6 +449,7 @@ número y suben de nivel.
 - Delete: `docs/SPEC.md`
 - Create: los 34 ficheros de la tabla de abajo
 - Create: `tools/manifiesto-del-reparto.txt`
+- Create: `tools/excepciones-de-encabezado.txt`
 - Create: `tools/generar_mapa.py`
 - Create: `tools/mapa-de-secciones.txt`
 - Modify: `mkdocs.yml` (el `nav`)
@@ -745,10 +746,17 @@ manifiesto no cuadra con la tabla.
 - [ ] **Step 4: Comprobar que cada fichero lleva lo que le toca**
 
 ```bash
-python3 tools/verificar_mudanza.py --manifiesto tools/manifiesto-del-reparto.txt docs/SPEC.md
+python3 tools/verificar_mudanza.py --excepciones tools/excepciones-de-encabezado.txt \
+    --manifiesto tools/manifiesto-del-reparto.txt docs/SPEC.md
 ```
 
 Expected: `la mudanza es fiel: cada fichero lleva su contenido y no falta ni sobra nada`, código 0.
+
+**La bandera `--excepciones` no es opcional, y su fichero es donde viven las once excepciones de encabezado
+de la tabla de más arriba.** Sin ella el comprobador no puede dar el visto bueno a un reparto correcto, porque
+los nueve encabezados que cambian a propósito le parecen nueve errores. Con ella, la lista deja de ser prosa
+y pasa a comprobarse en las dos direcciones: un encabezado que cambia sin estar declarado es un error, y una
+línea declarada que no llega a ocurrir también, porque querría decir que la lista se ha quedado desfasada.
 
 Esta comprobación hace dos cosas que la global no hace: verifica que el contenido de cada fichero sale de
 los rangos que le tocan, de modo que dos ficheros intercambiados no pasan, y avisa si algún fichero se ha
@@ -767,15 +775,16 @@ La comprobación por fichero del paso anterior no ve una línea que no esté en 
 mira los rangos que cada uno declara. Esta sí:
 
 ```bash
-python3 tools/verificar_mudanza.py docs/SPEC.md docs/spec/*.md docs/spec/cmd/*.md
+python3 tools/verificar_mudanza.py --excepciones tools/excepciones-de-encabezado.txt \
+    docs/SPEC.md docs/spec/*.md docs/spec/cmd/*.md
 ```
 
 Expected: código 0.
 
-Los encabezados que reporte tienen que ser exactamente los siete H1 nuevos y los dos títulos perdidos de la
-tabla de excepciones, y ninguno más. **Si aparece cualquier otro, es un error de la mudanza y hay que
-arreglarlo, nunca añadirlo a las excepciones.** Las líneas de contenido, en cambio, tienen que cuadrar sin
-ninguna excepción: si el comprobador reporta una sola línea perdida o sobrante, el paso no está terminado.
+Con `--excepciones`, el comprobador ya no imprime los encabezados que cambiaron: los compara contra la
+declaración y solo habla de los que no cuadran. **Si reporta cualquiera, es un error de la mudanza y hay que
+arreglarlo, nunca añadirlo a la declaración para que calle.** Las líneas de contenido tienen que cuadrar sin
+ninguna excepción: si reporta una sola línea perdida o sobrante, el paso no está terminado.
 
 - [ ] **Step 6: Borrar `docs/SPEC.md` y rehacer la navegación**
 
@@ -1569,11 +1578,13 @@ git commit -m "Cita la especificacion por titulo en el campo origen de los fixtu
 
 Antes de dar el trabajo por terminado, las ocho a la vez:
 
-- [ ] `python3 tools/verificar_mudanza.py --manifiesto tools/manifiesto-del-reparto.txt docs/SPEC.md`
-      termina con 0 sobre el `SPEC.md` de partida, de modo que cada fichero lleva el contenido de sus
-      rangos y ninguno tiene un bloque de código sin cerrar. Como la tarea 3 borra `docs/SPEC.md`, esta
-      comprobación se hace ahí y su salida queda en el informe de esa tarea, no al final.
-- [ ] `python3 tools/verificar_mudanza.py` no encuentra ninguna línea perdida ni sobrante en el conjunto.
+- [ ] Las dos comprobaciones de `tools/verificar_mudanza.py`, con `--excepciones` y con `--manifiesto`,
+      terminan con 0 sobre el `SPEC.md` de partida: cada fichero lleva el contenido de sus rangos, ninguno
+      tiene un bloque de código sin cerrar, y los encabezados que cambiaron son exactamente los declarados.
+      Como la tarea 3 borra `docs/SPEC.md`, estas comprobaciones se hacen ahí y su salida queda en el
+      informe de esa tarea, no al final.
+- [ ] `tools/excepciones-de-encabezado.txt` no tiene ninguna línea que no ocurra de verdad, que es la otra
+      dirección que el comprobador vigila.
 - [ ] `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict` termina con 0.
 - [ ] `python3 tools/comprobar_enlaces.py` termina con 0 sobre los cuatro ficheros de fuera de `docs/`.
 - [ ] `grep` de "sección N.N" y "apartado N.N" no encuentra nada fuera de `docs/superpowers/`.
