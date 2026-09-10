@@ -39,12 +39,20 @@ plugins:
   - search:
       lang: es
 
-# Un enlace a un fichero que no existe o a un ancla que no existe pasa a ser un aviso, y con
-# --strict, un fallo de build. Es lo que sostiene la convencion de citar por el titulo de la
-# seccion en vez de por su numero: una referencia rota deja de ser un error silencioso.
+# Un enlace a un fichero que no existe, a un ancla que no existe, o escrito de una forma que
+# MkDocs no reconoce pasa a ser un aviso, y con --strict, un fallo de build. Es lo que sostiene
+# la convencion de citar por el titulo de la seccion en vez de por su numero: una referencia
+# rota deja de ser un error silencioso. Los enlaces absolutos se rechazan de plano, porque la
+# convencion del proyecto es citar siempre con rutas relativas.
+#
+# Lo que esto NO cubre: los ficheros Markdown de fuera de docs/, como CLAUDE.md, INTEGRATION.md
+# y los de bench/. MkDocs solo ve lo que hay dentro de docs_dir, y de esos se encarga
+# tools/comprobar_enlaces.py.
 validation:
   anchors: warn
   unrecognized_links: warn
+  absolute_links: warn
+  omitted_files: warn
 
 markdown_extensions:
   - admonition
