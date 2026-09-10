@@ -1,0 +1,26 @@
+# Lo que se prueba es si go build produce un binario para otra plataforma
+# con lo que ya hay instalado. Un fallo aqui es lo que de verdad decide la
+# eleccion, porque distribuir el programa depende de ello.
+
+controlador    plataforma         CGO      resultado
+mattn          linux/amd64        0        ok, 3526807 bytes
+mattn          linux/arm64        0        ok, 3473947 bytes
+mattn          windows/amd64      0        ok, 3649024 bytes
+modernc        linux/amd64        0        ok, 10019283 bytes
+modernc        linux/arm64        0        ok, 9746305 bytes
+modernc        windows/amd64      0        ok, 10147840 bytes
+ncruces        linux/amd64        0        ok, 16396649 bytes
+ncruces        linux/arm64        0        ok, 15520499 bytes
+ncruces        windows/amd64      0        ok, 16647168 bytes
+zombiezen      linux/amd64        0        ok, 9522341 bytes
+zombiezen      linux/arm64        0        ok, 9335755 bytes
+zombiezen      windows/amd64      0        ok, 9628672 bytes
+
+# Y lo mismo con cgo activado, que es lo que mattn necesita para funcionar.
+mattn          linux/amd64        1        FALLA: # runtime/cgo
+mattn          windows/amd64      1        FALLA: # runtime/cgo
+
+# Un binario compilado sin cgo con el controlador de C se enlaza, pero no
+# tiene controlador registrado. Esto es lo que pasa al ejecutarlo:
+  compila sin cgo: si
+  al ejecutarlo: ls-mattn: journal_mode: Binary was compiled with 'CGO_ENABLED=0', go-sqlite3 requires cgo to work. This is a stub

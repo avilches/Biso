@@ -1,0 +1,6 @@
+binario               bytes  bibliotecas del sistema (otool -L)
+noop-bare           2081218  /usr/lib/libSystem.B.dylib /usr/lib/libresolv.9.dylib
+ls-mattn            7189522  /usr/lib/libresolv.9.dylib /usr/lib/libSystem.B.dylib
+ls-modernc         10068402  /usr/lib/libSystem.B.dylib /usr/lib/libresolv.9.dylib
+ls-ncruces         14934690  /usr/lib/libSystem.B.dylib /usr/lib/libresolv.9.dylib
+ls-zombiezen        9554882  /usr/lib/libSystem.B.dylib /usr/lib/libresolv.9.dylib

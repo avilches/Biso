@@ -1,0 +1,11 @@
+# 'frio' es con una cache de compilacion vacia y propia del banco, asi que
+# incluye compilar la biblioteca estandar y todas las dependencias. Es el
+# coste de la primera compilacion en una maquina de CI.
+# 'caliente' es tocar el main.go del propio programa y volver a compilar,
+# que es la vuelta que paga un agente en cada iteracion.
+
+binario              frio   caliente
+ls-mattn           14.25s      0.19s
+ls-modernc          5.53s      0.19s
+ls-ncruces          6.58s      0.15s
+ls-zombiezen        5.66s      0.19s

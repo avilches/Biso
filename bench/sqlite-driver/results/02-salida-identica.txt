@@ -1,0 +1,5 @@
+mattn        codigo=0  filas=300  md5=f550d4cd0779639edcb0e52100577468
+modernc      codigo=0  filas=300  md5=f550d4cd0779639edcb0e52100577468
+ncruces      codigo=0  filas=300  md5=f550d4cd0779639edcb0e52100577468
+zombiezen    codigo=0  filas=300  md5=f550d4cd0779639edcb0e52100577468
+veredicto: las cuatro salidas son identicas byte a byte

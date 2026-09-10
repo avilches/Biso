@@ -1,0 +1,27 @@
+# Reloj de pared del proceso completo, medido desde fuera con cmd/timeit.
+# Incluye fork, exec, arranque del runtime de Go y todo el trabajo.
+
+## Suelo: procesos que no consultan nada
+noop-bare        n=300  min=4.84  p50=8.07  p90=9.87  max=18.04  media=8.11  desv=1.80  (ms)
+noop-mattn       n=300  min=5.76  p50=8.99  p90=10.56  max=16.31  media=8.80  desv=1.66  (ms)
+noop-modernc     n=300  min=7.83  p50=11.19  p90=13.00  max=22.53  media=11.21  desv=1.85  (ms)
+noop-ncruces     n=300  min=4.74  p50=6.52  p90=9.21  max=18.07  media=7.00  desv=1.70  (ms)
+noop-zombiezen   n=300  min=7.57  p50=11.11  p90=13.06  max=16.75  media=11.03  desv=1.59  (ms)
+
+## biso ls sobre 300 tareas, limite 30 (el caso del presupuesto de 4.13)
+ls-mattn         n=300  min=7.67  p50=10.99  p90=12.32  max=20.92  media=10.71  desv=1.65  (ms)
+ls-modernc       n=300  min=10.78  p50=14.51  p90=16.04  max=23.49  media=14.57  desv=1.68  (ms)
+ls-ncruces       n=300  min=8.27  p50=11.55  p90=12.97  max=20.44  media=11.25  desv=1.61  (ms)
+ls-zombiezen     n=300  min=10.54  p50=14.10  p90=15.64  max=18.93  media=13.95  desv=1.49  (ms)
+
+## biso ls --all sobre 300 tareas (imprime las 300 filas)
+all-mattn        n=300  min=8.17  p50=11.59  p90=12.99  max=20.30  media=11.44  desv=1.64  (ms)
+all-modernc      n=300  min=11.63  p50=14.87  p90=16.24  max=34.73  media=14.95  desv=2.04  (ms)
+all-ncruces      n=300  min=8.72  p50=10.81  p90=13.75  max=32.28  media=11.51  desv=2.45  (ms)
+all-zombiezen    n=300  min=11.33  p50=14.57  p90=16.02  max=23.39  media=14.52  desv=1.56  (ms)
+
+## biso ls sobre 3.000 tareas, limite 30 (diez veces el tablero de referencia)
+big-mattn        n=300  min=19.95  p50=23.79  p90=26.06  max=37.67  media=24.04  desv=1.88  (ms)
+big-modernc      n=300  min=28.01  p50=31.42  p90=34.39  max=44.83  media=31.90  desv=2.19  (ms)
+big-ncruces      n=300  min=25.32  p50=29.93  p90=32.93  max=41.09  media=30.25  desv=2.15  (ms)
+big-zombiezen    n=300  min=24.09  p50=28.75  p90=31.40  max=40.59  media=29.09  desv=1.98  (ms)

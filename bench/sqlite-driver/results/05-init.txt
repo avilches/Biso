@@ -1,0 +1,29 @@
+# GODEBUG=inittrace=1 dice cuanto tarda el init de cada paquete antes de
+# llegar a main. El medidor de fases de internal/phase arranca ya dentro de
+# main, asi que esto es lo unico que ve lo que pasa antes, y es donde se
+# explica la mayor parte de la diferencia entre los controladores.
+
+--- ls-mattn
+       0.034 ms  os                                                   7808 bytes        22 allocs
+       0.022 ms  runtime                                                 0 bytes         0 allocs
+       0.010 ms  internal/godebug                                      312 bytes         7 allocs
+       0.009 ms  net/netip                                             744 bytes        18 allocs
+    suma de todos los init: 0.162 ms
+--- ls-modernc
+         2.6 ms  modernc.org/libc/honnef.co/go/netdb               3660040 bytes     44061 allocs
+       0.040 ms  modernc.org/libc                                     7728 bytes        30 allocs
+       0.037 ms  os                                                   7808 bytes        22 allocs
+       0.030 ms  modernc.org/sqlite/lib                                576 bytes         4 allocs
+    suma de todos los init: 2.794 ms
+--- ls-ncruces
+       0.039 ms  os                                                   7808 bytes        22 allocs
+       0.023 ms  syscall                                              2008 bytes         7 allocs
+       0.021 ms  runtime                                                 0 bytes         0 allocs
+       0.008 ms  net/netip                                             744 bytes        18 allocs
+    suma de todos los init: 0.132 ms
+--- ls-zombiezen
+         2.6 ms  modernc.org/libc/honnef.co/go/netdb               3660040 bytes     44061 allocs
+       0.045 ms  modernc.org/libc                                     7728 bytes        30 allocs
+       0.029 ms  os                                                   7808 bytes        22 allocs
+       0.029 ms  modernc.org/sqlite/lib                                576 bytes         4 allocs
+    suma de todos los init: 3.187 ms

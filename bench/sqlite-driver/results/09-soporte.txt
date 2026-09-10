@@ -1,0 +1,81 @@
+# Cada controlador trae su propia copia de SQLite compilada con sus propias
+# opciones, asi que esto no es una formalidad: una extension puede estar en
+# uno y faltar en otro. internal/features/features.go dice de donde sale la
+# exigencia de cada linea.
+
+ls-mattn     sqlite_version         3.53.4
+ls-mattn     journal_mode_wal       wal
+ls-mattn     busy_timeout           5000
+ls-mattn     foreign_keys           1
+ls-mattn     user_version           7
+ls-mattn     integrity_check        ok
+ls-mattn     recursive_cte          15
+ls-mattn     json1                  42
+ls-mattn     window_functions       1
+ls-mattn     collate_nocase_like    0
+ls-mattn     compile_options        42
+ls-mattn     tx_rollback            ok
+ls-mattn     begin_immediate        ok
+ls-mattn     savepoint              ok
+ls-mattn     wal_checkpoint         ok
+ls-mattn     fts5                   FALLA: CREATE VIRTUAL TABLE ft USING fts5(title): no such module: fts5
+ls-mattn     analyze                ok
+ls-mattn     read_during_write      ok
+
+ls-modernc   sqlite_version         3.53.4
+ls-modernc   journal_mode_wal       wal
+ls-modernc   busy_timeout           5000
+ls-modernc   foreign_keys           1
+ls-modernc   user_version           7
+ls-modernc   integrity_check        ok
+ls-modernc   recursive_cte          15
+ls-modernc   json1                  42
+ls-modernc   window_functions       1
+ls-modernc   collate_nocase_like    0
+ls-modernc   compile_options        56
+ls-modernc   tx_rollback            ok
+ls-modernc   begin_immediate        ok
+ls-modernc   savepoint              ok
+ls-modernc   wal_checkpoint         ok
+ls-modernc   fts5                   ok
+ls-modernc   analyze                ok
+ls-modernc   read_during_write      ok
+
+ls-ncruces   sqlite_version         3.53.4
+ls-ncruces   journal_mode_wal       wal
+ls-ncruces   busy_timeout           5000
+ls-ncruces   foreign_keys           1
+ls-ncruces   user_version           7
+ls-ncruces   integrity_check        ok
+ls-ncruces   recursive_cte          15
+ls-ncruces   json1                  42
+ls-ncruces   window_functions       1
+ls-ncruces   collate_nocase_like    0
+ls-ncruces   compile_options        60
+ls-ncruces   tx_rollback            ok
+ls-ncruces   begin_immediate        ok
+ls-ncruces   savepoint              ok
+ls-ncruces   wal_checkpoint         ok
+ls-ncruces   fts5                   FALLA: CREATE VIRTUAL TABLE ft USING fts5(title): sqlite3: SQL logic error: no such module: fts5
+ls-ncruces   analyze                ok
+ls-ncruces   read_during_write      ok
+
+zombiezen    sqlite_version         3.53.4
+zombiezen    journal_mode_wal       wal
+zombiezen    busy_timeout           5000
+zombiezen    foreign_keys           1
+zombiezen    user_version           7
+zombiezen    integrity_check        ok
+zombiezen    recursive_cte          15
+zombiezen    json1                  42
+zombiezen    window_functions       1
+zombiezen    collate_nocase_like    0
+zombiezen    compile_options        56
+zombiezen    tx_rollback            ok
+zombiezen    begin_immediate        ok
+zombiezen    savepoint              ok
+zombiezen    wal_checkpoint         ok
+zombiezen    fts5                   ok
+zombiezen    analyze                ok
+zombiezen    read_during_write      ok
+

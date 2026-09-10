@@ -1,0 +1,2 @@
+board=work/board.db tasks_total=390 listed_by_ls=300 dependencies=168 journal_mode=wal size=1441792 bytes
+board=work/board-3000.db tasks_total=3900 listed_by_ls=3000 dependencies=1713 journal_mode=wal size=13697024 bytes

@@ -1,0 +1,3 @@
+# Binarios compilados y tableros generados: se rehacen con ./run.sh
+bin/
+work/

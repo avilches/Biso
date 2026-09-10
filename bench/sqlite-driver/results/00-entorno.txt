@@ -1,0 +1,17 @@
+fecha: 2026-09-10T02:58:27Z
+go: go version go1.27.1 darwin/arm64
+cc: Apple clang version 21.0.0 (clang-2100.1.1.101)
+os: macOS 26.5.2 (25F84)
+kernel: Darwin 25.5.0 arm64
+cpu: Apple M3 Max
+cores: 16 (12 de rendimiento)
+ram: 64 GiB
+cgo: 1
+
+versiones de los controladores:
+  github.com/mattn/go-sqlite3 v1.14.52
+  github.com/ncruces/go-sqlite3 v0.35.4
+  github.com/ncruces/go-sqlite3-wasm/v5 v5.0.35304
+  modernc.org/libc v1.75.6
+  modernc.org/sqlite v1.58.0
+  zombiezen.com/go/sqlite v1.4.2

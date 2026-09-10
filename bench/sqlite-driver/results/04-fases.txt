@@ -1,0 +1,11 @@
+# Mediana de 50 ejecuciones, en milisegundos, con BENCH_PHASES=1.
+# 'open' es abrir el fichero y leer el primer PRAGMA. 'query' son las
+# cinco consultas de biso ls. 'compute' es urgencia, orden y formato.
+# 'total_in_main' es la suma, y lo que falta hasta el reloj de pared es
+# el arranque del proceso, que ningun controlador puede evitar.
+
+driver           args     open    query  compute  total_in_main
+mattn           0.000    0.507    1.170    0.121          1.837
+modernc         0.000    0.843    1.407    0.117          2.396
+ncruces         0.000    0.945    1.436    0.122          2.518
+zombiezen       0.000    0.856    1.166    0.121          2.181

@@ -1,0 +1,79 @@
+# Medido dentro de un contenedor golang:1.27-alpine, sobre Dory en un Apple M3 Max.
+# Los cuatro controladores se compilan y se miden en el mismo contenedor.
+
+== Entorno del contenedor
+PRETTY_NAME="Alpine Linux v3.24"
+Linux 6.12.30-dory aarch64
+go: go version go1.27.1 linux/arm64
+cc: gcc (Alpine 15.2.0) 15.2.0
+lineas de /etc/services: 361
+
+== Compilacion dentro del contenedor
+go: downloading github.com/mattn/go-sqlite3 v1.14.52
+ls-mattn     con cgo,  en frio: 28s, 7060616 bytes
+go: downloading modernc.org/sqlite v1.58.0
+go: downloading modernc.org/libc v1.75.6
+go: downloading golang.org/x/sys v0.47.0
+go: downloading modernc.org/memory v1.12.1
+go: downloading github.com/dustin/go-humanize v1.0.1
+go: downloading github.com/google/uuid v1.6.0
+go: downloading modernc.org/mathutil v1.7.1
+go: downloading github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec
+ls-modernc  sin cgo,  en frio: 7s, 9745129 bytes
+go: downloading github.com/ncruces/go-sqlite3 v0.35.4
+go: downloading github.com/ncruces/julianday v1.0.0
+go: downloading github.com/ncruces/go-sqlite3-wasm/v5 v5.0.35304
+ls-ncruces  sin cgo,  en frio: 5s, 15519331 bytes
+go: downloading zombiezen.com/go/sqlite v1.4.2
+ls-zombiezen  sin cgo,  en frio: 1s, 9269923 bytes
+
+== El tablero se regenera dentro del contenedor
+board=/tmp/board.db tasks_total=390 listed_by_ls=300 dependencies=168 journal_mode=wal size=1441792 bytes
+board=/tmp/board-3000.db tasks_total=3900 listed_by_ls=3000 dependencies=1713 journal_mode=wal size=13697024 bytes
+
+== La salida sigue siendo la misma en Linux
+mattn f550d4cd0779639edcb0e52100577468  -
+modernc f550d4cd0779639edcb0e52100577468  -
+ncruces f550d4cd0779639edcb0e52100577468  -
+zombiezen f550d4cd0779639edcb0e52100577468  -
+
+== Tiempo de init por paquete, el motivo principal de venir a Linux
+--- mattn
+0.021 init runtime @0.011 ms, 0.021 ms clock, 0 bytes, 0 allocs
+0.007 init net/netip @0.31 ms, 0.007 ms clock, 888 bytes, 19 allocs
+0.004 init internal/godebug @0.17 ms, 0.004 ms clock, 312 bytes, 7 allocs
+--- modernc
+0.046 init modernc.org/libc @0.44 ms, 0.046 ms clock, 2264 bytes, 25 allocs
+0.029 init modernc.org/sqlite/lib @0.49 ms, 0.029 ms clock, 0 bytes, 0 allocs
+0.019 init github.com/dustin/go-humanize @0.37 ms, 0.019 ms clock, 9224 bytes, 119 allocs
+--- ncruces
+0.016 init runtime @0.011 ms, 0.016 ms clock, 0 bytes, 0 allocs
+0.008 init net/netip @0.28 ms, 0.008 ms clock, 728 bytes, 18 allocs
+0.005 init os @0.17 ms, 0.005 ms clock, 432 bytes, 9 allocs
+--- zombiezen
+0.047 init modernc.org/libc @0.39 ms, 0.047 ms clock, 2272 bytes, 25 allocs
+0.027 init modernc.org/sqlite/lib @0.44 ms, 0.027 ms clock, 0 bytes, 0 allocs
+0.022 init github.com/dustin/go-humanize @0.32 ms, 0.022 ms clock, 9200 bytes, 119 allocs
+
+== Reloj de pared dentro del contenedor
+noop-bare        n=200  min=0.32  p50=0.37  p90=0.72  max=1.47  media=0.43  desv=0.19  (ms)
+ls-mattn         n=200  min=1.89  p50=2.10  p90=2.26  max=2.55  media=2.12  desv=0.11  (ms)
+ls-modernc       n=200  min=2.70  p50=3.15  p90=3.37  max=4.02  media=3.18  desv=0.15  (ms)
+ls-ncruces       n=200  min=2.32  p50=2.47  p90=2.77  max=6.67  media=2.57  desv=0.37  (ms)
+ls-zombiezen     n=200  min=2.33  p50=2.87  p90=3.20  max=4.45  media=2.92  desv=0.24  (ms)
+-- tablero de 3.000 tareas
+big-mattn        n=200  min=12.11  p50=12.89  p90=13.76  max=19.90  media=13.09  desv=0.94  (ms)
+big-modernc      n=200  min=21.18  p50=22.20  p90=23.95  max=27.50  media=22.55  desv=1.13  (ms)
+big-ncruces      n=200  min=17.76  p50=19.37  p90=20.50  max=22.11  media=19.38  desv=0.87  (ms)
+big-zombiezen    n=200  min=14.87  p50=18.77  p90=20.28  max=24.36  media=19.07  desv=0.96  (ms)
+
+== Con que se enlaza cada binario
+--- ls-mattn
+    	/lib/ld-musl-aarch64.so.1 (0xffff92e10000)
+    	libc.musl-aarch64.so.1 => /lib/ld-musl-aarch64.so.1 (0xffff92e10000)
+--- ls-modernc
+    /lib/ld-musl-aarch64.so.1: /tmp/ls-modernc: Not a valid dynamic program
+--- ls-ncruces
+    /lib/ld-musl-aarch64.so.1: /tmp/ls-ncruces: Not a valid dynamic program
+--- ls-zombiezen
+    /lib/ld-musl-aarch64.so.1: /tmp/ls-zombiezen: Not a valid dynamic program
