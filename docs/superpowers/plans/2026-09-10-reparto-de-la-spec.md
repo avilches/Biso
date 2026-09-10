@@ -68,6 +68,21 @@ Compara dos cosas por separado, y las dos importan:
 - Produces: interfaz de línea de comandos
   `python tools/verificar_mudanza.py <original> <fichero-nuevo>...`, que imprime el informe y termina con
   código 0 si todo cuadra y 1 si no.
+- Produces: `cargar_manifiesto(ruta: Path) -> list[tuple[Path, list[tuple[int, int]]]]`,
+  `comparar_por_fichero(original: Path, entradas) -> list[str]` y
+  `cercas_desbalanceadas(ficheros: list[Path]) -> list[str]`, más el modo
+  `python tools/verificar_mudanza.py --manifiesto <manifiesto> <original>`, que es el que usa la tarea 3.
+
+**Por qué hace falta el modo manifiesto, y no basta la comparación global.** La comparación de líneas como
+multiconjunto responde a "no se ha perdido nada", que no es lo mismo que "todo está en su sitio". Si el
+reparto extrae el rango de `biso ls` y lo escribe en el fichero de `biso get`, y el de `get` en el de `ls`,
+ninguna línea se pierde y la comparación global dice que la mudanza es fiel. No es un caso de laboratorio:
+el encabezado "Salida" aparece 17 veces en la especificación y "Firma" 20, así que dos secciones
+intercambiadas son indistinguibles para una comparación sin posición. El modo manifiesto compara el
+contenido de cada fichero contra los rangos que le tocan, y eso sí lo atrapa.
+
+Compara solo líneas de contenido, no encabezados, porque el reparto les cambia el nivel a todos y el texto
+a unos cuantos, a propósito. Los encabezados se siguen comparando en conjunto, con su tabla de excepciones.
 
 - [ ] **Step 1: Averiguar la versión de pytest y fijarla**
 
@@ -348,7 +363,7 @@ if __name__ == "__main__":
 - [ ] **Step 5: Ejecutar las pruebas y ver que pasan**
 
 Run: `uv run --with-requirements tools/requirements.txt --no-project pytest tools/tests -q`
-Expected: PASS, las diez pruebas.
+Expected: PASS, las catorce pruebas.
 
 - [ ] **Step 6: Commit**
 
@@ -433,6 +448,7 @@ número y suben de nivel.
 **Files:**
 - Delete: `docs/SPEC.md`
 - Create: los 34 ficheros de la tabla de abajo
+- Create: `tools/manifiesto-del-reparto.txt`
 - Modify: `mkdocs.yml` (el `nav`)
 - Modify: `docs/index.md` (el enlace a la especificación)
 
@@ -572,13 +588,41 @@ wc -l docs/spec/*.md docs/spec/cmd/*.md | sort -rn | head -5
 
 Expected: el mayor es `docs/spec/cmd/verbos-del-ciclo.md`, con unas 673 líneas más el H1.
 
-- [ ] **Step 3: Comprobar que no se ha perdido nada**
+- [ ] **Step 3: Escribir el manifiesto del reparto**
 
-```bash
-python3 tools/verificar_mudanza.py docs/SPEC.md docs/spec/*.md docs/spec/cmd/*.md
+La tabla de arriba es para leerla; el manifiesto es la misma información para comprobarla. Crea
+`tools/manifiesto-del-reparto.txt` con una línea por fichero, en el orden de la tabla:
+
+```
+# El reparto de docs/SPEC.md, en la forma que comprueba tools/verificar_mudanza.py.
+# Una linea por fichero nuevo, con los rangos de lineas del SPEC.md original que le tocan,
+# los dos extremos incluidos. La primera linea de un rango es el encabezado viejo cuando
+# ese encabezado se convierte en el H1 del fichero, y entonces no se copia.
+# Ver la tabla de la tarea 3 del plan, que dice lo mismo en prosa.
+docs/spec/index.md: 2-29, 507-510
+docs/spec/vocabulario.md: 31-63
+docs/spec/principios.md: 65-91
 ```
 
-Expected: `la mudanza es fiel: ninguna linea ni encabezado se perdio o aparecio`, código 0.
+y así con los 34. **Fíjate en que los rangos del manifiesto empiezan una línea después que en la tabla**
+cuando esa primera línea es el encabezado que pasa a ser el H1, porque el H1 lo escribes tú y no se copia.
+Para `index.md` el rango empieza en 2 porque la línea 1 es el H1 del documento, que sí se conserva pero se
+escribe como H1 del fichero. Para `garantias.md`, `salida-y-terminal.md`, `valores-de-entrada.md` y
+`presupuestos.md`, cuyos H1 nacen de la nada, **no se salta ninguna línea**: sus rangos empiezan donde dice
+la tabla, porque el encabezado viejo se conserva como subsección.
+
+- [ ] **Step 4: Comprobar que cada fichero lleva lo que le toca**
+
+```bash
+python3 tools/verificar_mudanza.py --manifiesto tools/manifiesto-del-reparto.txt docs/SPEC.md
+```
+
+Expected: `la mudanza es fiel: cada fichero lleva su contenido y no falta ni sobra nada`, código 0.
+
+Esta comprobación hace dos cosas que la global no hace: verifica que el contenido de cada fichero sale de
+los rangos que le tocan, de modo que dos ficheros intercambiados no pasan, y avisa si algún fichero se ha
+quedado con un número impar de cercas de bloque de código, que es lo que ocurre cuando un corte cae en
+mitad de un bloque.
 
 Los encabezados que el comprobador reporte tienen que ser exactamente los siete H1 nuevos y los dos
 títulos perdidos de la tabla de excepciones, y ninguno más. **Si aparece cualquier otro, es un error de la
@@ -586,22 +630,38 @@ mudanza y hay que arreglarlo, nunca añadirlo a las excepciones.** Las líneas d
 tienen que cuadrar sin ninguna excepción: si el comprobador reporta una sola línea perdida o sobrante, el
 paso no está terminado.
 
-- [ ] **Step 4: Borrar `docs/SPEC.md` y rehacer la navegación**
+- [ ] **Step 5: Comprobar que no se ha perdido nada en el conjunto**
+
+La comprobación por fichero del paso anterior no ve una línea que no esté en ningún fichero, porque solo
+mira los rangos que cada uno declara. Esta sí:
+
+```bash
+python3 tools/verificar_mudanza.py docs/SPEC.md docs/spec/*.md docs/spec/cmd/*.md
+```
+
+Expected: código 0.
+
+Los encabezados que reporte tienen que ser exactamente los siete H1 nuevos y los dos títulos perdidos de la
+tabla de excepciones, y ninguno más. **Si aparece cualquier otro, es un error de la mudanza y hay que
+arreglarlo, nunca añadirlo a las excepciones.** Las líneas de contenido, en cambio, tienen que cuadrar sin
+ninguna excepción: si el comprobador reporta una sola línea perdida o sobrante, el paso no está terminado.
+
+- [ ] **Step 6: Borrar `docs/SPEC.md` y rehacer la navegación**
 
 Borra `docs/SPEC.md`. En `mkdocs.yml`, sustituye la entrada `- Especificacion: SPEC.md` por el árbol
 completo, en el orden de lectura que fija la tabla, con la sección de comandos anidada. En
 `docs/index.md`, cambia el enlace `[Especificación](SPEC.md)` por `[Especificación](spec/index.md)`.
 
-- [ ] **Step 5: Construir el sitio**
+- [ ] **Step 7: Construir el sitio**
 
 Run: `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict`
 Expected: código 0. Los enlaces internos siguen siendo texto plano con números, así que la validación no
 tiene nada que objetar todavía.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add -A docs/spec docs/SPEC.md docs/index.md mkdocs.yml
+git add -A docs/spec docs/SPEC.md docs/index.md mkdocs.yml tools/manifiesto-del-reparto.txt
 git commit -m "Reparte SPEC.md en docs/spec/ sin cambiar una letra de contenido"
 ```
 
@@ -912,7 +972,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Ejecutar las pruebas y ver que pasan**
 
 Run: `uv run --with-requirements tools/requirements.txt --no-project pytest tools/tests -q`
-Expected: PASS, las dieciseis pruebas de los dos ficheros.
+Expected: PASS, las veinte pruebas de los dos ficheros.
 
 - [ ] **Step 5: Reescribir las referencias de los ocho documentos**
 
@@ -1165,7 +1225,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Ejecutar las pruebas y ver que pasan**
 
 Run: `uv run --with-requirements tools/requirements.txt --no-project pytest tools/tests -q`
-Expected: PASS, las veintidos pruebas de los tres ficheros.
+Expected: PASS, las veintiseis pruebas de los tres ficheros.
 
 - [ ] **Step 5: Crear la lista de normativas vacía y ver qué encuentra**
 
@@ -1366,7 +1426,11 @@ git commit -m "Cita la especificacion por titulo en el campo origen de los fixtu
 
 Antes de dar el trabajo por terminado, las ocho a la vez:
 
-- [ ] `python3 tools/verificar_mudanza.py` no encuentra ninguna línea perdida ni sobrante.
+- [ ] `python3 tools/verificar_mudanza.py --manifiesto tools/manifiesto-del-reparto.txt docs/SPEC.md`
+      termina con 0 sobre el `SPEC.md` de partida, de modo que cada fichero lleva el contenido de sus
+      rangos y ninguno tiene un bloque de código sin cerrar. Como la tarea 3 borra `docs/SPEC.md`, esta
+      comprobación se hace ahí y su salida queda en el informe de esa tarea, no al final.
+- [ ] `python3 tools/verificar_mudanza.py` no encuentra ninguna línea perdida ni sobrante en el conjunto.
 - [ ] `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict` termina con 0.
 - [ ] `python3 tools/comprobar_enlaces.py` termina con 0 sobre los cuatro ficheros de fuera de `docs/`.
 - [ ] `grep` de "sección N.N" y "apartado N.N" no encuentra nada fuera de `docs/superpowers/`.
