@@ -99,9 +99,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from verificar_mudanza import comparar
 
-ORIGINAL = """# Titulo
-
-## 1. Primera seccion
+ORIGINAL = """## 1. Primera seccion
 
 Una linea de contenido.
 Otra linea.
@@ -192,6 +190,33 @@ def test_una_almohadilla_dentro_de_un_bloque_de_codigo_es_contenido(tmp_path):
     uno = escribir(tmp_path, "uno.md", "# Uno\n\n```bash\n# un comentario de shell\n```\n")
     informe = comparar(original, [uno])
     assert informe.ok
+
+
+def test_el_titulo_del_documento_sobrevive_en_la_portada(tmp_path):
+    """El caso real del reparto: SPEC.md tiene un H1 que docs/spec/index.md conserva.
+
+    Un H1 del original que no aparece en ningun fichero nuevo SI se reporta como perdido, y
+    eso es lo correcto: es la unica forma de enterarse de que un titulo desaparecio. Lo que
+    esta prueba fija es que cuando el titulo si se conserva, no se reporta nada.
+    """
+    original = escribir(
+        tmp_path,
+        "original.md",
+        "# El documento entero\n\nPresentacion.\n\n## 1. Primera seccion\n\nContenido.\n",
+    )
+    portada = escribir(tmp_path, "index.md", "# El documento entero\n\nPresentacion.\n")
+    primera = escribir(tmp_path, "primera.md", "# Primera seccion\n\nContenido.\n")
+    informe = comparar(original, [portada, primera])
+    assert informe.ok
+
+
+def test_un_titulo_que_no_conserva_nadie_se_reporta(tmp_path):
+    """La cara contraria de la prueba anterior, que es la que da valor al comprobador."""
+    original = escribir(tmp_path, "original.md", "# El documento entero\n\n## 1. Primera\n\nContenido.\n")
+    primera = escribir(tmp_path, "primera.md", "# Primera\n\nContenido.\n")
+    informe = comparar(original, [primera])
+    assert not informe.ok
+    assert informe.encabezados_perdidos == ["El documento entero"]
 ```
 
 - [ ] **Step 3: Ejecutar las pruebas y ver que fallan**
@@ -323,7 +348,7 @@ if __name__ == "__main__":
 - [ ] **Step 5: Ejecutar las pruebas y ver que pasan**
 
 Run: `uv run --with-requirements tools/requirements.txt --no-project pytest tools/tests -q`
-Expected: PASS, las ocho pruebas.
+Expected: PASS, las diez pruebas.
 
 - [ ] **Step 6: Commit**
 
@@ -423,7 +448,7 @@ que aparecen en la tabla.
 
 | Fichero | Rangos | Líneas | Título (H1) |
 |---|---|---|---|
-| `docs/spec/index.md` | 1-29, 507-510 | 34 | `biso`: especificación del CLI de gestión de tareas |
+| `docs/spec/index.md` | 1-29, 507-510 | 33 | `biso`: especificación del CLI de gestión de tareas |
 | `docs/spec/vocabulario.md` | 30-63 | 34 | Vocabulario de esta especificación |
 | `docs/spec/principios.md` | 64-91 | 28 | Los principios |
 | `docs/spec/codigos-de-salida.md` | 92-137 | 46 | Códigos de salida |
@@ -887,7 +912,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Ejecutar las pruebas y ver que pasan**
 
 Run: `uv run --with-requirements tools/requirements.txt --no-project pytest tools/tests -q`
-Expected: PASS, las catorce pruebas de los dos ficheros.
+Expected: PASS, las dieciseis pruebas de los dos ficheros.
 
 - [ ] **Step 5: Reescribir las referencias de los ocho documentos**
 
@@ -1140,7 +1165,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Ejecutar las pruebas y ver que pasan**
 
 Run: `uv run --with-requirements tools/requirements.txt --no-project pytest tools/tests -q`
-Expected: PASS, las veinte pruebas de los tres ficheros.
+Expected: PASS, las veintidos pruebas de los tres ficheros.
 
 - [ ] **Step 5: Crear la lista de normativas vacía y ver qué encuentra**
 
