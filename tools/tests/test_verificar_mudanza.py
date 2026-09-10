@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from verificar_mudanza import comparar
+from verificar_mudanza import cargar_manifiesto, cercas_desbalanceadas, comparar, comparar_por_fichero, main
 
 ORIGINAL = """## 1. Primera seccion
 
@@ -125,3 +125,54 @@ def test_un_titulo_que_no_conserva_nadie_se_reporta(tmp_path):
     informe = comparar(original, [primera])
     assert not informe.ok
     assert informe.encabezados_perdidos == ["El documento entero"]
+
+
+CRUZABLE = """### 1. Primero
+
+#### Salida
+
+Arranca la tarea 12.
+
+### 2. Segundo
+
+#### Salida
+
+Para la tarea 12.
+"""
+
+
+def test_el_contenido_cruzado_entre_dos_ficheros_se_detecta(tmp_path):
+    """Dos ficheros que se intercambian su contenido pasan la comparacion global, no esta.
+
+    Es el caso que de verdad importa: el encabezado "Salida" sale 17 veces en la
+    especificacion real, asi que un corte mal hecho puede dejar la salida de un comando en
+    el fichero de otro sin que ninguna linea se pierda.
+    """
+    original = escribir(tmp_path, "original.md", CRUZABLE)
+    primero = escribir(tmp_path, "primero.md", "# Primero\n\n## Salida\n\nPara la tarea 12.\n")
+    segundo = escribir(tmp_path, "segundo.md", "# Segundo\n\n## Salida\n\nArranca la tarea 12.\n")
+    entradas = [(primero, [(1, 5)]), (segundo, [(7, 11)])]
+    assert comparar(original, [primero, segundo]).ok
+    problemas = comparar_por_fichero(original, entradas)
+    assert len(problemas) == 4
+
+
+def test_un_fichero_fiel_a_sus_rangos_no_da_problemas(tmp_path):
+    original = escribir(tmp_path, "original.md", CRUZABLE)
+    primero = escribir(tmp_path, "primero.md", "# Primero\n\n## Salida\n\nArranca la tarea 12.\n")
+    segundo = escribir(tmp_path, "segundo.md", "# Segundo\n\n## Salida\n\nPara la tarea 12.\n")
+    assert comparar_por_fichero(original, [(primero, [(1, 5)]), (segundo, [(7, 11)])]) == []
+
+
+def test_un_bloque_de_codigo_sin_cerrar_se_reporta(tmp_path):
+    partido = escribir(tmp_path, "partido.md", "# Uno\n\n```bash\nuna orden\n")
+    entero = escribir(tmp_path, "entero.md", "# Dos\n\n```bash\nuna orden\n```\n")
+    problemas = cercas_desbalanceadas([partido, entero])
+    assert len(problemas) == 1
+    assert "partido.md" in problemas[0]
+
+
+def test_un_fichero_que_no_se_puede_leer_da_un_error_limpio(tmp_path):
+    """Sin esto, main termina con una traza de Python en vez de con un mensaje."""
+    existe = escribir(tmp_path, "existe.md", "# Uno\n\nContenido.\n")
+    assert main(["prog", str(tmp_path / "no-existe.md"), str(existe)]) == 2
