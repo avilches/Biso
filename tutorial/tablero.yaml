@@ -1,0 +1,255 @@
+# Inventario de partida del tablero de ejemplo "Kex".
+#
+# Tomado de la tabla normativa de
+# docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md y comprobado contra la
+# salida literal de `biso prime` en la sección 9.7 de docs/SPEC.md (identificador, estado,
+# tipo, prioridad, título, avance de criterios de aceptación y persona asignada) y contra la
+# ficha de TASK-11 y la sección "Open Question" de TASK-60 en la sección 10.5.
+#
+# Esto no son las 248 tareas del tablero: son las nueve que el tutorial nombra y sigue, más
+# los contadores reales de cada estado. Las demás tareas (49 en To Do sin detalle y las 190 de
+# Done) no hacen falta para ningún escenario, y por eso no están aquí; el contador de
+# "board.counts" sí las incluye, porque esos números son los que "biso prime" imprime.
+#
+# El texto de los criterios de aceptación y de la definición de hecho que la SPEC no da
+# literalmente (solo da su recuento, columna "ac" de la tabla 9.7) está inventado para que la
+# semilla sea utilizable; no es texto literal de docs/SPEC.md salvo donde se indica en un
+# comentario junto al campo.
+#
+# El día que exista el binario, este fichero sembrará un tablero real para ejecutar contra él
+# los fixtures de tutorial/escenarios/.
+
+board:
+  project_name: Kex
+  task_prefix: TASK
+  # Los tres papeles obligatorios: inicial, activo y terminal (SPEC 6 / vocabulario).
+  statuses:
+    - name: To Do
+      role: initial
+    - name: In Progress
+      role: active
+    - name: Done
+      role: terminal
+  types: [idea, memory, task, bug, docs]
+  priorities: [high, medium, low]
+  # La clave "me" del tablero se deja SIN configurar a proposito. La seccion 10.10 de
+  # docs/SPEC.md lo exige para un tablero compartido entre una persona y un agente: "me" gana
+  # sobre BISO_ME, asi que ponerla haria que todo el mundo compartiese identidad y que --mine
+  # dejase de significar nada. Cada actor declara la suya por entorno, y de ahi sale el
+  # "you are @claude" que imprime `biso prime` en SPEC 9.7.
+  me: null
+  # Las identidades que aparecen en el tutorial, cada una en su propia sesion via BISO_ME.
+  identidades:
+    - "@claude"   # el agente, protagonista del recorrido
+    - "@sara"     # la persona que reparte trabajo y responde preguntas
+    - "@bob"      # tenedor del arrendamiento vencido de TASK-52, no actua en ningun escenario
+  lease_minutes: 240
+  # El dia que el tutorial toma como "hoy". No sale de docs/SPEC.md, que no lo declara en ningun
+  # sitio, sino de que es el unico valor que hace coherentes las fechas que el propio inventario
+  # ya trae: el vencimiento del arrendamiento de TASK-52 (2026-09-05, que tiene que estar en el
+  # pasado) y la fecha limite de TASK-7 (2026-09-08, que tiene que estar en el futuro). Hace
+  # falta porque el termino de proximidad de la urgencia (SPEC 5.4) se calcula contra hoy.
+  hoy: "2026-09-06"
+  # Recuento real por estado, literal de SPEC 9.7. Solo cambia cuando un escenario mueve una
+  # tarea de estado; el escenario que la mueve es responsable de actualizarlo aqui.
+  counts:
+    To Do: 54
+    In Progress: 4
+    Done: 190
+
+tasks:
+  - id: TASK-11
+    status: In Progress
+    type: bug
+    priority: high
+    title: Normalize CRLF in the diff
+    created_at: "2026-09-04T09:12:00Z"
+    updated_at: "2026-09-06T11:05:00Z"
+    assignees: ["@claude"]
+    due: null
+    # Texto y claves literales de SPEC 10.5 (la clave #2 no existe: se quitó antes de este punto).
+    acceptance_criteria:
+      - key: 1
+        text: El diff ignora el CRLF
+        checked: true
+      - key: 3
+        text: Hay un test que lo cubre
+        checked: false
+    definition_of_done:
+      - key: 1
+        text: Revisado por otra persona
+        checked: false
+    # Arrendamiento literal de SPEC 10.5: leaseExpiresAt y leaseHolder de la ficha de TASK-11.
+    lease:
+      expires_at: "2026-09-06T15:40:18Z"
+      holder: "@claude"
+
+  - id: TASK-52
+    status: In Progress
+    type: task
+    priority: low
+    title: Document the release checklist
+    created_at: "2026-08-15T10:00:00Z"
+    updated_at: "2026-09-05T08:55:00Z"
+    assignees: []
+    due: null
+    acceptance_criteria:
+      - key: 1
+        text: The README explains how to cut a release
+        checked: false
+    definition_of_done: []
+    # Arrendamiento vencido, literal de SPEC 9.7: "lease expired 2026-09-05T09:00:00Z, was held by @bob".
+    lease:
+      expires_at: "2026-09-05T09:00:00Z"
+      holder: "@bob"
+
+  - id: TASK-40
+    status: In Progress
+    type: task
+    priority: medium
+    title: Split the config loader
+    created_at: "2026-09-02T14:30:00Z"
+    updated_at: "2026-09-05T17:20:00Z"
+    assignees: ["@claude"]
+    due: null
+    # Esta dependencia no la declara docs/SPEC.md, se deduce de ella: la urgencia 19.0 que la
+    # especificacion imprime para TASK-11 en 10.6 y en 10.7.1 solo sale si TASK-11 bloquea a
+    # alguna tarea sin terminar (6.0 alta + 4.0 activa + 8.0 bloquea + 1.0 criterios = 19.0), y
+    # el orden de `biso ls --mine` del escenario 3 solo sale si TASK-40 esta bloqueada (3.0
+    # media + 4.0 activa - 5.0 bloqueada + 1.0 criterios = 3.0, la mas baja de la lista).
+    # Ver tutorial/lagunas/04-06.md.
+    depends: ["TASK-11"]
+    acceptance_criteria:
+      - key: 1
+        text: The loader is split into two pure functions
+        checked: false
+      - key: 2
+        text: The existing tests still pass
+        checked: false
+    definition_of_done: []
+    # Activa y asignada sin haber pasado por "biso start": llegar a activa por otra vía no crea
+    # arrendamiento (SPEC 5, sexta precision).
+    lease: null
+
+  - id: TASK-60
+    status: In Progress
+    type: task
+    priority: high
+    title: Confirm the retry budget for the upload endpoint
+    created_at: "2026-09-05T11:00:00Z"
+    updated_at: "2026-09-06T09:30:00Z"
+    assignees: ["@claude"]
+    due: null
+    acceptance_criteria:
+      - key: 1
+        text: The retry budget is written down in the configuration
+        checked: false
+      - key: 2
+        text: The same budget applies to the upload endpoint
+        checked: false
+    definition_of_done: []
+    lease: null
+    # Pregunta abierta literal de SPEC 10.5 (sección "Open Question" de TASK-60).
+    question:
+      author: "@claude"
+      asked_at: "2026-09-06T09:30:00Z"
+      body: Should the retry budget be shared with the download endpoint or kept separate?
+
+  - id: TASK-61
+    status: To Do
+    type: docs
+    priority: medium
+    title: Rewrite the install section
+    created_at: "2026-08-10T08:00:00Z"
+    updated_at: "2026-08-10T08:00:00Z"
+    assignees: ["@claude"]
+    due: null
+    acceptance_criteria:
+      - key: 1
+        text: The install section no longer mentions the retired --board flag
+        checked: false
+    definition_of_done: []
+    lease: null
+
+  - id: TASK-33
+    status: To Do
+    type: task
+    priority: medium
+    title: Add a retry counter to the upload log
+    created_at: "2026-08-20T09:40:00Z"
+    updated_at: "2026-09-03T16:15:00Z"
+    assignees: ["@claude"]
+    due: null
+    acceptance_criteria:
+      - key: 1
+        text: Every retry is counted in the log
+        checked: true
+      - key: 2
+        text: The counter shows up in the final summary
+        checked: false
+      - key: 3
+        text: A test covers three retries in a row
+        checked: false
+    definition_of_done: []
+    lease: null
+
+  - id: TASK-7
+    status: To Do
+    type: bug
+    priority: high
+    title: Crash on an empty repository
+    created_at: "2026-08-28T12:00:00Z"
+    updated_at: "2026-09-01T10:10:00Z"
+    assignees: []
+    # Fecha límite literal de SPEC 9.7.
+    due: "2026-09-08"
+    acceptance_criteria:
+      - key: 1
+        text: Running any command on an empty repository does not panic
+        checked: false
+      - key: 2
+        text: The error message says the repository is empty
+        checked: false
+      - key: 3
+        text: A regression test covers an empty repository
+        checked: false
+      - key: 4
+        text: The exit code is a normal error code, not a crash
+        checked: false
+    definition_of_done: []
+    lease: null
+
+  - id: TASK-19
+    status: To Do
+    type: task
+    priority: high
+    title: Retry the upload on 5xx
+    created_at: "2026-09-06T08:20:00Z"
+    updated_at: "2026-09-06T08:20:00Z"
+    assignees: []
+    due: null
+    acceptance_criteria:
+      - key: 1
+        text: A request that gets a 5xx is retried automatically
+        checked: false
+      - key: 2
+        text: The number of retries is configurable
+        checked: false
+    definition_of_done: []
+    lease: null
+
+  - id: TASK-44
+    status: To Do
+    type: bug
+    priority: low
+    title: Wrong column width on narrow ttys
+    created_at: "2026-07-30T16:45:00Z"
+    updated_at: "2026-08-02T09:00:00Z"
+    assignees: []
+    due: null
+    acceptance_criteria:
+      - key: 1
+        text: The status column no longer wraps on an 80-column terminal
+        checked: false
+    definition_of_done: []
+    lease: null

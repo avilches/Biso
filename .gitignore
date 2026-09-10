@@ -2,6 +2,9 @@
 # informes de una ejecucion por subagentes. No es documentacion del proyecto.
 .superpowers/
 
+# Cache de bytecode de Python, del generador del tutorial.
+__pycache__/
+
 # Sitio generado por MkDocs a partir de docs/*.md. Se reconstruye con
 # `uv run --with-requirements docs-requirements.txt --no-project mkdocs build`.
 site/

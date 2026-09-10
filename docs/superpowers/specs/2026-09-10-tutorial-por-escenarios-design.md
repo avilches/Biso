@@ -82,7 +82,7 @@ urgencia y qué significa tener una identidad.
 | 9 | La persona y el agente hablan | `comment`, `note` | `TASK-19` |
 | 10 | Cierras | `set --check`, `finish` | `TASK-19` pasa a Done |
 | 11 | Te equivocas | filtro imposible, referencia ambigua, inexistente | ninguna, todo falla |
-| 12 | Aparcas algo a medias | `archive` | `TASK-40` |
+| 12 | Aparcas algo a medias | `biso delete` (que no existe), `archive`, `ls --archived` | `TASK-52` |
 | 13 | Tocas veinte de golpe | `set` con varias referencias, `--dry-run` | varias |
 
 Lo que cada escenario tiene que dejar enseñado, y que no es adivinable:
@@ -210,3 +210,30 @@ Cinco encargos en paralelo, más una revisión al final:
 - **Escenarios 11 a 13**: los errores, archivar y el lote.
 - **La revisión**: continuidad del tablero de punta a punta, que ningún escritor individual puede ver, y
   que cada `origen` declarado como literal lo sea de verdad.
+
+
+## Lo que cambio al implementarlo
+
+Tres desviaciones de este diseno, con su motivo. Se anotan aqui porque el documento tiene que seguir
+describiendo lo que hay.
+
+**El escenario 12 archiva `TASK-52` y no `TASK-40`.** La leccion de ese escenario es que archivar
+vacia el arrendamiento, y `TASK-40` no tiene ninguno, asi que con ella la regla no se podria ensenar.
+`TASK-52` si: el agente se la queda en el escenario 6 reclamando el arrendamiento vencido de `@bob`,
+asi que archivarla en el 12 cierra ese hilo y muestra la reserva vaciandose. De paso el escenario
+ensena que `biso delete` no existe, cuyo mensaje la especificacion da literal.
+
+**Hay tres herramientas y no una.** Ademas del generador hicieron falta dos comprobadores, y los dos
+por el mismo motivo: habia numeros en los fixtures que nadie podia verificar leyendo un solo fichero.
+`tutorial/urgencia.py` calcula la urgencia de cada tarea desde `tutorial/tablero.yaml` con el
+desglose de cada termino, y `tutorial/continuidad.py` comprueba que los contadores del tablero
+encadenan entre escenarios. El segundo cazo un desfase de uno que cuatro escenarios arrastraban por
+no contar la `TASK-62` que crea el escenario 2.
+
+**`tutorial/tablero.yaml` declara cuatro cosas que la especificacion no da.** El dia que el tutorial
+toma como hoy, las fechas de creacion de las nueve tareas, la dependencia de `TASK-40` sobre
+`TASK-11`, y que la clave `me` del tablero se queda sin configurar. Las cuatro hacen falta para que
+la urgencia y el orden de las listas sean reproducibles, y las cuatro estan razonadas en
+`tutorial/lagunas/04-06.md`. La de `me` es la mas interesante, porque la seccion 10.10 de la
+especificacion exige dejarla sin configurar en un tablero compartido y su propio ejemplo la
+configura.

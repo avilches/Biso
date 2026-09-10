@@ -1,0 +1,122 @@
+id: 11-te-equivocas
+titulo: Te equivocas
+situacion: |
+  Llevas diez capítulos usando `biso` sin pensar demasiado en ello: pides una lista, pides una
+  tarea, y te la da. Es fácil olvidar que detrás de cada consulta hay una regla que decide qué
+  pasa cuando lo que pides no existe. Hoy tocan tres tropiezos seguidos, a propósito, porque son
+  los que enseñan la regla más importante de toda la especificación: un valor que el tablero no
+  conoce es un error, nunca una lista vacía. Ninguno de los tres escribe nada: este es un
+  capítulo de consulta, no de escritura, así que el tablero sale exactamente como entra.
+ensena:
+  - >-
+    Un valor que el tablero no conoce es un error, se esté leyendo o escribiendo, y nunca una
+    lista vacía. Por eso una lista vacía sí es un hecho sobre el tablero, y quien la recibe
+    puede actuar en consecuencia.
+  - >-
+    La coincidencia de vocabulario ignora mayúsculas, espacios, guiones y guiones bajos, así que
+    `TO_DO`, `to do` y `To-Do` no son tres filtros parecidos: son el mismo filtro.
+  - >-
+    Una referencia de texto que encaja con varias tareas no adivina cuál querías decir: lista
+    las candidatas y te deja elegir.
+  - >-
+    Una referencia bien formada que el tablero nunca ha llegado a asignar es un error distinto
+    del de una tarea que sí existió y ya no está, aunque los dos mensajes empiecen igual.
+  - >-
+    Cada tropiezo tiene su propio código de salida, así que un agente puede ramificar sobre el
+    número sin leer el mensaje.
+pasos:
+  - narracion: |
+      Quieres ver qué queda pendiente y escribes el nombre del estado tal y como lo llamarías
+      en cualquier otro gestor de tareas.
+    cmd: biso ls -s Pending
+    salida: |
+      error: unknown status: "Pending"
+             valid statuses on this board: To Do, In Progress, Done
+    exit: 3
+    origen: literal SPEC 6.2
+    comentario: |
+      No hay ningún «Pending» en este tablero, así que el programa no te devuelve una lista
+      vacía fingiendo que lo ha entendido: falla con el código 3 (BAD_VALUE) y te dice cuáles
+      son los valores válidos, para que no tengas que adivinar el nombre exacto. Es el mismo
+      mensaje, palabra por palabra, tanto si el valor imposible llega en un filtro de `biso ls`
+      como si llega en una escritura de `biso set` (sección 6.2).
+
+  - narracion: |
+      Pruebas con un valor que sí existe, pero escrito como te salga: en mayúsculas, con guion
+      bajo.
+    cmd: biso ls --count -s TO_DO
+    salida: "54"
+    exit: 0
+    origen: derivada SPEC 6.1
+    comentario: |
+      `TO_DO` no aparece tal cual en la configuración del tablero, que guarda `To Do`. Pero el
+      algoritmo de coincidencia de la sección 6.1 pasa los dos valores a minúsculas y les quita
+      los espacios, los guiones y los guiones bajos antes de comparar, así que `TO_DO` normaliza
+      a `todo`, igual que `To Do`. El tablero no ha cambiado desde que terminó el capítulo
+      anterior: sigue habiendo 54 tareas en `To Do`. `--count` imprime solo ese número, sin
+      ninguna otra línea (sección 10.4).
+
+  - narracion: |
+      Vuelves a probar, ahora con guion y mezclando mayúsculas y minúsculas.
+    cmd: biso ls --count -s To-Do
+    salida: "54"
+    exit: 0
+    origen: derivada SPEC 6.1
+    comentario: |
+      Mismo resultado, porque es el mismo filtro: `To-Do` normaliza también a `todo`. La misma
+      regla quita además los espacios repetidos, así que `to  do`, con dos espacios en medio,
+      también habría servido (es el ejemplo literal de la propia tabla de la sección 6.1).
+      Cuatro formas distintas de teclearlo, un solo valor.
+
+  - narracion: |
+      Se te ha olvidado el número de la tarea de los reintentos y escribes lo primero que
+      recuerdas del título.
+    cmd: biso get "retry"
+    salida: |
+      TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
+      TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
+      TASK-19  Done         task  high    Retry the upload on 5xx                           ac 2/2  @claude  -
+    exit: 5
+    origen: derivada SPEC 7.2
+    comentario: |
+      Las tres tareas llevan «retry» en el título, así que ninguna gana por estar en el título
+      mientras las otras solo lo llevan en el cuerpo (la regla de la sección 7.2): las tres son
+      candidatas por igual. El programa no elige por ti. Código 5 (AMBIGUOUS), y las tres filas
+      por stdout, en el mismo formato de columnas de `biso ls` (sección 10.4), ordenadas por
+      urgencia porque ninguna lleva `ordinal`: TASK-60 tiene una pregunta abierta, así que no
+      suma el término de tarea activa, pero es de prioridad alta; TASK-33 es de prioridad
+      media; TASK-19 ya está terminada, así que su urgencia es 0,0 (sección 5.4, «si el estado
+      de la tarea es el terminal, urgency = 0.0») y va la última. El valor de `ac` de TASK-19
+      depende de cómo se cerrara en el capítulo 10, que no está a la vista de este fichero: se
+      asume que llegó a `ac 2/2`, siguiendo el cierre que recomienda el propio mensaje de
+      `biso prime` («biso finish <ref> --check all --check-dod all --summary "..."»). Queda
+      anotado en `tutorial/lagunas/11-13.md`.
+
+  - narracion: |
+      Escribes el número a mano, pero se te cuela un dígito de más.
+    cmd: biso get TASK-99
+    salida: |
+      error: TASK-99 has never existed on this board
+      note: the highest id ever assigned here is TASK-62
+    exit: 4
+    origen: derivada SPEC 7.3
+    comentario: |
+      `TASK-99` está bien formado como identificador, así que esto no es un error de uso
+      (código 2): es un error de que ese identificador nunca ha existido, código 4 (NOT_FOUND),
+      con la clave `never_allocated`. El texto es el literal de la sección 7.3, con el número
+      del identificador más alto sustituido por el de este tablero, `TASK-62`, que es la tarea
+      que se creó en el capítulo 2. Hay un tercer mensaje de «no la encuentro» en la misma
+      sección, para una tarea que el tablero sí llegó a asignar y que ahora ya no está
+      (archivada y después eliminada): comparte el código 4 pero no la clave, y no hace falta
+      reproducirlo aquí para que quede clara la diferencia entre los dos. Y queda un cuarto
+      tropiezo que ni siquiera hemos tocado, el identificador mal formado como `TASK-1.1`, que
+      es código 2 en vez de 4, porque ahí el problema no es que la tarea no exista sino que lo
+      que has escrito no tiene la forma de una referencia. Cuatro formas de equivocarte, cuatro
+      códigos distintos: 2, 3, 4 y 5.
+tablero_entra: |
+  Igual que sale el capítulo 10: TASK-19 en Done, asignada a @claude. TASK-62, creada en el
+  capítulo 2, sigue en el tablero. Contadores 54 / 4 / 191 (To Do / In Progress / Done).
+tablero_sale: |
+  Igual que entra. Ninguno de los cinco pasos de este capítulo escribe en el tablero: los tres
+  tropiezos fallan antes de escribir nada, y las dos consultas con `--count` son lecturas.
+  Contadores sin cambios: 54 / 4 / 191.

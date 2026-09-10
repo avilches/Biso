@@ -1,0 +1,96 @@
+id: 12-aparcas-a-medias
+titulo: Aparcas algo a medias
+situacion: |
+  En el escenario 6 el agente se quedó con `TASK-52`, la tarea de documentar la lista de
+  publicación que `@bob` había dejado abandonada. Le pareció que alguien tenía que recogerla.
+
+  Ahora, con la subida ya arreglada y cerrada, la mira otra vez y cambia de opinión: nadie ha
+  publicado nada en semanas, no hay prisa, y tenerla en marcha a su nombre da una imagen falsa de
+  lo que está pasando en el tablero. No es que esté terminada. Es que no toca.
+
+  Eso tiene un gesto propio, y no es el que la mayoría busca primero.
+ensena:
+  - >-
+    Archivar no es terminar. Una tarea archivada no pasa al estado terminal: sale del tablero
+    activo con el estado que tuviera.
+  - >-
+    No existe ningún comando para borrar una tarea, y esa ausencia está especificada. El
+    identificador de una tarea archivada no se reutiliza nunca.
+  - >-
+    Archivar vacía el arrendamiento, aunque estuviera vivo y aunque archivar no saque la tarea
+    del estado activo. Un arrendamiento afirma que alguien está trabajando ahora, y archivar
+    dice justo lo contrario.
+pasos:
+  - narracion: |
+      El primer impulso de casi todo el mundo es buscar cómo se borra.
+    cmd: biso delete TASK-52
+    salida: |
+      error: there is no delete command, on purpose
+      hint: `biso archive <ref>` takes it off the board and keeps the history
+            an archived task still exists: `biso ls --archived` lists them, and the
+            id is never reused
+    exit: 2
+    origen: literal SPEC 10.8
+    comentario: |
+      La ausencia de este comando está escrita en la especificación, con su mensaje y su código,
+      en vez de dejar que `biso delete` caiga en el error genérico de comando desconocido. La
+      diferencia importa: un comando desconocido te hace dudar de si lo escribiste mal, y este
+      mensaje te dice que la decisión es deliberada y cuál es el gesto que buscabas.
+  - narracion: |
+      El agente saca la tarea del tablero.
+    cmd: biso archive TASK-52
+    salida: |
+      TASK-52  In Progress  ac 0/1  urgency 5.4  archived
+    exit: 0
+    origen: derivada SPEC 10.8, 5.4
+    comentario: |
+      Lee con cuidado esa línea, porque dice dos cosas que parecen incompatibles: la tarea sigue en
+      `In Progress` y está `archived`. No hay contradicción. Archivar no es un estado y no toca el
+      estado: es una marca aparte que la saca del tablero activo. Si mañana se desarchivara,
+      volvería a `In Progress`, que es donde estaba.
+
+      Y hay algo que la línea no dice: el arrendamiento que el agente había reclamado en el
+      escenario 6 acaba de vaciarse. Eso pasa siempre al archivar, sea el arrendamiento de quien
+      sea y esté vivo o vencido, y el motivo es que conservarlo lo guardaría donde nadie lo ve,
+      porque el arranque y el listado esconden las archivadas por defecto. Si esta tarea volviera
+      al tablero dentro de tres semanas con un arrendamiento a nombre de una sesión que ya murió,
+      ese dato sería basura con aspecto de información.
+
+      La urgencia sigue calculándose, 5.4, porque la tarea sigue en un estado que no es el
+      terminal. Archivar no la pone a cero: eso lo hace terminarla.
+  - narracion: |
+      Comprueba que no la ha perdido.
+    cmd: biso ls --archived
+    salida: |
+      TASK-52  In Progress  task  low  Document the release checklist  ac 0/1  @claude  -
+    exit: 0
+    origen: derivada SPEC 10.4, 10.8
+    comentario: |
+      Ahí sigue, entera, con su asignación intacta. Lo único que ha perdido es el arrendamiento.
+
+      Fíjate en que `--archived` es lo que la trae de vuelta a la vista: sin esa bandera no
+      aparece ni en `biso ls` ni en `biso prime`, y eso es lo que significa "salir del tablero
+      activo". La tarea no se ha ido a ninguna parte, se ha quitado de en medio.
+  - narracion: |
+      Y para cerrar la idea, mira qué queda en marcha ahora.
+    cmd: biso ls -s "In Progress"
+    salida: |
+      TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
+      TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
+      TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
+    exit: 0
+    origen: derivada SPEC 10.4, 5.4
+    comentario: |
+      Tres tareas donde antes había cuatro, y `TASK-19` ya no está en ninguna de las dos listas
+      porque se terminó en el escenario 10. El tablero dice ahora la verdad sobre lo que se está
+      haciendo, que es para lo que sirve archivar algo que no vas a tocar.
+tablero_entra: >
+  TASK-52 en In Progress, asignada a @claude, ac 0/1, urgencia 5.4, con el arrendamiento vivo de
+  @claude que reclamo en el escenario 6. TASK-19 ya terminada desde el escenario 10. El escenario
+  11 no escribio nada. Contadores 54/4/191 (To Do / In Progress / Done), con las cuatro en curso
+  siendo TASK-11, TASK-60, TASK-52 y TASK-40.
+tablero_sale: >
+  TASK-52 sigue en In Progress y sigue asignada a @claude, pero esta archivada y su arrendamiento
+  esta vacio: ni fecha de vencimiento ni tenedor. Su identificador queda reservado para siempre.
+  Ninguna otra tarea se toca. Contadores 54/3/191: In Progress baja de 4 a 3 porque los contadores
+  del arranque cuentan tareas no archivadas, no porque TASK-52 haya cambiado de estado.

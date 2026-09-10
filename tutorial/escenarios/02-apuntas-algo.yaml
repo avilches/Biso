@@ -1,0 +1,38 @@
+id: 02-apuntas-algo
+titulo: Se te ocurre algo y no quieres que se pierda
+situacion: |
+  Estás a mitad de otra cosa cuando caes en algo que hay que arreglar en el subidor de
+  archivos. No es lo que estás haciendo ahora, y si sigues tirando del hilo pierdes el hilo
+  de lo de verdad. Lo único que necesitas es dejarlo apuntado en algún sitio donde no se te
+  vaya a olvidar, y seguir.
+ensena:
+  - "El nombre desnudo de una bandera añade. `--ac` repetida dos veces deja dos criterios,
+    no uno que pisa al otro."
+  - "`biso new` imprime el identificador de la tarea nueva y nada más: ni un título repetido
+    a modo de confirmación, ni una línea de estado."
+pasos:
+  - narracion: |
+      Bastaría con teclear el título y ya quedaría a salvo, pero ya que lo tienes en la
+      cabeza, merece la pena dejar también el porqué y con qué criterio sabrás que está
+      resuelto. Son dos banderas más en la misma línea, y `new` las acepta todas:
+    cmd: >-
+      biso new "Log the diff size before uploading" --ac "The log prints the diff size
+      before each upload" --ac "The size also shows up when the upload fails"
+    salida: |
+      TASK-62
+    exit: 0
+    origen: derivada SPEC 10.3
+    comentario: |
+      Nada de "created TASK-62" ni de repetir el título: la única línea es el identificador,
+      porque eso es justo lo que no podías saber de antemano y lo demás ya lo sabías (regla 7
+      del mensaje de arranque, principio 4 de la sección 1). Las dos banderas `--ac` no han
+      sustituido nada, han añadido dos criterios distintos a una lista que empezaba vacía,
+      porque el nombre desnudo de un campo de lista siempre añade (sección 8.1). Si en vez de
+      sumar un segundo criterio hubieras querido reemplazar el primero, la bandera habría
+      sido `--set-ac`, no `--ac` otra vez, aunque aquí no hacía falta: una tarea recién
+      creada no tiene nada que sustituir todavía.
+tablero_entra: |
+  54/4/190 (To Do / In Progress / Done), igual que al terminar el escenario 1.
+tablero_sale: |
+  Se crea TASK-62 en el estado inicial, To Do, con dos criterios de aceptación sin marcar y
+  sin nadie asignado. Contadores 55/4/190.

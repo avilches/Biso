@@ -1,0 +1,115 @@
+id: 04-repartes-el-trabajo
+titulo: Repartes el trabajo
+situacion: |
+  Hasta ahora has estado mirando el tablero y apuntando cosas. Esto es distinto: hay una tarea
+  que alguien tiene que hacer, y hay que decir quién. En este proyecto trabajan una persona,
+  `@sara`, y un agente, `@claude`, sobre el mismo tablero, y `TASK-19` (reintentar la subida
+  cuando el servidor responde 5xx) lleva ahí desde el principio sin dueño.
+
+  Sara decide que la haga el agente. Lo que sigue es cómo se dice eso, y cómo se entera él.
+ensena:
+  - >-
+    Asignar es la decisión de una persona sobre lo que otra debe hacer. No es un reparto
+    automático: `biso` no asigna nada por su cuenta.
+  - >-
+    Un tablero compartido entre una persona y un agente deja la clave `me` sin configurar a
+    propósito, y cada uno declara su identidad en su propia sesión con `BISO_ME`. Si el tablero
+    la llevase puesta, todos compartirían identidad y `--mine` dejaría de significar nada.
+  - >-
+    Asignar una tarea no crea ningún arrendamiento. Recibir trabajo y empezarlo son dos cosas
+    distintas, y la segunda tiene su propio comando.
+pasos:
+  - narracion: |
+      Sara abre una terminal nueva y, antes de nada, quiere ver qué tiene ella pendiente. Todavía
+      no ha declarado quién es en esta sesión.
+    cmd: biso ls --mine
+    salida: |
+      error: --mine needs an identity; set it with biso config set me <you> or BISO_ME
+    exit: 6
+    origen: literal SPEC 3.1
+    comentario: |
+      Fíjate en que no devuelve una lista vacía. Podría haberlo hecho, y sería lo cómodo de
+      programar: sin identidad, ninguna tarea es "mía", así que cero resultados. Pero entonces
+      quien lo llama no podría distinguir "no tengo nada asignado" de "no has dicho quién eres",
+      y eso es justo lo que el primer principio de la especificación prohíbe. El error tiene
+      además su propio código, el 6, así que un programa que llame a `biso` puede reaccionar sin
+      leer el mensaje.
+
+      El mensaje ofrece las dos salidas, y no son equivalentes. `biso config set me` lo escribe
+      en la configuración del tablero, donde lo verían todos; `BISO_ME` lo declara solo para esta
+      sesión. En un tablero compartido hay que usar la segunda.
+  - narracion: |
+      Sara declara su identidad para esta sesión, que es una variable de entorno y no un comando
+      de `biso`, y le pasa la tarea al agente.
+    cmd: biso set TASK-19 -a @claude
+    salida: |
+      TASK-19  To Do  ac 0/2  urgency 7.0
+    exit: 0
+    origen: derivada SPEC 10.6, 5.4
+    comentario: |
+      La salida no repite lo que Sara acaba de escribir: no dice "assignee: @claude". Dice el
+      estado en que queda la tarea, su avance de criterios y su urgencia, que es lo que ella no
+      sabía. Es el cuarto principio de la especificación, y se cumple en todas las escrituras.
+
+      La urgencia es 7.0, y sale de sumar 6.0 por ser de prioridad alta y 1.0 por tener criterios
+      de aceptación. No suma el término de tarea activa, que vale 4.0, porque sigue en `To Do`:
+      asignar una tarea no la pone en marcha.
+
+      No aparece el trozo `dod` porque `TASK-19` no tiene definición de hecho, y ese trozo solo
+      sale cuando la hay.
+  - narracion: |
+      En su propia sesión, el agente pregunta qué le toca. Aquí `--mine` sí funciona, porque su
+      identidad está declarada.
+    cmd: biso ls --mine
+    salida: |
+      TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
+      TASK-19  To Do        task  high    Retry the upload on 5xx                           ac 0/2  @claude  -
+      TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
+      TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
+      TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
+      TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
+    exit: 0
+    origen: derivada SPEC 10.4, 5.4
+    comentario: |
+      Seis filas donde antes había cinco. `TASK-19` entra en segunda posición, y ese sitio no es
+      casual: la lista va por urgencia descendente y `TASK-19` vale 7.0, igual que `TASK-60`. Un
+      empate se rompe siempre por identificador ascendente, y 19 va antes que 60.
+
+      Que `TASK-60` valga lo mismo que una tarea que ni ha empezado, teniendo ella prioridad alta
+      y estando en curso, tiene una explicación: `TASK-60` tiene una pregunta abierta, y el
+      término de tarea activa solo suma cuando la tarea está en el estado activo **y** no está
+      esperando respuesta. Una tarea aparcada no está siendo trabajada por nadie, así que no
+      compite por tu atención. En el escenario 8 se ve por dentro.
+
+      Y ojo con lo que esta lista no dice: `TASK-19` ya es del agente, pero nadie ha empezado a
+      trabajar en ella. No hay ningún arrendamiento. Para eso hace falta el comando del escenario
+      siguiente.
+  - narracion: |
+      El mensaje de arranque cuenta lo mismo de otra forma. Si el agente volviera a lanzarlo
+      ahora, `TASK-19` habría cambiado de sitio.
+    cmd: biso ls --mine -s "To Do"
+    salida: |
+      TASK-19  To Do  task  high    Retry the upload on 5xx                ac 0/2  @claude  -
+      TASK-61  To Do  docs  medium  Rewrite the install section            ac 0/1  @claude  -
+      TASK-33  To Do  task  medium  Add a retry counter to the upload log  ac 1/3  @claude  -
+    exit: 0
+    origen: derivada SPEC 10.4
+    comentario: |
+      En `biso prime`, estas tres son las que salen en el bloque `ASSIGNED TO YOU`, que significa
+      exactamente esto: tareas que una persona decidió que hicieras tú y que todavía no están en
+      marcha. En el escenario 1 viste ese mensaje entero, y entonces `TASK-19` no estaba en ese
+      bloque porque no era de nadie.
+
+      Fíjate también en que las columnas se han estrechado. El ancho de cada una lo decide el
+      contenido de la lista que se está imprimiendo, no una plantilla fija: al filtrar por un
+      solo estado, la columna de estado ya no necesita hueco para `In Progress`, y al desaparecer
+      las tareas de título largo, la columna del título se encoge con ellas.
+tablero_entra: >
+  TASK-19 en To Do, sin asignar, ac 0/2, urgencia 7.0. La clave `me` del tablero está sin
+  configurar y cada actor declara su identidad con BISO_ME. Contadores 55/4/190 (To Do / In
+  Progress / Done), con las 54 iniciales más la TASK-62 que creó el escenario 2.
+tablero_sale: >
+  TASK-19 sigue en To Do y sigue con ac 0/2 y urgencia 7.0, pero ahora está asignada a @claude.
+  Sin arrendamiento: ninguno de los pasos de este escenario crea uno, porque solo `biso start` y
+  `biso new --start` lo hacen. TASK-11 se ha leído pero no se ha tocado. Contadores sin cambios,
+  55/4/190, porque ningún paso mueve una tarea de estado.

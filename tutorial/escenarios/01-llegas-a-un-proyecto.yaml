@@ -1,0 +1,142 @@
+id: 01-llegas-a-un-proyecto
+titulo: Llegas a un proyecto que no conoces
+situacion: |
+  Te acaban de meter en un proyecto que no habías tocado nunca. Hay gente trabajando en él
+  desde hace tiempo, hay tareas a medias, y tú no sabes ni por dónde se entra. Antes de tocar
+  nada, quieres saber qué hay: qué se está haciendo ahora mismo, qué espera respuesta, qué te
+  toca a ti y qué reglas rigen este tablero en concreto. No quieres leerte un manual entero
+  para eso.
+ensena:
+  - >-
+    El arranque se lee entero una vez, al principio de la sesión, y con eso basta, sin volver a
+    consultar nada más para completar un ciclo de trabajo completo.
+  - "`biso where` existe para el día en que dudes de qué tablero estás tocando de verdad."
+pasos:
+  - narracion: |
+      Lo primero que haces, antes de mirar nada más, es esto:
+    cmd: biso prime
+    salida: |
+      biso 1.0.0 - the task board of this project. This message is all you need to start.
+
+      BOARD  Kex
+        To Do 54 | In Progress 4 | Done 190
+        new tasks start in To Do; `biso start` moves to In Progress; `biso finish` to Done
+        types       idea, memory, task, bug, docs
+        priorities  high, medium, low
+        you are     @claude
+
+      COMMANDS  (`biso <cmd> --help` for the detail of any flag)
+        biso ls [-s STATUS] [--type T] [-l LABEL] [--mine] [--search TEXT]
+        biso get <ref> [--section ac]
+        biso new "TITLE" [-d TEXT] [--ac TEXT]... [--type T] [--priority P]
+        biso start <ref>... [--plan TEXT]
+        biso note <ref> "TEXT"
+        biso ask <ref> "QUESTION"
+        biso answer <ref> "TEXT"
+        biso finish <ref>... [--summary "TEXT"] [--check all] [--check-dod all]
+        biso set <ref>... [any field flag]
+        biso comment <ref> "TEXT" [--comment-author @who]
+
+      FIELD FLAGS  (same names, same meaning, in every command above that writes)
+        -t --title  -s --status  --type   --priority  --project      -a --assignee
+        -l --label  -d --desc    --ac     --dod       --plan         --note
+        --summary   --dep        --ref    --doc       --file         -m --milestone
+        -p --parent --due        --ordinal --ext K=V  --reporter     --comment
+        --check     --uncheck             --check-dod --uncheck-dod
+
+      RULES  (none of these are guessable; they are the whole learning curve)
+        1. Every write goes through biso. Nothing else touches the board.
+        2. A bare field flag ADDS. Replacing and removing are explicit: --label X
+           adds, --set-label X replaces the list, --rm-label X drops one, and
+           --clear-label empties it. Same four shapes for every list field.
+        3. <ref> is an id (TASK-12), a bare number (12) or free text ("CRLF"). Text
+           matching several tasks is an error that lists them, never a guess. `note`,
+           `comment`, `ask` and `answer` take one <ref>; `set`, `start` and `finish`
+           take several.
+        4. Filters reject values this board does not have: `-s Pending` is an error,
+           not an empty list. Case, spaces, hyphens and underscores are ignored, so
+           `-s todo`, `-s "To Do"` and `-s TO_DO` are one and the same filter. An
+           empty list is therefore a fact about the board that you can act on.
+        5. `biso ls` prints 30 tasks by urgency and leaves out the Done ones. It says
+           on stderr what it left out. --all lifts the limit, --any-status includes
+           Done, --archived reaches the archive.
+        6. --check and --uncheck take all, 3, 1-4, 1,3,7 or the criterion text. The
+           numbers are the stable #N keys that `biso get` shows, and they never
+           shift when one criterion is removed.
+        7. `biso new` prints the new id and nothing else. Every other write prints one
+           line per task: id, status, criteria, urgency. Add --print for the whole
+           record, or --json for a versioned envelope.
+        8. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.
+        9. Long text: a real newline works, and so do -d @file.md and -d - for stdin.
+       10. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
+           6 precondition not met, 7 environment, 8 no board here, 9 nothing written.
+       11. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
+           it, writing both into the comments. Ask instead of guessing. A task
+           assigned to you is one a person decided you should do.
+
+      IN PROGRESS
+        TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
+        TASK-52  In Progress  task  low     Document the release checklist                    ac 0/1  -        -
+          lease expired 2026-09-05T09:00:00Z, was held by @bob
+        TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
+
+      NEEDS ANSWER
+        TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
+          Should the retry budget be shared with the download endpoint or kept separate?
+
+      ASSIGNED TO YOU
+        TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
+        TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
+
+      NEXT UP  (not assigned to you, by urgency)
+        TASK-7   To Do        bug   high    Crash on an empty repository                      ac 0/4  -        2026-09-08
+        TASK-19  To Do        task  high    Retry the upload on 5xx                           ac 0/2  -        -
+        TASK-44  To Do        bug   low     Wrong column width on narrow ttys                 ac 0/1  -        -
+        49 more not shown: `biso ls --not-active --not-waiting`
+
+      Pick one, `biso start <ref> --plan "..."`, work, `biso note <ref> "..."` as you go,
+      and close with `biso finish <ref> --check all --check-dod all --summary "..."`.
+      That is the loop. Create a task when the work needs planning or review; do small
+      edits directly.
+    exit: 0
+    origen: literal SPEC 9.7
+    comentario: |
+      Esto es todo el mensaje, de arriba a abajo, y no hay una segunda pantalla después. El
+      bloque BOARD dice el vocabulario real de este tablero (los tipos, las prioridades, los
+      tres estados con su papel) y quién eres tú aquí. Las cuatro secciones de abajo reparten
+      el tablero entero sin que ninguna tarea aparezca en dos sitios: lo que está en marcha,
+      lo que espera una respuesta tuya, lo que es tuyo y lo siguiente por urgencia. Nadie
+      escribe esa urgencia a mano, se recalcula cada vez que la pides (lo retomas en el
+      escenario 3, "¿Y ahora qué hago?"). Con esto ya podrías crear una tarea, empezarla,
+      trabajarla y cerrarla sin abrir ningún otro documento: ese es el criterio con el que
+      está escrito este mensaje.
+  - narracion: |
+      Aún así te queda una duda que `prime` no contesta: este tablero, el que acabas de leer,
+      ¿es exactamente el que crees que es? Si trabajas con varias copias del proyecto a la vez
+      (un worktree distinto, una carpeta clonada dos veces) conviene comprobarlo antes de
+      escribir nada.
+    cmd: biso where
+    salida: |
+      id       3f9a2b1c
+      board    Kex
+      path     /Users/avilches/.biso/boards/kex-3f9a2b1c
+      source   project pointer at /Users/avilches/Hub/Projects/Kex
+      me       @claude
+      tasks    248 not archived, 31 archived, highest id ever assigned TASK-290
+    exit: 0
+    origen: literal SPEC 10.2
+    comentario: |
+      Cuatro datos que cambian cada uno por su cuenta: el identificador no cambia jamás, el
+      nombre lo cambia `biso config set project_name`, la ruta cambia si alguien mueve la
+      carpeta a mano, y `source` dice de dónde ha salido esa respuesta, que aquí es el puntero
+      del proyecto (sección 3.2). Si no hubiera ningún tablero, tanto `prime` como `where`
+      fallarían con el código 8, y el propio mensaje de error de `where` remite a
+      `biso init` como el remedio: crea un tablero nuevo y lo deja apuntado desde este
+      proyecto. No hace falta más que saber que existe para este momento; sus banderas se ven
+      cuando de verdad haga falta crear uno.
+tablero_entra: |
+  El tablero Kex tal y como lo fija el diseño del tutorial, sin ningún cambio previo.
+  Contadores 54/4/190 (To Do / In Progress / Done).
+tablero_sale: |
+  Sin cambios: todo el escenario es de lectura, y ni `prime` ni `where` escriben nunca nada.
+  Contadores 54/4/190.

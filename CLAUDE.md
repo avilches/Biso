@@ -96,10 +96,9 @@ de `docs/SPEC.md` es el almacén, y su decisión de controlador está tomada.
 
 ## El sitio de documentación
 
-Los cuatro documentos de `docs/` se sirven como un sitio navegable con MkDocs y el tema Material,
+Los documentos de `docs/` se sirven como un sitio navegable con MkDocs y el tema Material,
 definido en `mkdocs.yml`. Es utillaje de documentación, no parte del programa: no toca el código
-Go ni cambia el contenido de los `.md`, que siguen siendo la fuente de verdad. Las dependencias de
-Python están fijadas con versión exacta en `docs-requirements.txt`.
+Go. Las dependencias de Python están fijadas con versión exacta en `docs-requirements.txt`.
 
 Se ejecuta con `uv` (ya instalado en esta máquina) sin crear un entorno virtual dentro del
 repositorio ni instalar nada en el Python del sistema: `uv` resuelve las dependencias fijadas a un
@@ -109,3 +108,39 @@ caché propio y las descarta al terminar.
   `uv run --with-requirements docs-requirements.txt --no-project mkdocs serve`
 - Construir el sitio estático en `site/` (no se versiona, ver `.gitignore`):
   `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict`
+
+`docs/TUTORIAL.md` es la única excepción a "los `.md` son la fuente de verdad": es producto
+generado a partir de los fixtures de `tutorial/escenarios/` y de `tutorial/conceptos.md`, y no se
+edita a mano (lleva su propia cabecera que lo recuerda). Se regenera con:
+`uv run --with-requirements docs-requirements.txt --no-project python tutorial/generar.py`
+
+## El tutorial y sus tres herramientas
+
+El tutorial se diseñó en
+[`docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md`](docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md),
+y va por situaciones y no por comandos, para no ser una segunda copia de la sección 10 de la
+especificación. Cada paso de cada escenario declara su comando, su salida, su código de salida y de
+dónde sale esa salida: `literal SPEC <sección>` si está copiada carácter a carácter, o
+`derivada SPEC <sección>` si se construyó aplicando sus reglas. El generador marca las derivadas en
+la página, y esa marca es el aparato de validación: lo literal ya está validado por estar en la
+especificación, lo derivado es lo que hay que revisar.
+
+Tres scripts, los tres con el mismo prefijo de `uv` que MkDocs:
+
+- `python tutorial/generar.py` escribe `docs/TUTORIAL.md`. Valida los fixtures y **falla** si a un
+  paso le falta el código de salida o si `origen` no tiene una de las dos formas admitidas.
+- `python tutorial/urgencia.py` calcula la urgencia de cada tarea del tablero de ejemplo según la
+  sección 5.4, con el desglose de cada término, y las ordena por la regla de `biso ls`. Existe para
+  que ningún fixture tenga que hacer esa aritmética a mano: los escenarios ordenan listas por
+  urgencia y ese orden hay que poder reproducirlo.
+- `python tutorial/continuidad.py` comprueba que los contadores del tablero encadenan entre
+  escenarios consecutivos, o sea que lo que uno entrega es lo que el siguiente recibe. Sale 1 si no
+  cuadran. Ya cazó un desfase de uno que cuatro escenarios arrastraban.
+
+`tutorial/lagunas/` es lo que salió de escribir el tutorial: lo que la especificación no decide y
+hubo que suponer, con la pregunta concreta y qué se supuso. Alimenta `docs/PENDIENTES.md`.
+
+El día que exista el binario, el mismo formato de fixture se ejecuta contra un tablero sembrado con
+`tutorial/tablero.yaml` y se compara con lo declarado, así que los ejemplos dejarán de ser simulados
+y pasarán a ser pruebas de salida literal. Por eso `cmd` es una línea ejecutable y no una
+ilustración, y por eso el código de salida es obligatorio en todos los pasos.
