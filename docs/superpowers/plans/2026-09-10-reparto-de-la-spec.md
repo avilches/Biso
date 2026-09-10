@@ -537,13 +537,14 @@ mapa está mal y hay que arreglarlo antes de tocar nada, no después.
   dos títulos siguen existiendo y el comprobador no los echa en falta.
 - **Nada más cambia.** Ni una palabra del cuerpo, ni una referencia, ni un ejemplo, ni una tabla.
 
-### Las once excepciones de encabezado, y no hay más
+### Las excepciones de encabezado, y no hay ninguna más
 
-El comprobador del paso 3 va a reportar exactamente estas y ninguna otra. Cualquier cosa fuera de esta
-lista es un error de la mudanza.
+El comprobador va a reportar exactamente las de estas dos tablas y ninguna otra. Cualquier cosa fuera de
+ellas es un error de la mudanza. Las tablas son la lista, y por eso no llevan delante un recuento que se
+quedaria desfasado al anadir una fila, que es la regla de la tarea 8 aplicada a este mismo documento.
 
-**Siete H1 que aparecen de la nada**, porque su fichero reúne piezas que antes no tenían un título común,
-o porque el título viejo hablaba de un documento en singular:
+**Los H1 que aparecen de la nada**, porque su fichero reúne piezas que antes no tenían un título común, o
+porque el título viejo hablaba de un documento en singular:
 
 | Fichero | H1 nuevo |
 |---|---|
@@ -555,7 +556,7 @@ o porque el título viejo hablaba de un documento en singular:
 | `docs/spec/presupuestos.md` | Los presupuestos de arranque y de tamaño |
 | `docs/spec/cmd/help.md` | La ayuda: `biso help` y `biso --help` |
 
-**Dos títulos viejos que se pierden**, porque nombraban agrupaciones que dejan de existir:
+**Los títulos viejos que se pierden**, porque nombraban agrupaciones que dejan de existir:
 
 | Título que desaparece | Por qué |
 |---|---|
@@ -563,7 +564,8 @@ o porque el título viejo hablaba de un documento en singular:
 | Reglas transversales | Era el nombre del cajón de la sección 4, que se reparte en cuatro ficheros por temas. Su prosa introductoria (líneas 507-510) sobrevive en `docs/spec/index.md`, y solo se pierde la línea del encabezado |
 
 **Los demás H1 tienen que coincidir carácter a carácter con el encabezado del que salen**, quitándole el
-número. Si el comprobador reporta un octavo H1 nuevo o un tercer título perdido, hay un corte mal hecho.
+número. Si el comprobador reporta un H1 nuevo o un título perdido que no esté en las tablas de arriba, hay
+un corte mal hecho.
 
 - [ ] **Step 1: Crear los ficheros con los rangos de la tabla**
 
@@ -752,7 +754,7 @@ python3 tools/verificar_mudanza.py --excepciones tools/excepciones-de-encabezado
 
 Expected: `la mudanza es fiel: cada fichero lleva su contenido y no falta ni sobra nada`, código 0.
 
-**La bandera `--excepciones` no es opcional, y su fichero es donde viven las once excepciones de encabezado
+**La bandera `--excepciones` no es opcional, y su fichero es donde viven las excepciones de encabezado
 de la tabla de más arriba.** Sin ella el comprobador no puede dar el visto bueno a un reparto correcto, porque
 los nueve encabezados que cambian a propósito le parecen nueve errores. Con ella, la lista deja de ser prosa
 y pasa a comprobarse en las dos direcciones: un encabezado que cambia sin estar declarado es un error, y una
@@ -763,7 +765,7 @@ los rangos que le tocan, de modo que dos ficheros intercambiados no pasan, y avi
 quedado con un número impar de cercas de bloque de código, que es lo que ocurre cuando un corte cae en
 mitad de un bloque.
 
-Los encabezados que el comprobador reporte tienen que ser exactamente los siete H1 nuevos y los dos
+Los encabezados que el comprobador reporte tienen que ser exactamente los H1 nuevos y los
 títulos perdidos de la tabla de excepciones, y ninguno más. **Si aparece cualquier otro, es un error de la
 mudanza y hay que arreglarlo, nunca añadirlo a las excepciones.** Las líneas de contenido, en cambio,
 tienen que cuadrar sin ninguna excepción: si el comprobador reporta una sola línea perdida o sobrante, el
