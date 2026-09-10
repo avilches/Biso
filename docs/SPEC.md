@@ -5737,10 +5737,11 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
 En el orden en que cada pieza paga lo que cuesta:
 
 1. **El almacén**: abrir o crear la base de datos, el modo WAL y la transacción dentro de la que
-   ocurre cualquier escritura, que es de lo que dependen las seis garantías de la sección 4.10. **Aquí
-   se mide el presupuesto de arranque de la sección 4.13** con el mecanismo de acceso que se haya
-   elegido, porque esa prueba no se puede escribir antes de que el almacén exista, y la elección del
-   mecanismo se decide midiendo contra ella.
+   ocurre cualquier escritura, que es de lo que dependen las seis garantías de la sección 4.10. El
+   controlador ya está elegido, `modernc.org/sqlite` sobre `database/sql` y sin `cgo`, con las cifras
+   que lo deciden en el apartado 14.1 de `DECISIONES.md`. **Lo que se escribe aquí es la prueba del
+   presupuesto de arranque de la sección 4.13**, que no se puede escribir antes de que el almacén
+   exista y que hasta ahora solo se ha medido con un programa de prueba y no con el comando de verdad.
 2. **El modelo de datos lógico** de la sección 5, con las claves estables de los criterios y el
    rechazo explícito de lo desconocido.
 3. **El algoritmo de coincidencia** de la sección 6.1, que es una función pura de veinte líneas y de
