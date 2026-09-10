@@ -1235,8 +1235,24 @@ total medido.
 que en aquel momento todavía no estaba decidida. La medida vale para lo que se usó: fijar un
 presupuesto que un lenguaje compilado cumple de sobra y que un interpretado no cumple. Lo que no es es
 una medida del programa terminado: abrir el fichero de la base de datos, preparar sentencias y recorrer
-índices no cuesta lo mismo que leer un fichero de texto de una vez. Así que las tres veces de margen
-son margen sobre esa carga, y la del almacén real está sin medir; el apartado 14 dice cuándo se sabrá.
+índices no cuesta lo mismo que leer un fichero de texto de una vez.
+
+**El almacén real ya está medido, y esto es lo que le pasó a esa cifra de margen** (apartado 14.1). Con
+la base de datos SQLite de verdad y el controlador elegido, leer el tablero de 300 tareas cuesta **14,5
+milisegundos** en un portátil macOS y **3,2 milisegundos** en Linux. O sea que las tres veces de margen
+se quedan en **una vez y siete décimas** en el portátil, y crecen a casi ocho veces en Linux. El
+presupuesto se cumple en las dos, y desde ahora la frase "sobra tres veces" hay que leerla como una
+cifra de la carga de JSON y no del programa terminado.
+
+**Y una corrección al suelo, que no era una constante.** Los 5,2 milisegundos del párrafo anterior son
+un suelo de macOS. El equivalente medido al elegir el controlador, un binario de Go que no hace
+absolutamente nada, o sea suelo del sistema más arranque de Go, da **8,1 milisegundos** de mediana en el
+portátil macOS, coherente con los 7,4 que suman las dos cifras de arriba. Ese mismo binario tarda
+**0,37 milisegundos** en Linux, veintidós veces menos. No toca el presupuesto, que la sección 4.13 de
+`SPEC.md` amarra a la máquina que ejecuta la integración continua y no a un modelo de hardware, pero
+refuerza el argumento del apartado 12 contra tener un daemon: en el portátil el suelo se come 8,1 de los
+14,5 milisegundos que cuesta la lectura real, y un daemon no puede ahorrar el suelo, porque el cliente
+que hablaría con él es también un proceso.
 
 **La cifra excluye a propósito los lenguajes interpretados.** En la misma máquina, el solo arranque de
 Python 3.14 añade 24,5 milisegundos por delante de cualquier trabajo real, y el de Node 25.6 añade 33.
@@ -1285,15 +1301,74 @@ lee 300 tareas y termina, porque no llega a haber presión de memoria que recoge
 que el equivalente en Rust, lo que da igual en algo que se instala una vez. Y se renuncia a las seis
 décimas del párrafo anterior, que es lo que se está comprando.
 
-**Queda una cosa por comprobar al empezar a implementar, y no es del lenguaje sino de su encuentro con
-SQLite.** La persistencia del apartado 12 es una base de datos SQLite, y en Go hay dos formas de hablar
-con ella: un enlace con la biblioteca en C, que obliga a compilar con `cgo` y complica generar binarios
-para otras plataformas, o una traducción de SQLite a Go puro, que compila en cualquier sitio sin
-herramientas de C. La elección entre las dos afecta al arranque y a cómo se distribuye el programa, así
-que **hay que medirla contra el presupuesto de 25 milisegundos antes de comprometerse**, y no está
-medida todavía. Es la misma laguna que el apartado 13 declara al dar la cifra de 8,7 milisegundos: el
-margen que hoy se puede enseñar es el de leer un JSON, y el de leer el almacén real no se conocerá hasta
-que esta medición exista. No cambia la elección de lenguaje, porque lo que la decide es el coste de
-escribir el programa y no el rendimiento, y porque las dos formas de hablar con SQLite son de Go; lo que
-cambia es cuánta confianza merece hoy la frase "sobra tres veces". Es lo primero que la implementación
-tiene que resolver, y su resultado pertenece a este mismo apartado cuando se sepa.
+**Quedaba una cosa por comprobar, y no era del lenguaje sino de su encuentro con SQLite.** La
+persistencia del apartado 12 es una base de datos SQLite, y en Go hay tres formas de hablar con ella: un
+enlace con la biblioteca en C, que obliga a compilar con `cgo`; una traducción de ese código de C a Go
+puro; y SQLite compilado a WebAssembly y ejecutado por un motor escrito en Go. La elección afectaba al
+arranque y a cómo se distribuye el programa, y nunca a la del lenguaje, porque las tres son de Go. **Ya
+está medida, y la cierra el apartado siguiente.**
+
+### 14.1. El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`
+
+Medido el 2026-09-10 con el banco de pruebas que vive en `bench/sqlite-driver/` de este mismo
+repositorio, que se rehace con dos órdenes sin argumentos. Las tablas completas, la composición del
+tablero de prueba y las versiones exactas de todo están en `bench/sqlite-driver/RESULTADOS.md`; aquí va
+la decisión y lo que la sostiene. Se midieron los cuatro candidatos vivos, y los cuatro llevan dentro la
+misma versión de SQLite, la 3.53.4, así que ninguna diferencia de las que siguen es del motor.
+
+**El presupuesto se cumple con los cuatro, y con mucho margen.** Sobre el tablero de 300 tareas de la
+sección 4.13 de `SPEC.md`, en Linux el más lento tarda 3,2 milisegundos, casi ocho veces por debajo de
+los 25. En un portátil macOS van de 11 a 14,5 milisegundos, y de esos 8,1 son el suelo del sistema para
+arrancar cualquier proceso. Los cuatro binarios producen además una salida idéntica byte a byte en las
+dos plataformas, y ninguno necesitó una sola línea de SQL distinta: mismo esquema, mismas cinco
+consultas, mismos recorridos. La incompatibilidad que uno teme al elegir un controlador de SQLite no
+apareció por ningún lado, y eso es en sí mismo un argumento para quedarse en la interfaz estándar
+`database/sql`.
+
+**Así que el rendimiento no decide, y lo que decide es la distribución del binario.** Es el mismo
+criterio con el que el apartado anterior eligió Go frente a Rust, aplicado otra vez, y aquí la
+diferencia no es de grado.
+
+**El enlace con la biblioteca en C queda descartado, y eso es lo primero, porque descarta una familia
+entera.** Es el más rápido de los cuatro en las dos plataformas y aun así se cae, por dos cosas
+medidas. La primera es que desde una máquina macOS no produce un binario para Linux ni para Windows,
+porque la compilación cruzada falla en `runtime/cgo` al no haber un compilador de C para el sistema
+destino. La segunda es peor que un fallo de compilación: si se apaga `cgo`, el binario compila, enlaza,
+arranca y muere al tocar la base de datos con el mensaje `go-sqlite3 requires cgo to work. This is a
+stub`. Un fallo que la construcción deja pasar y que solo aparece al ejecutar es el peor desenlace para
+algo que se reparte como binario, porque no lo ve quien lo construye sino quien lo usa. Los otros tres
+candidatos compilan para `linux/amd64`, `linux/arm64` y `windows/amd64` con un `go build` y nada más
+instalado, y salen estáticos.
+
+**Entre los tres que quedan gana `modernc`, y por lo que cuesta escribir el programa.** Los separan 0,68
+milisegundos, que es el 2,7 por ciento del presupuesto, así que otra vez no decide el reloj. `modernc` es
+a la vez la interfaz estándar y el motor sobre el que están construidos los otros dos candidatos de Go
+puro. `zombiezen` es ese mismo motor con una interfaz propia que obliga a escribir a mano lo que
+`database/sql` da hecho, y su ganancia son 0,28 milisegundos. `ncruces` es el más rápido de los tres,
+pero su binario es un 48 por ciento mayor y su búsqueda por texto completo hay que registrarla por
+conexión, bajando por debajo de `database/sql`.
+
+**Y esto es lo que se acepta a cambio, con nombre y número.** En macOS, y solo en macOS, `modernc` gasta
+entre 2,6 y 3,5 milisegundos antes de que `main` empiece, en el arranque del paquete
+`modernc.org/libc/honnef.co/go/netdb`, que lee `/etc/services` y `/etc/protocols` del disco y los
+convierte en estructuras de Go para ofrecer una función de red que `biso` no usa nunca y que no se puede
+desactivar. Son entre el 10 y el 14 por ciento del presupuesto tirados en cada invocación. En Linux ese
+arranque baja a 0,046 milisegundos, porque el paquete no se importa allí, y eso se comprobó ejecutando
+los binarios dentro de un contenedor y no leyendo el código. Se acepta porque incluso pagándolo la
+mediana en macOS es de 14,5 sobre 25, y porque el remedio no está en `biso` sino aguas arriba.
+
+**La salida de emergencia queda dicha por adelantado, para no tener que discutirla desde cero.** Si ese
+peaje llegase a molestar de verdad, el relevo es `ncruces`, y el cambio cuesta una línea de `import` y
+la cadena con el nombre del controlador, porque los dos hablan por `database/sql` y el resto del código
+que consulta el tablero seguiría siendo el mismo. Esa es también la razón de no elegir `zombiezen`: no
+es que sea peor, es que salirse de `database/sql` convierte esa salida de emergencia de una línea en una
+reescritura.
+
+**Lo que se comprobó que soporta, porque la especificación lo da por hecho.** Modo WAL, `BEGIN
+IMMEDIATE` como acceso exclusivo de escritura, puntos de retorno, `busy_timeout`, claves ajenas,
+`user_version`, el `integrity_check` que necesita `biso doctor`, `wal_checkpoint(TRUNCATE)`, `ANALYZE`,
+consultas recursivas, el módulo JSON y las funciones de ventana. Y leer desde una segunda conexión
+mientras una primera tiene una escritura abierta, que es literalmente lo que promete la sección 4.10 de
+`SPEC.md`. La búsqueda por texto completo con FTS5, que sería la vía barata para la sección 7.2, viene
+puesta. Y un dato para cuando se implemente esa búsqueda: ningún controlador hace `LIKE` insensible a
+mayúsculas con acentos, porque eso es lo que hace SQLite sin la biblioteca ICU.

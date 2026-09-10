@@ -20,6 +20,12 @@ hay tiempo máximo de espera y qué rutas da `{files}`. Las reglas quedaron en u
 `DECISIONES.md`. De paso salió un error real del documento, que `{files}` y la clave `files` del JSON de
 `snapshot` nombraban conjuntos distintos de ficheros sin decirlo.
 
+Y el 2026-09-10 se cerró **el controlador de SQLite**, que era la primera de las decisiones aplazadas y
+la única que bloqueaba escribir código. El resultado y su porqué están en el apartado 14.1 de
+`DECISIONES.md`, y las cifras completas en `bench/sqlite-driver/RESULTADOS.md`. Al medirlo aparecieron
+dos correcciones al apartado 13, que daba por constante un suelo que era solo de macOS y por sin medir un
+almacén que ya lo está.
+
 Dos cosas que se aprendieron por el camino y conviene no volver a aprender. La primera: **ante cada hueco
 merece la pena preguntarse si existe porque falta decidir algo o porque sobra la cosa que lo abre.** El
 hueco de `--board` no se rellenó, se disolvió al retirar la bandera cuando se vio que `-C` ya llegaba a
@@ -31,10 +37,11 @@ exactamente el fallo que él denuncia como dominante en la especificación.
 
 ---
 
-## 1. Huecos que abrió la ronda del control de versiones
+## 1. Huecos abiertos
 
-Los dos salieron el 2026-09-09, al hacer configurable el sistema de control de versiones, y ninguno
-impide implementar la versión 1.0 con `git`, que es el valor por defecto y el único camino medido.
+Ninguno impide implementar la versión 1.0 con `git`, que es el valor por defecto y el único camino
+medido. Los dos primeros los abrió la ronda del control de versiones del 2026-09-09; el tercero salió al
+medir el controlador de SQLite el 2026-09-10.
 
 **El catálogo tiene un solo miembro conocido, así que la palabra promete más de lo que hay.** `git` es el
 único sistema cuya receta está escrita, y la de cualquier otro (Mercurial, Jujutsu, Subversion) no existe:
@@ -46,17 +53,21 @@ se escriba, quien use otro sistema pasa por `custom` y pierde el identificador d
 La sección 10.1 declara que si alguien cambia la clave `vcs` después de crear el tablero, el fichero se
 queda con el nombre del sistema anterior y hay que arreglarlo a mano. Es una comprobación que `doctor`
 podría hacer y no hace, y añadirla obliga a tocar las tres frases que cuentan las dieciocho filas de su
-tabla, así que no se hizo dentro de esta ronda.
+tabla, así que no se hizo dentro de esa ronda.
+
+**La sección 4.13 no dice el sistema operativo de la máquina de referencia, y ahora se sabe que eso
+cambia mucho el margen.** Esa sección amarra el presupuesto de 25 milisegundos a "la máquina que ejecuta
+la suite de integración continua", a propósito, para no llevar dentro del documento la ficha técnica de
+un ordenador. Al medir el controlador (apartado 14.1 de `DECISIONES.md`) salió que el suelo para arrancar
+un binario de Go que no hace nada es de 8,1 milisegundos en macOS y de 0,37 en Linux, veintidós veces
+menos, y que la lectura real del tablero tarda 14,5 milisegundos en el primero y 3,2 en el segundo. Las
+dos plataformas cumplen el presupuesto, así que nada está bloqueado, pero el mismo código pasa la prueba
+con una vez y siete décimas de margen o con casi ocho según el sistema del ejecutor, y el documento no
+dice cuál es. Cuando exista la integración continua habrá que fijarlo, o decir que da igual y por qué.
 
 ---
 
 ## 2. Decisiones aplazadas a propósito
-
-**El controlador de SQLite.** Es lo primero que la implementación tiene que resolver, y está en el
-`CLAUDE.md`: el enlace con la biblioteca en C obliga a compilar con `cgo` y complica generar binarios para
-otras plataformas, la traducción a Go puro compila en cualquier sitio, y la diferencia afecta al arranque.
-Sin medir contra el presupuesto de la sección 4.13, y el paso 1 del orden de implementación de la sección
-15 es ahora el sitio donde esa medición ocurre.
 
 **La exportación al formato de Backlog.md.** No es para uso propio: es para que quien ya lo usa pueda
 probar `biso` sin salto al vacío. La advertencia es que ese formato tiene bugs abiertos que se heredarían,

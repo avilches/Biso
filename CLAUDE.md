@@ -56,9 +56,15 @@ sobra tres veces, y su modelo de propiedad de memoria obliga a rondas de correcc
 sin dejar nada mejor en el producto. El razonamiento completo, con las cifras, está en la sección 14 de
 `docs/DECISIONES.md`.
 
-**Lo primero que la implementación tiene que resolver es cómo habla con SQLite**, porque la elección
-entre el enlace con la biblioteca en C, que obliga a compilar con `cgo`, y la traducción a Go puro
-afecta al arranque y a la distribución del binario, y todavía no está medida contra el presupuesto.
+**Y el controlador de SQLite es `modernc.org/sqlite`, sobre la interfaz estándar `database/sql` y sin
+`cgo`.** Medido el 2026-09-10: los cuatro candidatos cumplen el presupuesto con mucho margen, así que no
+decide el reloj sino la distribución del binario, y el enlace con la biblioteca en C no puede compilar de
+forma cruzada para Linux ni para Windows y su modo sin `cgo` produce un binario que falla al ejecutarse
+en vez de al construirse. El razonamiento está en el apartado 14.1 de `docs/DECISIONES.md`, y el banco de
+pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `README.md`.
+
+Con eso **ya no queda nada que bloquee empezar a escribir código**: el paso 1 del orden de la sección 15
+de `docs/SPEC.md` es el almacén, y su decisión de controlador está tomada.
 
 ## Cosas que conviene tener presentes al implementar
 
