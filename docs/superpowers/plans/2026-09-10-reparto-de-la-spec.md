@@ -423,7 +423,7 @@ que aparecen en la tabla.
 
 | Fichero | Rangos | Líneas | Título (H1) |
 |---|---|---|---|
-| `docs/spec/index.md` | 1-29, 506-510 | 35 | `biso`: especificación del CLI de gestión de tareas |
+| `docs/spec/index.md` | 1-29, 507-510 | 34 | `biso`: especificación del CLI de gestión de tareas |
 | `docs/spec/vocabulario.md` | 30-63 | 34 | Vocabulario de esta especificación |
 | `docs/spec/principios.md` | 64-91 | 28 | Los principios |
 | `docs/spec/codigos-de-salida.md` | 92-137 | 46 | Códigos de salida |
@@ -469,20 +469,55 @@ Las cinco mudanzas que no son un corte limpio, y que el diseño justifica:
   identificadores de las tareas.
 - **La ayuda se reúne**: el comando `biso help` (10.13) y la ayuda de primer nivel (sección 11) van al
   mismo fichero.
-- **La introducción de las reglas transversales** (líneas 506-510) va a `docs/spec/index.md`, porque
+- **La introducción de las reglas transversales** (líneas 507-510) va a `docs/spec/index.md`, porque
   describe un grupo que deja de existir como sección y su contenido pasa a formar parte de la explicación
-  del orden de lectura. Sus líneas de contenido sobreviven, que es lo que el comprobador exige.
+  del orden de lectura. Sus líneas de contenido sobreviven, que es lo que el comprobador exige. La línea
+  506, que es el encabezado `## 4. Reglas transversales`, es la única línea del documento viejo que no va
+  a ningún sitio, y está declarada en la tabla de excepciones.
+
+**Comprobación aritmética de la tabla:** los rangos cubren las líneas 1 a 5.762 sin solaparse, con la
+línea 506 como única excepción declarada. Antes de empezar a cortar, verifícalo con un script de tres
+líneas que ordene los rangos y confirme que cada uno empieza donde acabó el anterior. Si no cuadra, el
+mapa está mal y hay que arreglarlo antes de tocar nada, no después.
 
 ### Las reglas de la mudanza
 
-- **El encabezado de cada fichero pierde su número y pasa a ser un H1** con el título de la tabla. El
-  H1 es la única línea de encabezado cuyo texto puede no coincidir con el original, y solo en los cuatro
-  ficheros cuyo título de la tabla difiere del original: `vocabulario.md`, `invocacion.md`,
-  `garantias.md`, `presupuestos.md` y `cmd/help.md`. Para esos, hay que pasar al comprobador la lista de
-  excepciones (ver el paso 3).
+- **El encabezado de cada fichero pierde su número y pasa a ser un H1** con el título de la tabla.
 - **Las subsecciones suben un nivel**: un `###` que era hijo de la sección que ahora es fichero pasa a
   `##`, un `####` pasa a `###`, y así. El comprobador no mira el nivel, solo el texto.
+- **Cuando un fichero reúne dos secciones que antes estaban separadas, cada una conserva su propio
+  encabezado un nivel por debajo del H1.** Esta regla no es estética, es lo que mantiene corta la lista de
+  excepciones: si `cmd/help.md` se queda con un `## \`biso help\`` y un `## La ayuda de primer nivel`, esos
+  dos títulos siguen existiendo y el comprobador no los echa en falta.
 - **Nada más cambia.** Ni una palabra del cuerpo, ni una referencia, ni un ejemplo, ni una tabla.
+
+### Las once excepciones de encabezado, y no hay más
+
+El comprobador del paso 3 va a reportar exactamente estas y ninguna otra. Cualquier cosa fuera de esta
+lista es un error de la mudanza.
+
+**Siete H1 que aparecen de la nada**, porque su fichero reúne piezas que antes no tenían un título común,
+o porque el título viejo hablaba de un documento en singular:
+
+| Fichero | H1 nuevo |
+|---|---|
+| `docs/spec/vocabulario.md` | Vocabulario de esta especificación |
+| `docs/spec/invocacion.md` | Banderas globales, entorno y configuración de máquina |
+| `docs/spec/salida-y-terminal.md` | Terminal, flujos de salida y codificación |
+| `docs/spec/valores-de-entrada.md` | Cómo se pasa un valor |
+| `docs/spec/garantias.md` | Orden de escritura, concurrencia y datos dañados |
+| `docs/spec/presupuestos.md` | Los presupuestos de arranque y de tamaño |
+| `docs/spec/cmd/help.md` | La ayuda: `biso help` y `biso --help` |
+
+**Dos títulos viejos que se pierden**, porque nombraban agrupaciones que dejan de existir:
+
+| Título que desaparece | Por qué |
+|---|---|
+| Vocabulario de este documento | Lo sustituye el H1 de `vocabulario.md`, porque ya no hay un documento en singular |
+| Reglas transversales | Era el nombre del cajón de la sección 4, que se reparte en cuatro ficheros por temas. Su prosa introductoria (líneas 507-510) sobrevive en `docs/spec/index.md`, y solo se pierde la línea del encabezado |
+
+**Los demás H1 tienen que coincidir carácter a carácter con el encabezado del que salen**, quitándole el
+número. Si el comprobador reporta un octavo H1 nuevo o un tercer título perdido, hay un corte mal hecho.
 
 - [ ] **Step 1: Crear los ficheros con los rangos de la tabla**
 
@@ -520,10 +555,11 @@ python3 tools/verificar_mudanza.py docs/SPEC.md docs/spec/*.md docs/spec/cmd/*.m
 
 Expected: `la mudanza es fiel: ninguna linea ni encabezado se perdio o aparecio`, código 0.
 
-Los encabezados que el comprobador reporte como perdidos o sobrantes tienen que ser exactamente los
-cinco H1 renombrados de la tabla, y ninguno más. Si aparece cualquier otro, es un error de la mudanza y
-hay que arreglarlo, nunca añadirlo a las excepciones. Cuando solo queden esos cinco, dalos por buenos y
-anótalos en el mensaje del commit.
+Los encabezados que el comprobador reporte tienen que ser exactamente los siete H1 nuevos y los dos
+títulos perdidos de la tabla de excepciones, y ninguno más. **Si aparece cualquier otro, es un error de la
+mudanza y hay que arreglarlo, nunca añadirlo a las excepciones.** Las líneas de contenido, en cambio,
+tienen que cuadrar sin ninguna excepción: si el comprobador reporta una sola línea perdida o sobrante, el
+paso no está terminado.
 
 - [ ] **Step 4: Borrar `docs/SPEC.md` y rehacer la navegación**
 
@@ -899,15 +935,20 @@ de que citan con la numeración vieja.
 - Modify: `docs/superpowers/plans/2026-09-07-persistencia.md`
 - Modify: `docs/superpowers/specs/2026-09-06-modelo-de-estados-design.md`
 - Modify: `docs/superpowers/specs/2026-09-07-persistencia-design.md`
-- Modify: `docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md`
+
+**El diseño del tutorial no lleva nota, y esto es una corrección al diseño del reparto.** Su decisión 8
+lo mete en la lista de históricos, pero la misma decisión dice después que el tutorial necesita una pasada
+propia. No puede ser las dos cosas: una nota que diga "estas referencias se conservan sin tocar" y una
+tarea que las toque se contradicen. Manda lo específico: el diseño del tutorial es un encargo con trabajo
+en curso, no un acta cerrada, así que no lleva nota y sus referencias las reescribe la tarea 10.
 
 - [ ] **Step 1: Añadir la nota al principio de cada uno**
 
-Justo después del título, con este texto, igual en los cinco:
+Justo después del título, con este texto, igual en los cuatro:
 
 ```markdown
 > **Este documento cita la especificación por el número de sus secciones**, como se escribió en su día.
-> El 2026-09-10 `docs/SPEC.md` se reparti en los documentos de `docs/spec/`, que se citan por el título
+> El 2026-09-10 `docs/SPEC.md` se repartió en los documentos de `docs/spec/`, que se citan por el título
 > de sus secciones. Estas referencias se conservan sin tocar porque este documento es el acta de una
 > sesión cerrada. Para traducir una de ellas, mira el mapa de la tabla de la tarea 3 de
 > [el plan del reparto](../plans/2026-09-10-reparto-de-la-spec.md).
