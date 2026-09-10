@@ -28,11 +28,11 @@ pasos:
   - narracion: |
       Quieres ver qué queda pendiente y escribes el nombre del estado tal y como lo llamarías
       en cualquier otro gestor de tareas.
-    cmd: biso ls -s Pending
+    comando: biso ls -s Pending
     salida: |
       error: unknown status: "Pending"
              valid statuses on this board: To Do, In Progress, Done
-    exit: 3
+    codigo_salida: 3
     origen: literal SPEC 6.2
     comentario: |
       No hay ningún «Pending» en este tablero, así que el programa no te devuelve una lista
@@ -44,9 +44,9 @@ pasos:
   - narracion: |
       Pruebas con un valor que sí existe, pero escrito como te salga: en mayúsculas, con guion
       bajo.
-    cmd: biso ls --count -s TO_DO
+    comando: biso ls --count -s TO_DO
     salida: "54"
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 6.1
     comentario: |
       `TO_DO` no aparece tal cual en la configuración del tablero, que guarda `To Do`. Pero el
@@ -58,9 +58,9 @@ pasos:
 
   - narracion: |
       Vuelves a probar, ahora con guion y mezclando mayúsculas y minúsculas.
-    cmd: biso ls --count -s To-Do
+    comando: biso ls --count -s To-Do
     salida: "54"
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 6.1
     comentario: |
       Mismo resultado, porque es el mismo filtro: `To-Do` normaliza también a `todo`. La misma
@@ -71,12 +71,12 @@ pasos:
   - narracion: |
       Se te ha olvidado el número de la tarea de los reintentos y escribes lo primero que
       recuerdas del título.
-    cmd: biso get "retry"
+    comando: biso get "retry"
     salida: |
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
       TASK-19  Done         task  high    Retry the upload on 5xx                           ac 2/2  @claude  -
-    exit: 5
+    codigo_salida: 5
     origen: derivada SPEC 7.2
     comentario: |
       Las tres tareas llevan «retry» en el título, así que ninguna gana por estar en el título
@@ -94,11 +94,11 @@ pasos:
 
   - narracion: |
       Escribes el número a mano, pero se te cuela un dígito de más.
-    cmd: biso get TASK-99
+    comando: biso get TASK-99
     salida: |
       error: TASK-99 has never existed on this board
       note: the highest id ever assigned here is TASK-62
-    exit: 4
+    codigo_salida: 4
     origen: derivada SPEC 7.3
     comentario: |
       `TASK-99` está bien formado como identificador, así que esto no es un error de uso

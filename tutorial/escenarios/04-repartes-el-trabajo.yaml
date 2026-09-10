@@ -22,10 +22,10 @@ pasos:
   - narracion: |
       Sara abre una terminal nueva y, antes de nada, quiere ver qué tiene ella pendiente. Todavía
       no ha declarado quién es en esta sesión.
-    cmd: biso ls --mine
+    comando: biso ls --mine
     salida: |
       error: --mine needs an identity; set it with biso config set me <you> or BISO_ME
-    exit: 6
+    codigo_salida: 6
     origen: literal SPEC 3.1
     comentario: |
       Fíjate en que no devuelve una lista vacía. Podría haberlo hecho, y sería lo cómodo de
@@ -41,10 +41,10 @@ pasos:
   - narracion: |
       Sara declara su identidad para esta sesión, que es una variable de entorno y no un comando
       de `biso`, y le pasa la tarea al agente.
-    cmd: biso set TASK-19 -a @claude
+    comando: biso set TASK-19 -a @claude
     salida: |
       TASK-19  To Do  ac 0/2  urgency 7.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.6, 5.4
     comentario: |
       La salida no repite lo que Sara acaba de escribir: no dice "assignee: @claude". Dice el
@@ -60,7 +60,7 @@ pasos:
   - narracion: |
       En su propia sesión, el agente pregunta qué le toca. Aquí `--mine` sí funciona, porque su
       identidad está declarada.
-    cmd: biso ls --mine
+    comando: biso ls --mine
     salida: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-19  To Do        task  high    Retry the upload on 5xx                           ac 0/2  @claude  -
@@ -68,7 +68,7 @@ pasos:
       TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
       TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.4, 5.4
     comentario: |
       Seis filas donde antes había cinco. `TASK-19` entra en segunda posición, y ese sitio no es
@@ -87,12 +87,12 @@ pasos:
   - narracion: |
       El mensaje de arranque cuenta lo mismo de otra forma. Si el agente volviera a lanzarlo
       ahora, `TASK-19` habría cambiado de sitio.
-    cmd: biso ls --mine -s "To Do"
+    comando: biso ls --mine -s "To Do"
     salida: |
       TASK-19  To Do  task  high    Retry the upload on 5xx                ac 0/2  @claude  -
       TASK-61  To Do  docs  medium  Rewrite the install section            ac 0/1  @claude  -
       TASK-33  To Do  task  medium  Add a retry counter to the upload log  ac 1/3  @claude  -
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.4
     comentario: |
       En `biso prime`, estas tres son las que salen en el bloque `ASSIGNED TO YOU`, que significa

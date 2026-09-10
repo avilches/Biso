@@ -21,10 +21,10 @@ ensena:
 pasos:
   - narracion: |
       Añades los dos criterios que te faltaban, de una vez.
-    cmd: biso set TASK-19 --ac "El backoff sigue el mismo patron que el endpoint de descargas" --ac "Hay un test que cubre el caso de 5xx repetido" --ac "Hay un test que cubre el caso de exito tras reintentar" --ac "La documentacion del endpoint menciona el limite de reintentos"
+    comando: biso set TASK-19 --ac "El backoff sigue el mismo patron que el endpoint de descargas" --ac "Hay un test que cubre el caso de 5xx repetido" --ac "Hay un test que cubre el caso de exito tras reintentar" --ac "La documentacion del endpoint menciona el limite de reintentos"
     salida: |
       TASK-19  In Progress  ac 0/6  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.2, 10.6, 5.1
     comentario: |
       Cuatro `--ac` en la misma llamada añaden cuatro elementos nuevos, en el orden en que se
@@ -32,33 +32,33 @@ pasos:
       tarea desde el inventario inicial.
   - narracion: |
       Marcas el primero, el que ya tenías comprobado desde el principio.
-    cmd: biso set TASK-19 --check 1
+    comando: biso set TASK-19 --check 1
     salida: |
       TASK-19  In Progress  ac 1/6  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.4, 10.6
   - narracion: |
       Los tres que probaste juntos con el mismo test, de una vez, con un rango.
-    cmd: biso set TASK-19 --check 3-5
+    comando: biso set TASK-19 --check 3-5
     salida: |
       TASK-19  In Progress  ac 4/6  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.4, 10.6
   - narracion: |
       Y dos que no son consecutivos, con una lista separada por comas.
-    cmd: biso set TASK-19 --check 2,6
+    comando: biso set TASK-19 --check 2,6
     salida: |
       TASK-19  In Progress  ac 6/6  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.4, 10.6
   - narracion: |
       Casi al momento te das cuenta de que el #2 (el del contador en el log) lo diste por bueno
       demasiado pronto, el número de intentos todavía no se ve en el log, solo el resultado
       final. Lo desmarcas.
-    cmd: biso set TASK-19 --uncheck 2
+    comando: biso set TASK-19 --uncheck 2
     salida: |
       TASK-19  In Progress  ac 5/6  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.4, 10.6
     comentario: |
       `--uncheck` toma el mismo selector que `--check`, con el mismo efecto invertido, aquí
@@ -66,10 +66,10 @@ pasos:
   - narracion: |
       En la definición de hecho, marcas el que ya está cerrado buscando por su texto, no por
       número.
-    cmd: biso set TASK-19 --check-dod "README"
+    comando: biso set TASK-19 --check-dod "README"
     salida: |
       TASK-19  In Progress  ac 5/6  dod 1/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.4, 10.6
     comentario: |
       "README" no encaja con la gramática de claves de 8.4 (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), así
@@ -79,10 +79,10 @@ pasos:
       Añades el número de intentos al log, comprueba que ahora sí aparece, y cierras la tarea.
       Marcas todo lo que quede de una vez, por si te has dejado algo suelto, y escribes el
       resumen.
-    cmd: biso finish TASK-19 --check all --check-dod all --summary "Retry con el mismo backoff que el endpoint de descargas, tope de 3 intentos, contador visible en el log."
+    comando: biso finish TASK-19 --check all --check-dod all --summary "Retry con el mismo backoff que el endpoint de descargas, tope de 3 intentos, contador visible en el log."
     salida: |
       TASK-19  Done  ac 6/6  dod 2/2  urgency 0.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.6, 10.7.4, 5.4
     comentario: |
       `--check all` vuelve a marcar el #2, que habías desmarcado, y no toca los otros cinco, ya

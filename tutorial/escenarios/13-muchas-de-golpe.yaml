@@ -24,11 +24,11 @@ pasos:
   - narracion: |
       El agente empieza por lo fácil: dos tareas que hay que bajar de prioridad, en una sola
       llamada.
-    cmd: biso set TASK-44 TASK-61 --priority low
+    comando: biso set TASK-44 TASK-61 --priority low
     salida: |
       TASK-44  To Do  ac 0/1  urgency 1.6
       TASK-61  To Do  ac 0/1  urgency 1.4
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.6, 5.4
     comentario: |
       Una línea por tarea, con el mismo formato que cuando tocas una sola. No hay un modo lote que
@@ -42,11 +42,11 @@ pasos:
       dirección. La urgencia sirve para ordenar una lista, no para hacer aritmética con ella.
   - narracion: |
       Ahora una lista más larga, y con una errata dentro: una de las referencias no existe.
-    cmd: biso set TASK-7 TASK-33 TASK-99 --priority medium
+    comando: biso set TASK-7 TASK-33 TASK-99 --priority medium
     salida: |
       error: TASK-99 has never existed on this board
       note: the highest id ever assigned here is TASK-62
-    exit: 4
+    codigo_salida: 4
     origen: derivada SPEC 7.3, 10.6
     comentario: |
       Y esto es lo importante: **`TASK-7` y `TASK-33` no se han tocado**. No es que se hayan
@@ -59,10 +59,10 @@ pasos:
       ninguna.
   - narracion: |
       Corrige la errata y esta vez, antes de escribir, pide que se lo valide sin tocar nada.
-    cmd: biso set TASK-7 TASK-33 --priority medium --dry-run
+    comando: biso set TASK-7 TASK-33 --priority medium --dry-run
     salida: |
       2 tasks would be updated, nothing was written (--dry-run)
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 3, 10.6
     comentario: |
       Código 0, así que habría funcionado. Ese código es la respuesta de verdad, más que el texto:
@@ -75,11 +75,11 @@ pasos:
       queda anotado en tutorial/lagunas/11-13.md.
   - narracion: |
       Con la validación en verde, ejecuta de verdad.
-    cmd: biso set TASK-7 TASK-33 --priority medium
+    comando: biso set TASK-7 TASK-33 --priority medium
     salida: |
       TASK-7   To Do  ac 0/4  urgency 15.3
       TASK-33  To Do  ac 1/3  urgency 4.3
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.6, 5.4
     comentario: |
       `TASK-7` cae de 18.3 a 15.3, que son los 3.0 que pierde al pasar de prioridad alta a media, y
@@ -94,10 +94,10 @@ pasos:
       Para acabar, el otro lote que existe: meter tareas nuevas desde un fichero. El agente ha
       recibido tres incidencias por otro canal y las tiene en un fichero, una por línea. Antes de
       importarlas, las valida.
-    cmd: biso new --from incidencias.ndjson --dry-run
+    comando: biso new --from incidencias.ndjson --dry-run
     salida: |
       3 tasks would be created, nothing was written (--dry-run)
-    exit: 0
+    codigo_salida: 0
     origen: literal SPEC 10.3
     comentario: |
       Esta frase sí es literal de la especificación, con otro número. Y aquí `--dry-run` es donde

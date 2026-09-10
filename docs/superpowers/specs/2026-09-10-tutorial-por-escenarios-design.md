@@ -122,11 +122,11 @@ ensena:
 pasos:
   - narracion: |
       Prosa que prepara el comando.
-    cmd: biso note TASK-11 "Reescrito el parser de fechas"
+    comando: biso note TASK-11 "Reescrito el parser de fechas"
     salida: |
       warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z
       TASK-11  In Progress  ac 1/2  dod 0/2  urgencia 41
-    exit: 0
+    codigo_salida: 0
     origen: literal SPEC 4.3
     comentario: |
       Opcional. Lo que hay que mirar en esa salida y por qué.
@@ -137,7 +137,7 @@ Reglas del formato:
 - **`salida` es lo que sale por stdout y por stderr juntos**, en el orden en que los ve una persona en
   su terminal, porque es lo que el lector va a comparar. Cuando la distinción importe (que importa en el
   escenario 3), se dice en `comentario`.
-- **`exit` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial que solo
+- **`codigo_salida` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial que solo
   declara el código cuando falla enseña que el código solo importa al fallar, y en `biso` es al revés.
 - **`origen` es obligatorio** y solo admite dos formas:
   - `literal SPEC <sección>`: la salida está copiada carácter a carácter del documento.
@@ -182,7 +182,7 @@ Dos cosas que el generador tiene que hacer bien:
 
 - **Marcar las salidas derivadas.** Una nota discreta y consistente junto al bloque, no un aviso
   aparatoso: son la mayoría de los pasos y saturaría la página.
-- **Fallar en vez de generar algo malo.** Si a un paso le falta `exit`, si `origen` no tiene una de las
+- **Fallar en vez de generar algo malo.** Si a un paso le falta `codigo_salida`, si `origen` no tiene una de las
   dos formas admitidas, o si un fichero no es YAML válido, el script termina con código distinto de cero
   y dice qué fichero y qué paso. Un generador que se traga un fixture incompleto y produce una página
   incompleta destruye la única garantía que este diseño ofrece.
@@ -192,11 +192,12 @@ Se ejecuta con `uv`, igual que MkDocs, y queda anotado en `CLAUDE.md` junto a lo
 ## Lo que se ejecutará el día que exista el binario
 
 No se construye ahora, pero el formato está pensado para ello: un script recorrerá los mismos ficheros,
-lanzará cada `cmd` contra un tablero real sembrado con el inventario de arriba, y comparará la salida y
+lanzará cada `comando` contra un tablero real sembrado con el inventario de arriba, y comparará la salida y
 el código con lo declarado. Los ejemplos dejarán de ser simulados y pasarán a ser una batería de pruebas
 de salida literal.
 
-Por eso `cmd` es una línea de comando ejecutable y no una ilustración, y por eso `exit` es obligatorio.
+Por eso `comando` es una línea de comando ejecutable y no una ilustración, y por eso
+`codigo_salida` es obligatorio.
 Cualquier atajo en el formato que hoy parezca inofensivo se paga entonces.
 
 ## El reparto del trabajo
@@ -237,3 +238,16 @@ la urgencia y el orden de las listas sean reproducibles, y las cuatro estan razo
 `tutorial/lagunas/04-06.md`. La de `me` es la mas interesante, porque la seccion 10.10 de la
 especificacion exige dejarla sin configurar en un tablero compartido y su propio ejemplo la
 configura.
+
+**Las claves de los fixtures van todas en español y el código va todo en inglés.** Los ficheros de
+`tutorial/escenarios/` son documentación con forma de datos, así que sus claves son españolas; dos se
+habían quedado en inglés (`cmd` y `exit`) y se renombraron a `comando` y `codigo_salida`. Los tres
+scripts son código, así que van enteros en inglés, incluidos comentarios y mensajes, con la única
+excepción de las cadenas que el generador emite dentro de la página, agrupadas en un bloque marcado.
+La regla está escrita en el `CLAUDE.md` de la raíz.
+
+**El detalle operativo del tutorial vive en `tutorial/CLAUDE.md`.** El de la raíz solo lo referencia
+con un enlace, sin `@import`, para que un agente lo cargue cuando trabaje en esa carpeta y no antes.
+Referenciar en vez de importar tiene además una ventaja medida en esta máquina: opencode no expande
+los imports, así que un `@import` en la raíz obligaría a mantener un `opencode.json` en paralelo, y
+`link-agent-instructions.sh --check` confirma que sin él los tres agentes siguen leyendo lo mismo.

@@ -23,9 +23,9 @@ pasos:
   - narracion: |
       Pides solo esa sección, para no traerte la ficha entera por algo que sabes que va a estar
       vacío.
-    cmd: biso get TASK-19 --section dod
+    comando: biso get TASK-19 --section dod
     salida: ""
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.5
     comentario: |
       No sale ni la cabecera. La regla de 10.5 es literal: con `--section`, una sección vacía no
@@ -36,10 +36,10 @@ pasos:
   - narracion: |
       Escribes lo primero que se te ocurre: que el cambio lo revise alguien más antes de darlo
       por bueno.
-    cmd: biso set TASK-19 --dod "El cambio lo revisa otra persona antes de dar la tarea por terminada"
+    comando: biso set TASK-19 --dod "El cambio lo revisa otra persona antes de dar la tarea por terminada"
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.2, 10.6, 5.4
     comentario: |
       El nombre desnudo `--dod` añade. Es el mismo verbo que ya conoces de `--ac`: se comporta
@@ -47,39 +47,39 @@ pasos:
   - narracion: |
       Y una segunda cosa que tiene que quedar clara antes de cerrar: que el comportamiento del
       reintento quede explicado en algún sitio, para quien lo lea después.
-    cmd: biso set TASK-19 --dod "El comportamiento del retry queda documentado en el README"
+    comando: biso set TASK-19 --dod "El comportamiento del retry queda documentado en el README"
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.2, 10.6, 5.4
   - narracion: |
       Compruebas cómo han quedado, con sus claves.
-    cmd: biso get TASK-19 --section dod
+    comando: biso get TASK-19 --section dod
     salida: |
       TASK-19  Retry the upload on 5xx
 
       ## Definition of Done
       - [ ] #1 El cambio lo revisa otra persona antes de dar la tarea por terminada
       - [ ] #2 El comportamiento del retry queda documentado en el README
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.5
   - narracion: |
       Pensándolo mejor, el primero sobra: que otra persona revise el cambio ya es política del
       equipo para cualquier PR, no algo específico de esta tarea. Lo quitas.
-    cmd: biso set TASK-19 --rm-dod 1
+    comando: biso set TASK-19 --rm-dod 1
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.2, 8.4, 10.6
   - narracion: |
       Vuelves a mirar la lista para comprobar que lo que queda no ha cambiado de número.
-    cmd: biso get TASK-19 --section dod
+    comando: biso get TASK-19 --section dod
     salida: |
       TASK-19  Retry the upload on 5xx
 
       ## Definition of Done
       - [ ] #2 El comportamiento del retry queda documentado en el README
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 5.1, 10.5
     comentario: |
       Este es el punto central del escenario. El elemento que sobrevive sigue siendo `#2`, no ha
@@ -90,11 +90,11 @@ pasos:
   - narracion: |
       Un compañero revisa la frase y sugiere reescribir toda la lista de una vez, con una
       segunda entrada sobre las pruebas que hacen falta.
-    cmd: biso set TASK-19 --set-dod "El README explica cuando y cuantas veces se reintenta" --set-dod "El paquete de pruebas cubre el caso 5xx"
+    comando: biso set TASK-19 --set-dod "El README explica cuando y cuantas veces se reintenta" --set-dod "El paquete de pruebas cubre el caso 5xx"
     salida: |
       warning: --set-dod replaced 58 bytes of existing content
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 4.3, 8.2, 10.6
     comentario: |
       `--set-dod` sustituye la lista entera. El elemento `#2` desaparece con el resto de la
@@ -110,14 +110,14 @@ pasos:
       Queda anotado como laguna en tutorial/lagunas/07-10.md.
   - narracion: |
       Compruebas las claves de los dos nuevos.
-    cmd: biso get TASK-19 --section dod
+    comando: biso get TASK-19 --section dod
     salida: |
       TASK-19  Retry the upload on 5xx
 
       ## Definition of Done
       - [ ] #3 El README explica cuando y cuantas veces se reintenta
       - [ ] #4 El paquete de pruebas cubre el caso 5xx
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 5.1, 8.2, 10.5
     comentario: |
       Las claves son `#3` y `#4`, no `#1` y `#2`. El contador de esta lista, dentro de esta
@@ -127,10 +127,10 @@ pasos:
   - narracion: |
       Casi al momento te das cuenta de que estás afinando la redacción antes de tener el código
       encajado del todo. Prefieres dejarla en blanco hasta que el trabajo esté más maduro.
-    cmd: biso set TASK-19 --clear-dod
+    comando: biso set TASK-19 --clear-dod
     salida: |
       TASK-19  In Progress  ac 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.2, 10.6
     comentario: |
       La lista queda vacía, y por eso el trozo `dod` desaparece de la línea de estado: solo sale
@@ -139,10 +139,10 @@ pasos:
   - narracion: |
       Un rato después, con el reintento ya funcionando, retomas la lista definitiva. Es la misma
       redacción de antes.
-    cmd: biso set TASK-19 --dod "El README explica cuando y cuantas veces se reintenta" --dod "El paquete de pruebas cubre el caso 5xx"
+    comando: biso set TASK-19 --dod "El README explica cuando y cuantas veces se reintenta" --dod "El paquete de pruebas cubre el caso 5xx"
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 8.2, 10.6, 5.4
     comentario: |
       Nombre desnudo, añade otra vez. Las claves de estos dos elementos son `#5` y `#6`: el

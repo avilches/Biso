@@ -27,11 +27,11 @@ pasos:
       Sara está revisando el problema del CRLF y descubre algo que le parece útil para `TASK-11`,
       que es del agente y que él tiene en marcha ahora mismo. Lo apunta sin pensar en quién la
       tenía.
-    cmd: biso note TASK-11 "El CRLF tambien aparece en los ficheros de prueba, no solo en el diff"
+    comando: biso note TASK-11 "El CRLF tambien aparece en los ficheros de prueba, no solo en el diff"
     salida: |
       warning: TASK-11's lease is held by @claude until 2026-09-06T15:40:18Z
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 4.3, 10.7.1, 5
     comentario: |
       Lo primero: la nota se ha escrito. El código de salida es 0 y la tarea ha cambiado. El aviso
@@ -52,10 +52,10 @@ pasos:
       tarea sin terminar que depende de ella, y 1.0 por tener criterios de aceptación.
   - narracion: |
       El agente, en su sesión, sigue con lo suyo y anota su propio avance en la misma tarea.
-    cmd: biso note TASK-11 "El normalizador ya pasa el caso de los ficheros de prueba"
+    comando: biso note TASK-11 "El normalizador ya pasa el caso de los ficheros de prueba"
     salida: |
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.7.2, 5
     comentario: |
       Ningún aviso, porque el arrendamiento es suyo. Y algo que la salida no dice: acaba de
@@ -68,11 +68,11 @@ pasos:
   - narracion: |
       El agente quiere confirmar que la prioridad de esa tarea sigue siendo la que cree. La
       escribe otra vez con el mismo valor que ya tenía.
-    cmd: biso set TASK-11 --priority high
+    comando: biso set TASK-11 --priority high
     salida: |
       note: TASK-11 unchanged
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.6, 5
     comentario: |
       Este paso parece inútil y es el que cierra el razonamiento. No ha cambiado ningún campo, lo
@@ -89,14 +89,14 @@ pasos:
       Ahora la otra mitad del asunto. `TASK-52`, la del documento de la lista de publicación,
       lleva días en marcha y la tenía reservada `@bob`, que ya no aparece por aquí. El agente mira
       qué hay en curso.
-    cmd: biso ls -s "In Progress"
+    comando: biso ls -s "In Progress"
     salida: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-19  In Progress  task  high    Retry the upload on 5xx                           ac 0/2  @claude  -
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-52  In Progress  task  low     Document the release checklist                    ac 0/1  -        -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.4, 5.4
     comentario: |
       `TASK-52` sigue en `In Progress`, con toda normalidad, y no tiene a nadie asignado. Su
@@ -113,11 +113,11 @@ pasos:
       ser de prioridad media, porque depende de `TASK-11` y estar bloqueada resta 5.0.
   - narracion: |
       El agente decide encargarse él de esa tarea abandonada.
-    cmd: biso start TASK-52
+    comando: biso start TASK-52
     salida: |
       note: TASK-52 was already In Progress
       TASK-52  In Progress  ac 0/1  urgency 5.4
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.7.1, 5.4
     comentario: |
       Con una sola llamada ha hecho tres cosas: ha visto que el estado ya era el activo y lo dice
@@ -136,11 +136,11 @@ pasos:
       riesgo aceptado en la sección 11 de las decisiones de diseño.
   - narracion: |
       Antes de volver a lo suyo, el agente comprueba que su tarea principal sigue en pie.
-    cmd: biso set TASK-19 --priority high
+    comando: biso set TASK-19 --priority high
     salida: |
       note: TASK-19 unchanged
       TASK-19  In Progress  ac 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.6, 5
     comentario: |
       Otra escritura que no cambia nada y que renueva la reserva de `TASK-19` hasta 240 minutos

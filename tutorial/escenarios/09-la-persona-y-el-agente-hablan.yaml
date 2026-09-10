@@ -22,20 +22,20 @@ pasos:
   - narracion: |
       Terminas de encajar el reintento con el mismo patrón que ya usaba el endpoint de
       descargas, y dejas constancia de cómo quedó.
-    cmd: biso note TASK-19 "El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3."
+    comando: biso note TASK-19 "El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3."
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.7.2, 5.4
   - narracion: |
       Miras cómo ha quedado esa nota.
-    cmd: biso get TASK-19 --section notes
+    comando: biso get TASK-19 --section notes
     salida: |
       TASK-19  Retry the upload on 5xx
 
       ## Implementation Notes
       El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3.
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.5
     comentario: |
       No hay ningún autor ni ningún instante junto al texto. Las notas no tienen esa estructura:
@@ -46,11 +46,11 @@ pasos:
       Te llega un aviso: un usuario con conexión móvil ve fallos incluso con el reintento puesto.
       No es algo que hayas visto tú, así que lo entras como comentario, firmado por quien lo
       reportó.
-    cmd: 'biso comment TASK-19 "Un usuario con conexión móvil ve fallos incluso después de los 3 reintentos, ¿deberíamos subir el límite en ese caso?" --comment-author @trello:juan'
+    comando: 'biso comment TASK-19 "Un usuario con conexión móvil ve fallos incluso después de los 3 reintentos, ¿deberíamos subir el límite en ese caso?" --comment-author @trello:juan'
     salida: |
       note: comment #3 by @trello:juan
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.7.3, 5.2
     comentario: |
       "note: comment #3 by @trello:juan" sale por stderr, con la forma exacta que da el ejemplo
@@ -61,11 +61,11 @@ pasos:
   - narracion: |
       Respondes tú, como tú mismo, sin banderas de autor: la identidad configurada firma por
       defecto.
-    cmd: biso comment TASK-19 "De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos."
+    comando: biso comment TASK-19 "De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos."
     salida: |
       note: comment #4 by @claude
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.7.3, 5.2
     comentario: |
       Sin --comment-author, el autor es `me`, la identidad configurada de este tablero: @claude.
@@ -73,7 +73,7 @@ pasos:
       `biso comment`: el nombre no cambia porque en `biso comment` parezca redundante (10.6).
   - narracion: |
       Pones las dos secciones una junto a otra para ver el contraste de un vistazo.
-    cmd: biso get TASK-19 --section notes,comments
+    comando: biso get TASK-19 --section notes,comments
     salida: |
       TASK-19  Retry the upload on 5xx
 
@@ -92,7 +92,7 @@ pasos:
 
       @claude, 2026-09-06 16:20
       De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos.
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.5, 5.2
     comentario: |
       Las notas son un único bloque; los comentarios son cuatro entradas firmadas, en el orden

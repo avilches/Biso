@@ -13,14 +13,14 @@ ensena:
 pasos:
   - narracion: |
       Miras qué tienes asignado, sin filtrar nada más:
-    cmd: biso ls --mine
+    comando: biso ls --mine
     salida: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
       TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.4
     comentario: |
       Cinco filas, ni una más: como son menos de las 30 que `ls` enseña por defecto, no sale
@@ -37,14 +37,14 @@ pasos:
       quedado fuera no se mezcla nunca con las tareas: va por stderr, para que redirigir la
       salida a un fichero deje un fichero de datos limpio. Para verlo sin esperar a que el
       tablero crezca, le pones un límite más bajo que el que tienes asignado:
-    cmd: biso ls --mine --limit 3
+    comando: biso ls --mine --limit 3
     salida: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
       warning: 2 more tasks match; showing 3 of 5
       hint: narrow with -s, --type or -l, or ask for everything with --all
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.4
     comentario: |
       Las tres primeras filas van por stdout, y la advertencia y la sugerencia van por
@@ -59,7 +59,7 @@ pasos:
       De las cinco, TASK-33 es la que más se parece a lo que acabas de dejar tú en el
       escenario anterior: apuntada, con algún criterio ya pensado pero sin empezar. Antes de
       decidir si es tuya de verdad, la lees entera:
-    cmd: biso get TASK-33
+    comando: biso get TASK-33
     salida: |
       TASK-33  Add a retry counter to the upload log
       status     To Do                type       task
@@ -101,7 +101,7 @@ pasos:
 
       ## Open Question
       (empty)
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.5
     comentario: |
       No hay línea `lease`: esa solo sale cuando la tarea tiene un arrendamiento, y una tarea

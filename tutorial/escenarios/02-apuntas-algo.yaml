@@ -15,12 +15,12 @@ pasos:
       Bastaría con teclear el título y ya quedaría a salvo, pero ya que lo tienes en la
       cabeza, merece la pena dejar también el porqué y con qué criterio sabrás que está
       resuelto. Son dos banderas más en la misma línea, y `new` las acepta todas:
-    cmd: >-
+    comando: >-
       biso new "Log the diff size before uploading" --ac "The log prints the diff size
       before each upload" --ac "The size also shows up when the upload fails"
     salida: |
       TASK-62
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.3
     comentario: |
       Nada de "created TASK-62" ni de repetir el título: la única línea es el identificador,

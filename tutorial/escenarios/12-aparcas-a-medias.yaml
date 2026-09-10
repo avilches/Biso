@@ -23,13 +23,13 @@ ensena:
 pasos:
   - narracion: |
       El primer impulso de casi todo el mundo es buscar cómo se borra.
-    cmd: biso delete TASK-52
+    comando: biso delete TASK-52
     salida: |
       error: there is no delete command, on purpose
       hint: `biso archive <ref>` takes it off the board and keeps the history
             an archived task still exists: `biso ls --archived` lists them, and the
             id is never reused
-    exit: 2
+    codigo_salida: 2
     origen: literal SPEC 10.8
     comentario: |
       La ausencia de este comando está escrita en la especificación, con su mensaje y su código,
@@ -38,10 +38,10 @@ pasos:
       mensaje te dice que la decisión es deliberada y cuál es el gesto que buscabas.
   - narracion: |
       El agente saca la tarea del tablero.
-    cmd: biso archive TASK-52
+    comando: biso archive TASK-52
     salida: |
       TASK-52  In Progress  ac 0/1  urgency 5.4  archived
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.8, 5.4
     comentario: |
       Lee con cuidado esa línea, porque dice dos cosas que parecen incompatibles: la tarea sigue en
@@ -60,10 +60,10 @@ pasos:
       terminal. Archivar no la pone a cero: eso lo hace terminarla.
   - narracion: |
       Comprueba que no la ha perdido.
-    cmd: biso ls --archived
+    comando: biso ls --archived
     salida: |
       TASK-52  In Progress  task  low  Document the release checklist  ac 0/1  @claude  -
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.4, 10.8
     comentario: |
       Ahí sigue, entera, con su asignación intacta. Lo único que ha perdido es el arrendamiento.
@@ -73,12 +73,12 @@ pasos:
       activo". La tarea no se ha ido a ninguna parte, se ha quitado de en medio.
   - narracion: |
       Y para cerrar la idea, mira qué queda en marcha ahora.
-    cmd: biso ls -s "In Progress"
+    comando: biso ls -s "In Progress"
     salida: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.4, 5.4
     comentario: |
       Tres tareas donde antes había cuatro, y `TASK-19` ya no está en ninguna de las dos listas

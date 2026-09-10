@@ -35,21 +35,21 @@ ensena:
 pasos:
   - narracion: |
       Miras la pregunta de TASK-60 de cerca, no solo la línea recortada del arranque.
-    cmd: biso get TASK-60 --section question
+    comando: biso get TASK-60 --section question
     salida: |
       TASK-60  Confirm the retry budget for the upload endpoint
 
       ## Open Question
       @claude, 2026-09-06 09:30
       Should the retry budget be shared with the download endpoint or kept separate?
-    exit: 0
+    codigo_salida: 0
     origen: literal SPEC 10.5
   - narracion: |
       Ahora la tuya. En vez de fijar un número a ojo, la dejas escrita como pregunta.
-    cmd: 'biso ask TASK-19 "¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?"'
+    comando: 'biso ask TASK-19 "¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?"'
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 7.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.7.5, 5.4
     comentario: |
       El estado no cambia, sigue en In Progress. La urgencia sí baja, de 11.0 a 7.0: el término
@@ -59,29 +59,29 @@ pasos:
       (de 19.0 a 15.0), con los números de TASK-19.
   - narracion: |
       Compruebas que ha quedado bien escrita.
-    cmd: biso get TASK-19 --section question
+    comando: biso get TASK-19 --section question
     salida: |
       TASK-19  Retry the upload on 5xx
 
       ## Open Question
       @claude, 2026-09-06 14:10
       ¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.5, 5.7
   - narracion: |
       Un rato después, mirando un endpoint parecido, encuentras la respuesta tú mismo: ya hay un
       valor fijado en otra parte del código. Respondes y la tarea queda desaparcada.
-    cmd: 'biso answer TASK-19 "Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí."'
+    comando: 'biso answer TASK-19 "Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí."'
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 10.7.6, 5.4
     comentario: |
       La urgencia recupera los 11.0 de antes: waiting vuelve a ser falso y el término de
       actividad vuelve a sumar sus 4.0 puntos.
   - narracion: |
       Miras los comentarios para ver cómo ha quedado el rastro.
-    cmd: biso get TASK-19 --section comments
+    comando: biso get TASK-19 --section comments
     salida: |
       TASK-19  Retry the upload on 5xx
 
@@ -91,7 +91,7 @@ pasos:
 
       @claude, 2026-09-06 15:30
       Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí.
-    exit: 0
+    codigo_salida: 0
     origen: derivada SPEC 5.2, 5.3, 10.5, 10.7.6
     comentario: |
       El primer comentario lleva el instante en que se hizo la pregunta (14:10), no el de la
