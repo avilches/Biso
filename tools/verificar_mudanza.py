@@ -51,22 +51,36 @@ class Informe:
         )
 
 
-def _repartir(texto: str) -> tuple[Counter[str], Counter[str]]:
-    """Devuelve el multiconjunto de lineas de contenido y el de textos de encabezado."""
-    lineas: Counter[str] = Counter()
-    encabezados: Counter[str] = Counter()
+def _clasificar(texto: str) -> list[tuple[str, bool]]:
+    """Clasifica cada linea de un texto como contenido o encabezado, en su orden.
+
+    Devuelve una lista paralela a las lineas del fichero: para cada una, la linea tal cual y si
+    es un encabezado. Hay que clasificar el fichero entero de una vez, empezando por su primera
+    linea, porque saber si una linea esta dentro de un bloque de codigo depende de todas las
+    cercas anteriores. Clasificar un trozo suelto da un resultado distinto y equivocado: un
+    trozo que empieza dentro de un bloque cree estar fuera, y una linea de comentario de shell
+    se toma por un encabezado.
+    """
+    clasificadas: list[tuple[str, bool]] = []
     dentro_de_bloque = False
     for linea in texto.splitlines():
         if CERCA_RE.match(linea):
             dentro_de_bloque = not dentro_de_bloque
-            lineas[linea] += 1
+            clasificadas.append((linea, False))
             continue
-        if not dentro_de_bloque:
+        clasificadas.append((linea, not dentro_de_bloque and bool(ENCABEZADO_RE.match(linea))))
+    return clasificadas
+
+
+def _repartir(texto: str) -> tuple[Counter[str], Counter[str]]:
+    """Devuelve el multiconjunto de lineas de contenido y el de textos de encabezado."""
+    lineas: Counter[str] = Counter()
+    encabezados: Counter[str] = Counter()
+    for linea, es_encabezado in _clasificar(texto):
+        if es_encabezado:
             coincidencia = ENCABEZADO_RE.match(linea)
-            if coincidencia:
-                encabezados[coincidencia.group(3).strip()] += 1
-                continue
-        if linea.strip():
+            encabezados[coincidencia.group(3).strip()] += 1
+        elif linea.strip():
             lineas[linea] += 1
     return lineas, encabezados
 
@@ -122,15 +136,25 @@ def cargar_manifiesto(ruta: Path) -> list[tuple[Path, list[tuple[int, int]]]]:
     return entradas
 
 
-def _contenido_de_rangos(lineas: list[str], rangos: list[tuple[int, int]]) -> Counter[str]:
-    trozo: list[str] = []
+def _contenido_de_rangos(
+    clasificadas: list[tuple[str, bool]], rangos: list[tuple[int, int]]
+) -> Counter[str]:
+    """El contenido que le toca a un fichero, sacado de la clasificacion del original entero.
+
+    Recibe el original ya clasificado y no un trozo, justamente para no perder el contexto de
+    los bloques de codigo en los bordes de cada rango.
+    """
+    contenido: Counter[str] = Counter()
     for primera, ultima in rangos:
-        trozo.extend(lineas[primera - 1 : ultima])
-    contenido, _ = _repartir("\n".join(trozo))
+        for linea, es_encabezado in clasificadas[primera - 1 : ultima]:
+            if not es_encabezado and linea.strip():
+                contenido[linea] += 1
     return contenido
 
 
-def comparar_por_fichero(original: Path, entradas: list[tuple[Path, list[tuple[int, int]]]]) -> list[str]:
+def comparar_por_fichero(
+    original: Path, entradas: list[tuple[Path, list[tuple[int, int]]]]
+) -> list[str]:
     """Comprueba que cada fichero nuevo lleva exactamente el contenido de los rangos que le tocan.
 
     Esto es lo que atrapa un trasvase: dos ficheros que se intercambian su contenido pasan la
@@ -139,13 +163,34 @@ def comparar_por_fichero(original: Path, entradas: list[tuple[Path, list[tuple[i
     Solo compara lineas de contenido. Los encabezados se comparan aparte y en conjunto, porque
     el reparto les cambia el nivel y a algunos el texto, a proposito.
     """
-    lineas_original = original.read_text(encoding="utf-8").splitlines()
+    clasificadas = _clasificar(original.read_text(encoding="utf-8"))
+    total = len(clasificadas)
     problemas: list[str] = []
+    dueno_de_la_linea: dict[int, Path] = {}
     for fichero, rangos in entradas:
+        fuera_de_rango = False
+        for primera, ultima in rangos:
+            if primera < 1 or ultima > total:
+                problemas.append(
+                    f"{fichero}: el rango {primera}-{ultima} se sale del original, "
+                    f"que acaba en la linea {total}"
+                )
+                fuera_de_rango = True
+                continue
+            for numero in range(primera, ultima + 1):
+                anterior = dueno_de_la_linea.get(numero)
+                if anterior is not None:
+                    problemas.append(
+                        f"{fichero}: la linea {numero} del original ya la reclamaba {anterior}"
+                    )
+                else:
+                    dueno_de_la_linea[numero] = fichero
+        if fuera_de_rango:
+            continue
         if not fichero.is_file():
             problemas.append(f"{fichero}: el manifiesto lo nombra pero no existe")
             continue
-        esperado = _contenido_de_rangos(lineas_original, rangos)
+        esperado = _contenido_de_rangos(clasificadas, rangos)
         real, _ = _repartir(fichero.read_text(encoding="utf-8"))
         for linea in sorted((esperado - real).elements()):
             problemas.append(f"{fichero}: le falta una linea de sus rangos: {linea!r}")
@@ -173,9 +218,9 @@ def main(argv: list[str]) -> int:
         if len(argv) >= 4 and argv[1] == "--manifiesto":
             manifiesto, original = Path(argv[2]), Path(argv[3])
             entradas = cargar_manifiesto(manifiesto)
-            nuevos = [fichero for fichero, _ in entradas]
+            nuevos = [fichero for fichero, _ in entradas if fichero.is_file()]
             problemas = comparar_por_fichero(original, entradas)
-            problemas += cercas_desbalanceadas([f for f in nuevos if f.is_file()])
+            problemas += cercas_desbalanceadas(nuevos)
         elif len(argv) >= 3 and argv[1] != "--manifiesto":
             original = Path(argv[1])
             nuevos = [Path(a) for a in argv[2:]]

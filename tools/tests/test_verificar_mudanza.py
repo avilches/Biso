@@ -176,3 +176,68 @@ def test_un_fichero_que_no_se_puede_leer_da_un_error_limpio(tmp_path):
     """Sin esto, main termina con una traza de Python en vez de con un mensaje."""
     existe = escribir(tmp_path, "existe.md", "# Uno\n\nContenido.\n")
     assert main(["prog", str(tmp_path / "no-existe.md"), str(existe)]) == 2
+
+
+BLOQUE = """## 1. Primero
+
+```bash
+# un comentario de shell
+una orden
+```
+
+## 2. Segundo
+
+Contenido llano.
+"""
+
+
+def test_un_rango_que_empieza_dentro_de_un_bloque_no_pierde_la_linea(tmp_path):
+    """El comentario de shell es contenido, no un encabezado, aunque empiece por almohadilla.
+
+    Clasificar el trozo por separado lo tomaria por un encabezado y lo perderia del contenido
+    esperado, porque el trozo no sabe que viene detras de una cerca de apertura.
+    """
+    original = escribir(tmp_path, "original.md", BLOQUE)
+    trozo = escribir(tmp_path, "trozo.md", "# Primero\n\n```bash\n# un comentario de shell\nuna orden\n```\n")
+    assert comparar_por_fichero(original, [(trozo, [(1, 6)])]) == []
+
+
+def test_rangos_no_contiguos_no_confunden_el_estado_del_bloque(tmp_path):
+    original = escribir(tmp_path, "original.md", BLOQUE)
+    juntos = escribir(
+        tmp_path,
+        "juntos.md",
+        "# Juntado\n\n```bash\n# un comentario de shell\nuna orden\n```\n\nContenido llano.\n",
+    )
+    assert comparar_por_fichero(original, [(juntos, [(3, 6), (10, 10)])]) == []
+
+
+def test_un_rango_que_se_sale_del_original_se_reporta(tmp_path):
+    original = escribir(tmp_path, "original.md", "## 1. Primero\n\nContenido.\n")
+    fichero = escribir(tmp_path, "uno.md", "# Primero\n\nContenido.\n")
+    problemas = comparar_por_fichero(original, [(fichero, [(1, 99)])])
+    assert len(problemas) == 1
+    assert "se sale del original" in problemas[0]
+
+
+def test_dos_ficheros_que_reclaman_la_misma_linea_se_reportan(tmp_path):
+    original = escribir(tmp_path, "original.md", "## 1. Primero\n\nContenido.\n")
+    uno = escribir(tmp_path, "uno.md", "# Primero\n\nContenido.\n")
+    dos = escribir(tmp_path, "dos.md", "# Primero\n\nContenido.\n")
+    problemas = comparar_por_fichero(original, [(uno, [(1, 3)]), (dos, [(1, 3)])])
+    assert any("ya la reclamaba" in p for p in problemas)
+
+
+def test_el_mensaje_del_fichero_que_falta_llega_a_imprimirse(tmp_path, capsys):
+    """Antes moria: main pasaba el fichero ausente a comparar, que petaba antes de imprimir."""
+    original = escribir(tmp_path, "original.md", "## 1. Primero\n\nContenido.\n")
+    existe = escribir(tmp_path, "existe.md", "# Primero\n\nContenido.\n")
+    manifiesto = escribir(
+        tmp_path,
+        "manifiesto.txt",
+        f"{existe}: 1-3\n{tmp_path / 'no-existe.md'}: 1-3\n",
+    )
+    codigo = main(["prog", "--manifiesto", str(manifiesto), str(original)])
+    salida = capsys.readouterr().out
+    assert codigo == 1
+    assert "el manifiesto lo nombra pero no existe" in salida
