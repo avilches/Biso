@@ -213,40 +213,110 @@ def cercas_desbalanceadas(ficheros: list[Path]) -> list[str]:
     return problemas
 
 
+def cargar_excepciones(ruta: Path) -> tuple[set[str], set[str]]:
+    """Lee las excepciones de encabezado declaradas: las que nacen y las que se pierden.
+
+    Sin esta declaracion el comprobador no puede distinguir un encabezado que cambia a
+    proposito de uno que se perdio por error, y un reparto correcto nunca podria terminar con
+    codigo 0.
+    """
+    nuevos: set[str] = set()
+    perdidos: set[str] = set()
+    for numero, linea in enumerate(ruta.read_text(encoding="utf-8").splitlines(), start=1):
+        limpia = linea.strip()
+        if not limpia or limpia.startswith("#"):
+            continue
+        clase, _, texto = limpia.partition(":")
+        clase, texto = clase.strip(), texto.strip()
+        if clase == "nuevo" and texto:
+            nuevos.add(texto)
+        elif clase == "perdido" and texto:
+            perdidos.add(texto)
+        else:
+            raise ValueError(
+                f'{ruta}:{numero}: cada linea es "nuevo: <texto>" o "perdido: <texto>"'
+            )
+    return nuevos, perdidos
+
+
+def adjudicar_encabezados(informe: Informe, nuevos: set[str], perdidos: set[str]) -> list[str]:
+    """Compara los encabezados que cambiaron contra los que se declaro que iban a cambiar.
+
+    Falla en las dos direcciones a proposito. Un encabezado que cambio sin estar declarado es un
+    error de la mudanza. Y una excepcion declarada que no llego a ocurrir tambien lo es, porque
+    significa que la declaracion ya no describe el reparto que hay.
+    """
+    problemas: list[str] = []
+    observados_nuevos = set(informe.encabezados_sobrantes)
+    observados_perdidos = set(informe.encabezados_perdidos)
+    for texto in sorted(observados_nuevos - nuevos):
+        problemas.append(f"encabezado nuevo sin declarar: {texto!r}")
+    for texto in sorted(observados_perdidos - perdidos):
+        problemas.append(f"encabezado perdido sin declarar: {texto!r}")
+    for texto in sorted(nuevos - observados_nuevos):
+        problemas.append(f"se declaro como nuevo un encabezado que no aparece: {texto!r}")
+    for texto in sorted(perdidos - observados_perdidos):
+        problemas.append(f"se declaro como perdido un encabezado que sigue estando: {texto!r}")
+    return problemas
+
+
+def _uso() -> int:
+    print(
+        "uso: verificar_mudanza.py [--excepciones <fichero>] <original> <fichero-nuevo>...\n"
+        "     verificar_mudanza.py [--excepciones <fichero>] --manifiesto <manifiesto> <original>",
+        file=sys.stderr,
+    )
+    return 2
+
+
 def main(argv: list[str]) -> int:
+    argumentos = argv[1:]
+    excepciones: Path | None = None
+    if argumentos[:1] == ["--excepciones"]:
+        if len(argumentos) < 2:
+            return _uso()
+        excepciones = Path(argumentos[1])
+        argumentos = argumentos[2:]
     try:
-        if len(argv) >= 4 and argv[1] == "--manifiesto":
-            manifiesto, original = Path(argv[2]), Path(argv[3])
-            entradas = cargar_manifiesto(manifiesto)
+        if argumentos[:1] == ["--manifiesto"]:
+            if len(argumentos) < 3:
+                return _uso()
+            entradas = cargar_manifiesto(Path(argumentos[1]))
+            original = Path(argumentos[2])
             nuevos = [fichero for fichero, _ in entradas if fichero.is_file()]
             problemas = comparar_por_fichero(original, entradas)
             problemas += cercas_desbalanceadas(nuevos)
-        elif len(argv) >= 3 and argv[1] != "--manifiesto":
-            original = Path(argv[1])
-            nuevos = [Path(a) for a in argv[2:]]
+        elif len(argumentos) >= 2:
+            original = Path(argumentos[0])
+            nuevos = [Path(a) for a in argumentos[1:]]
             problemas = []
         else:
-            print(
-                "uso: verificar_mudanza.py <original> <fichero-nuevo>...\n"
-                "     verificar_mudanza.py --manifiesto <manifiesto> <original>",
-                file=sys.stderr,
-            )
-            return 2
+            return _uso()
         informe = comparar(original, nuevos)
+        if excepciones is not None:
+            declarados_nuevos, declarados_perdidos = cargar_excepciones(excepciones)
+            problemas += adjudicar_encabezados(informe, declarados_nuevos, declarados_perdidos)
     except (OSError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     for problema in problemas:
         print(problema)
-    for etiqueta, elementos in (
-        ("linea que se perdio", informe.lineas_perdidas),
-        ("linea que aparecio de la nada", informe.lineas_sobrantes),
-        ("encabezado que se perdio", informe.encabezados_perdidos),
-        ("encabezado que aparecio de la nada", informe.encabezados_sobrantes),
-    ):
-        for elemento in elementos:
-            print(f"{etiqueta}: {elemento!r}")
-    if informe.ok and not problemas:
+    for elemento in informe.lineas_perdidas:
+        print(f"linea que se perdio: {elemento!r}")
+    for elemento in informe.lineas_sobrantes:
+        print(f"linea que aparecio de la nada: {elemento!r}")
+    if excepciones is None:
+        for elemento in informe.encabezados_perdidos:
+            print(f"encabezado que se perdio: {elemento!r}")
+        for elemento in informe.encabezados_sobrantes:
+            print(f"encabezado que aparecio de la nada: {elemento!r}")
+    hay_lineas = bool(informe.lineas_perdidas or informe.lineas_sobrantes)
+    hay_encabezados = bool(informe.encabezados_perdidos or informe.encabezados_sobrantes)
+    if excepciones is not None:
+        correcto = not problemas and not hay_lineas
+    else:
+        correcto = not problemas and not hay_lineas and not hay_encabezados
+    if correcto:
         print("la mudanza es fiel: cada fichero lleva su contenido y no falta ni sobra nada")
         return 0
     return 1

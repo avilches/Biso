@@ -5,7 +5,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from verificar_mudanza import cargar_manifiesto, cercas_desbalanceadas, comparar, comparar_por_fichero, main
+from verificar_mudanza import (
+    adjudicar_encabezados,
+    cargar_excepciones,
+    cargar_manifiesto,
+    cercas_desbalanceadas,
+    comparar,
+    comparar_por_fichero,
+    main,
+)
 
 ORIGINAL = """## 1. Primera seccion
 
@@ -241,3 +249,35 @@ def test_el_mensaje_del_fichero_que_falta_llega_a_imprimirse(tmp_path, capsys):
     salida = capsys.readouterr().out
     assert codigo == 1
     assert "el manifiesto lo nombra pero no existe" in salida
+
+
+def test_las_excepciones_declaradas_dan_codigo_cero(tmp_path, capsys):
+    """Un encabezado que cambia a proposito, declarado, no impide terminar en verde."""
+    original = escribir(tmp_path, "original.md", "## 1. Titulo viejo\n\nContenido.\n")
+    nuevo = escribir(tmp_path, "nuevo.md", "# Titulo nuevo\n\nContenido.\n")
+    declaracion = escribir(
+        tmp_path, "excepciones.txt", "nuevo: Titulo nuevo\nperdido: Titulo viejo\n"
+    )
+    codigo = main(["prog", "--excepciones", str(declaracion), str(original), str(nuevo)])
+    assert codigo == 0
+    assert "la mudanza es fiel" in capsys.readouterr().out
+
+
+def test_un_encabezado_que_cambia_sin_declarar_falla(tmp_path, capsys):
+    original = escribir(tmp_path, "original.md", "## 1. Titulo viejo\n\nContenido.\n")
+    nuevo = escribir(tmp_path, "nuevo.md", "# Titulo nuevo\n\nContenido.\n")
+    declaracion = escribir(tmp_path, "excepciones.txt", "# ninguna declarada\n")
+    codigo = main(["prog", "--excepciones", str(declaracion), str(original), str(nuevo)])
+    salida = capsys.readouterr().out
+    assert codigo == 1
+    assert "encabezado nuevo sin declarar: 'Titulo nuevo'" in salida
+    assert "encabezado perdido sin declarar: 'Titulo viejo'" in salida
+
+
+def test_una_excepcion_declarada_que_no_ocurre_falla(tmp_path):
+    """Si la declaracion promete un cambio que no esta, se ha quedado desfasada."""
+    original = escribir(tmp_path, "original.md", "## 1. Igual\n\nContenido.\n")
+    nuevo = escribir(tmp_path, "nuevo.md", "# Igual\n\nContenido.\n")
+    informe = comparar(original, [nuevo])
+    problemas = adjudicar_encabezados(informe, {"Inventado"}, set())
+    assert problemas == ["se declaro como nuevo un encabezado que no aparece: 'Inventado'"]
