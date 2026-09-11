@@ -192,7 +192,7 @@ existiera antes queda afectada.
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
 | Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
 | Una bandera de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
-| Dos banderas de papel nombran el mismo estado | Error 2, con los dos papeles y el estado que comparten |
+| Varias banderas de papel nombran el mismo estado | Error 2, con los papeles y el estado que comparten |
 | `--statuses` con menos de tres estados | Error 2, diciendo cuántos hacen falta y por qué |
 | `--prefix` con algo que no sean letras | Error 2, `code` `invalid_prefix` |
 | Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección ["Identificadores"](../modelo-de-datos.md#identificadores)) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |

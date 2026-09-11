@@ -1,6 +1,6 @@
 # Los vocabularios del tablero y la regla de validación
 
-Tres campos tienen vocabulario cerrado, definido en la configuración: `status`, `type` y `priority`.
+Hay campos con vocabulario cerrado, definido en la configuración: `status`, `type` y `priority`.
 Un cuarto, `project`, lo tiene solo si el tablero declara proyectos. Para todos ellos rige una sola
 regla, **idéntica al escribir y al leer**.
 
@@ -92,7 +92,7 @@ una etiqueta nueva la incorpora al conjunto, y a partir de ese momento filtrar p
 el hito pasa lo mismo: `biso set TASK-1 -m "v1.2"` es lo que hace que `v1.2` exista para
 `biso ls -m "v1.2"`, y la última tarea que deja de llevarlo lo saca del conjunto.
 
-Está la bandera `--unchecked` de `biso ls` y `biso export`, que apaga **las tres comprobaciones contra
+Está la bandera `--unchecked` de `biso ls` y `biso export`, que apaga **las comprobaciones contra
 estos conjuntos, las de etiquetas, personas e hitos, y ninguna otra**: los vocabularios configurados
 de `--status`, `--type`, `--priority` y `--project` siguen validando, y `--parent` sigue resolviendo
 su referencia. La bandera no cambia ninguna otra cosa.

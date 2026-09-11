@@ -5,7 +5,7 @@ que la use un agente automático que trabaja dentro de ese proyecto: la salida e
 errores se distinguen por su código sin leer el mensaje, y ningún comportamiento depende de dónde se
 ejecute el programa.
 
-Esta documentación reúne los cuatro documentos del proyecto:
+Esta documentación reúne los documentos del proyecto:
 
 - **[Especificación](spec/index.md)**: define todos los comandos con su firma, sus parámetros, su
   comportamiento en los casos límite, la salida literal que imprimen, su esquema JSON y sus códigos

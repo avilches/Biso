@@ -68,8 +68,8 @@ clave se asigna al crear el elemento, y sustituir la lista crea elementos.
 | notas | `--note` | `--set-notes` | `--clear-notes` |
 | resumen final | `--summary` | `--set-summary` | `--clear-summary` |
 
-- Añadir a un campo vacío es lo mismo que fijarlo, así que al crear una tarea las dos columnas
-  coinciden y no hay nada que decidir.
+- Añadir a un campo vacío es lo mismo que fijarlo, así que al crear una tarea las columnas "Añade al
+  final" y "Sustituye" coinciden y no hay nada que decidir.
 - Al añadir sobre contenido existente se intercala una línea en blanco, y cada repetición de la
   bandera en la misma invocación produce su propio párrafo.
 - Añadir un valor vacío no hace nada y avisa, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).

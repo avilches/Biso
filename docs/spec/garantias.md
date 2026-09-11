@@ -71,7 +71,7 @@ dos cosas juntas son lo que impide que un listado incompleto se confunda con un 
 
 **`biso export` y `biso snapshot` son las dos excepciones al código 0 de una lectura de conjunto.**
 Los dos escriben igual todo lo que han podido leer, con el mismo aviso por stderr, pero terminan con
-**código 6** en vez de 0 cuando han saltado alguna tarea: son los dos comandos cuyo propósito es
+**código 6** en vez de 0 cuando han saltado alguna tarea: son los comandos cuyo propósito es
 servir de copia fiel del tablero, así que una copia incompleta no puede parecer un éxito llano. Un
 guion que encadene `biso export -o backup.ndjson && ...` o `biso snapshot && ...` puede comprobar el
 código de salida para detectar un volcado incompleto.

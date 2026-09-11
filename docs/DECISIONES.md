@@ -19,7 +19,7 @@ gestores de tareas maduros, Backlog.md y Taskwarrior, y de los fallos documentad
 
 ## La evidencia detrás de los siete principios
 
-Los siete principios de ["Los principios"](spec/principios.md) están ahí enunciados sin su procedencia,
+Los principios de ["Los principios"](spec/principios.md) están ahí enunciados sin su procedencia,
 porque un principio se aplica igual se sepa o no de dónde viene. Aquí está de dónde viene cada uno.
 
 **Principio 1, que un valor desconocido es un error al leer y al escribir.** Es el fallo más peligroso
@@ -99,7 +99,7 @@ los ficheros de convenciones del proyecto. Ese diseño se toma de una medición 
 
 En la herramienta estudiada, las cuatro guías de instrucciones se leyeron 69 veces en seis días y
 suman **201.500 bytes, el 27,5% de toda la salida** que la herramienta devolvió a los agentes, más que
-sus dos comandos más usados juntos.
+sus comandos más usados juntos.
 
 | Lectura | Bytes | Cuándo la exige ese diseño |
 |---|---:|---|
@@ -133,7 +133,7 @@ resumen del tablero, que crece con el tablero, no pueda comerse el sitio de las 
 
 **El reparto entre las dos partes cambió con el modelo de estados, y el total no.** La parte fija
 sube de 3.072 a 3.456 bytes porque el bloque `COMMANDS` gana las dos órdenes nuevas del ciclo, `ask` y
-`answer`, y el bloque `RULES` gana una regla más, la undécima, sobre esos dos verbos y sobre qué
+`answer`, y el bloque `RULES` gana una regla más, la undécima, sobre esos verbos y sobre qué
 significa una tarea asignada; el resumen del tablero baja de 2.048 a 1.664.
 Eso solo es seguro de hacer porque, a la vez, el orden de recorte del resumen deja de estar incompleto:
 antes nombraba un solo bloque y decía "antes que cualquier otra cosa" sin nombrar ninguna otra, así que
@@ -153,7 +153,7 @@ recorta es contenido, no el tope.
 **Esto no es "el tope nunca sube", es "el tope sube solo cuando reducir ya no es posible sin perder
 algo".** La medida de hoy, 4.818 de 5.120 bytes, tiene 302 de margen: nunca hizo falta apretar para
 caber, así que esta regla no se ha puesto a prueba todavía. Pero el margen que de verdad manda no es
-ese, sino el de la parte fija, que con las dos banderas nuevas `--check-dod` y `--uncheck-dod` en la
+ese, sino el de la parte fija, que con las banderas nuevas `--check-dod` y `--uncheck-dod` en la
 rejilla de `FIELD FLAGS` ha bajado a **129 bytes** de los 3.456: cualquier texto nuevo en el bloque
 fijo tiene que caber ahí, no en los 302 del total. Si en el futuro un comando nuevo obliga a
 recortar el bloque fijo (`COMMANDS`, `FIELD FLAGS`, `RULES`) y esa reducción sale limpia, sin perder
@@ -337,7 +337,7 @@ que se calcula es uno solo, que alguna dependencia esté sin terminar, así que 
 negación se forma con el mismo prefijo que los otros dos pares booleanos de `biso ls`,
 `--waiting`/`--not-waiting` y `--active`/`--not-active`. El nombre `ready` sobraba por dos motivos
 distintos. El primero es que hacía viajar el mismo hecho dos veces en el JSON, como `ready` y como
-`blocked`, y dos campos que dicen lo mismo acaban divergiendo. El segundo es que prometía más de lo
+`blocked`, y campos que dicen lo mismo acaban divergiendo. El segundo es que prometía más de lo
 que cumplía: miraba solo dependencias, así que `biso ls --ready` devolvía también las tareas aparcadas
 en una pregunta, que es justo lo que un agente no puede coger. De los dos nombres sobrevive `blocked`
 porque ya tiene entrada propia en la tabla de ["Vocabulario de esta especificación"](spec/vocabulario.md), porque da nombre al
@@ -384,7 +384,7 @@ requisito de ["Cuatro requisitos aprendidos de otras herramientas"](#cuatro-requ
 
 ---
 
-## Dos decisiones de detalle que cuesta reconstruir
+## Decisiones de detalle que cuesta reconstruir
 
 **Una tarea sin quien la reporte es válida.** El campo `reporter` toma la identidad configurada al
 crear la tarea, y si no hay ninguna se queda vacío **sin avisar**. Es deliberadamente distinto de los
@@ -404,7 +404,7 @@ dejaría en duda cuál de las dos sale.
 
 La especificación pasó por cuatro revisiones adversariales antes de darse por buena. El patrón de
 fallo dominante, y con diferencia, fue siempre el mismo: **dos copias distantes de un mismo dato que
-dejan de coincidir**. Una lista de campos que aparece en dos secciones, una cifra publicada en tres
+dejan de coincidir**. Una lista de campos que aparece en varias secciones, una cifra publicada en tres
 sitios, un código de salida que está en la tabla de un comando pero no en su texto de ayuda.
 
 De ahí salen tres costumbres que conviene mantener al editar:
@@ -529,7 +529,7 @@ comprobación es comparar y sustituir dentro de una transacción que ya existía
 
 **Pero lo que se implementa no es ese token de vallado, y apartarse de él es deliberado.** Un token de
 vallado rechaza la escritura entera de quien ya no es el propietario. `biso` la acepta: la escritura de
-una identidad que no es `leaseHolder` se hace igual y solo deja intactos los dos campos del
+una identidad que no es `leaseHolder` se hace igual y solo deja intactos los campos del
 arrendamiento, con el aviso de ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos) (sexta precisión de ["El modelo de datos de una tarea"](spec/modelo-de-datos.md)). Así que el
 agujero que el artículo cierra aquí queda entreabierto: el tenedor viejo que despierta puede comentar,
 anotar o cerrar la tarea que otro reclamó, y si vuelve a llamar a `biso start` se la lleva de vuelta,
@@ -543,7 +543,7 @@ de dos reclamaciones simultáneas de un arrendamiento vencido solo gane una, por
 comprueba dentro de su propia transacción que seguía vencido. La diferencia con el artículo queda
 anotada como riesgo aceptado en ["Riesgos conocidos y aceptados del modelo de estados"](#riesgos-conocidos-y-aceptados-del-modelo-de-estados).
 
-**Por qué el arrendamiento se exporta e importa como cualquier otro campo.** Al añadir los dos campos
+**Por qué el arrendamiento se exporta e importa como cualquier otro campo.** Al añadir los campos
 guardados quedó sin decir si viajan en `biso export`, y las dos respuestas eran defendibles: dejarlos
 fuera, porque un arrendamiento es la reserva de una sesión concreta en una máquina concreta, o dejarlos
 entrar, porque son campos guardados y no derivados y la garantía de simetría de ["`biso export`"](spec/cmd/export.md)
@@ -558,25 +558,25 @@ que llega vivo a nombre de otra identidad produce el aviso de ["Notas y avisos"]
 start` avisa y coge la tarea igual. El caso que de verdad importa, restaurar un respaldo del propio
 tablero, sale además mejor así: la tarea que estaba en marcha sigue constando en marcha y a nombre de
 quien la llevaba, en vez de aparecer activa y sin dueño del arrendamiento. Lo único que hay que
-custodiar es la invariante de que los dos campos solo tienen valor en una tarea activa y asignada, y se
+custodiar es la invariante de que los campos solo tienen valor en una tarea activa y asignada, y se
 custodia en dos sitios: en la validación previa de `biso new --from`, donde se custodia todo lo demás
 del lote y que rechaza el fichero entero antes de escribir nada, y en `biso doctor`, que la comprueba
-como comprueba las demás invariantes del tablero y la repara con `--fix` vaciando los dos campos
+como comprueba las demás invariantes del tablero y la repara con `--fix` vaciando los campos
 (["`biso doctor`"](spec/cmd/doctor.md)). El segundo hace falta porque la importación no es la única forma de que
 una base de datos llegue a incumplirla: puede venir escrita a mano, restaurada a medias o de otra
 versión, y sin esa comprobación la única invariante que este apartado dice que hay que custodiar sería
 la única que `doctor` no mira.
 
 **La invariante gana siempre sobre el aviso de un arrendamiento ajeno, y esa precedencia hay que
-escribirla.** Las dos reglas se enfrentan en un caso corriente: `@claude` tiene el arrendamiento vivo de
+escribirla.** Estas reglas se enfrentan en un caso corriente: `@claude` tiene el arrendamiento vivo de
 una tarea y `@sara` ejecuta `biso finish` sobre ella. Una regla dice que la escritura de otra identidad
-no toca ninguno de los dos campos, y solo avisa; la otra dice que la escritura que saca la tarea del
+no toca ninguno de los campos, y solo avisa; la otra dice que la escritura que saca la tarea del
 estado activo los vacía. Manda la segunda, y el aviso se emite igual. El argumento no es de gusto: la
 primera regla es una cortesía hacia el tenedor y la segunda es la invariante de la que dependen la
 validación del lote y `doctor`, así que con la precedencia al revés quedaría una tarea terminada con un
 arrendamiento vivo, y `biso export` de ese tablero produciría un fichero que su propio
 `biso init --from` rechazaría, rompiendo la prueba de simetría del ["contrato de estabilidad"](spec/estabilidad.md). Por el
-mismo argumento, `biso archive` vacía también los dos campos, aunque `archived` no sea un estado y
+mismo argumento, `biso archive` vacía también los campos, aunque `archived` no sea un estado y
 archivar no saque la tarea del estado activo: un arrendamiento afirma que alguien está trabajando ahora,
 y archivar es dejar de trabajar, así que conservarlo lo esconde donde nadie lo ve (`biso prime` y
 `biso ls` excluyen las archivadas) hasta que `--unarchive` lo devuelve semanas después a nombre de una
@@ -602,14 +602,14 @@ estado que no es el activo: ahí no se fija arrendamiento, porque fijarlo romper
 arriba, y hay que nombrarla explícitamente para que la frase "solo `start` reclama" no se lea como una
 regla sin excepciones.
 
-**Dos remates que la primera redacción dejó a medias.** El primero: los dos campos ya se podían pedir
+**Dos remates que la primera redacción dejó a medias.** El primero: los campos ya se podían pedir
 con `biso get --json`, y el mensaje de arranque remitía a `biso get` para verlos, pero su ficha de texto
 no tenía dónde enseñarlos, así que la remisión era falsa para quien no pide JSON. Ahora la ficha imprime
 una línea `lease` con los dos, y solo cuando la tarea tiene arrendamiento, porque una fila con dos
 guiones aparecería en la ficha de casi todas las tareas del tablero (["`biso get`"](spec/cmd/get.md)). El
-segundo: la validación rechazaba los dos campos sobre una tarea que no estuviera activa y asignada, pero
+segundo: la validación rechazaba los campos sobre una tarea que no estuviera activa y asignada, pero
 no rechazaba que llegara uno solo de los dos, y con `leaseExpiresAt` vacío el derivado `leaseExpired`
-comparaba un instante que no existe contra el reloj. Los dos campos van juntos o no viene ninguno, y
+comparaba un instante que no existe contra el reloj. Los campos van juntos o no viene ninguno, y
 `leaseExpired` es falso cuando no hay `leaseExpiresAt`: un derivado tiene que valer algo en todos los
 tableros posibles, no solo en los que se importaron bien.
 
@@ -814,7 +814,7 @@ vive en una sola máquina y no hay una segunda copia escribible con la que fusio
 comprobación de identidad de ["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables) basta y no hace falta un algoritmo de fusión.
 
 **Por qué `--fix` no es una comodidad, sino el consentimiento.** Esta decisión añade a `biso doctor`
-(["`biso doctor`"](spec/cmd/doctor.md)) las dos comprobaciones que no existían antes de que hubiera una base de
+(["`biso doctor`"](spec/cmd/doctor.md)) las comprobaciones que no existían antes de que hubiera una base de
 datos real detrás del tablero: la integridad de esa base de datos, y el aviso de un sistema de ficheros
 donde el modo WAL de SQLite no da las garantías de atomicidad que ["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables) exige.
 Las dos son daño externo puro, porque nada dentro de `biso` corrompe su propia base de datos ni decide
@@ -1039,7 +1039,7 @@ en esta máquina**, que es lo que el error `pointer_unresolved` dice con todas l
 alcanza un tablero que no existe en el disco.
 
 **La cuarta: la garantía que se pierde, y por qué no valía una bandera para conservarla.** Hay una
-diferencia real entre las dos banderas, y conviene no disimularla. `--board` prometía usar ese tablero
+diferencia real entre las banderas, y conviene no disimularla. `--board` prometía usar ese tablero
 directamente, sin buscar, mientras que `-C` sí sube por los ancestros, de modo que apuntar con `-C` a un
 directorio equivocado puede terminar en silencio en el tablero del proyecto que lo contenga. Parece un
 argumento para conservar la bandera, y se cae solo en cuanto se lee ["Cómo se elige el tablero"](spec/resolucion-del-tablero.md) entera, porque ese
@@ -1209,7 +1209,7 @@ entre las dos, por no añadir una decisión que nadie ha pedido.
 "los ficheros de la instantánea", pero la revisión lleva tres ficheros (`snapshot.ndjson`, `board.json` y
 el marcador `<id>.id`) mientras que la clave `files` del JSON de `biso snapshot` enseña solo los dos que
 ese comando escribe. Eran dos conjuntos distintos con nombres casi iguales, y no había manera de saber si
-`{files}` eran dos o tres. Son los tres, los mismos que entran en la revisión, y ahora las dos secciones
+`{files}` eran dos o tres. Son los tres, los mismos que entran en la revisión, y ahora esas secciones
 lo dicen y se nombran la una a la otra.
 
 ## El origen de la cifra de 25 milisegundos

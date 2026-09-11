@@ -54,8 +54,8 @@ se escriba, quien use otro sistema pasa por `custom` y pierde el identificador d
 **`biso doctor` no comprueba que el fichero de exclusión del tablero cuadre con el sistema configurado.**
 ["`biso init`"](spec/cmd/init.md) declara que si alguien cambia la clave `vcs` después de crear el tablero, el fichero se
 queda con el nombre del sistema anterior y hay que arreglarlo a mano. Es una comprobación que `doctor`
-podría hacer y no hace, y añadirla obliga a tocar las tres frases que cuentan las dieciocho filas de su
-tabla, así que no se hizo dentro de esa ronda.
+podría hacer y no hace, y añadirla obliga a tocar la tabla de `biso doctor`, así que no se hizo dentro
+de esa ronda.
 
 **["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque) no dice el sistema operativo de la máquina de referencia, y ahora se sabe que eso
 cambia mucho el margen.** Esa sección amarra el presupuesto de 25 milisegundos a "la máquina que ejecuta

@@ -62,7 +62,7 @@ TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 
 **Esta es la línea de estado, y la imprimen también los seis verbos del ciclo de la sección ["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`"](verbos-del-ciclo.md) y
 `biso archive`.** La única excepción es `biso new`, por el motivo que da la sección ["`biso new`"](new.md). Cada comando la enseña
-con su propio ejemplo, pero las tres reglas de su forma se dicen aquí y no se repiten:
+con su propio ejemplo, pero las reglas de su forma se dicen aquí y no se repiten:
 
 1. El trozo `ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación.
 2. El trozo `dod <marcados>/<total>` sale siempre que tenga definición de hecho. Una tarea sin ninguna

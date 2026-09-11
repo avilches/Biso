@@ -16,7 +16,7 @@ biso help [<command> | all]
 |---|---|
 | Sin argumento | Imprime la ["ayuda de primer nivel"](#la-ayuda-de-primer-nivel), igual que `biso --help` |
 | Con un nombre de comando | Imprime la ayuda de ese comando, igual que `biso <cmd> --help` |
-| Con `all` | Imprime la ayuda de primer nivel más la lista de los nueve comandos de administración, cada uno con su línea |
+| Con `all` | Imprime la ayuda de primer nivel más la lista de los comandos de administración, cada uno con su línea |
 | Con un nombre que no existe | Error 4, con los tres nombres más parecidos |
 
 `biso help` funciona **sin tablero**.
@@ -140,7 +140,7 @@ More: `biso <command> --help`, and `biso help all` for the administrative
 commands (init, where, archive, export, config, doctor, board, help, snapshot).
 ```
 
-Son treinta y una líneas, y no incluyen los nueve comandos de administración.
+Son treinta y una líneas, y no incluyen los comandos de administración.
 
 ---
 

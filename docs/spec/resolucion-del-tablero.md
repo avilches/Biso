@@ -85,7 +85,7 @@ claves:
 | `path` | ruta del directorio del tablero, absoluta o relativa | no | solo cuando el tablero no vive en una de las raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina) |
 
 Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
-tablero sin ningún paso adicional. Siete reglas gobiernan su lectura:
+tablero sin ningún paso adicional. Estas reglas gobiernan su lectura:
 
 - Una clave desconocida en el puntero es un error.
 - **`path` nombra el directorio del tablero, no el directorio que lo contiene.** Es la ruta que se

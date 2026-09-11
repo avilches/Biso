@@ -1,0 +1,16 @@
+# Frases que cuentan y que se quedan, porque el numero es la regla y hay una prueba que lo
+# comprueba, no una descripcion del contenido del documento. Una por linea, con su texto
+# exacto. Ver tools/comprobar_recuentos.py.
+
+dos campos
+seis verbos
+dos criterios
+siete principios
+cuatro requisitos
+cuatro decisiones
+tres mensajes
+tres estados
+tres banderas
+nueve secciones
+dos secciones
+ocho columnas

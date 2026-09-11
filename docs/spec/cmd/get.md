@@ -85,9 +85,12 @@ Esto lo reporto un usuario con un repositorio clonado en Windows.
 (empty)
 ```
 
+El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el contrato de estabilidad
+permite cambiar entre versiones menores, así que la cifra exacta puede no ser esta.
+
 Los encabezados de esta salida son un formato de presentación, no un formato de almacenamiento.
 
-**La línea `lease` sale solo cuando la tarea tiene arrendamiento**, y entonces sale con sus dos campos:
+**La línea `lease` sale solo cuando la tarea tiene arrendamiento**, y entonces sale con sus campos:
 `lease` es `leaseExpiresAt`, con el mismo formato de instante que `created` y `updated`, y `holder` es
 `leaseHolder` (sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Los dos aparecen y desaparecen juntos, porque la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) no admite uno sin
 el otro. Pertenece al bloque de metadatos, así que la trae `--section meta` y no ninguna otra sección.
@@ -96,7 +99,7 @@ ninguna de las de arriba cambia de sitio según la tarea. Eso no choca con la re
 completa imprime las nueve secciones aunque estén vacías, porque lo condicional es una línea del bloque
 y no el bloque. Una tarea sin arrendamiento **no imprime la línea**, en vez de imprimirla con dos
 guiones, porque eso pondría dos guiones en la ficha de casi todas las tareas del tablero y la ausencia
-de la línea dice lo mismo. Esta es la única forma de ver los dos campos sin `--json`: `biso prime` no
+de la línea dice lo mismo. Esta es la única forma de ver los campos sin `--json`: `biso prime` no
 los trae (["La salida literal"](prime.md#la-salida-literal)) y `biso ls` tampoco (["`biso ls`"](ls.md)). Si el arrendamiento está vencido, el instante ya lo dice y la
 ficha no añade ninguna marca; el derivado `leaseExpired` ya calculado está en `--json`.
 

@@ -102,7 +102,7 @@ Las reglas del lote, todas obligatorias:
   comprueba en la validación, en sus dos mitades, y cada una es un fallo que nombra la línea y el campo.
   Una línea que traiga cualquiera de los dos sobre una tarea que no esté a la vez en el estado activo y
   asignada a alguien es un fallo de validación. Y una línea que traiga uno de los dos y no el otro
-  también lo es, aunque la tarea esté activa y asignada: los dos campos van juntos, porque
+  también lo es, aunque la tarea esté activa y asignada: los campos van juntos, porque
   `leaseExpired` se calcula comparando `leaseExpiresAt` con el reloj de quien lee y con ese campo vacío
   no habría nada que comparar. Los dos fallos se ven así:
   ```

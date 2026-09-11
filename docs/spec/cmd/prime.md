@@ -60,7 +60,7 @@ Entra:
 - **Los nombres de todas las banderas de campo**, en una rejilla de cinco líneas.
 - El vocabulario real de este tablero, con **el recuento por estado** y con la marca de cuál es el
   estado de las tareas nuevas, cuál el activo y cuál el terminal.
-- Las once reglas que no son adivinables.
+- Las reglas que no son adivinables.
 - Los códigos de salida, en dos líneas.
 - El estado del tablero: lo que está en curso y lo más urgente de lo que no ha empezado.
 
@@ -71,8 +71,8 @@ Se queda fuera, y va a `biso <cmd> --help`:
 - El formato de lote de `biso new --from` y el esquema JSON completo.
 - `biso export`, `biso config`, `biso doctor`, `biso archive`, `biso where` y `biso board`, que no
   aparecen en el ciclo de trabajo normal.
-- Todos los casos límite: el rango invertido, las dos entradas estándar, la coma dentro de una
-  etiqueta.
+- Todos los casos límite: el rango invertido, pedir la entrada estándar más de una vez, la coma
+  dentro de una etiqueta.
 - La política de cuándo merece la pena crear una tarea, que es una decisión del proyecto y no de la
   herramienta. El mensaje la resume en una línea y no la desarrolla.
 
@@ -170,6 +170,9 @@ and close with `biso finish <ref> --check all --check-dod all --summary "..."`.
 That is the loop. Create a task when the work needs planning or review; do small
 edits directly.
 ```
+
+La cadena de versión de la primera línea es la que tenga instalada quien ejecute el ejemplo, y el
+contrato de estabilidad permite que cambie entre versiones, así que puede no ser exactamente esta.
 
 Cómo se calcula el resumen, para que la implementación sea única:
 
@@ -279,6 +282,9 @@ THE BOARD IS EMPTY
   }
 }
 ```
+
+Los valores de urgencia del ejemplo salen de los coeficientes por defecto, que el contrato de
+estabilidad permite cambiar entre versiones menores, así que las cifras exactas pueden no ser estas.
 
 Las reglas y los nombres de las banderas no viajan en el JSON: quien pide JSON es un programa, y un
 programa no necesita que le expliquen que el nombre desnudo añade.

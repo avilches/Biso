@@ -11,7 +11,7 @@ Todos los comandos que reciben `<ref>` usan exactamente esta rutina. No hay vari
 | `#<n>` | `#11` | igual que el anterior |
 | cualquier otra cosa | `"CRLF"` | consulta de texto |
 
-Dos banderas fuerzan la interpretación, y valen en todos los comandos que aceptan una referencia:
+Estas banderas fuerzan la interpretación, y valen en todos los comandos que aceptan una referencia:
 
 - `--id` obliga a interpretar como identificador. Con un valor que no encaje en la gramática, error 2.
 - `--match` obliga a interpretar como texto, y sirve para buscar una tarea que se llame "42".
@@ -75,7 +75,8 @@ note: TASK-53 was assigned at some point, so it was archived and then removed
 hint: `biso ls --archived` lists what is archived
 ```
 
-Los tres códigos son distintos: 2, y luego 4 con dos `code` distintos.
+Los códigos de estos tres casos son distintos entre sí: el primero sale con 2, y los otros dos comparten
+el código 4 pero llevan un `code` distinto.
 
 ---
 

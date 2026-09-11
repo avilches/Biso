@@ -52,7 +52,7 @@ Sale a `doctor` solo lo que cae en uno de estos dos casos:
 - **Lo que solo pasa por daño externo**, porque nada dentro de `biso` lo produce: una base de datos
   corrupta, una carpeta que alguien movió a mano, un fichero que perdió sus permisos.
 
-Y de ahí sale el corolario que hace falta para que las dos reglas no se peleen: **un comando que
+Y de ahí sale el corolario que hace falta para que las reglas no se peleen: **un comando que
 tropieza con un problema reparable que no le toca arreglar lo dice con un `warning:` y nombra `biso
 doctor --fix`.** Eso no es remitir a una llamada que se iba a hacer igual, que es justo lo que se
 prohíbe: es contar algo que quien llama no sabía y que no iba a descubrir por su cuenta. La regla que
@@ -156,7 +156,7 @@ Y con `--fix`, en el grupo de lo reparado:
 
 Su `code` en el JSON es `lease_invariant` en los dos sitios.
 
-**Las dos filas del marcador se parecen y se reparan al revés, y por eso son dos.** Que falte tiene una
+**Las filas del marcador se parecen y se reparan al revés.** Que falte tiene una
 sola lectura posible: el `id` de verdad es el que lleva la base de datos, y el marcador es su copia en el
 sistema de ficheros, así que escribirlo con ese valor no puede equivocarse y `--fix` lo hace solo. Que
 discrepe no tiene una sola lectura: reescribir el marcador con el `id` de la base de datos dejaría de
@@ -174,17 +174,16 @@ sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#c
 distingue a un aviso de un error, así que es aviso.
 
 **Y la primera tiene una peculiaridad que la separa de las demás filas de error: nunca aparece como
-una línea del informe.** Las otras catorce comprobaciones de error sí producen una entrada en la lista
+una línea del informe.** Las demás comprobaciones de error sí producen una entrada en la lista
 de problemas cuando se disparan, pero esta no, porque cuando se dispara no hay informe de `doctor`
 que mostrarla: hay el abort completo de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), con su propio mensaje y su propio código 10,
 antes de que `doctor` llegue a comprobar nada más (ver la tabla de comportamiento más abajo). La fila
 está en esta tabla para decir que existe como comprobación y cuál es su nivel, no porque vaya a
 verse alguna vez junto a las demás.
 
-Con esto, de las dieciocho filas de la tabla, diecisiete son problemas (quince errores y dos avisos) y
-una, los huecos en la numeración, no lo es y no se reporta nunca. De esas diecisiete, solo dieciséis
-llegan a aparecer alguna vez como una línea del informe: la comprobación de integridad de la base de
-datos es la única que, aun siendo un problema real, no se manifiesta ahí, por la razón de arriba.
+Con esto, todas las filas de la tabla son un problema real salvo los huecos en la numeración, que no
+lo son y no se reportan nunca. Y de las que sí lo son, solo la comprobación de integridad de la base de
+datos no llega a aparecer nunca como una línea del informe, por la razón de arriba.
 
 ## Atomicidad de `--fix` con varias reparaciones
 

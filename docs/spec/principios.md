@@ -1,13 +1,13 @@
 # Los principios
 
-Siete reglas. El resto del documento es una consecuencia de ellas.
+Las reglas de esta lista. El resto del documento es una consecuencia de ellas.
 
 1. **Un valor que el tablero no conoce es un error, se esté leyendo o escribiendo, y siempre con la
    misma regla de coincidencia.** Un filtro con un valor imposible nunca devuelve una lista vacía.
    Como consecuencia, una lista vacía es un hecho sobre el tablero y quien la recibe puede actuar en
    consecuencia.
 
-2. **Un nombre significa siempre lo mismo, en todos los comandos.** No existen dos banderas con el
+2. **Un nombre significa siempre lo mismo, en todos los comandos.** No existen banderas con el
    mismo nombre y semántica distinta según dónde se usen, ni dos nombres para el mismo concepto.
 
 3. **El nombre desnudo añade. Sustituir se dice en voz alta.** `--label` añade una etiqueta y

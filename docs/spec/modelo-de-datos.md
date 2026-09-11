@@ -43,7 +43,7 @@ escribe. No dice nada de cómo se guardan.
 | `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
 | `leaseExpired` | booleano, derivado | derivado | el programa | no, se recalcula al leer |
 
-Ocho precisiones sobre la mutabilidad:
+Precisiones sobre la mutabilidad:
 
 - **"No mutable" significa que ninguna bandera del programa lo cambia.** `updatedAt` lo reescribe el
   programa en cada operación que cambie algo.
@@ -73,7 +73,7 @@ Ocho precisiones sobre la mutabilidad:
   segunda pasa por `biso start` o por su atajo `biso new --start`.** Cualquier escritura sobre una
   tarea activa y asignada renueva `leaseExpiresAt` a `ahora + lease_minutes`, pero solo
   cuando quien llama ya es `leaseHolder`. **Cualquier escritura son todas**, sin ninguna excepción:
-  los [seis verbos del ciclo](cmd/verbos-del-ciclo.md), [`biso set`](cmd/set.md) y [`biso archive`](cmd/archive.md), que son los ocho
+  los [seis verbos del ciclo](cmd/verbos-del-ciclo.md), [`biso set`](cmd/set.md) y [`biso archive`](cmd/archive.md), que son los
   comandos que llegan a escribir sobre una tarea que ya existe. Se nombran aquí porque una regla
   general que no nombra a nadie invita a buscarle excepciones donde no las hay. **Una escritura que
   no cambia ningún campo renueva igual**: [`biso set`](cmd/set.md) con todas sus banderas dando el valor que la
@@ -83,29 +83,29 @@ Ocho precisiones sobre la mutabilidad:
   porque ningún campo de la tarea ha cambiado, y deja vacía la lista `changed` del [esquema JSON](cmd/set.md); la nota sigue siendo cierta, porque habla de los campos de la tarea y ninguno cambió. Si la
   tarea no tiene arrendamiento todavía, escribir sobre ella no lo crea: fijarlo por primera vez es
   parte de lo que hace `biso start`, igual que reclamarlo vencido o tomarlo de [otra identidad](cmd/verbos-del-ciclo.md#biso-start). Una escritura de una identidad distinta de `leaseHolder` mientras el arrendamiento está
-  vivo no toca ninguno de los dos campos: avisa con el mismo
+  vivo no toca ninguno de los campos: avisa con el mismo
   `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` de [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y de la tabla de
   la sección ["Notas y avisos"](salida-y-terminal.md#notas-y-avisos), y el resto de la escritura se hace igual. **Con una sola excepción, y es que esa
   misma escritura rompa la invariante de la precisión siguiente**: si deja la tarea fuera del estado
-  activo, sin ninguna persona asignada o archivada, los dos campos se vacían en esa misma escritura,
+  activo, sin ninguna persona asignada o archivada, los campos se vacían en esa misma escritura,
   sea quien sea quien la haga, y el aviso de que el arrendamiento era de otra identidad se emite
   igual. Una escritura de una identidad distinta mientras el arrendamiento está vencido tampoco lo
   toca, y lo deja vencido: quien comenta, anota o cierra una tarea no ha reclamado nada. **Reclamar
   es de [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y de su atajo [`biso new --start`](cmd/new.md), y de nadie más**, con una
   excepción que hay que nombrar porque sin ella la frase sería falsa: `biso start -s <estado>` con
   un estado que no es el activo no fija arrendamiento, ya que fijarlo ahí rompería la invariante de
-  la precisión siguiente, y deja los dos campos como los dejaría cualquier otra escritura. Una tarea
+  la precisión siguiente, y deja los campos como los dejaría cualquier otra escritura. Una tarea
   que llega a activa y asignada por cualquier otra vía no tiene arrendamiento hasta que alguien
   llame a `biso start` sobre ella, y esas vías son exactamente dos: las banderas de campo de la
   sección ["Las familias de banderas"](familias-de-banderas.md), por ejemplo `biso set --status`, ninguna de las cuales lo puede crear, y la
   importación, que es de lo que trata la última precisión.
-- **Los dos campos solo tienen valor en una tarea activa y asignada, y se vacían al perder
+- **Los campos solo tienen valor en una tarea activa y asignada, y se vacían al perder
   cualquiera de las dos condiciones, no solo la primera.** Una escritura que saca la tarea del
   estado activo (`biso finish`, o `biso set --status` a cualquier otro valor) vacía
   `leaseExpiresAt` y `leaseHolder` en esa misma escritura. Y como la condición que los sostiene es
   la conjunción de las dos cosas, perder la segunda los vacía igual: `--clear-assignee` o
   [`--rm-assignee`](familias-de-banderas.md#campos-de-lista) sobre una tarea activa que se queda sin ninguna persona asignada vacía los
-  dos campos en esa misma escritura, sea quien sea quien la haga. **[`biso archive`](cmd/archive.md) los vacía
+  campos en esa misma escritura, sea quien sea quien la haga. **[`biso archive`](cmd/archive.md) los vacía
   también**, aunque `archived` no sea un estado y archivar no saque la tarea del estado activo:
   archivar es dejar de trabajar en la tarea, y un arrendamiento es la afirmación de que alguien está
   trabajando ahora, así que conservarlo lo guardaría donde nadie lo ve, porque `biso prime` y
@@ -117,7 +117,7 @@ Ocho precisiones sobre la mutabilidad:
   deja terminada y sin arrendamiento. Con la precedencia al revés quedaría una tarea terminada con un
   arrendamiento vivo, que es exactamente lo que la última precisión rechaza al importar, así que
   `biso export` produciría un fichero que su propio `biso init --from` rechaza y la prueba de
-  simetría de la sección ["El contrato de estabilidad"](estabilidad.md) fallaría (sección ["Saber si alguien está trabajando de verdad"](../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de `DECISIONES.md`). **Y los dos campos van
+  simetría de la sección ["El contrato de estabilidad"](estabilidad.md) fallaría (sección ["Saber si alguien está trabajando de verdad"](../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de `DECISIONES.md`). **Y los campos van
   siempre juntos**: ninguna escritura, y tampoco la importación, deja uno con valor y el otro vacío.
 - **La importación los escribe con el valor que traiga el fichero, y es la única vía que lo hace.**
   Los dos son campos guardados y no derivados, así que [`biso export`](cmd/export.md) los escribe y [`biso new --from`](cmd/new.md)
@@ -125,7 +125,7 @@ Ocho precisiones sobre la mutabilidad:
   sin una lista de excepciones que mantener. La invariante de la precisión anterior se comprueba al
   importar, y en sus dos mitades. Una línea que traiga `leaseExpiresAt` o `leaseHolder` sobre una
   tarea que no esté a la vez en el estado activo y asignada a alguien es un fallo de validación del
-  [lote](cmd/new.md), igual que una clave desconocida. Y una línea que traiga uno de los dos campos y no el
+  [lote](cmd/new.md), igual que una clave desconocida. Y una línea que traiga uno de los campos y no el
   otro es el mismo fallo, con el mismo trato: los dos vienen juntos o no viene ninguno, porque un
   `leaseHolder` sin `leaseExpiresAt` sería un arrendamiento que no caduca nunca, y un
   `leaseExpiresAt` sin `leaseHolder` una reserva de nadie. Un arrendamiento importado no privilegia
@@ -237,6 +237,9 @@ fórmula.
 Un ejemplo completo, que es el que imprime `biso get --explain-urgency` en la sección [`biso get`](cmd/get.md): una tarea
 de prioridad alta, en el estado activo, de la que depende otra tarea sin terminar, sin fecha límite,
 con dos criterios y creada hoy, suma `6.0 + 4.0 + 8.0 + 0.0 + 0.0 + 1.0 + 0.0`, es decir **19.0**.
+
+El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el contrato de estabilidad
+permite cambiar entre versiones menores, así que la cifra exacta puede no ser esta.
 
 **Los coeficientes configurables son exactamente siete, bajo `urgency.`, uno por término de la
 fórmula**: `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`,

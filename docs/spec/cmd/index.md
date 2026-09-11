@@ -1,9 +1,10 @@
 # Los comandos
 
-Veinte comandos. Los once primeros son el ciclo de trabajo y aparecen en `biso --help`; los nueve
-restantes son de administración y aparecen en `biso help all`. De esos once, diez son los que la sección ["Qué entra en el mensaje y qué se relega a `--help`"](prime.md#qué-entra-en-el-mensaje-y-qué-se-relega-a---help)
-cuenta como "las órdenes del ciclo de trabajo" del bloque `COMMANDS` de `biso prime`: `prime` es el
-undécimo, y no se lista a sí mismo en su propio mensaje.
+Los comandos que aparecen en `biso --help` son el ciclo de trabajo; los que no aparecen ahí son de
+administración y solo se listan con `biso help all`. De los que aparecen en `biso --help`, todos salvo
+`prime` son los que la sección ["Qué entra en el mensaje y qué se relega a `--help`"](prime.md#qué-entra-en-el-mensaje-y-qué-se-relega-a---help)
+cuenta como "las órdenes del ciclo de trabajo" del bloque `COMMANDS` de `biso prime`: `prime` no se
+lista a sí mismo en su propio mensaje.
 
 | Comando | Qué hace | En `biso --help` |
 |---|---|---|
@@ -30,7 +31,7 @@ undécimo, y no se lista a sí mismo en su propio mensaje.
 
 **Las banderas globales de la sección ["Banderas globales"](../invocacion.md#banderas-globales) valen en todos ellos y no se repiten en las tablas de
 parámetros de cada comando.** Un comando solo las menciona cuando le impone una restricción
-adicional, y esas restricciones son exactamente cuatro en todo el documento: `prime --full` no se
+adicional, y estas son todas las restricciones que hay en todo el documento: `prime --full` no se
 combina con `--json`, `config` solo acepta `--json` en su subcomando `list`, `export` rechaza
 `--json` con código 2, y `--print` y `--dry-run` no valen donde no tienen nada que hacer, cada una
 en su propia lista, según la regla de la sección ["Banderas globales"](../invocacion.md#banderas-globales).

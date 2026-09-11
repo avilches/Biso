@@ -98,9 +98,9 @@ sí está cerrado.
 
 `missing_identity` (código 2, en `biso ask`, `biso answer` y el autor de un comentario) y
 `mine_requires_identity` (código 6, en `--mine`) son la falta de identidad de la tabla de ["Variables de entorno"](invocacion.md#variables-de-entorno), pero
-con dos códigos de salida distintos. No son un mismo concepto duplicado: como esta tabla está
+con códigos de salida distintos. No son un mismo concepto duplicado: como esta tabla está
 agrupada por código de salida y ninguno de los dos se mueve nunca, la misma falta de identidad no
-puede compartir un `code` cuando sale con códigos distintos. La asimetría entre los dos códigos es
+puede compartir un `code` cuando sale con códigos distintos. La asimetría entre esos códigos es
 anterior a esta rama.
 
 ## Números, fechas y ausencias

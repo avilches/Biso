@@ -3,7 +3,7 @@
 ## El presupuesto de arranque
 
 **`biso ls` y `biso prime` sobre un tablero de 300 tareas terminan en menos de 25 milisegundos de
-reloj.** Es una regla transversal y no solo de esos dos comandos: ninguno de los demás tiene un motivo
+reloj.** Es una regla transversal y no solo de esos comandos: ninguno de los demás tiene un motivo
 para tardar más que ellos. Es una prueba de la suite, no una aspiración, y se mide en la máquina de
 referencia.
 
@@ -24,12 +24,12 @@ la siguiente, porque ahí el hardware no ha cambiado y lo único que puede haber
 
 **La composición del tablero de 300 tareas es indiferente, y por eso no se fija.** No importa cuántas
 estén en cada estado, ni si alguna tiene una pregunta abierta o un arrendamiento vencido: ninguno de
-los dos comandos se ramifica según el contenido de una tarea concreta, así que su coste crece de forma
+los comandos se ramifica según el contenido de una tarea concreta, así que su coste crece de forma
 esencialmente lineal con el número de tareas y no con su composición. Fijar un reparto arbitrario no
 añadiría ninguna garantía que esta razón no dé ya, y la ambigüedad se cierra con la explicación, no con
 una tabla de reparto que nadie necesita reproducir.
 
-Tres reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
+Estas reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
 
 1. **Ningún comando hace al arrancar trabajo que nadie ha pedido.** Ni una consulta que no alimente
    una línea de lo que esa invocación va a imprimir, ni una comprobación de más, ni una llamada de

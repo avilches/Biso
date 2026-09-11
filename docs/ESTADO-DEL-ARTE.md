@@ -366,7 +366,7 @@ y ["Riesgos conocidos y aceptados del modelo de estados"](DECISIONES.md#riesgos-
 `https://github.com/MrLesk/Backlog.md/issues/990`, si un agente copia la descripción ya renderizada,
 con sus marcadores de sección incluidos, y la reenvía como entrada, los marcadores se anidan y las
 ediciones sucesivas se van tragando los criterios de aceptación y las notas, que desaparecen de la
-salida. En `https://github.com/MrLesk/Backlog.md/issues/1000`, confundir dos banderas crea un criterio
+salida. En `https://github.com/MrLesk/Backlog.md/issues/1000`, confundir banderas crea un criterio
 fantasma en silencio. En `https://github.com/MrLesk/Backlog.md/issues/1008`, un subencabezado dentro de
 una sección la trunca, porque el patrón que la extrae no distingue dos almohadillas de tres.
 

@@ -53,7 +53,7 @@ Reglas de combinación de filtros:
 - **Filtros de campos distintos se combinan con `y`.** `-s "To Do" --type bug` son las que cumplen las
   dos cosas.
 - **Valores repetidos del mismo campo se combinan con `o`.** `--type bug --type docs` son las de
-  cualquiera de los dos tipos. Esto vale para `--status`, `--type`, `--priority`, `--project`,
+  cualquiera de los tipos. Esto vale para `--status`, `--type`, `--priority`, `--project`,
   `--assignee` y `--label-or`.
 - **`-l/--label` es la única que se combina con `y`.** `-l frontend -l bug` son las que llevan las
   dos. Para el `o` está `--label-or`, que valida igual.
@@ -241,8 +241,11 @@ igual que las demás.
 }
 ```
 
+El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el contrato de estabilidad
+permite cambiar entre versiones menores, así que la cifra exacta puede no ser esta.
+
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
-comentarios. Para eso está `biso get`. Los diez campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) sí están todos,
+comentarios. Para eso está `biso get`. Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) sí están todos,
 `blocks` incluido. `truncated` es explícito para que nadie tenga que comparar `shown` con `matched`,
 y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado.
 

@@ -7,7 +7,7 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 |---:|---|---|---|
 | 0 | `OK` | La operación terminó y se aplicó | `biso new "Algo"` |
 | 1 | `INTERNAL` | Fallo no previsto del programa | una excepción no capturada |
-| 2 | `USAGE` | La línea de comandos está mal formada | bandera desconocida, falta un obligatorio, dos banderas incompatibles, identificador mal formado, bandera de escritura en un comando de lectura |
+| 2 | `USAGE` | La línea de comandos está mal formada | bandera desconocida, falta un obligatorio, banderas incompatibles, identificador mal formado, bandera de escritura en un comando de lectura |
 | 3 | `BAD_VALUE` | El valor que llega es sintácticamente correcto pero el tablero no lo reconoce, o un dato guardado no se puede interpretar | `--status "Pending"` en un tablero cuyos estados son otros |
 | 4 | `NOT_FOUND` | La entidad referida no existe | `biso get TASK-999` |
 | 5 | `AMBIGUOUS` | La referencia encaja con más de una entidad | `biso get "parser"` con tres coincidencias |
@@ -18,7 +18,7 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 | 10 | `DAMAGED` | El tablero está donde tiene que estar, y su almacén no se puede leer | `board.db` que no abre, o que falla su comprobación de integridad (["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) |
 | 11 | `AMBIGUOUS_BOARD` | El mismo identificador de tablero aparece en dos sitios, y elegir uno sería escribir en el que nadie ha nombrado | dos raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina) con una carpeta que lleva el mismo marcador (["Cómo se elige el tablero"](resolucion-del-tablero.md)) |
 
-Cinco reglas que acompañan a la tabla:
+Las reglas que acompañan a la tabla:
 
 - **El código 9 garantiza que no se ha escrito nada.** Si un comando termina con 9, el tablero está
   exactamente como estaba antes. Por eso una validación fallida dentro de un lote se reporta como 9 y
