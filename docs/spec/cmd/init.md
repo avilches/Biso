@@ -113,7 +113,7 @@ contrario sería mentir.
 
 **Las dos salidas de esa elección cambian dónde acaba el historial**, y por eso merece la pena decirlas
 juntas. Ignorar la carpeta deja al tablero con su propio repositorio, el que `biso snapshot` crea de
-forma perezosa la primera vez que corre ahí, y publicarlo es entonces un trabajo aparte.
+forma perezosa la primera vez que corre ahí (["`biso snapshot`"](snapshot.md)), y publicarlo es entonces un trabajo aparte.
 Versionarla mete los dos ficheros de la instantánea en el repositorio del código, así que `snapshot`
 guarda su revisión ahí mismo, junto a los cambios del proyecto, y la instantánea cruza a otra máquina
 con él sin que nadie configure nada. La base de datos no entra en ninguno de los dos casos.
