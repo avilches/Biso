@@ -85,14 +85,12 @@ actualice solo.
 **El mensaje del commit `bd0c874`** describe cuatro cambios que en realidad entraron en `aaa5b96`. El
 árbol es correcto, solo el mensaje se adelantó. Sin enmendar por no reescribir historia sin petición.
 
-**El campo `origen` de los fixtures del tutorial**, que cita hoy la especificación por el número de
-sección del viejo `SPEC.md` (`literal SPEC <número>`) y tiene que pasar a citarla por fichero y título
-dentro de `docs/spec/` (`literal spec/salida-y-terminal.md "Notas y avisos"`), como el resto del
-repositorio. El cambio se empezó en `worktree-tutorial` y se paró a medio camino: cuando se escribió el
-plan del reparto solo existía el escenario `01-llegas-a-un-proyecto.yaml`, con dos `origen` de una sola
-sección cada uno, pero ese worktree ya tiene doce escenarios más, con muchos pasos que citan varias
-secciones a la vez separadas por coma (`derivada SPEC <número>, <número>, ...`). Ni la forma nueva del
-campo ni el generador de fixtures dicen cómo citar varias secciones en una sola línea de `origen`, y el
-diseño del tutorial tampoco explica por qué un paso citaría más de una a la vez. Hace falta decidir esa
-forma combinada antes de tocar los doce escenarios; el escenario `01` y el generador quedaron sin tocar,
-en su forma vieja, para no dejar el tutorial roto a medias.
+**El campo `origen` de los fixtures del tutorial, decidido pero sin ejecutar.** La forma combinada que
+faltaba (citar varias secciones a la vez, cada una por fichero y título) ya está decidida en
+[`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md): `origen` se separa en `source_kind`
+(`literal` o `derived`) y `source`, una lista de citas. Esa decisión se llevó además a que el tutorial
+entero nace en inglés, no solo ese campo, así que lo que falta por hacer creció con ella: traducir los
+nombres de todos los campos del formato y el contenido en español de los trece escenarios de
+`worktree-tutorial`, y las cadenas de página de `tutorial/generate.py`. Nada de eso se puede ejecutar
+desde este worktree, aislado en `.claude/worktrees/reparto-de-la-spec`: hace falta una sesión que trabaje
+directamente en `worktree-tutorial`, con ese documento como plan de partida.
