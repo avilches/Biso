@@ -1681,6 +1681,14 @@ git commit -m "Reordena DECISIONES.md por temas en vez de por orden de llegada"
 está sin commitear. Esta tarea no se puede hacer hasta que ese trabajo esté en una rama. **Si al llegar
 aquí sigue sin commitear, para y dilo, no lo commitees tú.**
 
+> **Aplazada el 2026-09-11: la precondición ya se cumple, pero `worktree-tutorial` cambió de forma que
+> este paso a paso ya no basta.** Cuando se escribió este plan solo existía el escenario
+> `01-llegas-a-un-proyecto.yaml`; hoy hay doce más, y muchos de sus pasos citan varias secciones del
+> viejo `SPEC.md` a la vez, separadas por coma (`derivada SPEC 5.2, 5.3, 10.5, 10.7.6`), una forma que
+> ni el paso 1 de esta tarea ni el mapa de la tarea 3 contemplan. Hace falta decidir cómo se cita eso en
+> la forma nueva antes de tocar esos doce escenarios. El detalle está en la entrada "El campo `origen`
+> de los fixtures del tutorial" de [`docs/PENDIENTES.md`](../../PENDIENTES.md#2-decisiones-aplazadas-a-propósito).
+
 **Files:**
 - Modify: `tutorial/generar.py`
 - Modify: `tutorial/escenarios/01-llegas-a-un-proyecto.yaml`
