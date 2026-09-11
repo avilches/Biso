@@ -92,7 +92,7 @@ que son la búsqueda de un tablero por su `id` (la sección ["Cómo se elige el 
 `id` nuevo no exista ya. El orden solo importa para decir qué se lee antes, nunca para elegir entre dos
 candidatos: **el mismo `id` en dos raíces es un error** (la sección ["Cómo se elige el tablero"](resolucion-del-tablero.md)), no una preferencia. Una raíz de la
 lista que no exista o no se pueda leer no es un error, porque una máquina puede tener configurado un
-disco que hoy no está montado: se salta y `biso doctor` la reporta como aviso (["`biso help`"](cmd/help.md#biso-help)).
+disco que hoy no está montado: se salta y `biso doctor` la reporta como aviso (["`biso doctor`"](cmd/doctor.md#qué-comprueba)).
 
 Se leen directamente de ese fichero, sin pasar por la resolución de tablero de la sección ["Cómo se elige el tablero"](resolucion-del-tablero.md), porque
 hace falta conocerlas antes de que exista el primer tablero de la máquina. Y, como en cualquier otro

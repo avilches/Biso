@@ -221,7 +221,7 @@ ninguna base de datos (sección ["Cómo se elige el tablero"](../resolucion-del-
 `{ "storeVersion": 1 }`, la versión del formato del almacén, que no repite el identificador para que no
 haya dos sitios donde pueda decir cosas distintas. El mismo identificador está guardado dentro de la
 base de datos, y esa redundancia es a propósito: es la que permite comprobar que el marcador de un
-directorio corresponde de verdad al tablero que contiene, cosa que `biso doctor` hace (sección ["`biso help`"](help.md#biso-help)). Los dos
+directorio corresponde de verdad al tablero que contiene, cosa que `biso doctor` hace (sección ["`biso doctor`"](doctor.md#qué-comprueba)). Los dos
 ficheros, la base de datos y el marcador, son lo único que hace falta para que un directorio sea un
 tablero.
 

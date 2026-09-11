@@ -82,8 +82,7 @@ Ocho precisiones sobre la mutabilidad:
   puede depender de si los valores coincidían por casualidad. Esa renovación no toca `updatedAt`,
   porque ningún campo de la tarea ha cambiado, y deja vacía la lista `changed` del [esquema JSON](cmd/set.md); la nota sigue siendo cierta, porque habla de los campos de la tarea y ninguno cambió. Si la
   tarea no tiene arrendamiento todavía, escribir sobre ella no lo crea: fijarlo por primera vez es
-  parte de lo que hace `biso start`, igual que reclamarlo vencido o tomarlo de [otra identidad
-  ](cmd/verbos-del-ciclo.md#biso-start). Una escritura de una identidad distinta de `leaseHolder` mientras el arrendamiento está
+  parte de lo que hace `biso start`, igual que reclamarlo vencido o tomarlo de [otra identidad](cmd/verbos-del-ciclo.md#biso-start). Una escritura de una identidad distinta de `leaseHolder` mientras el arrendamiento está
   vivo no toca ninguno de los dos campos: avisa con el mismo
   `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` de [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y de la tabla de
   la sección ["Notas y avisos"](salida-y-terminal.md#notas-y-avisos), y el resto de la escritura se hace igual. **Con una sola excepción, y es que esa

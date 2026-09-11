@@ -33,7 +33,7 @@ ejecuta un comando dentro de un tablero se refiere a ese, no al del proyecto que
 tablero de un `id` concreto sí exige las dos cosas, porque ahí la pregunta es cuál de varios directorios
 es el que se busca y el marcador es lo único que la contesta. Aquí no hay nada que elegir: el directorio
 ya está señalado con el dedo, y un tablero al que le falte el marcador tiene que poder abrirse
-precisamente para que `biso doctor --fix` se lo devuelva (["`biso help`"](cmd/help.md#biso-help)). Exigirlo también aquí dejaría sin
+precisamente para que `biso doctor --fix` se lo devuelva (["`biso doctor`"](cmd/doctor.md#qué-comprueba)). Exigirlo también aquí dejaría sin
 arreglo el único estado que ese arreglo existe para arreglar.
 
 **El tope de la búsqueda hacia arriba es el directorio personal de quien llama**, el que dice la
@@ -103,7 +103,7 @@ tablero sin ningún paso adicional. Siete reglas gobiernan su lectura:
   de ficheros: el mismo `id` está guardado dentro de la base de datos, y el marcador lo repite en su
   nombre para que encontrar un tablero sea leer nombres de un directorio, sin abrir ninguna base de
   datos. Lleva dentro la versión del formato del almacén. **Si el nombre del marcador y el `id` de la
-  base de datos discrepan es un error**, y `biso doctor` lo comprueba (["`biso help`"](cmd/help.md#biso-help)).
+  base de datos discrepan es un error**, y `biso doctor` lo comprueba (["`biso doctor`"](cmd/doctor.md#qué-comprueba)).
 - **Un directorio con el marcador pero sin la base de datos no es un tablero, y la búsqueda sigue.** No
   es un caso rebuscado: es lo que recibe una copia de trabajo de un proyecto que versionó el directorio
   de su tablero, porque el fichero de exclusión que `init` escribe ahí dentro excluye siempre la base de datos y
