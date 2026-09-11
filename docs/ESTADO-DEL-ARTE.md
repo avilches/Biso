@@ -268,7 +268,7 @@ alta.
 **Qué hace `biso`.** Un tablero es uno, con un solo asignador. Los identificadores siguen siendo
 secuenciales y legibles, porque el fallo no viene de que sean secuenciales, viene de que cada copia de
 trabajo asigne por su cuenta. Compartir entre máquinas más adelante se hace reservando rangos, y los
-huecos que eso deja ya son legales por escrito en la sección 4.11.
+huecos que eso deja ya son legales por escrito en ["Identificadores"](spec/modelo-de-datos.md#identificadores).
 
 ## 2. El estado de las tareas se bifurca con la rama
 
@@ -303,7 +303,8 @@ ficheros de bloqueo y escrituras atómicas.
 Claude Code sufre lo mismo en su propio fichero de configuración, que varias sesiones truncan a mitad
 de escritura (`https://github.com/anthropics/claude-code/issues/28973`).
 
-**Qué hace `biso`.** Lo tenía escrito antes de elegir el mecanismo: la sección 4.10 exige que ninguna
+**Qué hace `biso`.** Lo tenía escrito antes de elegir el mecanismo:
+["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables) exige que ninguna
 escritura se observe a medias, que dos escrituras simultáneas sobre la misma tarea no se pierdan ni se
 mezclen, y que si no se consigue el acceso exclusivo se espere hasta cinco segundos y se falle con
 código 7 **sin escribir nada**. Una transacción de SQLite en modo WAL da exactamente eso.
@@ -330,10 +331,10 @@ muerto libera solo. Y no intenta cruzar máquinas, porque un tablero es uno.
 escanea las carpetas de activas y completadas pero no la de archivadas, así que el identificador vuelve
 a estar libre y quedan dos ficheros distintos con el mismo identificador en carpetas distintas.
 
-**Qué hace `biso`.** La sección 4.11 lo prohíbe expresamente: un identificador no se reutiliza jamás, y
+**Qué hace `biso`.** ["Identificadores"](spec/modelo-de-datos.md#identificadores) lo prohíbe expresamente: un identificador no se reutiliza jamás, y
 el tablero sabe en todo momento cuál es el más alto que ha llegado a asignar, dato que se guarda aparte
-de las tareas presentes. Eso es también lo que le permite dar tres mensajes distintos de "no la
-encuentro" en la sección 7.3, distinguiendo un identificador mal formado, uno que nunca existió, y uno
+de las tareas presentes. Eso es también lo que le permite dar
+[tres mensajes distintos de "no la encuentro"](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), distinguiendo un identificador mal formado, uno que nunca existió, y uno
 que existió y ya no está.
 
 ## 6. Una tarea se queda cogida porque la sesión murió
@@ -355,8 +356,9 @@ misma transacción, de modo que nadie renueva ni se atribuye un arrendamiento aj
 reclamaciones simultáneas de uno vencido solo gana una. Lo que no hace es rechazar la escritura del
 tenedor antiguo, que es la otra mitad del token: la acepta entera y solo deja intactos los dos campos
 del arrendamiento, avisando por stderr, así que quien despierta tarde puede comentar, anotar o cerrar la
-tarea que otro ya reclamó. La sección 9.2 de `docs/DECISIONES.md` cuenta por qué se aparta a propósito,
-y su apartado 11 lo anota como riesgo aceptado.
+tarea que otro ya reclamó.
+["Saber si alguien está trabajando de verdad"](DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de `docs/DECISIONES.md` cuenta por qué se aparta a propósito,
+y ["Riesgos conocidos y aceptados del modelo de estados"](DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) lo anota como riesgo aceptado.
 
 ## 7. El agente escribe mal el formato y se traga datos
 
@@ -377,7 +379,7 @@ comandos, y cada comando valida. Es el sitio donde la base de datos gana de form
 hay un formato de texto que un agente pueda malinterpretar al reenviarlo.
 
 Con una honestidad al lado: **con un fichero por tarea, aislar el daño de una tarea corrupta es gratis**,
-y la sección 4.12 de `biso` está escrita pensando en eso. Con una base de datos hay que separar dos
+y ["Qué pasa con un dato que no se puede interpretar"](spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) está escrita pensando en eso. Con una base de datos hay que separar dos
 casos que hoy se dicen como uno: una tarea cuyo contenido no se interpreta, y una base de datos que no
 abre.
 
@@ -390,7 +392,8 @@ añadiendo una clave a mano y haciendo una edición trivial.
 
 **Qué hace `biso`.** Los campos externos son un mecanismo declarado, no un hueco: el tablero declara
 qué claves admite, y una tarea con una clave que la configuración ya no declara **no se lee en silencio
-ni se reescribe perdiéndola**, sino que sigue la regla de la sección 4.12 y `biso doctor` la reporta.
+ni se reescribe perdiéndola**, sino que sigue la regla de
+["Qué pasa con un dato que no se puede interpretar"](spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) y `biso doctor` la reporta.
 
 ## 9. Estado compartido que cada invocación pisa
 
@@ -452,7 +455,8 @@ reconociendo la fricción que eso añadía a quien trabaja solo.
 **Qué hace `biso`.** No hay daemon, y el motivo es aritmético antes que estético. El coste dominante de
 una invocación es arrancar un proceso, y el cliente que hablaría por el socket también es un proceso, así
 que el daemon compite por uno o dos milisegundos de unos ocho pagando con una arquitectura entera. Un
-daemon colgado, además, haría fallar también las lecturas, que la sección 4.10 promete que nunca fallan
+daemon colgado, además, haría fallar también las lecturas, que
+["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables) promete que nunca fallan
 por una escritura en curso.
 
 ## 12. El coste de arranque y el coste de contexto
@@ -519,8 +523,8 @@ indicación visible de que fuera generado, ni en la interfaz ni en la interfaz d
 **Qué hace `biso`.** Es local y no tiene cuota. Y distingue quién escribió qué **mientras cada quien
 tenga su propia identidad**, con autor en los comentarios y en la pregunta abierta. Esa condición hay que
 decirla, porque un tablero con la clave `me` configurada la destruye: `me` gana sobre `BISO_ME`, así que
-ahí todo el mundo comparte identidad y la distinción deja de existir, lo que la sección 11 de
-`DECISIONES.md` anota como riesgo aceptado. Un tablero compartido entre una persona y un agente tiene que
+ahí todo el mundo comparte identidad y la distinción deja de existir, lo que
+["Riesgos conocidos y aceptados del modelo de estados"](DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) anota como riesgo aceptado. Un tablero compartido entre una persona y un agente tiene que
 dejar `me` sin configurar, y de la vía por la que esa clave llegaba sin que nadie la eligiera, restaurar
 la instantánea de otra persona, ya se encarga `biso snapshot`, que no la escribe.
 
@@ -545,7 +549,7 @@ fuera del listado lo que no se puede coger ahora**, y **poder fichar una tarea d
 tres están ya en la especificación de `biso` como `dependencies`, como los filtros que se combinan en
 `biso ls --not-blocked --not-waiting`, y como `biso start`. La segunda no es una sola bandera a
 propósito: ninguna puede decir por sí misma que una tarea esté lista, porque cuántos filtros hace falta
-descartar depende de qué se busque, y la sección 6 de `docs/DECISIONES.md` cuenta por qué se retiró el
+descartar depende de qué se busque, y ["El porqué de reglas concretas"](DECISIONES.md#el-porqué-de-reglas-concretas) cuenta por qué se retiró el
 nombre `--ready`, que lo prometía sin poder cumplirlo.
 
 Y dos que rechaza de forma consistente: **el proceso en segundo plano** y **el almacén opaco**. El

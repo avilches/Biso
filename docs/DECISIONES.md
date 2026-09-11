@@ -1,6 +1,6 @@
 # Por qué `biso` es como es
 
-`docs/SPEC.md` dice qué hace el programa y nunca por qué. Este documento es el complemento: la razón
+[`docs/spec/`](spec/index.md) dice qué hace el programa y nunca por qué. Este documento es el complemento: la razón
 de cada decisión que podría parecer arbitraria, y la evidencia que la sostiene.
 
 **Sirve para una cosa concreta:** antes de cambiar una regla de la especificación, hay que mirar aquí
@@ -8,7 +8,7 @@ si esa regla existe por algo. Varias de ellas parecen caprichos de estilo y son 
 fallo medido en herramientas reales.
 
 Este documento usa las mismas palabras que la especificación y con el mismo significado; la tabla de
-"Vocabulario de este documento" al principio de `docs/SPEC.md` es la referencia para las dos.
+["Vocabulario de esta especificación"](spec/vocabulario.md) es la referencia para las dos.
 
 La evidencia viene de dos sitios. El primero es un estudio del uso real de un gestor de tareas por
 agentes automáticos: 856 invocaciones de línea de comandos en 60 sesiones y 10 proyectos a lo largo
@@ -19,7 +19,7 @@ gestores de tareas maduros, Backlog.md y Taskwarrior, y de los fallos documentad
 
 ## La evidencia detrás de los siete principios
 
-Los siete principios de la sección 1 de la especificación están ahí enunciados sin su procedencia,
+Los siete principios de ["Los principios"](spec/principios.md) están ahí enunciados sin su procedencia,
 porque un principio se aplica igual se sepa o no de dónde viene. Aquí está de dónde viene cada uno.
 
 **Principio 1, que un valor desconocido es un error al leer y al escribir.** Es el fallo más peligroso
@@ -113,7 +113,7 @@ A eso hay que sumar la inyección de instrucciones en el fichero de convenciones
 se paga en todas las sesiones aunque no se toque el tablero.
 
 El mensaje de `biso prime` mide **4.818 bytes**, 3.327 de parte fija y 1.491 de resumen del tablero
-(sección 9.5 de `docs/SPEC.md`), contra un tope duro de 5.120 repartido en dos partes de 3.456 y
+(["El presupuesto de tamaño"](spec/presupuestos.md#el-presupuesto-de-tamaño)), contra un tope duro de 5.120 repartido en dos partes de 3.456 y
 1.664.
 
 | Magnitud | Herramienta estudiada | `biso` |
@@ -138,7 +138,7 @@ significa una tarea asignada; el resumen del tablero baja de 2.048 a 1.664.
 Eso solo es seguro de hacer porque, a la vez, el orden de recorte del resumen deja de estar incompleto:
 antes nombraba un solo bloque y decía "antes que cualquier otra cosa" sin nombrar ninguna otra, así que
 un tablero con muchas tareas en curso podía rebasar el tope sin que hubiera una conducta definida para
-ese caso. Con los cinco pasos completos que trae ahora la sección 9.5 de `SPEC.md`, el resumen ya no
+ese caso. Con los cinco pasos completos que trae ahora ["El presupuesto de tamaño"](spec/presupuestos.md#el-presupuesto-de-tamaño), el resumen ya no
 crece sin límite, y darle menos sitio cuesta filas mostradas, no correcciones. La parte fija, en
 cambio, no se puede recortar sola: o cabe entera o hay que quitar contenido a mano, así que es la parte
 que necesita más margen.
@@ -147,7 +147,7 @@ que necesita más margen.
 solo obliga desde la versión 1.0, que todavía no está publicada, así que subir el tope no rompería
 ninguna promesa hecha a nadie. La razón es de fondo: un tope que se sube cada vez que aprieta deja de
 ser un tope, y su valor entero está en que obligue a elegir qué entra en el mensaje y qué se relega a
-`--help`. Por eso, si al escribir el texto real de la sección 9.7 los números no cupieran, lo que se
+`--help`. Por eso, si al escribir el texto real de ["La salida literal"](spec/cmd/prime.md#la-salida-literal) los números no cupieran, lo que se
 recorta es contenido, no el tope.
 
 **Esto no es "el tope nunca sube", es "el tope sube solo cuando reducir ya no es posible sin perder
@@ -170,7 +170,7 @@ disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es
   hito como campo de la tarea y no crea una entidad con ciclo de vida propio: no hay comando que cree
   un hito, ni clave de configuración que lo declare, ni fecha ni estado propios. Que no haya entidad
   no quiere decir que la bandera no valide, y conviene no confundir las dos cosas: `--milestone`
-  valida contra el conjunto de hitos que las tareas usan de hecho (6.3 de `SPEC.md`), que es derivado
+  valida contra el conjunto de hitos que las tareas usan de hecho (["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué)), que es derivado
   y se llena solo. Lo que sí sería contradictorio es hacerla validar contra "los hitos definidos",
   porque nada declara ese conjunto y nadie podría llenarlo.
 - **El servidor de integración.** En 1.280 transcripciones no hubo una sola llamada al servidor de
@@ -184,17 +184,17 @@ disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es
   por olvido.
 - **El commit automático por cada llamada.** Se midió que convierte el ciclo de una tarea en siete
   commits, seis de ellos con el mensaje idéntico. Presuponía que las tareas eran ficheros versionados
-  del propio proyecto, y esa premisa se descarta entera con la decisión de persistencia (sección 12):
+  del propio proyecto, y esa premisa se descarta entera con la [decisión de persistencia](#la-decisión-de-persistencia):
   el tablero vive en un almacén aparte, y lo único que se versiona es la instantánea de texto que
   `biso snapshot` escribe cuando quien llama lo pide, un solo commit por invocación y nunca uno por
   cada escritura de tarea.
 - **La visibilidad entre versiones del proyecto.** Se habían medido cinco fallos reales de las copias
   de trabajo paralelas de otras herramientas: dos "tarea no encontrada" sobre tareas que existían en
-  otra rama, tres volcados de pila al leer de una rama remota, y un identificador ambiguo. La decisión
-  de persistencia (sección 12) no los resuelve, los disuelve: el tablero no vive en el árbol de
+  otra rama, tres volcados de pila al leer de una rama remota, y un identificador ambiguo. La [decisión
+  de persistencia](#la-decisión-de-persistencia) no los resuelve, los disuelve: el tablero no vive en el árbol de
   trabajo, así que una tarea cerrada está cerrada y no hay una rama de la que leerla ni una remota que
   le falte. Lo que queda, y sigue siendo independiente del almacenamiento, son los tres mensajes
-  distintos de "no la encuentro" de la sección 7.3 de `SPEC.md` y la garantía de que ninguna lectura de
+  distintos de ["no la encuentro"](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro) y la garantía de que ninguna lectura de
   conjunto aborta por una tarea que no se puede leer.
 - **La sincronización con sistemas externos.** No está, pero sí están las cuatro piezas que la hacen
   posible, y esa es la única razón por la que existen: las claves declaradas de `ext` para guardar la
@@ -204,7 +204,7 @@ disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es
   sin `-a`. Se descarta porque en un tablero que la usara, absolutamente todo nacería asignado, y la
   asignación dejaría de significar que alguien decidió encargarte justo esa tarea: la consulta de
   arranque de un agente devolvería el backlog entero disfrazado de encargo. Es la comodidad concreta
-  que habría destruido la señal en la que se apoya la decisión del apartado 9.1, que la asignación sea
+  que habría destruido la señal en la que se apoya la decisión de ["Distinguir el encargo de la ejecución: resuelto sin estado nuevo"](#distinguir-el-encargo-de-la-ejecución-resuelto-sin-estado-nuevo), que la asignación sea
   el gesto con el que una persona encarga trabajo.
 
 ---
@@ -249,20 +249,20 @@ obligatorio del contrato de estabilidad.
 
 Cada entrada dice la sección de la especificación a la que corresponde.
 
-**6.1, por qué no hay coincidencia por prefijo ni por parecido al resolver una referencia.** Una regla
+**["El algoritmo de coincidencia"](spec/vocabularios.md#el-algoritmo-de-coincidencia), por qué no hay coincidencia por prefijo ni por parecido al resolver una referencia.** Una regla
 que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
 
-**6.3, por qué las tareas archivadas cuentan en los conjuntos de etiquetas, personas e hitos contra
+**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las tareas archivadas cuentan en los conjuntos de etiquetas, personas e hitos contra
 los que validan los filtros.** Es lo que impide que un filtro que hoy funciona deje de funcionar
 mañana por archivar la última tarea que lo usaba.
 
-**6.3, por qué las etiquetas, las personas y los hitos no tienen vocabulario cerrado al escribir, pero
+**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las etiquetas, las personas y los hitos no tienen vocabulario cerrado al escribir, pero
 sus filtros sí validan.** No tienen vocabulario cerrado porque su utilidad es que se puedan inventar
 sobre la marcha. Y validar al leer no es una asimetría con la escritura: es la aplicación del
 principio 1, que dice que un filtro que no puede encajar con nada es un error y no una respuesta
 vacía.
 
-**6.3, por qué el hito validaba y ahora valida.** El hito era la excepción, con un `--milestone` que
+**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué el hito validaba y ahora valida.** El hito era la excepción, con un `--milestone` que
 nunca fallaba y devolvía una lista vacía ante cualquier errata. La razón que se daba era que no hay
 entidad de hito, pero el argumento del párrafo de arriba no distingue en nada al hito de la etiqueta:
 las dos son texto que quien llama se inventa, ninguna de las dos se declara antes de usarla, y en las
@@ -279,10 +279,10 @@ comportamiento que se pide no engaña a nadie. Por eso `--unchecked` pasa a apag
 comprobación del hito: dejar el hito fuera de la escapatoria declarada crearía una asimetría nueva
 justo al quitar la vieja.
 
-**7.3, por qué los tres mensajes de "no la encuentro" son distintos.** Porque las tres situaciones
+**["Los tres mensajes de \"no la encuentro\""](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), por qué son distintos.** Porque las tres situaciones
 piden acciones distintas de quien llama: corregir la sintaxis, dejar de buscar, o mirar en el archivo.
 
-**8.1, por qué cada clase de campo tiene las variantes de bandera que tiene.** Las cuatro variantes
+**["La regla"](spec/familias-de-banderas.md#la-regla), por qué cada clase de campo tiene las variantes de bandera que tiene.** Las cuatro variantes
 (`--campo`, `--set-campo`, `--rm-campo`, `--clear-campo`) existen para todo campo que guarde una
 lista, porque sobre una lista se pueden hacer las cuatro operaciones. Un bloque de prosa no tiene
 elementos que quitar de uno en uno, así que no tiene `rm-`. Un mapa de claves se manipula por clave y
@@ -291,48 +291,48 @@ comentarios son una lista inmutable, de la que no se quita nada, así que solo a
 tabla de clases de campo no es una lista de excepciones a la regla: es la regla aplicada a cada forma
 de dato.**
 
-**8.4, por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
+**["Selectores de criterios"](spec/familias-de-banderas.md#selectores-de-criterios), por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
 su texto exacto es más frágil que quitarlo por su clave.
 
-**8.6, por qué no existe una bandera que sustituya el mapa de campos externos entero.** Fijar una clave
+**["Campos externos"](spec/familias-de-banderas.md#campos-externos), por qué no existe una bandera que sustituya el mapa de campos externos entero.** Fijar una clave
 ya es sustituir su valor, así que una segunda bandera para lo mismo solo serviría para equivocarse. Y
 una que sustituyese el mapa entero con la sintaxis `clave=valor` sería una forma silenciosa de borrar
 la identidad externa de una tarea al escribir otra.
 
-**9.7, por qué el bloque de tareas en curso del mensaje de arranque no tiene límite.** Porque en un
+**["La salida literal"](spec/cmd/prime.md#la-salida-literal), por qué el bloque de tareas en curso del mensaje de arranque no tiene límite.** Porque en un
 tablero sano son pocas.
 
-**10.1, por qué el puntero del proyecto es la única cosa que `init` escribe fuera del tablero.** Sin
+**["`biso init`"](spec/cmd/init.md), por qué el puntero del proyecto es la única cosa que `init` escribe fuera del tablero.** Sin
 ella, un tablero creado en otra ubicación no lo encontraría ningún comando posterior.
 
-**10.1, por qué se retira la regla posicional que guardaba el estado activo como el penúltimo de
+**["`biso init`"](spec/cmd/init.md), por qué se retira la regla posicional que guardaba el estado activo como el penúltimo de
 `--statuses`.** La regla estaba rota, y la contradicción que la delata vive en el propio documento: el
 tablero de ejemplo era `Ideas, To Do, In Progress, Blocked, Done`, cuyo penúltimo es `Blocked`, y había
 un ejemplo literal de `biso init` que lo creaba así, mientras que tanto la salida de `biso config list`
 como el esquema JSON de `biso prime` declaraban que el estado activo de ese mismo tablero era
 `In Progress`. Las dos cosas no podían ser ciertas a la vez, y la regla solo parecía funcionar porque
 el tablero por defecto tenía justo tres estados. Se sustituye por tres banderas explícitas,
-`--initial-status`, `--active-status` y `--terminal-status`, con el mismo argumento de 6.1: una regla
+`--initial-status`, `--active-status` y `--terminal-status`, con el mismo argumento de ["El algoritmo de coincidencia"](spec/vocabularios.md#el-algoritmo-de-coincidencia): una regla
 que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
 
-**10.1, por qué el tablero por defecto no trae un estado `Ideas`.** Un estado `Ideas` no dice nada que
+**["`biso init`"](spec/cmd/init.md), por qué el tablero por defecto no trae un estado `Ideas`.** Un estado `Ideas` no dice nada que
 no diga ya estar sin asignar, que se consulta con `biso ls --unassigned`. El matiz que sí aporta,
-"esto quizá no lo hagamos nunca", tiene ya una decisión con evidencia detrás en el apartado 9.5: se
+"esto quizá no lo hagamos nunca", tiene ya una decisión con evidencia detrás en ["Lo que se miró de ese diseño anterior y se descarta"](#lo-que-se-miró-de-ese-diseño-anterior-y-se-descarta): se
 cubre con un tipo más del vocabulario que ya existe y no con un estado. Y hay un motivo peor para no
 ponerlo por defecto: si `Ideas` fuera el estado inicial, toda tarea nueva nacería ahí, y el bloque
 `NEXT UP` del mensaje de arranque mezclaría "algún día quizá" con "hay que hacerlo", que es justo la
 distinción que ese bloque existe para hacer.
 
-**10.3, por qué existe `--start` al crear una tarea.** Evita que crear una tarea para ponerse con ella
+**["`biso new`"](spec/cmd/new.md), por qué existe `--start` al crear una tarea.** Evita que crear una tarea para ponerse con ella
 en el mismo minuto cueste dos llamadas. Es el principio 5 aplicado a un caso medido.
 
-**10.3, por qué `--comment` funciona al crear.** Por lo mismo: una tarea que nace con un comentario
+**["`biso new`"](spec/cmd/new.md), por qué `--comment` funciona al crear.** Por lo mismo: una tarea que nace con un comentario
 cuesta una llamada.
 
-**10.4, por qué el filtro de etiquetas es el único que combina sus valores con "y".** Porque el uso
+**["`biso ls`"](spec/cmd/ls.md), por qué el filtro de etiquetas es el único que combina sus valores con "y".** Porque el uso
 normal de varias etiquetas es acotar, no ampliar.
 
-**10.4, por qué el filtro de dependencias es `--blocked` y `--not-blocked`, y no `--ready`.** El hecho
+**["`biso ls`"](spec/cmd/ls.md), por qué el filtro de dependencias es `--blocked` y `--not-blocked`, y no `--ready`.** El hecho
 que se calcula es uno solo, que alguna dependencia esté sin terminar, así que se nombra una vez y su
 negación se forma con el mismo prefijo que los otros dos pares booleanos de `biso ls`,
 `--waiting`/`--not-waiting` y `--active`/`--not-active`. El nombre `ready` sobraba por dos motivos
@@ -340,47 +340,47 @@ distintos. El primero es que hacía viajar el mismo hecho dos veces en el JSON, 
 `blocked`, y dos campos que dicen lo mismo acaban divergiendo. El segundo es que prometía más de lo
 que cumplía: miraba solo dependencias, así que `biso ls --ready` devolvía también las tareas aparcadas
 en una pregunta, que es justo lo que un agente no puede coger. De los dos nombres sobrevive `blocked`
-porque ya tiene entrada propia en la tabla de vocabulario de `docs/SPEC.md`, porque da nombre al
+porque ya tiene entrada propia en la tabla de ["Vocabulario de esta especificación"](spec/vocabulario.md), porque da nombre al
 término `urgency.blocked` de la fórmula de urgencia, y porque nombra el hecho que de verdad se calcula.
 Y el nombre nuevo tampoco promete estar lista para trabajar, porque ninguna bandera sola puede: eso
 son varios filtros, y cuántos depende de qué se busque. Descartar lo bloqueado y lo aparcado son dos,
 `--not-blocked --not-waiting`; quien quiera además tarea sin empezar añade `--not-active`, que es el
-filtro con el que el propio mensaje de arranque describe su bloque `NEXT UP` (9.7); y quien la quiera
+filtro con el que el propio mensaje de arranque describe su bloque `NEXT UP` (["La salida literal"](spec/cmd/prime.md#la-salida-literal)); y quien la quiera
 sin dueño, `--unassigned`. El cambio quita una clave del JSON y renombra una bandera,
-que son las dos cosas que el contrato de estabilidad de 13 promete no tocar nunca, y por eso se hace
+que son las dos cosas que el ["contrato de estabilidad"](spec/estabilidad.md) promete no tocar nunca, y por eso se hace
 ahora: ese contrato obliga a partir de la versión 1.0 y todavía no hay ninguna versión publicada.
 Después de 1.0 esta limpieza ya no se podría hacer.
 
-**10.6, por qué `set` no repite en su tabla las banderas de campo.** Porque repetirlas invitaría a que
+**["`biso set`"](spec/cmd/set.md), por qué `set` no repite en su tabla las banderas de campo.** Porque repetirlas invitaría a que
 divergieran, que es como se rompen los documentos largos.
 
-**10.6, por qué la línea de estado encoge cuando la tarea no tiene criterios, en vez de imprimir un
+**["`biso set`"](spec/cmd/set.md), por qué la línea de estado encoge cuando la tarea no tiene criterios, en vez de imprimir un
 guion como hace el listado.** Las dos salidas parecen contradecirse y no lo hacen, porque no son la
-misma clase de cosa. El listado de 10.4 es una tabla: sus columnas se rellenan al ancho del valor más
+misma clase de cosa. El listado de ["`biso ls`"](spec/cmd/ls.md) es una tabla: sus columnas se rellenan al ancho del valor más
 largo de la llamada, así que una celda vacía tiene que ocupar su sitio o las filas de abajo se
 descolocan, y para eso está el guion. La línea de estado sale una por tarea afectada, sin ancho
 compartido y sin nada que alinear debajo, de modo que un hueco no descoloca nada y un guion solo
 añadiría un símbolo más que interpretar. Quien quiera los contadores siempre, estén las listas vacías
 o no, pide `--json`, que trae los cuatro como números.
 
-**10.7, por qué `finish` avisa de los criterios sin marcar y no lo impide.** Un criterio puede haber
+**["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`"](spec/cmd/verbos-del-ciclo.md), por qué `finish` avisa de los criterios sin marcar y no lo impide.** Un criterio puede haber
 quedado obsoleto, y un comando que no deja cerrar empuja a rodearlo con `set`, que es como se aprende
 a esquivar una herramienta. Para quien quiera la política dura está `--strict`.
 
-**10.9, por qué `export` no hereda los valores por defecto de `ls`, y por qué sale con código 6 y no
+**["`biso export`"](spec/cmd/export.md), por qué `export` no hereda los valores por defecto de `ls`, y por qué sale con código 6 y no
 con 0 cuando salta una tarea ilegible.** Porque exportar de más nunca hace daño y exportar de menos en
 silencio arruina una copia de seguridad. Es el único comando cuyo propósito es no perder nada, y por
 eso es la única excepción a la regla general de las lecturas de conjunto.
 
-**10.13, por qué `help` funciona sin tablero.** Porque es lo primero que alguien ejecuta cuando algo
+**["`biso help`"](spec/cmd/help.md#biso-help), por qué `help` funciona sin tablero.** Porque es lo primero que alguien ejecuta cuando algo
 no va.
 
-**4.8, por qué los campos de texto largo no se parten por comas.** Porque una coma dentro de una frase
+**["Repetición y listas separadas por comas"](spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas), por qué los campos de texto largo no se parten por comas.** Porque una coma dentro de una frase
 es normal, y partir por ella convertiría una descripción en varias.
 
-**5.3, por qué las fechas se pueden fijar al importar y no en el uso normal.** Sin esa excepción no se
+**["Las fechas"](spec/modelo-de-datos.md#las-fechas), por qué las fechas se pueden fijar al importar y no en el uso normal.** Sin esa excepción no se
 puede importar el histórico de otro sistema conservando cuándo pasó cada cosa, que es el tercer
-requisito de la sección 5 de este documento.
+requisito de ["Cuatro requisitos aprendidos de otras herramientas"](#cuatro-requisitos-aprendidos-de-otras-herramientas), en este mismo documento.
 
 ---
 
@@ -388,7 +388,7 @@ requisito de la sección 5 de este documento.
 
 **Una tarea sin quien la reporte es válida.** El campo `reporter` toma la identidad configurada al
 crear la tarea, y si no hay ninguna se queda vacío **sin avisar**. Es deliberadamente distinto de los
-otros cinco sitios donde hace falta una identidad (tabla de la sección 3.1 de `docs/SPEC.md`): el
+otros cinco sitios donde hace falta una identidad (tabla de ["Variables de entorno"](spec/invocacion.md#variables-de-entorno)): el
 filtro `--mine` falla, la autoasignación de `start` avisa, y el autor de un comentario, `biso ask` y
 `biso answer` son un error. La razón es que un tablero de una sola persona no tiene por qué
 configurar su identidad solo para poder crear tareas.
@@ -428,9 +428,9 @@ frases y esa vivía en una celda.
 Salen de un diseño anterior de gestor de tareas que no llegó a escribirse, y de la evidencia que
 aquel diseño recogió sobre la herramienta que usaba esta máquina antes. Los cuatro tocaban el modelo
 de estados y se decidieron a la vez: dos quedan resueltos sin ningún papel de estado nuevo, uno se
-resuelve con la enmienda de la decisión de persistencia (9.2), y uno se retira. El criterio que ordenó
+resuelve con la enmienda de la decisión de persistencia (["Saber si alguien está trabajando de verdad"](#saber-si-alguien-está-trabajando-de-verdad)), y uno se retira. El criterio que ordenó
 las cuatro decisiones, y que conviene aplicar la próxima vez que alguien proponga un papel de estado,
-está en el apartado 10.
+está en ["El criterio de estado frente a campo"](#el-criterio-de-estado-frente-a-campo).
 
 ### Distinguir el encargo de la ejecución: resuelto sin estado nuevo
 
@@ -442,7 +442,7 @@ estado para separarlos.
 escribe un dato: `assignees`. El agente escribe otro: el estado activo, al ejecutar `biso start`. Son
 dos datos distintos, escritos por dos actores distintos, y esa asimetría existía ya en la
 especificación antes de este trabajo; nadie la había mirado como la respuesta al requisito. Y
-aplicando el criterio del apartado 10, tampoco podía ser nunca un estado: "esto lo tiene que hacer un
+aplicando el criterio de ["El criterio de estado frente a campo"](#el-criterio-de-estado-frente-a-campo), tampoco podía ser nunca un estado: "esto lo tiene que hacer un
 agente" convive con cualquier punto del camino, porque una tarea puede estar recién creada, a medias,
 o aparcada en una pregunta abierta y seguir siendo de quien se la asignaron.
 
@@ -486,7 +486,7 @@ importa es justamente el que no lo dispara.
 La forma conocida de resolverlo es un arrendamiento con caducidad: latido mientras se trabaja, y algo
 que libere la tarea cuya sesión murió. Arrendar sería asignar con esa caducidad sobre una tarea ya
 activa, y reclamarla sería la misma escritura que hoy hace `biso start`, así que la decisión de este
-apartado sigue encajando con la del 9.1 aunque aquel, al final, no trajera ningún papel nuevo.
+apartado sigue encajando con la de ["Distinguir el encargo de la ejecución: resuelto sin estado nuevo"](#distinguir-el-encargo-de-la-ejecución-resuelto-sin-estado-nuevo) aunque aquel, al final, no trajera ningún papel nuevo.
 
 **Esta dependía de cómo se persistan los datos**, y se cerró con esa decisión tomada.
 
@@ -497,21 +497,21 @@ un campo derivado no puede cambiar un campo guardado. Si nada escribe, la tarea 
 estado activo guardado por muy vencido que esté su arrendamiento.
 
 Lo que se guarda es el instante de caducidad (`leaseExpiresAt`) y quién tiene el arrendamiento
-(`leaseHolder`), los dos sin valor salvo en una tarea activa y asignada (sección 5 de `SPEC.md`). Lo
+(`leaseHolder`), los dos sin valor salvo en una tarea activa y asignada (["El modelo de datos de una tarea"](spec/modelo-de-datos.md)). Lo
 que caduca sigue siendo, como decía la redacción original, "estoy en ello" y no "esto es tuyo": el
 campo derivado `leaseExpired` dice que el arrendamiento venció, pero el estado guardado no cambia
 solo, nunca. Liberarlo es una escritura explícita, y sigue sin hacer falta un comando nuevo para eso:
 es la misma que ya hace `biso start`, que reclama el arrendamiento vencido a favor de quien llama
 comprobando quién lo tenía dentro de la misma transacción, para que el tenedor viejo no lo recupere con
-su siguiente escritura al despertar (sección 10.7.1 de `SPEC.md`). Con un arrendamiento vivo de otra
+su siguiente escritura al despertar (["`biso start`"](spec/cmd/verbos-del-ciclo.md#biso-start)). Con un arrendamiento vivo de otra
 identidad, `biso start` avisa y la coge igual: el mismo "avisa, no impide" que ya aplicaba a las
 dependencias sin terminar y a la pregunta abierta.
 
 **Por qué se enmienda en vez de reescribirse sin más.** La redacción aplazada no decía cómo se
 liberaba una caducidad, y la lectura más directa de "saca la tarea del estado activo" es una
 escritura diferida: que la siguiente escritura cualquiera, o un proceso de fondo, arrastrara el
-saneamiento de las tareas vencidas. Esa vía se descarta explícitamente al tomar esta decisión, en la
-sección 6 del diseño de persistencia, porque haría que un comando tocara tareas que no nombró, y
+saneamiento de las tareas vencidas. Esa vía se descarta explícitamente al tomar esta decisión, en
+["Una tarea se queda cogida porque la sesión murió"](ESTADO-DEL-ARTE.md#6-una-tarea-se-queda-cogida-porque-la-sesión-murió), porque haría que un comando tocara tareas que no nombró, y
 porque `biso prime`, que no escribe nunca, mostraría un estado que una escritura ajena y posterior
 podría cambiar. No es que la decisión siempre hubiera sido la de hoy: es que la única forma de
 sostenerla, al escribirla de verdad, obligaba a mover la contradicción con `status` a otro sitio en
@@ -521,40 +521,40 @@ vez de resolverla.
 fuera de aquí: un arrendamiento con caducidad, renovado por latido, para evitar la doble reclamación.
 La pieza que le faltaba a la redacción aplazada es la comprobación del tenedor, y la idea viene de un
 artículo que formaliza el patrón: propone el límite de tiempo **más un token de vallado que rechace las
-escrituras del propietario antiguo** (sección 6 de `docs/ESTADO-DEL-ARTE.md`, con su enlace). Sin nada
+escrituras del propietario antiguo** (["Una tarea se queda cogida porque la sesión murió"](ESTADO-DEL-ARTE.md#6-una-tarea-se-queda-cogida-porque-la-sesión-murió), con su enlace). Sin nada
 de eso, el tenedor viejo puede despertar, escribir, y robar de vuelta una tarea que ya había reclamado
 otro. Comprobar quién lo tiene sale gratis aquí, porque el arrendamiento ya guarda ese dato y la
 comprobación es comparar y sustituir dentro de una transacción que ya existía por otro motivo
-(sección 4.10).
+(["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables)).
 
 **Pero lo que se implementa no es ese token de vallado, y apartarse de él es deliberado.** Un token de
 vallado rechaza la escritura entera de quien ya no es el propietario. `biso` la acepta: la escritura de
 una identidad que no es `leaseHolder` se hace igual y solo deja intactos los dos campos del
-arrendamiento, con el aviso de la sección 4.3 de `SPEC.md` (sexta precisión de la sección 5). Así que el
+arrendamiento, con el aviso de ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos) (sexta precisión de ["El modelo de datos de una tarea"](spec/modelo-de-datos.md)). Así que el
 agujero que el artículo cierra aquí queda entreabierto: el tenedor viejo que despierta puede comentar,
 anotar o cerrar la tarea que otro reclamó, y si vuelve a llamar a `biso start` se la lleva de vuelta,
 con aviso y sin impedimento. Se acepta porque rechazar la escritura sería lo único de todo el programa
 que impide trabajar por el estado en que está una tarea: las dependencias sin terminar avisan, la
-pregunta abierta avisa, y un arrendamiento ajeno avisa igual, por el motivo del apartado 6, que un
+pregunta abierta avisa, y un arrendamiento ajeno avisa igual, por el motivo de ["El porqué de reglas concretas"](#el-porqué-de-reglas-concretas), que un
 bloqueo de flujo no evita el trabajo duplicado y sí empuja a rodear la herramienta. Lo que la
 comprobación del tenedor sí cierra, y es lo que se gana, son las dos cosas que el aviso no puede dar:
 que una escritura de otra identidad nunca renueve el plazo ajeno ni se atribuya el arrendamiento, y que
 de dos reclamaciones simultáneas de un arrendamiento vencido solo gane una, porque `biso start`
 comprueba dentro de su propia transacción que seguía vencido. La diferencia con el artículo queda
-anotada como riesgo aceptado en el apartado 11.
+anotada como riesgo aceptado en ["Riesgos conocidos y aceptados del modelo de estados"](#riesgos-conocidos-y-aceptados-del-modelo-de-estados).
 
 **Por qué el arrendamiento se exporta e importa como cualquier otro campo.** Al añadir los dos campos
 guardados quedó sin decir si viajan en `biso export`, y las dos respuestas eran defendibles: dejarlos
 fuera, porque un arrendamiento es la reserva de una sesión concreta en una máquina concreta, o dejarlos
-entrar, porque son campos guardados y no derivados y la garantía de simetría de la sección 10.9 de
-`SPEC.md` promete que todos ellos van y vuelven. Se eligió la segunda, y en rigor no era una elección
-libre: el contrato de estabilidad de la sección 13 de `SPEC.md` ya enuncia esa simetría como una prueba
+entrar, porque son campos guardados y no derivados y la garantía de simetría de ["`biso export`"](spec/cmd/export.md)
+promete que todos ellos van y vuelven. Se eligió la segunda, y en rigor no era una elección
+libre: el ["contrato de estabilidad"](spec/estabilidad.md) ya enuncia esa simetría como una prueba
 de la suite "sobre todos los campos no derivados", sin lista de excepciones, así que dejar fuera el
 arrendamiento habría obligado a abrir una y a mantenerla, que es exactamente la clase de enumeración
-que se desincroniza (apartado 8). La otra razón, la que hace que la primera no salga cara, es que el
+que se desincroniza (["Una advertencia sobre cómo se mantiene la especificación"](#una-advertencia-sobre-cómo-se-mantiene-la-especificación)). La otra razón, la que hace que la primera no salga cara, es que el
 diseño ya toleraba un arrendamiento ajeno: `leaseExpired` se recalcula contra el reloj de
 quien lee, así que el arrendamiento que llega caducado sale caducado y `biso start` lo reclama, y el
-que llega vivo a nombre de otra identidad produce el aviso de la sección 4.3 y nada más, porque `biso
+que llega vivo a nombre de otra identidad produce el aviso de ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos) y nada más, porque `biso
 start` avisa y coge la tarea igual. El caso que de verdad importa, restaurar un respaldo del propio
 tablero, sale además mejor así: la tarea que estaba en marcha sigue constando en marcha y a nombre de
 quien la llevaba, en vez de aparecer activa y sin dueño del arrendamiento. Lo único que hay que
@@ -562,7 +562,7 @@ custodiar es la invariante de que los dos campos solo tienen valor en una tarea 
 custodia en dos sitios: en la validación previa de `biso new --from`, donde se custodia todo lo demás
 del lote y que rechaza el fichero entero antes de escribir nada, y en `biso doctor`, que la comprueba
 como comprueba las demás invariantes del tablero y la repara con `--fix` vaciando los dos campos
-(sección 10.11 de `SPEC.md`). El segundo hace falta porque la importación no es la única forma de que
+(["`biso doctor`"](spec/cmd/doctor.md)). El segundo hace falta porque la importación no es la única forma de que
 una base de datos llegue a incumplirla: puede venir escrita a mano, restaurada a medias o de otra
 versión, y sin esa comprobación la única invariante que este apartado dice que hay que custodiar sería
 la única que `doctor` no mira.
@@ -575,7 +575,7 @@ estado activo los vacía. Manda la segunda, y el aviso se emite igual. El argume
 primera regla es una cortesía hacia el tenedor y la segunda es la invariante de la que dependen la
 validación del lote y `doctor`, así que con la precedencia al revés quedaría una tarea terminada con un
 arrendamiento vivo, y `biso export` de ese tablero produciría un fichero que su propio
-`biso init --from` rechazaría, rompiendo la prueba de simetría de la sección 13 de `SPEC.md`. Por el
+`biso init --from` rechazaría, rompiendo la prueba de simetría del ["contrato de estabilidad"](spec/estabilidad.md). Por el
 mismo argumento, `biso archive` vacía también los dos campos, aunque `archived` no sea un estado y
 archivar no saque la tarea del estado activo: un arrendamiento afirma que alguien está trabajando ahora,
 y archivar es dejar de trabajar, así que conservarlo lo esconde donde nadie lo ve (`biso prime` y
@@ -595,7 +595,7 @@ renovación es un hecho del arrendamiento, no una modificación de la tarea, y l
 porque habla de la tarea.
 
 **Y `biso new --start` reclama el arrendamiento, porque es el atajo de dos llamadas y la equivalencia
-tiene que ser real.** La sección 6 justifica esa bandera como el ahorro de `biso new` más `biso start`;
+tiene que ser real.** ["El porqué de reglas concretas"](#el-porqué-de-reglas-concretas) justifica esa bandera como el ahorro de `biso new` más `biso start`;
 si creara la tarea activa y asignada pero sin arrendamiento, las dos vías darían dos tareas distintas y
 la única forma de saberlo sería leer la letra pequeña. La excepción simétrica es `biso start -s` con un
 estado que no es el activo: ahí no se fija arrendamiento, porque fijarlo rompería la invariante de
@@ -606,7 +606,7 @@ regla sin excepciones.
 con `biso get --json`, y el mensaje de arranque remitía a `biso get` para verlos, pero su ficha de texto
 no tenía dónde enseñarlos, así que la remisión era falsa para quien no pide JSON. Ahora la ficha imprime
 una línea `lease` con los dos, y solo cuando la tarea tiene arrendamiento, porque una fila con dos
-guiones aparecería en la ficha de casi todas las tareas del tablero (sección 10.5 de `SPEC.md`). El
+guiones aparecería en la ficha de casi todas las tareas del tablero (["`biso get`"](spec/cmd/get.md)). El
 segundo: la validación rechazaba los dos campos sobre una tarea que no estuviera activa y asignada, pero
 no rechazaba que llegara uno solo de los dos, y con `leaseExpiresAt` vacío el derivado `leaseExpired`
 comparaba un instante que no existe contra el reloj. Los dos campos van juntos o no viene ninguno, y
@@ -625,9 +625,9 @@ decisión no tenía dónde vivir y la única forma de registrarla era crear una 
 Lo que falta es un papel que marque un estado como "espera a una persona", y que el mensaje de
 arranque lo destaque en su propio bloque.
 
-**Queda resuelta, y no con el papel que este apartado imaginaba.** Aplicando el criterio del apartado
-10, una pregunta abierta puede detener una tarea en cualquier punto del camino, así que no podía ser
-un estado: es el campo `question` de la sección 5.7 de `SPEC.md`, con su derivado `waiting`, los
+**Queda resuelta, y no con el papel que este apartado imaginaba.** Aplicando el criterio de
+["El criterio de estado frente a campo"](#el-criterio-de-estado-frente-a-campo), una pregunta abierta puede detener una tarea en cualquier punto del camino, así que no podía ser
+un estado: es el campo `question` de ["La pregunta abierta"](spec/modelo-de-datos.md#la-pregunta-abierta), con su derivado `waiting`, los
 verbos `biso ask` y `biso answer`, y el bloque `NEEDS ANSWER` del mensaje de arranque, que es
 exactamente el bloque propio que este apartado pedía.
 
@@ -648,13 +648,14 @@ guarda el estado actual de una tarea y no un histórico de sus estados anteriore
 llamaría abandonada habiendo estado hecha.
 
 **El argumento que sí vale es que a este requisito le falta la evidencia que los otros tres sí traen.**
-El 9.1 corrige un diagnóstico sobre una asimetría real de la especificación, el 9.2 trae el fallo
+["Distinguir el encargo de la ejecución: resuelto sin estado nuevo"](#distinguir-el-encargo-de-la-ejecución-resuelto-sin-estado-nuevo) corrige un diagnóstico sobre una asimetría real de la especificación,
+["Saber si alguien está trabajando de verdad"](#saber-si-alguien-está-trabajando-de-verdad) trae el fallo
 medido de una herramienta que se usaba antes (un campo sin latido, sin marca de tiempo y sin
-caducidad), y el 9.3 trae cuatro tareas paradas por una pregunta sin responder en el tablero que se
+caducidad), y ["Señalar lo que espera a una persona"](#señalar-lo-que-espera-a-una-persona) trae cuatro tareas paradas por una pregunta sin responder en el tablero que se
 estudió. Este requisito dice que una tarea hecha y una abandonada "se confunden", sin un solo caso en
 el que esa confusión haya costado algo. Un papel de estado que obligue a dar un motivo es barato de
 añadir cuando haga falta y caro de quitar si sobra, así que se queda fuera hasta que aparezca un caso
-real que lo pida, y entonces se engancha a `biso archive`. Se anota en la sección 14 de `SPEC.md`.
+real que lo pida, y entonces se engancha a `biso archive`. Se anota en ["Lo que se deja fuera a propósito"](spec/fuera-de-alcance.md).
 
 ### Lo que se miró de ese diseño anterior y se descarta
 
@@ -667,7 +668,7 @@ conclusión es que la necesidad se cubre mejor con un tipo más en el vocabulari
 una entidad y un comando propios.
 
 **Una forma concreta de guardar los datos**, con un directorio por entidad para que añadir un
-comentario no reescriba nada de lo demás. La decisión de persistencia (sección 12) no la adopta: una
+comentario no reescriba nada de lo demás. La [decisión de persistencia](#la-decisión-de-persistencia) no la adopta: una
 base de datos SQLite da la misma propiedad, una escritura por tarea sin reescribir el tablero entero, y
 además la transacción que un directorio de ficheros habría tenido que construir a mano.
 
@@ -686,7 +687,7 @@ de dar la decisión por hecha.
 
 ## El criterio de estado frente a campo
 
-Es la regla que ordenó las cuatro decisiones del apartado 9, y conviene tenerla escrita aparte porque
+Es la regla que ordenó las cuatro decisiones de ["El modelo de estados: cuatro requisitos, cerrados"](#el-modelo-de-estados-cuatro-requisitos-cerrados), y conviene tenerla escrita aparte porque
 se va a volver a necesitar la próxima vez que alguien proponga un papel de estado:
 
 > Algo es un estado cuando es excluyente con los demás y dice en qué punto del camino está la tarea.
@@ -695,10 +696,10 @@ se va a volver a necesitar la próxima vez que alguien proponga un papel de esta
 La especificación ya la aplicaba sin decirla: `archived` es un campo y no un estado precisamente
 porque una tarea archivada conserva el estado que tenía al archivarse. Lo que faltaba era el criterio
 escrito, para no volver a meter en el vocabulario de estados algo que no es un punto del camino.
-Aplicado a los cuatro requisitos del apartado 9, deja solo uno pidiendo de verdad algo excluyente y
-ligado al camino, el 9.4, y ese es justo el que se retira por falta de evidencia; los otros tres son un
-gesto que ya existía (9.1), una reserva con caducidad (9.2) o un campo que puede convivir con cualquier
-estado (9.3).
+Aplicado a los cuatro requisitos de ["El modelo de estados: cuatro requisitos, cerrados"](#el-modelo-de-estados-cuatro-requisitos-cerrados), deja solo uno pidiendo de verdad algo excluyente y
+ligado al camino, el de ["Distinguir terminar de descartar: retirado"](#distinguir-terminar-de-descartar-retirado), y ese es justo el que se retira por falta de evidencia; los otros tres son un
+gesto que ya existía (["Distinguir el encargo de la ejecución"](#distinguir-el-encargo-de-la-ejecución-resuelto-sin-estado-nuevo)), una reserva con caducidad (["Saber si alguien está trabajando de verdad"](#saber-si-alguien-está-trabajando-de-verdad)) o un campo que puede convivir con cualquier
+estado (["Señalar lo que espera a una persona"](#señalar-lo-que-espera-a-una-persona)).
 
 **Por qué esta condición no se hace configurable.** Dejar que cada tablero declarase sus propios
 estados como excluyentes o no destruiría la garantía en la que descansa el resto del modelo: que
@@ -716,21 +717,21 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
 
 - **Dos agentes con la misma identidad ven la misma cola.** Dos sesiones con el mismo `BISO_ME` no se
   distinguen entre sí, y las dos podrían coger la misma tarea a la vez. Es exactamente lo que resuelve
-  el arrendamiento del apartado 9.2: la segunda sesión ve el aviso de que el arrendamiento está vivo y
+  el arrendamiento de ["Saber si alguien está trabajando de verdad"](#saber-si-alguien-está-trabajando-de-verdad): la segunda sesión ve el aviso de que el arrendamiento está vivo y
   a nombre de esa misma identidad, pero `biso start` avisa y la coge igual, así que dos sesiones que
   comparten identidad siguen pudiendo pisarse. El arrendamiento defiende de una sesión muerta, no de
   dos sesiones vivas con el mismo nombre.
 - **El tenedor viejo de un arrendamiento no tiene prohibido escribir.** El artículo que formaliza el
   patrón propone, junto a la caducidad, un token de vallado que rechace las escrituras del propietario
-  antiguo (sección 6 de `docs/ESTADO-DEL-ARTE.md`), y `biso` hace a propósito algo más débil: la
+  antiguo (["Una tarea se queda cogida porque la sesión murió"](ESTADO-DEL-ARTE.md#6-una-tarea-se-queda-cogida-porque-la-sesión-murió)), y `biso` hace a propósito algo más débil: la
   escritura de una identidad que no es `leaseHolder` se acepta entera y solo deja intactos
-  `leaseExpiresAt` y `leaseHolder`, con el aviso de la sección 4.3 de `SPEC.md`. Un agente que despierta
+  `leaseExpiresAt` y `leaseHolder`, con el aviso de ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos). Un agente que despierta
   después de que otro reclamara su tarea puede comentarla, anotarla o cerrarla, y con `biso start`
-  llevársela de vuelta. Se acepta por coherencia con "avisa, no impide", el mismo argumento del apartado
-  6 que vale para las dependencias sin terminar y para la pregunta abierta: un bloqueo de flujo no evita
+  llevársela de vuelta. Se acepta por coherencia con "avisa, no impide", el mismo argumento de
+  ["El porqué de reglas concretas"](#el-porqué-de-reglas-concretas) que vale para las dependencias sin terminar y para la pregunta abierta: un bloqueo de flujo no evita
   el trabajo duplicado, solo empuja a rodear la herramienta. Lo que el arrendamiento sí garantiza es que
   una tarea no se quede cogida para siempre, que nadie renueve ni se atribuya un arrendamiento ajeno, y
-  que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una (apartado 9.2).
+  que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una (["Saber si alguien está trabajando de verdad"](#saber-si-alguien-está-trabajando-de-verdad)).
 - **Un tablero con la clave `me` configurada anula la distinción entre persona y agente.** La clave
   `me` gana sobre `BISO_ME`, así que en un tablero que la tenga puesta todo el mundo comparte
   identidad y `--mine` deja de significar nada. Un tablero compartido entre una persona y un agente
@@ -744,21 +745,21 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   algo por iniciativa propia lo escribe en un comentario, y el mensaje de arranque no muestra
   comentarios. El agente lo ve al hacer `biso get`.
 - **El listado no enseña el texto de la pregunta, solo dice qué tareas la tienen.** Es el precio de no
-  meter texto largo en el listado, medido en el principio 4 de la sección 1: 215 fichas completas
+  meter texto largo en el listado, medido en el principio 4 de ["La evidencia detrás de los siete principios"](#la-evidencia-detrás-de-los-siete-principios): 215 fichas completas
   sumaron 179.369 bytes, casi la cuarta parte de la salida del estudio. Quien quiera leer la pregunta
   usa `biso get --section question`, o mira el mensaje de arranque, que sí la enseña.
 - **Una pregunta abierta sobre una tarea terminada o archivada desaparece de la vista.** `biso finish`
   avisa pero no impide, los bloques del mensaje de arranque excluyen terminadas y archivadas, y
   `biso ls` excluye el estado terminal por defecto, así que `biso ls --waiting` no la encuentra sin
   `--any-status`. Se acepta porque la alternativa, impedir cerrar una tarea con una pregunta abierta,
-  empujaría a rodear la herramienta, el mismo argumento que ya vale en el apartado 6 para `finish` y
+  empujaría a rodear la herramienta, el mismo argumento que ya vale en ["El porqué de reglas concretas"](#el-porqué-de-reglas-concretas) para `finish` y
   los criterios sin marcar.
 - **El filtro de dependencias no excluye las tareas aparcadas.** `--not-blocked` mira solo
   dependencias, así que un agente que elija trabajo únicamente con esa bandera se lleva también las
   que esperan una respuesta. La consulta correcta añade `--not-waiting`, y así lo dicen tanto la
   descripción de la bandera como el ejemplo de la ayuda de `biso ls`. El riesgo se queda, pero
   encogido: el nombre ya no promete que la tarea esté lista para trabajar, solo que no esté bloqueada,
-  que es lo que mide. El porqué del nombre está en el apartado 6.
+  que es lo que mide. El porqué del nombre está en ["El porqué de reglas concretas"](#el-porqué-de-reglas-concretas).
 
 ---
 
@@ -766,9 +767,8 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
 
 La especificación dejaba deliberadamente abierto cómo se guardan los datos. La decisión es: un tablero
 es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un fichero
-puntero versionado con el proyecto (`.biso.json`, sección 3.2 de `SPEC.md`), con una exportación de texto
-que sí se guarda en el control de versiones para el historial (`biso snapshot`, sección 10.14 de
-`SPEC.md`). Sin daemon, y sin fusionar nunca dos almacenes escritos por separado.
+puntero versionado con el proyecto (`.biso.json`, ["Cómo se elige el tablero"](spec/resolucion-del-tablero.md)), con una exportación de texto
+que sí se guarda en el control de versiones para el historial (`biso snapshot`, ["`biso snapshot`"](spec/cmd/snapshot.md)). Sin daemon, y sin fusionar nunca dos almacenes escritos por separado.
 
 La evidencia detrás de cada pieza de esta decisión, con sus enlaces, está en
 [`docs/ESTADO-DEL-ARTE.md`](ESTADO-DEL-ARTE.md), el inventario de las herramientas del espacio y el
@@ -776,50 +776,47 @@ catálogo de sus fallos. Lo que sigue aquí es el porqué de cada pieza, no la e
 
 **Por qué el tablero no se versiona con el código.** Cualquier herramienta que guarde las tareas como
 ficheros del árbol de trabajo hereda su peor propiedad: el estado se bifurca con la rama, así que una
-incidencia cerrada en una rama vuelve a aparecer abierta al volver a la principal (sección 2 de
-`docs/ESTADO-DEL-ARTE.md`). Sacar el tablero del árbol de trabajo no resuelve ese problema, lo disuelve:
+incidencia cerrada en una rama vuelve a aparecer abierta al volver a la principal (["El estado de las tareas se bifurca con la rama"](ESTADO-DEL-ARTE.md#2-el-estado-de-las-tareas-se-bifurca-con-la-rama)). Sacar el tablero del árbol de trabajo no resuelve ese problema, lo disuelve:
 una tarea cerrada está cerrada, no cerrada en esta rama, porque no hay una rama que la contenga. El
 precio es que el tablero no viaja al clonar el proyecto en otra máquina, y se paga a propósito a cambio
 de que el estado de una tarea sea uno solo.
 
 **Por qué no hay daemon, y por qué el motivo es aritmético y no de gusto.** El coste dominante de una
-invocación de `biso` es arrancar un proceso, no el trabajo que hace una vez arrancado: la sección 12 de
-`docs/ESTADO-DEL-ARTE.md` mide el suelo del sistema en 5,2 milisegundos y el total de leer, ordenar e
+invocación de `biso` es arrancar un proceso, no el trabajo que hace una vez arrancado: ["El coste de arranque y el coste de contexto"](ESTADO-DEL-ARTE.md#12-el-coste-de-arranque-y-el-coste-de-contexto)
+mide el suelo del sistema en 5,2 milisegundos y el total de leer, ordenar e
 imprimir 300 tareas en 8,7 milisegundos con un binario de Go, suelo incluido y leyendo un JSON en vez de
-la base de datos (apartado 13). Un daemon solo puede ahorrar lo que hay por encima del suelo, no el
+la base de datos (["El origen de la cifra de 25 milisegundos"](#el-origen-de-la-cifra-de-25-milisegundos)). Un daemon solo puede ahorrar lo que hay por encima del suelo, no el
 suelo, porque el cliente que hablaría con él por un socket es también un proceso y paga el mismo suelo de
 arranque para lanzarse. Así que un daemon competiría por uno o dos milisegundos de
 unos ocho, pagando a cambio una arquitectura entera: un proceso de fondo que hay que arrancar, vigilar y
-matar, y que si se cuelga hace fallar también las lecturas que la sección 4.10 de `SPEC.md` promete que
+matar, y que si se cuelga hace fallar también las lecturas que ["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables) promete que
 nunca fallan por una escritura en curso. Beads tuvo uno, hacía una sola cosa, y se eliminó por completo
 al cambiar de motor; quien lo reemplazó por algo más simple cuenta que se pasaba varias veces por semana
-peleándose con él (sección 11 de `docs/ESTADO-DEL-ARTE.md`).
+peleándose con él (["El proceso de fondo"](ESTADO-DEL-ARTE.md#11-el-proceso-de-fondo)).
 
 **Por qué el texto es una salida, y nunca un canal de vuelta.** `biso snapshot` escribe `snapshot.ndjson` y
 `board.json` para que el historial de git cuente lo que pasó y para que `biso init --from` pueda
 reconstruir el tablero entero en otra máquina, pero nada dentro de `biso` vuelve a leer esos ficheros
 como si fueran la verdad. Beads documenta por qué esa asimetría es obligatoria y no una elección
 estética: su importación es solo de inserción y actualización, y no puede saber si un registro ausente
-en el texto fue borrado a propósito o simplemente no se llegó a exportar (sección 10 de
-`docs/ESTADO-DEL-ARTE.md`). Tratar el texto como una fuente además de como una salida reintroduce esa
+en el texto fue borrado a propósito o simplemente no se llegó a exportar (["El almacén binario no se versiona, y el texto no tiene transacciones"](ESTADO-DEL-ARTE.md#10-el-almacén-binario-no-se-versiona-y-el-texto-no-tiene-transacciones)). Tratar el texto como una fuente además de como una salida reintroduce esa
 ambigüedad en `biso`, así que no se hace nunca: la base de datos es la única verdad, y `export` y
 `snapshot` son su proyección de solo lectura hacia fuera.
 
 **Por qué nunca se sincroniza fusionando dos almacenes escritos por separado.** Es el sitio donde se
 han estrellado todas las herramientas del espacio, de formas distintas pero con la misma raíz: dos
-copias de trabajo que asignan el mismo identificador a tareas distintas (sección 1 de
-`docs/ESTADO-DEL-ARTE.md`), un bloqueo de fichero que no cruza remotos de git (sección 4), y un fichero
+copias de trabajo que asignan el mismo identificador a tareas distintas (["Dos copias de trabajo asignan el mismo identificador"](ESTADO-DEL-ARTE.md#1-dos-copias-de-trabajo-asignan-el-mismo-identificador)), un bloqueo de fichero que no cruza remotos de git (["Un bloqueo que no cruza máquinas, o que se queda huérfano"](ESTADO-DEL-ARTE.md#4-un-bloqueo-que-no-cruza-máquinas-o-que-se-queda-huérfano)), y un fichero
 de log que se fusiona por unión de líneas y resucita las que se habían borrado, porque una fusión de
-texto concatena y solo quita duplicados exactos, sin razonar sobre qué falta ni por qué (sección 10). La
+texto concatena y solo quita duplicados exactos, sin razonar sobre qué falta ni por qué (["El almacén binario no se versiona, y el texto no tiene transacciones"](ESTADO-DEL-ARTE.md#10-el-almacén-binario-no-se-versiona-y-el-texto-no-tiene-transacciones)). La
 respuesta seria de ese último problema, sustituir el motor por uno con fusión a nivel de celda, es la que
 tomó Beads, y es coherente pero cara. `biso` no la necesita porque no la tiene que resolver: un tablero
 vive en una sola máquina y no hay una segunda copia escribible con la que fusionarse, así que la
-comprobación de identidad de la sección 4.10 de `SPEC.md` basta y no hace falta un algoritmo de fusión.
+comprobación de identidad de ["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables) basta y no hace falta un algoritmo de fusión.
 
 **Por qué `--fix` no es una comodidad, sino el consentimiento.** Esta decisión añade a `biso doctor`
-(sección 10.11 de `SPEC.md`) las dos comprobaciones que no existían antes de que hubiera una base de
+(["`biso doctor`"](spec/cmd/doctor.md)) las dos comprobaciones que no existían antes de que hubiera una base de
 datos real detrás del tablero: la integridad de esa base de datos, y el aviso de un sistema de ficheros
-donde el modo WAL de SQLite no da las garantías de atomicidad que la sección 4.10 de `SPEC.md` exige.
+donde el modo WAL de SQLite no da las garantías de atomicidad que ["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables) exige.
 Las dos son daño externo puro, porque nada dentro de `biso` corrompe su propia base de datos ni decide
 en qué disco vive el tablero, y por eso ninguna de las dos es reparable ni con `--fix`: la integridad se
 repara restaurando de una copia, fuera de `biso` por completo, y el sistema de ficheros no es algo que
@@ -835,7 +832,7 @@ era proteger de que un proyecto encontrara el tablero de otro que lo contuviera.
 saber por qué, porque parece una protección gratis y no lo es.
 
 El primer motivo es que hace que la resolución del tablero dependa de una herramienta que este mismo
-documento declara opcional. La sección 10.14 de `SPEC.md` dice que git puede no estar instalado y que
+documento declara opcional. ["`biso snapshot`"](spec/cmd/snapshot.md) dice que git puede no estar instalado y que
 un tablero funciona igual sin él, y a la vez el freno haría que la respuesta a cuál es mi tablero
 saliera de si existe cierto directorio que crea git. El segundo es peor, porque no es de principios sino
 de comportamiento observable: es `biso snapshot` quien convierte el directorio del tablero en un
@@ -853,7 +850,7 @@ proyecto anidado en otro que sí tiene tablero, y ahí el puntero del proyecto d
 directorio donde el freno habría parado, así que el freno llega tarde y el puntero se hereda igual. La
 única regla que de verdad lo evitaría es respetar el `.gitignore` del proyecto de fuera, porque en el
 caso real que motivó la discusión ese fichero excluye la carpeta del proyecto de dentro. Eso está
-descartado por el presupuesto de la sección 4.13 de `SPEC.md`: interpretar un `.gitignore` de verdad no
+descartado por ["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque): interpretar un `.gitignore` de verdad no
 se puede reimplementar de forma fiable, y preguntárselo a git cuesta 12 milisegundos medidos de los 25
 que hay para todo.
 
@@ -876,7 +873,7 @@ descarta porque ahí no falta ningún dato: la configuración completa de un tab
 `task_prefix`, vive dentro de su propia base de datos, y el puntero solo sirve para encontrar un tablero,
 cosa que quien ya está dentro de él no necesita. Un directorio que contiene `board.db` es ese tablero y
 no puede ser otro, así que no hay nada que adivinar, y es un hecho más específico que cualquier puntero
-heredado, de donde sale que gane al puntero en el orden de la sección 3.2. Esta vía se lleva por delante
+heredado, de donde sale que gane al puntero en el orden de ["Cómo se elige el tablero"](spec/resolucion-del-tablero.md). Esta vía se lleva por delante
 el otro motivo que tenía el freno de git para existir, porque el caso que hacía falta proteger ahora se
 resuelve solo.
 
@@ -912,8 +909,7 @@ un orden declarado, un estado intermedio observable y un código de error propio
 
 El coste es que buscar un tablero por su identificador pasa de leer un nombre de carpeta a mirar dentro
 de cada carpeta de cada raíz. Sigue sin abrir ninguna base de datos, así que son lecturas de directorio,
-pero con veinte tableros son veintiuna en vez de una, y hay que medirlo contra el presupuesto de la
-sección 4.13 cuando el programa exista. Se descartó a propósito el atajo de buscar primero por el nombre
+pero con veinte tableros son veintiuna en vez de una, y hay que medirlo contra ["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque) cuando el programa exista. Se descartó a propósito el atajo de buscar primero por el nombre
 y caer al marcador solo si falla: sería más rápido y volvería a poner el mismo dato en dos sitios, que es
 lo que se acaba de quitar.
 
@@ -926,7 +922,7 @@ La ruta relativa **se resuelve contra el directorio que contiene el fichero punt
 directorio de trabajo.** El puntero se busca subiendo desde el directorio de trabajo, así que el mismo
 fichero se lee desde cualquier subdirectorio del proyecto: resolver contra el directorio de trabajo haría
 que el mismo puntero nombrara un tablero distinto por cada subdirectorio desde el que se llamara, y que
-casi ninguno de ellos existiera. Eso rompería el principio de la sección 1 de `SPEC.md` de que ningún
+casi ninguno de ellos existiera. Eso rompería el principio de ["Los principios"](spec/principios.md) de que ningún
 comportamiento depende de dónde se ejecute el programa.
 
 **La primera redacción de esto se apoyaba en un escenario que la desmentía, y conviene dejarlo escrito
@@ -961,7 +957,7 @@ estructura de directorios de quien ejecutó `init`, y eso queda en el historial 
 personas ven. La elección se conserva porque es de verdad del usuario, y el coste de conservarla es una
 nota y una regla de búsqueda, no un mecanismo.
 
-**Y por qué la nota es una nota y no un aviso.** La sección 4.3 de `SPEC.md` reserva `warning:` para lo
+**Y por qué la nota es una nota y no un aviso.** ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos) reserva `warning:` para lo
 que está mal hecho o es arriesgado, y su tabla de avisos es cerrada. Guardar una ruta relativa no está mal
 hecho: es la elección correcta para quien tiene sus worktrees dentro del proyecto, que es el caso normal.
 La nota está redactada como hecho más consecuencia, y no como el consejo de "considera usar rutas
@@ -992,8 +988,8 @@ componente de una ruta absoluta es siempre un directorio del sistema o el conten
 personales de todo el mundo, así que un puntero ahí no puede estar a propósito.
 
 **Por qué se retiran la bandera `--board` y la variable `BISO_BOARD`.** Eran las dos primeras de las
-cuatro vías por las que la sección 3.2 de `SPEC.md` encontraba un tablero, y la tabla de banderas
-globales las resumía como "Usa ese tablero directamente, sin buscar", con un valor que la sección 3
+cuatro vías por las que ["Cómo se elige el tablero"](spec/resolucion-del-tablero.md) encontraba un tablero, y la tabla de banderas
+globales las resumía como "Usa ese tablero directamente, sin buscar", con un valor que ["Banderas globales"](spec/invocacion.md#banderas-globales)
 describía como "el nombre o el localizador de un tablero, en la forma que el almacenamiento imponga".
 Esa vaguedad se sostenía mientras la persistencia estuviera sin decidir. Con la persistencia ya decidida
 había que contestar si el valor era un nombre, un identificador de ocho hexadecimales o una ruta, sobre
@@ -1008,25 +1004,25 @@ desde ese directorio ya reconoce las dos cosas que alguien querría nombrar. Si 
 directorio es el de un proyecto, la vía del puntero lee su `.biso.json` ahí o en cualquier ancestro. Así
 que `-C <directorio del tablero>` y `-C <directorio del proyecto>` cubren juntos todo lo que la bandera
 retirada podía nombrar sin ambigüedad. Y para fijarlo durante una sesión entera, que era el único uso
-propio de `BISO_BOARD` frente a la bandera, ya está `BISO_CWD`, que la sección 3.1 declara equivalente a
+propio de `BISO_BOARD` frente a la bandera, ya está `BISO_CWD`, que ["Variables de entorno"](spec/invocacion.md#variables-de-entorno) declara equivalente a
 `--cwd` con la bandera ganando.
 
 **La segunda: por qué no se sustituye por una bandera que acepte el nombre del tablero.** Es la pata que
 más falta va a hacer, porque nombrar el tablero por su nombre es lo primero que se le ocurre a
 cualquiera. El obstáculo es que **el nombre de un tablero no está en el sistema de ficheros**. Lo que hay
-en el disco es una carpeta llamada `<slug>-<id>`, y ese trozo legible es decorativo a propósito: la
-sección 3.2 dice que nadie resuelve nunca por él, y la 10.10 dice que cambiar `project_name`, que es el
+en el disco es una carpeta llamada `<slug>-<id>`, y ese trozo legible es decorativo a propósito:
+["Cómo se elige el tablero"](spec/resolucion-del-tablero.md) dice que nadie resuelve nunca por él, y ["`biso config`"](spec/cmd/config.md) dice que cambiar `project_name`, que es el
 nombre del tablero, no toca el sistema de ficheros en absoluto. De ahí que el slug pueda ser el de un
 nombre anterior y no haya nada que lo corrija, ni falta que hace. El nombre de verdad vive dentro de la
 base de datos, junto con el resto de la configuración. Resolver por nombre sería, entonces, abrir la base
-de datos de cada carpeta de cada raíz para preguntarle cómo se llama, y eso choca de frente con el
-presupuesto de la sección 4.13, que da 25 milisegundos para todo: con veinte tableros son veinte
+de datos de cada carpeta de cada raíz para preguntarle cómo se llama, y eso choca de frente con
+["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque), que da 25 milisegundos para todo: con veinte tableros son veinte
 aperturas de SQLite antes de empezar a hacer el trabajo que se ha pedido, y eso es exactamente el trabajo
 que nadie ha pedido que la primera regla de esa misma sección prohíbe. La salida evidente, guardar el
 nombre en el fichero marcador para poder leerlo sin abrir ninguna base de datos, reintroduce justo lo que
 el rediseño de la identidad acababa de quitar: que renombrar un tablero vuelva a escribir en el sistema
 de ficheros, con lo que vuelve el mismo dato en dos sitios y la posibilidad de que discrepen. Y aunque
-todo eso saliera gratis, el nombre no sirve para elegir, porque no es único: la sección 3.2 declara legal
+todo eso saliera gratis, el nombre no sirve para elegir, porque no es único: ["Cómo se elige el tablero"](spec/resolucion-del-tablero.md) declara legal
 que dos proyectos de la misma máquina se llamen igual, y lo declara como una de las tres cosas que
 resuelve de golpe sacar la identidad del nombre, precisamente porque lo que identifica a un tablero es su
 `id` y no cómo se llama.
@@ -1034,7 +1030,7 @@ resuelve de golpe sacar la identidad del nombre, precisamente porque lo que iden
 **La tercera: por qué tampoco una bandera que acepte el identificador.** Aquí no hay ningún obstáculo
 técnico, hay algo peor: no hay ningún caso de uso que se sostenga. El identificador de ocho hexadecimales
 no aparece en el trabajo diario, porque las tareas se nombran con `<PREFIX>-<n>` y ese prefijo se deriva
-de `project_name`, no del `id` del tablero (sección 4.11), así que nadie lo tiene delante ni lo teclea. El
+de `project_name`, no del `id` del tablero (["Identificadores"](spec/modelo-de-datos.md#identificadores)), así que nadie lo tiene delante ni lo teclea. El
 único momento en que el `id` manda es cuando el puntero lo trae y su `path` no resuelve, y ahí la
 búsqueda **ya recorre sola** la raíz por defecto y las raíces adicionales mirando el marcador `<id>.id` de
 cada carpeta, sin que nadie tenga que pasar ninguna bandera. El otro caso imaginable, que un mensaje de
@@ -1046,7 +1042,7 @@ alcanza un tablero que no existe en el disco.
 diferencia real entre las dos banderas, y conviene no disimularla. `--board` prometía usar ese tablero
 directamente, sin buscar, mientras que `-C` sí sube por los ancestros, de modo que apuntar con `-C` a un
 directorio equivocado puede terminar en silencio en el tablero del proyecto que lo contenga. Parece un
-argumento para conservar la bandera, y se cae solo en cuanto se lee la sección 3.2 entera, porque ese
+argumento para conservar la bandera, y se cae solo en cuanto se lee ["Cómo se elige el tablero"](spec/resolucion-del-tablero.md) entera, porque ese
 riesgo ya está aceptado en el caso general: "El precio de no tener ese freno es que un proyecto sin
 puntero propio hereda el del proyecto que lo contenga, si lo hay, y se acepta a propósito". Añadir una
 bandera cuyo único valor fuera evitar en un caso concreto un riesgo que la especificación acepta a
@@ -1065,23 +1061,23 @@ quedan dos, y la primera, la que reconoce un directorio como tablero porque cont
 ser una comodidad y pasa a ser **la única forma que queda de tocar un tablero al que el proyecto actual
 no apunta sin escribir antes en el disco**, siempre para una sola invocación y con `-C` apuntando a su
 directorio. Cuando se decidió, se justificó solo con que ahí no hay nada que adivinar; ahora carga además
-con este trabajo. Se nota en el puntero perdido, donde la sección 3.2 ofrecía dos remedios, `--board`
+con este trabajo. Se nota en el puntero perdido, donde ["Cómo se elige el tablero"](spec/resolucion-del-tablero.md) ofrecía dos remedios, `--board`
 apuntando al tablero o `biso init --at`, y ha quedado con uno solo, que escribe un puntero nuevo en el
 proyecto. Quien en el futuro quiera endurecer esa vía, por ejemplo exigiéndole también el marcador
 `<id>.id` como hace la búsqueda por identificador, tiene que saber que estaría cerrando la última puerta
-que queda, y que la propia sección 3.2 la deja abierta a propósito para que `biso doctor --fix` pueda
+que queda, y que la propia sección la deja abierta a propósito para que `biso doctor --fix` pueda
 devolver un marcador que falte.
 
 ### El control de versiones, la instantánea y los códigos que salieron de ahí
 
-Todo este apartado sale de una sola pregunta que la especificación tenía mal contestada: la sección 14 de
-`SPEC.md` decía que lo que cruza a otra máquina es la instantánea, y ningún comando le daba una vía para
+Todo este apartado sale de una sola pregunta que la especificación tenía mal contestada: ["Lo que se deja fuera a propósito"](spec/fuera-de-alcance.md)
+decía que lo que cruza a otra máquina es la instantánea, y ningún comando le daba una vía para
 cruzar, porque el repositorio donde vive está fuera del proyecto y no tiene remoto.
 
 **Por qué el sistema de control de versiones es configurable, y no git a secas.** Cablear git habría
 dejado sin historial a cualquiera que use otro sistema, y no por una limitación real: lo único que `biso`
 necesita de él son cuatro operaciones, ver si un directorio está en un repositorio, crear uno, guardar una
-revisión y publicarla. La clave `vcs` de la sección 3.3 de `SPEC.md` las nombra, con `git` por defecto
+revisión y publicarla. La clave `vcs` de ["Configuración de máquina"](spec/invocacion.md#configuración-de-máquina) las nombra, con `git` por defecto
 porque es el dominante y el único medido, `none` para no ejecutar nada y `custom` para el resto. El
 catálogo existe porque un sistema conocido permite decir cosas que un comando opaco no puede: el
 identificador de la revisión, que no había nada que guardar, y en qué repositorio ha acabado. Con `custom`
@@ -1098,7 +1094,7 @@ en esta misma ronda se sacó de la instantánea por exactamente esa razón.
 puede estar en tres situaciones, y las tres tienen los mismos ficheros en el mismo sitio: ser su propio
 repositorio, estar dentro del repositorio del proyecto, o no estar en ninguno. Lo único que distingue la
 segunda de tener el directorio ignorado es una línea en el fichero de exclusión del proyecto, así que
-adivinarlo mirando el disco es imposible y `snapshot` lo pregunta (10.14 de `SPEC.md`). El caso que
+adivinarlo mirando el disco es imposible y `snapshot` lo pregunta (["`biso snapshot`"](spec/cmd/snapshot.md)). El caso que
 justifica el trabajo es el bueno: cuando el proyecto versiona la carpeta del tablero, la revisión va al
 repositorio del código y la instantánea cruza a otra máquina con el proyecto, sin que nadie configure un
 remoto. Leída al pie de la letra, la redacción anterior habría creado ahí un repositorio dentro de otro
@@ -1117,7 +1113,7 @@ quedaba versionado y a la vez que la revisión añadía solo los dos ficheros de
 uno a uno, y no el directorio entero, para que un fichero que alguien deje ahí a mano no acabe en el
 historial.
 
-**Por qué `snapshot` no toma ningún acceso exclusivo.** Es una lectura, y la sección 4.10 de `SPEC.md`
+**Por qué `snapshot` no toma ningún acceso exclusivo.** Es una lectura, y ["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables)
 promete que una lectura nunca hace fallar a una escritura. Si tomara el acceso exclusivo de las
 escrituras, una copia podría hacer terminar con error a un `biso set` que llegara a la vez, que es un daño
 sobre el trabajo diario. Sin él, el único desenlace malo es que dos instantáneas simultáneas choquen al
@@ -1130,7 +1126,7 @@ mismo segundo sobre el mismo tablero.
 **Por qué el daño de la base de datos estrena el código 10 en vez de compartir el 8.** El 8 promete un
 remedio, `biso init` crea el tablero, y con la base de datos dañada ese remedio no arregla nada: hay que
 reconstruir desde una instantánea. Tres situaciones con tres remedios no pueden compartir número si el
-principio de la sección 1 de `SPEC.md` dice que quien llama ramifica sobre el número sin leer el mensaje.
+principio de ["Los principios"](spec/principios.md) dice que quien llama ramifica sobre el número sin leer el mensaje.
 Y como el remedio ahora tiene un comando que lo hace, el mensaje lo nombra en vez de decir "restaura de
 una copia": `biso init --from` reconstruye en el sitio, adoptando el `id` del marcador, y para eso hubo
 que declarar que un directorio cuya base de datos no abre no cuenta como tablero accesible.
@@ -1144,9 +1140,9 @@ para saber cuál de los dos remedios aplicar, que es justo lo que los códigos e
 **Por qué las columnas se miden en celdas de terminal.** Los títulos son texto libre en UTF-8, y contar
 puntos de código desalinea la tabla en cuanto aparece un acento combinante, un ideograma o un emoji,
 porque lo que suman en pantalla no es lo que suman como caracteres. La celda es la única unidad que
-alinea de verdad, y medirla no contradice la prohibición de mirar el terminal de la sección 4.1 de
-`SPEC.md`: la anchura de un carácter es una propiedad de Unicode, igual en cualquier máquina, mientras
-que lo que 4.1 prohíbe es preguntarle a la ventana cuántas columnas tiene. El recorte del título usa la
+alinea de verdad, y medirla no contradice la prohibición de mirar el terminal de
+["Interactividad, terminal y color"](spec/salida-y-terminal.md#interactividad-terminal-y-color): la anchura de un carácter es una propiedad de Unicode, igual en cualquier máquina, mientras
+que lo que esa sección prohíbe es preguntarle a la ventana cuántas columnas tiene. El recorte del título usa la
 misma unidad y no parte nunca un grafema, así que la promesa es un tope de 100 celdas y no una longitud
 exacta.
 
@@ -1161,7 +1157,7 @@ máximo de espera, y si `{files}` daba rutas relativas o absolutas.
 **Lo primero que salió al mirarlos fue que dos de los tres no eran de `custom`.** Le pasan igual a `git`:
 si `git commit` falla porque un hook lo rechaza o porque nadie ha configurado una identidad, la pregunta
 de qué se hace con lo que ese `git` escribió es exactamente la misma. Así que las reglas se escribieron
-una sola vez, en un apartado de la sección 10.14 de `SPEC.md` que vale para los dos sistemas, y `custom`
+una sola vez, en un apartado de ["`biso snapshot`"](spec/cmd/snapshot.md) que vale para los dos sistemas, y `custom`
 las hereda. Sale más corto que un contrato paralelo por sistema y deja menos rincones donde volver a
 decidir lo mismo.
 
@@ -1174,13 +1170,13 @@ error**, porque `git commit` escribe su resumen por la estándar y `git push` su
 quedarse con una sola pierde la mitad de lo útil. El precio es que el orden relativo entre las dos
 corrientes no se puede garantizar, y el documento lo dice en vez de prometer algo que no se cumple.
 
-Por stdout no va nunca nada, porque la sección 4.2 de `SPEC.md` lo reserva para los datos. Y con `--json`
-tampoco va por stderr, donde la sección 12.2 de `SPEC.md` pone el sobre de error: ahí las líneas entran en
+Por stdout no va nunca nada, porque ["stdout, stderr y qué va en cada uno"](spec/salida-y-terminal.md#stdout-stderr-y-qué-va-en-cada-uno) lo reserva para los datos. Y con `--json`
+tampoco va por stderr, donde ["Los errores en JSON"](spec/contrato-json.md#los-errores-en-json) pone el sobre de error: ahí las líneas entran en
 el propio sobre, en `data.vcsOutput` o en `error.vcsOutput`. Eso añadió una quinta clave de detalle a la
-tabla de esa sección de `SPEC.md`, que ya se gobierna aparte del contrato de estabilidad de las salidas de
+tabla de esa sección, que ya se gobierna aparte del contrato de estabilidad de las salidas de
 datos precisamente para poder crecer.
 
-**`--quiet` no las suprime**, por el mismo motivo por el que la sección 4.3 nunca suprime un `warning:`.
+**`--quiet` no las suprime**, por el mismo motivo por el que ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos) nunca suprime un `warning:`.
 `--quiet` calla las líneas `note:` porque las escribió `biso`, que sabe que son trivia; de una línea que
 escribió un programa ajeno no puede saberlo. Quien quiera silencio tiene el `2>/dev/null` que esa misma
 sección ya nombra.
@@ -1209,7 +1205,7 @@ dos máquinas. Se eligieron relativas, sin `./` delante, que es además lo que y
 quien necesite absolutas puede envolver su orden en un script. Se descartó una clave nueva para elegir
 entre las dos, por no añadir una decisión que nadie ha pedido.
 
-**Y al escribirlo apareció un error del documento.** La sección 3.3 decía que `{files}` se sustituía por
+**Y al escribirlo apareció un error del documento.** ["Configuración de máquina"](spec/invocacion.md#configuración-de-máquina) decía que `{files}` se sustituía por
 "los ficheros de la instantánea", pero la revisión lleva tres ficheros (`snapshot.ndjson`, `board.json` y
 el marcador `<id>.id`) mientras que la clave `files` del JSON de `biso snapshot` enseña solo los dos que
 ese comando escribe. Eran dos conjuntos distintos con nombres casi iguales, y no había manera de saber si
@@ -1218,12 +1214,12 @@ lo dicen y se nombran la una a la otra.
 
 ## El origen de la cifra de 25 milisegundos
 
-El tope de bytes del mensaje de arranque (apartado 3) trae su medida. El presupuesto de arranque de la
-sección 4.13 de `SPEC.md`, 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero de
+El tope de bytes del mensaje de arranque (["El presupuesto del mensaje de arranque"](#el-presupuesto-del-mensaje-de-arranque)) trae su medida. ["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque),
+25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero de
 300 tareas, no la tenía escrita en ningún sitio, y esta sección es esa medida.
 
 **Medido en la misma máquina que documenta `docs/ESTADO-DEL-ARTE.md`** (Apple M3 Max, macOS 26.5.2, 300
-iteraciones, sección 12 de ese documento). El suelo del sistema operativo para arrancar cualquier
+iteraciones, ["El coste de arranque y el coste de contexto"](ESTADO-DEL-ARTE.md#12-el-coste-de-arranque-y-el-coste-de-contexto)). El suelo del sistema operativo para arrancar cualquier
 proceso, sin ejecutar ninguna línea propia todavía, es **5,2 milisegundos**. Un binario de Go añade
 **2,2 milisegundos** encima de ese suelo. Y un programa en Go que lee 300 tareas **de un fichero
 JSON**, las ordena y las imprime tardó **8,7 milisegundos en total**, suelo, arranque de Go y trabajo
@@ -1231,13 +1227,13 @@ real incluidos. La cifra del presupuesto, 25 milisegundos, deja **unas tres vece
 total medido.
 
 **Y hay que decir con qué se midió ese total, porque no es el almacén que se acabó eligiendo.** Los
-8,7 milisegundos salen de leer un fichero JSON, no la base de datos SQLite que decide el apartado 12,
-que en aquel momento todavía no estaba decidida. La medida vale para lo que se usó: fijar un
+8,7 milisegundos salen de leer un fichero JSON, no la base de datos SQLite que decide
+["La decisión de persistencia"](#la-decisión-de-persistencia), que en aquel momento todavía no estaba decidida. La medida vale para lo que se usó: fijar un
 presupuesto que un lenguaje compilado cumple de sobra y que un interpretado no cumple. Lo que no es es
 una medida del programa terminado: abrir el fichero de la base de datos, preparar sentencias y recorrer
 índices no cuesta lo mismo que leer un fichero de texto de una vez.
 
-**El almacén real ya está medido, y esto es lo que le pasó a esa cifra de margen** (apartado 14.1). Con
+**El almacén real ya está medido, y esto es lo que le pasó a esa cifra de margen** (["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo)). Con
 la base de datos SQLite de verdad y el controlador elegido, leer el tablero de 300 tareas cuesta **14,5
 milisegundos** en un portátil macOS y **3,2 milisegundos** en Linux. O sea que las tres veces de margen
 se quedan en **una vez y siete décimas** en el portátil, y crecen a casi ocho veces en Linux. El
@@ -1248,9 +1244,9 @@ cifra de la carga de JSON y no del programa terminado.
 un suelo de macOS. El equivalente medido al elegir el controlador, un binario de Go que no hace
 absolutamente nada, o sea suelo del sistema más arranque de Go, da **8,1 milisegundos** de mediana en el
 portátil macOS, coherente con los 7,4 que suman las dos cifras de arriba. Ese mismo binario tarda
-**0,37 milisegundos** en Linux, veintidós veces menos. No toca el presupuesto, que la sección 4.13 de
-`SPEC.md` amarra a la máquina que ejecuta la integración continua y no a un modelo de hardware, pero
-refuerza el argumento del apartado 12 contra tener un daemon: en el portátil el suelo se come 8,1 de los
+**0,37 milisegundos** en Linux, veintidós veces menos. No toca el presupuesto, que ["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque)
+amarra a la máquina que ejecuta la integración continua y no a un modelo de hardware, pero
+refuerza el argumento de ["La decisión de persistencia"](#la-decisión-de-persistencia) contra tener un daemon: en el portátil el suelo se come 8,1 de los
 14,5 milisegundos que cuesta la lectura real, y un daemon no puede ahorrar el suelo, porque el cliente
 que hablaría con él es también un proceso.
 
@@ -1269,23 +1265,23 @@ presupuesto del apartado anterior en la única carga que hay medida, y los separ
 milisegundo, así que la decisión no se toma por rendimiento: se toma por lo que cuesta escribir el
 programa, porque es lo único que de verdad los separa aquí.
 
-**Por rendimiento la diferencia son seis décimas de milisegundo.** Con las medidas de la sección 12 de
-`docs/ESTADO-DEL-ARTE.md`, sobre el suelo de 5,2 milisegundos que cuesta arrancar cualquier proceso,
+**Por rendimiento la diferencia son seis décimas de milisegundo.** Con las medidas de
+["El coste de arranque y el coste de contexto"](ESTADO-DEL-ARTE.md#12-el-coste-de-arranque-y-el-coste-de-contexto), sobre el suelo de 5,2 milisegundos que cuesta arrancar cualquier proceso,
 Rust añade 1,6 milisegundos y Go 2,2. Esa diferencia es el **2,4 por ciento** de un presupuesto de 25
 milisegundos que sobra tres veces sobre el total medido de 8,7, que es lo que cuesta leer 300 tareas de
-un JSON y no lo que costará leerlas de SQLite (apartado 13). El margen puede encogerse cuando se mida
+un JSON y no lo que costará leerlas de SQLite (["El origen de la cifra de 25 milisegundos"](#el-origen-de-la-cifra-de-25-milisegundos)). El margen puede encogerse cuando se mida
 el almacén de verdad, pero las seis décimas no dependen de eso: son el arranque del propio binario, la
 misma cifra fija sea cual sea el trabajo que venga después. Para calibrar cuánto es: `rg`, que es
 la herramienta más rápida de las que se midieron instaladas, tarda 7,1 milisegundos, y
 `git --version` tarda 12,3. Ganar seis décimas en un programa cuyo competidor de referencia gasta doce
 milisegundos en imprimir su propia versión no cambia nada que un usuario pueda notar. El presupuesto,
 además, **se midió con un binario de Go**, así que la cifra que la especificación exige no se extrapola
-de otro lenguaje: es lo que el lenguaje elegido hizo en esa máquina, con la carga que el apartado 13
-dice.
+de otro lenguaje: es lo que el lenguaje elegido hizo en esa máquina, con la carga que
+["El origen de la cifra de 25 milisegundos"](#el-origen-de-la-cifra-de-25-milisegundos) dice.
 
 **Lo que decide es el ciclo de desarrollo, y en particular el ciclo de un agente.** Este documento y
-`SPEC.md` están escritos para que alguien implemente el programa entero sin preguntar, con la
-comprobación frecuente que la sección 15 de `SPEC.md` ordena, y ese alguien va a ser en buena parte un
+[`docs/spec/`](spec/index.md) están escritos para que alguien implemente el programa entero sin preguntar, con la
+comprobación frecuente que ["Por dónde empezar a implementar"](spec/por-donde-empezar.md) ordena, y ese alguien va a ser en buena parte un
 agente automático. En ese modo de trabajo, el coste dominante no es el tiempo de ejecución del programa
 sino **el número de vueltas entre escribir y ver el resultado**, y ahí Go gana por dos motivos
 distintos. El primero es que compila muy rápido, así que cada vuelta es corta. El segundo es más
@@ -1302,7 +1298,7 @@ que el equivalente en Rust, lo que da igual en algo que se instala una vez. Y se
 décimas del párrafo anterior, que es lo que se está comprando.
 
 **Quedaba una cosa por comprobar, y no era del lenguaje sino de su encuentro con SQLite.** La
-persistencia del apartado 12 es una base de datos SQLite, y en Go hay tres formas de hablar con ella: un
+persistencia de ["La decisión de persistencia"](#la-decisión-de-persistencia) es una base de datos SQLite, y en Go hay tres formas de hablar con ella: un
 enlace con la biblioteca en C, que obliga a compilar con `cgo`; una traducción de ese código de C a Go
 puro; y SQLite compilado a WebAssembly y ejecutado por un motor escrito en Go. La elección afectaba al
 arranque y a cómo se distribuye el programa, y nunca a la del lenguaje, porque las tres son de Go. **Ya
@@ -1316,8 +1312,8 @@ tablero de prueba y las versiones exactas de todo están en `bench/sqlite-driver
 la decisión y lo que la sostiene. Se midieron los cuatro candidatos vivos, y los cuatro llevan dentro la
 misma versión de SQLite, la 3.53.4, así que ninguna diferencia de las que siguen es del motor.
 
-**El presupuesto se cumple con los cuatro, y con mucho margen.** Sobre el tablero de 300 tareas de la
-sección 4.13 de `SPEC.md`, en Linux el más lento tarda 3,2 milisegundos, casi ocho veces por debajo de
+**El presupuesto se cumple con los cuatro, y con mucho margen.** Sobre el tablero de 300 tareas de
+["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque), en Linux el más lento tarda 3,2 milisegundos, casi ocho veces por debajo de
 los 25. En un portátil macOS van de 11 a 14,5 milisegundos, y de esos 8,1 son el suelo del sistema para
 arrancar cualquier proceso. Los cuatro binarios producen además una salida idéntica byte a byte en las
 dos plataformas, y ninguno necesitó una sola línea de SQL distinta: mismo esquema, mismas cinco
@@ -1368,7 +1364,8 @@ reescritura.
 IMMEDIATE` como acceso exclusivo de escritura, puntos de retorno, `busy_timeout`, claves ajenas,
 `user_version`, el `integrity_check` que necesita `biso doctor`, `wal_checkpoint(TRUNCATE)`, `ANALYZE`,
 consultas recursivas, el módulo JSON y las funciones de ventana. Y leer desde una segunda conexión
-mientras una primera tiene una escritura abierta, que es literalmente lo que promete la sección 4.10 de
-`SPEC.md`. La búsqueda por texto completo con FTS5, que sería la vía barata para la sección 7.2, viene
+mientras una primera tiene una escritura abierta, que es literalmente lo que promete
+["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables). La búsqueda por texto completo con FTS5, que sería la vía barata para
+["La búsqueda por texto"](spec/referencias.md#la-búsqueda-por-texto), viene
 puesta. Y un dato para cuando se implemente esa búsqueda: ningún controlador hace `LIKE` insensible a
 mayúsculas con acentos, porque eso es lo que hace SQLite sin la biblioteca ICU.
