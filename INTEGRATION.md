@@ -412,7 +412,7 @@ file, --note for a decision, ask when a person must choose. Keep no notes elsewh
 ```
 
 Ese texto mide **164 bytes** con su salto de línea final, y la parte fija tiene hoy **129 libres**.
-Cuando este apartado se escribió había 201 y por eso decía que cabía; con las dos banderas nuevas de
+Cuando este apartado se escribió había 201 y por eso decía que cabía; con las banderas nuevas de
 `FIELD FLAGS` ya no cabe, y le faltan 35 bytes. No es un número que corregir: es que la propuesta, tal
 como está escrita, no entra.
 
@@ -425,7 +425,7 @@ decisión de la sección ["La decisión abierta"](#la-decisión-abierta), no de 
    salen, por ejemplo, de dejar de nombrar los dos usos de `--doc` ("a design or plan file") o de
    suprimir la última oración, que es la que cierra la puerta a escribir notas en otro sitio y
    probablemente sea la parte que más aporta.
-2. **Recortar otra cosa del bloque fijo** para hacerle sitio: alguna de las once reglas, o una línea
+2. **Recortar otra cosa del bloque fijo** para hacerle sitio: alguna de las reglas, o una línea
    de `COMMANDS`. Esto es exactamente el caso que `docs/DECISIONES.md` describe como la prueba de
    fuego del tope, y solo vale si esa reducción sale limpia; si para meter la frase hay que quitar
    algo que un agente necesita para arrancar, la que sobra es la frase.

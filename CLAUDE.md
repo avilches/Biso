@@ -26,7 +26,7 @@ saber que ya está anotado evita volver a descubrirlo. Cuando se cierre una entr
 
 ["Por dónde empezar a implementar"](docs/spec/por-donde-empezar.md) dice el orden en que cada pieza paga lo que cuesta: el modelo de
 datos, el algoritmo de coincidencia (una función pura de la que dependen todos los comandos), los
-cuatro comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
+comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
 exportación, y el resto.
 
 ## El modelo de estados está cerrado
@@ -97,7 +97,7 @@ Con eso **ya no queda nada que bloquee empezar a escribir código**: el paso 1 d
 
 ## El sitio de documentación
 
-Los cuatro documentos de `docs/` se sirven como un sitio navegable con MkDocs y el tema Material,
+Los documentos de `docs/` se sirven como un sitio navegable con MkDocs y el tema Material,
 definido en `mkdocs.yml`. Es utillaje de documentación, no parte del programa: no toca el código
 Go ni cambia el contenido de los `.md`, que siguen siendo la fuente de verdad. Las dependencias de
 Python están fijadas con versión exacta en `docs-requirements.txt`.
