@@ -81,3 +81,21 @@ actualice solo.
 
 **El mensaje del commit `bd0c874`** describe cuatro cambios que en realidad entraron en `aaa5b96`. El
 árbol es correcto, solo el mensaje se adelantó. Sin enmendar por no reescribir historia sin petición.
+
+---
+
+## 3. Un plan de implementación que hay que repasar antes de retomarlo
+
+El 2026-09-11 se escribió, en la rama `worktree-implementacion-almacen`, el plan del primer paso de
+la sección 15 (`docs/superpowers/plans/2026-09-11-almacen.md`): el almacén SQLite, sus migraciones,
+la transacción `WithTx` y la primera medida real del presupuesto de arranque. El documento de
+arquitectura que lo motiva vive en la misma rama, en
+`docs/superpowers/specs/2026-09-10-arquitectura-implementacion-design.md`. Los dos citan `docs/SPEC.md`
+por número de sección (4.10, 4.13, 15 y otras).
+
+Mientras estén abiertas la rama `worktree-reparto-de-la-spec`, que retira `docs/SPEC.md` como fichero
+único y reparte su contenido en `docs/spec/`, y la rama `worktree-tutorial`, ese plan no se puede
+ejecutar tal cual: sus referencias por sección apuntan a un `SPEC.md` que va a dejar de existir en esa
+forma. Cuando las dos se cierren, hay que releer el plan y el documento de arquitectura y actualizar
+sus referencias a los ficheros y a la numeración que tenga entonces la especificación, antes de
+retomarlo.
