@@ -26,12 +26,12 @@ en la forma de objeto que esa sección define para los criterios, la definición
 comentarios y la pregunta abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
 y las claves estables de cada criterio.
 
-**Los únicos campos que no salen son los derivados de la sección 5.** `question` sale en `export` y
+**Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md).** `question` sale en `export` y
 entra de vuelta con `new --from`, con sus tres partes completas.
 
 `export` solo lleva las tareas: reconstruir un tablero entero, con su vocabulario y no solo con sus
-datos, es lo que hace `biso snapshot` (10.14), cuyo `snapshot.ndjson` tiene exactamente esta misma forma
-y se lee de vuelta con el `--from` de `biso init` (10.1), no con el de `biso new`.
+datos, es lo que hace [`biso snapshot`](snapshot.md), cuyo `snapshot.ndjson` tiene exactamente esta misma forma
+y se lee de vuelta con el `--from` de [`biso init`](init.md), no con el de `biso new`.
 
 La garantía que la suite de pruebas comprueba:
 
@@ -52,7 +52,7 @@ tiene.
 `biso init --from` lee el vocabulario del propio `board.json` de la instantánea, así que el tablero
 de destino no necesita declarar nada a mano: nace con el mismo `task_prefix`, los mismos estados y
 los mismos tipos que el de origen, y por eso la importación de su `snapshot.ndjson` nunca falla por
-vocabulario distinto. Comparar esto con la vía manual de `biso new --from` (10.3): esa sigue
+vocabulario distinto. Comparar esto con la vía manual de [`biso new --from`](new.md): esa sigue
 existiendo para importar un NDJSON suelto en un tablero cuyo vocabulario ya se ha declarado por
 separado, pero ya no es la única manera de reconstruir un tablero entero.
 

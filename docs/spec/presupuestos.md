@@ -38,19 +38,19 @@ Tres reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
    documentado está en este documento y no en otra herramienta: la resolución del tablero llevaba una
    comprobación de un `.git` en cada directorio del camino hacia arriba, para frenar la búsqueda del
    puntero, y se retiró al ver que además de costar comprobaciones en cada llamada no protegía de lo
-   que pretendía (sección 12 de `DECISIONES.md`).
+   que pretendía (sección ["La decisión de persistencia"](../DECISIONES.md#la-decisión-de-persistencia) de `DECISIONES.md`).
 2. **Ningún comando ejecuta un programa ajeno en su camino caliente.** `biso snapshot` es la única
-   excepción, y así lo dice la sección 10.14. Invocar `git`, que es el sistema de control de versiones
+   excepción, y así lo dice la sección ["`biso snapshot`"](cmd/snapshot.md). Invocar `git`, que es el sistema de control de versiones
    por defecto, cuesta unos 12 milisegundos medidos, casi la mitad de este presupuesto entero gastada en
    una sola llamada. Este presupuesto es además la razón por la que la resolución del tablero de la
-   sección 3.2 no mira el control de versiones en absoluto, ni siquiera leyendo ficheros: frenar la
+   sección ["Cómo se elige el tablero"](resolucion-del-tablero.md) no mira el control de versiones en absoluto, ni siquiera leyendo ficheros: frenar la
    búsqueda del puntero donde un repositorio empieza obligaría a respetar sus reglas de exclusión para
    que el freno significara algo, y eso no se puede reimplementar de forma fiable ni preguntar sin
-   invocar el programa. Que `biso snapshot` sí haga esas dos preguntas (10.14) no contradice nada:
+   invocar el programa. Que `biso snapshot` sí haga esas dos preguntas (["`biso snapshot`"](cmd/snapshot.md)) no contradice nada:
    ese comando ya está fuera del camino caliente por definición.
 3. **La palanca mayor no es que cada llamada sea más rápida: es que haga falta hacer menos llamadas.**
-   Para eso existe `biso prime` (sección 9), que sustituye el ciclo entero de leer guías sueltas y
-   encadenar comandos por un solo mensaje al principio de la sesión; `docs/DECISIONES.md`, sección 3,
+   Para eso existe `biso prime` (sección ["`biso prime`, el arranque de una sesión"](cmd/prime.md)), que sustituye el ciclo entero de leer guías sueltas y
+   encadenar comandos por un solo mensaje al principio de la sesión; la sección ["El presupuesto del mensaje de arranque"](../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`
    mide lo que cuesta la alternativa de no tenerlo.
 
 ---
@@ -81,7 +81,7 @@ definir:
 4. Si no basta, el de `IN PROGRESS`.
 5. Si aun así no cupiera, cada uno de los cuatro bloques se reduce a su sola línea de recuento.
 
-`ASSIGNED TO YOU` y `NEXT UP` comparten la línea de recuento que ya define 9.7. `IN PROGRESS` y
+`ASSIGNED TO YOU` y `NEXT UP` comparten la línea de recuento que ya define la sección ["La salida literal"](cmd/prime.md#la-salida-literal). `IN PROGRESS` y
 `NEEDS ANSWER` llevan cada uno la suya, con el mismo patrón: cuántas tareas del bloque quedan
 fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 `N more not shown: 'biso ls --active'`, y para `NEEDS ANSWER` es
@@ -89,10 +89,10 @@ fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 
 Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
-El texto literal de la sección 9.7 ocupa **4.818 bytes** con el tablero del ejemplo: **3.327** de
+El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **4.818 bytes** con el tablero del ejemplo: **3.327** de
 parte fija y **1.491** de resumen. Las dos partes caben dentro de su tope.
 
-**El número que congela el contrato de estabilidad de la sección 13 es el total, 5.120 bytes**, porque
+**El número que congela el contrato de estabilidad de la sección ["El contrato de estabilidad"](estabilidad.md) es el total, 5.120 bytes**, porque
 es el único que quien llama observa. El reparto entre las dos partes puede cambiar sin romper ese
 contrato.
 

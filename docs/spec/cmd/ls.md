@@ -106,7 +106,7 @@ ordenadas por identificador.
 | `--limit 0` | No imprime ninguna fila, solo el aviso de recorte con el total. Es la forma de contar sin `--count` |
 | `--count` | Un número por stdout y nada más |
 | `--ids` | Identificadores, uno por línea, sin cabeceras ni columnas |
-| Alguna tarea ilegible | Se salta, con el aviso de 4.12, y el resto del listado es válido |
+| Alguna tarea ilegible | Se salta, con el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), y el resto del listado es válido |
 
 ## Salida
 
@@ -134,16 +134,16 @@ Ocho columnas fijas, separadas por dos espacios, en este orden y con estos conte
    y no hay nada después que alinear.
 
 **La unidad de los dos pasos es la celda de un terminal monoespaciado, no el carácter.** Un título es
-texto libre en UTF-8 (4.4), así que puede llevar ideogramas, emoji o acentos combinantes, y esas tres
+texto libre en UTF-8 (["Codificación y texto"](../salida-y-terminal.md#codificación-y-texto)), así que puede llevar ideogramas, emoji o acentos combinantes, y esas tres
 cosas ocupan en pantalla algo distinto de lo que suman sus puntos de código: una marca combinante mide
 cero celdas porque se pinta sobre la letra anterior, un ideograma de Asia oriental o un emoji miden dos,
 y todo lo demás mide una. La tabla que lo dice es la de Unicode, la de anchura de Asia oriental más la
 categoría de las marcas combinantes, y contar en cualquier otra unidad desalinea la tabla en cuanto un
 título deja de ser ASCII.
 
-**Medir en celdas no es mirar el terminal, así que no contradice la sección 4.1.** La anchura de un
+**Medir en celdas no es mirar el terminal, así que no contradice la sección ["Interactividad, terminal y color"](../salida-y-terminal.md#interactividad-terminal-y-color).** La anchura de un
 carácter es una propiedad de Unicode, la misma en cualquier máquina y con cualquier ventana, y por eso
-la salida sigue sin depender de dónde se ejecute el programa. Lo que 4.1 prohíbe es lo otro: preguntar
+la salida sigue sin depender de dónde se ejecute el programa. Lo que la sección ["Interactividad, terminal y color"](../salida-y-terminal.md#interactividad-terminal-y-color) prohíbe es lo otro: preguntar
 cuántas columnas tiene la ventana, o si hay color, para decidir qué se imprime.
 
 **Y el recorte nunca parte un grafema por la mitad.** Si cortar exactamente en la celda 97 separaría una
@@ -242,7 +242,7 @@ igual que las demás.
 ```
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
-comentarios. Para eso está `biso get`. Los diez campos derivados de la sección 5 sí están todos,
+comentarios. Para eso está `biso get`. Los diez campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) sí están todos,
 `blocks` incluido. `truncated` es explícito para que nadie tenga que comparar `shown` con `matched`,
 y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado.
 
@@ -255,7 +255,7 @@ y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado
 | Banderas incompatibles, `--limit` negativo, `--sort` inventado, fecha mal formada | 2 |
 | `--parent` a una tarea que no existe | 4 |
 | `--parent` por texto con varias coincidencias | 5 |
-| `--mine` sin ninguna identidad configurada (3.1) | 6 |
+| `--mine` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | 6 |
 | El almacén no responde | 7 |
 | No hay tablero | 8 |
 

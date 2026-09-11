@@ -11,19 +11,19 @@ con esta forma:
 
 | `kind` | Lo produce | `data` contiene |
 |---|---|---|
-| `prime` | `prime` | Sección 9.9 |
-| `where` | `where` | `id`, `board`, `path`, `source`, `me`, `counts`. Ejemplo en 10.2 |
-| `init` | `init` | `board`, `pointerCreated`. Ejemplo en 10.1 |
+| `prime` | `prime` | Sección ["El esquema JSON"](cmd/prime.md#el-esquema-json) |
+| `where` | `where` | `id`, `board`, `path`, `source`, `me`, `counts`. Ejemplo en ["`biso where`"](cmd/where.md) |
+| `init` | `init` | `board`, `pointerCreated`. Ejemplo en ["`biso init`"](cmd/init.md) |
 | `task.list` | `ls` | `tasks`, `shown`, `matched`, `hidden`, `truncated`, `skipped`, `sort`, `filters` |
 | `task.get` | `get` | `task` |
 | `task.candidates` | `get` con varias coincidencias | `tasks` |
 | `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer`, `archive` | `tasks`, `warnings` |
-| `config` | `config list` | `config`. Ejemplo en 10.10 |
-| `doctor` | `doctor` | `problems`, `warnings`, `fixed`. Ejemplo en 10.11 |
-| `snapshot` | `snapshot` | `tasks`, `files`, `vcs`, `committed`, `commit`, `repository`, `pushed`, `vcsOutput`, `skipped`. Ejemplo en 10.14 |
-| `board` | `board` | `url`, `port`, `opened`. Ejemplo en 10.12, y se imprime al arrancar el servidor |
-| `help` | `help` | `commands`, con el nombre y el resumen de cada uno. Ejemplo en 10.13 |
-| `error` | cualquier fallo | Ver 12.2 |
+| `config` | `config list` | `config`. Ejemplo en ["`biso config`"](cmd/config.md) |
+| `doctor` | `doctor` | `problems`, `warnings`, `fixed`. Ejemplo en ["`biso doctor`"](cmd/doctor.md) |
+| `snapshot` | `snapshot` | `tasks`, `files`, `vcs`, `committed`, `commit`, `repository`, `pushed`, `vcsOutput`, `skipped`. Ejemplo en ["`biso snapshot`"](cmd/snapshot.md) |
+| `board` | `board` | `url`, `port`, `opened`. Ejemplo en ["`biso board`"](cmd/board.md), y se imprime al arrancar el servidor |
+| `help` | `help` | `commands`, con el nombre y el resumen de cada uno. Ejemplo en ["`biso help`"](cmd/help.md#biso-help) |
+| `error` | cualquier fallo | Ver ["Los errores en JSON"](#los-errores-en-json) |
 
 Un lote de doscientas cuarenta y dos tareas es **un solo sobre** con doscientas cuarenta y dos
 entradas en `data.tasks`, nunca doscientos cuarenta y dos objetos sueltos. La única salida del
@@ -33,7 +33,7 @@ su formato es NDJSON por definición.
 ## Los errores en JSON
 
 Con `--json`, un error sale **por stderr**, como un objeto con esta forma, y el código de salida del
-proceso es el de la tabla de la sección 2:
+proceso es el de la tabla de la sección ["Códigos de salida"](codigos-de-salida.md):
 
 ```json
 {
@@ -54,7 +54,7 @@ proceso es el de la tabla de la sección 2:
 Cuando un solo comando produce varios fallos, como un lote inválido, `error.details` es una lista de
 objetos con la misma forma, uno por fallo, y `error.code` es `batch_invalid`.
 
-**Un sobre de error no es una salida de datos, y se gobierna aparte de la promesa de la sección 12.4.**
+**Un sobre de error no es una salida de datos, y se gobierna aparte de la promesa de la sección ["Números, fechas y ausencias"](#números-fechas-y-ausencias).**
 Esa promesa existe porque quien consume una salida de datos no puede prever qué habrá dentro, así que
 tiene derecho a que la forma no dependa del contenido. En un error sí puede preverlo, porque lo primero
 que hace es leer `code`, y cada `code` trae siempre las mismas claves. Estas son las tres que están en
@@ -66,7 +66,7 @@ todos los errores y las cinco de detalle, con la regla de cuándo acompañan:
 | `field` y `given` | En los que nombran una bandera, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran una bandera |
 | `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs` |
 | `details` | Solo en `batch_invalid` y en `dry_run_failed`, y es una lista de objetos de esta misma forma, uno por fallo |
-| `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió la orden que falló (10.14) |
+| `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió la orden que falló (["`biso snapshot`"](cmd/snapshot.md)) |
 
 Las cinco de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
 comprobable: quien ramifica sobre `unknown_status` sabe que va a tener `field`, `given` y `valid`, y
@@ -97,7 +97,7 @@ desaparecerá. Quien ramifique sobre un `code` desconocido debe tratarlo por su 
 sí está cerrado.
 
 `missing_identity` (código 2, en `biso ask`, `biso answer` y el autor de un comentario) y
-`mine_requires_identity` (código 6, en `--mine`) son la falta de identidad de la tabla de 3.1, pero
+`mine_requires_identity` (código 6, en `--mine`) son la falta de identidad de la tabla de ["Variables de entorno"](invocacion.md#variables-de-entorno), pero
 con dos códigos de salida distintos. No son un mismo concepto duplicado: como esta tabla está
 agrupada por código de salida y ninguno de los dos se mueve nunca, la misma falta de identidad no
 puede compartir un `code` cuando sale con códigos distintos. La asimetría entre los dos códigos es
@@ -118,10 +118,10 @@ anterior a esta rama.
 
   | Clave | `kind` | La bandera que la gobierna |
   |---|---|---|
-  | `data.task.urgencyBreakdown` | `task.get` | Solo aparece con `--explain-urgency` (10.5) |
-  | Las demás claves de `data.task` | `task.get` | Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas, y ninguna otra (10.5) |
+  | `data.task.urgencyBreakdown` | `task.get` | Solo aparece con `--explain-urgency` (["`biso get`"](cmd/get.md)) |
+  | Las demás claves de `data.task` | `task.get` | Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas, y ninguna otra (["`biso get`"](cmd/get.md)) |
 - Una lista vacía es `[]` y un mapa vacío es `{}`, nunca `null`.
-- **Todo lo de arriba gobierna las salidas de datos, y el sobre de error se gobierna aparte** (12.2). La
+- **Todo lo de arriba gobierna las salidas de datos, y el sobre de error se gobierna aparte** (["Los errores en JSON"](#los-errores-en-json)). La
   razón es que quien consume una salida de datos no puede prever qué habrá dentro, y quien recibe un
   error sí: lo primero que lee es `code`, y cada `code` trae siempre las mismas claves.
 

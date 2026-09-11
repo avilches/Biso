@@ -68,7 +68,7 @@ error: unknown status: "Pending"
 | `--label` y `--label-or` | el conjunto de etiquetas del tablero, definido abajo | error 3, con las cinco más parecidas |
 | `--assignee` | el conjunto de personas del tablero, definido abajo | error 3, con las cinco más parecidas |
 | `--milestone` | el conjunto de hitos del tablero, definido abajo | error 3, con las cinco más parecidas |
-| `--parent` | la resolución de referencias de la sección 7 | error 2, 4 o 5 |
+| `--parent` | la resolución de referencias de la sección ["Cómo se resuelve una referencia a una tarea"](referencias.md) | error 2, 4 o 5 |
 | `--search` | nada, es texto libre | nunca falla |
 
 **El conjunto de etiquetas del tablero** es la unión de las etiquetas declaradas en la clave `labels`
@@ -82,7 +82,7 @@ el que valida `--assignee`.
 **El conjunto de hitos del tablero es solo derivado**: son los valores de `milestone` que lleva
 cualquier tarea del tablero, **archivadas y terminadas incluidas**, y nada más. Es el único de los
 tres que no tiene mitad declarada, porque no existe ninguna clave `milestones` en la configuración
-(10.10) ni ninguna bandera de `biso init` que la escriba, así que **un hito existe exactamente
+de [`biso config`](cmd/config.md) ni ninguna bandera de `biso init` que la escriba, así que **un hito existe exactamente
 mientras alguna tarea lo lleve escrito**. Un tablero en el que ninguna tarea tiene hito tiene el
 conjunto vacío, y entonces cualquier `--milestone` es error 3; el mensaje lo dice tal cual, sin
 sugerencias, porque no hay ninguna que ofrecer.

@@ -2,11 +2,11 @@
 
 Nombrar lo que no está evita que alguien lo dé por olvidado.
 
-- **No hay `biso delete`.** Está especificado que no existe y qué contesta si se intenta (10.8).
+- **No hay `biso delete`.** Está especificado que no existe y qué contesta si se intenta (["`biso archive`"](cmd/archive.md)).
 - **No hay entidades de hito, documento ni decisión.** El hito es un campo de la tarea y no una
   entidad con ciclo de vida propio: no se crea, no se cierra, no tiene fecha ni descripción, y no hay
   ninguna clave de configuración que lo declare. Eso no impide que `-m/--milestone` valide al filtrar,
-  porque el conjunto contra el que valida es derivado de lo que las tareas usan (6.3) y no una lista
+  porque el conjunto contra el que valida es derivado de lo que las tareas usan (["Qué valida cada filtro, y contra qué"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué)) y no una lista
   que haya que mantener aparte. La documentación se apunta con `--doc`, que es una lista de textos.
 - **No hay contextos de sesión**, es decir, filtros por defecto guardados que cambien lo que devuelve
   una consulta sin que se vea en la línea de comandos.
@@ -16,20 +16,20 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
 - **No hay servidor de integración ni protocolo de herramientas.** La interfaz de la versión 1.0 es
   esta línea de comandos y su salida JSON.
 - **No hay ninguna bandera ni variable de entorno que nombre un tablero.** El tablero se elige por
-  las dos vías de la sección 3.2, y `-C` ya alcanza tanto el directorio de un tablero como el de un
-  proyecto que apunte a uno, así que una bandera para nombrarlo no añadiría nada (sección 3 de
-  `docs/DECISIONES.md`).
-- **No hay una interfaz multiproyecto.** Cada invocación resuelve un único tablero (sección 3.2), y no
+  las dos vías de la sección ["Cómo se elige el tablero"](resolucion-del-tablero.md), y `-C` ya alcanza tanto el directorio de un tablero como el de un
+  proyecto que apunte a uno, así que una bandera para nombrarlo no añadiría nada (sección ["El presupuesto del mensaje de arranque"](../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque)
+  de `docs/DECISIONES.md`).
+- **No hay una interfaz multiproyecto.** Cada invocación resuelve un único tablero (sección ["Cómo se elige el tablero"](resolucion-del-tablero.md)), y no
   hay ningún comando que lea o agregue varios a la vez, aunque la máquina entera tenga más de uno
-  (sección 3.3): quien necesite verlos juntos los recorre uno por uno desde fuera.
+  (sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina)): quien necesite verlos juntos los recorre uno por uno desde fuera.
 - **No hay exportación al formato de Backlog.md.** `biso export` escribe el mismo formato que lee
   `biso new --from`, y traducir a un formato ajeno es trabajo de un conversor aparte, no de este
   comando.
 - **No hay sincronización con ningún sistema externo.**
 - **No hay sincronización entre máquinas.** Un tablero vive en la máquina donde se creó, y lo que
   cruza a otra es la instantánea que deja `biso snapshot`, para reconstruirlo entero con
-  `biso init --from`, no para mantener dos copias vivas al día (sección 12 de `docs/DECISIONES.md`).
-  **Cómo cruza depende de dónde viva el tablero, y las dos vías están especificadas** (10.14): un
+  `biso init --from`, no para mantener dos copias vivas al día (sección ["La decisión de persistencia"](../DECISIONES.md#la-decisión-de-persistencia) de `docs/DECISIONES.md`).
+  **Cómo cruza depende de dónde viva el tablero, y las dos vías están especificadas** (["`biso snapshot`"](cmd/snapshot.md)): un
   tablero versionado dentro del proyecto viaja con él y con el remoto que el proyecto ya tenga, sin que
   nadie configure nada, y un tablero con su propio repositorio viaja cuando alguien le da un remoto y
   `biso snapshot --vcs push` lo publica. Lo que no hay es ningún remoto que `biso` configure por su

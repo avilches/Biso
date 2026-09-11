@@ -21,7 +21,7 @@ Saca la tarea del tablero activo. **La tarea sigue existiendo**, su identificado
 |---|---|
 | Ya estaba archivada | Código 0, con un `note:`, sin escribir |
 | Otras tareas vivas dependen de ella | Aviso con la lista, se archiva igual |
-| La tarea tiene arrendamiento, vivo o vencido | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea (séptima precisión de la sección 5). Si estaba vivo y era de otra identidad, sale además el aviso de 4.3 |
+| La tarea tiene arrendamiento, vivo o vencido | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Si estaba vivo y era de otra identidad, sale además el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) |
 | `--unarchive` | La devuelve al tablero con el estado que tenía, y sin arrendamiento: si vuelve al estado activo, quien quiera trabajar en ella lo toma con `biso start` |
 | Varias referencias | Todo o nada |
 

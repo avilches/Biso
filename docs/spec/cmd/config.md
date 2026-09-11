@@ -33,16 +33,16 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `labels` | lista | vacía |
 | `assignees` | lista | vacía |
 | `extensions` | lista | vacía |
-| `task_prefix` | texto de solo letras | se deriva de `project_name` en mayúsculas (sección 4.11) |
+| `task_prefix` | texto de solo letras | se deriva de `project_name` en mayúsculas (sección ["Identificadores"](../modelo-de-datos.md#identificadores)) |
 | `me` | texto de persona | `BISO_ME` si está definida |
 | `default_limit` | entero >= 0 | 30 |
 | `finish_strict` | booleano | falso |
 | `lease_minutes` | entero > 0 | 240 |
-| `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver 5.4 para el término de cada uno y su valor por defecto |
+| `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver ["La urgencia"](../modelo-de-datos.md#la-urgencia) para el término de cada uno y su valor por defecto |
 
 **`project_name` es el nombre del tablero, y cambiarlo no toca el sistema de ficheros.** Ninguna clave
 de esta tabla lo hace. La carpeta del tablero se queda con el nombre que tenga, aunque sea el slug de un
-nombre anterior, porque ese nombre es decorativo y nadie resuelve por él (sección 3.2): la identidad del
+nombre anterior, porque ese nombre es decorativo y nadie resuelve por él (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)): la identidad del
 tablero está en el marcador `<id>.id` y dentro de la base de datos, no en el nombre de la carpeta. Así
 que renombrar un tablero es una escritura en su base de datos y nada más, con la misma transacción y las
 mismas garantías que cualquier otra.
@@ -51,10 +51,10 @@ mismas garantías que cualquier otra.
 de una transacción de SQLite, así que renombrar el tablero habría sido escribir la configuración y
 después mover la carpeta, con un estado intermedio observable si la segunda mitad fallaba, un error 7
 propio para el fallo de permisos, y la posibilidad de dejar sin resolver el puntero de un tablero que
-viviera fuera de las raíces de la sección 3.3. Nada de eso existe: no hay dos mitades.
+viviera fuera de las raíces de la sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina). Nada de eso existe: no hay dos mitades.
 
 **Ningún carácter de `project_name` puede romper nada, y ahora por un motivo más simple**: no entra en
-ninguna ruta. Sigue habiendo un slug derivado de él (sección 3.2), pero solo se usa para dar nombre a la
+ninguna ruta. Sigue habiendo un slug derivado de él (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), pero solo se usa para dar nombre a la
 carpeta cuando `biso init` la crea, y ahí el valor ya está comprobado. Un `project_name` cuyo slug quede
 vacío sigue siendo un error, porque el slug es un dato del tablero y la regla de que un valor no válido
 nunca se acepta vale igual.
@@ -62,10 +62,10 @@ nunca se acepta vale igual.
 **Renombrar no toca nunca el `task_prefix`.** Se derivó una vez al crear el tablero y desde entonces
 vive por su cuenta en esa clave. Cambiar `project_name` no lo recalcula, aunque el nombre nuevo diera un
 `task_prefix` distinto si el tablero se creara hoy. Y si el nombre nuevo no deja ninguna letra con la
-que derivar uno (sección 4.11), tampoco es un error aquí, porque `task_prefix` ya está fijado y no se
+que derivar uno (sección ["Identificadores"](../modelo-de-datos.md#identificadores)), tampoco es un error aquí, porque `task_prefix` ya está fijado y no se
 recalcula al renombrar.
 
-Lo mismo vale para `biso init --overwrite-config` (sección 10.1), y solo cuando se da `<name>`
+Lo mismo vale para `biso init --overwrite-config` (sección ["`biso init`"](init.md)), y solo cuando se da `<name>`
 explícito: si ese `<name>` difiere del `project_name` que el tablero ya tenía, lo cambia igual que lo
 haría `config set project_name`, y tampoco mueve nada. **Sin `<name>` explícito, `project_name` se
 conserva tal cual estaba**, aunque el valor por defecto de `<name>` sea el nombre del directorio del
@@ -74,9 +74,9 @@ instrucción de renombrar uno que ya existe.
 
 **`me` gana sobre `BISO_ME` cuando las dos están puestas.** Por eso un tablero compartido entre una
 persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
-identidad y `--mine` deja de significar nada (sección 11 de `docs/DECISIONES.md`).
+identidad y `--mine` deja de significar nada (sección ["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `docs/DECISIONES.md`).
 
-**`lease_minutes` fija cuánto dura el arrendamiento de una tarea activa y asignada (sección 5), y se
+**`lease_minutes` fija cuánto dura el arrendamiento de una tarea activa y asignada (sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), y se
 puede cambiar libremente en cualquier momento, sin caer nunca en el error 6.** A diferencia de
 `task_prefix` o de `statuses` en uso, esta clave no queda incrustada en ninguna tarea existente:
 `leaseExpiresAt` se calcula al escribir, así que cambiar `lease_minutes` solo afecta a los
@@ -85,7 +85,7 @@ inconsistente por ello. El valor por defecto, 240 minutos, viene de que **el err
 vencido, no el vencido tardío**: un arrendamiento demasiado corto hace que un agente reclame una tarea
 que otro está trabajando de verdad, mientras que uno demasiado largo solo retrasa el aviso. Y las
 consecuencias de un valor mal calibrado son más pequeñas de lo que parecen, porque `biso start` avisa
-y coge la tarea igual incluso con el arrendamiento vivo (10.7.1): una duración mal puesta produce un
+y coge la tarea igual incluso con el arrendamiento vivo (["`biso start`"](verbos-del-ciclo.md#biso-start)): una duración mal puesta produce un
 informe equivocado, no datos equivocados.
 
 **Los tres estados especiales son valores explícitos, no posiciones.** Se escriben al crear el tablero
@@ -97,7 +97,7 @@ queda incrustado en datos que ya existen, porque cada identificador ya asignado 
 grabado. Mientras el tablero está vacío no hay ningún identificador con el que pueda entrar en
 conflicto, así que cambiarla funciona sin más; en cuanto existe una sola tarea, cambiarla es error 6
 (tabla de abajo), con el mismo motivo por el que no se toca `statuses` en uso. La misma regla vale
-para `biso init --overwrite-config` (sección 10.1): reescribir la configuración de un tablero con
+para `biso init --overwrite-config` (sección ["`biso init`"](init.md)): reescribir la configuración de un tablero con
 tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` explícito o no.
 
 ## Comportamiento, caso a caso
@@ -115,10 +115,10 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
-| Cambiar `project_name` a un valor vacío, o a uno cuyo slug (sección 3.2) quede vacío tras derivarlo | Error 3, en los dos casos |
+| Cambiar `project_name` a un valor vacío, o a uno cuyo slug (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) quede vacío tras derivarlo | Error 3, en los dos casos |
 | Cambiar `project_name` al mismo valor que ya tiene | El `set` se completa igual, con su `note:` |
 | Cambiar `project_name` a un valor que no dejaría ninguna letra para derivar un prefijo | No es error: el `task_prefix` ya está fijado y no se recalcula al renombrar |
-| Cambiar `project_name` en un tablero cuyo puntero lleva `path`, o cuya carpeta ya no se llama como el nombre viejo | No es un caso especial: no se mueve nada y el puntero sigue valiendo, porque nada resuelve por el nombre de la carpeta (sección 3.2) |
+| Cambiar `project_name` en un tablero cuyo puntero lleva `path`, o cuya carpeta ya no se llama como el nombre viejo | No es un caso especial: no se mueve nada y el puntero sigue valiendo, porque nada resuelve por el nombre de la carpeta (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) |
 | `get` de una clave de lista | Los valores separados por comas, en una línea |
 | `set` correcto | Sin salida por stdout, con `note:` por stderr diciendo el valor nuevo |
 

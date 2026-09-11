@@ -1,6 +1,6 @@
 # `biso set`
 
-El comando de edición general. Todo lo que hacen los verbos de flujo de 10.7 se puede hacer aquí, con
+El comando de edición general. Todo lo que hacen los verbos de flujo de la sección ["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`"](verbos-del-ciclo.md) se puede hacer aquí, con
 más palabras.
 
 ## Firma
@@ -13,16 +13,16 @@ biso set <ref>... [cualquier bandera de campo de la seccion 8]
 
 ## Parámetros propios
 
-**Todas** las banderas de las secciones 8.2, 8.3, 8.5 y 8.6 valen aquí, con exactamente el mismo
+**Todas** las banderas de las secciones ["Campos de lista"](../familias-de-banderas.md#campos-de-lista), ["Campos de prosa"](../familias-de-banderas.md#campos-de-prosa), ["Campos escalares"](../familias-de-banderas.md#campos-escalares) y ["Campos externos"](../familias-de-banderas.md#campos-externos) valen aquí, con exactamente el mismo
 significado que en cualquier otro comando. Lo propio de `set`:
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
 | `<ref>` | | sí, una o más | referencia | | sí | no | |
-| `--check <sel>` | | no | selector 8.4 | | sí | ver 8.4 | solape con `--uncheck` |
-| `--uncheck <sel>` | | no | selector 8.4 | | sí | ver 8.4 | solape con `--check` |
-| `--check-dod <sel>` | | no | selector 8.4 | | sí | ver 8.4 | solape con `--uncheck-dod` |
-| `--uncheck-dod <sel>` | | no | selector 8.4 | | sí | ver 8.4 | solape con `--check-dod` |
+| `--check <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--uncheck` |
+| `--uncheck <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check` |
+| `--check-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--uncheck-dod` |
+| `--uncheck-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check-dod` |
 | `--comment <text>` | | no | texto largo | | sí | no | |
 | `--comment-author <@who>` | | no | texto libre | `me` | no | no | requiere `--comment` |
 | `--id` | | no | booleano | falso | no | no | `--match` |
@@ -36,17 +36,17 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Caso | Qué pasa |
 |---|---|
 | Ninguna bandera de cambio | Error 2: `error: nothing to change` con un puntero a `biso get` |
-| Varias referencias | El mismo cambio se aplica a todas, con la garantía de todo o nada de 4.10 |
+| Varias referencias | El mismo cambio se aplica a todas, con la garantía de todo o nada de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables) |
 | Varias referencias y un selector que no sea `all` (clave, rango, lista o texto) | Error 2, porque el selector de una tarea no tiene por qué significar lo mismo en otra |
 | Varias referencias y `--check all` | Válido |
 | Una de varias referencias no existe | Error 4, y **no se escribe ninguna**, ni siquiera las buenas |
-| Un `--set-*` pisa contenido no vacío | Se hace, con el aviso de 4.3 diciendo cuántos bytes ha reemplazado |
+| Un `--set-*` pisa contenido no vacío | Se hace, con el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) diciendo cuántos bytes ha reemplazado |
 | Paso a un estado terminal con criterios sin marcar | Se hace, con aviso |
-| Paso a un estado terminal con una pregunta abierta (5.7) | Se hace, con aviso, igual que en `biso finish` (10.7.4) y como atribuye 4.3 a cualquier llegada al estado terminal |
-| Todas las banderas dejan la tarea igual | Código 0, con `note: TASK-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (sexta precisión de la sección 5) |
-| `--status` a un estado que no es el activo, `--clear-assignee` o `--rm-assignee` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de 4.3 (séptima precisión de la sección 5) |
+| Paso a un estado terminal con una pregunta abierta (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)) | Se hace, con aviso, igual que en `biso finish` (["`biso finish`"](verbos-del-ciclo.md#biso-finish)) y como atribuye la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) a cualquier llegada al estado terminal |
+| Todas las banderas dejan la tarea igual | Código 0, con `note: TASK-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (sexta precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
+| `--status` a un estado que no es el activo, `--clear-assignee` o `--rm-assignee` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
 | `--comment-author` sin `--comment` | Error 2 |
-| `--comment` sin `--comment-author` y sin ninguna identidad configurada (3.1) | Error 2 |
+| `--comment` sin `--comment-author` y sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | Error 2 |
 | La tarea no se puede leer | Error 3, y no se escribe nada |
 
 ## Salida
@@ -60,15 +60,15 @@ elemento, así que su línea trae también el avance de esa segunda lista:
 TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
-**Esta es la línea de estado, y la imprimen también los seis verbos del ciclo de 10.7 y
-`biso archive`.** La única excepción es `biso new`, por el motivo que da 10.3. Cada comando la enseña
+**Esta es la línea de estado, y la imprimen también los seis verbos del ciclo de la sección ["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`"](verbos-del-ciclo.md) y
+`biso archive`.** La única excepción es `biso new`, por el motivo que da la sección ["`biso new`"](new.md). Cada comando la enseña
 con su propio ejemplo, pero las tres reglas de su forma se dicen aquí y no se repiten:
 
 1. El trozo `ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación.
 2. El trozo `dod <marcados>/<total>` sale siempre que tenga definición de hecho. Una tarea sin ninguna
    de las dos listas imprime solo el identificador, el estado y la urgencia.
 3. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
-   que un comando puede añadirle, y quien lo añade es `biso archive` (10.8).
+   que un comando puede añadirle, y quien lo añade es `biso archive` (["`biso archive`"](archive.md)).
 
 Los avisos van por stderr:
 

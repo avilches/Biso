@@ -10,7 +10,7 @@ biso doctor [--fix]
 |---|---|---|---|---|---|---|---|
 | `--fix` | | no | booleano | falso | no | no | ninguno |
 
-**`biso doctor` sin `--fix` es de solo lectura**, y `--print` y `--dry-run` de la sección 3 son error 2
+**`biso doctor` sin `--fix` es de solo lectura**, y `--print` y `--dry-run` de la sección ["Banderas globales"](../invocacion.md#banderas-globales) son error 2
 igual que en cualquier otro comando de lectura. **Con `--fix` es un comando de escritura**: ahí
 `--dry-run` reporta qué se repararía sin reparar nada, y `--print` no añade nada, porque `doctor` no
 imprime fichas de tareas.
@@ -30,13 +30,13 @@ que este documento ya hace:
 - **Casi ningún comando ve nada que arreglar.** `biso get` lee una tarea y no puede detectar que otra
   tenga una dependencia rota. Lo que hace útil a `doctor` no es saber reparar, es mirar el tablero
   entero.
-- **Los comandos de lectura no pueden escribir.** La sección 4.10 promete que las lecturas nunca
-  fallan por una escritura en curso y nunca la bloquean, y la 9.4 que `biso prime` no escribe nunca y
+- **Los comandos de lectura no pueden escribir.** La sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables) promete que las lecturas nunca
+  fallan por una escritura en curso y nunca la bloquean, y la sección ["Qué hace, caso a caso"](prime.md#qué-hace-caso-a-caso) que `biso prime` no escribe nunca y
   es seguro en paralelo. Un `ls` o un `prime` que repararan al pasar necesitarían acceso exclusivo,
   podrían esperar cinco segundos y fallar con código 7, y se perdería justo la garantía de los dos
   comandos que un agente llama sin parar.
 - **Un comando de escritura tiene permiso para lo que se le pidió, no para más.** Y no es solo
-  cuestión de sorpresa: con el todo o nada de la sección 4.10, si `biso set` cambiara un título y
+  cuestión de sorpresa: con el todo o nada de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables), si `biso set` cambiara un título y
   además reparara otra cosa, y la reparación fallara, habría que decidir si se deshace el título, o
   sea una transacción que abarca dos intenciones sin relación.
 
@@ -64,7 +64,7 @@ se puede preguntar **"le pasa algo a este tablero"** sin haber intentado antes u
 un diagnóstico que se corre cuando se sospecha, no una llamada que se iba a hacer igual.
 
 **Ningún comando de `biso` pregunta nada por la entrada estándar, ni `doctor` con `--fix` ni ninguno
-otro** (sección 4.1). La misma orden sirve para una persona y para un agente, y lo único que cambia es
+otro** (sección ["Interactividad, terminal y color"](../salida-y-terminal.md#interactividad-terminal-y-color)). La misma orden sirve para una persona y para un agente, y lo único que cambia es
 quién lee la salida: la persona lee el informe, el agente mira el código de salida.
 
 ## Errores y avisos, y solo los errores sacan el código 6
@@ -76,7 +76,7 @@ Lo que `doctor` reporta se divide en dos niveles:
 - **Avisos**: son verdad, merece la pena saberlos, y no rompen nada. **No cambian el código de
   salida.**
 
-**Se llaman avisos, pero no usan el prefijo `warning:`.** Ese prefijo es de stderr: la sección 4.3
+**Se llaman avisos, pero no usan el prefijo `warning:`.** Ese prefijo es de stderr: la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)
 dice que su tabla es la lista completa de avisos que el programa emite por ahí, y no hay ningún otro.
 El informe de `doctor` va por stdout (ver más abajo por qué), así que para distinguir sus dos niveles
 usa un formato propio, no un token que otra sección ya reserva para otra cosa: el encabezado de la
@@ -97,13 +97,13 @@ lo lea sabe si le importa, montando el disco o quitando la raíz de la configura
 abrir nada más.
 
 **El informe de `biso doctor` viaja entero por stdout, con sus errores y sus avisos juntos.** La
-sección 4.2 dice que stdout lleva lo que un programa consumiría, y el informe es exactamente eso: es
+sección ["stdout, stderr y qué va en cada uno"](../salida-y-terminal.md#stdout-stderr-y-qué-va-en-cada-uno) dice que stdout lleva lo que un programa consumiría, y el informe es exactamente eso: es
 el resultado que se ha pedido, no un mensaje que acompaña a otro trabajo. Los avisos y las notas de
-la sección 4.3 son mensajes que un comando emite al lado de lo que produce; los hallazgos de `doctor`
+la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) son mensajes que un comando emite al lado de lo que produce; los hallazgos de `doctor`
 son lo que produce, así que stdout le corresponde por la regla general, no aparte de ella. La sección
 ya lo hacía así antes de esta tarea, cuando un tablero limpio imprime `no problems found` por stdout:
 aquí no se cambia nada, se explica lo que ya era. Los avisos de los demás comandos, los que lista la
-tabla cerrada de la sección 4.3, siguen yendo por stderr sin cambiar, y el informe de `doctor` no le
+tabla cerrada de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos), siguen yendo por stderr sin cambiar, y el informe de `doctor` no le
 añade ninguna fila ni reutiliza su prefijo `warning:`.
 
 ## Qué comprueba
@@ -121,25 +121,25 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Ciclos de tarea padre | error | no |
 | Claves de criterio repetidas dentro de una tarea | error | no |
 | `leaseExpiresAt` o `leaseHolder` con valor en una tarea que no está a la vez en el estado activo y asignada, o uno de los dos con valor y el otro vacío | error | sí, vaciando los dos |
-| El identificador más alto que el tablero recuerda haber asignado (4.11) es menor que el identificador más alto de una tarea existente | error | sí |
-| Falta el marcador `<id>.id` en el directorio del tablero (sección 3.2) | error | sí, escribiéndolo con el `id` que lleva la base de datos |
+| El identificador más alto que el tablero recuerda haber asignado (["Identificadores"](../modelo-de-datos.md#identificadores)) es menor que el identificador más alto de una tarea existente | error | sí |
+| Falta el marcador `<id>.id` en el directorio del tablero (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) | error | sí, escribiéndolo con el `id` que lleva la base de datos |
 | El marcador `<id>.id` nombra un `id` distinto del que lleva la base de datos | error | no, hay que decidir a mano |
-| Una raíz de `boards_extra_roots` (sección 3.3) no existe o no se puede leer | aviso | no, es configuración de la máquina o un disco sin montar |
-| La comprobación de integridad de la base de datos falla (4.12) | error | no, es daño externo; la reparación es restaurar de una copia |
+| Una raíz de `boards_extra_roots` (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) no existe o no se puede leer | aviso | no, es configuración de la máquina o un disco sin montar |
+| La comprobación de integridad de la base de datos falla (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | error | no, es daño externo; la reparación es restaurar de una copia |
 | El directorio del tablero está en un sistema de ficheros donde el modo WAL de SQLite no es seguro | aviso | no, es una propiedad del sistema de ficheros, no algo que `biso` pueda cambiar |
 | Huecos en la numeración | no es un problema | no son un problema, no se reportan |
 
 **No hay ninguna comprobación sobre el nombre de la carpeta del tablero, y no es un olvido.** El nombre
-es decorativo y nadie resuelve por él (sección 3.2), así que una carpeta con el nombre de un `project_name`
+es decorativo y nadie resuelve por él (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), así que una carpeta con el nombre de un `project_name`
 anterior, o con un nombre que alguien puso a mano, no es un problema del que informar. Denunciarlo sería
-denunciar algo que la sección 10.10 permite explícitamente.
+denunciar algo que la sección ["`biso config`"](config.md) permite explícitamente.
 
 **La fila del arrendamiento repara en una sola dirección, y por eso `--fix` la hace solo.** Los dos
 campos son lo que sobra, y el estado y la lista de personas asignadas son el dato: vaciarlos deja la
 tarea exactamente como estaba, mientras que arreglarla al revés, poniéndola activa o asignándole a
 alguien para justificar el arrendamiento, cambiaría el trabajo del tablero para salvar una reserva que
-ya no vale. La invariante que comprueba es la de la séptima precisión de la sección 5, la misma que
-`biso new --from` aplica al importar (10.3), y cae en el segundo de los dos casos de arriba: ninguna
+ya no vale. La invariante que comprueba es la de la séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md), la misma que
+`biso new --from` aplica al importar (["`biso new`"](new.md)), y cae en el segundo de los dos casos de arriba: ninguna
 escritura de `biso` la puede romper, así que si un tablero llega a ese estado es por daño externo, como
 una base de datos escrita a mano, restaurada a medias o venida de otra versión. Sin `--fix` sale bajo
 `Errors:`:
@@ -166,17 +166,17 @@ que los identificadores duplicados de la primera fila.
 
 **La comprobación de integridad de la base de datos y el aviso del sistema de ficheros son las dos
 comprobaciones que añade esta misma decisión de persistencia**, y caen cada una en uno de los dos
-casos de arriba. La primera es daño externo puro, sección 4.12: nada dentro de `biso` corrompe su
+casos de arriba. La primera es daño externo puro, sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar): nada dentro de `biso` corrompe su
 propia base de datos, así que no hay ninguna dirección que reparar por su cuenta, y por eso es un
 error, no un aviso, aunque tampoco sea reparable. La segunda no reporta un daño ya hecho, sino un
 riesgo: en ese sistema de ficheros el modo WAL de SQLite no ofrece las garantías de atomicidad que la
-sección 4.10 exige, pero el tablero de hoy puede estar perfectamente sano. Eso es exactamente lo que
+sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables) exige, pero el tablero de hoy puede estar perfectamente sano. Eso es exactamente lo que
 distingue a un aviso de un error, así que es aviso.
 
 **Y la primera tiene una peculiaridad que la separa de las demás filas de error: nunca aparece como
 una línea del informe.** Las otras catorce comprobaciones de error sí producen una entrada en la lista
 de problemas cuando se disparan, pero esta no, porque cuando se dispara no hay informe de `doctor`
-que mostrarla: hay el abort completo de la sección 4.12, con su propio mensaje y su propio código 10,
+que mostrarla: hay el abort completo de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), con su propio mensaje y su propio código 10,
 antes de que `doctor` llegue a comprobar nada más (ver la tabla de comportamiento más abajo). La fila
 está en esta tabla para decir que existe como comprobación y cuál es su nivel, no porque vaya a
 verse alguna vez junto a las demás.
@@ -200,9 +200,9 @@ ficheros, y no existe manera de hacerlos atómicos juntos. Cualquier redacción 
 prometiera una atomicidad conjunta estaría prometiendo algo que no se puede implementar. Es la única
 reparación de `--fix` que sale de la base de datos, y por eso esta sección existe.
 
-Y esto no rompe la garantía de la sección 4.10, porque esa sección promete sobre las escrituras del
+Y esto no rompe la garantía de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables), porque esa sección promete sobre las escrituras del
 tablero, es decir, sobre sus datos, y el marcador no es un dato del tablero: es una copia de su `id` en
-el sistema de ficheros, puesta ahí para poder encontrarlo sin abrirlo (sección 3.2). Por eso el orden
+el sistema de ficheros, puesta ahí para poder encontrarlo sin abrirlo (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)). Por eso el orden
 importa y hay que decirlo explícito: primero la transacción de datos, después el marcador. Si el
 marcador falla, las reparaciones de datos quedan hechas y son definitivas, el comando termina con el
 código de no poder escribir (7, el mismo de cualquier otro fallo de entorno al reparar), y la falta del
@@ -218,8 +218,8 @@ que queda pendiente es una reparación que ya se sabe cómo repetir.
 | Solo avisos, sin ningún error | Se reportan bajo `Warnings:`, código 0 |
 | Solo errores reparables, con `--fix` | Se reparan y se reporta cada uno, código 0 |
 | Quedan errores sin reparar | Código 6, aunque se haya reparado algo o se hayan reportado avisos |
-| Una tarea ilegible (4.12) | Se reporta como error y se sigue con las demás. **Nunca aborta** |
-| La base de datos no se puede leer (4.12) | El comando entero aborta con el mensaje y el código 10 de 4.12, antes de comprobar nada más |
+| Una tarea ilegible (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | Se reporta como error y se sigue con las demás. **Nunca aborta** |
+| La base de datos no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | El comando entero aborta con el mensaje y el código 10 de ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), antes de comprobar nada más |
 | `--fix` sin poder escribir | Código 7. Si falla la escritura del marcador después de la transacción de datos, esta ya quedó aplicada (ver arriba) |
 | `--fix --dry-run` | Reporta qué se repararía, sin reparar nada, código 0 |
 
@@ -236,7 +236,7 @@ Warnings:
 ```
 
 Los errores y los avisos se agrupan bajo su propio encabezado, `Errors:` y `Warnings:`; ninguno de
-los dos usa el prefijo `warning:` de stderr, que la sección 4.3 reserva para lo que va por ahí. Un
+los dos usa el prefijo `warning:` de stderr, que la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) reserva para lo que va por ahí. Un
 grupo vacío no se imprime: si no hay avisos no aparece `Warnings:`, y si no hay errores no aparece
 `Errors:`. `1 error fixed` cuenta lo reparado aparte, después de los dos grupos.
 
@@ -290,7 +290,7 @@ texto, en vez de a uno menor.
 | Sintaxis | 2 |
 | No se puede escribir al reparar | 7 |
 | No hay tablero | 8 |
-| Su base de datos no se puede leer (4.12) | 10 |
+| Su base de datos no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | 10 |
 
 ## `biso doctor --help`
 

@@ -15,7 +15,7 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
 | `<name>` | | no | texto | el nombre del proyecto | no | no | |
-| `--at <dir>` | | no | ruta de un directorio | una carpeta nueva en la raíz por defecto de la máquina (sección 3.3) | no | no | |
+| `--at <dir>` | | no | ruta de un directorio | una carpeta nueva en la raíz por defecto de la máquina (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) | no | no | |
 | `--statuses <list>` | | no | lista | `To Do, In Progress, Done` | sí | sí | |
 | `--initial-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--active-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
@@ -24,16 +24,16 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 | `--priorities <list>` | | no | lista | `high, medium, low` | sí | sí | |
 | `--projects <list>` | | no | lista | vacía | sí | sí | |
 | `--extensions <list>` | | no | lista | vacía | sí | sí | |
-| `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección 4.11) | no | no | |
+| `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificadores"](../modelo-de-datos.md#identificadores)) | no | no | |
 | `--overwrite-config` | | no | booleano | falso | no | no | |
 | `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--projects`, `--extensions`, `--prefix`, `--overwrite-config` |
 
 **`--at` es la ruta del directorio del tablero que se va a crear, no el directorio donde se crea.** Con
 `--at tablero` el tablero queda en `tablero`, no en `tablero/kex-3f9a2b1c`. Es la misma convención que
 la clave `path` del puntero, que también nombra el directorio del tablero y no el que lo contiene
-(sección 3.2), y no es casualidad: la ruta que recibe `--at` es exactamente la que se escribe en esa
+(sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), y no es casualidad: la ruta que recibe `--at` es exactamente la que se escribe en esa
 clave, con la misma forma. Puede ser absoluta o relativa al directorio de trabajo, y **su último componente es el nombre de la carpeta, que
-es decorativo** (sección 3.2), así que `--at tablero` es tan válido como `--at kex-3f9a2b1c`.
+es decorativo** (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), así que `--at tablero` es tan válido como `--at kex-3f9a2b1c`.
 
 ## Comportamiento
 
@@ -41,16 +41,16 @@ Crea un tablero vacío con su configuración. **No escribe nunca fuera del table
 del proyecto que se describe a continuación.
 
 **`<name>` es el `project_name` inicial del tablero.** Cambiarlo más adelante es cosa de `biso config
-set project_name`, que no toca el sistema de ficheros (sección 10.10).
+set project_name`, que no toca el sistema de ficheros (sección ["`biso config`"](config.md)).
 
 `init` escribe, además del tablero, **el puntero del proyecto** (el fichero `.biso.json` de la
-sección 3.2), y lo escribe siempre que no exista ya uno, porque un tablero no se localiza nunca por su
-posición en el disco sino por una de las dos vías de la sección 3.2. Es la única cosa que `init`
+sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), y lo escribe siempre que no exista ya uno, porque un tablero no se localiza nunca por su
+posición en el disco sino por una de las dos vías de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md). Es la única cosa que `init`
 escribe fuera del tablero. La salida siempre confirma que el proyecto apunta al tablero, se haya escrito
 el puntero en esta llamada o ya estuviera ahí de antes.
 
 **Sin `--at`, el puntero no lleva clave `path`**: el tablero va a la raíz por defecto de la máquina y
-ahí lo encuentra la búsqueda por marcador de la sección 3.2, así que escribir su ruta sería guardar un
+ahí lo encuentra la búsqueda por marcador de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md), así que escribir su ruta sería guardar un
 dato que nadie necesita y que dejaría de valer al cambiar `boards_root`.
 
 **Con `--at`, el puntero lleva la ruta en `path`, con la misma forma en que se dio `--at`**: relativa si
@@ -62,7 +62,7 @@ proyecto.**
 
 La consecuencia práctica hay que decirla, porque es lo único que distingue a las dos formas. Una `path`
 relativa se resuelve contra el directorio del puntero y, si ahí no hay tablero, contra sus ancestros
-(sección 3.2), así que vale en cualquier copia de trabajo que tenga el tablero dentro o por encima: es
+(sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), así que vale en cualquier copia de trabajo que tenga el tablero dentro o por encima: es
 lo que quiere quien pone el tablero dentro del proyecto y trabaja en copias que también viven dentro del
 proyecto, como los worktrees de git en `.claude/worktrees/`. Una `path` absoluta vale desde cualquier
 sitio del disco mientras el proyecto no se mueva, y es lo que hace falta cuando las copias de trabajo
@@ -90,7 +90,7 @@ reconoce y el resto puede seguir.
 configuración legítima, para quien quiera que su tablero viva junto a su proyecto y viaje en la misma
 copia de seguridad, y sigue funcionando igual porque la resolución del tablero no depende de dónde esté
 la carpeta. Es el caso al que sirve la `path` relativa del párrafo anterior, y el que la búsqueda por
-ancestros de la sección 3.2 mantiene alcanzable desde una copia de trabajo que no tenga el directorio
+ancestros de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) mantiene alcanzable desde una copia de trabajo que no tenga el directorio
 del tablero. Lo que queda por decidir es si el proyecto versiona esa carpeta o la ignora, y **las dos
 cosas funcionan y llevan a sitios distintos**, así que `init` no recomienda ninguna: dice cuáles son,
 por stderr y con el nombre real de la carpeta, que es el que se le acaba de dar en `--at`.
@@ -113,7 +113,7 @@ contrario sería mentir.
 
 **Las dos salidas de esa elección cambian dónde acaba el historial**, y por eso merece la pena decirlas
 juntas. Ignorar la carpeta deja al tablero con su propio repositorio, el que `biso snapshot` crea de
-forma perezosa la primera vez que corre ahí (10.14), y publicarlo es entonces un trabajo aparte.
+forma perezosa la primera vez que corre ahí, y publicarlo es entonces un trabajo aparte.
 Versionarla mete los dos ficheros de la instantánea en el repositorio del código, así que `snapshot`
 guarda su revisión ahí mismo, junto a los cambios del proyecto, y la instantánea cruza a otra máquina
 con él sin que nadie configure nada. La base de datos no entra en ninguno de los dos casos.
@@ -128,11 +128,11 @@ descartarla.
 se ve venir. El fichero de exclusión que `init` escribe dentro del tablero excluye siempre la base de
 datos, así que versionar el directorio del tablero versiona su marcador y sus dos ficheros de texto,
 pero nunca `board.db`. Una copia de trabajo recibiría entonces un directorio con el marcador correcto y sin base de
-datos: **eso no es un tablero**, y la resolución de la sección 3.2 no lo acepta como tal, sigue buscando
+datos: **eso no es un tablero**, y la resolución de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) no lo acepta como tal, sigue buscando
 en los ancestros y en las raíces, y así encuentra el tablero de verdad. Si no lo encuentra en ninguna
 parte, el error nombra ese directorio a medias, porque es la pista de lo que ha pasado.
 
-**Si ya existe un puntero pero el tablero que nombra no está en esta máquina** (sección 3.2), `init`
+**Si ya existe un puntero pero el tablero que nombra no está en esta máquina** (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), `init`
 no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máquinas sigan hablando del
 mismo tablero. Y no reescribe el puntero, porque ya era correcto.
 
@@ -142,10 +142,10 @@ terminal en ese orden. **Con `--statuses`**, hacen falta las tres banderas de pa
 configuración a las que corresponden.
 
 **`--from <location>` restaura una instantánea, en vez de crear un tablero en blanco.** `<location>`
-es el directorio de un tablero que ha escrito `biso snapshot` (sección 10.14), es decir, el que
+es el directorio de un tablero que ha escrito ["`biso snapshot`"](snapshot.md), es decir, el que
 contiene `snapshot.ndjson` y `board.json`. En una sola invocación, `init --from` hace lo que sería
 crear el tablero con la configuración de `board.json` e importar `snapshot.ndjson` con las mismas
-reglas del lote de `biso new --from` (sección 10.3): valida el fichero de tareas entero contra el
+reglas del lote de `biso new --from` (sección ["`biso new`"](new.md)): valida el fichero de tareas entero contra el
 vocabulario de `board.json` antes de escribir nada y, solo si todo es válido, escribe primero la
 configuración y después las tareas. Como `board.json` ya trae el nombre del tablero, los estados,
 los tipos, las prioridades, los proyectos, las extensiones y el prefijo del tablero de origen,
@@ -173,7 +173,7 @@ hint: `biso where` says which rule picked it
 hint: --overwrite-config rewrites its configuration and never touches its tasks
 ```
 
-**`--dry-run` vale en este comando** (sección 3), y es donde más sirve: valida los argumentos y, con
+**`--dry-run` vale en este comando** (sección ["Banderas globales"](../invocacion.md#banderas-globales)), y es donde más sirve: valida los argumentos y, con
 `--from`, la instantánea entera contra el vocabulario que ella misma trae, sin crear ni escribir nada,
 y sale 0 si habría funcionado y 9 si no. `--print`, en cambio, es error 2, porque ninguna tarea que
 existiera antes queda afectada.
@@ -181,21 +181,21 @@ existiera antes queda afectada.
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
-| El directorio de destino tiene una base de datos que no se puede leer (4.12) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 10 nombra, y también lo que necesita un clon traído a otra máquina, que llega con la carpeta versionada y sin base de datos |
-| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de 3.2, y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
+| El directorio de destino tiene una base de datos que no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 10 nombra, y también lo que necesita un clon traído a otra máquina, que llega con la carpeta versionada y sin base de datos |
+| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
 | `--at` con una ruta relativa | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta relativa, código 0 |
 | `--at` con una ruta absoluta | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta absoluta, código 0 |
 | `--at` con una ruta relativa que sale del proyecto, como `../tableros/kex` | No es un error, y el puntero la guarda tal cual: resuelve mientras la posición relativa entre el puntero y el tablero se mantenga, y el marcador confirma que el directorio al que llega es el tablero que el `id` nombra |
-| `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección 10.10 aplica a `task_prefix` |
+| `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección ["`biso config`"](config.md) aplica a `task_prefix` |
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
 | Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
 | Una bandera de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
 | Dos banderas de papel nombran el mismo estado | Error 2, con los dos papeles y el estado que comparten |
 | `--statuses` con menos de tres estados | Error 2, diciendo cuántos hacen falta y por qué |
 | `--prefix` con algo que no sean letras | Error 2, `code` `invalid_prefix` |
-| Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección 4.11) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
+| Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección ["Identificadores"](../modelo-de-datos.md#identificadores)) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
 | `--at` a un directorio donde no se puede escribir | Error 7 |
 | `--from` junto con `<name>`, con cualquier bandera de vocabulario, o con `--overwrite-config` | Error 2 |
 | `--from` a un directorio al que le falta `snapshot.ndjson`, `board.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
@@ -203,31 +203,31 @@ existiera antes queda afectada.
 | `--from` cuyo `board.json` tiene el mismo problema que haría fallar con Error 2 a la bandera de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría esa bandera |
 | `--from` cuyo `snapshot.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
 | `--from` cuyo `board.json` declara un vocabulario que ninguna tarea de `snapshot.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `board.json`, tenga tareas que lo usen entero o no |
-| `--from` cuyo `board.json` trae `me` o `default_limit`, porque se escribió a mano o con una versión anterior | No es un error, y tampoco se importan: `biso snapshot` no las escribe (10.14) y `init --from` no las lee, con `note: me and default_limit are not restored, they belong to whoever uses the board`. No son claves desconocidas, así que no caen en el error 2 de la fila de arriba |
-| `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `board.json` no hace válido | Error 9, la misma regla del lote de `biso new --from` (sección 10.3), con el detalle de qué falta línea a línea |
+| `--from` cuyo `board.json` trae `me` o `default_limit`, porque se escribió a mano o con una versión anterior | No es un error, y tampoco se importan: `biso snapshot` no las escribe y `init --from` no las lee, con `note: me and default_limit are not restored, they belong to whoever uses the board`. No son claves desconocidas, así que no caen en el error 2 de la fila de arriba |
+| `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `board.json` no hace válido | Error 9, la misma regla del lote de `biso new --from` (sección ["`biso new`"](new.md)), con el detalle de qué falta línea a línea |
 
 **Los tres estados especiales se guardan como valores explícitos en la configuración, no como
 posiciones.** Cambiar `statuses` después no los mueve nunca. Si al cambiar `statuses` uno de los tres
-deja de existir, el comando que lo hace falla, según la sección 10.10.
+deja de existir, el comando que lo hace falla, según la sección ["`biso config`"](config.md).
 
 **El fichero de la base de datos se llama `board.db`**, con `board.db-wal` y `board.db-shm` como sus
 ficheros auxiliares. El nombre es fijo y forma parte de la interfaz, no un detalle interno, porque es
-lo que hace reconocible un directorio de tablero: la primera vía de la sección 3.2 se apoya en él, y
+lo que hace reconocible un directorio de tablero: la primera vía de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) se apoya en él, y
 sin un nombre declarado esa vía no sería implementable de una sola manera.
 
 **Junto a él, `init` escribe el marcador de identidad `<id>.id`**, por ejemplo `3f9a2b1c.id`, que es lo
 que permite encontrar el tablero por su identificador leyendo nombres de un directorio, sin abrir
-ninguna base de datos (sección 3.2). Su nombre es el dato; su contenido es
+ninguna base de datos (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)). Su nombre es el dato; su contenido es
 `{ "storeVersion": 1 }`, la versión del formato del almacén, que no repite el identificador para que no
 haya dos sitios donde pueda decir cosas distintas. El mismo identificador está guardado dentro de la
 base de datos, y esa redundancia es a propósito: es la que permite comprobar que el marcador de un
-directorio corresponde de verdad al tablero que contiene, cosa que `biso doctor` hace (10.13). Los dos
+directorio corresponde de verdad al tablero que contiene, cosa que `biso doctor` hace (sección ["`biso help`"](help.md#biso-help)). Los dos
 ficheros, la base de datos y el marcador, son lo único que hace falta para que un directorio sea un
 tablero.
 
 **El directorio del tablero es también, si es posible, su propio repositorio, pero `init` no lo crea.**
 Lo que `init` sí escribe es el **fichero de exclusión del sistema de control de versiones que la máquina tenga
-configurado** (sección 3.3), con `board.db` y sus dos ficheros auxiliares dentro, dejándolo listo para
+configurado** (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)), con `board.db` y sus dos ficheros auxiliares dentro, dejándolo listo para
 el día en que el directorio llegue a ser un repositorio: lo que se versiona entonces es
 `snapshot.ndjson`, `board.json` y el marcador, nunca el binario. Con `git`, ese fichero es
 `.gitignore`; con `custom`, el que declare la clave `ignore_file`, y ninguno si no la declara; con
@@ -245,11 +245,11 @@ recuperar la identidad y no solo los datos: el tablero restaurado adopta el `id`
 instantánea nombra, en vez de acuñar uno nuevo, y por eso el puntero commiteado del proyecto sigue
 valiendo después de restaurar. Sin eso, restaurar en una máquina nueva daba un tablero correcto que el
 proyecto no podía encontrar. Si el `id` de la instantánea ya existe en esta máquina, es el error de
-identidad duplicada de la sección 3.2, no una adopción silenciosa.
+identidad duplicada de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md), no una adopción silenciosa.
 
 **Es `biso snapshot`, no `init`, quien convierte el directorio en un repositorio, y lo hace de forma
 perezosa**: la primera vez que `snapshot` corre sobre un directorio que no está en ninguno, crea ahí el
-del sistema de control de versiones configurado antes de guardar la revisión (sección 10.14). Y si el
+del sistema de control de versiones configurado antes de guardar la revisión (sección ["`biso snapshot`"](snapshot.md)). Y si el
 directorio ya está dentro del repositorio del proyecto, que es el caso de un tablero versionado con el
 código, no crea ninguno: la revisión va a ese. La base de datos no se versiona nunca, ni siquiera
 después de eso, porque cada escritura suya reescribe páginas internas: cada revisión guardaría una copia
@@ -258,7 +258,7 @@ completa y ningún sistema podría diferenciarla de una forma legible.
 **El repositorio es opcional y su ausencia no rompe nada.** Si el sistema configurado no está instalado,
 `snapshot` sigue escribiendo sus dos ficheros igual y sirviendo para restaurar con `--from`; lo único
 que se pierde es el historial. `biso` no puede exigir que haya un sistema de control de versiones instalado, así
-que esto nunca hace fallar ni a `init` ni a `snapshot` por esta sola razón (la sección 10.14 sí
+que esto nunca hace fallar ni a `init` ni a `snapshot` por esta sola razón (la sección ["`biso snapshot`"](snapshot.md) sí
 distingue un fallo de entorno una vez que la revisión se intenta de verdad, con un repositorio ya
 existente). Quien quiera dar historial a un tablero que nació sin él puede crear el repositorio a mano
 en su directorio en cualquier momento: la siguiente instantánea lo detecta y empieza a guardar
@@ -269,7 +269,7 @@ revisiones.
 Esto es lo que imprime la tercera invocación de los ejemplos de ayuda,
 `biso init Kex --at kex-board --prefix TASK --extensions trello.card` (con `--json` para el esquema
 de más abajo). El prefijo sale `TASK` porque lo fija `--prefix`, no porque se derive del nombre
-`Kex`, que sin esa bandera daría `KEX` (sección 4.11).
+`Kex`, que sin esa bandera daría `KEX` (sección ["Identificadores"](../modelo-de-datos.md#identificadores)).
 
 ```
 Created board "Kex"
@@ -283,7 +283,7 @@ Run `biso prime` to see how to use it.
 
 La línea "This project now points at that board." aparece siempre, porque el proyecto siempre queda
 apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera escrito de antes
-(sección 3.2).
+(sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)).
 
 **Esta invocación emite además las dos notas**, porque `--at kex-board` es una ruta relativa que cae
 dentro del proyecto, que es justo el caso que las dispara. Por stderr sale esto, en este orden:
@@ -298,7 +298,7 @@ note: the location is stored as the relative path "kex-board". A working copy
 ```
 
 No están en el bloque de arriba porque ese bloque es stdout, y las notas van por stderr como todas
-(sección 4.3). El puntero que esta llamada escribe es
+(sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). El puntero que esta llamada escribe es
 `{ "version": 1, "id": "3f9a2b1c", "path": "kex-board" }`.
 
 ## El esquema JSON

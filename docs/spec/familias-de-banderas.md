@@ -20,10 +20,11 @@ campo tiene estas variantes:
 | Escalar | fijar, vaciar |
 | Lista inmutable (comentarios) | solo añadir, `--comment` |
 
-**`question` no entra en esta tabla.** Es un registro de tres partes (5.7), no una lista, ni un
-bloque de prosa, ni un mapa, ni un escalar, así que ninguna de estas clases lo describe. **Ninguna
-bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación de
-`biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (5).
+**`question` no entra en esta tabla.** Es un registro de tres partes (["La pregunta abierta"](modelo-de-datos.md#la-pregunta-abierta)), no una
+lista, ni un bloque de prosa, ni un mapa, ni un escalar, así que ninguna de estas clases lo describe.
+**Ninguna bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación
+de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (sección
+["El modelo de datos de una tarea"](modelo-de-datos.md)).
 
 **El significado no cambia entre comandos.** `--ac` añade un criterio en `biso new`, en `biso set`, en
 `biso start` y en `biso finish`, y todos los comandos de escritura aceptan todas estas banderas.
@@ -51,11 +52,12 @@ banderas de las dos lo lleven siempre (`--ac` y `--dod`, `--rm-ac` y `--rm-dod`)
 | definición de hecho | `--dod` | `--set-dod` | `--rm-dod` | `--clear-dod` | **no** |
 
 Todas las de "añade" y "sustituye" son repetibles. `--rm-ac` y `--rm-dod` toman un selector de la
-sección 8.4.
+sección ["Selectores de criterios"](#selectores-de-criterios).
 
 **`--set-ac` y `--set-dod` crean elementos nuevos, con claves nuevas y sin marcar**, y las claves de
-los elementos anteriores no se reutilizan. Es coherente con 5.1: la clave se asigna al crear el
-elemento, y sustituir la lista crea elementos.
+los elementos anteriores no se reutilizan. Es coherente con
+["Los criterios y sus claves estables"](modelo-de-datos.md#los-criterios-y-sus-claves-estables): la
+clave se asigna al crear el elemento, y sustituir la lista crea elementos.
 
 ## Campos de prosa
 
@@ -70,7 +72,7 @@ elemento, y sustituir la lista crea elementos.
   coinciden y no hay nada que decidir.
 - Al añadir sobre contenido existente se intercala una línea en blanco, y cada repetición de la
   bandera en la misma invocación produce su propio párrafo.
-- Añadir un valor vacío no hace nada y avisa, según 4.6.
+- Añadir un valor vacío no hace nada y avisa, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
 
 ## Selectores de criterios
 
@@ -125,7 +127,7 @@ error: --check and --uncheck both select acceptance criterion #3 of TASK-11
 | orden manual | `--ordinal` | `--clear-ordinal` |
 | persona que reporta | `--reporter` | `--clear-reporter` |
 
-Un escalar **nunca** se borra pasándole la cadena vacía, según 4.6.
+Un escalar **nunca** se borra pasándole la cadena vacía, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
 
 ## Campos externos
 

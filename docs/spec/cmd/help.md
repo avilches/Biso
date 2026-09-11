@@ -14,7 +14,7 @@ biso help [<command> | all]
 
 | Caso | Qué pasa |
 |---|---|
-| Sin argumento | Imprime la ayuda de primer nivel de la sección 11, igual que `biso --help` |
+| Sin argumento | Imprime la ["ayuda de primer nivel"](#la-ayuda-de-primer-nivel), igual que `biso --help` |
 | Con un nombre de comando | Imprime la ayuda de ese comando, igual que `biso <cmd> --help` |
 | Con `all` | Imprime la ayuda de primer nivel más la lista de los nueve comandos de administración, cada uno con su línea |
 | Con un nombre que no existe | Error 4, con los tres nombres más parecidos |
@@ -23,7 +23,7 @@ biso help [<command> | all]
 
 ### Salida de `biso help all`
 
-Es la de la sección 11, seguida de:
+Es la de la ["ayuda de primer nivel"](#la-ayuda-de-primer-nivel), seguida de:
 
 ```
 Administration:
@@ -58,7 +58,7 @@ Administration:
 prosa.** Un texto de ayuda es prosa escrita para leerse, con sus ejemplos y sus párrafos, y meterla en
 una clave sería mover el problema de analizarla a otro sitio; la lista de comandos, en cambio, es un dato
 y es lo que le sirve a un agente para descubrir la interfaz sin leer nada. Los resúmenes son los mismos
-que imprime la ayuda de primer nivel (sección 11).
+que imprime la ["ayuda de primer nivel"](#la-ayuda-de-primer-nivel).
 
 `biso help --json` y `biso help all --json` traen la lista entera, y `biso help <comando> --json` la trae
 con un solo elemento, el de ese comando. La clave `commands` está siempre y siempre es una lista, así que

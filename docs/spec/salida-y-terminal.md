@@ -42,7 +42,7 @@ Hay tres clases de línea que no son errores, las tres por stderr:
   suprime.**
 - **La salida de un programa ajeno**, prefijada con el nombre del sistema de control de versiones y dos
   puntos, o sea `git:` o `custom:`. Solo la emite `biso snapshot`, que es el único comando que ejecuta
-  otro programa, y las reglas de cuándo aparece están en la sección 10.14. **Nunca se suprime**, tampoco
+  otro programa, y las reglas de cuándo aparece están en la sección ["`biso snapshot`"](cmd/snapshot.md). **Nunca se suprime**, tampoco
   con `--quiet`: de una línea que `biso` no ha escrito no puede juzgar si sobra.
 
 Las dos primeras dejan el código de salida en 0. La tercera acompaña igual a una operación que va bien
@@ -62,15 +62,15 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 | `warning: TASK-11 has unresolved dependencies: TASK-4 (To Do)` | al empezar una tarea bloqueada |
 | `warning: 28 more tasks match; showing 30 of 58` | en `biso ls`, al recortar |
 | `warning: --label: "urgent" given twice, kept once` | valor repetido en una bandera de lista |
-| `warning: --desc contains a literal \n and no real newline; it will be stored as text` | ver 4.4 |
+| `warning: --desc contains a literal \n and no real newline; it will be stored as text` | ver ["Codificación y texto"](#codificación-y-texto) |
 | `warning: --note: empty value, nothing was added` | valor vacío en una bandera que añade |
 | `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada |
 | `warning: TASK-11 has no acceptance criteria` | `--check all` sobre una tarea sin criterios |
-| `warning: 1 task could not be read and was skipped` | ver 4.12 |
-| `warning: <x> is deprecated and will be removed in 2.0` | ver la sección 13 |
+| `warning: 1 task could not be read and was skipped` | ver ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
+| `warning: <x> is deprecated and will be removed in 2.0` | ver la sección ["El contrato de estabilidad"](estabilidad.md) |
 | `warning: TASK-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta |
 | `warning: TASK-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta |
-| `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al escribir sobre una tarea cuyo arrendamiento está vivo y es de otra identidad, con `biso start` o con cualquier otra escritura (sección 5, 9.2 de `DECISIONES.md`, 10.7.1) |
+| `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al escribir sobre una tarea cuyo arrendamiento está vivo y es de otra identidad, con `biso start` o con cualquier otra escritura (sección ["El modelo de datos de una tarea"](modelo-de-datos.md), ["Saber si alguien está trabajando de verdad"](../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de `DECISIONES.md`, y ["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)) |
 
 ## Codificación y texto
 

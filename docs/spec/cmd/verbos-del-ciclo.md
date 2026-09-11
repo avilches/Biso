@@ -1,21 +1,21 @@
 # Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`
 
-Los seis aceptan **todas** las banderas de campo de la sección 8, igual que `set`. No son un
+Los seis aceptan **todas** las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), igual que `set`. No son un
 subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que el gesto frecuente
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
 Los seis son escrituras sobre la tarea, así que a los cinco que no son `start` (`note`, `comment`,
-`finish`, `ask`, `answer`) les aplica la regla general de la sección 5: si quien llama ya es
+`finish`, `ask`, `answer`) les aplica la regla general de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md): si quien llama ya es
 `leaseHolder`, renuevan `leaseExpiresAt`; si no lo es y el arrendamiento está vivo, no tocan ninguno de
 los dos campos y avisan; y si no lo es y está vencido, lo dejan vencido. Ninguno de los cinco fija ni
-transfiere `leaseHolder`: reclamar es de `start`, y de `biso new --start` al crear (10.3).
+transfiere `leaseHolder`: reclamar es de `start`, y de [`biso new --start`](new.md) al crear.
 **Y por encima de todo eso está la invariante**: la escritura que saca la tarea del estado activo o la
 deja sin ninguna persona asignada vacía los dos campos, sea quien sea quien la haga, así que
 `biso finish` los vacía siempre y el aviso de un arrendamiento ajeno no lo impide (séptima precisión de
-la sección 5).
+la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)).
 
 Los seis imprimen también la misma línea de estado que `set`, con la forma y las reglas que define
-10.6. Los ejemplos de más abajo son esa línea con los datos de la TASK-11, que tiene dos criterios de
+[`biso set`](set.md). Los ejemplos de más abajo son esa línea con los datos de la TASK-11, que tiene dos criterios de
 aceptación y un elemento de definición de hecho.
 
 El ciclo entero de una tarea es esto:
@@ -45,16 +45,16 @@ biso start <ref>... [--plan <text>] [-a <@who>]... [-s <v>] [--reopen]
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-`--plan` y `-a/--assignee` son las banderas de campo de la sección 8, con su significado de siempre:
+`--plan` y `-a/--assignee` son las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), con su significado de siempre:
 **las dos añaden**. `--plan` añade al plan existente y `--set-plan` lo reemplaza; `-a` añade una
 persona y `--set-assignee` reemplaza la lista.
 
 ### Qué hace
 
 Cuatro cosas en una escritura: pone el estado activo, **asigna la tarea a `me` si no tiene ninguna
-persona asignada**, toma el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección 5) a favor de
+persona asignada**, toma el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) a favor de
 quien llama (renovándolo si ya era suyo, reclamándolo si estaba vencido, o tomándolo si era de otra
-identidad: es el único comando que hace las tres cosas sobre una tarea que ya existe, sección 5), y
+identidad: es el único comando que hace las tres cosas sobre una tarea que ya existe, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), y
 añade el plan si se ha pasado. Con `-s` a un estado que no es el activo no hay arrendamiento que tomar,
 y la fila correspondiente de la tabla dice qué pasa entonces.
 
@@ -63,12 +63,12 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | La tarea ya está en el estado activo | Se aplica el resto igual, con `note: TASK-11 was already In Progress` |
 | La tarea ya está en el estado terminal | Error 6, salvo con `--reopen`, que la devuelve al estado activo |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
-| La tarea tiene una pregunta abierta (5.7) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
-| El arrendamiento de la tarea está vencido (`leaseExpired`, sección 5) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (sexta precisión de la sección 5), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección 11 de `DECISIONES.md` |
+| La tarea tiene [una pregunta abierta](../modelo-de-datos.md#la-pregunta-abierta) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
+| El arrendamiento de la tarea está vencido (`leaseExpired`, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (sexta precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `DECISIONES.md` |
 | El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
-| `-s` con un estado que no es el activo, por ejemplo `biso start TASK-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (séptima precisión de la sección 5). Fijarlo ahí rompería la invariante de que los dos campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: TASK-1 was moved to To Do, no lease was claimed` |
+| `-s` con un estado que no es el activo, por ejemplo `biso start TASK-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Fijarlo ahí rompería la invariante de que los dos campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: TASK-1 was moved to To Do, no lease was claimed` |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: TASK-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
-| No hay ninguna identidad configurada (3.1) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
+| No hay [ninguna identidad configurada](../invocacion.md#variables-de-entorno) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
 | La tarea ya tiene plan y se pasa `--plan` | Se añade al final, como toda bandera desnuda |
 | Varias referencias | Todo o nada |
 
@@ -152,7 +152,7 @@ largo.
 
 `biso note` toma **una sola** referencia, mientras que `set`, `start`, `finish` y `archive` toman
 varias. Para que esa diferencia no produzca basura en silencio, **un posicional de texto que encaje
-con la gramática de identificador de la sección 7.1 es un error 2**:
+con la gramática de identificador de la sección ["La gramática"](../referencias.md#la-gramática) es un error 2**:
 
 ```
 error: "TASK-2" looks like a task id, and `biso note` takes only one task
@@ -160,7 +160,7 @@ hint: to note the same thing on several tasks: biso set TASK-1 TASK-2 --note "..
       to write that text literally:            biso note TASK-1 --note "TASK-2"
 ```
 
-**`--note`, la bandera de campo de la sección 8, nunca pasa por esa comprobación**, porque no es un
+**`--note`, la bandera de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), nunca pasa por esa comprobación**, porque no es un
 posicional: es la vía para escribir una nota que de verdad diga `TASK-2`. La misma regla vale para
 `biso comment`, con `--comment`.
 
@@ -168,12 +168,12 @@ posicional: es la vía para escribir una nota que de verdad diga `TASK-2`. La mi
 
 Añade uno o más párrafos a las notas de implementación. **Nunca reemplaza.** Para reemplazar está
 `biso set <ref> --set-notes`, que este comando no acepta por su nombre desnudo pero sí como bandera de
-campo de la sección 8, igual que las demás.
+campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), igual que las demás.
 
 | Caso | Qué pasa |
 |---|---|
 | Sin ningún texto y sin ninguna bandera de campo | Error 2 |
-| Texto vacío | No añade nada y avisa, según 4.6 |
+| Texto vacío | No añade nada y avisa, según ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) |
 | La tarea no tiene notas todavía | Se crean |
 | Varios textos | Un párrafo por texto, en el orden dado |
 
@@ -252,7 +252,7 @@ biso comment <ref> [<text>...] [--comment-author <@who>]
 
 Se aplican las mismas reglas de posicional que en `biso note`, incluida la del texto que parece un
 identificador. El autor es texto libre, no se valida contra nada y no interpreta el `@` inicial. **Sin
-`--comment-author` y sin ninguna identidad configurada (3.1), es error 2**: `error: --comment-author is
+`--comment-author` y sin [ninguna identidad configurada](../invocacion.md#variables-de-entorno), es error 2**: `error: --comment-author is
 required, no identity is configured`. Lo mismo vale para `--comment` en cualquier otro comando de
 escritura.
 
@@ -338,9 +338,9 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | Sin `--summary` | Se cierra igual, con `warning: TASK-11 finished without a final summary` |
 | Sin `--summary` y con `--strict` | Error 6 |
 | La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
-| La tarea tiene una pregunta abierta (5.7) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
+| La tarea tiene [una pregunta abierta](../modelo-de-datos.md#la-pregunta-abierta) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
-| La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de 4.3 de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los dos campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (séptima precisión de la sección 5) |
+| La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los dos campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
 | La tarea tiene el arrendamiento y `-s` la lleva a otro estado que tampoco es el activo | Los dos campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
 | `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos, incluido el de la pregunta abierta |
 | Varias referencias | Todo o nada |
@@ -354,7 +354,7 @@ Quien quiera la política dura tiene `--strict`, y puede fijarla por defecto con
 TASK-11  Done  ac 2/2  dod 1/1  urgency 0.0
 ```
 
-La urgencia de una tarea en el estado terminal es cero por definición, según 5.4.
+La urgencia de una tarea en el estado terminal es cero por definición, según la sección ["La urgencia"](../modelo-de-datos.md#la-urgencia).
 
 Por stderr, cuando toca:
 
@@ -431,11 +431,11 @@ biso ask <ref> <text>... [--id] [--match] [cualquier bandera de campo de la secc
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-Cada texto es un párrafo propio del cuerpo de la pregunta, igual que en `biso note` (10.7.2). Acepta
-`@fichero` y `-` como cualquier texto largo (4.5).
+Cada texto es un párrafo propio del cuerpo de la pregunta, igual que en [`biso note`](#biso-note). Acepta
+`@fichero` y `-` como [cualquier texto largo](../valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
 
-Se aplica la misma regla del texto que parece un identificador que `biso note` (10.7.2): un
-posicional que encaja con la gramática de identificador de la sección 7.1 es error 2. Pero el mensaje
+Se aplica la misma regla del texto que parece un identificador que [`biso note`](#biso-note): un
+posicional que encaja con la gramática de identificador de la sección ["La gramática"](../referencias.md#la-gramática) es error 2. Pero el mensaje
 es propio, porque `biso ask` no tiene una bandera de campo que escriba `question`, así que la única
 salida es `@fichero` o `-`, nunca `--note`:
 
@@ -444,12 +444,12 @@ error: "TASK-2" looks like a task id, and `biso ask` takes only one task
 hint: to write that text literally, use @file or - for stdin
 ```
 
-**`biso ask` no acepta `--comment-author`**: el autor de la pregunta es siempre la identidad
-configurada (3.1).
+**`biso ask` no acepta `--comment-author`**: el autor de la pregunta es siempre [la identidad
+configurada](../invocacion.md#variables-de-entorno).
 
 ### Qué hace
 
-Llena el campo `question` (5.7) con el autor y el instante que fija el programa y el texto dado,
+Llena el campo [`question`](../modelo-de-datos.md#la-pregunta-abierta) con el autor y el instante que fija el programa y el texto dado,
 junto con cualquier otra bandera de campo que se haya pasado en la misma escritura. **No cambia el
 estado de la tarea.**
 
@@ -459,9 +459,9 @@ estado de la tarea.**
 | La tarea ya tiene una pregunta abierta | Error 6, para que la segunda no borre a la primera en silencio |
 | La tarea está en el estado terminal | Error 6, igual que `biso start`, con la pista de reabrirla |
 | La tarea está archivada | Se hace, con `note: TASK-11 is archived` por stderr, igual que `biso get` |
-| El texto está vacío | Error 3: `error: the question cannot be empty`, `code` `empty_scalar_value` (4.6) |
-| Sin identidad configurada (3.1) | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` |
-| Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que `biso note` (10.7.2) |
+| El texto está vacío | Error 3: `error: the question cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
+| Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` |
+| Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
 
 Los dos errores 6 llevan pista:
@@ -482,7 +482,7 @@ hint: reopen it first with `biso start TASK-11 --reopen`
 TASK-11  In Progress  ac 1/2  dod 0/1  urgency 15.0
 ```
 
-La urgencia queda por debajo de los 19.0 del ejemplo de 5.4 porque el término de actividad exige
+La urgencia queda por debajo de los 19.0 del ejemplo de ["La urgencia"](../modelo-de-datos.md#la-urgencia) porque el término de actividad exige
 también que no haya pregunta abierta: la tarea sigue en el estado activo, pero `waiting` ya es
 cierto.
 
@@ -551,11 +551,10 @@ biso answer <ref> <text>... [--id] [--match] [cualquier bandera de campo de la s
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-Cada texto es un párrafo propio de la respuesta, igual que en `biso ask` (10.7.5) y en `biso note`
-(10.7.2). Acepta `@fichero` y `-` como cualquier texto largo (4.5).
+Cada texto es un párrafo propio de la respuesta, igual que en [`biso ask`](#biso-ask) y en [`biso note`](#biso-note). Acepta `@fichero` y `-` como [cualquier texto largo](../valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
 
-Se aplica la misma regla del texto que parece un identificador que `biso note` (10.7.2): un
-posicional que encaja con la gramática de identificador de la sección 7.1 es error 2. Pero el mensaje
+Se aplica la misma regla del texto que parece un identificador que [`biso note`](#biso-note): un
+posicional que encaja con la gramática de identificador de la sección ["La gramática"](../referencias.md#la-gramática) es error 2. Pero el mensaje
 es propio, porque `biso answer` no tiene una bandera de campo que escriba `question`, así que la única
 salida es `@fichero` o `-`, nunca `--note`:
 
@@ -565,26 +564,26 @@ hint: to write that text literally, use @file or - for stdin
 ```
 
 **`biso answer` no acepta `--comment-author`**: los dos comentarios que
-escribe van siempre firmados por la identidad configurada (3.1). Quien necesite firmar un comentario
+escribe van siempre firmados por [la identidad configurada](../invocacion.md#variables-de-entorno). Quien necesite firmar un comentario
 con otro autor tiene `biso comment --comment-author`, que sigue funcionando como siempre.
 
 ### Qué hace
 
-Vacía el campo `question` (5.7) en una sola escritura, con tres efectos en este orden exacto:
+Vacía el campo [`question`](../modelo-de-datos.md#la-pregunta-abierta) en una sola escritura, con tres efectos en este orden exacto:
 
-1. Añade al histórico de comentarios (5.2) uno con el `author`, el `askedAt` y el `body` que guardaba
-   el campo: la pregunta se convierte literalmente en un comentario, con su autor y su instante
-   originales (5.3).
-2. Añade detrás un segundo comentario con el texto de la respuesta, firmado por la identidad
-   configurada (3.1) y con el instante de ahora.
+1. Añade al [histórico de comentarios](../modelo-de-datos.md#los-comentarios) uno con el `author`, el `askedAt` y el `body` que guardaba
+   el campo: la pregunta se convierte literalmente en un comentario, con su autor y su [instante](../modelo-de-datos.md#las-fechas)
+   originales.
+2. Añade detrás un segundo comentario con el texto de la respuesta, firmado por [la identidad
+   configurada](../invocacion.md#variables-de-entorno) y con el instante de ahora.
 3. Vacía el campo.
 
-**El orden no depende de la línea de comandos, según la regla de 4.9.** Dentro del paso de los
+**El orden no depende de la línea de comandos, según la regla de ["Orden de aplicación dentro de una escritura"](../garantias.md#orden-de-aplicación-dentro-de-una-escritura).** Dentro del paso de los
 comentarios, los dos que escribe este verbo van siempre antes que cualquier `--comment` que se haya
 pasado en la misma escritura. El vaciado del campo `question` es un paso propio de `biso answer`,
-posterior a todos los de 4.9, y es siempre el último efecto de la escritura.
+posterior a todos los de ["Orden de aplicación dentro de una escritura"](../garantias.md#orden-de-aplicación-dentro-de-una-escritura), y es siempre el último efecto de la escritura.
 
-Como los comentarios se guardan y se muestran en orden de inserción y no de instante (5.2), el
+Como los [comentarios](../modelo-de-datos.md#los-comentarios) se guardan y se muestran en orden de inserción y no de instante, el
 comentario de la pregunta queda antes que el de la respuesta aunque su instante sea anterior, y el
 instante de cada uno sigue diciendo la verdad.
 
@@ -592,9 +591,9 @@ instante de cada uno sigue diciendo la verdad.
 |---|---|
 | La tarea no tiene pregunta abierta | Error 6, con la pista de usar `biso comment` |
 | Falta el positional del texto | Error 2. Una respuesta sin respuesta no cierra nada |
-| El texto está vacío (`biso answer TASK-11 ""`) | Error 3: `error: the answer cannot be empty`, `code` `empty_scalar_value` (4.6) |
-| Sin identidad configurada (3.1) | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` |
-| Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que `biso note` (10.7.2) |
+| El texto está vacío (`biso answer TASK-11 ""`) | Error 3: `error: the answer cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
+| Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` |
+| Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
 | Se pasan además banderas de campo | Se aplican igual, como en cualquier verbo del ciclo |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
 | La tarea está archivada | Se hace, con `note: TASK-11 is archived` por stderr, igual que `biso get` |
@@ -603,8 +602,8 @@ instante de cada uno sigue diciendo la verdad.
 **No es simétrico con `biso ask`, y es a propósito.** `ask` sobre una tarea terminada es error 6,
 porque no tiene sentido abrir una pregunta sobre algo que ya está cerrado. Pero responder una pregunta
 que se quedó abierta al cerrar la tarea es la única vía de recuperación que existe: `biso finish`
-avisa sin impedirlo (4.3) y esa pregunta desaparece de los bloques de `biso prime` y del `biso ls` por
-defecto, riesgo que `docs/DECISIONES.md` (sección 11) acepta a propósito. Impedir `answer` sobre una
+[avisa](../salida-y-terminal.md#notas-y-avisos) sin impedirlo y esa pregunta desaparece de los bloques de `biso prime` y del `biso ls` por
+defecto, riesgo que la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `docs/DECISIONES.md` acepta a propósito. Impedir `answer` sobre una
 tarea terminada cerraría esa única vía.
 
 ```
@@ -618,7 +617,7 @@ hint: use `biso comment` to add a comment
 TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
-La urgencia recupera el término de actividad de 5.4, porque `waiting` vuelve a ser falso.
+La urgencia recupera el término de actividad de ["La urgencia"](../modelo-de-datos.md#la-urgencia), porque `waiting` vuelve a ser falso.
 
 ### Códigos de salida
 

@@ -5,18 +5,19 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
 
 **No cambia nunca:**
 
-- Los códigos de salida de la sección 2 y su significado.
-- Los identificadores `code` de la sección 12.3, con la regla de ampliación que allí se dice.
+- Los ["Códigos de salida"](codigos-de-salida.md) y su significado.
+- Los identificadores `code` de la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), con la regla de
+  ampliación que allí se dice.
 - El nombre y el significado de cada comando y de cada bandera. **Una bandera nunca cambia de
   semántica**, y en particular ninguna que hoy añade pasará a reemplazar. Si hiciera falta el
   comportamiento contrario, se añade una bandera nueva con otro nombre.
 - Las claves de `data` en cada `kind` de JSON. Se pueden añadir claves; las que hay no se quitan ni
   cambian de tipo.
-- El algoritmo de coincidencia de la sección 6.1, idéntico al leer y al escribir.
+- El ["algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia), idéntico al leer y al escribir.
 - La simetría entre `biso export` y `biso new --from` sobre todos los campos no derivados, que es una
   prueba de la suite y no una intención. La de `biso snapshot` con `biso init --from` cubre además la
   configuración del tablero, **con la excepción declarada de `me` y `default_limit`**, que no viajan en
-  la instantánea (10.14) y por tanto tampoco están en esta promesa.
+  la instantánea de [`biso snapshot`](cmd/snapshot.md) y por tanto tampoco están en esta promesa.
 - La estabilidad de las claves de los criterios: una clave asignada no se reasigna nunca.
 - El tope de tamaño del mensaje de `biso prime`.
 
@@ -28,7 +29,7 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
   con el tiempo.
 - Los coeficientes por defecto de la urgencia. La estructura de la fórmula, no.
 - Los valores por defecto de la configuración, salvo los que este documento fija dentro de un comando.
-- **El presupuesto de arranque de 25 milisegundos de la sección 4.13.** No es de la misma naturaleza
+- **El [presupuesto de arranque](presupuestos.md#el-presupuesto-de-arranque) de 25 milisegundos.** No es de la misma naturaleza
   que el tope de bytes de arriba: los 5.120 bytes son una propiedad del texto, así que cualquiera los
   mide y siempre dan lo mismo, mientras que los 25 milisegundos son una propiedad de la máquina de
   referencia. Congelar en este contrato un número que depende del hardware haría que la herramienta

@@ -10,32 +10,32 @@ biso snapshot [--vcs <mode>]
 |---|---|---|---|---|---|---|---|
 | `--vcs <mode>` | | no | `none`, `commit` o `push` | `commit` | no | no | ninguno |
 
-**`biso snapshot` no cambia ningún dato del tablero**, así que la sección 3 lo clasifica junto a
+**`biso snapshot` no cambia ningún dato del tablero**, así que la sección ["Banderas globales"](../invocacion.md#banderas-globales) lo clasifica junto a
 `export` entre los comandos donde `--print` y `--dry-run` son error de uso con código 2: no hay
 ninguna tarea afectada que imprimir, ni ninguna escritura de tarea que simular.
 
 **No tiene bandera `-o`/`--out`.** A diferencia de `export`, que escribe donde se le diga,
-`snapshot` escribe siempre en el propio directorio del tablero (10.1), con nombre fijo:
+`snapshot` escribe siempre en el propio directorio del tablero (["`biso init`"](init.md)), con nombre fijo:
 `snapshot.ndjson` y `board.json`. Es la instantánea del tablero para sí mismo, no un volcado a otra
 parte; para volcar a otra parte está `export`.
 
 ## Qué escribe, y por qué esos dos ficheros
 
-`snapshot.ndjson` tiene exactamente la forma que fija la garantía de simetría de `biso export` (10.9):
+`snapshot.ndjson` tiene exactamente la forma que fija la garantía de simetría de `biso export` (["`biso export`"](export.md)):
 una tarea por línea, con las mismas claves, incluidos los identificadores, las fechas y las claves de
 criterio. `board.json` es la configuración del tablero, en la misma forma que imprime
-`biso config list --json` (10.10): todas las claves de vocabulario, `task_prefix` y las demás.
+`biso config list --json` (["`biso config`"](config.md)): todas las claves de vocabulario, `task_prefix` y las demás.
 
 **Con dos excepciones, `me` y `default_limit`, que no se escriben nunca.** Las dos son preferencias de
 quien usa el tablero y no propiedades suyas, y la primera hace daño de verdad al viajar: restaurar la
 instantánea de otra persona con `biso init --from` dejaría su identidad configurada como la del tablero,
 y un tablero con `me` puesto anula `--mine`, porque entonces todo el mundo comparte identidad (sección
-11 de `DECISIONES.md`). Un tablero restaurado nace por tanto sin identidad y con el límite por defecto,
-y quien restaura pone la suya con `biso config set me`. La garantía de simetría de 10.9 sigue cubriendo
+["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `DECISIONES.md`). Un tablero restaurado nace por tanto sin identidad y con el límite por defecto,
+y quien restaura pone la suya con `biso config set me`. La garantía de simetría de ["`biso export`"](export.md) sigue cubriendo
 todo lo demás y **no cuenta estas dos claves**, que es la única cosa que exportar e importar no
 reproduce campo a campo.
 
-Los dos ficheros son los que después lee `biso init --from` (10.1) para reconstruir el tablero
+Los dos ficheros son los que después lee `biso init --from` (["`biso init`"](init.md)) para reconstruir el tablero
 entero. Van en dos ficheros separados, y no en uno solo, para que los diffs queden legibles: la
 configuración cambia pocas veces y las tareas cambian todo el rato, así que mezclarlas habría hecho
 que cada revisión de una tarea reescribiera también un bloque de configuración idéntico.
@@ -53,7 +53,7 @@ esta especificación lo dice en vez de prometer una atomicidad de dos ficheros q
 no da.
 
 **`snapshot` no toma ningún acceso exclusivo**, ni el de las escrituras de tareas ni uno propio. Es una
-lectura del tablero, y las lecturas nunca bloquean a nadie (4.10, punto 6): una instantánea de un
+lectura del tablero, y las lecturas nunca bloquean a nadie (["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables), punto 6): una instantánea de un
 tablero grande no puede hacer fallar a un `biso set` que llegue a la vez. Lo que sí puede pasar es que
 dos instantáneas simultáneas choquen al guardar la revisión, porque el sistema de control de versiones
 se protege con su propia marca de bloqueo; entonces una de las dos sale con código 7 y su mensaje dice
@@ -62,7 +62,7 @@ escribió su temporal.
 
 ## El sistema de control de versiones
 
-El sistema lo dice la clave `vcs` de la configuración de máquina (sección 3.3), con `git` por defecto,
+El sistema lo dice la clave `vcs` de la configuración de máquina (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)), con `git` por defecto,
 `none` para no ejecutar nada y `custom` para uno que `biso` no conoce. La bandera `--vcs` de este
 comando elige qué se hace en esta llamada, y no cambia esa configuración:
 
@@ -77,7 +77,7 @@ escriben los ficheros y emiten `note: vcs is set to none, skipping the commit`, 
 
 **Ningún otro comando de `biso` ejecuta nunca un programa ajeno.** Invocar el sistema de control de
 versiones cuesta unos 12 milisegundos medidos, y el presupuesto de arranque de 25 milisegundos para
-`biso ls` y `biso prime` sobre un tablero de 300 tareas (sección 4.13) no admite ese coste en el camino
+`biso ls` y `biso prime` sobre un tablero de 300 tareas (sección ["El presupuesto de arranque"](../presupuestos.md#el-presupuesto-de-arranque)) no admite ese coste en el camino
 caliente de ningún comando. `biso snapshot` es la única excepción, precisamente porque quien lo llama ya
 está pidiendo explícitamente esa operación; y es también, por lo mismo, el único comando que llega a
 crear un repositorio: sin haber corrido nunca `biso snapshot` con `commit` o con `push` sobre él, el
@@ -121,7 +121,7 @@ código, que no puede añadir lo que ignora.
 **El tablero dentro del proyecto y versionado con él es el único caso en el que la instantánea cruza a
 otra máquina sin que nadie configure nada**, porque el repositorio del proyecto ya tiene remoto. En los
 demás, el historial del tablero es estrictamente local hasta que alguien le añada uno a mano, y entonces
-`--vcs push` lo publica. Publicar no es trabajo de `biso` mientras no se le pida: la sección 14 lo dice.
+`--vcs push` lo publica. Publicar no es trabajo de `biso` mientras no se le pida: la sección ["Lo que se deja fuera a propósito"](../fuera-de-alcance.md) lo dice.
 
 **Y hay que decir qué arrastra `--vcs push` cuando la revisión ha ido al repositorio del proyecto**:
 publica esa rama entera, así que se lleva también los commits de código que estuvieran pendientes.
@@ -140,7 +140,7 @@ añade el directorio entero, para que un fichero que alguien deje ahí a mano no
 
 El marcador entra porque es lo que hace que la identidad del tablero viaje con la instantánea: al leerla
 de vuelta, `biso init --from` adopta ese `id` en vez de acuñar uno nuevo, y por eso el puntero
-commiteado del proyecto sigue valiendo después de restaurar (10.1). La base de datos no entra nunca, y
+commiteado del proyecto sigue valiendo después de restaurar (["`biso init`"](init.md)). La base de datos no entra nunca, y
 de eso se encarga el fichero de exclusión que `init` dejó escrito dentro del tablero, no este comando.
 
 El mensaje de la revisión es `biso snapshot: 248 tasks`, con el recuento real de cada vez.
@@ -168,8 +168,8 @@ resumen por la estándar y `git push` su progreso por la de error, así que qued
 mitad. **El orden relativo entre las dos corrientes no está garantizado**; el de las líneas dentro de cada
 una sí. Las líneas en blanco se descartan, y una última línea sin salto final cuenta como línea.
 
-Nada de eso va nunca por stdout, que la sección 4.2 reserva para los datos, y `--quiet` no lo suprime,
-por el motivo que da la sección 4.3.
+Nada de eso va nunca por stdout, que la sección ["stdout, stderr y qué va en cada uno"](../salida-y-terminal.md#stdout-stderr-y-qué-va-en-cada-uno) reserva para los datos, y `--quiet` no lo suprime,
+por el motivo que da la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos).
 
 **Y tiene una consecuencia visible que no es un fallo**: cuando no hay nada que guardar, la línea que
 `git commit` escribe por su cuenta se reenvía igual, así que sale al lado de la nota que `biso` emite
@@ -185,7 +185,7 @@ un `fatal: not a git repository` alarmante el camino normal de cualquier tablero
 repositorio. Se reenvía, por tanto, solo lo que escriben las órdenes que actúan: `init`, `add`, `commit` y
 `push` en `git`, y `commit` y `publish` en `custom`.
 
-**Con `--json` no van por stderr.** Ahí stderr lleva el sobre de error (12.2) y no puede llevar además
+**Con `--json` no van por stderr.** Ahí stderr lleva el sobre de error (["Los errores en JSON"](../contrato-json.md#los-errores-en-json)) y no puede llevar además
 texto suelto, así que esas líneas van dentro del sobre: en `data.vcsOutput` cuando la operación acaba
 bien, y en `error.vcsOutput` cuando falla. Es una lista de cadenas, una por línea, y **ahí van sin el
 prefijo**, que existe solo para separarlas a la vista en un terminal.
@@ -203,7 +203,7 @@ prefijo**, que existe solo para separarlas a la vista en un terminal.
 | La revisión falla por una razón de entorno, con un repositorio ya existente (sistema sin configurar, sin permiso, disco lleno, otra instantánea guardando a la vez) | Los dos ficheros ya han quedado escritos antes de intentarlo; Error 7, `code` `vcs_commit_failed`, y el mensaje dice que nada se ha perdido y que basta volver a llamar |
 | `--vcs push` y la publicación falla | Los ficheros están escritos y la revisión guardada; Error 7, `code` `vcs_push_failed` |
 | `--vcs push` con `vcs` igual a `custom` y sin orden `publish` declarada | Error 2, `code` `vcs_push_unavailable`, antes de escribir nada |
-| Alguna tarea no se puede leer (4.12) | Se salta, se cuenta, `warning: 1 task could not be read and was skipped`, y el código es 6 en vez de 0, igual que en `biso export` |
+| Alguna tarea no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | Se salta, se cuenta, `warning: 1 task could not be read and was skipped`, y el código es 6 en vez de 0, igual que en `biso export` |
 | No se puede escribir alguno de los dos ficheros | Error 7, con los dos ficheros anteriores intactos y sin intentar la revisión |
 | No hay tablero | Error 8 |
 
@@ -270,11 +270,11 @@ git:  3 files changed, 12 insertions(+), 4 deletions(-)
 no devuelve identificador. `repository` es la raíz del repositorio donde ha ido la revisión, que es lo
 que dice en qué caso de los tres se estaba. `pushed` es `false` salvo con `--vcs push` cumplido.
 `skipped` lleva los identificadores de las tareas ilegibles que se han saltado, igual que en `biso ls`
-(10.4): vacío salvo cuando el código de salida es 6.
+(["`biso ls`"](ls.md)): vacío salvo cuando el código de salida es 6.
 
 `files` son los dos ficheros que este comando escribe, **no los tres que entran en la revisión**: el
 marcador `<id>.id` ya estaba ahí y lo escribió `biso init`. El `{files}` de la configuración de `custom`
-(3.3) sí son los tres, y son dos conjuntos distintos con nombres parecidos.
+(["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) sí son los tres, y son dos conjuntos distintos con nombres parecidos.
 
 `vcsOutput` son las líneas que escribieron las órdenes que se ejecutaron, sin el prefijo que llevan en el
 modo de texto, y está vacía cuando no se ha ejecutado ninguna.

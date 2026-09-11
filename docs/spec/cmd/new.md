@@ -14,7 +14,7 @@ biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de la
 | `--start` | | no | booleano | falso | no | no | `-s`, `--from` |
 | `--from <file|->` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
 
-Todas las banderas de campo de la sección 8 valen aquí. En una tarea nueva no hay nada que sustituir
+Todas las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md) valen aquí. En una tarea nueva no hay nada que sustituir
 ni que quitar, así que `--set-*`, `--rm-*` y `--clear-*` se aceptan y hacen lo mismo que el nombre
 desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad al crear son
 `-d/--desc`, `--ac`, `--dod`, `--type`, `--priority`, `-l/--label`, `-a/--assignee`, `--ref`,
@@ -22,7 +22,7 @@ desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad 
 `--ext`, `--plan`, `--note`, `--summary` y `--comment`.
 
 - **`--start`** crea la tarea directamente en el estado activo, asignada a `me` y con el arrendamiento
-  tomado a favor de quien llama (`leaseExpiresAt` y `leaseHolder`, sección 5), exactamente como lo haría
+  tomado a favor de quien llama (`leaseExpiresAt` y `leaseHolder`, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), exactamente como lo haría
   `biso start` sobre ella. Es el atajo de esas dos llamadas, así que la equivalencia tiene que ser real:
   si `--start` dejara la tarea activa y asignada sin arrendamiento, `biso new "X" --start` y
   `biso new "X"` seguido de `biso start` darían dos tareas distintas. Es, junto con `biso start`, la
@@ -46,7 +46,7 @@ desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad 
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
 | `--due` en el pasado | Se acepta, con aviso |
 | `-d @fichero` que no existe | Error 4 |
-| `--start` sin ninguna identidad configurada (3.1) y sin `-a` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (sección 5). Es el mismo caso que la fila equivalente de `biso start` (10.7.1) |
+| `--start` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) y sin `-a` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Es el mismo caso que la fila equivalente de `biso start` (["`biso start`"](verbos-del-ciclo.md#biso-start)) |
 | `--start` con `-a @sara` y una identidad configurada distinta | La tarea queda asignada a `@sara` y el arrendamiento es de quien llama, igual que en `biso start`: quien lo toma es quien escribe, no quien figura en `assignees` |
 | Todo bien | Se crea la tarea, código 0 |
 
@@ -59,7 +59,7 @@ TASK-101
 ```
 
 `biso new` es el único comando de escritura cuya salida por defecto es distinta de la línea de estado
-de 10.6, y así está dicho en el mensaje de arranque.
+de la sección ["`biso set`"](set.md), y así está dicho en el mensaje de arranque.
 
 Con `--print`, después de la línea del identificador viene la ficha completa en el formato de
 `biso get`. Con `--quiet`, solo el identificador y ninguna nota.
@@ -73,7 +73,7 @@ biso new --from tareas.ndjson --dry-run
 ```
 
 La entrada es **NDJSON**: un objeto JSON por línea. Las líneas vacías y las que empiezan por `#` se
-ignoran. Las claves son las del modelo de datos de la sección 5, en `camelCase`.
+ignoran. Las claves son las del modelo de datos de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md), en `camelCase`.
 
 Ejemplo de una línea, con todos los tipos compuestos:
 
@@ -92,13 +92,13 @@ Las reglas del lote, todas obligatorias:
   se deduce.
 - **`comments` es una lista de objetos** con `author`, `createdAt` y `body`. `createdAt` es opcional y,
   si falta, se pone el instante de la importación.
-- **`question` se acepta como objeto** con `author`, `askedAt` y `body` (5.7) en el lote de `--from`.
+- **`question` se acepta como objeto** con `author`, `askedAt` y `body` (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)) en el lote de `--from`.
   `askedAt` es opcional y, si falta, se pone el instante de la importación, igual que `createdAt` en
   `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.
 - **`id`, `createdAt` y `updatedAt` se aceptan aquí y solo aquí.** Un `id` ya ocupado es un fallo de
   validación; un `id` libre se reserva y el tablero no lo volverá a asignar.
 - **`leaseExpiresAt` y `leaseHolder` se aceptan aquí con el valor que traiga el fichero**, que es lo
-  que hace cierta la garantía de simetría de 10.9 para ellos dos. La invariante de la sección 5 se
+  que hace cierta la garantía de simetría de ["`biso export`"](export.md) para ellos dos. La invariante de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) se
   comprueba en la validación, en sus dos mitades, y cada una es un fallo que nombra la línea y el campo.
   Una línea que traiga cualquiera de los dos sobre una tarea que no esté a la vez en el estado activo y
   asignada a alguien es un fallo de validación. Y una línea que traiga uno de los dos y no el otro
@@ -111,20 +111,20 @@ Las reglas del lote, todas obligatorias:
   ```
 - **Un `id` explícito tiene que llevar el `task_prefix` del tablero de destino.** Si no lo lleva, es
   un fallo de validación, igual que un `id` ya ocupado: es la misma protección que hace inmutable a
-  `task_prefix` en la sección 10.10, cerrando la tercera vía hacia el mismo tablero de identificadores
+  `task_prefix` en la sección ["`biso config`"](config.md), cerrando la tercera vía hacia el mismo tablero de identificadores
   mixtos que esa inmutabilidad ya evita en las otras dos (cambiar `--prefix` a mano, o renombrar el
   tablero). No es una restricción nueva sobre la simetría: exportar un tablero y restaurarlo con
-  `biso snapshot` y `biso init --from` (10.9, 10.14) trae también su `task_prefix`, así que los `id`
+  `biso snapshot` y `biso init --from` (["`biso export`"](export.md), ["`biso snapshot`"](snapshot.md)) trae también su `task_prefix`, así que los `id`
   de su `snapshot.ndjson` siempre lo llevan puesto.
 - **`archived` se acepta como booleano.** Por defecto, si la clave no aparece, la tarea se crea sin
   archivar. Ningún otro comando tiene una bandera de campo para él: fuera de la importación,
   archivar se hace con `biso archive`.
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
   escriben, y el mensaje dice la línea y la clave.
-- **Los campos derivados de la sección 5 no se aceptan.** En la entrada son claves desconocidas y
+- **Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) no se aceptan.** En la entrada son claves desconocidas y
   por tanto un fallo de validación.
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de
-  la sección 4.10.
+  la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables).
 - Un lote no admite `--start` ni ninguna bandera de campo: todo va en el fichero.
 
 Salida del lote, una línea por tarea, en el orden del fichero:

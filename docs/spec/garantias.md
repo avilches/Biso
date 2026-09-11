@@ -42,7 +42,7 @@ consiga es cosa de quien implemente.
 6. **Las lecturas nunca fallan por culpa de una escritura en curso**, y nunca la bloquean.
 
 **Las seis hablan de las escrituras del tablero, y hay un solo comando que escribe ficheros de texto con
-nombre fijo, `biso snapshot`.** Sus garantías son otras y están en la sección 10.14: cada fichero se
+nombre fijo, `biso snapshot`.** Sus garantías son otras y están en [`biso snapshot`](cmd/snapshot.md): cada fichero se
 escribe en un temporal y se renombra encima, los dos temporales se completan antes de renombrar
 ninguno, y el comando no toma ningún acceso exclusivo, precisamente para que una copia no pueda hacer
 fallar a la escritura de una tarea. Ninguna de las seis de aquí queda tocada por eso.
@@ -90,9 +90,10 @@ hint: it did not open, or it failed its integrity check, and there is no automat
 hint: rebuild it in place with `biso init --from <snapshot dir>`, which keeps its id
 ```
 
-El código de salida es **10** (`DAMAGED`, sección 2), y no el 8 de la ausencia de tablero, porque el
-remedio es otro: aquí el tablero está donde tiene que estar y lo que hay que hacer es reconstruirlo, no
-crearlo. La clave `code` del sobre JSON (sección 12.3) es `database_unreadable`.
+El código de salida es **10** (`DAMAGED`, ver ["Códigos de salida"](codigos-de-salida.md)), y no el 8 de
+la ausencia de tablero, porque el remedio es otro: aquí el tablero está donde tiene que estar y lo que
+hay que hacer es reconstruirlo, no crearlo. La clave `code` del sobre JSON (sección
+["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)) es `database_unreadable`.
 
 **El código 10 puede salir de cualquier comando, y por eso no se repite en la tabla de códigos de
 salida de cada uno.** Esas tablas dicen los desenlaces propios del comando; este no lo es de ninguno, es
@@ -100,7 +101,7 @@ el del tablero entero, igual que el 1 de un fallo del programa, que tampoco apar
 
 **Y el remedio se puede teclear tal cual, porque el segundo `hint` nombra el comando que lo hace.** Un
 directorio cuya base de datos no abre no cuenta como tablero accesible para `biso init`, así que
-`biso init --from` reconstruye ahí mismo en vez de dar el error 2 de "ya hay uno" (10.1), y adopta el
+`biso init --from` reconstruye ahí mismo en vez de dar el error 2 de "ya hay uno" de [`biso init`](cmd/init.md), y adopta el
 `id` que nombra el marcador de la instantánea, de modo que el puntero commiteado del proyecto sigue
 valiendo. Es también lo que necesita un clon recién traído a otra máquina, que llega con el directorio
 del tablero versionado y sin base de datos dentro.

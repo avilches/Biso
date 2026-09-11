@@ -15,8 +15,8 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 | 7 | `ENVIRONMENT` | Falla el entorno, no la petición | el almacén no responde, no hay permisos, no se puede adquirir el acceso exclusivo, no hay terminal donde hace falta |
 | 8 | `NO_BOARD` | No hay tablero accesible desde donde se ha llamado | cualquier comando fuera de un tablero, salvo `init`, `help`, `--help` y `--version`, que no necesitan uno; `biso where` también devuelve 8 cuando no encuentra ninguno |
 | 9 | `VALIDATION` | Una validación previa ha fallado y **no se ha escrito nada** | `biso new --from tareas.ndjson` con la línea 47 inválida |
-| 10 | `DAMAGED` | El tablero está donde tiene que estar, y su almacén no se puede leer | `board.db` que no abre, o que falla su comprobación de integridad (4.12) |
-| 11 | `AMBIGUOUS_BOARD` | El mismo identificador de tablero aparece en dos sitios, y elegir uno sería escribir en el que nadie ha nombrado | dos raíces de la sección 3.3 con una carpeta que lleva el mismo marcador (3.2) |
+| 10 | `DAMAGED` | El tablero está donde tiene que estar, y su almacén no se puede leer | `board.db` que no abre, o que falla su comprobación de integridad (["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) |
+| 11 | `AMBIGUOUS_BOARD` | El mismo identificador de tablero aparece en dos sitios, y elegir uno sería escribir en el que nadie ha nombrado | dos raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina) con una carpeta que lleva el mismo marcador (["Cómo se elige el tablero"](resolucion-del-tablero.md)) |
 
 Cinco reglas que acompañan a la tabla:
 
@@ -37,10 +37,10 @@ Cinco reglas que acompañan a la tabla:
   arregla; con el 11 hay dos y hay que quitar o renombrar uno de los dos directorios a mano. Por eso el
   daño del almacén no comparte número con la ausencia de tablero, aunque para quien llama las tres
   frases empiecen igual: quien ramifica sobre el número tiene que poder elegir el remedio sin leer el
-  mensaje, que es el principio de la sección 1. **Ni el 10 ni el 11 aparecen en la tabla de códigos de
+  mensaje, que es el principio de la sección ["Los principios"](principios.md). **Ni el 10 ni el 11 aparecen en la tabla de códigos de
   salida de cada comando**, porque no son desenlaces propios de ninguno sino del tablero entero, igual
   que el 1. La excepción es `biso where`, que existe justamente para explicar la resolución y los lleva
-  los dos en su tabla (10.2).
+  los dos en su tabla (["`biso where`"](cmd/where.md)).
 
 ---
 

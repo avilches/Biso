@@ -2,7 +2,7 @@
 
 ## Qué resuelve este comando
 
-`biso` **no escribe nunca fuera del tablero, salvo el puntero del proyecto de la sección 3.2.** No
+`biso` **no escribe nunca fuera del tablero, salvo el puntero del proyecto de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md).** No
 modifica ningún otro fichero del proyecto, ni al crear el tablero ni nunca. Todo lo que hace falta
 para empezar a trabajar cabe en un solo comando, cuya salida es un solo mensaje.
 
@@ -32,17 +32,17 @@ biso prime [--full] [--limit <n>] [--json]
   se imprima. Con `0`, las dos desaparecen y se queda solo esa línea.
 - `--full` añade al final la lista completa de banderas de `biso new` y `biso set`. Es para una
   persona que está aprendiendo la herramienta, no para el arranque de un agente.
-- `--json` es la bandera global de la sección 3, y aquí es lo único que la restringe: no se puede
+- `--json` es la bandera global de la sección ["Banderas globales"](../invocacion.md#banderas-globales), y aquí es lo único que la restringe: no se puede
   combinar con `--full`, porque el JSON no lleva texto de ayuda.
 
 ## Qué hace, caso a caso
 
 | Situación | Qué pasa |
 |---|---|
-| Hay tablero y tiene tareas | Imprime el mensaje de 9.7 por stdout, código 0 |
-| Hay tablero y está vacío | Igual, con los cuatro bloques de tareas sustituidos por las tres líneas de 9.8 |
-| No hay tablero | Código 8, y por stderr el mensaje de la sección 3.2 |
-| Alguna tarea no se puede leer | El mensaje sale igual, con el aviso de 4.12, código 0 |
+| Hay tablero y tiene tareas | Imprime el mensaje de la sección ["La salida literal"](#la-salida-literal) por stdout, código 0 |
+| Hay tablero y está vacío | Igual, con los cuatro bloques de tareas sustituidos por las tres líneas de la sección ["Tablero vacío"](#tablero-vacío) |
+| No hay tablero | Código 8, y por stderr el mensaje de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) |
+| Alguna tarea no se puede leer | El mensaje sale igual, con el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), código 0 |
 | `--limit` negativo | Código 2 |
 
 `biso prime` **no escribe nada, nunca**, y no necesita acceso exclusivo. Es seguro llamarlo en
@@ -82,7 +82,7 @@ Esto es exactamente lo que `biso prime` imprime por stdout con un tablero de eje
 por stderr.
 
 **Ese tablero fija `task_prefix` a `TASK` explícitamente**, en vez de dejar que se derive de
-`project_name` como haría por defecto (sección 4.11), para que los identificadores de todos los ejemplos
+`project_name` como haría por defecto (la sección ["Identificadores"](../modelo-de-datos.md#identificadores)), para que los identificadores de todos los ejemplos
 de este documento no dependan del nombre que le toque al tablero de turno. De paso queda demostrado que
 `task_prefix` se puede fijar a mano.
 
@@ -190,19 +190,19 @@ Cómo se calcula el resumen, para que la implementación sea única:
   `ASSIGNED TO YOU` no se imprime nunca**, aunque el resto del mensaje se imprime igual, con
   `you are (not set)` en el bloque `BOARD`.
 - `IN PROGRESS` lista las tareas del estado activo sin pregunta abierta, ordenadas por la regla de
-  orden de 10.4, sin límite. Cada tarea cuyo arrendamiento está vencido (el campo derivado
-  `leaseExpired` de la sección 5) lleva, igual que `NEEDS ANSWER` con su pregunta, una segunda línea
+  orden de la sección ["`biso ls`"](ls.md), sin límite. Cada tarea cuyo arrendamiento está vencido (el campo derivado
+  `leaseExpired` de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) lleva, igual que `NEEDS ANSWER` con su pregunta, una segunda línea
   indentada con la forma `lease expired <leaseExpiresAt>, was held by <leaseHolder>`. Es el único de
   los cuatro bloques que la lleva, porque es el único cuya etiqueta afirma que alguien está
   trabajando ahora mismo, y un arrendamiento vencido contradice justo esa afirmación. Esta línea, como
   la de la pregunta, no cuenta para el ancho de las columnas. El hecho que la provoca sí viaja en el
-  esquema JSON de 9.9, como el campo `leaseExpired`, y sus dos detalles no: quien los quiera los pide
-  con `biso get`, que los imprime en su línea `lease` (10.5), igual que pide el cuerpo de la pregunta.
+  esquema JSON de la sección ["El esquema JSON"](#el-esquema-json), como el campo `leaseExpired`, y sus dos detalles no: quien los quiera los pide
+  con `biso get`, que los imprime en su línea `lease` (["`biso get`"](get.md)), igual que pide el cuerpo de la pregunta.
 - `NEEDS ANSWER` lista las tareas con pregunta abierta, ordenadas igual, sin límite. Cada tarea
   ocupa **dos líneas**: la fila de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo
   una línea indentada con la pregunta recortada a **100 celdas**, con la misma regla exacta que el
   algoritmo aplica a los títulos. Los saltos de línea reales del cuerpo se sustituyen por un espacio
-  antes de recortar, y el recorte usa el mismo sufijo `...` que 10.4 usa para los títulos. Va en línea
+  antes de recortar, y el recorte usa el mismo sufijo `...` que la sección ["`biso ls`"](ls.md) usa para los títulos. Va en línea
   propia y no en una novena columna, porque el algoritmo tiene ocho exactas y una regla que dice que
   la octava nunca se rellena.
 - `ASSIGNED TO YOU` lista las tareas asignadas a la identidad configurada que no estén ya en
@@ -214,18 +214,18 @@ Cómo se calcula el resumen, para que la implementación sea única:
   propio límite, el resumen crecería al doble sin que `--limit` lo notara.
 - La línea de recuento dice cuántas tareas quedan fuera de `ASSIGNED TO YOU` y `NEXT UP` juntas por el
   corte.
-- Las filas usan exactamente el algoritmo de columnas de `biso ls` de la sección 10.4, con una
+- Las filas usan exactamente el algoritmo de columnas de `biso ls` de la sección ["`biso ls`"](ls.md), con una
   diferencia declarada aquí: el ancho de las columnas 1 a 7 se calcula sobre las filas de los cuatro
   bloques juntas, **sin contar las líneas de pregunta ni las de arrendamiento vencido**, que no son
   filas de la tabla, para que los cuatro bloques se lean como una sola tabla.
 - `NEXT UP` es lo que no cae en ninguno de los tres bloques anteriores, no "lo que no ha empezado".
   Por eso su rótulo es `NEXT UP  (not assigned to you, by urgency)`, su línea de recuento tiene la
   forma `N more not shown: 'biso ls --not-active --not-waiting'`, y su clave en el esquema JSON del
-  apartado 9.9 es `hiddenCount`.
+  apartado ["El esquema JSON"](#el-esquema-json) es `hiddenCount`.
 
 ## Tablero vacío
 
-Cuando no hay ninguna tarea, los cuatro bloques de tareas de 9.7 se sustituyen por esto, sin imprimir
+Cuando no hay ninguna tarea, los cuatro bloques de tareas de la sección ["La salida literal"](#la-salida-literal) se sustituyen por esto, sin imprimir
 ninguno de sus encabezados, y el resto del mensaje no cambia:
 
 ```
@@ -284,21 +284,21 @@ Las reglas y los nombres de las banderas no viajan en el JSON: quien pide JSON e
 programa no necesita que le expliquen que el nombre desnudo añade.
 
 **Ninguna de las cuatro listas trae el cuerpo de la pregunta**, por el mismo motivo que el esquema de
-`task.list` en 10.4 no trae el cuerpo de la tarea: es texto largo. Lo que sí llevan es la posición de
+`task.list` en la sección ["`biso ls`"](ls.md) no trae el cuerpo de la tarea: es texto largo. Lo que sí llevan es la posición de
 cada tarea (en `needsAnswer` o en cualquier otro de los cuatro bloques), que ya dice si está
 aparcada, igual que el campo derivado `waiting` de `task.list`. Quien necesite leer la pregunta usa
 `biso get --section question`.
 
 **`leaseExpired` sale en los cuatro bloques**, y en `assignedToYou` y en `nextUp` vale siempre `false`.
 Esos dos bloques no pueden contener ninguna tarea en el estado activo, que es la única clase de tarea
-en la que un arrendamiento puede existir: la precedencia de 9.7 manda toda tarea activa a `inProgress`
+en la que un arrendamiento puede existir: la precedencia de la sección ["La salida literal"](#la-salida-literal) manda toda tarea activa a `inProgress`
 o a `needsAnswer`. Quien implemente puede apoyarse en ese valor constante, pero la clave se emite igual,
-porque la regla de 12.4 prohíbe que una clave aparezca o desaparezca según los datos y quien lee esta
+porque la regla de la sección ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias) prohíbe que una clave aparezca o desaparezca según los datos y quien lee esta
 salida no sabe de antemano en qué bloque va a caer una tarea. Va en el JSON aunque la segunda línea
 indentada del texto salga solo en `inProgress`, porque no es texto largo y esconderlo obligaría a quien
 consume JSON a llamar a `biso get` tarea por tarea para saber algo que el mensaje de texto ya enseña.
-Sus dos detalles, `leaseExpiresAt` y `leaseHolder`, no salen aquí: para eso está `task.list` (10.4), y
-en texto la línea `lease` de la ficha de `biso get` (10.5).
+Sus dos detalles, `leaseExpiresAt` y `leaseHolder`, no salen aquí: para eso está `task.list` (["`biso ls`"](ls.md)), y
+en texto la línea `lease` de la ficha de `biso get` (["`biso get`"](get.md)).
 
 ## Códigos de salida
 

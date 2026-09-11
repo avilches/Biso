@@ -22,7 +22,7 @@ marcar uno.
 
 ## Comportamiento, caso a caso
 
-La resolución de `<ref>` está en la sección 7 y no se repite. Lo propio de este comando:
+La resolución de `<ref>` está en la sección ["Cómo se resuelve una referencia a una tarea"](../referencias.md) y no se repite. Lo propio de este comando:
 
 | Caso | Qué pasa |
 |---|---|
@@ -30,7 +30,7 @@ La resolución de `<ref>` está en la sección 7 y no se repite. Lo propio de es
 | La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** en el formato de `biso ls` |
 | La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched TASK-11` por stderr |
 | La tarea está archivada | Se imprime, con `note: TASK-11 is archived` por stderr |
-| La tarea no se puede leer | Error 3, según la regla de lectura dirigida de 4.12 |
+| La tarea no se puede leer | Error 3, según la regla de lectura dirigida de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
 | `--section` con un nombre inventado | Error 2, con los nueve nombres válidos |
 | `--section` de una sección vacía | No imprime esa sección, y si no queda ninguna sección que imprimir, la salida está vacía y el código sigue siendo 0 |
 
@@ -89,7 +89,7 @@ Los encabezados de esta salida son un formato de presentación, no un formato de
 
 **La línea `lease` sale solo cuando la tarea tiene arrendamiento**, y entonces sale con sus dos campos:
 `lease` es `leaseExpiresAt`, con el mismo formato de instante que `created` y `updated`, y `holder` es
-`leaseHolder` (sección 5). Los dos aparecen y desaparecen juntos, porque la sección 5 no admite uno sin
+`leaseHolder` (sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Los dos aparecen y desaparecen juntos, porque la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) no admite uno sin
 el otro. Pertenece al bloque de metadatos, así que la trae `--section meta` y no ninguna otra sección.
 Es la única línea condicional de ese bloque, y por eso va al final de las líneas de dos campos: así
 ninguna de las de arriba cambia de sitio según la tarea. Eso no choca con la regla de que la ficha
@@ -97,7 +97,7 @@ completa imprime las nueve secciones aunque estén vacías, porque lo condiciona
 y no el bloque. Una tarea sin arrendamiento **no imprime la línea**, en vez de imprimirla con dos
 guiones, porque eso pondría dos guiones en la ficha de casi todas las tareas del tablero y la ausencia
 de la línea dice lo mismo. Esta es la única forma de ver los dos campos sin `--json`: `biso prime` no
-los trae (9.7) y `biso ls` tampoco (10.4). Si el arrendamiento está vencido, el instante ya lo dice y la
+los trae (["La salida literal"](prime.md#la-salida-literal)) y `biso ls` tampoco (["`biso ls`"](ls.md)). Si el arrendamiento está vencido, el instante ya lo dice y la
 ficha no añade ninguna marca; el derivado `leaseExpired` ya calculado está en `--json`.
 
 Con `--section ac`, solo el encabezado con el identificador y el título, y la sección pedida:
@@ -110,7 +110,7 @@ TASK-11  Normalize CRLF in the diff
 - [ ] #3 Hay un test que lo cubre
 ```
 
-Con `--section question` sobre TASK-60, la tarea con la pregunta abierta del ejemplo de 9.7, la
+Con `--section question` sobre TASK-60, la tarea con la pregunta abierta del ejemplo de la sección ["La salida literal"](prime.md#la-salida-literal), la
 sección sale rellena con la misma forma que ya usa `## Comments`: el autor y el instante en una línea
 y el cuerpo debajo.
 
@@ -138,7 +138,7 @@ urgency 19.0
 ```
 
 El término `active` vale `1.00` solo si el estado es el activo y la tarea no tiene una pregunta
-abierta (5.7); en cualquier otro caso vale `0.00`, y la etiqueta dice cuál de los dos motivos se
+abierta (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)); en cualquier otro caso vale `0.00`, y la etiqueta dice cuál de los dos motivos se
 aplica: `not active` si el estado no es el activo, `active, waiting` si lo es pero la tarea espera una
 respuesta.
 
@@ -180,7 +180,7 @@ Es el objeto de `task.list` más los campos del cuerpo:
 
 **`urgencyBreakdown` solo sale con `--explain-urgency`**, igual que el desglose de la salida de texto, y
 el ejemplo de arriba es el de una llamada que la lleva. Es la única clave de todo el documento que una
-bandera añade, y la excepción a la regla de las claves siempre presentes está declarada en 12.4, junto
+bandera añade, y la excepción a la regla de las claves siempre presentes está declarada en la sección ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), junto
 con la otra cosa que `biso get` hace con sus banderas: recortar `data.task` con `--section`.
 
 `urgencyBreakdown.active` es el único término que no es un número suelto: `value` es el número que

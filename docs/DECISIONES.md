@@ -17,7 +17,7 @@ gestores de tareas maduros, Backlog.md y Taskwarrior, y de los fallos documentad
 
 ---
 
-## 1. La evidencia detrás de los siete principios
+## La evidencia detrás de los siete principios
 
 Los siete principios de la sección 1 de la especificación están ahí enunciados sin su procedencia,
 porque un principio se aplica igual se sepa o no de dónde viene. Aquí está de dónde viene cada uno.
@@ -66,7 +66,7 @@ por 36.
 
 ---
 
-## 2. La regla de coincidencia de vocabulario
+## La regla de coincidencia de vocabulario
 
 Es la pieza que cierra el principio 1, y merece contarse entera porque tiene una trampa.
 
@@ -92,7 +92,7 @@ vocabulario.
 
 ---
 
-## 3. El presupuesto del mensaje de arranque
+## El presupuesto del mensaje de arranque
 
 `biso prime` sustituye por completo a las guías de instrucciones y a cualquier inyección de texto en
 los ficheros de convenciones del proyecto. Ese diseño se toma de una medición concreta.
@@ -163,7 +163,7 @@ disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es
 
 ---
 
-## 4. Lo que se deja fuera, y por qué
+## Lo que se deja fuera, y por qué
 
 - **Los hitos como entidad.** En el estudio, el comando de crear hitos se usó 22 veces, pero los
   comandos de documentos y de decisiones no se usaron ni una sola vez en seis días. `biso` conserva el
@@ -209,7 +209,7 @@ disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es
 
 ---
 
-## 5. Cuatro requisitos aprendidos de otras herramientas
+## Cuatro requisitos aprendidos de otras herramientas
 
 Estos no salen del estudio de uso, sino de comparar Backlog.md con Taskwarrior y mirar qué falla en
 cada uno.
@@ -245,7 +245,7 @@ obligatorio del contrato de estabilidad.
 
 ---
 
-## 6. El porqué de reglas concretas
+## El porqué de reglas concretas
 
 Cada entrada dice la sección de la especificación a la que corresponde.
 
@@ -384,7 +384,7 @@ requisito de la sección 5 de este documento.
 
 ---
 
-## 7. Dos decisiones de detalle que cuesta reconstruir
+## Dos decisiones de detalle que cuesta reconstruir
 
 **Una tarea sin quien la reporte es válida.** El campo `reporter` toma la identidad configurada al
 crear la tarea, y si no hay ninguna se queda vacío **sin avisar**. Es deliberadamente distinto de los
@@ -400,7 +400,7 @@ dejaría en duda cuál de las dos sale.
 
 ---
 
-## 8. Una advertencia sobre cómo se mantiene la especificación
+## Una advertencia sobre cómo se mantiene la especificación
 
 La especificación pasó por cuatro revisiones adversariales antes de darse por buena. El patrón de
 fallo dominante, y con diferencia, fue siempre el mismo: **dos copias distantes de un mismo dato que
@@ -423,7 +423,7 @@ frases y esa vivía en una celda.
 
 ---
 
-## 9. El modelo de estados: cuatro requisitos, cerrados
+## El modelo de estados: cuatro requisitos, cerrados
 
 Salen de un diseño anterior de gestor de tareas que no llegó a escribirse, y de la evidencia que
 aquel diseño recogió sobre la herramienta que usaba esta máquina antes. Los cuatro tocaban el modelo
@@ -432,7 +432,7 @@ resuelve con la enmienda de la decisión de persistencia (9.2), y uno se retira.
 las cuatro decisiones, y que conviene aplicar la próxima vez que alguien proponga un papel de estado,
 está en el apartado 10.
 
-### 9.1. Distinguir el encargo de la ejecución: resuelto sin estado nuevo
+### Distinguir el encargo de la ejecución: resuelto sin estado nuevo
 
 El requisito decía que, con los tres papeles de la especificación, el gesto de una persona que encarga
 trabajo y el de un agente que lo coge **son el mismo dato**, y que hacía falta un cuarto papel de
@@ -466,7 +466,7 @@ entonces a propósito, no por sorpresa. Y no hay forma de decir "esto es tuyo, p
 asignación como única señal, asignar autoriza a empezar de inmediato, y quien necesite esa espera tiene
 que no asignar hasta que toque, o usar una fecha límite.
 
-### 9.2. Saber si alguien está trabajando de verdad
+### Saber si alguien está trabajando de verdad
 
 Una tarea que un agente coge antes de que su sesión muera se queda en el estado activo
 indefinidamente, y nada lo detecta.
@@ -613,7 +613,7 @@ comparaba un instante que no existe contra el reloj. Los dos campos van juntos o
 `leaseExpired` es falso cuando no hay `leaseExpiresAt`: un derivado tiene que valer algo en todos los
 tableros posibles, no solo en los que se importaron bien.
 
-### 9.3. Señalar lo que espera a una persona
+### Señalar lo que espera a una persona
 
 Se puede configurar un estado tipo `Blocked`, pero es un estado más: `biso prime` no lo distingue, así
 que una tarea parada esperando una decisión humana no se ve donde se mira.
@@ -631,7 +631,7 @@ un estado: es el campo `question` de la sección 5.7 de `SPEC.md`, con su deriva
 verbos `biso ask` y `biso answer`, y el bloque `NEEDS ANSWER` del mensaje de arranque, que es
 exactamente el bloque propio que este apartado pedía.
 
-### 9.4. Distinguir terminar de descartar: retirado
+### Distinguir terminar de descartar: retirado
 
 Se retira, y conviene decir por qué el argumento que parecía bueno no lo era, para no repetir el error
 si alguien vuelve a proponerlo.
@@ -656,7 +656,7 @@ el que esa confusión haya costado algo. Un papel de estado que obligue a dar un
 añadir cuando haga falta y caro de quitar si sobra, así que se queda fuera hasta que aparezca un caso
 real que lo pida, y entonces se engancha a `biso archive`. Se anota en la sección 14 de `SPEC.md`.
 
-### 9.5. Lo que se miró de ese diseño anterior y se descarta
+### Lo que se miró de ese diseño anterior y se descarta
 
 **Un modelo con entidades separadas para tarea, idea, aprendizaje y decisión**, cada una con sus
 propios estados y campos. La necesidad que lo motivaba es real, porque sin sitio donde ponerlas las
@@ -671,7 +671,7 @@ comentario no reescriba nada de lo demás. La decisión de persistencia (secció
 base de datos SQLite da la misma propiedad, una escritura por tarea sin reescribir el tablero entero, y
 además la transacción que un directorio de ficheros habría tenido que construir a mano.
 
-### 9.6. Un contraste que conviene mirar antes de implementar
+### Un contraste que conviene mirar antes de implementar
 
 Aquel diseño se imponía una regla contraria a la de esta especificación: **los valores por defecto
 viven completos en el binario, el comando de creación del tablero no escribe ninguna configuración, y
@@ -684,7 +684,7 @@ de dar la decisión por hecha.
 
 ---
 
-## 10. El criterio de estado frente a campo
+## El criterio de estado frente a campo
 
 Es la regla que ordenó las cuatro decisiones del apartado 9, y conviene tenerla escrita aparte porque
 se va a volver a necesitar la próxima vez que alguien proponga un papel de estado:
@@ -710,7 +710,7 @@ introducción de la especificación descarta. La condición es del modelo, no de
 
 ---
 
-## 11. Riesgos conocidos y aceptados del modelo de estados
+## Riesgos conocidos y aceptados del modelo de estados
 
 Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar dos veces con lo mismo.
 
@@ -762,7 +762,7 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
 
 ---
 
-## 12. La decisión de persistencia
+## La decisión de persistencia
 
 La especificación dejaba deliberadamente abierto cómo se guardan los datos. La decisión es: un tablero
 es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un fichero
@@ -1072,7 +1072,7 @@ proyecto. Quien en el futuro quiera endurecer esa vía, por ejemplo exigiéndole
 que queda, y que la propia sección 3.2 la deja abierta a propósito para que `biso doctor --fix` pueda
 devolver un marcador que falte.
 
-### 12.1. El control de versiones, la instantánea y los códigos que salieron de ahí
+### El control de versiones, la instantánea y los códigos que salieron de ahí
 
 Todo este apartado sale de una sola pregunta que la especificación tenía mal contestada: la sección 14 de
 `SPEC.md` decía que lo que cruza a otra máquina es la instantánea, y ningún comando le daba una vía para
@@ -1152,7 +1152,7 @@ exacta.
 
 ---
 
-### 12.2. Cómo se ejecuta el sistema de control de versiones
+### Cómo se ejecuta el sistema de control de versiones
 
 Cerrada la ronda que hizo configurable el sistema de control de versiones, quedaban tres rincones del
 contrato de `vcs_custom` sin decidir: qué se hacía con lo que las órdenes escribieran, si había un tiempo
@@ -1216,7 +1216,7 @@ ese comando escribe. Eran dos conjuntos distintos con nombres casi iguales, y no
 `{files}` eran dos o tres. Son los tres, los mismos que entran en la revisión, y ahora las dos secciones
 lo dicen y se nombran la una a la otra.
 
-## 13. El origen de la cifra de 25 milisegundos
+## El origen de la cifra de 25 milisegundos
 
 El tope de bytes del mensaje de arranque (apartado 3) trae su medida. El presupuesto de arranque de la
 sección 4.13 de `SPEC.md`, 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero de
@@ -1262,7 +1262,7 @@ lista de candidatos a los compilados, y el apartado siguiente cierra la elecció
 
 ---
 
-## 14. El lenguaje de implementación es Go
+## El lenguaje de implementación es Go
 
 **Los dos candidatos reales eran Go y Rust**, y la elección es Go. Los dos cumplen con holgura el
 presupuesto del apartado anterior en la única carga que hay medida, y los separa menos de un
@@ -1308,7 +1308,7 @@ puro; y SQLite compilado a WebAssembly y ejecutado por un motor escrito en Go. L
 arranque y a cómo se distribuye el programa, y nunca a la del lenguaje, porque las tres son de Go. **Ya
 está medida, y la cierra el apartado siguiente.**
 
-### 14.1. El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`
+### El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`
 
 Medido el 2026-09-10 con el banco de pruebas que vive en `bench/sqlite-driver/` de este mismo
 repositorio, que se rehace con dos órdenes sin argumentos. Las tablas completas, la composición del
