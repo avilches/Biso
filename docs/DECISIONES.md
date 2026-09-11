@@ -66,100 +66,26 @@ por 36.
 
 ---
 
-## La regla de coincidencia de vocabulario
+## Una advertencia sobre cómo se mantiene la especificación
 
-Es la pieza que cierra el principio 1, y merece contarse entera porque tiene una trampa.
+La especificación pasó por cuatro revisiones adversariales antes de darse por buena. El patrón de
+fallo dominante, y con diferencia, fue siempre el mismo: **dos copias distantes de un mismo dato que
+dejan de coincidir**. Una lista de campos que aparece en varias secciones, una cifra publicada en tres
+sitios, un código de salida que está en la tabla de un comando pero no en su texto de ayuda.
 
-**Se eligió eliminar los separadores, no colapsarlos.** Normalizar es pasar a minúsculas, quitar
-diacríticos y quitar espacios, guiones y guiones bajos; comparar es igualdad. Con esa regla, `todo`,
-`To-Do`, `TO_DO` y `to do` son todos `To Do`.
+De ahí salen tres costumbres que conviene mantener al editar:
 
-La alternativa era colapsar cualquier tramo de separadores a un solo espacio, y **no funciona**:
-colapsando, `To-Do` se convierte en `to do` y coincide, pero `todo` no tiene ningún separador que
-colapsar, se queda en `todo`, y no coincide con `to do`. Es un error fácil de cometer al redactar la
-regla en prosa, porque el ejemplo que uno escribe a continuación parece cierto y no lo es.
+1. **Cuando un dato tenga que aparecer en dos sitios, que uno remita al otro** en vez de repetirlo.
+2. **Los ejemplos de salida se generan ejecutando el algoritmo, no se escriben a mano.** Los del
+   listado y los del mensaje de arranque fallaron tres revisiones seguidas mientras se escribieron a
+   mano, y dejaron de fallar en cuanto se generaron.
+3. **Al corregir una afirmación, búscala en todo el documento** antes de darla por corregida.
 
-Se eligió eliminar por dos motivos. El primero es que es lo que hacen las herramientas existentes al
-escribir, así que ningún texto que hoy vale deja de valer. El segundo es que produce una función más
-simple de escribir y de probar.
-
-**Por eso la regla está escrita en la especificación como pseudocódigo con pasos numerados y no como
-prosa.** Escrita en prosa volvería a poder decir dos cosas a la vez, y ya lo hizo una vez.
-
-Una consecuencia que conviene no perder: el ejemplo canónico de un valor inválido no puede ser `Todo`,
-porque `Todo` es válido. En la especificación el ejemplo es `Pending`, que no existe en ningún
-vocabulario.
-
----
-
-## El presupuesto del mensaje de arranque
-
-`biso prime` sustituye por completo a las guías de instrucciones y a cualquier inyección de texto en
-los ficheros de convenciones del proyecto. Ese diseño se toma de una medición concreta.
-
-En la herramienta estudiada, las cuatro guías de instrucciones se leyeron 69 veces en seis días y
-suman **201.500 bytes, el 27,5% de toda la salida** que la herramienta devolvió a los agentes, más que
-sus comandos más usados juntos.
-
-| Lectura | Bytes | Cuándo la exige ese diseño |
-|---|---:|---|
-| Guía general | 2.365 | al empezar |
-| Guía de creación | 4.014 | antes de crear |
-| Guía de ejecución | 3.807 | antes de planificar o actualizar |
-| Guía de finalización | 2.719 | antes de terminar |
-| **Ciclo completo** | **12.905** | una sesión que crea, trabaja y cierra |
-
-A eso hay que sumar la inyección de instrucciones en el fichero de convenciones del repositorio, que
-se paga en todas las sesiones aunque no se toque el tablero.
-
-El mensaje de `biso prime` mide **4.818 bytes**, 3.327 de parte fija y 1.491 de resumen del tablero
-(["El presupuesto de tamaño"](spec/presupuestos.md#el-presupuesto-de-tamaño)), contra un tope duro de 5.120 repartido en dos partes de 3.456 y
-1.664.
-
-| Magnitud | Herramienta estudiada | `biso` |
-|---|---:|---|
-| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.818 bytes |
-| Media medida por sesión | 3.358 bytes | 4.818 bytes |
-| Lecturas obligatorias por sesión | entre 1 y 4 | 1 |
-| Contexto gastado en sesiones que no tocan tareas | la inyección en el fichero de convenciones | 0 |
-
-**La media sube ligeramente, y conviene decirlo en vez de esconderlo.** Lo que cambia es otra cosa: el
-coste pasa a ser fijo, conocido y acotado por una prueba, en vez de depender de cuántas guías decida
-leer el agente, y el peor caso cae a menos de un tercio. El ahorro grande no está aquí, está en que la
-salida de las escrituras deje de ser un eco y en las llamadas que desaparecen al fusionar el ciclo.
-
-**El tope es una prueba de la suite, no un objetivo.** Y el reparto en dos partes existe para que el
-resumen del tablero, que crece con el tablero, no pueda comerse el sitio de las reglas.
-
-**El reparto entre las dos partes cambió con el modelo de estados, y el total no.** La parte fija
-sube de 3.072 a 3.456 bytes porque el bloque `COMMANDS` gana las dos órdenes nuevas del ciclo, `ask` y
-`answer`, y el bloque `RULES` gana una regla más, la undécima, sobre esos verbos y sobre qué
-significa una tarea asignada; el resumen del tablero baja de 2.048 a 1.664.
-Eso solo es seguro de hacer porque, a la vez, el orden de recorte del resumen deja de estar incompleto:
-antes nombraba un solo bloque y decía "antes que cualquier otra cosa" sin nombrar ninguna otra, así que
-un tablero con muchas tareas en curso podía rebasar el tope sin que hubiera una conducta definida para
-ese caso. Con los cinco pasos completos que trae ahora ["El presupuesto de tamaño"](spec/presupuestos.md#el-presupuesto-de-tamaño), el resumen ya no
-crece sin límite, y darle menos sitio cuesta filas mostradas, no correcciones. La parte fija, en
-cambio, no se puede recortar sola: o cabe entera o hay que quitar contenido a mano, así que es la parte
-que necesita más margen.
-
-**El tope total, 5.120 bytes, no se mueve, y el motivo no es de contrato.** El contrato de estabilidad
-solo obliga desde la versión 1.0, que todavía no está publicada, así que subir el tope no rompería
-ninguna promesa hecha a nadie. La razón es de fondo: un tope que se sube cada vez que aprieta deja de
-ser un tope, y su valor entero está en que obligue a elegir qué entra en el mensaje y qué se relega a
-`--help`. Por eso, si al escribir el texto real de ["La salida literal"](spec/cmd/prime.md#la-salida-literal) los números no cupieran, lo que se
-recorta es contenido, no el tope.
-
-**Esto no es "el tope nunca sube", es "el tope sube solo cuando reducir ya no es posible sin perder
-algo".** La medida de hoy, 4.818 de 5.120 bytes, tiene 302 de margen: nunca hizo falta apretar para
-caber, así que esta regla no se ha puesto a prueba todavía. Pero el margen que de verdad manda no es
-ese, sino el de la parte fija, que con las banderas nuevas `--check-dod` y `--uncheck-dod` en la
-rejilla de `FIELD FLAGS` ha bajado a **129 bytes** de los 3.456: cualquier texto nuevo en el bloque
-fijo tiene que caber ahí, no en los 302 del total. Si en el futuro un comando nuevo obliga a
-recortar el bloque fijo (`COMMANDS`, `FIELD FLAGS`, `RULES`) y esa reducción sale limpia, sin perder
-información que un agente necesite para arrancar bien, es que había margen y el tope hizo su trabajo.
-Pero si reducir más solo se puede ya a costa de quitar algo así, mantener el tope fijo deja de ser
-disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es lo correcto.
+Y una cuarta, sobre este documento en particular: la especificación no justifica sus decisiones, y esa
+regla es fácil de romper sin darse cuenta. La justificación no solo se esconde en la prosa, también en
+la estructura. Una tabla llegó a tener una columna titulada "Por qué" que sobrevivió a cuatro
+revisiones, dos de ellas dedicadas expresamente a cazar justificaciones, porque todo el mundo buscaba
+frases y esa vivía en una celda.
 
 ---
 
@@ -242,184 +168,6 @@ Taskwarrior 3.0 retiró el historial de una de sus vistas sin aviso, y su cambio
 almacenamiento provocó un caso real documentado de pérdida total de la base de tareas en Arch Linux,
 porque el paquete se actualizó sin incluir el script de migración. De ahí sale el ciclo de aviso
 obligatorio del contrato de estabilidad.
-
----
-
-## El porqué de reglas concretas
-
-Cada entrada dice la sección de la especificación a la que corresponde.
-
-**["El algoritmo de coincidencia"](spec/vocabularios.md#el-algoritmo-de-coincidencia), por qué no hay coincidencia por prefijo ni por parecido al resolver una referencia.** Una regla
-que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
-
-**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las tareas archivadas cuentan en los conjuntos de etiquetas, personas e hitos contra
-los que validan los filtros.** Es lo que impide que un filtro que hoy funciona deje de funcionar
-mañana por archivar la última tarea que lo usaba.
-
-**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las etiquetas, las personas y los hitos no tienen vocabulario cerrado al escribir, pero
-sus filtros sí validan.** No tienen vocabulario cerrado porque su utilidad es que se puedan inventar
-sobre la marcha. Y validar al leer no es una asimetría con la escritura: es la aplicación del
-principio 1, que dice que un filtro que no puede encajar con nada es un error y no una respuesta
-vacía.
-
-**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué el hito validaba y ahora valida.** El hito era la excepción, con un `--milestone` que
-nunca fallaba y devolvía una lista vacía ante cualquier errata. La razón que se daba era que no hay
-entidad de hito, pero el argumento del párrafo de arriba no distingue en nada al hito de la etiqueta:
-las dos son texto que quien llama se inventa, ninguna de las dos se declara antes de usarla, y en las
-dos una errata al filtrar produce exactamente el fallo que el principio 1 existe para evitar. Lo que
-hacía falta no era una entidad, sino un conjunto contra el que comparar, y ese conjunto ya estaba
-ahí sin que nadie lo escribiera: los hitos que las tareas llevan de hecho. Con eso, **el hito era la
-última asimetría del principio 1 dentro de la especificación, y deja de serlo.**
-
-La excepción que queda, la bandera `--unchecked`, no es de la misma clase y por eso se conserva. La
-diferencia está en quién decide: una asimetría es el programa el que decide callar, sin que quien
-llama lo sepa ni pueda evitarlo, mientras que `--unchecked` la pide quien llama, en la misma línea de
-comandos, y quien la escribe está declarando que acepta una lista vacía sin garantía. Un
-comportamiento que se pide no engaña a nadie. Por eso `--unchecked` pasa a apagar también la
-comprobación del hito: dejar el hito fuera de la escapatoria declarada crearía una asimetría nueva
-justo al quitar la vieja.
-
-**["Los tres mensajes de \"no la encuentro\""](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), por qué son distintos.** Porque las tres situaciones
-piden acciones distintas de quien llama: corregir la sintaxis, dejar de buscar, o mirar en el archivo.
-
-**["La regla"](spec/familias-de-banderas.md#la-regla), por qué cada clase de campo tiene las variantes de bandera que tiene.** Las cuatro variantes
-(`--campo`, `--set-campo`, `--rm-campo`, `--clear-campo`) existen para todo campo que guarde una
-lista, porque sobre una lista se pueden hacer las cuatro operaciones. Un bloque de prosa no tiene
-elementos que quitar de uno en uno, así que no tiene `rm-`. Un mapa de claves se manipula por clave y
-no por posición, así que su "quitar" toma una clave. Un escalar solo se fija o se vacía. Y los
-comentarios son una lista inmutable, de la que no se quita nada, así que solo admiten añadir. **La
-tabla de clases de campo no es una lista de excepciones a la regla: es la regla aplicada a cada forma
-de dato.**
-
-**["Selectores de criterios"](spec/familias-de-banderas.md#selectores-de-criterios), por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
-su texto exacto es más frágil que quitarlo por su clave.
-
-**["Campos externos"](spec/familias-de-banderas.md#campos-externos), por qué no existe una bandera que sustituya el mapa de campos externos entero.** Fijar una clave
-ya es sustituir su valor, así que una segunda bandera para lo mismo solo serviría para equivocarse. Y
-una que sustituyese el mapa entero con la sintaxis `clave=valor` sería una forma silenciosa de borrar
-la identidad externa de una tarea al escribir otra.
-
-**["La salida literal"](spec/cmd/prime.md#la-salida-literal), por qué el bloque de tareas en curso del mensaje de arranque no tiene límite.** Porque en un
-tablero sano son pocas.
-
-**["`biso init`"](spec/cmd/init.md), por qué el puntero del proyecto es la única cosa que `init` escribe fuera del tablero.** Sin
-ella, un tablero creado en otra ubicación no lo encontraría ningún comando posterior.
-
-**["`biso init`"](spec/cmd/init.md), por qué se retira la regla posicional que guardaba el estado activo como el penúltimo de
-`--statuses`.** La regla estaba rota, y la contradicción que la delata vive en el propio documento: el
-tablero de ejemplo era `Ideas, To Do, In Progress, Blocked, Done`, cuyo penúltimo es `Blocked`, y había
-un ejemplo literal de `biso init` que lo creaba así, mientras que tanto la salida de `biso config list`
-como el esquema JSON de `biso prime` declaraban que el estado activo de ese mismo tablero era
-`In Progress`. Las dos cosas no podían ser ciertas a la vez, y la regla solo parecía funcionar porque
-el tablero por defecto tenía justo tres estados. Se sustituye por tres banderas explícitas,
-`--initial-status`, `--active-status` y `--terminal-status`, con el mismo argumento de ["El algoritmo de coincidencia"](spec/vocabularios.md#el-algoritmo-de-coincidencia): una regla
-que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
-
-**["`biso init`"](spec/cmd/init.md), por qué el tablero por defecto no trae un estado `Ideas`.** Un estado `Ideas` no dice nada que
-no diga ya estar sin asignar, que se consulta con `biso ls --unassigned`. El matiz que sí aporta,
-"esto quizá no lo hagamos nunca", tiene ya una decisión con evidencia detrás en ["Lo que se miró de ese diseño anterior y se descarta"](#lo-que-se-miró-de-ese-diseño-anterior-y-se-descarta): se
-cubre con un tipo más del vocabulario que ya existe y no con un estado. Y hay un motivo peor para no
-ponerlo por defecto: si `Ideas` fuera el estado inicial, toda tarea nueva nacería ahí, y el bloque
-`NEXT UP` del mensaje de arranque mezclaría "algún día quizá" con "hay que hacerlo", que es justo la
-distinción que ese bloque existe para hacer.
-
-**["`biso new`"](spec/cmd/new.md), por qué existe `--start` al crear una tarea.** Evita que crear una tarea para ponerse con ella
-en el mismo minuto cueste dos llamadas. Es el principio 5 aplicado a un caso medido.
-
-**["`biso new`"](spec/cmd/new.md), por qué `--comment` funciona al crear.** Por lo mismo: una tarea que nace con un comentario
-cuesta una llamada.
-
-**["`biso ls`"](spec/cmd/ls.md), por qué el filtro de etiquetas es el único que combina sus valores con "y".** Porque el uso
-normal de varias etiquetas es acotar, no ampliar.
-
-**["`biso ls`"](spec/cmd/ls.md), por qué el filtro de dependencias es `--blocked` y `--not-blocked`, y no `--ready`.** El hecho
-que se calcula es uno solo, que alguna dependencia esté sin terminar, así que se nombra una vez y su
-negación se forma con el mismo prefijo que los otros dos pares booleanos de `biso ls`,
-`--waiting`/`--not-waiting` y `--active`/`--not-active`. El nombre `ready` sobraba por dos motivos
-distintos. El primero es que hacía viajar el mismo hecho dos veces en el JSON, como `ready` y como
-`blocked`, y campos que dicen lo mismo acaban divergiendo. El segundo es que prometía más de lo
-que cumplía: miraba solo dependencias, así que `biso ls --ready` devolvía también las tareas aparcadas
-en una pregunta, que es justo lo que un agente no puede coger. De los dos nombres sobrevive `blocked`
-porque ya tiene entrada propia en la tabla de ["Vocabulario de esta especificación"](spec/vocabulario.md), porque da nombre al
-término `urgency.blocked` de la fórmula de urgencia, y porque nombra el hecho que de verdad se calcula.
-Y el nombre nuevo tampoco promete estar lista para trabajar, porque ninguna bandera sola puede: eso
-son varios filtros, y cuántos depende de qué se busque. Descartar lo bloqueado y lo aparcado son dos,
-`--not-blocked --not-waiting`; quien quiera además tarea sin empezar añade `--not-active`, que es el
-filtro con el que el propio mensaje de arranque describe su bloque `NEXT UP` (["La salida literal"](spec/cmd/prime.md#la-salida-literal)); y quien la quiera
-sin dueño, `--unassigned`. El cambio quita una clave del JSON y renombra una bandera,
-que son las dos cosas que el ["contrato de estabilidad"](spec/estabilidad.md) promete no tocar nunca, y por eso se hace
-ahora: ese contrato obliga a partir de la versión 1.0 y todavía no hay ninguna versión publicada.
-Después de 1.0 esta limpieza ya no se podría hacer.
-
-**["`biso set`"](spec/cmd/set.md), por qué `set` no repite en su tabla las banderas de campo.** Porque repetirlas invitaría a que
-divergieran, que es como se rompen los documentos largos.
-
-**["`biso set`"](spec/cmd/set.md), por qué la línea de estado encoge cuando la tarea no tiene criterios, en vez de imprimir un
-guion como hace el listado.** Las dos salidas parecen contradecirse y no lo hacen, porque no son la
-misma clase de cosa. El listado de ["`biso ls`"](spec/cmd/ls.md) es una tabla: sus columnas se rellenan al ancho del valor más
-largo de la llamada, así que una celda vacía tiene que ocupar su sitio o las filas de abajo se
-descolocan, y para eso está el guion. La línea de estado sale una por tarea afectada, sin ancho
-compartido y sin nada que alinear debajo, de modo que un hueco no descoloca nada y un guion solo
-añadiría un símbolo más que interpretar. Quien quiera los contadores siempre, estén las listas vacías
-o no, pide `--json`, que trae los cuatro como números.
-
-**["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`"](spec/cmd/verbos-del-ciclo.md), por qué `finish` avisa de los criterios sin marcar y no lo impide.** Un criterio puede haber
-quedado obsoleto, y un comando que no deja cerrar empuja a rodearlo con `set`, que es como se aprende
-a esquivar una herramienta. Para quien quiera la política dura está `--strict`.
-
-**["`biso export`"](spec/cmd/export.md), por qué `export` no hereda los valores por defecto de `ls`, y por qué sale con código 6 y no
-con 0 cuando salta una tarea ilegible.** Porque exportar de más nunca hace daño y exportar de menos en
-silencio arruina una copia de seguridad. Es el único comando cuyo propósito es no perder nada, y por
-eso es la única excepción a la regla general de las lecturas de conjunto.
-
-**["`biso help`"](spec/cmd/help.md#biso-help), por qué `help` funciona sin tablero.** Porque es lo primero que alguien ejecuta cuando algo
-no va.
-
-**["Repetición y listas separadas por comas"](spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas), por qué los campos de texto largo no se parten por comas.** Porque una coma dentro de una frase
-es normal, y partir por ella convertiría una descripción en varias.
-
-**["Las fechas"](spec/modelo-de-datos.md#las-fechas), por qué las fechas se pueden fijar al importar y no en el uso normal.** Sin esa excepción no se
-puede importar el histórico de otro sistema conservando cuándo pasó cada cosa, que es el tercer
-requisito de ["Cuatro requisitos aprendidos de otras herramientas"](#cuatro-requisitos-aprendidos-de-otras-herramientas), en este mismo documento.
-
----
-
-## Decisiones de detalle que cuesta reconstruir
-
-**Una tarea sin quien la reporte es válida.** El campo `reporter` toma la identidad configurada al
-crear la tarea, y si no hay ninguna se queda vacío **sin avisar**. Es deliberadamente distinto de los
-otros cinco sitios donde hace falta una identidad (tabla de ["Variables de entorno"](spec/invocacion.md#variables-de-entorno)): el
-filtro `--mine` falla, la autoasignación de `start` avisa, y el autor de un comentario, `biso ask` y
-`biso answer` son un error. La razón es que un tablero de una sola persona no tiene por qué
-configurar su identidad solo para poder crear tareas.
-
-**`biso export --json` es un error y no una bandera sin efecto.** `export` es el único comando cuya
-salida ya es JSON sin pedirlo, en forma de un objeto por línea, mientras que `--json` significa el
-sobre único que imprimen todos los demás. Son dos formas distintas, y aceptar la bandera en silencio
-dejaría en duda cuál de las dos sale.
-
----
-
-## Una advertencia sobre cómo se mantiene la especificación
-
-La especificación pasó por cuatro revisiones adversariales antes de darse por buena. El patrón de
-fallo dominante, y con diferencia, fue siempre el mismo: **dos copias distantes de un mismo dato que
-dejan de coincidir**. Una lista de campos que aparece en varias secciones, una cifra publicada en tres
-sitios, un código de salida que está en la tabla de un comando pero no en su texto de ayuda.
-
-De ahí salen tres costumbres que conviene mantener al editar:
-
-1. **Cuando un dato tenga que aparecer en dos sitios, que uno remita al otro** en vez de repetirlo.
-2. **Los ejemplos de salida se generan ejecutando el algoritmo, no se escriben a mano.** Los del
-   listado y los del mensaje de arranque fallaron tres revisiones seguidas mientras se escribieron a
-   mano, y dejaron de fallar en cuanto se generaron.
-3. **Al corregir una afirmación, búscala en todo el documento** antes de darla por corregida.
-
-Y una cuarta, sobre este documento en particular: la especificación no justifica sus decisiones, y esa
-regla es fácil de romper sin darse cuenta. La justificación no solo se esconde en la prosa, también en
-la estructura. Una tabla llegó a tener una columna titulada "Por qué" que sobrevivió a cuatro
-revisiones, dos de ellas dedicadas expresamente a cazar justificaciones, porque todo el mundo buscaba
-frases y esa vivía en una celda.
 
 ---
 
@@ -1369,3 +1117,255 @@ mientras una primera tiene una escritura abierta, que es literalmente lo que pro
 ["La búsqueda por texto"](spec/referencias.md#la-búsqueda-por-texto), viene
 puesta. Y un dato para cuando se implemente esa búsqueda: ningún controlador hace `LIKE` insensible a
 mayúsculas con acentos, porque eso es lo que hace SQLite sin la biblioteca ICU.
+
+---
+
+## La regla de coincidencia de vocabulario
+
+Es la pieza que cierra el principio 1, y merece contarse entera porque tiene una trampa.
+
+**Se eligió eliminar los separadores, no colapsarlos.** Normalizar es pasar a minúsculas, quitar
+diacríticos y quitar espacios, guiones y guiones bajos; comparar es igualdad. Con esa regla, `todo`,
+`To-Do`, `TO_DO` y `to do` son todos `To Do`.
+
+La alternativa era colapsar cualquier tramo de separadores a un solo espacio, y **no funciona**:
+colapsando, `To-Do` se convierte en `to do` y coincide, pero `todo` no tiene ningún separador que
+colapsar, se queda en `todo`, y no coincide con `to do`. Es un error fácil de cometer al redactar la
+regla en prosa, porque el ejemplo que uno escribe a continuación parece cierto y no lo es.
+
+Se eligió eliminar por dos motivos. El primero es que es lo que hacen las herramientas existentes al
+escribir, así que ningún texto que hoy vale deja de valer. El segundo es que produce una función más
+simple de escribir y de probar.
+
+**Por eso la regla está escrita en la especificación como pseudocódigo con pasos numerados y no como
+prosa.** Escrita en prosa volvería a poder decir dos cosas a la vez, y ya lo hizo una vez.
+
+Una consecuencia que conviene no perder: el ejemplo canónico de un valor inválido no puede ser `Todo`,
+porque `Todo` es válido. En la especificación el ejemplo es `Pending`, que no existe en ningún
+vocabulario.
+
+---
+
+## El presupuesto del mensaje de arranque
+
+`biso prime` sustituye por completo a las guías de instrucciones y a cualquier inyección de texto en
+los ficheros de convenciones del proyecto. Ese diseño se toma de una medición concreta.
+
+En la herramienta estudiada, las cuatro guías de instrucciones se leyeron 69 veces en seis días y
+suman **201.500 bytes, el 27,5% de toda la salida** que la herramienta devolvió a los agentes, más que
+sus comandos más usados juntos.
+
+| Lectura | Bytes | Cuándo la exige ese diseño |
+|---|---:|---|
+| Guía general | 2.365 | al empezar |
+| Guía de creación | 4.014 | antes de crear |
+| Guía de ejecución | 3.807 | antes de planificar o actualizar |
+| Guía de finalización | 2.719 | antes de terminar |
+| **Ciclo completo** | **12.905** | una sesión que crea, trabaja y cierra |
+
+A eso hay que sumar la inyección de instrucciones en el fichero de convenciones del repositorio, que
+se paga en todas las sesiones aunque no se toque el tablero.
+
+El mensaje de `biso prime` mide **4.818 bytes**, 3.327 de parte fija y 1.491 de resumen del tablero
+(["El presupuesto de tamaño"](spec/presupuestos.md#el-presupuesto-de-tamaño)), contra un tope duro de 5.120 repartido en dos partes de 3.456 y
+1.664.
+
+| Magnitud | Herramienta estudiada | `biso` |
+|---|---:|---|
+| Peor caso por sesión, con ciclo completo | 12.905 bytes | 4.818 bytes |
+| Media medida por sesión | 3.358 bytes | 4.818 bytes |
+| Lecturas obligatorias por sesión | entre 1 y 4 | 1 |
+| Contexto gastado en sesiones que no tocan tareas | la inyección en el fichero de convenciones | 0 |
+
+**La media sube ligeramente, y conviene decirlo en vez de esconderlo.** Lo que cambia es otra cosa: el
+coste pasa a ser fijo, conocido y acotado por una prueba, en vez de depender de cuántas guías decida
+leer el agente, y el peor caso cae a menos de un tercio. El ahorro grande no está aquí, está en que la
+salida de las escrituras deje de ser un eco y en las llamadas que desaparecen al fusionar el ciclo.
+
+**El tope es una prueba de la suite, no un objetivo.** Y el reparto en dos partes existe para que el
+resumen del tablero, que crece con el tablero, no pueda comerse el sitio de las reglas.
+
+**El reparto entre las dos partes cambió con el modelo de estados, y el total no.** La parte fija
+sube de 3.072 a 3.456 bytes porque el bloque `COMMANDS` gana las dos órdenes nuevas del ciclo, `ask` y
+`answer`, y el bloque `RULES` gana una regla más, la undécima, sobre esos verbos y sobre qué
+significa una tarea asignada; el resumen del tablero baja de 2.048 a 1.664.
+Eso solo es seguro de hacer porque, a la vez, el orden de recorte del resumen deja de estar incompleto:
+antes nombraba un solo bloque y decía "antes que cualquier otra cosa" sin nombrar ninguna otra, así que
+un tablero con muchas tareas en curso podía rebasar el tope sin que hubiera una conducta definida para
+ese caso. Con los cinco pasos completos que trae ahora ["El presupuesto de tamaño"](spec/presupuestos.md#el-presupuesto-de-tamaño), el resumen ya no
+crece sin límite, y darle menos sitio cuesta filas mostradas, no correcciones. La parte fija, en
+cambio, no se puede recortar sola: o cabe entera o hay que quitar contenido a mano, así que es la parte
+que necesita más margen.
+
+**El tope total, 5.120 bytes, no se mueve, y el motivo no es de contrato.** El contrato de estabilidad
+solo obliga desde la versión 1.0, que todavía no está publicada, así que subir el tope no rompería
+ninguna promesa hecha a nadie. La razón es de fondo: un tope que se sube cada vez que aprieta deja de
+ser un tope, y su valor entero está en que obligue a elegir qué entra en el mensaje y qué se relega a
+`--help`. Por eso, si al escribir el texto real de ["La salida literal"](spec/cmd/prime.md#la-salida-literal) los números no cupieran, lo que se
+recorta es contenido, no el tope.
+
+**Esto no es "el tope nunca sube", es "el tope sube solo cuando reducir ya no es posible sin perder
+algo".** La medida de hoy, 4.818 de 5.120 bytes, tiene 302 de margen: nunca hizo falta apretar para
+caber, así que esta regla no se ha puesto a prueba todavía. Pero el margen que de verdad manda no es
+ese, sino el de la parte fija, que con las banderas nuevas `--check-dod` y `--uncheck-dod` en la
+rejilla de `FIELD FLAGS` ha bajado a **129 bytes** de los 3.456: cualquier texto nuevo en el bloque
+fijo tiene que caber ahí, no en los 302 del total. Si en el futuro un comando nuevo obliga a
+recortar el bloque fijo (`COMMANDS`, `FIELD FLAGS`, `RULES`) y esa reducción sale limpia, sin perder
+información que un agente necesite para arrancar bien, es que había margen y el tope hizo su trabajo.
+Pero si reducir más solo se puede ya a costa de quitar algo así, mantener el tope fijo deja de ser
+disciplina y pasa a ser dañar el mensaje a propósito; en ese punto, subirlo es lo correcto.
+
+---
+
+## El porqué de reglas concretas
+
+Cada entrada dice la sección de la especificación a la que corresponde.
+
+**["El algoritmo de coincidencia"](spec/vocabularios.md#el-algoritmo-de-coincidencia), por qué no hay coincidencia por prefijo ni por parecido al resolver una referencia.** Una regla
+que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
+
+**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las tareas archivadas cuentan en los conjuntos de etiquetas, personas e hitos contra
+los que validan los filtros.** Es lo que impide que un filtro que hoy funciona deje de funcionar
+mañana por archivar la última tarea que lo usaba.
+
+**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las etiquetas, las personas y los hitos no tienen vocabulario cerrado al escribir, pero
+sus filtros sí validan.** No tienen vocabulario cerrado porque su utilidad es que se puedan inventar
+sobre la marcha. Y validar al leer no es una asimetría con la escritura: es la aplicación del
+principio 1, que dice que un filtro que no puede encajar con nada es un error y no una respuesta
+vacía.
+
+**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué el hito validaba y ahora valida.** El hito era la excepción, con un `--milestone` que
+nunca fallaba y devolvía una lista vacía ante cualquier errata. La razón que se daba era que no hay
+entidad de hito, pero el argumento del párrafo de arriba no distingue en nada al hito de la etiqueta:
+las dos son texto que quien llama se inventa, ninguna de las dos se declara antes de usarla, y en las
+dos una errata al filtrar produce exactamente el fallo que el principio 1 existe para evitar. Lo que
+hacía falta no era una entidad, sino un conjunto contra el que comparar, y ese conjunto ya estaba
+ahí sin que nadie lo escribiera: los hitos que las tareas llevan de hecho. Con eso, **el hito era la
+última asimetría del principio 1 dentro de la especificación, y deja de serlo.**
+
+La excepción que queda, la bandera `--unchecked`, no es de la misma clase y por eso se conserva. La
+diferencia está en quién decide: una asimetría es el programa el que decide callar, sin que quien
+llama lo sepa ni pueda evitarlo, mientras que `--unchecked` la pide quien llama, en la misma línea de
+comandos, y quien la escribe está declarando que acepta una lista vacía sin garantía. Un
+comportamiento que se pide no engaña a nadie. Por eso `--unchecked` pasa a apagar también la
+comprobación del hito: dejar el hito fuera de la escapatoria declarada crearía una asimetría nueva
+justo al quitar la vieja.
+
+**["Los tres mensajes de \"no la encuentro\""](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), por qué son distintos.** Porque las tres situaciones
+piden acciones distintas de quien llama: corregir la sintaxis, dejar de buscar, o mirar en el archivo.
+
+**["La regla"](spec/familias-de-banderas.md#la-regla), por qué cada clase de campo tiene las variantes de bandera que tiene.** Las cuatro variantes
+(`--campo`, `--set-campo`, `--rm-campo`, `--clear-campo`) existen para todo campo que guarde una
+lista, porque sobre una lista se pueden hacer las cuatro operaciones. Un bloque de prosa no tiene
+elementos que quitar de uno en uno, así que no tiene `rm-`. Un mapa de claves se manipula por clave y
+no por posición, así que su "quitar" toma una clave. Un escalar solo se fija o se vacía. Y los
+comentarios son una lista inmutable, de la que no se quita nada, así que solo admiten añadir. **La
+tabla de clases de campo no es una lista de excepciones a la regla: es la regla aplicada a cada forma
+de dato.**
+
+**["Selectores de criterios"](spec/familias-de-banderas.md#selectores-de-criterios), por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
+su texto exacto es más frágil que quitarlo por su clave.
+
+**["Campos externos"](spec/familias-de-banderas.md#campos-externos), por qué no existe una bandera que sustituya el mapa de campos externos entero.** Fijar una clave
+ya es sustituir su valor, así que una segunda bandera para lo mismo solo serviría para equivocarse. Y
+una que sustituyese el mapa entero con la sintaxis `clave=valor` sería una forma silenciosa de borrar
+la identidad externa de una tarea al escribir otra.
+
+**["La salida literal"](spec/cmd/prime.md#la-salida-literal), por qué el bloque de tareas en curso del mensaje de arranque no tiene límite.** Porque en un
+tablero sano son pocas.
+
+**["`biso init`"](spec/cmd/init.md), por qué el puntero del proyecto es la única cosa que `init` escribe fuera del tablero.** Sin
+ella, un tablero creado en otra ubicación no lo encontraría ningún comando posterior.
+
+**["`biso init`"](spec/cmd/init.md), por qué se retira la regla posicional que guardaba el estado activo como el penúltimo de
+`--statuses`.** La regla estaba rota, y la contradicción que la delata vive en el propio documento: el
+tablero de ejemplo era `Ideas, To Do, In Progress, Blocked, Done`, cuyo penúltimo es `Blocked`, y había
+un ejemplo literal de `biso init` que lo creaba así, mientras que tanto la salida de `biso config list`
+como el esquema JSON de `biso prime` declaraban que el estado activo de ese mismo tablero era
+`In Progress`. Las dos cosas no podían ser ciertas a la vez, y la regla solo parecía funcionar porque
+el tablero por defecto tenía justo tres estados. Se sustituye por tres banderas explícitas,
+`--initial-status`, `--active-status` y `--terminal-status`, con el mismo argumento de ["El algoritmo de coincidencia"](spec/vocabularios.md#el-algoritmo-de-coincidencia): una regla
+que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
+
+**["`biso init`"](spec/cmd/init.md), por qué el tablero por defecto no trae un estado `Ideas`.** Un estado `Ideas` no dice nada que
+no diga ya estar sin asignar, que se consulta con `biso ls --unassigned`. El matiz que sí aporta,
+"esto quizá no lo hagamos nunca", tiene ya una decisión con evidencia detrás en ["Lo que se miró de ese diseño anterior y se descarta"](#lo-que-se-miró-de-ese-diseño-anterior-y-se-descarta): se
+cubre con un tipo más del vocabulario que ya existe y no con un estado. Y hay un motivo peor para no
+ponerlo por defecto: si `Ideas` fuera el estado inicial, toda tarea nueva nacería ahí, y el bloque
+`NEXT UP` del mensaje de arranque mezclaría "algún día quizá" con "hay que hacerlo", que es justo la
+distinción que ese bloque existe para hacer.
+
+**["`biso new`"](spec/cmd/new.md), por qué existe `--start` al crear una tarea.** Evita que crear una tarea para ponerse con ella
+en el mismo minuto cueste dos llamadas. Es el principio 5 aplicado a un caso medido.
+
+**["`biso new`"](spec/cmd/new.md), por qué `--comment` funciona al crear.** Por lo mismo: una tarea que nace con un comentario
+cuesta una llamada.
+
+**["`biso ls`"](spec/cmd/ls.md), por qué el filtro de etiquetas es el único que combina sus valores con "y".** Porque el uso
+normal de varias etiquetas es acotar, no ampliar.
+
+**["`biso ls`"](spec/cmd/ls.md), por qué el filtro de dependencias es `--blocked` y `--not-blocked`, y no `--ready`.** El hecho
+que se calcula es uno solo, que alguna dependencia esté sin terminar, así que se nombra una vez y su
+negación se forma con el mismo prefijo que los otros dos pares booleanos de `biso ls`,
+`--waiting`/`--not-waiting` y `--active`/`--not-active`. El nombre `ready` sobraba por dos motivos
+distintos. El primero es que hacía viajar el mismo hecho dos veces en el JSON, como `ready` y como
+`blocked`, y campos que dicen lo mismo acaban divergiendo. El segundo es que prometía más de lo
+que cumplía: miraba solo dependencias, así que `biso ls --ready` devolvía también las tareas aparcadas
+en una pregunta, que es justo lo que un agente no puede coger. De los dos nombres sobrevive `blocked`
+porque ya tiene entrada propia en la tabla de ["Vocabulario de esta especificación"](spec/vocabulario.md), porque da nombre al
+término `urgency.blocked` de la fórmula de urgencia, y porque nombra el hecho que de verdad se calcula.
+Y el nombre nuevo tampoco promete estar lista para trabajar, porque ninguna bandera sola puede: eso
+son varios filtros, y cuántos depende de qué se busque. Descartar lo bloqueado y lo aparcado son dos,
+`--not-blocked --not-waiting`; quien quiera además tarea sin empezar añade `--not-active`, que es el
+filtro con el que el propio mensaje de arranque describe su bloque `NEXT UP` (["La salida literal"](spec/cmd/prime.md#la-salida-literal)); y quien la quiera
+sin dueño, `--unassigned`. El cambio quita una clave del JSON y renombra una bandera,
+que son las dos cosas que el ["contrato de estabilidad"](spec/estabilidad.md) promete no tocar nunca, y por eso se hace
+ahora: ese contrato obliga a partir de la versión 1.0 y todavía no hay ninguna versión publicada.
+Después de 1.0 esta limpieza ya no se podría hacer.
+
+**["`biso set`"](spec/cmd/set.md), por qué `set` no repite en su tabla las banderas de campo.** Porque repetirlas invitaría a que
+divergieran, que es como se rompen los documentos largos.
+
+**["`biso set`"](spec/cmd/set.md), por qué la línea de estado encoge cuando la tarea no tiene criterios, en vez de imprimir un
+guion como hace el listado.** Las dos salidas parecen contradecirse y no lo hacen, porque no son la
+misma clase de cosa. El listado de ["`biso ls`"](spec/cmd/ls.md) es una tabla: sus columnas se rellenan al ancho del valor más
+largo de la llamada, así que una celda vacía tiene que ocupar su sitio o las filas de abajo se
+descolocan, y para eso está el guion. La línea de estado sale una por tarea afectada, sin ancho
+compartido y sin nada que alinear debajo, de modo que un hueco no descoloca nada y un guion solo
+añadiría un símbolo más que interpretar. Quien quiera los contadores siempre, estén las listas vacías
+o no, pide `--json`, que trae los cuatro como números.
+
+**["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`"](spec/cmd/verbos-del-ciclo.md), por qué `finish` avisa de los criterios sin marcar y no lo impide.** Un criterio puede haber
+quedado obsoleto, y un comando que no deja cerrar empuja a rodearlo con `set`, que es como se aprende
+a esquivar una herramienta. Para quien quiera la política dura está `--strict`.
+
+**["`biso export`"](spec/cmd/export.md), por qué `export` no hereda los valores por defecto de `ls`, y por qué sale con código 6 y no
+con 0 cuando salta una tarea ilegible.** Porque exportar de más nunca hace daño y exportar de menos en
+silencio arruina una copia de seguridad. Es el único comando cuyo propósito es no perder nada, y por
+eso es la única excepción a la regla general de las lecturas de conjunto.
+
+**["`biso help`"](spec/cmd/help.md#biso-help), por qué `help` funciona sin tablero.** Porque es lo primero que alguien ejecuta cuando algo
+no va.
+
+**["Repetición y listas separadas por comas"](spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas), por qué los campos de texto largo no se parten por comas.** Porque una coma dentro de una frase
+es normal, y partir por ella convertiría una descripción en varias.
+
+**["Las fechas"](spec/modelo-de-datos.md#las-fechas), por qué las fechas se pueden fijar al importar y no en el uso normal.** Sin esa excepción no se
+puede importar el histórico de otro sistema conservando cuándo pasó cada cosa, que es el tercer
+requisito de ["Cuatro requisitos aprendidos de otras herramientas"](#cuatro-requisitos-aprendidos-de-otras-herramientas), en este mismo documento.
+
+---
+
+## Decisiones de detalle que cuesta reconstruir
+
+**Una tarea sin quien la reporte es válida.** El campo `reporter` toma la identidad configurada al
+crear la tarea, y si no hay ninguna se queda vacío **sin avisar**. Es deliberadamente distinto de los
+otros cinco sitios donde hace falta una identidad (tabla de ["Variables de entorno"](spec/invocacion.md#variables-de-entorno)): el
+filtro `--mine` falla, la autoasignación de `start` avisa, y el autor de un comentario, `biso ask` y
+`biso answer` son un error. La razón es que un tablero de una sola persona no tiene por qué
+configurar su identidad solo para poder crear tareas.
+
+**`biso export --json` es un error y no una bandera sin efecto.** `export` es el único comando cuya
+salida ya es JSON sin pedirlo, en forma de un objeto por línea, mientras que `--json` significa el
+sobre único que imprimen todos los demás. Son dos formas distintas, y aceptar la bandera en silencio
+dejaría en duda cuál de las dos sale.
