@@ -88,7 +88,7 @@ ignoran. Las claves son las del modelo de datos de la sección ["El modelo de da
 Ejemplo de una línea, con todos los tipos compuestos:
 
 ```json
-{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":true}],"comments":[{"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
+{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":true}],"comments":[{"key":1,"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 ```
 
 Las reglas del lote, todas obligatorias:
@@ -100,8 +100,13 @@ Las reglas del lote, todas obligatorias:
 - **El contador de claves de cada lista se sitúa por encima de la clave mayor importada**, de modo que
   un criterio añadido después nunca choca con uno importado. El contador no es una clave del formato:
   se deduce.
-- **`comments` es una lista de objetos** con `author`, `createdAt` y `body`. `createdAt` es opcional y,
-  si falta, se pone el instante de la importación.
+- **`comments` es una lista de objetos** con `author`, `createdAt`, `body` y, opcionalmente, `key`.
+  `createdAt` es opcional y, si falta, se pone el instante de la importación. `key` sigue la misma
+  regla que la de `acceptanceCriteria` y `definitionOfDone`
+  (["Los criterios y sus claves estables"](../modelo-de-datos.md#los-criterios-y-sus-claves-estables)): si falta, se asigna con la siguiente clave libre del
+  contador de comentarios de esa tarea, y una `key` repetida dentro de los comentarios de la misma
+  tarea es un fallo de validación. Es lo que hace cierta la simetría de `biso export` para la clave de
+  un comentario (["`biso export`"](export.md)).
 - **`question` se acepta como objeto** con `author`, `askedAt` y `body` (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)) en el lote de `--from`.
   `askedAt` es opcional y, si falta, se pone el instante de la importación, igual que `createdAt` en
   `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.

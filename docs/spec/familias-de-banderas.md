@@ -20,7 +20,7 @@ una más ni una menos:
 | Bloque de prosa | añadir al final, vaciar |
 | Mapa de claves | fijar una clave, quitar una clave, vaciar |
 | Escalar | fijar, vaciar |
-| Lista inmutable (comentarios) | solo añadir, `--comment` |
+| Comentarios | añadir (`--comment`), borrar uno entero, corregir solo su fecha; nunca editar cuerpo ni autor |
 
 **`question` no entra en esta tabla.** Es un registro de tres partes (["La pregunta abierta"](modelo-de-datos.md#la-pregunta-abierta)), no una
 lista, ni un bloque de prosa, ni un mapa, ni un escalar, así que ninguna de estas clases lo describe.
@@ -179,6 +179,52 @@ error: --check-ac and --uncheck-ac both select acceptance criterion #3 of MYP-11
 
 Esta es la única familia de banderas de esta sección donde el solape es un error en vez de resolverse
 por orden (["Sustituir un campo que no tiene bandera de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera) explica por qué).
+
+## Comentarios
+
+| Operación | Bandera | Repetible |
+|---|---|---|
+| añadir | `--comment <text>` | sí |
+| borrar uno o varios enteros | `--rm-comment <sel>` | sí |
+| corregir solo la fecha de uno o varios | `--set-comment-date <sel>=<instante>` | sí |
+
+**No existe una bandera que edite el cuerpo o el autor de un comentario ya escrito, y no va a
+existir.** Un comentario es el registro de una conversación, y lo único que se concede aquí es
+corregir un metadato (la fecha) o retirar el comentario entero, nunca reescribir lo que se dijo. La
+razón, con el caso medido que la motiva, está en ["Borrar o corregir la fecha de un comentario"](../DECISIONES.md#borrar-o-corregir-la-fecha-de-un-comentario) de
+`DECISIONES.md`.
+
+**`--rm-comment` y `--set-comment-date` toman el mismo selector que `--rm-ac` y `--check-ac`**
+(["Selectores de criterios"](#selectores-de-criterios)), con la clave de un comentario en vez de la de un criterio y el
+cuerpo del comentario en vez del texto del criterio para la forma de texto:
+
+```
+biso set MYP-11 --rm-comment 3
+biso set MYP-11 --rm-comment all
+biso set MYP-11 --set-comment-date 3=2026-08-14T10:22:00Z
+```
+
+**No existe `--clear-comments`.** `--rm-comment all` ya vacía la lista, y esta familia no necesita
+una segunda forma de decir lo mismo: a diferencia de los criterios, que tienen `--clear-acs` además de
+`--rm-ac` (["Campos de lista sin coma (criterios)"](#campos-de-lista-sin-coma-criterios)), aquí no hace falta la redundancia porque nada en esta
+familia sustituye la lista entera de un tirón, y vaciarla del todo es un gesto tan deliberado como
+borrar uno por uno.
+
+**`--set-comment-date` toma un instante UTC completo (`YYYY-MM-DDTHH:MM:SSZ`), no una fecha suelta.**
+`createdAt` es un instante, no un día, así que la corrección tiene que poder fijar la hora y no solo la
+fecha; `--due` es distinto porque `due` sí es un día (["El modelo de datos de una tarea"](modelo-de-datos.md)).
+
+| Caso límite | Resultado |
+|---|---|
+| clave que no existe | error 4: `no comment #7 on MYP-11 (keys: 1, 3)` |
+| texto que no encaja con ningún comentario | error 4, con los cuerpos de los comentarios listados |
+| texto que encaja con dos o más | error 5, con los dos listados |
+| rango invertido | error 2 |
+| `--set-comment-date` con un instante mal formado | error 2, señalando el formato ISO 8601 |
+| la misma clave en dos `--set-comment-date` con instantes distintos | error 2, misma regla que un escalar repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)) |
+| la misma clave en dos `--set-comment-date` con el mismo instante | se aplica una vez, sin aviso |
+| `--rm-comment` y `--set-comment-date` sobre la misma clave en la misma llamada | error 2, mismo trato que el solape de `--check-ac`/`--uncheck-ac` de arriba: borrar y corregir la fecha del mismo comentario a la vez es una petición contradictoria |
+| `--rm-comment all` en una tarea sin comentarios | sin efecto, sin aviso |
 
 ## Campos escalares
 

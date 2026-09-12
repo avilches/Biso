@@ -8,7 +8,8 @@ más palabras.
 ```
 biso set <ref>... [cualquier bandera de campo de la seccion 8]
          [--check-ac <sel>]... [--uncheck-ac <sel>]... [--check-dod <sel>]... [--uncheck-dod <sel>]...
-         [--comment <text>]... [--comment-author <@who>] [--id] [--match]
+         [--comment <text>]... [--comment-author <@who>]
+         [--rm-comment <sel>]... [--set-comment-date <sel>=<instante>]... [--id] [--match]
 ```
 
 ## Parámetros propios
@@ -25,6 +26,8 @@ significado que en cualquier otro comando. Lo propio de `set`:
 | `--uncheck-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check-dod` |
 | `--comment <text>` | | no | texto largo | | sí | no | |
 | `--comment-author <@who>` | | no | texto libre | `me` | no | no | requiere `--comment` |
+| `--rm-comment <sel>` | | no | selector ["Comentarios"](../familias-de-banderas.md#comentarios) | | sí | ver ["Comentarios"](../familias-de-banderas.md#comentarios) | solape con `--set-comment-date` sobre la misma clave |
+| `--set-comment-date <sel>=<instante>` | | no | selector ["Comentarios"](../familias-de-banderas.md#comentarios) + instante UTC | | sí | ver ["Comentarios"](../familias-de-banderas.md#comentarios) | solape con `--rm-comment` sobre la misma clave |
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
@@ -122,8 +125,8 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 | Cambio aplicado, o nada que cambiar | 0 |
 | Sin banderas de cambio, banderas incompatibles, selector por clave con varias tareas, solape | 2 |
 | Valor fuera de un vocabulario, clave de extensión no declarada, tarea ilegible | 3 |
-| Alguna referencia no existe, o un selector de texto no encaja con ningún criterio | 4 |
-| Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios | 5 |
+| Alguna referencia no existe, o un selector de texto no encaja con ningún criterio o comentario | 4 |
+| Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios o comentarios | 5 |
 | `--dry-run` que no pasa la validación | 9 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 7 |
 | No hay tablero | 8 |
@@ -175,8 +178,14 @@ Scalars just take a value: -t/--title, -s/--status, --type, --priority,
 a --clear-<field>. An empty string is never a way to clear anything.
 
 Comments:
-      --comment <text>       append a comment; repeatable
-      --comment-author <@w>  who wrote it (default: you)
+      --comment <text>            append a comment; repeatable
+      --comment-author <@w>       who wrote it (default: you)
+      --rm-comment <sel>          remove one or more, by the same kind of
+                                   selector as --rm-ac; body and author are
+                                   never edited, by any flag
+      --set-comment-date <sel>=<instant>
+                                   correct only the date of one or more,
+                                   instant is YYYY-MM-DDTHH:MM:SSZ
 
 Resolution:
       --id / --match         force <ref> to be an id, or free text
@@ -190,7 +199,7 @@ Exit codes:
   0  done                    5  something matched more than one thing
   2  bad usage               7  the board could not be written
   3  unknown value           9  --dry-run did not pass
-  4  a task or a criterion was not found
+  4  a task, criterion or comment was not found
                              8  no board here
 
 Examples:

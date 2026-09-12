@@ -78,7 +78,7 @@ The parser already normalized LF, CRLF was missing.
 (empty)
 
 ## Comments
-@avilches, 2026-09-06 10:02
+#1  @avilches, 2026-09-06 10:02
 A user with a Windows clone reported this.
 
 ## Open Question
@@ -114,8 +114,9 @@ MYP-11  Normalize CRLF in the diff
 ```
 
 Con `--section question` sobre MYP-60, la tarea con la pregunta abierta del ejemplo de la sección ["La salida literal"](prime.md#la-salida-literal), la
-sección sale rellena con la misma forma que ya usa `## Comments`: el autor y el instante en una línea
-y el cuerpo debajo.
+sección sale rellena con una forma parecida a la de `## Comments`: el autor y el instante en una línea
+y el cuerpo debajo, pero **sin la clave**, porque `question` es un registro de tres partes y no una
+lista direccionable (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)): no hay un selector que pueda señalar "la pregunta número tal".
 
 ```
 MYP-60  Confirm the retry budget for the upload endpoint
@@ -171,7 +172,7 @@ Es el objeto de `task.list` más los campos del cuerpo:
       "plan": "1. Read the parser.\n2. Add the CRLF case.",
       "notes": "The parser already normalized LF, CRLF was missing.",
       "summary": null,
-      "comments": [ { "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "A user with a Windows clone..." } ],
+      "comments": [ { "key": 1, "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "A user with a Windows clone..." } ],
       "question": null,
       "blocks": ["MYP-40"],
       "urgencyBreakdown": { "priority": 6.0, "active": { "value": 4.0, "reason": null }, "blocking": 8.0,

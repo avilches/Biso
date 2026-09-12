@@ -35,7 +35,7 @@ escribe. No dice nada de cómo se guardan.
 | `summary` | texto largo | no | quien llama | sí |
 | `acceptanceCriteria` | lista de criterios | no | quien llama | sí |
 | `definitionOfDone` | lista de criterios | no | quien llama | sí |
-| `comments` | lista de comentarios | no | quien llama | solo se añade |
+| `comments` | lista de comentarios | no | quien llama | se añade, se borra entero, o se corrige solo la fecha; ver la precisión de abajo |
 | `question` | registro de tres partes | no | mixto, según la parte; ver ["La pregunta abierta"](#la-pregunta-abierta) | sí, solo con `biso ask`, `biso answer`, o al importar |
 | `acDone`, `acTotal`, `dodDone`, `dodTotal` | entero, derivado | derivado | el programa | no, se recalculan al leer |
 | `commentCount` | entero, derivado | derivado | el programa | no, se recalcula al leer |
@@ -47,8 +47,12 @@ Precisiones sobre la mutabilidad:
 
 - **"No mutable" significa que ninguna bandera del programa lo cambia.** `updatedAt` lo reescribe el
   programa en cada operación que cambie algo.
-- **Un comentario no se edita ni se borra, solo se añade.** Un comentario es el registro de una
-  conversación.
+- **El cuerpo y el autor de un comentario no se editan nunca, por ninguna vía.** Un comentario es el
+  registro de una conversación, y lo que se dijo no se reescribe. Lo que sí se puede corregir, con las
+  banderas dedicadas de ["Comentarios"](familias-de-banderas.md#comentarios) y nunca con una escritura general sobre la
+  tarea, es borrar el comentario entero (`--rm-comment`) o corregir únicamente su fecha
+  (`--set-comment-date`). La razón, con el caso que la motiva, está en
+  ["Borrar o corregir la fecha de un comentario"](../DECISIONES.md#borrar-o-corregir-la-fecha-de-un-comentario) de `DECISIONES.md`.
 - **`archived` solo lo cambia `biso archive` y `biso archive --unarchive`.** No hay una bandera de
   campo de la sección ["Las familias de banderas"](familias-de-banderas.md) para él: archivar es un gesto de flujo de trabajo con nombre propio,
   según el principio 5.
@@ -158,13 +162,19 @@ Consecuencias que hay que respetar en toda la implementación:
 
 ## Los comentarios
 
-Cada comentario tiene autor, instante y cuerpo:
+Cada comentario tiene clave, autor, instante y cuerpo:
 
 | Parte | Tipo | Quién la fija |
 |---|---|---|
+| `key` | entero positivo | el programa al crear el comentario |
 | `author` | texto libre | quien llama, y por defecto la identidad `me` |
-| `createdAt` | instante UTC | el programa, salvo al importar |
+| `createdAt` | instante UTC | el programa, salvo al importar o con `--set-comment-date` (["Comentarios"](familias-de-banderas.md#comentarios)) |
 | `body` | texto largo | quien llama |
+
+**La clave se asigna al crear el comentario, con un contador propio de esa lista dentro de esa
+tarea, y no se reasigna nunca**, exactamente igual que la de un criterio
+(["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables)). Borrar un comentario no mueve las claves de los
+demás.
 
 **El autor es texto libre y no se valida contra nada.** Un comentario puede venir de alguien que no
 existe en este tablero, y un sistema externo puede usar su propia convención, por ejemplo

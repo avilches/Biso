@@ -1263,9 +1263,14 @@ llama con el nombre desnudo del campo.** Antes había cuatro variantes por cada 
 (`--campo` añadía, `--set-campo` sustituía, `--rm-campo` quitaba, `--clear-campo` vaciaba), y las
 demás clases de campo tenían el subconjunto de esas cuatro que tenía sentido para su forma de dato:
 un bloque de prosa no tiene elementos que quitar de uno en uno, así que no tenía `rm-`; un mapa de
-claves se manipula por clave y no por posición; un escalar solo se fija o se vacía; los comentarios
-son una lista inmutable que solo admite añadir. Esa parte no cambia: sigue siendo verdad que la tabla
-de clases de campo es la regla aplicada a cada forma de dato, no una lista de excepciones.
+claves se manipula por clave y no por posición; un escalar solo se fija o se vacía; los comentarios,
+en aquel momento, solo admitían añadir. **Esa última pieza ya no es cierta**: ["Borrar o corregir la fecha de un comentario"](#borrar-o-corregir-la-fecha-de-un-comentario), más abajo en
+este documento, añade dos operaciones más, y la forma vigente de la clase está en
+["Comentarios"](spec/familias-de-banderas.md#comentarios) y no aquí. Lo que sigue siendo cierto, y es lo que este párrafo quería decir, es
+que la tabla de clases de campo aplica exactamente las operaciones que tienen sentido para cada forma
+de dato, no una lista de excepciones: que el conjunto de un escalar sea distinto del de un mapa, o que
+el de los comentarios haya crecido de uno a tres elementos, no es una excepción a la regla, es la
+regla funcionando.
 
 **Lo que cambió es el nombre desnudo.** Funcionaba, y resolvía el fallo medido del principio 3, pero
 exigía conocer la regla de antemano para no adivinar: nada en `--label` dice que añade, hay que
@@ -1496,3 +1501,44 @@ haga falta: el contrato de estabilidad (["El contrato de estabilidad"](spec/esta
 línea de estado puede cambiar entre versiones menores, así que alargarla no rompe ninguna promesa. Una
 línea aparte en stdout, por la misma razón, multiplicaría las líneas de salida por tarea sin necesidad:
 el dato cabe en la línea que ya existe.
+
+---
+
+## Borrar o corregir la fecha de un comentario
+
+**La decisión.** `biso` añade banderas dedicadas para comentarios ya escritos: `--rm-comment <sel>`
+borra uno o varios enteros, y `--set-comment-date <sel>=<instante>` corrige solo su fecha. El
+selector es el mismo de ["Selectores de criterios"](spec/familias-de-banderas.md#selectores-de-criterios), con la clave del comentario en vez de la del
+criterio. **No existe, y no va a existir, ninguna forma de editar el cuerpo o el autor de un
+comentario ya escrito.** Cada comentario recibe además una clave estable, igual que un criterio de
+aceptación, porque sin ella no hay forma de señalar cuál se quiere borrar o corregir sin que se mueva
+al borrar otro.
+
+**El caso medido que lo motiva.** En una migración real con otra herramienta que guarda los
+comentarios como texto en un fichero, se detectaron agentes editando ese fichero a mano para que las
+fechas de varios comentarios coincidieran entre sí, precisamente porque la herramienta no ofrecía
+ninguna vía legítima para corregir la fecha de un comentario ya escrito fuera de una importación
+inicial. `biso` ya resuelve la mitad del problema: cualquier fecha se puede fijar al crear una tarea
+por lote (["Cuatro requisitos aprendidos de otras herramientas"](#cuatro-requisitos-aprendidos-de-otras-herramientas), en este documento). Pero esa vía sirve para
+poblar un tablero vacío, no para corregir una tarea que ya existe: un `id` ya ocupado falla al
+importar (["`biso new`"](spec/cmd/new.md)), así que hoy no hay ninguna forma de arreglar una fecha equivocada en una tarea
+existente sin destruirla y recrearla entera. Ese hueco es el que empuja a la misma clase de atajo que
+ya se vio en la otra herramienta, y en `biso` el atajo equivalente sería manipular directamente el
+fichero de la base de datos SQLite por fuera de la CLI, que es peor que editar un markdown a mano
+porque además puede dejar el almacén en un estado que `biso doctor` no sabe explicar.
+
+**Por qué se acepta corregir la fecha o borrar, y no editar el cuerpo o el autor.** La garantía que
+importa preservar es que un comentario es el registro de lo que se dijo, no de cuándo se archivó el
+registro. Editar el cuerpo o el autor reescribiría la conversación misma, que es exactamente lo que
+esta lista existe para impedir. Corregir la fecha, o borrar el comentario entero cuando de verdad
+sobra, deja intacto el contenido de la conversación y solo toca un metadato o la presencia del
+registro completo, así que no compromete esa garantía. Es la misma distinción que ya usa el modelo con
+`leaseExpiresAt`/`leaseHolder`: se puede corregir un dato operativo sin que eso abra la puerta a
+reescribir el historial de lo que pasó.
+
+**Por qué una clave estable, y no un selector por posición.** Las claves de los criterios ya resuelven
+el mismo problema (una posición se mueve al borrar un elemento de en medio, una clave no) y ya tienen
+su propio selector completo. Darle a los comentarios una segunda forma de direccionarse, distinta y
+más pobre, solo para ahorrarse un campo, habría creado dos maneras de resolver "cuál elemento de una
+lista" en el mismo documento en vez de una. Reutilizar el selector entero, en cambio, significa que
+quien ya sabe usar `--rm-ac` no aprende nada nuevo para usar `--rm-comment`.
