@@ -124,6 +124,12 @@ error: malformed extension key: "trello=card"
 hint: an extension key may contain letters, digits, and - _ .
 ```
 
+**Esto rige al escribir.** Un valor ya guardado que no cumple este alfabeto, porque se escribió antes
+de que existiera esta regla o porque llegó por una vía que no pasa por esta validación, no es un error
+nuevo distinto: es un dato que el programa no puede interpretar, y se trata con la regla general de
+["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), la misma que ya cubre una clave de `ext` que la
+configuración ha dejado de declarar.
+
 Los `code` correspondientes, `malformed_label`, `malformed_assignee` y `malformed_extension_key`,
 están en la tabla de ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error).
 

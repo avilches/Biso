@@ -234,6 +234,14 @@ de comentario que termine literalmente en algo con forma de instante detrás de 
 que esta regla no puede resolver por texto; para ese caso, la clave sigue siendo el selector que
 siempre funciona.
 
+**Esto no es la misma regla que `--ext <clave>=<valor>`, y no hace falta que lo sea.** `--ext` corta
+por el primer `=` porque puede: el alfabeto de una clave de `ext` ya excluye el propio `=`
+(["El juego de caracteres de un token"](valores-de-entrada.md#el-juego-de-caracteres-de-un-token)), así que el primer `=` de la cadena es siempre el único
+`=` que puede separar la clave del valor, y da igual por cuál de los dos extremos se busque. El
+selector de `--set-comment-date`, en cambio, puede ser un texto libre sin alfabeto cerrado, así que
+necesita su propia regla de corte, y esa regla es "por el último" precisamente porque aquí sí puede
+haber más de un `=` en la cadena.
+
 **El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguna de las
 dos, no durante el orden de escritura.** Caen en pasos distintos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)
 (`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada una resolviera
@@ -256,6 +264,8 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 | la misma clave en dos `--set-comment-date` con el mismo instante | se aplica una vez, sin aviso |
 | `--rm-comment` y `--set-comment-date` sobre la misma clave en la misma llamada | error 2, detectado en la validación previa de arriba: borrar y corregir la fecha del mismo comentario a la vez es una petición contradictoria |
 | `--rm-comment all` en una tarea sin comentarios | sin efecto, con `warning: MYP-11 has no comments`, igual que `--check-ac all` sin criterios (["Selectores de criterios"](#selectores-de-criterios)) |
+| `--rm-comment all` o `--set-comment-date all=<instante>` sobre varias tareas | válido, cada tarea actúa sobre los suyos |
+| una clave, un rango, una lista o un texto sobre varias tareas | error 2, misma regla que la de ["Selectores de criterios"](#selectores-de-criterios): el selector de una tarea no tiene por qué significar lo mismo en otra |
 
 ## Campos escalares
 
