@@ -127,6 +127,7 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Una raíz de `boards_extra_roots` (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) no existe o no se puede leer | aviso | no, es configuración de la máquina o un disco sin montar |
 | La comprobación de integridad de la base de datos falla (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | error | no, es daño externo; la reparación es restaurar de una copia |
 | El directorio del tablero está en un sistema de ficheros donde el modo WAL de SQLite no es seguro | aviso | no, es una propiedad del sistema de ficheros, no algo que `biso` pueda cambiar |
+| El fichero de exclusión no corresponde al `vcs` configurado en la máquina | aviso | no, hay que escribirlo a mano |
 | Huecos en la numeración | no es un problema | no son un problema, no se reportan |
 
 **No hay ninguna comprobación sobre el nombre de la carpeta del tablero, y no es un olvido.** El nombre
@@ -180,6 +181,32 @@ que mostrarla: hay el abort completo de la sección ["Qué pasa con un dato que 
 antes de que `doctor` llegue a comprobar nada más (ver la tabla de comportamiento más abajo). La fila
 está en esta tabla para decir que existe como comprobación y cuál es su nivel, no porque vaya a
 verse alguna vez junto a las demás.
+
+**El fichero de exclusión desactualizado no se repara con `--fix`, por el mismo motivo que ya fija la
+sección ["`biso init`"](init.md).** `vcs` es configuración de la máquina, no del
+tablero (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)), así que el
+fichero que un tablero tiene que llevar depende de qué esté configurado ahora, no de un historial que
+`biso` no guarda. El único nombre que la especificación fija de antemano es `.gitignore`, el de `git`;
+el de `custom` lo declara `ignore_file`, un valor arbitrario que la máquina puede haber cambiado o
+dejado de declarar, y `none` no espera ninguno. Por eso `doctor` solo puede reconocer con certeza un
+caso: que exista `.gitignore` en el directorio del tablero y que el `vcs` de la máquina ya no sea `git`
+ni un `custom` cuyo `ignore_file` sea también `.gitignore`. El caso contrario, un `ignore_file` de un
+`custom` anterior que quedó huérfano, no es detectable, porque `biso` no recuerda cuál era ese nombre
+antes de que `vcs` cambiara.
+
+Es aviso, no error, por la misma razón que la raíz adicional que no se puede leer: no dice que el
+tablero esté roto ni que ningún dato de `biso` sea poco fiable, dice que hay un fichero de la máquina
+que se quedó con un nombre antiguo. Y no es reparable con `--fix`, porque la sección ["`biso init`"](init.md)
+ya deja dicho que `biso` nunca renombra ni escribe otro fichero de exclusión por su cuenta cuando `vcs`
+cambia: `doctor --fix` sería incoherente con esa misma decisión si lo hiciera. Se decide a mano, igual
+que la fila del marcador `<id>.id` discrepante. Sale bajo `Warnings:`:
+
+```
+  .gitignore does not match the configured vcs "none" (left over from git, biso does not rewrite it automatically)
+```
+
+Su `code` en el JSON es `ignore_file_mismatch`, con `task` a `null`, porque es un hallazgo del tablero
+y no de ninguna tarea, igual que la raíz adicional que no se puede leer.
 
 Con esto, todas las filas de la tabla son un problema real salvo los huecos en la numeración, que no
 lo son y no se reportan nunca. Y de las que sí lo son, solo la comprobación de integridad de la base de
@@ -301,8 +328,9 @@ values that are no longer configured, a broken status-role invariant, broken
 dependencies, dependency cycles, parent cycles, repeated criterion keys, a lease
 on a task that is not both active and assigned, a recorded highest id that has
 fallen behind, a database that fails its integrity check, a missing or
-mismatched <id>.id marker, an extra board root that cannot be read, and a board
-directory on a filesystem where SQLite's WAL mode is not safe.
+mismatched <id>.id marker, an extra board root that cannot be read, an exclusion
+file that no longer matches the configured vcs, and a board directory on a
+filesystem where SQLite's WAL mode is not safe.
 
 Options:
       --fix      repair what can be repaired without a decision

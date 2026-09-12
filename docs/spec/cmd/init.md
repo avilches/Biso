@@ -237,7 +237,8 @@ ningún programa, así que esto no contradice que `biso snapshot` sea el único 
 **Si alguien cambia la clave `vcs` después, ese fichero se queda con el nombre del sistema anterior**, y
 `biso` no lo renombra ni escribe otro: `init` solo se ejecuta una vez por tablero, y adivinar cuándo hay
 que reescribir un fichero de exclusión ajeno sería pasarse. Quien cambie de sistema tiene que escribir a
-mano el fichero que el nuevo espere, con las tres líneas de la base de datos.
+mano el fichero que el nuevo espere, con las tres líneas de la base de datos. `biso doctor` avisa de
+este desajuste cuando lo puede reconocer (sección ["`biso doctor`"](doctor.md#qué-comprueba)).
 
 **El marcador no se excluye, y eso resuelve algo.** Al quedar versionado con la instantánea, el
 identificador del tablero viaja en ella, así que restaurar con `biso init --from <instantánea>` puede
