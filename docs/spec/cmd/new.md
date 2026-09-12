@@ -3,7 +3,7 @@
 ## Firma
 
 ```
-biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de la seccion 8]
+biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de las familias de banderas]
 ```
 
 ## Parámetros propios

@@ -53,7 +53,7 @@ plugins:
 #
 # Lo que esto NO cubre: los ficheros Markdown de fuera de docs/, como CLAUDE.md y los de
 # bench/. MkDocs solo ve lo que hay dentro de docs_dir, y de esos se encarga
-# tools/comprobar_enlaces.py.
+# docs/docs-tooling/tools/comprobar_enlaces.py.
 validation:
   anchors: warn
   unrecognized_links: warn
@@ -120,4 +120,3 @@ nav:
     - Por donde empezar a implementar: spec/por-donde-empezar.md
   - Decisiones de diseno: DECISIONES.md
   - Estado del arte: ESTADO-DEL-ARTE.md
-  - Pendientes: PENDIENTES.md

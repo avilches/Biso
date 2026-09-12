@@ -3,7 +3,7 @@
 # Los comentarios de este fichero citan la especificacion por el numero de sus secciones, como se
 # escribio en su dia. docs/SPEC.md se reparto despues en los documentos de docs/spec/, que se citan
 # por el titulo de sus secciones; para traducir una referencia de aqui, mira
-# tools/mapa-de-secciones.txt.
+# docs/docs-tooling/tools/mapa-de-secciones.txt.
 #
 # Tomado de la tabla normativa de
 # docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md y comprobado contra la
