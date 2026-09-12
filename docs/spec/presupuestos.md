@@ -57,10 +57,10 @@ Estas reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
 
 ## El presupuesto de tamaño
 
-El mensaje tiene un **tope duro de 5.120 bytes**, que se comprueba en la suite de pruebas y se reparte
+El mensaje tiene un **tope duro de 5.504 bytes**, que se comprueba en la suite de pruebas y se reparte
 en dos partes que suman exactamente ese tope:
 
-- **La parte fija no pasa de 3.456 bytes.** Es la línea de título, `COMMANDS`, `FIELD FLAGS`, `RULES` y
+- **La parte fija no pasa de 3.840 bytes.** Es la línea de título, `COMMANDS`, `FIELD FLAGS`, `RULES` y
   el párrafo final ("Pick one, ..."): nada de esto depende del contenido del tablero.
 - **El resumen del tablero no pasa de 1.664 bytes.** Es el bloque `BOARD` (nombre, recuento por
   estado, vocabularios, identidad), `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU`, `NEXT UP`
@@ -89,10 +89,10 @@ fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 
 Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
-El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **4.818 bytes** con el tablero del ejemplo: **3.327** de
-parte fija y **1.491** de resumen. Las dos partes caben dentro de su tope.
+El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.184 bytes** con el tablero del ejemplo: **3.695** de
+parte fija y **1.489** de resumen. Las dos partes caben dentro de su tope.
 
-**El número que congela el contrato de estabilidad de la sección ["El contrato de estabilidad"](estabilidad.md) es el total, 5.120 bytes**, porque
+**El número que congela el contrato de estabilidad de la sección ["El contrato de estabilidad"](estabilidad.md) es el total, 5.504 bytes**, porque
 es el único que quien llama observa. El reparto entre las dos partes puede cambiar sin romper ese
 contrato.
 

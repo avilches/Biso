@@ -477,7 +477,7 @@ unos 21.000 tokens, y tuvo que añadir un modo de 7 herramientas y 5.000. Y en e
 pregunta cómo repartir tareas a un agente sin agotar su contexto navegando muchos ficheros.
 
 **Qué hace `biso`.** El presupuesto de arranque pasa a ser un requisito con cifra y con prueba de la
-suite, como ya lo son los 5.120 bytes del mensaje de arranque. Y la palanca principal no es hacer cada
+suite, como ya lo son los 5.504 bytes del mensaje de arranque. Y la palanca principal no es hacer cada
 llamada más rápida sino hacer menos llamadas, que es para lo que existe `biso prime`: una invocación que
 sustituye a muchas, con su tamaño acotado por contrato.
 

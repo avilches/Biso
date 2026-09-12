@@ -99,49 +99,56 @@ BOARD  My project
 COMMANDS  (`biso <cmd> --help` for the detail of any flag)
   biso ls [-s STATUS] [--type T] [-l LABEL] [--mine] [--search TEXT]
   biso get <ref> [--section ac]
-  biso new "TITLE" [-d TEXT] [--ac TEXT]... [--type T] [--priority P]
+  biso new "TITLE" [-d TEXT] [--add-ac TEXT]... [--type T] [--priority P]
   biso start <ref>... [--plan TEXT]
   biso note <ref> "TEXT"
   biso ask <ref> "QUESTION"
   biso answer <ref> "TEXT"
-  biso finish <ref>... [--summary "TEXT"] [--check all] [--check-dod all]
+  biso finish <ref>... [--summary "TEXT"] [--check-ac all] [--check-dod all]
   biso set <ref>... [any field flag]
   biso comment <ref> "TEXT" [--comment-author @who]
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
-  -t --title  -s --status  --type   --priority  --project      -a --assignee
-  -l --label  -d --desc    --ac     --dod       --plan         --note
-  --summary   --dep        --ref    --doc       --file         -m --milestone
-  -p --parent --due        --ordinal --ext K=V  --reporter     --comment
-  --check     --uncheck             --check-dod --uncheck-dod
+  -t --title  -s --status  --type --clear-type  --priority --clear-priority
+  --project --clear-project  -m --milestone --clear-milestone
+  -p --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --reporter --clear-reporter
+  -l --add-labels --rm-labels --clear-labels --replace-labels
+  -a --add-assignees --rm-assignees --clear-assignees --replace-assignees
+  --add-refs --rm-refs --clear-refs --replace-refs
+  --add-docs --rm-docs --clear-docs --replace-docs
+  --add-deps --rm-deps --clear-deps --replace-deps
+  --add-files --rm-files --clear-files --replace-files
+  --add-ac --rm-ac --clear-acs   --add-dod --rm-dod --clear-dods
+  --check-ac --uncheck-ac --check-dod --uncheck-dod
+  -d --append-desc --clear-desc  --append-plan --clear-plan
+  --append-note --clear-notes  --append-summary --clear-summary
+  --comment --rm-comment --set-comment-date
+  --ext K=V --rm-ext --clear-ext
 
 RULES  (none of these are guessable; they are the whole learning curve)
   1. Every write goes through biso. Nothing else touches the board.
-  2. A bare field flag ADDS. Replacing and removing are explicit: --label X
-     adds, --set-label X replaces the list, --rm-label X drops one, and
-     --clear-label empties it. Same four shapes for every list field.
-  3. <ref> is an id (MYP-12), a bare number (12) or free text ("CRLF"). Text
+  2. <ref> is an id (MYP-12), a bare number (12) or free text ("CRLF"). Text
      matching several tasks is an error that lists them, never a guess. `note`,
      `comment`, `ask` and `answer` take one <ref>; `set`, `start` and `finish`
      take several.
-  4. Filters reject values this board does not have: `-s Pending` is an error,
+  3. Filters reject values this board does not have: `-s Pending` is an error,
      not an empty list. Case, spaces, hyphens and underscores are ignored, so
      `-s todo`, `-s "To Do"` and `-s TO_DO` are one and the same filter. An
      empty list is therefore a fact about the board that you can act on.
-  5. `biso ls` prints 30 tasks by urgency and leaves out the Done ones. It says
+  4. `biso ls` prints 30 tasks by urgency and leaves out the Done ones. It says
      on stderr what it left out. --all lifts the limit, --any-status includes
      Done, --archived reaches the archive.
-  6. --check and --uncheck take all, 3, 1-4, 1,3,7 or the criterion text. The
-     numbers are the stable #N keys that `biso get` shows, and they never
+  5. --check-ac, --uncheck-ac, --check-dod and --uncheck-dod take all, 3, 1-4, 1,3,7 or the
+     criterion text. The numbers are the stable #N keys that `biso get` shows, and they never
      shift when one criterion is removed.
-  7. `biso new` prints the new id and nothing else. Every other write prints one
+  6. `biso new` prints the new id and nothing else. Every other write prints one
      line per task: id, status, criteria, urgency. Add --print for the whole
      record, or --json for a versioned envelope.
-  8. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.
-  9. Long text: a real newline works, and so do -d @file.md and -d - for stdin.
- 10. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
+  7. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.
+  8. Long text: a real newline works, and so do -d @file.md and -d - for stdin.
+  9. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
      6 precondition not met, 7 environment, 8 no board here, 9 nothing written.
- 11. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
+ 10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
      it, writing both into the comments. Ask instead of guessing. A task
      assigned to you is one a person decided you should do.
 
@@ -166,7 +173,7 @@ NEXT UP  (not assigned to you, by urgency)
   49 more not shown: `biso ls --not-active --not-waiting`
 
 Pick one, `biso start <ref> --plan "..."`, work, `biso note <ref> "..."` as you go,
-and close with `biso finish <ref> --check all --check-dod all --summary "..."`.
+and close with `biso finish <ref> --check-ac all --check-dod all --summary "..."`.
 That is the loop. Create a task when the work needs planning or review; do small
 edits directly.
 ```
