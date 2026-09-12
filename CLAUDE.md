@@ -93,8 +93,11 @@ programa: no toca el código Go. Las dependencias de Python están fijadas con v
 
 Se ejecuta con `uv` (ya instalado en esta máquina) sin crear un entorno virtual dentro del
 repositorio ni instalar nada en el Python del sistema: `uv` resuelve las dependencias fijadas a un
-caché propio y las descarta al terminar. El `Makefile` de la raíz envuelve los comandos largos:
+caché propio y las descarta al terminar. El `Makefile` de la raíz envuelve los comandos largos
+(`make help` los lista):
 
+- `make` (sin argumentos): genera la documentación entera; es el alias de `docs-build`. El día que
+  exista código Go, este objetivo también lo compilará.
 - `make docs-serve`: sirve el sitio en local con recarga automática al editar los `.md`.
 - `make docs-build`: regenera `docs/TUTORIAL.md` y construye el sitio estático en `site/` (no se
   versiona, ver `.gitignore`) con `mkdocs build --strict`.
