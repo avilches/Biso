@@ -30,7 +30,7 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
 - Los coeficientes por defecto de la urgencia. La estructura de la fórmula, no.
 - Los valores por defecto de la configuración, salvo los que este documento fija dentro de un comando.
 - **El [presupuesto de arranque](presupuestos.md#el-presupuesto-de-arranque) de 25 milisegundos.** No es de la misma naturaleza
-  que el tope de bytes de arriba: los 5.120 bytes son una propiedad del texto, así que cualquiera los
+  que el tope de bytes de arriba: los 5.504 bytes son una propiedad del texto, así que cualquiera los
   mide y siempre dan lo mismo, mientras que los 25 milisegundos son una propiedad de la máquina de
   referencia. Congelar en este contrato un número que depende del hardware haría que la herramienta
   incumpliera su propia promesa al ejecutarse en un ordenador más lento, sin que nadie hubiera cambiado
