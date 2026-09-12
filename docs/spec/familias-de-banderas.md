@@ -223,6 +223,17 @@ borrar uno por uno.
 `createdAt` es un instante, no un día, así que la corrección tiene que poder fijar la hora y no solo la
 fecha; `--due` es distinto porque `due` sí es un día (["El modelo de datos de una tarea"](modelo-de-datos.md)).
 
+**Dónde corta el `=` de `--set-comment-date`, cuando el selector es un texto que a su vez puede traer
+el signo `=`.** El valor se divide por el **último** `=` de la cadena, nunca por el primero: todo lo
+que queda a la derecha tiene que cumplir el formato de instante de arriba, y si no lo cumple es error
+2 de instante mal formado, aunque el fragmento de texto de la izquierda contenga otro `=` suelto. Es
+la misma familia de problema que ya resuelve la regla de desambiguación de ["Selectores de criterios"](#selectores-de-criterios) (clave
+o texto, según si el valor entero encaja con la gramática de claves), solo que aquí el corte no
+depende de una gramática cerrada sino de que el instante tiene una forma fija y reconocible. Un cuerpo
+de comentario que termine literalmente en algo con forma de instante detrás de un `=` es el único caso
+que esta regla no puede resolver por texto; para ese caso, la clave sigue siendo el selector que
+siempre funciona.
+
 **El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguna de las
 dos, no durante el orden de escritura.** Caen en pasos distintos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)
 (`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada una resolviera
@@ -236,7 +247,7 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 
 | Caso límite | Resultado |
 |---|---|
-| clave que no existe | error 4: `no comment #7 on MYP-11 (keys: 1, 3)` |
+| clave que no existe | error 4: `no comment #7 on MYP-11 (keys: 1)` |
 | texto que no encaja con ningún comentario | error 4, con los cuerpos de los comentarios listados |
 | texto que encaja con dos o más | error 5, con los dos listados |
 | rango invertido | error 2 |
@@ -244,7 +255,7 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 | la misma clave en dos `--set-comment-date` con instantes distintos | error 2, misma regla que un escalar repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)) |
 | la misma clave en dos `--set-comment-date` con el mismo instante | se aplica una vez, sin aviso |
 | `--rm-comment` y `--set-comment-date` sobre la misma clave en la misma llamada | error 2, detectado en la validación previa de arriba: borrar y corregir la fecha del mismo comentario a la vez es una petición contradictoria |
-| `--rm-comment all` en una tarea sin comentarios | sin efecto, sin aviso |
+| `--rm-comment all` en una tarea sin comentarios | sin efecto, con `warning: MYP-11 has no comments`, igual que `--check-ac all` sin criterios (["Selectores de criterios"](#selectores-de-criterios)) |
 
 ## Campos escalares
 

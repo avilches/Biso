@@ -1413,13 +1413,24 @@ dejaría en duda cuál de las dos sale.
 
 ## El juego de caracteres de un token
 
-La especificación no restringía ningún carácter en `labels`, `assignees`, `references`,
-`documentation`, `dependencies`, `modifiedFiles` ni en una clave de `ext`: la única regla escrita era
-que una coma dentro de un valor se escapa con `\,`, lo que de hecho dejaba pasar espacios, saltos de
-línea y cualquier símbolo. `labels` y `assignees` se imprimen en las columnas de ancho fijo de
-`biso ls` y `biso prime`, así que un espacio o un salto de línea dentro de uno de esos tokens rompía
-la tabla sin que hubiera forma de distinguir, al leerla, un token con espacio de dos tokens
-separados. Hacía falta cerrar el alfabeto en algún punto, y la pregunta era dónde.
+**La decisión.** Cerrar el alfabeto de `labels` y `assignees` a letras y dígitos Unicode más los
+símbolos `- _ . : @`, sin espacio, siguiendo a Taskwarrior y Jira y no a GitHub (comparación completa
+más abajo): biso es un programa que un agente maneja tecleando líneas de comandos, no un formulario
+web, así que cada etiqueta con espacio sería una comilla que ese agente tendría que acordarse de poner
+siempre, para ganar exactamente lo mismo que ya ofrecen `-` y `_`. Y olvidar la comilla no siempre
+falla alto: según qué banderas haya alrededor, la palabra suelta puede convertirse en un argumento
+inesperado (el caso bueno, error 2) o colarse donde no tocaba. Cerrar el alfabeto quita el problema de
+raíz en vez de pedir disciplina. `references`, `documentation`, `dependencies` y `modifiedFiles` no
+llevan esta restricción, y una clave de `ext` lleva un tercer alfabeto distinto; el porqué de cada una
+está más abajo.
+
+**El problema que la motiva.** La especificación no restringía ningún carácter en `labels`,
+`assignees`, `references`, `documentation`, `dependencies`, `modifiedFiles` ni en una clave de `ext`:
+la única regla escrita era que una coma dentro de un valor se escapa con `\,`, lo que de hecho dejaba
+pasar espacios, saltos de línea y cualquier símbolo. `labels` y `assignees` se imprimen en las columnas
+de ancho fijo de `biso ls` y `biso prime`, así que un espacio o un salto de línea dentro de uno de esos
+tokens rompía la tabla sin que hubiera forma de distinguir, al leerla, un token con espacio de dos
+tokens separados. Hacía falta cerrar el alfabeto en algún punto, y la pregunta era dónde.
 
 **Qué hacen las herramientas comparables.** Dos de ellas escriben una etiqueta como palabra suelta de
 una línea de comandos, que es exactamente la situación de biso:
@@ -1432,14 +1443,6 @@ una línea de comandos, que es exactamente la situación de biso:
   problema de biso: una etiqueta de GitHub se elige en un desplegable de un formulario web o llega ya
   como cadena entrecomillada dentro de un JSON de su API, nunca como una palabra suelta que una shell
   tenga que trocear antes de que el programa la vea.
-
-**La decisión.** Cerrar el alfabeto de `labels` y `assignees` a letras y dígitos Unicode más los
-símbolos `- _ . : @`, sin espacio, siguiendo a Taskwarrior y Jira y no a GitHub: biso es un programa
-que un agente maneja tecleando líneas de comandos, no un formulario web, así que cada etiqueta con
-espacio sería una comilla que ese agente tendría que acordarse de poner siempre, para ganar exactamente
-lo mismo que ya ofrecen `-` y `_`. Y olvidar la comilla no siempre falla alto: según qué banderas haya
-alrededor, la palabra suelta puede convertirse en un argumento inesperado (el caso bueno, error 2) o
-colarse donde no tocaba. Cerrar el alfabeto quita el problema de raíz en vez de pedir disciplina.
 
 Cerrar el alfabeto de estos dos campos tiene una consecuencia que también hay que anotar: **el escape
 de coma deja de aplicarles**. La única razón para escapar una coma es poder meterla como contenido
