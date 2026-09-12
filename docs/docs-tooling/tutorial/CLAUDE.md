@@ -5,10 +5,10 @@ Si has llegado aquí para cambiar algo del tutorial, lo que se toca es un ficher
 luego se regenera la página.
 
 Su diseño, con el porqué de cada decisión, está en
-[`docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md`](../docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md).
+[`docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md`](../../superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md).
 La forma de las citas a varias secciones a la vez y que el contenido del tutorial nace en inglés
 (a diferencia del resto de la documentación del repositorio) se decidió después, en
-[`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](../docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md).
+[`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](../../superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md).
 
 ## La idea
 
@@ -17,7 +17,7 @@ reconoce ("a mitad de la tarea descubres que falta un criterio") y los comandos 
 situación los pide.
 
 No es una decisión estética. Un tutorial ordenado por comandos sería una segunda copia de
-["Los comandos"](../docs/spec/cmd/index.md), y en cuanto existen dos copias empiezan a divergir. Ordenado por situaciones
+["Los comandos"](../../spec/cmd/index.md), y en cuanto existen dos copias empiezan a divergir. Ordenado por situaciones
 aporta lo único que la especificación no tiene, que es el porqué y el orden en que se conocen los
 conceptos, y no compite con ella como fuente de verdad.
 
@@ -95,9 +95,9 @@ son una excepción al idioma del código.
 Los tres llevan el mismo prefijo de `uv` que MkDocs, que no instala nada en el sistema:
 
 ```
-uv run --with-requirements docs-requirements.txt --no-project python tutorial/generate.py
-uv run --with-requirements docs-requirements.txt --no-project python tutorial/urgency.py
-uv run --with-requirements docs-requirements.txt --no-project python tutorial/continuity.py
+uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py
+uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/urgency.py
+uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/continuity.py
 ```
 
 `generate.py` escribe la página, y **falla sin escribir nada** si a un paso le falta el código de
@@ -107,7 +107,7 @@ generador que se traga un fixture incompleto destruye la única garantía de est
 Los otros dos existen porque había números en los fixtures que nadie podía verificar leyendo un solo
 fichero:
 
-- `urgency.py` calcula la urgencia de cada tarea según ["La urgencia"](../docs/spec/modelo-de-datos.md#la-urgencia), con el
+- `urgency.py` calcula la urgencia de cada tarea según ["La urgencia"](../../spec/modelo-de-datos.md#la-urgencia), con el
   desglose de cada término, y las ordena por la regla de `biso ls`. Los escenarios ordenan listas por
   urgencia, y ese orden hay que poder reproducirlo en vez de creerse un número escrito por alguien.
   Reproduce el `urgency 19.0` que la especificación imprime para `TASK-11`, que es la comprobación de
@@ -120,7 +120,7 @@ fichero:
 comprobadores. Y construir el sitio, que es la comprobación de que la página entra bien:
 
 ```
-uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict
+uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project mkdocs build --strict -f docs/docs-tooling/mkdocs/mkdocs.yml
 ```
 
 ## Lo que viene

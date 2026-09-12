@@ -10,7 +10,8 @@ docs/TUTORIAL.md preceded by the concepts section (tutorial/conceptos.md).
 It depends on nothing beyond the standard library and PyYAML, which MkDocs already pulls in (see
 docs-requirements.txt). Run it with:
 
-    uv run --with-requirements docs-requirements.txt --no-project python tutorial/generate.py
+    uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project \
+        python docs/docs-tooling/tutorial/generate.py
 
 When a fixture is incomplete or malformed the script writes nothing and exits non-zero, listing
 every problem it found with the file and step each one is in. A generator that swallows an
@@ -27,14 +28,15 @@ from typing import Any
 
 import yaml
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SCENARIOS_DIR = REPO_ROOT / "tutorial" / "escenarios"
-CONCEPTS_PATH = REPO_ROOT / "tutorial" / "conceptos.md"
+TUTORIAL_DIR = Path(__file__).resolve().parent
+REPO_ROOT = TUTORIAL_DIR.parent.parent.parent
+SCENARIOS_DIR = TUTORIAL_DIR / "escenarios"
+CONCEPTS_PATH = TUTORIAL_DIR / "conceptos.md"
 OUTPUT_PATH = REPO_ROOT / "docs" / "TUTORIAL.md"
 
 REGENERATE_CMD = (
-    "uv run --with-requirements docs-requirements.txt --no-project "
-    "python tutorial/generate.py"
+    "uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project "
+    "python docs/docs-tooling/tutorial/generate.py"
 )
 
 FILENAME_RE = re.compile(r"^(\d+)-([a-z0-9]+(?:-[a-z0-9]+)*)\.yaml$")

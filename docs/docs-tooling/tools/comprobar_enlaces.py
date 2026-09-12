@@ -2,9 +2,9 @@
 """Comprueba los enlaces relativos de los ficheros Markdown que estan fuera de docs/.
 
 `mkdocs build --strict` valida los enlaces y las anclas de todo lo que hay dentro de docs/,
-pero no ve CLAUDE.md, INTEGRATION.md ni los .md de bench/. Este script los cubre: por cada
-enlace relativo a un fichero del repositorio, comprueba que el fichero existe y que, si el
-enlace lleva ancla, ese fichero tiene un encabezado que la genera.
+pero no ve CLAUDE.md ni los .md de bench/. Este script los cubre: por cada enlace relativo a
+un fichero del repositorio, comprueba que el fichero existe y que, si el enlace lleva ancla,
+ese fichero tiene un encabezado que la genera.
 
 El ancla se calcula igual que el slugify de pymdownx que mkdocs.yml configura, para que los
 dos coincidan: minusculas, fuera todo lo que no sea letra, numero, espacio o guion, y cada
@@ -12,7 +12,7 @@ racha de espacios convertida en un guion. Los acentos se conservan.
 
 Se ejecuta:
 
-    python tools/comprobar_enlaces.py CLAUDE.md INTEGRATION.md bench/sqlite-driver/*.md
+    python tools/comprobar_enlaces.py CLAUDE.md bench/sqlite-driver/*.md
 
 Termina con codigo 0 si todos los enlaces resuelven y 1 si alguno no.
 """

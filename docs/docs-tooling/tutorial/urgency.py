@@ -5,7 +5,8 @@ This exists so that no fixture has to do that arithmetic by hand. The tutorial's
 lists by urgency, and that order has to be reproducible instead of taken on trust from a number
 somebody typed. Run it with:
 
-    uv run --with-requirements docs-requirements.txt --no-project python tutorial/urgency.py
+    uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project \
+        python docs/docs-tooling/tutorial/urgency.py
 
 It prints every task with its urgency and the breakdown of each term, already sorted by the default
 ordering rule of `biso ls` (SPEC 10.4): tasks with an ordinal first, then the rest by descending

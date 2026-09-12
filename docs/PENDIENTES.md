@@ -12,7 +12,7 @@ fixtures del tutorial se separó en `source_kind` (`literal` o `derived`) y `sou
 por fichero y título, según el diseño de
 [`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md),
 y el tutorial entero (nombres de campos, contenido de los trece escenarios, `tutorial/conceptos.md` y las
-cadenas de página de `tutorial/generate.py`) nació en inglés. Los tres comandos de `tutorial/CLAUDE.md` y
+cadenas de página de `tutorial/generate.py`) nació en inglés. Los comandos de `tutorial/CLAUDE.md` y
 el build estricto de MkDocs pasan. Falta la revisión y la mezcla del PR.
 
 ## SIGUIENTE

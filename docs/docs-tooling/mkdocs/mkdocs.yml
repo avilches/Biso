@@ -1,12 +1,18 @@
 site_name: biso
 site_description: Especificacion y decisiones de diseno de biso, el CLI de gestion de tareas
-docs_dir: docs
+docs_dir: ../..
+site_dir: ../../../site
 
 # docs/superpowers/ guarda los documentos de diseno y los planes de las sesiones de
 # brainstorming. Se publican, porque ESTADO-DEL-ARTE.md enlaza a uno de ellos, pero no
 # entran en el menu lateral para no mezclarlos con los documentos principales.
 not_in_nav: |
   superpowers/
+
+# docs-tooling/ guarda los scripts, los fixtures del tutorial y la configuracion de MkDocs:
+# nada de eso es contenido a publicar.
+exclude_docs: |
+  docs-tooling/
 
 theme:
   name: material
@@ -45,8 +51,8 @@ plugins:
 # rota deja de ser un error silencioso. Los enlaces absolutos se rechazan de plano, porque la
 # convencion del proyecto es citar siempre con rutas relativas.
 #
-# Lo que esto NO cubre: los ficheros Markdown de fuera de docs/, como CLAUDE.md, INTEGRATION.md
-# y los de bench/. MkDocs solo ve lo que hay dentro de docs_dir, y de esos se encarga
+# Lo que esto NO cubre: los ficheros Markdown de fuera de docs/, como CLAUDE.md y los de
+# bench/. MkDocs solo ve lo que hay dentro de docs_dir, y de esos se encarga
 # tools/comprobar_enlaces.py.
 validation:
   anchors: warn

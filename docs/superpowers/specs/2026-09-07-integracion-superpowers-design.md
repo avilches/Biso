@@ -202,12 +202,12 @@ Y en su sección "Finish", dos órdenes consecutivas:
 
 O sea: el propio autor identifica que las decisiones tomadas en tu nombre solo te llegan por un
 mensaje final, y que ese mensaje muere con la sesión. **Los `comments` de `biso` son inmutables,
-con autor y con fecha (sección ["Los comentarios"](docs/spec/modelo-de-datos.md#los-comentarios)). El encaje es exacto, y viene ya justificado
+con autor y con fecha (sección ["Los comentarios"](../../spec/modelo-de-datos.md#los-comentarios)). El encaje es exacto, y viene ya justificado
 desde el otro lado.** Este es el argumento más fuerte a favor de toda la integración.
 
 ### `DECISIONES.md` ya descarta el canal fácil
 
-La sección ["El presupuesto del mensaje de arranque"](docs/DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md` dice, literalmente:
+La sección ["El presupuesto del mensaje de arranque"](../../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md` dice, literalmente:
 
 > `biso prime` sustituye por completo a las guías de instrucciones y a cualquier inyección de texto
 > en los ficheros de convenciones del proyecto.
@@ -227,7 +227,7 @@ no se puede usar sin contradecir la decisión que justifica la existencia de `bi
 
 ### No hace falta añadir ni un campo
 
-El modelo lógico de la sección ["El modelo de datos de una tarea"](docs/spec/modelo-de-datos.md) ya tiene sitio para todo lo que produce una
+El modelo lógico de la sección ["El modelo de datos de una tarea"](../../spec/modelo-de-datos.md) ya tiene sitio para todo lo que produce una
 sesión con Superpowers. Inventario de lo que se usa:
 
 | Campo de `biso` | Bandera | Qué guardaría de una sesión con Superpowers |
@@ -290,7 +290,7 @@ solo si alguien se acuerda de pedirla. Si la sesión se corta antes, no hay abso
 
 La tarea son **muchas escrituras pequeñas** en momentos que ya existen en el flujo de todas formas:
 al empezar, en cada decisión, en cada puerta, al cerrar. Cada una es una llamada barata a un CLI
-cuya salida por defecto no es un eco (principio 4 de la sección ["Los principios"](docs/spec/principios.md)). Journalear una
+cuya salida por defecto no es un eco (principio 4 de la sección ["Los principios"](../../spec/principios.md)). Journalear una
 tarea entera cuesta uno o dos miles de tokens, contra los diez kilobytes de un documento de handoff.
 
 Y hay un tercer punto que el propio `prime` ya dice en su párrafo de cierre: `work, biso note <ref>
@@ -305,7 +305,7 @@ documentos y las decisiones entren en él.
 
 Confirmado: `biso` es un CLI y no puede inyectar nada en el contexto de nadie. Quién levanta al
 agente y con qué prompt inicial es responsabilidad del arnés (un cron, un script, `claude -p`, un
-hook `SessionStart`). La sección ["Lo que se deja fuera a propósito"](docs/spec/fuera-de-alcance.md) ya lo deja fuera a propósito: "No hay servidor
+hook `SessionStart`). La sección ["Lo que se deja fuera a propósito"](../../spec/fuera-de-alcance.md) ya lo deja fuera a propósito: "No hay servidor
 de integración ni protocolo de herramientas".
 
 ### El matiz que cambia el diseño: el texto de la tarea es prompt
@@ -332,7 +332,7 @@ necesita diseño, lo correcto es que se pare, y se pierde el turno.
 ### La política de despacho que se deduce
 
 1. Despachar solo tareas listas: `biso ls --not-blocked --not-waiting` (los dos filtros existen,
-   sección ["`biso ls`"](docs/spec/cmd/ls.md), junto con `--blocked`, `--active`, `--not-active`, `--mine` y
+   sección ["`biso ls`"](../../spec/cmd/ls.md), junto con `--blocked`, `--active`, `--not-active`, `--mine` y
    `--unassigned`).
 2. Exigir además que **la puerta de diseño esté cerrada**, que en la práctica significa que la tarea
    ya lleva un `--doc` con su plan. Una tarea sin plan es trabajo de diseño y va a una persona.
@@ -368,7 +368,7 @@ Ni el nombre. Tres motivos:
 
 1. Es un plugin de terceros, fijado por un marketplace ajeno, que va por la 6.3.0 y reorganiza sus
    skills entre versiones. Atar la especificación a su vocabulario envejece mal.
-2. La sección ["Lo que se deja fuera a propósito"](docs/spec/fuera-de-alcance.md) ya declara que no hay sincronización con ningún sistema externo.
+2. La sección ["Lo que se deja fuera a propósito"](../../spec/fuera-de-alcance.md) ya declara que no hay sincronización con ningún sistema externo.
 3. No hace falta. La regla que resuelve el problema es general y no nombra a nadie: **la tarea es el
    registro, los documentos van en `--doc`, las decisiones en `--note`, y se pregunta en vez de
    adivinar.** Un agente que tenga eso y las skills en contexto tiende el puente solo, porque el
@@ -379,7 +379,7 @@ Comprobado además que hoy la especificación no contiene ni una sola aparición
 
 ### El presupuesto del mensaje de arranque, con los números
 
-De la sección ["El presupuesto de tamaño"](docs/spec/presupuestos.md#el-presupuesto-de-tamaño) y de la sección ["El presupuesto del mensaje de arranque"](docs/DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`:
+De la sección ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presupuesto-de-tamaño) y de la sección ["El presupuesto del mensaje de arranque"](../../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`:
 
 | Parte | Tope | Ocupado hoy | Libre |
 |---|---:|---:|---:|
@@ -396,7 +396,7 @@ bloque fijo, porque las dos partes tienen tope propio y el resumen no cede el su
 Dos restricciones que hay que respetar al proponer texto:
 
 - El tope total de 5.120 bytes es de las pocas cosas que **no cambian nunca** según el ["contrato de
-  estabilidad"](docs/spec/estabilidad.md). El texto dentro del tope sí puede cambiar entre versiones menores, y de
+  estabilidad"](../../spec/estabilidad.md). El texto dentro del tope sí puede cambiar entre versiones menores, y de
   hecho esa sección dice que es "donde se espera que la herramienta más aprenda con el tiempo".
 - `docs/DECISIONES.md` es explícito sobre qué cede cuando aprieta: "un tope que se sube cada vez que
   aprieta deja de ser un tope ... si los números no cupieran, lo que se recorta es contenido, no el
@@ -468,7 +468,7 @@ aportan garantía real:
 
 **¿Gana el mensaje de `biso prime` la frase de ["La frase propuesta, que hoy ya no cabe"](#la-frase-propuesta-que-hoy-ya-no-cabe)?**
 
-A favor: el criterio de diseño de la sección ["Qué resuelve este comando"](docs/spec/cmd/prime.md#qué-resuelve-este-comando) dice que quien lea el mensaje y no haya visto nunca
+A favor: el criterio de diseño de la sección ["Qué resuelve este comando"](../../spec/cmd/prime.md#qué-resuelve-este-comando) dice que quien lea el mensaje y no haya visto nunca
 la herramienta tiene que poder completar un ciclo de trabajo entero sin leer nada más. Hoy ese ciclo
 es completo para trabajo pequeño, pero no dice dónde viven los documentos ni las decisiones, que es
 exactamente lo que se pierde cuando la sesión muere.
@@ -507,7 +507,7 @@ Las dos alternativas si la respuesta es que no:
   creada desde un worktree podría no verse desde `main`, y que entonces el registro duradero dejaría
   de serlo justo cuando más falta hace. Estaba bien identificado: es la peor propiedad de las
   herramientas que guardan las tareas como ficheros del árbol de trabajo, donde el estado se bifurca
-  con la rama y una incidencia cerrada en una rama reaparece abierta en la principal. La sección ["La decisión de persistencia"](docs/DECISIONES.md#la-decisión-de-persistencia)
+  con la rama y una incidencia cerrada en una rama reaparece abierta en la principal. La sección ["La decisión de persistencia"](../../DECISIONES.md#la-decisión-de-persistencia)
   de `docs/DECISIONES.md` no lo mitiga, lo elimina: un tablero es una base de datos SQLite en un
   directorio propio **fuera** del proyecto, localizada por el fichero puntero versionado
   `.biso.json`, así que no hay ninguna rama que contenga la tarea y un worktree ve exactamente el
@@ -517,7 +517,7 @@ Las dos alternativas si la respuesta es que no:
   eso no afecta a nada de lo que se propone aquí.
 - **El riesgo nuevo que aparece al cerrar esa decisión: el tablero ya no viaja, y los documentos
   sí.** El precio declarado de sacar el tablero del árbol de trabajo es que no se clona con el
-  proyecto, y lo único que cruza es la exportación de texto de `biso snapshot` (sección ["`biso snapshot`"](docs/spec/cmd/snapshot.md)).
+  proyecto, y lo único que cruza es la exportación de texto de `biso snapshot` (sección ["`biso snapshot`"](../../spec/cmd/snapshot.md)).
   Eso toca de lleno al argumento de la sección ["Superpowers documenta la fuga que no puede tapar"](#superpowers-documenta-la-fuga-que-no-puede-tapar): los `Ruling:` que se rescatan
   de la bitácora antes del `rm -rf` pasan a vivir en una base de datos local a una máquina, así que
   la frase de Superpowers "la historia de git es el registro ahora" solo vuelve a ser cierta cuando
@@ -528,13 +528,13 @@ Las dos alternativas si la respuesta es que no:
 - **Y hay una configuración en la que ese riesgo desaparece del todo, que conviene tener presente
   aquí**: si el tablero se crea dentro del proyecto con `biso init --at` y el proyecto versiona esa
   carpeta, la revisión de la instantánea va al repositorio del código y viaja con su remoto, sin que
-  nadie configure nada (sección ["`biso snapshot`"](docs/spec/cmd/snapshot.md)). La base de datos sigue quedando fuera,
+  nadie configure nada (sección ["`biso snapshot`"](../../spec/cmd/snapshot.md)). La base de datos sigue quedando fuera,
   porque el fichero de exclusión que `init` escribe dentro del tablero la excluye siempre, así que la
   propiedad de la que depende este documento, que un worktree vea el mismo tablero que `main`, se
   conserva igual. En esa configuración, "la historia de git es el registro ahora" vuelve a ser cierta
   en cuanto alguien ejecuta `biso snapshot`, y lo que cruza a otra máquina cruza con el proyecto.
 - **El arrendamiento con caducidad existe precisamente para el fallo que motiva este documento**:
-  detectar una tarea que un agente cogió y cuya sesión murió sin liberarla. La sección ["Saber si alguien está trabajando de verdad"](docs/DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de
+  detectar una tarea que un agente cogió y cuya sesión murió sin liberarla. La sección ["Saber si alguien está trabajando de verdad"](../../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de
   `docs/DECISIONES.md` ya lo resuelve, dentro de un capítulo titulado "El modelo de estados: cuatro
   requisitos, cerrados": se guardan `leaseExpiresAt` y `leaseHolder`, un plazo vencido no saca la
   tarea del estado activo por sí solo, y quien reclama una tarea vencida lo hace con el mismo
@@ -561,8 +561,8 @@ En este orden, y ninguno de los pasos depende de que exista una línea de códig
    `biso` y se puede probar en cuanto exista el CLI.
 2. **La frase del `prime`**, si la decisión de la sección ["La decisión abierta"](#la-decisión-abierta) es que sí: primero dejarla en 129 bytes o
    menos, o recortar antes lo que haga falta del bloque fijo, porque con su tamaño de hoy no cabe;
-   luego editar la salida literal de la sección ["La salida literal"](docs/spec/cmd/prime.md#la-salida-literal), **recalcular los bytes de las
-   dos partes** y actualizar los números de la sección ["El presupuesto de tamaño"](docs/spec/presupuestos.md#el-presupuesto-de-tamaño) y de la sección ["El presupuesto del mensaje de arranque"](docs/DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`, que hoy
+   luego editar la salida literal de la sección ["La salida literal"](../../spec/cmd/prime.md#la-salida-literal), **recalcular los bytes de las
+   dos partes** y actualizar los números de la sección ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presupuesto-de-tamaño) y de la sección ["El presupuesto del mensaje de arranque"](../../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`, que hoy
    dicen 3.327 y 4.818.
 3. **La entrada en `docs/DECISIONES.md`** explicando por qué esa frase entra y por qué no se nombra
    a Superpowers. Sin eso, la siguiente sesión que vea la frase la puede quitar por parecer ajena al
@@ -581,15 +581,15 @@ regenerarlos y a comprobar que coinciden carácter a carácter.
 
 **En este repositorio:**
 
-- `docs/spec/`, sección ["El modelo de datos de una tarea"](docs/spec/modelo-de-datos.md), el modelo de datos y sus campos.
-- `docs/spec/`, secciones ["Qué resuelve este comando"](docs/spec/cmd/prime.md#qué-resuelve-este-comando), ["El presupuesto de tamaño"](docs/spec/presupuestos.md#el-presupuesto-de-tamaño), ["Qué entra en el mensaje y qué se relega a `--help`"](docs/spec/cmd/prime.md#qué-entra-en-el-mensaje-y-qué-se-relega-a---help) y ["La salida literal"](docs/spec/cmd/prime.md#la-salida-literal), el mensaje de arranque, su presupuesto y su texto
+- `docs/spec/`, sección ["El modelo de datos de una tarea"](../../spec/modelo-de-datos.md), el modelo de datos y sus campos.
+- `docs/spec/`, secciones ["Qué resuelve este comando"](../../spec/cmd/prime.md#qué-resuelve-este-comando), ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presupuesto-de-tamaño), ["Qué entra en el mensaje y qué se relega a `--help`"](../../spec/cmd/prime.md#qué-entra-en-el-mensaje-y-qué-se-relega-a---help) y ["La salida literal"](../../spec/cmd/prime.md#la-salida-literal), el mensaje de arranque, su presupuesto y su texto
   literal.
-- `docs/spec/`, sección ["`biso ls`"](docs/spec/cmd/ls.md), los filtros de `biso ls`, incluidos `--not-blocked` y `--waiting`.
-- `docs/spec/`, sección ["El contrato de estabilidad"](docs/spec/estabilidad.md), el contrato de estabilidad, que congela el tope de 5.120 bytes.
-- `docs/spec/`, sección ["Lo que se deja fuera a propósito"](docs/spec/fuera-de-alcance.md), lo que se deja fuera a propósito.
-- `docs/DECISIONES.md` sección ["El presupuesto del mensaje de arranque"](docs/DECISIONES.md#el-presupuesto-del-mensaje-de-arranque), el presupuesto del mensaje de arranque y la decisión de sustituir
+- `docs/spec/`, sección ["`biso ls`"](../../spec/cmd/ls.md), los filtros de `biso ls`, incluidos `--not-blocked` y `--waiting`.
+- `docs/spec/`, sección ["El contrato de estabilidad"](../../spec/estabilidad.md), el contrato de estabilidad, que congela el tope de 5.120 bytes.
+- `docs/spec/`, sección ["Lo que se deja fuera a propósito"](../../spec/fuera-de-alcance.md), lo que se deja fuera a propósito.
+- `docs/DECISIONES.md` sección ["El presupuesto del mensaje de arranque"](../../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque), el presupuesto del mensaje de arranque y la decisión de sustituir
   las guías de instrucciones.
-- `docs/DECISIONES.md` sección ["Saber si alguien está trabajando de verdad"](docs/DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad), el arrendamiento con caducidad, ya decidido.
+- `docs/DECISIONES.md` sección ["Saber si alguien está trabajando de verdad"](../../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad), el arrendamiento con caducidad, ya decidido.
 
 **Fuera de este repositorio:**
 
