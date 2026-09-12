@@ -5,38 +5,25 @@ que la use un agente automático que trabaja dentro de ese proyecto. La salida e
 errores se distinguen por su código sin leer el mensaje, y ningún comportamiento depende de dónde se
 ejecute el programa.
 
-## Estado: especificación cerrada, sin una línea de código
+## La especificación
 
-Lo que hay es [`docs/spec/`](docs/spec/index.md), y es la especificación de la que se implementa todo. Define
-todos los comandos (su recuento vive en ["Los comandos"](docs/spec/cmd/index.md)) con su firma, su tabla de parámetros, su
-comportamiento en los casos límite, la salida literal que imprimen, su esquema JSON, sus códigos de
-salida y el texto exacto de su ayuda.
-Está escrito para que alguien lo implemente entero sin preguntar nada.
+La especificación completa vive en [`docs/spec/`](docs/spec/index.md), y es de ahí de donde se
+implementa todo: define todos los comandos (su recuento vive en ["Los comandos"](docs/spec/cmd/index.md))
+con su firma, su tabla de parámetros, su comportamiento en los casos límite, la salida literal que
+imprimen, su esquema JSON, sus códigos de salida y el texto exacto de su ayuda. Está escrita para que
+alguien la implemente entera sin preguntar nada.
 
 **No hay que rediseñar nada por libre.** Si al implementar aparece un caso que la especificación no
 cubre, lo correcto es añadirlo a la especificación y luego implementarlo, no resolverlo solo en el
 código. Y si una regla parece arbitraria, su razón está en
 [`docs/DECISIONES.md`](docs/DECISIONES.md) antes de cambiarla.
 
-**Y antes de dar por hueca una laguna, hay que mirar
-[`docs/PENDIENTES.md`](docs/PENDIENTES.md)**, que es la lista de lo que queda por cerrar: los rincones
-donde la especificación todavía no decide, las frases que dicen algo falso sin cambiar el
-comportamiento, y las decisiones aplazadas a propósito. Nada de eso impide empezar a implementar, y
-saber que ya está anotado evita volver a descubrirlo. Cuando se cierre una entrada, se quita de ahí.
-
 ["Por dónde empezar a implementar"](docs/spec/por-donde-empezar.md) dice el orden en que cada pieza paga lo que cuesta: el modelo de
 datos, el algoritmo de coincidencia (una función pura de la que dependen todos los comandos), los
 comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
 exportación, y el resto.
 
-## El modelo de estados está cerrado
-
-Los cuatro requisitos que lo tocaban ya están decididos: dos resueltos sin ningún papel de estado
-nuevo, uno resuelto con la decisión de persistencia ya tomada (el arrendamiento con caducidad) y uno
-retirado. El detalle, con la evidencia detrás de cada decisión, está en
-["El modelo de estados: cuatro requisitos, cerrados"](docs/DECISIONES.md#el-modelo-de-estados-cuatro-requisitos-cerrados).
-
-## La persistencia está decidida
+## La persistencia
 
 Un tablero es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un
 fichero puntero versionado en git, con una exportación de texto que sí se commitea para el historial
@@ -45,27 +32,18 @@ cada pieza, con su aritmética, está en ["La decisión de persistencia"](docs/D
 que enlaza a su vez a [`docs/ESTADO-DEL-ARTE.md`](docs/ESTADO-DEL-ARTE.md), la investigación sobre las
 demás herramientas del espacio y por qué fallan.
 
-## El lenguaje es Go
+## El lenguaje y el controlador de SQLite
 
-El requisito que sale de la especificación es que el programa arranque rápido, con el presupuesto de
-["El presupuesto de arranque"](docs/spec/presupuestos.md#el-presupuesto-de-arranque): 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero
-de 300 tareas, cuyo origen está en ["El origen de la cifra de 25 milisegundos"](docs/DECISIONES.md#el-origen-de-la-cifra-de-25-milisegundos). Eso descarta los lenguajes
-interpretados, y entre los compilados la elección es **Go**, no por rendimiento sino por lo que cuesta
-escribir el programa: la ventaja de Rust son seis décimas de milisegundo sobre un presupuesto que ya
-sobra tres veces, y su modelo de propiedad de memoria obliga a rondas de corrección que alargan el ciclo
-sin dejar nada mejor en el producto. El razonamiento completo, con las cifras, está en
+El programa está escrito en **Go**, con el presupuesto de
+["El presupuesto de arranque"](docs/spec/presupuestos.md#el-presupuesto-de-arranque): 25 milisegundos de reloj para `biso ls` y `biso prime`
+sobre un tablero de 300 tareas. El razonamiento completo, con las cifras, está en
 ["El lenguaje de implementación es Go"](docs/DECISIONES.md#el-lenguaje-de-implementación-es-go).
 
-**Y el controlador de SQLite es `modernc.org/sqlite`, sobre la interfaz estándar `database/sql` y sin
-`cgo`.** Medido el 2026-09-10: los cuatro candidatos cumplen el presupuesto con mucho margen, así que no
-decide el reloj sino la distribución del binario, y el enlace con la biblioteca en C no puede compilar de
-forma cruzada para Linux ni para Windows y su modo sin `cgo` produce un binario que falla al ejecutarse
-en vez de al construirse. El razonamiento está en
+El controlador de SQLite es `modernc.org/sqlite`, sobre la interfaz estándar `database/sql` y sin
+`cgo`, porque el enlace con la biblioteca en C no compila de forma cruzada para Linux ni para Windows.
+El razonamiento está en
 ["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](docs/DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo), y el banco de
 pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `README.md`.
-
-Con eso **ya no queda nada que bloquee empezar a escribir código**: el paso 1 del orden de
-["Por dónde empezar a implementar"](docs/spec/por-donde-empezar.md) es el almacén, y su decisión de controlador está tomada.
 
 ## Cosas que conviene tener presentes al implementar
 
@@ -88,9 +66,10 @@ Con eso **ya no queda nada que bloquee empezar a escribir código**: el paso 1 d
 
 - **El trabajo va en un worktree**, en `.claude/worktrees/<rama>`, nunca editando `main`
   directamente.
-- **Al terminar una tarea, se mezcla directamente a `main` y se borra el worktree, sin PR.**
-- **La documentación va en español**: `docs/`, este fichero, y los ficheros de fixtures del
-  tutorial, que son documentación con forma de datos.
+- **La documentación va en español**: `docs/`, este fichero y los demás `CLAUDE.md` del
+  repositorio. La única excepción es el contenido de `docs/TUTORIAL.md` y de los fixtures que lo
+  generan (`tutorial/escenarios/*.yaml`, `tutorial/conceptos.md`), declarada y razonada en
+  `tutorial/CLAUDE.md`: ese tutorial nace en inglés.
 - **El código fuente va entero en inglés, sea Go o Python.** No es solo cuestión de los
   identificadores: los comentarios, los docstrings y los mensajes que la propia herramienta imprime
   van también en inglés. Un fichero `.go` o `.py` no lleva ni una palabra en español.

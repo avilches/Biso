@@ -1,7 +1,7 @@
 # Banco de pruebas: con qué controlador habla `biso` con SQLite
 
 Este directorio contesta con números la única decisión que quedaba antes de escribir código,
-la que `docs/PENDIENTES.md` tenía aplazada en sus ["Decisiones aplazadas a propósito"](../../docs/PENDIENTES.md#2-decisiones-aplazadas-a-propósito): cómo habla el programa con SQLite.
+la que `docs/PENDIENTES.md` tenía anotada como decisión aplazada a propósito: cómo habla el programa con SQLite.
 El resultado, con su tabla y su recomendación, está en
 [`RESULTADOS.md`](RESULTADOS.md), y su contenido está escrito para acabar en ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go) de
 `docs/DECISIONES.md`.
