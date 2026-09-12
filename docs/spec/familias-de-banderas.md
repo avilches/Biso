@@ -13,17 +13,26 @@ cuatro palabras para saber qué hace cada una, ni falta que consultar esta secci
 Cada clase de campo tiene exactamente las operaciones que tienen sentido para esa forma de dato, ni
 una más ni una menos:
 
-| Clase de campo | Variantes |
-|---|---|
-| Lista de tokens que admite coma | añadir, quitar, vaciar, sustituir entera |
-| Lista de tokens sin comas (criterios) | añadir, quitar, vaciar |
-| Bloque de prosa | añadir al final, vaciar |
-| Mapa de claves | fijar una clave, quitar una clave, vaciar |
-| Escalar | fijar, vaciar |
-| Lista inmutable (comentarios) | solo añadir, `--comment` |
+La columna "Forma" usa las mismas seis palabras de la tabla de formas de
+["El modelo de datos de una tarea"](modelo-de-datos.md), porque son la misma clasificación vista desde el lado de las
+banderas: qué se puede hacer con un campo depende de su forma. **Dos formas se reparten en más de una
+fila** cuando, dentro de la misma forma, hay más de un conjunto de operaciones posible: `acceptanceCriteria`,
+`definitionOfDone` y `comments` son los tres "lista de objetos" de aquella tabla, pero los criterios y
+los comentarios no comparten las mismas banderas, así que la forma aparece dos veces, una por cada
+conjunto de operaciones.
 
-**`question` no entra en esta tabla.** Es un registro de tres partes (["La pregunta abierta"](modelo-de-datos.md#la-pregunta-abierta)), no una
-lista, ni un bloque de prosa, ni un mapa, ni un escalar, así que ninguna de estas clases lo describe.
+| Forma | Clase de campo | Variantes |
+|---|---|---|
+| escalar | Escalar | fijar, vaciar |
+| lista de tokens | Lista de tokens | añadir, quitar, vaciar, sustituir entera |
+| bloque de prosa | Bloque de prosa | añadir al final, vaciar |
+| mapa de claves | Mapa de claves | fijar una clave, quitar una clave, vaciar |
+| lista de objetos | Criterios (`acceptanceCriteria`, `definitionOfDone`) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
+| lista de objetos | Comentarios (`comments`) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
+
+**`question` no entra en esta tabla.** Es la forma "registro de tres partes" de la tabla de formas, y
+esa forma no tiene ninguna fila aquí porque no existe ninguna bandera de campo que la escriba: ninguna
+de las demás filas la describe, y no hace falta una fila vacía solo para nombrarla.
 **Ninguna bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación
 de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (sección
 ["El modelo de datos de una tarea"](modelo-de-datos.md)).
@@ -103,6 +112,14 @@ anteriores no se reutilizan.** Es coherente con
 ["Los criterios y sus claves estables"](modelo-de-datos.md#los-criterios-y-sus-claves-estables): la
 clave se asigna al crear el elemento.
 
+**Qué clave le toca a un elemento creado con `--add-ac` o `--add-dod` es algo que quien llama no
+puede saber de antemano**, salvo en `biso new`: en cualquier otro comando de escritura, el contador de
+esa lista ya venía de antes, y consultarlo exigiría leer la tarea primero. Por el principio 4
+(["Los principios"](principios.md), "la salida por defecto de una escritura es lo que quien llama no sabía"), esa clave es
+justo la clase de dato que la salida por defecto tiene que enseñar sin que haga falta pedirlo aparte.
+La forma exacta de cómo se enseña, en la línea de estado de ["`biso set`"](cmd/set.md#salida) y no en `biso new`, está en esa misma
+sección.
+
 ## Campos de prosa
 
 | Campo | Añade al final | Vacía |
@@ -171,6 +188,84 @@ error: --check-ac and --uncheck-ac both select acceptance criterion #3 of MYP-11
 
 Esta es la única familia de banderas de esta sección donde el solape es un error en vez de resolverse
 por orden (["Sustituir un campo que no tiene bandera de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera) explica por qué).
+
+## Comentarios
+
+| Operación | Bandera | Repetible |
+|---|---|---|
+| añadir | `--comment <text>` | sí |
+| borrar uno o varios enteros | `--rm-comment <sel>` | sí |
+| corregir solo la fecha de uno o varios | `--set-comment-date <sel>=<instante>` | sí |
+
+**No existe una bandera que edite el cuerpo o el autor de un comentario ya escrito, y no va a
+existir.** Un comentario es el registro de una conversación, y lo único que se concede aquí es
+corregir un metadato (la fecha) o retirar el comentario entero, nunca reescribir lo que se dijo. La
+razón, con el caso medido que la motiva, está en ["Borrar o corregir la fecha de un comentario"](../DECISIONES.md#borrar-o-corregir-la-fecha-de-un-comentario) de
+`DECISIONES.md`.
+
+**`--rm-comment` y `--set-comment-date` toman el mismo selector que `--rm-ac` y `--check-ac`**
+(["Selectores de criterios"](#selectores-de-criterios)), con la clave de un comentario en vez de la de un criterio y el
+cuerpo del comentario en vez del texto del criterio para la forma de texto:
+
+```
+biso set MYP-11 --rm-comment 3
+biso set MYP-11 --rm-comment all
+biso set MYP-11 --set-comment-date 3=2026-08-14T10:22:00Z
+```
+
+**No existe `--clear-comments`.** `--rm-comment all` ya vacía la lista, y esta familia no necesita
+una segunda forma de decir lo mismo: a diferencia de los criterios, que tienen `--clear-acs` además de
+`--rm-ac` (["Campos de lista sin coma (criterios)"](#campos-de-lista-sin-coma-criterios)), aquí no hace falta la redundancia porque nada en esta
+familia sustituye la lista entera de un tirón, y vaciarla del todo es un gesto tan deliberado como
+borrar uno por uno.
+
+**`--set-comment-date` toma un instante UTC completo (`YYYY-MM-DDTHH:MM:SSZ`), no una fecha suelta.**
+`createdAt` es un instante, no un día, así que la corrección tiene que poder fijar la hora y no solo la
+fecha; `--due` es distinto porque `due` sí es un día (["El modelo de datos de una tarea"](modelo-de-datos.md)).
+
+**Dónde corta el `=` de `--set-comment-date`, cuando el selector es un texto que a su vez puede traer
+el signo `=`.** El valor se divide por el **último** `=` de la cadena, nunca por el primero: todo lo
+que queda a la derecha tiene que cumplir el formato de instante de arriba, y si no lo cumple es error
+2 de instante mal formado, aunque el fragmento de texto de la izquierda contenga otro `=` suelto. Es
+la misma familia de problema que ya resuelve la regla de desambiguación de ["Selectores de criterios"](#selectores-de-criterios) (clave
+o texto, según si el valor entero encaja con la gramática de claves), solo que aquí el corte no
+depende de una gramática cerrada sino de que el instante tiene una forma fija y reconocible. Un cuerpo
+de comentario que termine literalmente en algo con forma de instante detrás de un `=` es el único caso
+que esta regla no puede resolver por texto; para ese caso, la clave sigue siendo el selector que
+siempre funciona.
+
+**Esto no es la misma regla que `--ext <clave>=<valor>`, y no hace falta que lo sea.** `--ext` corta
+por el primer `=` porque puede: el alfabeto de una clave de `ext` ya excluye el propio `=`
+(["El juego de caracteres de un token"](valores-de-entrada.md#el-juego-de-caracteres-de-un-token)), así que el primer `=` de la cadena es siempre el único
+`=` que puede separar la clave del valor, y da igual por cuál de los dos extremos se busque. El
+selector de `--set-comment-date`, en cambio, puede ser un texto libre sin alfabeto cerrado, así que
+necesita su propia regla de corte, y esa regla es "por el último" precisamente porque aquí sí puede
+haber más de un `=` en la cadena.
+
+**El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguna de las
+dos, no durante el orden de escritura.** Caen en pasos distintos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)
+(`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada una resolviera
+su selector en su propio paso, `--rm-comment` ya habría borrado el comentario para cuando
+`--set-comment-date` intentara corregirle la fecha, y el resultado sería un error 4 de "no existe" en
+vez de un conflicto. Para que la regla no dependa de ese orden, cada selector se resuelve contra la
+lista de comentarios de **antes** de la escritura, en la fase de validación que exige el principio 6
+(["Los principios"](principios.md)), exactamente como ya hace la regla de solape de `--check-ac`/`--uncheck-ac`
+(["Selectores de criterios"](#selectores-de-criterios)) sobre el conjunto ya resuelto: si una misma clave aparece en los dos
+selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
+
+| Caso límite | Resultado |
+|---|---|
+| clave que no existe | error 4: `no comment #7 on MYP-11 (keys: 1)` |
+| texto que no encaja con ningún comentario | error 4, con los cuerpos de los comentarios listados |
+| texto que encaja con dos o más | error 5, con los dos listados |
+| rango invertido | error 2 |
+| `--set-comment-date` con un instante mal formado | error 2, señalando el formato ISO 8601 |
+| la misma clave en dos `--set-comment-date` con instantes distintos | error 2, misma regla que un escalar repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)) |
+| la misma clave en dos `--set-comment-date` con el mismo instante | se aplica una vez, sin aviso |
+| `--rm-comment` y `--set-comment-date` sobre la misma clave en la misma llamada | error 2, detectado en la validación previa de arriba: borrar y corregir la fecha del mismo comentario a la vez es una petición contradictoria |
+| `--rm-comment all` en una tarea sin comentarios | sin efecto, con `warning: MYP-11 has no comments`, igual que `--check-ac all` sin criterios (["Selectores de criterios"](#selectores-de-criterios)) |
+| `--rm-comment all` o `--set-comment-date all=<instante>` sobre varias tareas | válido, cada tarea actúa sobre los suyos |
+| una clave, un rango, una lista o un texto sobre varias tareas | error 2, misma regla que la de ["Selectores de criterios"](#selectores-de-criterios): el selector de una tarea no tiene por qué significar lo mismo en otra |
 
 ## Campos escalares
 

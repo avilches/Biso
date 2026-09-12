@@ -17,7 +17,7 @@
 | **persona** | Quien encarga y quien responde | |
 | **agente** | El programa automático que coge tareas y las hace | |
 | **criterio** | Un elemento de las dos listas de comprobación | `acceptanceCriteria`, `definitionOfDone` |
-| **comentario** | Una entrada inmutable del histórico | `comments` |
+| **comentario** | Una entrada del histórico cuyo cuerpo y autor no se editan nunca, aunque su fecha se pueda corregir o el comentario entero se pueda borrar | `comments` |
 
 Estas palabras quedan restringidas por las reglas de abajo, y conviene decir a qué en vez de
 prohibirlas a secas, porque algunas de ellas tienen un uso legítimo:

@@ -270,7 +270,9 @@ escritura.
 MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
-Y por stderr, `note: comment #2 by @trello:juan`.
+Y por stderr, `note: comment #2 by @trello:juan`. Ese `#2` es la `key` que acaba de recibir el
+comentario (["Los comentarios"](../modelo-de-datos.md#los-comentarios)), la misma que después acepta `--rm-comment` y `--set-comment-date`
+(["Comentarios"](../familias-de-banderas.md#comentarios)).
 
 ### Códigos de salida
 
@@ -298,7 +300,9 @@ Options:
 Every field flag of `biso set --help` works here too. Use `--comment <text>`
 for a comment that is not checked against the id grammar.
 
-Comments are append-only: they are never edited and never deleted.
+A comment's body and author are never edited, by any flag. The whole comment
+can be removed with --rm-comment, and only its date corrected with
+--set-comment-date, both in `biso set --help`.
 
 Exit codes:
   0  appended       3  the task could not be read    7  could not be written

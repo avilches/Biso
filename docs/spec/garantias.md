@@ -7,17 +7,24 @@ orden en que aparecen las banderas en la línea de comandos**, para que el resul
 
 1. Todos los `--clear-*`.
 2. Todos los `--replace-*`.
-3. Todos los `--rm-*`.
+3. Todos los `--rm-*`, incluido `--rm-comment`.
 4. Los añadidos: `--add-*` y `--append-*`.
 5. Los campos escalares.
 6. Los marcados de criterios y de definición de hecho (`--check-ac`, `--uncheck-ac`, `--check-dod`,
    `--uncheck-dod`).
-7. Los comentarios.
+7. `--set-comment-date`.
+8. Los comentarios, es decir `--comment`, el que añade.
 
 Con este orden, `--clear-labels --add-labels urgent` deja exactamente una etiqueta, y `--clear-acs
 --add-ac "A" --check-ac all` marca el criterio recién puesto. Dentro de un mismo paso manda el orden
 de la línea de comandos: `--add-labels b --add-labels a` deja `b` antes que `a`. Las listas nunca se
 ordenan solas.
+
+**`--rm-comment` y `--set-comment-date` solo pueden señalar un comentario que ya existiera al empezar
+la llamada.** Como `--comment` va en el último paso, un comentario que la propia llamada añade nunca
+es un objetivo válido de las otras dos: su clave se resuelve contra la lista de antes de que
+`--rm-comment` actúe en el paso 3, así que referenciarla en la misma llamada es la misma clase de
+fallo que una clave que no existe todavía (["Comentarios"](familias-de-banderas.md#comentarios)).
 
 ## Concurrencia, atomicidad y garantías observables
 

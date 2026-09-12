@@ -820,10 +820,10 @@ $ biso get TASK-19 --section comments
 TASK-19  Retry the upload on 5xx
 
 ## Comments
-@claude, 2026-09-06 14:10
+#1  @claude, 2026-09-06 14:10
 What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?
 
-@claude, 2026-09-06 15:30
+#2  @claude, 2026-09-06 15:30
 There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here.
 ```
 
@@ -887,9 +887,9 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [`biso comment`](spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](spec/modelo-de-datos.md#los-comentarios); not literal spec text)*
+*(derived output, see [`biso comment`](spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](spec/modelo-de-datos.md#los-comentarios), [Comentarios](spec/familias-de-banderas.md#comentarios); not literal spec text)*
 
-*Note: "note: comment #3 by @trello:juan" goes to stderr, in the exact shape the specification's own example gives. The number isn't a stable key like a criterion's: it's the comment's position in the list, and since comments are never edited or deleted (append-only), that position never changes again. This is TASK-19's third comment because `biso answer` had already added two in the previous scenario.*
+*Note: "note: comment #3 by @trello:juan" goes to stderr, in the exact shape the specification's own example gives. The number is a stable key, exactly like a criterion's: it's assigned once when the comment is created and never reassigned, even if an earlier comment is later removed with `--rm-comment`. A comment's body and author are never edited, by any flag; only its date can be corrected, with `--set-comment-date`, and the whole comment can be removed entirely. This is TASK-19's third comment because `biso answer` had already added two in the previous scenario.*
 
 You answer yourself, as yourself, with no author flags: the configured identity signs by
 default.
@@ -916,16 +916,16 @@ TASK-19  Retry the upload on 5xx
 The exponential backoff in retry.go can be reused as-is; the limit just needs to be set to 3.
 
 ## Comments
-@claude, 2026-09-06 14:10
+#1  @claude, 2026-09-06 14:10
 What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?
 
-@claude, 2026-09-06 15:30
+#2  @claude, 2026-09-06 15:30
 There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here.
 
-@trello:juan, 2026-09-06 16:05
+#3  @trello:juan, 2026-09-06 16:05
 A user on a mobile connection sees failures even after the 3 retries, should we raise the limit in that case?
 
-@claude, 2026-09-06 16:20
+#4  @claude, 2026-09-06 16:20
 Not for now, 3 retries is the policy for the rest of the system; if it happens again we'll revisit it.
 ```
 

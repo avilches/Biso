@@ -3,52 +3,72 @@
 Este es el modelo **lógico**. Describe qué campos tiene una tarea, de qué tipo son y quién los
 escribe. No dice nada de cómo se guardan.
 
-| Campo | Tipo lógico | Obligatorio | Quién lo fija | Mutable |
-|---|---|---|---|---|
-| `id` | identificador `PREFIX-<n>` | sí | el programa | no |
-| `title` | texto de una línea | sí | quien llama | sí |
-| `status` | uno del vocabulario de estados | sí | quien llama | sí |
-| `type` | uno del vocabulario de tipos | no | quien llama | sí |
-| `priority` | uno del vocabulario de prioridades | no | quien llama | sí |
-| `project` | uno del vocabulario de proyectos | no | quien llama | sí |
-| `milestone` | texto de hito | no | quien llama | sí |
-| `parent` | referencia a otra tarea | no | quien llama | sí |
-| `assignees` | lista de textos de persona | no | quien llama | sí |
-| `reporter` | texto de persona | no | el programa al crear, o quien llama; ver ["Quién reporta una tarea"](#quién-reporta-una-tarea) | sí |
-| `labels` | lista de textos | no | quien llama | sí |
-| `dependencies` | lista de referencias a tareas | no | quien llama | sí |
-| `references` | lista de textos | no | quien llama | sí |
-| `documentation` | lista de textos | no | quien llama | sí |
-| `modifiedFiles` | lista de textos | no | quien llama | sí |
-| `due` | fecha `YYYY-MM-DD` | no | quien llama | sí |
-| `ordinal` | entero >= 0 | no | quien llama | sí |
-| `createdAt` | instante UTC | sí | el programa | solo al importar |
-| `updatedAt` | instante UTC | sí | el programa | solo al importar |
-| `archived` | booleano | sí, `false` por defecto | el programa, con `biso archive` | sí, solo con `biso archive` / `--unarchive`, o al importar |
-| `leaseExpiresAt` | instante UTC | no | el programa, a `ahora + lease_minutes` (clave de [configuración](cmd/config.md)); ver la sexta precisión de abajo para cuándo | sí, ver las tres últimas precisiones de abajo, o al importar |
-| `leaseHolder` | texto de persona | no | el programa, solo con [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y con [`biso new --start`](cmd/new.md); ver la sexta precisión de abajo | sí, solo con esos dos, o al importar; ver las tres últimas precisiones de abajo |
-| `urgency` | decimal, derivado | derivado | el programa | no, se recalcula al leer |
-| `ext` | mapa de clave declarada a texto | no | quien llama | sí |
-| `description` | texto largo | no | quien llama | sí |
-| `plan` | texto largo | no | quien llama | sí |
-| `notes` | texto largo | no | quien llama | sí |
-| `summary` | texto largo | no | quien llama | sí |
-| `acceptanceCriteria` | lista de criterios | no | quien llama | sí |
-| `definitionOfDone` | lista de criterios | no | quien llama | sí |
-| `comments` | lista de comentarios | no | quien llama | solo se añade |
-| `question` | registro de tres partes | no | mixto, según la parte; ver ["La pregunta abierta"](#la-pregunta-abierta) | sí, solo con `biso ask`, `biso answer`, o al importar |
-| `acDone`, `acTotal`, `dodDone`, `dodTotal` | entero, derivado | derivado | el programa | no, se recalculan al leer |
-| `commentCount` | entero, derivado | derivado | el programa | no, se recalcula al leer |
-| `blocks` | lista de referencias, derivado | derivado | el programa | no, se recalcula al leer |
-| `blocked`, `waiting` | booleano, derivado | derivado | el programa | no, se recalculan al leer |
-| `leaseExpired` | booleano, derivado | derivado | el programa | no, se recalcula al leer |
+**Todo campo es de una de seis formas, y la tabla de abajo dice cuál para cada uno, sin excepción:**
+
+| Forma | Qué es | Ningún elemento tiene fecha/autor propios, salvo que se diga | Se direcciona por |
+|---|---|---|---|
+| escalar | un solo valor: texto, número, booleano, fecha o instante | (no aplica, no es una lista) | no aplica |
+| lista de tokens | varios valores del mismo tipo simple, separados por coma al escribir | cierto | por su propio valor, nunca por posición ni por clave |
+| bloque de prosa | un solo texto largo, que puede tener saltos de línea | (no aplica) | no aplica |
+| mapa de claves | pares clave-valor, con las claves declaradas de antemano | cierto | por su clave |
+| lista de objetos | varios elementos, cada uno con más de un campo propio | depende del campo, se dice en su fila | por una clave estable que el programa asigna al crear, nunca por posición |
+| registro de tres partes | como un elemento de una lista de objetos, pero solo hay uno, nunca una lista | depende del campo, se dice en su fila | no aplica, solo hay uno |
+
+Con esto, la pregunta "¿tiene fecha y autor propios, y se puede señalar uno a uno?" se contesta para
+cualquier campo sin salir de este documento: si su forma es "lista de objetos" o "registro de tres
+partes", la fila de la tabla siguiente o su sección propia lo dice explícitamente; para las otras
+cuatro formas la respuesta es siempre la misma y ya está en la tabla de arriba.
+
+| Campo | Forma | Tipo lógico | Obligatorio | Quién lo fija | Mutable |
+|---|---|---|---|---|---|
+| `id` | escalar | identificador `PREFIX-<n>` | sí | el programa | no |
+| `title` | escalar | texto de una línea | sí | quien llama | sí |
+| `status` | escalar | uno del vocabulario de estados | sí | quien llama | sí |
+| `type` | escalar | uno del vocabulario de tipos | no | quien llama | sí |
+| `priority` | escalar | uno del vocabulario de prioridades | no | quien llama | sí |
+| `project` | escalar | uno del vocabulario de proyectos | no | quien llama | sí |
+| `milestone` | escalar | texto de hito | no | quien llama | sí |
+| `parent` | escalar | referencia a otra tarea | no | quien llama | sí |
+| `assignees` | lista de tokens | textos de persona | no | quien llama | sí |
+| `reporter` | escalar | texto de persona | no | el programa al crear, o quien llama; ver ["Quién reporta una tarea"](#quién-reporta-una-tarea) | sí |
+| `labels` | lista de tokens | textos | no | quien llama | sí |
+| `dependencies` | lista de tokens | referencias a tareas | no | quien llama | sí |
+| `references` | lista de tokens | textos | no | quien llama | sí |
+| `documentation` | lista de tokens | textos | no | quien llama | sí |
+| `modifiedFiles` | lista de tokens | textos | no | quien llama | sí |
+| `due` | escalar | fecha `YYYY-MM-DD` | no | quien llama | sí |
+| `ordinal` | escalar | entero >= 0 | no | quien llama | sí |
+| `createdAt` | escalar | instante UTC | sí | el programa | solo al importar |
+| `updatedAt` | escalar | instante UTC | sí | el programa | solo al importar |
+| `archived` | escalar | booleano | sí, `false` por defecto | el programa, con `biso archive` | sí, solo con `biso archive` / `--unarchive`, o al importar |
+| `leaseExpiresAt` | escalar | instante UTC | no | el programa, a `ahora + lease_minutes` (clave de [configuración](cmd/config.md)); ver la sexta precisión de abajo para cuándo | sí, ver las tres últimas precisiones de abajo, o al importar |
+| `leaseHolder` | escalar | texto de persona | no | el programa, solo con [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y con [`biso new --start`](cmd/new.md); ver la sexta precisión de abajo | sí, solo con esos dos, o al importar; ver las tres últimas precisiones de abajo |
+| `urgency` | escalar | decimal, derivado | derivado | el programa | no, se recalcula al leer |
+| `ext` | mapa de claves | clave declarada a texto | no | quien llama | sí |
+| `description` | bloque de prosa | texto largo | no | quien llama | sí |
+| `plan` | bloque de prosa | texto largo | no | quien llama | sí |
+| `notes` | bloque de prosa | texto largo | no | quien llama | sí |
+| `summary` | bloque de prosa | texto largo | no | quien llama | sí |
+| `acceptanceCriteria` | lista de objetos | criterios, sin fecha ni autor propios; ver ["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables) | no | quien llama | sí |
+| `definitionOfDone` | lista de objetos | criterios, sin fecha ni autor propios; ver ["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables) | no | quien llama | sí |
+| `comments` | lista de objetos | comentarios, con fecha y autor propios; ver ["Los comentarios"](#los-comentarios) | no | quien llama | se añade, se borra entero, o se corrige solo la fecha; ver la precisión de abajo |
+| `question` | registro de tres partes | con fecha y autor propios, igual que un comentario; ver ["La pregunta abierta"](#la-pregunta-abierta) | no | mixto, según la parte; ver ["La pregunta abierta"](#la-pregunta-abierta) | sí, solo con `biso ask`, `biso answer`, o al importar |
+| `acDone`, `acTotal`, `dodDone`, `dodTotal` | escalar | entero, derivado | derivado | el programa | no, se recalculan al leer |
+| `commentCount` | escalar | entero, derivado | derivado | el programa | no, se recalcula al leer |
+| `blocks` | lista de tokens | referencias, derivado | derivado | el programa | no, se recalcula al leer |
+| `blocked`, `waiting` | escalar | booleano, derivado | derivado | el programa | no, se recalculan al leer |
+| `leaseExpired` | escalar | booleano, derivado | derivado | el programa | no, se recalcula al leer |
 
 Precisiones sobre la mutabilidad:
 
 - **"No mutable" significa que ninguna bandera del programa lo cambia.** `updatedAt` lo reescribe el
   programa en cada operación que cambie algo.
-- **Un comentario no se edita ni se borra, solo se añade.** Un comentario es el registro de una
-  conversación.
+- **El cuerpo y el autor de un comentario no se editan nunca, por ninguna vía.** Un comentario es el
+  registro de una conversación, y lo que se dijo no se reescribe. Lo que sí se puede corregir, con las
+  banderas dedicadas de ["Comentarios"](familias-de-banderas.md#comentarios) y nunca con una escritura general sobre la
+  tarea, es borrar el comentario entero (`--rm-comment`) o corregir únicamente su fecha
+  (`--set-comment-date`). La razón, con el caso que la motiva, está en
+  ["Borrar o corregir la fecha de un comentario"](../DECISIONES.md#borrar-o-corregir-la-fecha-de-un-comentario) de `DECISIONES.md`.
 - **`archived` solo lo cambia `biso archive` y `biso archive --unarchive`.** No hay una bandera de
   campo de la sección ["Las familias de banderas"](familias-de-banderas.md) para él: archivar es un gesto de flujo de trabajo con nombre propio,
   según el principio 5.
@@ -158,13 +178,19 @@ Consecuencias que hay que respetar en toda la implementación:
 
 ## Los comentarios
 
-Cada comentario tiene autor, instante y cuerpo:
+Cada comentario tiene clave, autor, instante y cuerpo:
 
 | Parte | Tipo | Quién la fija |
 |---|---|---|
+| `key` | entero positivo | el programa al crear el comentario |
 | `author` | texto libre | quien llama, y por defecto la identidad `me` |
-| `createdAt` | instante UTC | el programa, salvo al importar |
+| `createdAt` | instante UTC | el programa, salvo al importar o con `--set-comment-date` (["Comentarios"](familias-de-banderas.md#comentarios)) |
 | `body` | texto largo | quien llama |
+
+**La clave se asigna al crear el comentario, con un contador propio de esa lista dentro de esa
+tarea, y no se reasigna nunca**, exactamente igual que la de un criterio
+(["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables)). Borrar un comentario no mueve las claves de los
+demás.
 
 **El autor es texto libre y no se valida contra nada.** Un comentario puede venir de alguien que no
 existe en este tablero, y un sistema externo puede usar su propia convención, por ejemplo
@@ -181,7 +207,11 @@ pregunta que responde.
 sistema, en UTC y con precisión de segundo.
 
 **Se pueden fijar solo al importar**, es decir, en `biso new --from`. En cualquier otro sitio son un
-hecho observado y no un dato que se negocie.
+hecho observado y no un dato que se negocie, **con una única excepción**: el instante de un
+comentario ya escrito se puede corregir con `--set-comment-date`
+(["Comentarios"](familias-de-banderas.md#comentarios), ["Borrar o corregir la fecha de un comentario"](../DECISIONES.md#borrar-o-corregir-la-fecha-de-un-comentario) de `DECISIONES.md`). Es una corrección de un dato ya
+observado, no una negociación nueva, y por eso no abre la puerta a hacer lo mismo con `createdAt`,
+`updatedAt` ni con `question.askedAt`.
 
 **Una excepción de forma, no de fondo:** `biso answer` escribe el comentario en que se convierte la
 pregunta con el instante en que esa pregunta se hizo, no con el de la respuesta. No negocia nada,

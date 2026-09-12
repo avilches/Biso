@@ -8,7 +8,8 @@ más palabras.
 ```
 biso set <ref>... [cualquier bandera de campo de las familias de banderas]
          [--check-ac <sel>]... [--uncheck-ac <sel>]... [--check-dod <sel>]... [--uncheck-dod <sel>]...
-         [--comment <text>]... [--comment-author <@who>] [--id] [--match]
+         [--comment <text>]... [--comment-author <@who>]
+         [--rm-comment <sel>]... [--set-comment-date <sel>=<instante>]... [--id] [--match]
 ```
 
 ## Parámetros propios
@@ -25,6 +26,8 @@ significado que en cualquier otro comando. Lo propio de `set`:
 | `--uncheck-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check-dod` |
 | `--comment <text>` | | no | texto largo | | sí | no | |
 | `--comment-author <@who>` | | no | texto libre | `me` | no | no | requiere `--comment` |
+| `--rm-comment <sel>` | | no | selector ["Comentarios"](../familias-de-banderas.md#comentarios) | | sí | ver ["Comentarios"](../familias-de-banderas.md#comentarios) | solape con `--set-comment-date` sobre la misma clave |
+| `--set-comment-date <sel>=<instante>` | | no | selector ["Comentarios"](../familias-de-banderas.md#comentarios) + instante UTC | | sí | ver ["Comentarios"](../familias-de-banderas.md#comentarios) | solape con `--rm-comment` sobre la misma clave |
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
@@ -67,8 +70,18 @@ con su propio ejemplo, pero las reglas de su forma se dicen aquí y no se repite
 1. El trozo `ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación.
 2. El trozo `dod <marcados>/<total>` sale siempre que tenga definición de hecho. Una tarea sin ninguna
    de las dos listas imprime solo el identificador, el estado y la urgencia.
-3. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
-   que un comando puede añadirle, y quien lo añade es `biso archive` (["`biso archive`"](archive.md)).
+3. **Si la llamada crea uno o más criterios de aceptación, la línea añade `added ac #<clave>`,** con
+   las claves nuevas separadas por comas si son varias. Lo mismo con `added dod #<clave>` si crea
+   definición de hecho, y las dos piezas pueden ir juntas en la misma línea si la llamada crea de las
+   dos clases a la vez. **Si la llamada no crea ningún criterio, esta pieza no aparece**, y la línea es
+   exactamente la de antes. La razón de que vaya aquí y no en `biso new` está en
+   ["Campos de lista sin coma (criterios)"](../familias-de-banderas.md#campos-de-lista-sin-coma-criterios):
+   ```
+   biso set MYP-11 --add-ac "There is a test" --add-ac "Docs updated"
+   MYP-11  In Progress  ac 1/4  dod 0/1  urgency 19.0  added ac #4, #5
+   ```
+4. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
+   más que una escritura puede añadirle, y quien lo añade es `biso archive` (["`biso archive`"](archive.md)).
 
 Los avisos van por stderr:
 
@@ -87,7 +100,7 @@ warning: --replace-labels replaced 2 existing labels
     "tasks": [
       { "id": "MYP-11", "status": "In Progress", "acDone": 1, "acTotal": 2,
         "dodDone": 0, "dodTotal": 1, "urgency": 19.0,
-        "changed": ["labels", "status"] }
+        "changed": ["labels", "status"], "acAdded": [], "dodAdded": [] }
     ],
     "warnings": [ { "code": "overwrite", "field": "labels", "count": 2, "task": "MYP-11" } ]
   }
@@ -99,6 +112,12 @@ warning: --replace-labels replaced 2 existing labels
 dice qué campos han cambiado de verdad, que no es lo mismo que qué banderas se han pasado. En el lote
 de `new --from`, las 242 tareas van en `data.tasks` de **un solo sobre**, no en 242 objetos sueltos.
 
+**`acAdded` y `dodAdded` son las claves que la llamada acaba de crear**, en el mismo orden en que se
+crearon, vacías (`[]`) cuando no se creó ninguna. Están presentes en las mismas condiciones que el
+resto de claves de `data.tasks` (["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias)): siempre, en todos los comandos que
+comparten este `kind`, incluido `new`, aunque su equivalente en texto plano solo aparezca en la línea
+de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)).
+
 ## Códigos de salida
 
 | Desenlace | Código |
@@ -106,8 +125,8 @@ de `new --from`, las 242 tareas van en `data.tasks` de **un solo sobre**, no en 
 | Cambio aplicado, o nada que cambiar | 0 |
 | Sin banderas de cambio, banderas incompatibles, selector por clave con varias tareas, solape | 2 |
 | Valor fuera de un vocabulario, clave de extensión no declarada, tarea ilegible | 3 |
-| Alguna referencia no existe, o un selector de texto no encaja con ningún criterio | 4 |
-| Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios | 5 |
+| Alguna referencia no existe, o un selector de texto no encaja con ningún criterio o comentario | 4 |
+| Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios o comentarios | 5 |
 | `--dry-run` que no pasa la validación | 9 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 7 |
 | No hay tablero | 8 |
@@ -159,8 +178,14 @@ Scalars just take a value: -t/--title, -s/--status, --type, --priority,
 a --clear-<field>. An empty string is never a way to clear anything.
 
 Comments:
-      --comment <text>       append a comment; repeatable
-      --comment-author <@w>  who wrote it (default: you)
+      --comment <text>            append a comment; repeatable
+      --comment-author <@w>       who wrote it (default: you)
+      --rm-comment <sel>          remove one or more, by the same kind of
+                                   selector as --rm-ac; body and author are
+                                   never edited, by any flag
+      --set-comment-date <sel>=<instant>
+                                   correct only the date of one or more,
+                                   instant is YYYY-MM-DDTHH:MM:SSZ
 
 Resolution:
       --id / --match         force <ref> to be an id, or free text
@@ -174,7 +199,7 @@ Exit codes:
   0  done                    5  something matched more than one thing
   2  bad usage               7  the board could not be written
   3  unknown value           9  --dry-run did not pass
-  4  a task or a criterion was not found
+  4  a task, criterion or comment was not found
                              8  no board here
 
 Examples:

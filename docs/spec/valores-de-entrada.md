@@ -67,7 +67,9 @@ Para toda bandera marcada como repetible:
 - Si además acepta lista, separar por comas acumula igual: `--add-labels a,b` deja las mismas dos.
 - Las dos formas se pueden mezclar.
 - **Una coma dentro de un valor se escapa con `\,`.** Es la única forma de meter una coma en una
-  etiqueta o en una referencia.
+  referencia, en una documentación o en un fichero tocado. Una etiqueta, una persona asignada o una
+  clave de `ext` nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
+  (["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token)).
 - Los campos de texto largo y los criterios **nunca** se parten por comas.
 - Un valor repetido dentro de la misma bandera se guarda una vez y produce
   `warning: --add-labels: "urgent" given twice, kept once`.
@@ -78,4 +80,56 @@ distintos es un error de uso con código 2:
 ```
 error: --status given twice with different values: "In Progress" and "Done"
 ```
+
+## El juego de caracteres de un token
+
+`labels`, `assignees` y las claves de `ext` (["Campos externos"](modelo-de-datos.md#los-campos-externos)) son los únicos
+campos de esta sección cuyo alfabeto está cerrado. Los demás campos de lista de la tabla de
+["Campos de lista que admiten coma"](familias-de-banderas.md#campos-de-lista-que-admiten-coma), es decir `references`, `documentation`,
+`dependencies` y `modifiedFiles`, son texto libre y no tienen ninguna restricción de caracteres: una
+referencia o una documentación pueden ser una URL, y un fichero tocado es una ruta, y ninguna de las
+dos cosas admite cerrarle el alfabeto sin dejar fuera casos legítimos. `dependencies` tampoco la
+necesita: cada elemento es un `<ref>` y ya lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](referencias.md).
+
+| Campo | Alfabeto |
+|---|---|
+| `labels`, `assignees` | letras y dígitos Unicode, y los símbolos `- _ . : @` |
+| clave de `ext` | letras y dígitos Unicode, y los símbolos `- _ .` |
+
+**Ninguno de los dos alfabetos admite el espacio.** Dos herramientas comparables que escriben una
+etiqueta como palabra suelta de una línea de comandos, en vez de elegirla en un formulario web,
+la prohíben: Taskwarrior exige que una etiqueta sea una sola palabra, y Jira rechaza directamente
+cualquier etiqueta con espacio. GitHub sí permite etiquetas de varias palabras, pero nunca se
+enfrenta a este problema porque una etiqueta de GitHub nunca se teclea suelta en una shell: se elige
+en un desplegable o llega ya como cadena entrecomillada dentro de un JSON. La razón completa, con la
+comparación entera, está en ["El juego de caracteres de un token"](../DECISIONES.md#el-juego-de-caracteres-de-un-token) de `DECISIONES.md`.
+
+**La clave de `ext` no admite `@` ni `:`, porque no tienen ningún uso documentado ahí, ni tampoco
+`=`, porque `--ext <clave>=<valor>` ya usa ese carácter para separar la clave del valor**: si se
+permitiera dentro de la clave, `--ext a=b=c` sería ambiguo sobre dónde termina la clave.
+
+**Un carácter fuera del alfabeto que le toca es error 2 (`USAGE`)**, en la misma familia que un
+identificador mal formado (["Los tres mensajes de \"no la encuentro\""](referencias.md#los-tres-mensajes-de-no-la-encuentro)): es un problema de forma, no de que el
+tablero no reconozca el valor, así que no es el código 3 de ["Los vocabularios del tablero y la regla de validación"](vocabularios.md), y de hecho ni `labels` ni
+`assignees` tienen vocabulario cerrado al escribir (["Qué valida cada filtro, y contra qué"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué)).
+
+```
+error: malformed label: "urgent!"
+hint: a label may contain letters, digits, and - _ . : @
+
+error: malformed assignee: "sara smith"
+hint: an assignee may contain letters, digits, and - _ . : @
+
+error: malformed extension key: "trello=card"
+hint: an extension key may contain letters, digits, and - _ .
+```
+
+**Esto rige al escribir.** Un valor ya guardado que no cumple este alfabeto, porque se escribió antes
+de que existiera esta regla o porque llegó por una vía que no pasa por esta validación, no es un error
+nuevo distinto: es un dato que el programa no puede interpretar, y se trata con la regla general de
+["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), la misma que ya cubre una clave de `ext` que la
+configuración ha dejado de declarar.
+
+Los `code` correspondientes, `malformed_label`, `malformed_assignee` y `malformed_extension_key`,
+están en la tabla de ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error).
 
