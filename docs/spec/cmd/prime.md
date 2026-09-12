@@ -64,7 +64,7 @@ Entra:
 - Los códigos de salida, en dos líneas.
 - El estado del tablero: lo que está en curso y lo más urgente de lo que no ha empezado.
 
-Se queda fuera, y va a `biso <cmd> --help`:
+Se queda fuera, y va a `biso <cmd> --help` o a `biso help <cmd>...` cuando hacen falta varios de golpe:
 
 - Los valores, los tipos y las incompatibilidades de cada bandera. El mensaje da los nombres, que es
   lo que no se puede adivinar; la ayuda da el detalle, que es lo que se consulta cuando se necesita.
@@ -96,7 +96,7 @@ BOARD  My project
   priorities  high, medium, low
   you are     @claude
 
-COMMANDS  (`biso <cmd> --help` for the detail of any flag)
+COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
   biso ls [-s STATUS] [--type T] [-l LABEL] [--mine] [--search TEXT]
   biso get <ref> [--section ac]
   biso new "TITLE" [-d TEXT] [--add-ac TEXT]... [--type T] [--priority P]
