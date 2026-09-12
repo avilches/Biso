@@ -156,10 +156,10 @@ anterior. Con estas cuatro tareas, el título más largo mide 28 caracteres y po
 rellena a ese ancho, no a uno fijo:
 
 ```
-TASK-7   To Do        bug   high    Crash on an empty repository  ac 0/4  -        2026-09-08
-TASK-11  In Progress  bug   high    Normalize CRLF in the diff    ac 1/2  @claude  -
-TASK-19  To Do        task  high    Retry the upload on 5xx       ac 0/2  -        -
-TASK-23  To Do        docs  medium  Rewrite the install section   ac 0/1  @sara+1  -
+MYP-7   To Do        bug   high    Crash on an empty repository  ac 0/4  -        2026-09-08
+MYP-11  In Progress  bug   high    Normalize CRLF in the diff    ac 1/2  @claude  -
+MYP-19  To Do        task  high    Retry the upload on 5xx       ac 0/2  -        -
+MYP-23  To Do        docs  medium  Rewrite the install section   ac 0/1  @sara+1  -
 ```
 
 Y por stderr, siempre que se haya recortado:
@@ -172,8 +172,8 @@ hint: narrow with -s, --type or -l, or ask for everything with --all
 Con `--ids`:
 
 ```
-TASK-7
-TASK-11
+MYP-7
+MYP-11
 ```
 
 Con `--count`:
@@ -195,7 +195,7 @@ igual que las demás.
   "data": {
     "tasks": [
       {
-        "id": "TASK-11",
+        "id": "MYP-11",
         "title": "Normalize CRLF in the diff",
         "status": "In Progress",
         "type": "bug",
@@ -222,7 +222,7 @@ igual que las demás.
         "dodTotal": 1,
         "commentCount": 1,
         "urgency": 19.0,
-        "blocks": ["TASK-40"],
+        "blocks": ["MYP-40"],
         "blocked": false,
         "waiting": false,
         "leaseExpired": false,

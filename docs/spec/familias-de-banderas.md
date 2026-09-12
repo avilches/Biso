@@ -94,13 +94,13 @@ texto que no encontrará nada y dará error 4, en vez de convertirse en algo a m
 
 | Caso límite | Resultado |
 |---|---|
-| clave que no existe | error 4: `no acceptance criterion #7 on TASK-11 (keys: 1, 3)` |
+| clave que no existe | error 4: `no acceptance criterion #7 on MYP-11 (keys: 1, 3)` |
 | texto que no encaja con ninguno | error 4, con los textos de los elementos listados |
 | texto que encaja con dos | error 5, con los dos listados |
 | rango donde faltan claves intermedias | se aplican las que hay, sin aviso |
 | rango invertido, `4-1` | error 2 |
 | marcar un elemento ya marcado | se queda marcado, sin aviso, la operación es idempotente |
-| `--check all` en una tarea sin criterios | sin efecto, con `warning: TASK-11 has no acceptance criteria` |
+| `--check all` en una tarea sin criterios | sin efecto, con `warning: MYP-11 has no acceptance criteria` |
 | `--check all` sobre varias tareas | válido, cada tarea marca los suyos |
 | una clave, un rango, una lista o un texto sobre varias tareas | error 2, porque el selector de una tarea no tiene por qué significar lo mismo en otra |
 
@@ -109,7 +109,7 @@ después de resolver `--check` y `--uncheck` un mismo elemento aparece en los do
 2, y da igual que se haya escrito `--check 3 --uncheck 3` o `--check all --uncheck 3`:
 
 ```
-error: --check and --uncheck both select acceptance criterion #3 of TASK-11
+error: --check and --uncheck both select acceptance criterion #3 of MYP-11
 ```
 
 ## Campos escalares

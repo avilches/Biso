@@ -43,7 +43,7 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Un `--set-*` pisa contenido no vacío | Se hace, con el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) diciendo cuántos bytes ha reemplazado |
 | Paso a un estado terminal con criterios sin marcar | Se hace, con aviso |
 | Paso a un estado terminal con una pregunta abierta (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)) | Se hace, con aviso, igual que en `biso finish` (["`biso finish`"](verbos-del-ciclo.md#biso-finish)) y como atribuye la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) a cualquier llegada al estado terminal |
-| Todas las banderas dejan la tarea igual | Código 0, con `note: TASK-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (sexta precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
+| Todas las banderas dejan la tarea igual | Código 0, con `note: MYP-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (sexta precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
 | `--status` a un estado que no es el activo, `--clear-assignee` o `--rm-assignee` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
 | `--comment-author` sin `--comment` | Error 2 |
 | `--comment` sin `--comment-author` y sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | Error 2 |
@@ -53,11 +53,11 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 
 Por defecto, **una línea por tarea afectada** con lo que quien llama no sabía: el estado resultante,
 el avance de criterios y la urgencia recalculada. Los tres datos son derivados, y ninguno se puede
-conocer sin leer la tarea. La TASK-11 de los ejemplos tiene además una definición de hecho de un
+conocer sin leer la tarea. La MYP-11 de los ejemplos tiene además una definición de hecho de un
 elemento, así que su línea trae también el avance de esa segunda lista:
 
 ```
-TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 **Esta es la línea de estado, y la imprimen también los seis verbos del ciclo de la sección ["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`"](verbos-del-ciclo.md) y
@@ -85,11 +85,11 @@ warning: --set-plan replaced 412 bytes of existing content
   "generatedAt": "2026-09-06T11:40:18Z",
   "data": {
     "tasks": [
-      { "id": "TASK-11", "status": "In Progress", "acDone": 1, "acTotal": 2,
+      { "id": "MYP-11", "status": "In Progress", "acDone": 1, "acTotal": 2,
         "dodDone": 0, "dodTotal": 1, "urgency": 19.0,
         "changed": ["plan", "status"] }
     ],
-    "warnings": [ { "code": "overwrite", "field": "plan", "bytes": 412, "task": "TASK-11" } ]
+    "warnings": [ { "code": "overwrite", "field": "plan", "bytes": 412, "task": "MYP-11" } ]
   }
 }
 ```
@@ -165,9 +165,9 @@ Exit codes:
                              8  no board here
 
 Examples:
-  biso set TASK-11 --priority high --label parser
-  biso set TASK-11 --check 1,3 --note "Both covered by diff_test.rs"
-  biso set TASK-11 TASK-12 --milestone "v1.2"
+  biso set MYP-11 --priority high --label parser
+  biso set MYP-11 --check 1,3 --note "Both covered by diff_test.rs"
+  biso set MYP-11 MYP-12 --milestone "v1.2"
   biso set "CRLF" --set-desc @docs/bugs/BUG-02.md
 ```
 

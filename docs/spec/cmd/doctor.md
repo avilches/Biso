@@ -145,13 +145,13 @@ una base de datos escrita a mano, restaurada a medias o venida de otra versión.
 `Errors:`:
 
 ```
-  TASK-52  has a lease but is not both active and assigned
+  MYP-52  has a lease but is not both active and assigned
 ```
 
 Y con `--fix`, en el grupo de lo reparado:
 
 ```
-  TASK-52 had a lease but was not both active and assigned; cleared leaseExpiresAt and leaseHolder
+  MYP-52 had a lease but was not both active and assigned; cleared leaseExpiresAt and leaseHolder
 ```
 
 Su `code` en el JSON es `lease_invariant` en los dos sitios.
@@ -227,11 +227,11 @@ que queda pendiente es una reparación que ya se sabe cómo repetir.
 ```
 2 errors found, 1 warning found
 Errors:
-  TASK-40  dependency TASK-99 does not exist
+  MYP-40  dependency MYP-99 does not exist
 Warnings:
   extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)
 1 error fixed
-  the highest recorded id was TASK-40 and tasks go up to TASK-52; recorded TASK-52
+  the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52
 ```
 
 Los errores y los avisos se agrupan bajo su propio encabezado, `Errors:` y `Warnings:`; ninguno de
@@ -261,13 +261,13 @@ que `Warnings:` siempre los lista todos y su recuento siempre coincide con su li
   "generatedAt": "2026-09-06T09:12:04Z",
   "data": {
     "problems": [
-      { "task": "TASK-40", "code": "dependency_not_found", "message": "dependency TASK-99 does not exist" }
+      { "task": "MYP-40", "code": "dependency_not_found", "message": "dependency MYP-99 does not exist" }
     ],
     "warnings": [
       { "task": null, "code": "extra_root_unreadable", "message": "extra board root \"/Volumes/disco/boards\" cannot be read (skipped when looking up boards by id)" }
     ],
     "fixed": [
-      { "code": "highest_id_behind", "message": "the highest recorded id was TASK-40 and tasks go up to TASK-52; recorded TASK-52" }
+      { "code": "highest_id_behind", "message": "the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52" }
     ]
   }
 }

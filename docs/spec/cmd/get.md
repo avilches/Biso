@@ -16,7 +16,7 @@ biso get <ref> [--id] [--match] [--section <name>]... [--explain-urgency]
 | `--section <name>` | | no | `meta`, `desc`, `ac`, `dod`, `plan`, `notes`, `summary`, `comments`, `question` | todas | sí | sí | |
 | `--explain-urgency` | | no | booleano | falso | no | no | |
 
-`--section` sirve para pedir solo una parte. `biso get TASK-11 --section ac` imprime los criterios con
+`--section` sirve para pedir solo una parte. `biso get MYP-11 --section ac` imprime los criterios con
 sus claves y cuesta unas decenas de bytes en vez de la ficha entera, que es lo que hace falta antes de
 marcar uno.
 
@@ -28,8 +28,8 @@ La resolución de `<ref>` está en la sección ["Cómo se resuelve una referenci
 |---|---|
 | La referencia resuelve a una tarea | Se imprime, código 0 |
 | La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** en el formato de `biso ls` |
-| La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched TASK-11` por stderr |
-| La tarea está archivada | Se imprime, con `note: TASK-11 is archived` por stderr |
+| La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched MYP-11` por stderr |
+| La tarea está archivada | Se imprime, con `note: MYP-11 is archived` por stderr |
 | La tarea no se puede leer | Error 3, según la regla de lectura dirigida de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
 | `--section` con un nombre inventado | Error 2, con los nueve nombres válidos |
 | `--section` de una sección vacía | No imprime esa sección, y si no queda ninguna sección que imprimir, la salida está vacía y el código sigue siendo 0 |
@@ -41,7 +41,7 @@ vacía; sin la bandera, omitir una sección la confundiría con una que no se ha
 ## Salida
 
 ```
-TASK-11  Normalize CRLF in the diff
+MYP-11  Normalize CRLF in the diff
 status     In Progress          type       bug
 priority   high                 urgency    19.0
 assignees  @claude              reporter   @avilches
@@ -49,7 +49,7 @@ labels     parser               milestone  -
 parent     -                    due        -
 project    -                    ordinal    -
 created    2026-09-06 09:12     updated    2026-09-06 11:40
-depends    -                    blocks     TASK-40
+depends    -                    blocks     MYP-40
 lease      2026-09-06 15:40     holder     @claude
 refs       docs/bugs/BUG-02.md
 docs       -
@@ -106,19 +106,19 @@ ficha no añade ninguna marca; el derivado `leaseExpired` ya calculado está en 
 Con `--section ac`, solo el encabezado con el identificador y el título, y la sección pedida:
 
 ```
-TASK-11  Normalize CRLF in the diff
+MYP-11  Normalize CRLF in the diff
 
 ## Acceptance Criteria
 - [x] #1 The diff ignores CRLF
 - [ ] #3 There is a test that covers it
 ```
 
-Con `--section question` sobre TASK-60, la tarea con la pregunta abierta del ejemplo de la sección ["La salida literal"](prime.md#la-salida-literal), la
+Con `--section question` sobre MYP-60, la tarea con la pregunta abierta del ejemplo de la sección ["La salida literal"](prime.md#la-salida-literal), la
 sección sale rellena con la misma forma que ya usa `## Comments`: el autor y el instante en una línea
 y el cuerpo debajo.
 
 ```
-TASK-60  Confirm the retry budget for the upload endpoint
+MYP-60  Confirm the retry budget for the upload endpoint
 
 ## Open Question
 @claude, 2026-09-06 09:30
@@ -163,7 +163,7 @@ Es el objeto de `task.list` más los campos del cuerpo:
   "generatedAt": "2026-09-06T13:31:09Z",
   "data": {
     "task": {
-      "id": "TASK-11",
+      "id": "MYP-11",
       "description": "The diff compares byte by byte...",
       "acceptanceCriteria": [ { "key": 1, "text": "The diff ignores CRLF", "checked": true },
                               { "key": 3, "text": "There is a test that covers it", "checked": false } ],
@@ -173,7 +173,7 @@ Es el objeto de `task.list` más los campos del cuerpo:
       "summary": null,
       "comments": [ { "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "A user with a Windows clone..." } ],
       "question": null,
-      "blocks": ["TASK-40"],
+      "blocks": ["MYP-40"],
       "urgencyBreakdown": { "priority": 6.0, "active": { "value": 4.0, "reason": null }, "blocking": 8.0,
                             "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 }
     }
@@ -211,7 +211,7 @@ coincidencias, `kind` es `task.candidates`, `data.tasks` es la lista y el códig
 ```
 Usage: biso get <ref> [options]
 
-Show one task. <ref> is an id (TASK-11), a bare number (11) or free text
+Show one task. <ref> is an id (MYP-11), a bare number (11) or free text
 ("CRLF"). Free text that matches several tasks lists them and exits 5; it
 never picks one for you.
 
@@ -237,10 +237,10 @@ Exit codes:
   8  no board here
 
 Examples:
-  biso get TASK-11
+  biso get MYP-11
   biso get 11 --section ac
   biso get "CRLF"
-  biso get TASK-11 --explain-urgency
+  biso get MYP-11 --explain-urgency
 ```
 
 ---

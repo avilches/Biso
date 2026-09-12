@@ -9,7 +9,7 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 | 1 | `INTERNAL` | Fallo no previsto del programa | una excepción no capturada |
 | 2 | `USAGE` | La línea de comandos está mal formada | bandera desconocida, falta un obligatorio, banderas incompatibles, identificador mal formado, bandera de escritura en un comando de lectura |
 | 3 | `BAD_VALUE` | El valor que llega es sintácticamente correcto pero el tablero no lo reconoce, o un dato guardado no se puede interpretar | `--status "Pending"` en un tablero cuyos estados son otros |
-| 4 | `NOT_FOUND` | La entidad referida no existe | `biso get TASK-999` |
+| 4 | `NOT_FOUND` | La entidad referida no existe | `biso get MYP-999` |
 | 5 | `AMBIGUOUS` | La referencia encaja con más de una entidad | `biso get "parser"` con tres coincidencias |
 | 6 | `PRECONDITION` | La operación es válida, pero el estado actual del tablero no la permite o no la satisface | `biso finish --strict` con criterios sin marcar, o `biso doctor` con problemas pendientes |
 | 7 | `ENVIRONMENT` | Falla el entorno, no la petición | el almacén no responde, no hay permisos, no se puede adquirir el acceso exclusivo, no hay terminal donde hace falta |

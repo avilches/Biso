@@ -52,10 +52,10 @@ Tres mecanismos, en orden de preferencia:
 1. **`--flag=valor`** funciona siempre y es la forma recomendada: `--desc=-5 grados`.
 2. **`--`** termina el análisis de opciones: `biso new -- "-n no es una bandera"`.
 3. **Un valor que empieza por guion detrás de una bandera que exige valor se acepta tal cual**, sin
-   heurísticas. `biso set TASK-1 --note -x` guarda `-x` como nota.
+   heurísticas. `biso set MYP-1 --note -x` guarda `-x` como nota.
 
 Como consecuencia de la regla 3, olvidar el valor de una bandera se detecta por lo que sobra después,
-no por lo que parece: `biso set TASK-1 --note --priority high` guarda la nota `--priority` y luego
+no por lo que parece: `biso set MYP-1 --note --priority high` guarda la nota `--priority` y luego
 falla con código 2 y `error: unexpected argument: high`.
 
 ## Repetición y listas separadas por comas

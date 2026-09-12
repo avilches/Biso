@@ -55,7 +55,7 @@ desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad 
 Por defecto, **una línea por tarea creada, con el identificador y nada más**:
 
 ```
-TASK-101
+MYP-101
 ```
 
 `biso new` es el único comando de escritura cuya salida por defecto es distinta de la línea de estado
@@ -78,7 +78,7 @@ ignoran. Las claves son las del modelo de datos de la sección ["El modelo de da
 Ejemplo de una línea, con todos los tipos compuestos:
 
 ```json
-{"id":"TASK-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["TASK-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":true}],"comments":[{"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
+{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":true}],"comments":[{"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 ```
 
 Las reglas del lote, todas obligatorias:
@@ -130,9 +130,9 @@ Las reglas del lote, todas obligatorias:
 Salida del lote, una línea por tarea, en el orden del fichero:
 
 ```
-TASK-101
-TASK-102
-TASK-103
+MYP-101
+MYP-102
+MYP-103
 ```
 
 Salida de `--dry-run` cuando todo está bien, por stderr y con código 0:
@@ -145,7 +145,7 @@ Y cuando no, por stderr y con código 9, **con todos los fallos, no solo el prim
 
 ```
 error: 4 of 242 lines are invalid, nothing was written
-  line 12: id "OTHER-5" does not match this board's task prefix "TASK"
+  line 12: id "OTHER-5" does not match this board's task prefix "MYP"
   line 47: unknown status: "Pendiente" (valid: To Do, In Progress, Done)
   line 88: unknown key: "trelloCard"
   line 201: title cannot be empty

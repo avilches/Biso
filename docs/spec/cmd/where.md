@@ -34,7 +34,7 @@ board    Kex
 path     /Users/avilches/.biso/boards/kex-3f9a2b1c
 source   project pointer at /Users/avilches/Hub/Projects/Kex
 me       @claude
-tasks    248 not archived, 31 archived, highest id ever assigned TASK-290
+tasks    248 not archived, 31 archived, highest id ever assigned MYP-290
 ```
 
 **La fila `path` es siempre la ruta ya resuelta del directorio del tablero, nunca el texto literal que
@@ -95,7 +95,7 @@ la fila donde más confunde, porque justo al lado hay un recuento de estados.
     "path": "/Users/avilches/.biso/boards/kex-3f9a2b1c",
     "source": "project pointer at /Users/avilches/Hub/Projects/Kex",
     "me": "@claude",
-    "counts": { "notArchived": 248, "archived": 31, "highestIdEverAssigned": "TASK-290" }
+    "counts": { "notArchived": 248, "archived": 31, "highestIdEverAssigned": "MYP-290" }
   }
 }
 ```

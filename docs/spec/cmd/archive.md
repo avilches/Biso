@@ -40,7 +40,7 @@ hint: `biso archive <ref>` takes it off the board and keeps the history
 ## Salida
 
 ```
-TASK-11  Done  ac 2/2  dod 1/1  urgency 0.0  archived
+MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0  archived
 ```
 
 ## Códigos de salida
@@ -80,9 +80,9 @@ Exit codes:
                     5  ambiguous                      8  no board here
 
 Examples:
-  biso archive TASK-11
-  biso archive TASK-11 TASK-12 TASK-13
-  biso archive TASK-11 --unarchive
+  biso archive MYP-11
+  biso archive MYP-11 MYP-12 MYP-13
+  biso archive MYP-11 --unarchive
 ```
 
 ---

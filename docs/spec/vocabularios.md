@@ -44,7 +44,7 @@ Con este algoritmo, y para un tablero cuyo estado es `To Do`:
 Esta tabla es el contrato, y es la prueba de aceptación que hay que poder ejecutar. Tablero con los
 estados `To Do`, `In Progress` y `Done`:
 
-| Entrada | `biso set TASK-1 -s <v>` | `biso ls -s <v>` |
+| Entrada | `biso set MYP-1 -s <v>` | `biso ls -s <v>` |
 |---|---|---|
 | `To Do` | escribe | filtra |
 | `todo` | escribe | filtra |
@@ -89,7 +89,7 @@ sugerencias, porque no hay ninguna que ofrecer.
 
 **Ni las etiquetas, ni las personas, ni los hitos tienen vocabulario cerrado al escribir.** Escribir
 una etiqueta nueva la incorpora al conjunto, y a partir de ese momento filtrar por ella funciona. Con
-el hito pasa lo mismo: `biso set TASK-1 -m "v1.2"` es lo que hace que `v1.2` exista para
+el hito pasa lo mismo: `biso set MYP-1 -m "v1.2"` es lo que hace que `v1.2` exista para
 `biso ls -m "v1.2"`, y la última tarea que deja de llevarlo lo saca del conjunto.
 
 Está la bandera `--unchecked` de `biso ls` y `biso export`, que apaga **las comprobaciones contra

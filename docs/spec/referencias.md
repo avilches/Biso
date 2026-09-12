@@ -6,7 +6,7 @@ Todos los comandos que reciben `<ref>` usan exactamente esta rutina. No hay vari
 
 | Forma | Ejemplo | Interpretación |
 |---|---|---|
-| `PREFIX-<n>` | `TASK-11` | identificador, sin distinguir mayúsculas en el prefijo |
+| `PREFIX-<n>` | `MYP-11` | identificador, sin distinguir mayúsculas en el prefijo |
 | `<n>` | `11` | identificador, con el prefijo del tablero |
 | `#<n>` | `#11` | igual que el anterior |
 | cualquier otra cosa | `"CRLF"` | consulta de texto |
@@ -40,7 +40,7 @@ Cuando se usa para resolver una referencia, y solo entonces, se aplican además 
 
 | Coincidencias | Qué pasa |
 |---:|---|
-| exactamente 1 | se usa esa tarea, con `note: "CRLF" matched TASK-11` por stderr |
+| exactamente 1 | se usa esa tarea, con `note: "CRLF" matched MYP-11` por stderr |
 | 0 | error 4 |
 | más de 1 | error 5, con las candidatas por stdout en el formato de `biso ls` |
 
@@ -54,24 +54,24 @@ archivadas**; el filtro `--search` mira las que digan los demás filtros.
 **Identificador mal formado**, código 2, `code` igual a `malformed_id`:
 
 ```
-error: malformed task id: "TASK-1.1"
-hint: ids look like TASK-11 or 11. A subtask is an ordinary task with --parent TASK-1
+error: malformed task id: "MYP-1.1"
+hint: ids look like MYP-11 or 11. A subtask is an ordinary task with --parent MYP-1
 ```
 
 **Identificador bien formado que el tablero nunca ha llegado a asignar**, código 4, `code` igual a
 `never_allocated`:
 
 ```
-error: TASK-999 has never existed on this board
-note: the highest id ever assigned here is TASK-90
+error: MYP-999 has never existed on this board
+note: the highest id ever assigned here is MYP-90
 ```
 
 **Identificador que el tablero asignó alguna vez y que ahora no está**, código 4, `code` igual a
 `not_found`:
 
 ```
-error: TASK-53 is not on this board
-note: TASK-53 was assigned at some point, so it was archived and then removed
+error: MYP-53 is not on this board
+note: MYP-53 was assigned at some point, so it was archived and then removed
 hint: `biso ls --archived` lists what is archived
 ```
 

@@ -11,7 +11,7 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
 - **No hay contextos de sesión**, es decir, filtros por defecto guardados que cambien lo que devuelve
   una consulta sin que se vea en la línea de comandos.
 - **No hay recurrencia, ni seguimiento de tiempo, ni subtareas con numeración propia.** Una subtarea
-  es una tarea normal con `--parent`, y el mensaje de error de un identificador como `TASK-1.1` lo
+  es una tarea normal con `--parent`, y el mensaje de error de un identificador como `MYP-1.1` lo
   dice.
 - **No hay servidor de integración ni protocolo de herramientas.** La interfaz de la versión 1.0 es
   esta línea de comandos y su salida JSON.

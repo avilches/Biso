@@ -77,14 +77,14 @@ Precisiones sobre la mutabilidad:
   comandos que llegan a escribir sobre una tarea que ya existe. Se nombran aquí porque una regla
   general que no nombra a nadie invita a buscarle excepciones donde no las hay. **Una escritura que
   no cambia ningún campo renueva igual**: [`biso set`](cmd/set.md) con todas sus banderas dando el valor que la
-  tarea ya tiene sale con código 0 y con `note: TASK-11 unchanged`, y aun así renueva
+  tarea ya tiene sale con código 0 y con `note: MYP-11 unchanged`, y aun así renueva
   `leaseExpiresAt`, porque sigue siendo una escritura del tenedor sobre su tarea y el latido no
   puede depender de si los valores coincidían por casualidad. Esa renovación no toca `updatedAt`,
   porque ningún campo de la tarea ha cambiado, y deja vacía la lista `changed` del [esquema JSON](cmd/set.md); la nota sigue siendo cierta, porque habla de los campos de la tarea y ninguno cambió. Si la
   tarea no tiene arrendamiento todavía, escribir sobre ella no lo crea: fijarlo por primera vez es
   parte de lo que hace `biso start`, igual que reclamarlo vencido o tomarlo de [otra identidad](cmd/verbos-del-ciclo.md#biso-start). Una escritura de una identidad distinta de `leaseHolder` mientras el arrendamiento está
   vivo no toca ninguno de los campos: avisa con el mismo
-  `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z` de [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y de la tabla de
+  `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z` de [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y de la tabla de
   la sección ["Notas y avisos"](salida-y-terminal.md#notas-y-avisos), y el resto de la escritura se hace igual. **Con una sola excepción, y es que esa
   misma escritura rompa la invariante de la precisión siguiente**: si deja la tarea fuera del estado
   activo, sin ninguna persona asignada o archivada, los campos se vacían en esa misma escritura,
@@ -113,7 +113,7 @@ Precisiones sobre la mutabilidad:
   después a nombre de una sesión que ya murió. **Esta precisión gana siempre sobre la anterior, y
   por eso la invariante se enuncia aquí y el aviso allí.** Cuando quien escribe no es
   `leaseHolder`, el aviso de que el arrendamiento es de otra identidad se emite igual, pero los dos
-  campos se vacían: `@sara` haciendo `biso finish TASK-11` sobre una tarea arrendada por `@claude` la
+  campos se vacían: `@sara` haciendo `biso finish MYP-11` sobre una tarea arrendada por `@claude` la
   deja terminada y sin arrendamiento. Con la precedencia al revés quedaría una tarea terminada con un
   arrendamiento vivo, que es exactamente lo que la última precisión rechaza al importar, así que
   `biso export` produciría un fichero que su propio `biso init --from` rechaza y la prueba de
@@ -257,7 +257,7 @@ regla de orden completa de la sección [`biso ls`](cmd/ls.md).
 es la siguiente:
 
 - El tablero **declara** en su configuración qué claves admite, en la lista `extensions`.
-- Escribir una clave declarada funciona: `biso set TASK-1 --ext trello.card=5f2a8c1e3b9d4a7f`.
+- Escribir una clave declarada funciona: `biso set MYP-1 --ext trello.card=5f2a8c1e3b9d4a7f`.
 - Escribir una clave no declarada es error 3:
   ```
   error: unknown extension key: "jira.key"
@@ -307,8 +307,13 @@ answer`, y para eso hacen falta su autor y su instante originales, no los de qui
 - Un identificador es `<PREFIX>-<n>`, con `n` entero positivo. `PREFIX` viene de la configuración
   (`task_prefix`).
 - **`task_prefix` no tiene un valor fijo por defecto: se deriva del nombre del tablero
-  (`project_name`) en mayúsculas.** Dos tableros con `TASK` como valor fijo colisionarían los dos en
-  `TASK-1`, y eso haría inservible cualquier vista que junte tareas de varios proyectos.
+  (`project_name`) en mayúsculas.** Dos tableros con `MYP` como valor fijo colisionarían los dos en
+  `MYP-1`, y eso haría inservible cualquier vista que junte tareas de varios proyectos.
+- **Los ejemplos de esta especificación pertenecen todos al mismo tablero ficticio, llamado `My
+  project`, con `task_prefix` fijado a `MYP`.** Es el prefijo que aparece en los identificadores de
+  ejemplo del resto del documento (`MYP-11`, `MYP-60`...), fijado a mano en vez de derivarse del
+  nombre (que daría `MYPROJECT`), para que los ejemplos se lean como parte de un mismo tablero
+  coherente.
 - **La derivación quita del nombre los caracteres que no son letras y pasa el resto a mayúsculas**,
   así que un tablero llamado `mi-proyecto-2` da el prefijo `MIPROYECTO`. Si al quitarlos no queda
   ninguna letra, como en un tablero llamado `2026`, `biso init` no se inventa un valor: falla y pide

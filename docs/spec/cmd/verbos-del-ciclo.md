@@ -15,15 +15,15 @@ deja sin ninguna persona asignada vacía los campos, sea quien sea quien la haga
 la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)).
 
 Los seis imprimen también la misma línea de estado que `set`, con la forma y las reglas que define
-[`biso set`](set.md). Los ejemplos de más abajo son esa línea con los datos de la TASK-11, que tiene dos criterios de
+[`biso set`](set.md). Los ejemplos de más abajo son esa línea con los datos de la MYP-11, que tiene dos criterios de
 aceptación y un elemento de definición de hecho.
 
 El ciclo entero de una tarea es esto:
 
 ```
-biso start  TASK-11 --plan "1. Read the parser. 2. Add the CRLF case."
-biso note   TASK-11 "The parser already normalized LF, CRLF was missing"
-biso finish TASK-11 --check all --check-dod all --summary "Normalize CRLF in the diff, verified with the tests."
+biso start  MYP-11 --plan "1. Read the parser. 2. Add the CRLF case."
+biso note   MYP-11 "The parser already normalized LF, CRLF was missing"
+biso finish MYP-11 --check all --check-dod all --summary "Normalize CRLF in the diff, verified with the tests."
 ```
 
 ## `biso start`
@@ -60,14 +60,14 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 
 | Caso | Qué pasa |
 |---|---|
-| La tarea ya está en el estado activo | Se aplica el resto igual, con `note: TASK-11 was already In Progress` |
+| La tarea ya está en el estado activo | Se aplica el resto igual, con `note: MYP-11 was already In Progress` |
 | La tarea ya está en el estado terminal | Error 6, salvo con `--reopen`, que la devuelve al estado activo |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos.md#la-pregunta-abierta) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
 | El arrendamiento de la tarea está vencido (`leaseExpired`, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (sexta precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `DECISIONES.md` |
-| El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
-| `-s` con un estado que no es el activo, por ejemplo `biso start TASK-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: TASK-1 was moved to To Do, no lease was claimed` |
-| La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: TASK-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
+| El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
+| `-s` con un estado que no es el activo, por ejemplo `biso start MYP-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
+| La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: MYP-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
 | No hay [ninguna identidad configurada](../invocacion.md#variables-de-entorno) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
 | La tarea ya tiene plan y se pasa `--plan` | Se añade al final, como toda bandera desnuda |
 | Varias referencias | Todo o nada |
@@ -75,7 +75,7 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 ### Salida
 
 ```
-TASK-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
 ```
 
 El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el contrato de estabilidad
@@ -126,9 +126,9 @@ Exit codes:
                     8  no board here
 
 Examples:
-  biso start TASK-11 --plan "1. Read the parser. 2. Add the CRLF case."
+  biso start MYP-11 --plan "1. Read the parser. 2. Add the CRLF case."
   biso start 11
-  biso start TASK-11 TASK-12
+  biso start MYP-11 MYP-12
 ```
 
 ## `biso note`
@@ -158,13 +158,13 @@ varias. Para que esa diferencia no produzca basura en silencio, **un posicional 
 con la gramática de identificador de la sección ["La gramática"](../referencias.md#la-gramática) es un error 2**:
 
 ```
-error: "TASK-2" looks like a task id, and `biso note` takes only one task
-hint: to note the same thing on several tasks: biso set TASK-1 TASK-2 --note "..."
-      to write that text literally:            biso note TASK-1 --note "TASK-2"
+error: "MYP-2" looks like a task id, and `biso note` takes only one task
+hint: to note the same thing on several tasks: biso set MYP-1 MYP-2 --note "..."
+      to write that text literally:            biso note MYP-1 --note "MYP-2"
 ```
 
 **`--note`, la bandera de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), nunca pasa por esa comprobación**, porque no es un
-posicional: es la vía para escribir una nota que de verdad diga `TASK-2`. La misma regla vale para
+posicional: es la vía para escribir una nota que de verdad diga `MYP-2`. La misma regla vale para
 `biso comment`, con `--comment`.
 
 ### Qué hace
@@ -183,7 +183,7 @@ campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), i
 ### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 ### Códigos de salida
@@ -227,9 +227,9 @@ Exit codes:
                     5  ambiguous                      8  no board here
 
 Examples:
-  biso note TASK-11 "The parser already normalized LF, CRLF was missing"
+  biso note MYP-11 "The parser already normalized LF, CRLF was missing"
   biso note 11 "First finding" "Second finding"
-  biso note TASK-11 @/tmp/benchmark-output.txt
+  biso note MYP-11 @/tmp/benchmark-output.txt
 ```
 
 ## `biso comment`
@@ -262,7 +262,7 @@ escritura.
 ### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 Y por stderr, `note: comment #2 by @trello:juan`.
@@ -301,7 +301,7 @@ Exit codes:
                     5  ambiguous                      8  no board here
 
 Examples:
-  biso comment TASK-11 "A user with a Windows clone reported this"
+  biso comment MYP-11 "A user with a Windows clone reported this"
   biso comment 11 "Moved to Doing from the phone" --comment-author @trello:avilches
 ```
 
@@ -338,7 +338,7 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | Quedan criterios sin marcar y no se pasó `--check` | **Se cierra igual**, con el aviso y la lista de los que faltan |
 | Quedan elementos de la definición de hecho sin marcar | Igual, con su propio aviso |
 | Lo mismo, con `--strict` | Error 6, y no se escribe nada |
-| Sin `--summary` | Se cierra igual, con `warning: TASK-11 finished without a final summary` |
+| Sin `--summary` | Se cierra igual, con `warning: MYP-11 finished without a final summary` |
 | Sin `--summary` y con `--strict` | Error 6 |
 | La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos.md#la-pregunta-abierta) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
@@ -354,7 +354,7 @@ Quien quiera la política dura tiene `--strict`, y puede fijarla por defecto con
 ### Salida
 
 ```
-TASK-11  Done  ac 2/2  dod 1/1  urgency 0.0
+MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0
 ```
 
 La urgencia de una tarea en el estado terminal es cero por definición, según la sección ["La urgencia"](../modelo-de-datos.md#la-urgencia).
@@ -362,7 +362,7 @@ La urgencia de una tarea en el estado terminal es cero por definición, según l
 Por stderr, cuando toca:
 
 ```
-warning: TASK-11 moved to Done with 1 of 2 acceptance criteria unchecked
+warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked
   #3 There is a test that covers it
 ```
 
@@ -412,9 +412,9 @@ Exit codes:
                                         8  no board here
 
 Examples:
-  biso finish TASK-11 --check all --check-dod all --summary "Normalizes CRLF"
-  biso finish TASK-11 --check "covers CRLF" --note "313 tests green"
-  biso finish TASK-11 TASK-12 --check all --summary "Both closed by PR 42"
+  biso finish MYP-11 --check all --check-dod all --summary "Normalizes CRLF"
+  biso finish MYP-11 --check "covers CRLF" --note "313 tests green"
+  biso finish MYP-11 MYP-12 --check all --summary "Both closed by PR 42"
 ```
 
 ## `biso ask`
@@ -443,7 +443,7 @@ es propio, porque `biso ask` no tiene una bandera de campo que escriba `question
 salida es `@fichero` o `-`, nunca `--note`:
 
 ```
-error: "TASK-2" looks like a task id, and `biso ask` takes only one task
+error: "MYP-2" looks like a task id, and `biso ask` takes only one task
 hint: to write that text literally, use @file or - for stdin
 ```
 
@@ -461,7 +461,7 @@ estado de la tarea.**
 | La tarea no tiene pregunta abierta | Se llena el campo. **No cambia el estado** |
 | La tarea ya tiene una pregunta abierta | Error 6, para que la segunda no borre a la primera en silencio |
 | La tarea está en el estado terminal | Error 6, igual que `biso start`, con la pista de reabrirla |
-| La tarea está archivada | Se hace, con `note: TASK-11 is archived` por stderr, igual que `biso get` |
+| La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get` |
 | El texto está vacío | Error 3: `error: the question cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
 | Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
@@ -470,19 +470,19 @@ estado de la tarea.**
 Los errores 6 llevan pista:
 
 ```
-error: TASK-11 already has an open question
-hint: answer it first with `biso answer TASK-11 <text>`
+error: MYP-11 already has an open question
+hint: answer it first with `biso answer MYP-11 <text>`
 ```
 
 ```
-error: TASK-11 is already Done
-hint: reopen it first with `biso start TASK-11 --reopen`
+error: MYP-11 is already Done
+hint: reopen it first with `biso start MYP-11 --reopen`
 ```
 
 ### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  dod 0/1  urgency 15.0
+MYP-11  In Progress  ac 1/2  dod 0/1  urgency 15.0
 ```
 
 La urgencia queda por debajo de los 19.0 del ejemplo de ["La urgencia"](../modelo-de-datos.md#la-urgencia) porque el término de actividad exige
@@ -533,7 +533,7 @@ Exit codes:
   6  already asking, or already finished
 
 Examples:
-  biso ask TASK-11 "Do we normalize binary files too, or only text?"
+  biso ask MYP-11 "Do we normalize binary files too, or only text?"
   biso ask 11 @/tmp/question.md
 ```
 
@@ -562,7 +562,7 @@ es propio, porque `biso answer` no tiene una bandera de campo que escriba `quest
 salida es `@fichero` o `-`, nunca `--note`:
 
 ```
-error: "TASK-2" looks like a task id, and `biso answer` takes only one task
+error: "MYP-2" looks like a task id, and `biso answer` takes only one task
 hint: to write that text literally, use @file or - for stdin
 ```
 
@@ -594,12 +594,12 @@ instante de cada uno sigue diciendo la verdad.
 |---|---|
 | La tarea no tiene pregunta abierta | Error 6, con la pista de usar `biso comment` |
 | Falta el positional del texto | Error 2. Una respuesta sin respuesta no cierra nada |
-| El texto está vacío (`biso answer TASK-11 ""`) | Error 3: `error: the answer cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
+| El texto está vacío (`biso answer MYP-11 ""`) | Error 3: `error: the answer cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
 | Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
 | Se pasan además banderas de campo | Se aplican igual, como en cualquier verbo del ciclo |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
-| La tarea está archivada | Se hace, con `note: TASK-11 is archived` por stderr, igual que `biso get` |
+| La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get` |
 | La tarea está en el estado terminal | Se hace igual que en cualquier otro estado |
 
 **No es simétrico con `biso ask`, y es a propósito.** `ask` sobre una tarea terminada es error 6,
@@ -610,14 +610,14 @@ defecto, riesgo que la sección ["Riesgos conocidos y aceptados del modelo de es
 tarea terminada cerraría esa única vía.
 
 ```
-error: TASK-11 has no open question
+error: MYP-11 has no open question
 hint: use `biso comment` to add a comment
 ```
 
 ### Salida
 
 ```
-TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 La urgencia recupera el término de actividad de ["La urgencia"](../modelo-de-datos.md#la-urgencia), porque `waiting` vuelve a ser falso.
@@ -667,7 +667,7 @@ Exit codes:
   6  no open question
 
 Examples:
-  biso answer TASK-11 "Only text files. Binary ones are skipped entirely."
+  biso answer MYP-11 "Only text files. Binary ones are skipped entirely."
   biso answer 11 "Yes" --ac "A binary file is never touched"
 ```
 

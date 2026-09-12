@@ -332,7 +332,7 @@ sesión muerta.
 
 **Una escritura que no cambia ningún campo también late, y esto es lo que un implementador desharía
 creyendo que optimiza.** `biso set` con todas sus banderas dando el valor que la tarea ya tiene sale con
-código 0 y con `note: TASK-11 unchanged`, y aun así renueva `leaseExpiresAt` si quien llama es el
+código 0 y con `note: MYP-11 unchanged`, y aun así renueva `leaseExpiresAt` si quien llama es el
 tenedor. Salta a la vista el atajo contrario, no escribir nada cuando no hay nada que escribir, y es un
 error: el latido de este arrendamiento no es un comando propio, es cualquier escritura que el agente ya
 hace, y si la renovación dependiera de que algún valor hubiera cambiado de verdad, un agente que repite
