@@ -13,17 +13,22 @@ cuatro palabras para saber qué hace cada una, ni falta que consultar esta secci
 Cada clase de campo tiene exactamente las operaciones que tienen sentido para esa forma de dato, ni
 una más ni una menos:
 
-| Clase de campo | Variantes |
+Los nombres de esta columna son los mismos seis de la tabla de formas de
+["El modelo de datos de una tarea"](modelo-de-datos.md), porque son la misma clasificación vista desde el lado de las
+banderas: qué se puede hacer con un campo depende de su forma, así que las dos tablas tienen que
+usar las mismas palabras para lo mismo.
+
+| Clase de campo (forma) | Variantes |
 |---|---|
-| Lista de tokens que admite coma | añadir, quitar, vaciar, sustituir entera |
-| Lista de tokens sin comas (criterios) | añadir, quitar, vaciar |
+| Escalar | fijar, vaciar |
+| Lista de tokens | añadir, quitar, vaciar, sustituir entera |
 | Bloque de prosa | añadir al final, vaciar |
 | Mapa de claves | fijar una clave, quitar una clave, vaciar |
-| Escalar | fijar, vaciar |
-| Comentarios | añadir (`--comment`), borrar uno entero, corregir solo su fecha; nunca editar cuerpo ni autor |
+| Lista de objetos, sin comas (criterios) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
+| Lista de objetos (comentarios) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
 
-**`question` no entra en esta tabla.** Es un registro de tres partes (["La pregunta abierta"](modelo-de-datos.md#la-pregunta-abierta)), no una
-lista, ni un bloque de prosa, ni un mapa, ni un escalar, así que ninguna de estas clases lo describe.
+**`question` no entra en esta tabla.** Es un registro de tres partes (["La pregunta abierta"](modelo-de-datos.md#la-pregunta-abierta)), la sexta
+forma de la tabla de arriba, y ninguna de las otras cinco lo describe.
 **Ninguna bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación
 de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (sección
 ["El modelo de datos de una tarea"](modelo-de-datos.md)).
