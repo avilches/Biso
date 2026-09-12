@@ -8,3 +8,11 @@ __pycache__/
 # Sitio generado por MkDocs a partir de docs/*.md. Se reconstruye con
 # `uv run --with-requirements docs-requirements.txt --no-project mkdocs build`.
 site/
+
+# Configuracion local de los IDE de JetBrains. Es de cada maquina y de cada
+# persona, no del proyecto.
+.idea/
+
+# Bytecode compilado de Python al ejecutar los scripts y pruebas de tools/.
+# Se regenera solo, no aporta nada versionado.
+__pycache__/

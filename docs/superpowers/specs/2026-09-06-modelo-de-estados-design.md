@@ -1,8 +1,14 @@
 # Diseño: el modelo de estados de `biso`
 
+> **Este documento cita la especificación por el número de sus secciones**, como se escribió en su día.
+> El 2026-09-10 `docs/SPEC.md` se repartió en los documentos de `docs/spec/`, que se citan por el título
+> de sus secciones. Estas referencias se conservan sin tocar porque este documento es el acta de una
+> sesión cerrada. Para traducir una de ellas, mira el mapa de la tabla de la tarea 3 de
+> [el plan del reparto](../plans/2026-09-10-reparto-de-la-spec.md).
+
 Este documento cierra los cuatro requisitos que la sección 9 de [`DECISIONES.md`](../../DECISIONES.md)
 dejó identificados y sin incorporar. No es la especificación: es la decisión y su razón, escrita para
-que aplicarla a [`SPEC.md`](../../SPEC.md) y a `DECISIONES.md` sea mecánico. La sección 11 es la lista
+que aplicarla a [`SPEC.md`](../../spec/index.md) y a `DECISIONES.md` sea mecánico. La sección 11 es la lista
 de esos cambios, uno a uno.
 
 Lo que decide, en una frase: **ningún papel de estado nuevo, un campo nuevo con dos verbos, y el

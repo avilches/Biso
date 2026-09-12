@@ -245,7 +245,7 @@ TASK-62
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.3, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/new.md`](spec/cmd/new.md), no es texto literal de la especificación)*
 
 *Nota: Nada de "created TASK-62" ni de repetir el título: la única línea es el identificador, porque eso es justo lo que no podías saber de antemano y lo demás ya lo sabías (regla 7 del mensaje de arranque, principio 4 de la sección 1). Las dos banderas `--ac` no han sustituido nada, han añadido dos criterios distintos a una lista que empezaba vacía, porque el nombre desnudo de un campo de lista siempre añade (sección 8.1). Si en vez de sumar un segundo criterio hubieras querido reemplazar el primero, la bandera habría sido `--set-ac`, no `--ac` otra vez, aunque aquí no hacía falta: una tarea recién creada no tiene nada que sustituir todavía.*
 
@@ -273,7 +273,7 @@ TASK-40  In Progress  task  medium  Split the config loader                     
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/ls.md`](spec/cmd/ls.md), no es texto literal de la especificación)*
 
 *Nota: Cinco filas, ni una más: como son menos de las 30 que `ls` enseña por defecto, no sale ningún aviso de recorte por stderr, solo las filas por stdout. El orden no es el del identificador ni el de cuándo se crearon: es urgencia descendente, que es el criterio por defecto cuando ninguna tarea de la lista lleva un `ordinal` manual (sección 10.4). TASK-11 va primera porque suma prioridad alta, estar activa y bloquear a otra tarea sin terminar; TASK-40 va la última pese a estar también en marcha, porque a ella la bloquea TASK-11 y eso resta en vez de sumar. Ese número no lo escribe nadie ni se guarda en ningún sitio: se recalcula en el instante de leer (sección 5.4), y por eso no hay una columna "urgency" en esta tabla, solo el orden que produce.*
 
@@ -293,7 +293,7 @@ hint: narrow with -s, --type or -l, or ask for everything with --all
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/ls.md`](spec/cmd/ls.md), no es texto literal de la especificación)*
 
 *Nota: Las tres primeras filas van por stdout, y la advertencia y la sugerencia van por stderr: en tu terminal se ven seguidas, pero si guardas la salida en un fichero (`biso ls --mine --limit 3 > tareas.txt`) ese fichero tiene tres líneas, no cinco. Aquí el límite lo has puesto tú con `--limit 3` para verlo con pocos datos; sin esa bandera el límite por defecto es 30, y con un tablero de este tamaño (54 To Do más 4 In Progress, sin contar las 190 Done que `ls` esconde por defecto) es fácil llegar a esas 30 sin buscarlo. `--all` quita el límite entero, y `--any-status` es lo único que trae de vuelta las tareas terminadas.*
 
@@ -347,7 +347,7 @@ so debugging one means reconstructing it by hand from scattered timestamps.
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/get.md`](spec/cmd/get.md), no es texto literal de la especificación)*
 
 *Nota: No hay línea `lease`: esa solo sale cuando la tarea tiene un arrendamiento, y una tarea en To Do no puede tenerlo (sección 5). Las nueve secciones salen siempre, aunque estén vacías y marcadas con `(empty)`, porque omitir una que no se ha pedido se confundiría con una que sí se ha pedido y ha salido vacía. Fíjate en las claves `#1`, `#2` y `#3` delante de cada criterio: son estables, no una posición en la lista, así que si algún día se quita el `#2` los otros dos siguen siendo `#1` y `#3`, nunca se renumeran.*
 
@@ -387,7 +387,7 @@ TASK-19  To Do  ac 0/2  urgency 7.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.6, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: La salida no repite lo que Sara acaba de escribir: no dice "assignee: @claude". Dice el estado en que queda la tarea, su avance de criterios y su urgencia, que es lo que ella no sabía. Es el cuarto principio de la especificación, y se cumple en todas las escrituras. La urgencia es 7.0, y sale de sumar 6.0 por ser de prioridad alta y 1.0 por tener criterios de aceptación. No suma el término de tarea activa, que vale 4.0, porque sigue en `To Do`: asignar una tarea no la pone en marcha. No aparece el trozo `dod` porque `TASK-19` no tiene definición de hecho, y ese trozo solo sale cuando la hay.*
 
@@ -406,7 +406,7 @@ TASK-40  In Progress  task  medium  Split the config loader                     
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.4, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/ls.md`](spec/cmd/ls.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: Seis filas donde antes había cinco. `TASK-19` entra en segunda posición, y ese sitio no es casual: la lista va por urgencia descendente y `TASK-19` vale 7.0, igual que `TASK-60`. Un empate se rompe siempre por identificador ascendente, y 19 va antes que 60. Que `TASK-60` valga lo mismo que una tarea que ni ha empezado, teniendo ella prioridad alta y estando en curso, tiene una explicación: `TASK-60` tiene una pregunta abierta, y el término de tarea activa solo suma cuando la tarea está en el estado activo **y** no está esperando respuesta. Una tarea aparcada no está siendo trabajada por nadie, así que no compite por tu atención. En el escenario 8 se ve por dentro. Y ojo con lo que esta lista no dice: `TASK-19` ya es del agente, pero nadie ha empezado a trabajar en ella. No hay ningún arrendamiento. Para eso hace falta el comando del escenario siguiente.*
 
@@ -422,7 +422,7 @@ TASK-33  To Do  task  medium  Add a retry counter to the upload log  ac 1/3  @cl
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/ls.md`](spec/cmd/ls.md), no es texto literal de la especificación)*
 
 *Nota: En `biso prime`, estas tres son las que salen en el bloque `ASSIGNED TO YOU`, que significa exactamente esto: tareas que una persona decidió que hicieras tú y que todavía no están en marcha. En el escenario 1 viste ese mensaje entero, y entonces `TASK-19` no estaba en ese bloque porque no era de nadie. Fíjate también en que las columnas se han estrechado. El ancho de cada una lo decide el contenido de la lista que se está imprimiendo, no una plantilla fija: al filtrar por un solo estado, la columna de estado ya no necesita hueco para `In Progress`, y al desaparecer las tareas de título largo, la columna del título se encoge con ellas.*
 
@@ -448,7 +448,7 @@ TASK-19  In Progress  ac 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.7.1, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/verbos-del-ciclo.md#biso-start`](spec/cmd/verbos-del-ciclo.md#biso-start), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: La urgencia ha subido de 7.0 a 11.0, y son exactamente los 4.0 del término de tarea activa. Nadie ha escrito ese número: se recalcula al leer, cada vez. Lo que la salida no dice es lo más importante de este paso. `biso start` ha hecho cuatro cosas en una sola escritura: ha puesto el estado activo, ha comprobado que la tarea ya tenía a alguien asignado (a `@claude`, desde el escenario 4, así que no ha tocado nada), **ha tomado el arrendamiento** a nombre de quien llama, y ha añadido el plan. Si la tarea no hubiera tenido a nadie asignado, `start` le habría puesto a quien llama, y esa es la diferencia con lo que hizo Sara en el escenario anterior: ella asignó sin empezar, y `start` empieza asignando si hace falta.*
 
@@ -466,7 +466,7 @@ exponencial
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/get.md`](spec/cmd/get.md), no es texto literal de la especificación)*
 
 *Nota: El plan está donde debía. Lo del arrendamiento hay que explicarlo, porque no se enseña aquí: son dos campos guardados en la tarea, hasta cuándo vale la reserva y de quién es, y el programa acaba de ponerlos en "ahora más 240 minutos" y en `@claude`. Esos 240 minutos son la clave `lease_minutes` de la configuración del tablero, y se pueden cambiar cuando se quiera sin romper nada: el vencimiento se calcula al escribir, así que cambiarla solo afecta a los arrendamientos que se renueven desde ese momento. El valor por defecto es generoso a propósito. El error que hace daño es el falso vencido, no el vencido tarde: un arrendamiento demasiado corto hace que otro agente reclame una tarea que alguien está trabajando de verdad, mientras que uno demasiado largo solo retrasa un aviso. Y como vas a ver en el escenario siguiente, ese aviso nunca impide trabajar.*
 
@@ -498,7 +498,7 @@ TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 4.3, 10.7.1, 5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/salida-y-terminal.md#notas-y-avisos`](spec/salida-y-terminal.md#notas-y-avisos), [`spec/cmd/verbos-del-ciclo.md#biso-start`](spec/cmd/verbos-del-ciclo.md#biso-start), [`spec/modelo-de-datos.md`](spec/modelo-de-datos.md), no es texto literal de la especificación)*
 
 *Nota: Lo primero: la nota se ha escrito. El código de salida es 0 y la tarea ha cambiado. El aviso no es un rechazo, es información. Eso es deliberado y la especificación lo argumenta: un bloqueo de flujo no evita el trabajo duplicado. Si `biso` le hubiera dicho "no puedes escribir aquí", Sara habría escrito la nota en otro sitio, o habría editado el almacén por su cuenta, y entonces el tablero mentiría. Es la misma decisión que con las dependencias sin terminar y con las preguntas abiertas: avisa, no impide. Lo segundo, y es fácil pasarlo por alto: esta escritura **no ha tocado el arrendamiento**. No lo ha renovado, porque Sara no es quien lo tiene, y no lo ha robado, porque solo `biso start` hace eso. Sigue siendo de `@claude` y sigue venciendo a la misma hora. La urgencia sigue en 19.0 porque una nota no cambia nada de lo que la urgencia mide. Y esos 19.0 se descomponen así: 6.0 por prioridad alta, 4.0 por estar activa, 8.0 porque hay otra tarea sin terminar que depende de ella, y 1.0 por tener criterios de aceptación.*
 
@@ -511,7 +511,7 @@ TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.7.2, 5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/verbos-del-ciclo.md#biso-note`](spec/cmd/verbos-del-ciclo.md#biso-note), [`spec/modelo-de-datos.md`](spec/modelo-de-datos.md), no es texto literal de la especificación)*
 
 *Nota: Ningún aviso, porque el arrendamiento es suyo. Y algo que la salida no dice: acaba de renovarse hasta 240 minutos después de este momento. Ahí está la idea central. No hay un `biso heartbeat`, ni un `biso renew`, ni una bandera para pedirlo. Cualquier escritura del tenedor sobre su tarea renueva la reserva, y "cualquiera" son todas: los seis verbos del ciclo, `biso set` y `biso archive`. Trabajar es lo que mantiene la reserva viva, que es exactamente lo que quieres que signifique.*
 
@@ -526,7 +526,7 @@ TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.6, 5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md`](spec/modelo-de-datos.md), no es texto literal de la especificación)*
 
 *Nota: Este paso parece inútil y es el que cierra el razonamiento. No ha cambiado ningún campo, lo dice la nota, y aun así **el arrendamiento se ha renovado**. Tenía que ser así: si el latido dependiera de que los valores hubieran cambiado de verdad, una escritura que por casualidad coincide con lo que ya había dejaría morir la reserva de alguien que sí está trabajando. La renovación mira quién escribe y sobre qué, no si acertó a cambiar algo. La otra cara: como ningún campo de la tarea ha cambiado, la fecha de última modificación de la tarea **no** se toca. La reserva se renueva y la tarea no se ensucia.*
 
@@ -545,7 +545,7 @@ TASK-40  In Progress  task  medium  Split the config loader                     
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.4, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/ls.md`](spec/cmd/ls.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: `TASK-52` sigue en `In Progress`, con toda normalidad, y no tiene a nadie asignado. Su arrendamiento venció el 5 de septiembre y el estado guardado no se ha movido ni un milímetro. Eso no es un descuido, es la regla: lo que vence es la reclamación, no el estado. Nadie va a sacarla de `In Progress` por su cuenta, porque hacerlo significaría que un comando toca tareas que no le nombraste, y porque `biso prime`, que no escribe nunca, acabaría mostrando un estado que la siguiente escritura de otro podría cambiar. El orden de esta lista, por si te lo preguntas, es urgencia descendente y no tiene nada que ver con el estado: 19.0, 11.0, 7.0, 5.4 y 3.1. `TASK-40` va última, pese a estar en marcha y ser de prioridad media, porque depende de `TASK-11` y estar bloqueada resta 5.0.*
 
@@ -559,7 +559,7 @@ TASK-52  In Progress  ac 0/1  urgency 5.4
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.7.1, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/verbos-del-ciclo.md#biso-start`](spec/cmd/verbos-del-ciclo.md#biso-start), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: Con una sola llamada ha hecho tres cosas: ha visto que el estado ya era el activo y lo dice con esa nota, se ha asignado la tarea porque no la tenía nadie, y **ha reclamado el arrendamiento vencido** a su nombre. Esa reclamación ocurre dentro de la misma transacción que comprueba que seguía vencido, y ese detalle importa: si dos agentes reclaman el mismo arrendamiento vencido en el mismo instante, solo gana uno. No hay una ventana en la que los dos crean que es suyo. Lo que esa comprobación no hace es callar a `@bob` si algún día vuelve. Él puede seguir anotando, comentando y cerrando esta tarea, porque escribir nunca está prohibido; lo que ya no puede es renovar ni recuperar una reserva que ahora es de otro, y si quiere recuperarla tiene que pedirla otra vez con `biso start` y saldrá el aviso del primer paso. Es una diferencia deliberada con el patrón clásico de reserva con testigo, y está anotada como riesgo aceptado en la sección 11 de las decisiones de diseño.*
 
@@ -573,7 +573,7 @@ TASK-19  In Progress  ac 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.6, 5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md`](spec/modelo-de-datos.md), no es texto literal de la especificación)*
 
 *Nota: Otra escritura que no cambia nada y que renueva la reserva de `TASK-19` hasta 240 minutos después de este momento. Con esto la tarea entra en el escenario siguiente con el arrendamiento fresco, y ya sabes que eso no ha costado ningún comando especial.*
 
@@ -600,7 +600,7 @@ $ biso get TASK-19 --section dod
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/get.md`](spec/cmd/get.md), no es texto literal de la especificación)*
 
 *Nota: No sale ni la cabecera. La regla de 10.5 es literal: con `--section`, una sección vacía no se imprime, y si no queda ninguna sección que imprimir la salida entera está vacía. Eso es distinto de pedir la ficha completa, donde toda sección vacía sale igual, marcada con `(empty)`. La bandera cambia el criterio a propósito: sin ella, omitir confundiría "vacío" con "no pedido"; con ella pediste justo eso, así que "vacío" ya no necesita decirse.*
 
@@ -614,7 +614,7 @@ TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.2, 10.6, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#campos-de-lista`](spec/familias-de-banderas.md#campos-de-lista), [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: El nombre desnudo `--dod` añade. Es el mismo verbo que ya conoces de `--ac`: se comporta igual en cualquier campo de lista.*
 
@@ -628,7 +628,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.2, 10.6, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#campos-de-lista`](spec/familias-de-banderas.md#campos-de-lista), [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 Compruebas cómo han quedado, con sus claves.
 
@@ -643,7 +643,7 @@ TASK-19  Retry the upload on 5xx
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/get.md`](spec/cmd/get.md), no es texto literal de la especificación)*
 
 Pensándolo mejor, el primero sobra: que otra persona revise el cambio ya es política del
 equipo para cualquier PR, no algo específico de esta tarea. Lo quitas.
@@ -655,7 +655,7 @@ TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.2, 8.4, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#campos-de-lista`](spec/familias-de-banderas.md#campos-de-lista), [`spec/familias-de-banderas.md#selectores-de-criterios`](spec/familias-de-banderas.md#selectores-de-criterios), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 Vuelves a mirar la lista para comprobar que lo que queda no ha cambiado de número.
 
@@ -669,7 +669,7 @@ TASK-19  Retry the upload on 5xx
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 5.1, 10.5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables`](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables), [`spec/cmd/get.md`](spec/cmd/get.md), no es texto literal de la especificación)*
 
 *Nota: Este es el punto central del escenario. El elemento que sobrevive sigue siendo `#2`, no ha pasado a `#1`. La clave la fija el programa al crear el elemento y no se mueve nunca (5.1): por eso marcar o quitar por número es seguro incluso cuando la lista ha perdido elementos por el medio, y por eso una tarea puede tener perfectamente los criterios `#2` y `#7` sin que eso sea un error de nadie.*
 
@@ -684,7 +684,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 4.3, 8.2, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/salida-y-terminal.md#notas-y-avisos`](spec/salida-y-terminal.md#notas-y-avisos), [`spec/familias-de-banderas.md#campos-de-lista`](spec/familias-de-banderas.md#campos-de-lista), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 *Nota: `--set-dod` sustituye la lista entera. El elemento `#2` desaparece con el resto de la lista vieja, y los dos que entran son elementos nuevos. El aviso de bytes reemplazados lo describe 4.3 para "cualquier --set-* que pise contenido no vacío", sin restringirlo a los campos de prosa, pero el único ejemplo que trae la especificación es de `--set-plan` (una cadena suelta), y no dice cómo se cuentan los bytes cuando lo que se sustituye es una lista con varios elementos, cada uno con su propio texto. Aquí se ha tomado como los bytes UTF-8 del texto del único elemento que había antes de sustituir (58, los de "El comportamiento del retry queda documentado en el README"), por ser la lectura más cercana al caso de una sola cadena que sí cubre la especificación. Queda anotado como laguna en tutorial/lagunas/07-10.md.*
 
@@ -701,7 +701,7 @@ TASK-19  Retry the upload on 5xx
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 5.1, 8.2, 10.5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables`](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables), [`spec/familias-de-banderas.md#campos-de-lista`](spec/familias-de-banderas.md#campos-de-lista), [`spec/cmd/get.md`](spec/cmd/get.md), no es texto literal de la especificación)*
 
 *Nota: Las claves son `#3` y `#4`, no `#1` y `#2`. El contador de esta lista, dentro de esta tarea, ya iba por 2 antes de sustituir nada, y sustituir no lo reinicia: "las claves de los elementos anteriores no se reutilizan" vale también cuando la sustitución viene después de un `--rm-`, no solo justo después de crear la tarea.*
 
@@ -715,7 +715,7 @@ TASK-19  In Progress  ac 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.2, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#campos-de-lista`](spec/familias-de-banderas.md#campos-de-lista), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 *Nota: La lista queda vacía, y por eso el trozo `dod` desaparece de la línea de estado: solo sale "siempre que la tarea tenga definición de hecho" (10.6), y una lista vacía no cuenta como tenerla. `ac` sigue saliendo porque esos dos criterios no se han tocado.*
 
@@ -729,7 +729,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.2, 10.6, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#campos-de-lista`](spec/familias-de-banderas.md#campos-de-lista), [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: Nombre desnudo, añade otra vez. Las claves de estos dos elementos son `#5` y `#6`: el contador de la lista no se ha reiniciado ni con el `--rm-dod` de antes ni con el `--clear-dod` de después, "solo crece" en palabras de 5.1, pase lo que pase con el contenido de la lista.*
 
@@ -781,7 +781,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 7.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.7.5, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/verbos-del-ciclo.md#biso-ask`](spec/cmd/verbos-del-ciclo.md#biso-ask), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: El estado no cambia, sigue en In Progress. La urgencia sí baja, de 11.0 a 7.0: el término de actividad de la fórmula (5.4) exige que la tarea esté en el estado activo *y* que no tenga pregunta abierta, así que en cuanto `waiting` pasa a cierto ese término deja de sumar sus 4.0 puntos. Es la misma caída de 4.0 que muestra el ejemplo de 10.7.5 sobre TASK-11 (de 19.0 a 15.0), con los números de TASK-19.*
 
@@ -798,7 +798,7 @@ TASK-19  Retry the upload on 5xx
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.5, 5.7, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/get.md`](spec/cmd/get.md), [`spec/modelo-de-datos.md#la-pregunta-abierta`](spec/modelo-de-datos.md#la-pregunta-abierta), no es texto literal de la especificación)*
 
 Un rato después, mirando un endpoint parecido, encuentras la respuesta tú mismo: ya hay un
 valor fijado en otra parte del código. Respondes y la tarea queda desaparcada.
@@ -810,7 +810,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.7.6, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/verbos-del-ciclo.md#biso-answer`](spec/cmd/verbos-del-ciclo.md#biso-answer), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: La urgencia recupera los 11.0 de antes: waiting vuelve a ser falso y el término de actividad vuelve a sumar sus 4.0 puntos.*
 
@@ -830,7 +830,7 @@ Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con bac
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 5.2, 5.3, 10.5, 10.7.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/modelo-de-datos.md#los-comentarios`](spec/modelo-de-datos.md#los-comentarios), [`spec/modelo-de-datos.md#las-fechas`](spec/modelo-de-datos.md#las-fechas), [`spec/cmd/get.md`](spec/cmd/get.md), [`spec/cmd/verbos-del-ciclo.md#biso-answer`](spec/cmd/verbos-del-ciclo.md#biso-answer), no es texto literal de la especificación)*
 
 *Nota: El primer comentario lleva el instante en que se hizo la pregunta (14:10), no el de la respuesta (15:30): es la excepción de forma que anota 5.3, la pregunta se traslada tal cual la vivió el programa la primera vez. Los dos van en el orden en que `biso answer` los escribió, que es también su orden de inserción, y 5.2 dice que ese es el orden que se guarda y se muestra, no el que marca cada instante.*
 
@@ -858,7 +858,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.7.2, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/verbos-del-ciclo.md#biso-note`](spec/cmd/verbos-del-ciclo.md#biso-note), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 Miras cómo ha quedado esa nota.
 
@@ -872,7 +872,7 @@ El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fi
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.5, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/get.md`](spec/cmd/get.md), no es texto literal de la especificación)*
 
 *Nota: No hay ningún autor ni ningún instante junto al texto. Las notas no tienen esa estructura: son un solo bloque de prosa al que cada `--note` añade un párrafo (8.3), no una lista de entradas con autor como los comentarios (5.2). Si necesitaras saber quién escribió una nota o cuándo, no lo sabrías: no es ese tipo de dato.*
 
@@ -888,7 +888,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.7.3, 5.2, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/verbos-del-ciclo.md#biso-comment`](spec/cmd/verbos-del-ciclo.md#biso-comment), [`spec/modelo-de-datos.md#los-comentarios`](spec/modelo-de-datos.md#los-comentarios), no es texto literal de la especificación)*
 
 *Nota: "note: comment #3 by @trello:juan" sale por stderr, con la forma exacta que da el ejemplo de 10.7.3. El número no es una clave estable como la de un criterio (5.1): es la posición del comentario en la lista, y como los comentarios nunca se editan ni se borran (append-only, 10.7.3), esa posición no vuelve a cambiar. Este es el tercero de TASK-19 porque `biso answer` ya había añadido dos en el escenario anterior.*
 
@@ -903,7 +903,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.7.3, 5.2, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/verbos-del-ciclo.md#biso-comment`](spec/cmd/verbos-del-ciclo.md#biso-comment), [`spec/modelo-de-datos.md#los-comentarios`](spec/modelo-de-datos.md#los-comentarios), no es texto literal de la especificación)*
 
 *Nota: Sin --comment-author, el autor es `me`, la identidad configurada de este tablero: @claude. Es el mismo `--comment-author` que existe en todos los comandos de escritura, no solo en `biso comment`: el nombre no cambia porque en `biso comment` parezca redundante (10.6).*
 
@@ -932,7 +932,7 @@ De momento no, 3 reintentos es la política del resto del sistema; si se repite 
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.5, 5.2, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/get.md`](spec/cmd/get.md), [`spec/modelo-de-datos.md#los-comentarios`](spec/modelo-de-datos.md#los-comentarios), no es texto literal de la especificación)*
 
 *Nota: Las notas son un único bloque; los comentarios son cuatro entradas firmadas, en el orden en que se escribieron. `## Implementation Notes` sale antes que `## Comments` aunque en la bandera se haya pedido al revés (`notes,comments`): el orden de impresión de las secciones es el orden fijo de la ficha completa (10.5), no el orden en que se listan en `--section`. La especificación no lo dice de forma explícita para el caso de varias secciones a la vez; queda anotado en tutorial/lagunas/07-10.md.*
 
@@ -957,7 +957,7 @@ TASK-19  In Progress  ac 0/6  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.2, 10.6, 5.1, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#campos-de-lista`](spec/familias-de-banderas.md#campos-de-lista), [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables`](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables), no es texto literal de la especificación)*
 
 *Nota: Cuatro `--ac` en la misma llamada añaden cuatro elementos nuevos, en el orden en que se escriben (4.9), con claves nuevas, #3, #4, #5 y #6, detrás de los #1 y #2 que ya tenía la tarea desde el inventario inicial.*
 
@@ -970,7 +970,7 @@ TASK-19  In Progress  ac 1/6  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.4, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#selectores-de-criterios`](spec/familias-de-banderas.md#selectores-de-criterios), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 Los tres que probaste juntos con el mismo test, de una vez, con un rango.
 
@@ -981,7 +981,7 @@ TASK-19  In Progress  ac 4/6  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.4, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#selectores-de-criterios`](spec/familias-de-banderas.md#selectores-de-criterios), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 Y dos que no son consecutivos, con una lista separada por comas.
 
@@ -992,7 +992,7 @@ TASK-19  In Progress  ac 6/6  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.4, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#selectores-de-criterios`](spec/familias-de-banderas.md#selectores-de-criterios), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 Casi al momento te das cuenta de que el #2 (el del contador en el log) lo diste por bueno
 demasiado pronto, el número de intentos todavía no se ve en el log, solo el resultado
@@ -1005,7 +1005,7 @@ TASK-19  In Progress  ac 5/6  dod 0/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.4, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#selectores-de-criterios`](spec/familias-de-banderas.md#selectores-de-criterios), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 *Nota: `--uncheck` toma el mismo selector que `--check`, con el mismo efecto invertido, aquí "uno suelto", igual que el primer `--check` de este escenario.*
 
@@ -1019,7 +1019,7 @@ TASK-19  In Progress  ac 5/6  dod 1/2  urgency 11.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 8.4, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/familias-de-banderas.md#selectores-de-criterios`](spec/familias-de-banderas.md#selectores-de-criterios), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 *Nota: "README" no encaja con la gramática de claves de 8.4 (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), así que se trata como texto literal y busca el elemento cuyo texto lo contenga. Solo el #5 ("El README explica cuándo y cuántas veces se reintenta") encaja, así que no hay ambigüedad.*
 
@@ -1034,7 +1034,7 @@ TASK-19  Done  ac 6/6  dod 2/2  urgency 0.0
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.6, 10.7.4, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/cmd/verbos-del-ciclo.md#biso-finish`](spec/cmd/verbos-del-ciclo.md#biso-finish), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: `--check all` vuelve a marcar el #2, que habías desmarcado, y no toca los otros cinco, ya estaban marcados, y marcar dos veces el mismo criterio "se queda marcado, sin aviso, la operación es idempotente" (8.4). `--check-dod all` marca el #6, el único que quedaba. La urgencia pasa a 0.0 porque el estado terminal la fija así por definición (5.4), no porque se recalcule con la fórmula de siempre. Lo que esta línea no dice, y conviene saber, es que cerrar una tarea vacía siempre `leaseExpiresAt` y `leaseHolder`, sea quien sea quien la tenga (sección 5, séptima precisión, citada de nuevo en 10.6 y en 10.7.4). TASK-19 llevaba el arrendamiento de @claude desde el escenario 5; con este `biso finish` queda sin arrendamiento, y quedaría igual de vacío aunque lo hubiera tenido otra identidad. La invariante gana siempre sobre la regla general de "una escritura ajena no toca el arrendamiento": una tarea terminada con arrendamiento vivo es un estado que ni la propia importación del tablero aceptaría.*
 
@@ -1077,7 +1077,7 @@ $ biso ls --count -s TO_DO
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 6.1, no es texto literal de la especificación)*
+*(salida derivada de [`spec/vocabularios.md#el-algoritmo-de-coincidencia`](spec/vocabularios.md#el-algoritmo-de-coincidencia), no es texto literal de la especificación)*
 
 *Nota: `TO_DO` no aparece tal cual en la configuración del tablero, que guarda `To Do`. Pero el algoritmo de coincidencia de la sección 6.1 pasa los dos valores a minúsculas y les quita los espacios, los guiones y los guiones bajos antes de comparar, así que `TO_DO` normaliza a `todo`, igual que `To Do`. El tablero no ha cambiado desde que terminó el capítulo anterior: sigue habiendo 54 tareas en `To Do`. `--count` imprime solo ese número, sin ninguna otra línea (sección 10.4).*
 
@@ -1090,7 +1090,7 @@ $ biso ls --count -s To-Do
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 6.1, no es texto literal de la especificación)*
+*(salida derivada de [`spec/vocabularios.md#el-algoritmo-de-coincidencia`](spec/vocabularios.md#el-algoritmo-de-coincidencia), no es texto literal de la especificación)*
 
 *Nota: Mismo resultado, porque es el mismo filtro: `To-Do` normaliza también a `todo`. La misma regla quita además los espacios repetidos, así que `to do`, con dos espacios en medio, también habría servido (es el ejemplo literal de la propia tabla de la sección 6.1). Cuatro formas distintas de teclearlo, un solo valor.*
 
@@ -1106,7 +1106,7 @@ TASK-19  Done         task  high    Retry the upload on 5xx                     
 
 Código de salida: `5`
 
-*(salida derivada de SPEC 7.2, no es texto literal de la especificación)*
+*(salida derivada de [`spec/referencias.md#la-búsqueda-por-texto`](spec/referencias.md#la-búsqueda-por-texto), no es texto literal de la especificación)*
 
 *Nota: Las tres tareas llevan «retry» en el título, así que ninguna gana por estar en el título mientras las otras solo lo llevan en el cuerpo (la regla de la sección 7.2): las tres son candidatas por igual. El programa no elige por ti. Código 5 (AMBIGUOUS), y las tres filas por stdout, en el mismo formato de columnas de `biso ls` (sección 10.4), ordenadas por urgencia porque ninguna lleva `ordinal`: TASK-60 tiene una pregunta abierta, así que no suma el término de tarea activa, pero es de prioridad alta; TASK-33 es de prioridad media; TASK-19 ya está terminada, así que su urgencia es 0,0 (sección 5.4, «si el estado de la tarea es el terminal, urgency = 0.0») y va la última. El valor de `ac` de TASK-19 depende de cómo se cerrara en el capítulo 10, que no está a la vista de este fichero: se asume que llegó a `ac 2/2`, siguiendo el cierre que recomienda el propio mensaje de `biso prime` («biso finish <ref> --check all --check-dod all --summary "..."»). Queda anotado en `tutorial/lagunas/11-13.md`.*
 
@@ -1120,7 +1120,7 @@ note: the highest id ever assigned here is TASK-62
 
 Código de salida: `4`
 
-*(salida derivada de SPEC 7.3, no es texto literal de la especificación)*
+*(salida derivada de [`spec/referencias.md#los-tres-mensajes-de-no-la-encuentro`](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), no es texto literal de la especificación)*
 
 *Nota: `TASK-99` está bien formado como identificador, así que esto no es un error de uso (código 2): es un error de que ese identificador nunca ha existido, código 4 (NOT_FOUND), con la clave `never_allocated`. El texto es el literal de la sección 7.3, con el número del identificador más alto sustituido por el de este tablero, `TASK-62`, que es la tarea que se creó en el capítulo 2. Hay un tercer mensaje de «no la encuentro» en la misma sección, para una tarea que el tablero sí llegó a asignar y que ahora ya no está (archivada y después eliminada): comparte el código 4 pero no la clave, y no hace falta reproducirlo aquí para que quede clara la diferencia entre los dos. Y queda un cuarto tropiezo que ni siquiera hemos tocado, el identificador mal formado como `TASK-1.1`, que es código 2 en vez de 4, porque ahí el problema no es que la tarea no exista sino que lo que has escrito no tiene la forma de una referencia. Cuatro formas de equivocarte, cuatro códigos distintos: 2, 3, 4 y 5.*
 
@@ -1163,7 +1163,7 @@ TASK-52  In Progress  ac 0/1  urgency 5.4  archived
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.8, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/archive.md`](spec/cmd/archive.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: Lee con cuidado esa línea, porque dice dos cosas que parecen incompatibles: la tarea sigue en `In Progress` y está `archived`. No hay contradicción. Archivar no es un estado y no toca el estado: es una marca aparte que la saca del tablero activo. Si mañana se desarchivara, volvería a `In Progress`, que es donde estaba. Y hay algo que la línea no dice: el arrendamiento que el agente había reclamado en el escenario 6 acaba de vaciarse. Eso pasa siempre al archivar, sea el arrendamiento de quien sea y esté vivo o vencido, y el motivo es que conservarlo lo guardaría donde nadie lo ve, porque el arranque y el listado esconden las archivadas por defecto. Si esta tarea volviera al tablero dentro de tres semanas con un arrendamiento a nombre de una sesión que ya murió, ese dato sería basura con aspecto de información. La urgencia sigue calculándose, 5.4, porque la tarea sigue en un estado que no es el terminal. Archivar no la pone a cero: eso lo hace terminarla.*
 
@@ -1176,7 +1176,7 @@ TASK-52  In Progress  task  low  Document the release checklist  ac 0/1  @claude
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.4, 10.8, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/ls.md`](spec/cmd/ls.md), [`spec/cmd/archive.md`](spec/cmd/archive.md), no es texto literal de la especificación)*
 
 *Nota: Ahí sigue, entera, con su asignación intacta. Lo único que ha perdido es el arrendamiento. Fíjate en que `--archived` es lo que la trae de vuelta a la vista: sin esa bandera no aparece ni en `biso ls` ni en `biso prime`, y eso es lo que significa "salir del tablero activo". La tarea no se ha ido a ninguna parte, se ha quitado de en medio.*
 
@@ -1191,7 +1191,7 @@ TASK-40  In Progress  task  medium  Split the config loader                     
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.4, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/ls.md`](spec/cmd/ls.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: Tres tareas donde antes había cuatro, y `TASK-19` ya no está en ninguna de las dos listas porque se terminó en el escenario 10. El tablero dice ahora la verdad sobre lo que se está haciendo, que es para lo que sirve archivar algo que no vas a tocar.*
 
@@ -1223,7 +1223,7 @@ TASK-61  To Do  ac 0/1  urgency 1.4
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.6, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: Una línea por tarea, con el mismo formato que cuando tocas una sola. No hay un modo lote que cambie la forma de la salida ni un resumen que sustituya al detalle: lo que aprendiste con una vale para las dos. `TASK-44` ya era de prioridad baja, así que su urgencia no se mueve. `TASK-61` baja de 4.5 a 1.4, y ahí hay una lección escondida sobre leer estos números: la caída real es de exactamente 3.0, los que aportaba la prioridad media, pero las dos cifras que ves están redondeadas a un decimal desde 4.45 y 1.45, y esos dos redondeos no van en la misma dirección. La urgencia sirve para ordenar una lista, no para hacer aritmética con ella.*
 
@@ -1237,7 +1237,7 @@ note: the highest id ever assigned here is TASK-62
 
 Código de salida: `4`
 
-*(salida derivada de SPEC 7.3, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/referencias.md#los-tres-mensajes-de-no-la-encuentro`](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 *Nota: Y esto es lo importante: **`TASK-7` y `TASK-33` no se han tocado**. No es que se hayan escrito y luego se haya deshecho: es que no se llegó a escribir nada, porque la validación de las tres referencias ocurre antes de la primera escritura. Piensa en lo que te ahorra. Si el lote se aplicase tarea a tarea y se detuviese al fallar, después de este error tendrías que averiguar cuántas se habían escrito ya para no repetirlas, y eso es imposible de hacer bien desde un programa. Aquí el contrato es simple: o todas o ninguna.*
 
@@ -1250,7 +1250,7 @@ $ biso set TASK-7 TASK-33 --priority medium --dry-run
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 3, 10.6, no es texto literal de la especificación)*
+*(salida derivada de [`spec/invocacion.md#banderas-globales`](spec/invocacion.md#banderas-globales), [`spec/cmd/set.md`](spec/cmd/set.md), no es texto literal de la especificación)*
 
 *Nota: Código 0, así que habría funcionado. Ese código es la respuesta de verdad, más que el texto: un programa que llame a `biso` no necesita leer nada para saber si el lote es válido. El texto exacto de esta línea es una derivación. La especificación da la frase literal para el lote de `biso new --from` ("242 tasks would be created, nothing was written (--dry-run)") y dice que `--dry-run` vale en todos los comandos que escriben, pero no escribe la frase para `biso set`. Aquí se ha usado la misma forma cambiando el verbo, que es lo más probable, y queda anotado en tutorial/lagunas/11-13.md.*
 
@@ -1264,7 +1264,7 @@ TASK-33  To Do  ac 1/3  urgency 4.3
 
 Código de salida: `0`
 
-*(salida derivada de SPEC 10.6, 5.4, no es texto literal de la especificación)*
+*(salida derivada de [`spec/cmd/set.md`](spec/cmd/set.md), [`spec/modelo-de-datos.md#la-urgencia`](spec/modelo-de-datos.md#la-urgencia), no es texto literal de la especificación)*
 
 *Nota: `TASK-7` cae de 18.3 a 15.3, que son los 3.0 que pierde al pasar de prioridad alta a media, y sigue siendo la más urgente del tablero con diferencia: le queda el término de fecha límite, que aporta 11.2 porque vence en dos días. `TASK-33` no se mueve, porque ya era de prioridad media, y aun así aparece en la salida: te dice en qué queda cada tarea que nombraste, no solo las que cambiaron. Fíjate también en la alineación de la primera columna. El ancho lo fija el identificador más largo de la salida, así que `TASK-7` lleva un espacio de más para cuadrar con `TASK-33`.*
 

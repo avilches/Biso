@@ -13,8 +13,8 @@ El tutorial va **por situaciones y no por comandos**. Un capítulo abre con un a
 reconoce ("a mitad de la tarea descubres que falta un criterio") y los comandos aparecen porque la
 situación los pide.
 
-No es una decisión estética. Un tutorial ordenado por comandos sería una segunda copia de la sección
-10 de `docs/SPEC.md`, y en cuanto existen dos copias empiezan a divergir. Ordenado por situaciones
+No es una decisión estética. Un tutorial ordenado por comandos sería una segunda copia de
+["Los comandos"](../docs/spec/cmd/index.md), y en cuanto existen dos copias empiezan a divergir. Ordenado por situaciones
 aporta lo único que la especificación no tiene, que es el porqué y el orden en que se conocen los
 conceptos, y no compite con ella como fuente de verdad.
 
@@ -46,18 +46,19 @@ Cada paso declara el comando, su salida, su código de salida y **de dónde sale
       warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z
       TASK-11  In Progress  ac 1/2  dod 0/2  urgency 41.0
     codigo_salida: 0
-    origen: literal SPEC 4.3
+    origen: literal spec/salida-y-terminal.md#notas-y-avisos
     comentario: |
       Opcional. Lo que hay que mirar en esa salida y por qué.
 ```
 
 Las reglas que no se negocian:
 
-- **`origen` solo admite dos formas**, `literal SPEC <sección>` si la salida está copiada carácter a
-  carácter del documento, o `derivada SPEC <sección>` si se construyó aplicando sus reglas. El
-  generador **marca las derivadas en la página**, y esa marca es el aparato de validación: lo literal
-  ya está validado por estar en la especificación, lo derivado es lo que hay que revisar. De 59
-  pasos, 7 son literales.
+- **`origen` solo admite dos formas**, `literal spec/<ruta>` si la salida está copiada carácter a
+  carácter de ese fichero de `docs/spec/`, o `derivada spec/<ruta>[, spec/<ruta>...]` si se construyó
+  aplicando las reglas de esos ficheros. `<ruta>` lleva ancla cuando la regla está dentro de un
+  apartado y no cuando es el fichero entero. El generador **marca las derivadas en la página
+  enlazando cada ruta**, y esa marca es el aparato de validación: lo literal ya está validado por
+  estar en la especificación, lo derivado es lo que hay que revisar. De 59 pasos, 7 son literales.
 - **`codigo_salida` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial
   que solo declara el código cuando falla enseña que el código solo importa al fallar, y en `biso` es
   al revés.
@@ -92,7 +93,7 @@ generador que se traga un fixture incompleto destruye la única garantía de est
 Los otros dos existen porque había números en los fixtures que nadie podía verificar leyendo un solo
 fichero:
 
-- `urgency.py` calcula la urgencia de cada tarea según la sección 5.4 de la especificación, con el
+- `urgency.py` calcula la urgencia de cada tarea según ["La urgencia"](../docs/spec/modelo-de-datos.md#la-urgencia), con el
   desglose de cada término, y las ordena por la regla de `biso ls`. Los escenarios ordenan listas por
   urgencia, y ese orden hay que poder reproducirlo en vez de creerse un número escrito por alguien.
   Reproduce el `urgency 19.0` que la especificación imprime para `TASK-11`, que es la comprobación de

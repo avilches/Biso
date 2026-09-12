@@ -7,8 +7,8 @@ ejecute el programa.
 
 ## Estado: especificación cerrada, sin una línea de código
 
-Lo que hay es [`docs/SPEC.md`](docs/SPEC.md), y es el documento del que se implementa todo. Define
-todos los comandos (su recuento vive en la sección 10) con su firma, su tabla de parámetros, su
+Lo que hay es [`docs/spec/`](docs/spec/index.md), y es la especificación de la que se implementa todo. Define
+todos los comandos (su recuento vive en ["Los comandos"](docs/spec/cmd/index.md)) con su firma, su tabla de parámetros, su
 comportamiento en los casos límite, la salida literal que imprimen, su esquema JSON, sus códigos de
 salida y el texto exacto de su ayuda.
 Está escrito para que alguien lo implemente entero sin preguntar nada.
@@ -24,54 +24,55 @@ donde la especificación todavía no decide, las frases que dicen algo falso sin
 comportamiento, y las decisiones aplazadas a propósito. Nada de eso impide empezar a implementar, y
 saber que ya está anotado evita volver a descubrirlo. Cuando se cierre una entrada, se quita de ahí.
 
-Su sección 15 dice por dónde empezar, en el orden en que cada pieza paga lo que cuesta: el modelo de
+["Por dónde empezar a implementar"](docs/spec/por-donde-empezar.md) dice el orden en que cada pieza paga lo que cuesta: el modelo de
 datos, el algoritmo de coincidencia (una función pura de la que dependen todos los comandos), los
-cuatro comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
+comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
 exportación, y el resto.
 
 ## El modelo de estados está cerrado
 
 Los cuatro requisitos que lo tocaban ya están decididos: dos resueltos sin ningún papel de estado
 nuevo, uno resuelto con la decisión de persistencia ya tomada (el arrendamiento con caducidad) y uno
-retirado. El detalle, con la evidencia detrás de cada decisión, está en la sección 9 de
-[`docs/DECISIONES.md`](docs/DECISIONES.md).
+retirado. El detalle, con la evidencia detrás de cada decisión, está en
+["El modelo de estados: cuatro requisitos, cerrados"](docs/DECISIONES.md#el-modelo-de-estados-cuatro-requisitos-cerrados).
 
 ## La persistencia está decidida
 
 Un tablero es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un
 fichero puntero versionado en git, con una exportación de texto que sí se commitea para el historial
 (`biso snapshot`). Sin daemon, y sin fusionar nunca dos almacenes escritos por separado. El porqué de
-cada pieza, con su aritmética, está en la sección 12 de [`docs/DECISIONES.md`](docs/DECISIONES.md),
+cada pieza, con su aritmética, está en ["La decisión de persistencia"](docs/DECISIONES.md#la-decisión-de-persistencia),
 que enlaza a su vez a [`docs/ESTADO-DEL-ARTE.md`](docs/ESTADO-DEL-ARTE.md), la investigación sobre las
 demás herramientas del espacio y por qué fallan.
 
 ## El lenguaje es Go
 
-El requisito que sale de la especificación es que el programa arranque rápido, con el presupuesto de la
-sección 4.13 de `docs/SPEC.md`: 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero
-de 300 tareas, cuyo origen está en la sección 13 de `docs/DECISIONES.md`. Eso descarta los lenguajes
+El requisito que sale de la especificación es que el programa arranque rápido, con el presupuesto de
+["El presupuesto de arranque"](docs/spec/presupuestos.md#el-presupuesto-de-arranque): 25 milisegundos de reloj para `biso ls` y `biso prime` sobre un tablero
+de 300 tareas, cuyo origen está en ["El origen de la cifra de 25 milisegundos"](docs/DECISIONES.md#el-origen-de-la-cifra-de-25-milisegundos). Eso descarta los lenguajes
 interpretados, y entre los compilados la elección es **Go**, no por rendimiento sino por lo que cuesta
 escribir el programa: la ventaja de Rust son seis décimas de milisegundo sobre un presupuesto que ya
 sobra tres veces, y su modelo de propiedad de memoria obliga a rondas de corrección que alargan el ciclo
-sin dejar nada mejor en el producto. El razonamiento completo, con las cifras, está en la sección 14 de
-`docs/DECISIONES.md`.
+sin dejar nada mejor en el producto. El razonamiento completo, con las cifras, está en
+["El lenguaje de implementación es Go"](docs/DECISIONES.md#el-lenguaje-de-implementación-es-go).
 
 **Y el controlador de SQLite es `modernc.org/sqlite`, sobre la interfaz estándar `database/sql` y sin
 `cgo`.** Medido el 2026-09-10: los cuatro candidatos cumplen el presupuesto con mucho margen, así que no
 decide el reloj sino la distribución del binario, y el enlace con la biblioteca en C no puede compilar de
 forma cruzada para Linux ni para Windows y su modo sin `cgo` produce un binario que falla al ejecutarse
-en vez de al construirse. El razonamiento está en el apartado 14.1 de `docs/DECISIONES.md`, y el banco de
+en vez de al construirse. El razonamiento está en
+["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](docs/DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo), y el banco de
 pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `README.md`.
 
-Con eso **ya no queda nada que bloquee empezar a escribir código**: el paso 1 del orden de la sección 15
-de `docs/SPEC.md` es el almacén, y su decisión de controlador está tomada.
+Con eso **ya no queda nada que bloquee empezar a escribir código**: el paso 1 del orden de
+["Por dónde empezar a implementar"](docs/spec/por-donde-empezar.md) es el almacén, y su decisión de controlador está tomada.
 
 ## Cosas que conviene tener presentes al implementar
 
 - **El mensaje de arranque tiene un tope duro de 5.120 bytes.** No es un objetivo, es una prueba de la
-  suite, y es el único de los números de tamaño que congela el contrato de estabilidad de la sección
-  13 de `docs/SPEC.md`. El reparto entre la parte fija y el resumen, y lo que mide hoy el texto, están
-  en la sección 9.5 de `docs/SPEC.md`.
+  suite, y es el único de los números de tamaño que congela
+  ["El contrato de estabilidad"](docs/spec/estabilidad.md). El reparto entre la parte fija y el resumen, y lo que mide hoy el texto, están
+  en ["El presupuesto de tamaño"](docs/spec/presupuestos.md#el-presupuesto-de-tamaño).
 - **La simetría entre `biso export` y `biso new --from` es una prueba, no una intención.** Exportar
   un tablero e importarlo en otro vacío tiene que dar dos tableros idénticos campo a campo, con
   identificadores, fechas y claves de criterios incluidas.
@@ -87,6 +88,7 @@ de `docs/SPEC.md` es el almacén, y su decisión de controlador está tomada.
 
 - **El trabajo va en un worktree**, en `.claude/worktrees/<rama>`, nunca editando `main`
   directamente.
+- **Al terminar una tarea, se mezcla directamente a `main` y se borra el worktree, sin PR.**
 - **La documentación va en español**: `docs/`, este fichero, y los ficheros de fixtures del
   tutorial, que son documentación con forma de datos.
 - **El código fuente va entero en inglés, sea Go o Python.** No es solo cuestión de los

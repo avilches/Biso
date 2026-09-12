@@ -29,7 +29,7 @@ pasos:
       TASK-44  To Do  ac 0/1  urgency 1.6
       TASK-61  To Do  ac 0/1  urgency 1.4
     codigo_salida: 0
-    origen: derivada SPEC 10.6, 5.4
+    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       Una línea por tarea, con el mismo formato que cuando tocas una sola. No hay un modo lote que
       cambie la forma de la salida ni un resumen que sustituya al detalle: lo que aprendiste con
@@ -47,7 +47,7 @@ pasos:
       error: TASK-99 has never existed on this board
       note: the highest id ever assigned here is TASK-62
     codigo_salida: 4
-    origen: derivada SPEC 7.3, 10.6
+    origen: derivada spec/referencias.md#los-tres-mensajes-de-no-la-encuentro, spec/cmd/set.md
     comentario: |
       Y esto es lo importante: **`TASK-7` y `TASK-33` no se han tocado**. No es que se hayan
       escrito y luego se haya deshecho: es que no se llegó a escribir nada, porque la validación de
@@ -63,7 +63,7 @@ pasos:
     salida: |
       2 tasks would be updated, nothing was written (--dry-run)
     codigo_salida: 0
-    origen: derivada SPEC 3, 10.6
+    origen: derivada spec/invocacion.md#banderas-globales, spec/cmd/set.md
     comentario: |
       Código 0, así que habría funcionado. Ese código es la respuesta de verdad, más que el texto:
       un programa que llame a `biso` no necesita leer nada para saber si el lote es válido.
@@ -80,7 +80,7 @@ pasos:
       TASK-7   To Do  ac 0/4  urgency 15.3
       TASK-33  To Do  ac 1/3  urgency 4.3
     codigo_salida: 0
-    origen: derivada SPEC 10.6, 5.4
+    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       `TASK-7` cae de 18.3 a 15.3, que son los 3.0 que pierde al pasar de prioridad alta a media, y
       sigue siendo la más urgente del tablero con diferencia: le queda el término de fecha límite,
@@ -98,7 +98,7 @@ pasos:
     salida: |
       3 tasks would be created, nothing was written (--dry-run)
     codigo_salida: 0
-    origen: literal SPEC 10.3
+    origen: literal spec/cmd/new.md
     comentario: |
       Esta frase sí es literal de la especificación, con otro número. Y aquí `--dry-run` es donde
       más sirve, porque un fichero de importación puede traer un tipo, un estado o una clave que

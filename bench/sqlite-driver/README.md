@@ -1,12 +1,12 @@
 # Banco de pruebas: con qué controlador habla `biso` con SQLite
 
 Este directorio contesta con números la única decisión que quedaba antes de escribir código,
-la que `docs/PENDIENTES.md` tenía aplazada en su sección 2: cómo habla el programa con SQLite.
+la que `docs/PENDIENTES.md` tenía aplazada en sus ["Decisiones aplazadas a propósito"](../../docs/PENDIENTES.md#2-decisiones-aplazadas-a-propósito): cómo habla el programa con SQLite.
 El resultado, con su tabla y su recomendación, está en
-[`RESULTADOS.md`](RESULTADOS.md), y su contenido está escrito para acabar en la sección 14 de
+[`RESULTADOS.md`](RESULTADOS.md), y su contenido está escrito para acabar en ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go) de
 `docs/DECISIONES.md`.
 
-Lo que se mide es el presupuesto de la sección 4.13 de `docs/SPEC.md`: 25 milisegundos de reloj
+Lo que se mide es el presupuesto de ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque): 25 milisegundos de reloj
 para `biso ls` sobre un tablero de 300 tareas.
 
 ## Cómo se vuelve a ejecutar
@@ -23,7 +23,7 @@ fuera de este directorio: los binarios van a `bin/`, los tableros generados a `w
 carpetas están en el `.gitignore` porque se rehacen solas. La medida en frío usa una caché de
 compilación propia dentro de `work/`, así que no borra la caché del usuario.
 
-`linux.sh` hace falta porque la máquina de referencia de la sección 4.13 es la que ejecuta la
+`linux.sh` hace falta porque la máquina de referencia de ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque) es la que ejecuta la
 integración continua, y esa no es macOS. No es una formalidad: uno de los controladores paga en
 macOS un peaje de arranque que en Linux no existe, y sin verlo el veredicto sale al revés.
 Necesita un Docker que responda, que en esta máquina es Dory, y compila también dentro del
@@ -70,10 +70,10 @@ trabajo**, y que lo único distinto sea hablar con la base de datos. Por eso el 
 partido así:
 
 - `internal/board/` es el trabajo de verdad, y lo comparten los cuatro: el modelo de tarea
-  reducido a lo que `biso ls` imprime, la fórmula de urgencia de la sección 5.4 de `SPEC.md`, la
-  regla de orden y el formato de las ocho columnas de la 10.4, medido en celdas de terminal.
+  reducido a lo que `biso ls` imprime, la fórmula de ["La urgencia"](../../docs/spec/modelo-de-datos.md#la-urgencia), la
+  regla de orden y el formato de las ocho columnas de [`biso ls`](../../docs/spec/cmd/ls.md), medido en celdas de terminal.
 - `internal/board/schema.go` tiene el esquema del tablero y las **cinco consultas** que
-  `biso ls` necesita, y ni una más: la primera regla de la sección 4.13 prohíbe leer lo que la
+  `biso ls` necesita, y ni una más: la primera regla de ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque) prohíbe leer lo que la
   invocación no va a imprimir, así que ahí no se leen comentarios, ni etiquetas, ni prosa.
 - `internal/board/loadsql.go` recorre esas cinco consultas por `database/sql`, y lo comparten
   los tres controladores que ofrecen esa interfaz. Entre ellos, lo único que cambia es una línea

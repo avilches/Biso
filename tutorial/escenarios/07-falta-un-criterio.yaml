@@ -26,7 +26,7 @@ pasos:
     comando: biso get TASK-19 --section dod
     salida: ""
     codigo_salida: 0
-    origen: derivada SPEC 10.5
+    origen: derivada spec/cmd/get.md
     comentario: |
       No sale ni la cabecera. La regla de 10.5 es literal: con `--section`, una sección vacía no
       se imprime, y si no queda ninguna sección que imprimir la salida entera está vacía. Eso es
@@ -40,7 +40,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.2, 10.6, 5.4
+    origen: derivada spec/familias-de-banderas.md#campos-de-lista, spec/cmd/set.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       El nombre desnudo `--dod` añade. Es el mismo verbo que ya conoces de `--ac`: se comporta
       igual en cualquier campo de lista.
@@ -51,7 +51,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.2, 10.6, 5.4
+    origen: derivada spec/familias-de-banderas.md#campos-de-lista, spec/cmd/set.md, spec/modelo-de-datos.md#la-urgencia
   - narracion: |
       Compruebas cómo han quedado, con sus claves.
     comando: biso get TASK-19 --section dod
@@ -62,7 +62,7 @@ pasos:
       - [ ] #1 El cambio lo revisa otra persona antes de dar la tarea por terminada
       - [ ] #2 El comportamiento del retry queda documentado en el README
     codigo_salida: 0
-    origen: derivada SPEC 10.5
+    origen: derivada spec/cmd/get.md
   - narracion: |
       Pensándolo mejor, el primero sobra: que otra persona revise el cambio ya es política del
       equipo para cualquier PR, no algo específico de esta tarea. Lo quitas.
@@ -70,7 +70,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.2, 8.4, 10.6
+    origen: derivada spec/familias-de-banderas.md#campos-de-lista, spec/familias-de-banderas.md#selectores-de-criterios, spec/cmd/set.md
   - narracion: |
       Vuelves a mirar la lista para comprobar que lo que queda no ha cambiado de número.
     comando: biso get TASK-19 --section dod
@@ -80,7 +80,7 @@ pasos:
       ## Definition of Done
       - [ ] #2 El comportamiento del retry queda documentado en el README
     codigo_salida: 0
-    origen: derivada SPEC 5.1, 10.5
+    origen: derivada spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables, spec/cmd/get.md
     comentario: |
       Este es el punto central del escenario. El elemento que sobrevive sigue siendo `#2`, no ha
       pasado a `#1`. La clave la fija el programa al crear el elemento y no se mueve nunca
@@ -95,7 +95,7 @@ pasos:
       warning: --set-dod replaced 58 bytes of existing content
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 4.3, 8.2, 10.6
+    origen: derivada spec/salida-y-terminal.md#notas-y-avisos, spec/familias-de-banderas.md#campos-de-lista, spec/cmd/set.md
     comentario: |
       `--set-dod` sustituye la lista entera. El elemento `#2` desaparece con el resto de la
       lista vieja, y los dos que entran son elementos nuevos.
@@ -118,7 +118,7 @@ pasos:
       - [ ] #3 El README explica cuando y cuantas veces se reintenta
       - [ ] #4 El paquete de pruebas cubre el caso 5xx
     codigo_salida: 0
-    origen: derivada SPEC 5.1, 8.2, 10.5
+    origen: derivada spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables, spec/familias-de-banderas.md#campos-de-lista, spec/cmd/get.md
     comentario: |
       Las claves son `#3` y `#4`, no `#1` y `#2`. El contador de esta lista, dentro de esta
       tarea, ya iba por 2 antes de sustituir nada, y sustituir no lo reinicia: "las claves de
@@ -131,7 +131,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.2, 10.6
+    origen: derivada spec/familias-de-banderas.md#campos-de-lista, spec/cmd/set.md
     comentario: |
       La lista queda vacía, y por eso el trozo `dod` desaparece de la línea de estado: solo sale
       "siempre que la tarea tenga definición de hecho" (10.6), y una lista vacía no cuenta como
@@ -143,7 +143,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.2, 10.6, 5.4
+    origen: derivada spec/familias-de-banderas.md#campos-de-lista, spec/cmd/set.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       Nombre desnudo, añade otra vez. Las claves de estos dos elementos son `#5` y `#6`: el
       contador de la lista no se ha reiniciado ni con el `--rm-dod` de antes ni con el

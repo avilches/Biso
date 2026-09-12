@@ -1,6 +1,6 @@
 # Lo que queda por cerrar en la especificación
 
-Este documento existe porque `docs/SPEC.md` está escrito para implementarse sin preguntar nada, y estas
+Este documento existe porque [`docs/spec/`](spec/index.md) está escrito para implementarse sin preguntar nada, y estas
 son las preguntas que todavía se le pueden hacer. Ninguna impide empezar a implementar: la especificación
 es coherente y completa en todo lo que el trabajo diario toca. Lo que sigue son huecos que un
 implementador encontraría al llegar a un rincón concreto, incoherencias que no cambian el comportamiento,
@@ -8,22 +8,24 @@ y decisiones aplazadas a propósito.
 
 **Cuando una entrada se cierra, se quita de aquí.** El 2026-09-09 se cerró todo lo que quedaba de las dos
 revisiones de la rama de persistencia: los nueve huecos que un implementador habría tenido que rellenar
-solo, el orden de implementación de la sección 15, la última incoherencia de vocabulario y los cinco
-huecos que habían aparecido al cerrar los demás. La sección 12.1 de `DECISIONES.md` guarda el porqué de
-los que llevaban una decisión de fondo detrás, y la sección 2 de aquí conserva las decisiones que siguen
+solo, el orden de implementación de ["Por dónde empezar a implementar"](spec/por-donde-empezar.md), la última incoherencia de vocabulario y los cinco
+huecos que habían aparecido al cerrar los demás.
+["El control de versiones, la instantánea y los códigos que salieron de ahí"](DECISIONES.md#el-control-de-versiones-la-instantánea-y-los-códigos-que-salieron-de-ahí) de `DECISIONES.md` guarda el porqué de
+los que llevaban una decisión de fondo detrás, y ["Decisiones aplazadas a propósito"](#2-decisiones-aplazadas-a-propósito) conserva las decisiones que siguen
 aplazadas a propósito.
 
 Ese mismo día se cerró después **el contrato de ejecución del sistema de control de versiones**, que era
 el primero de los tres huecos que la ronda había abierto: qué se hace con lo que escriben las órdenes, si
-hay tiempo máximo de espera y qué rutas da `{files}`. Las reglas quedaron en un apartado de la sección
-10.14 de `SPEC.md` que vale igual para `git` y para `custom`, y el porqué en la sección 12.2 de
+hay tiempo máximo de espera y qué rutas da `{files}`. Las reglas quedaron en un apartado de
+["`biso snapshot`"](spec/cmd/snapshot.md) que vale igual para `git` y para `custom`, y el porqué en
+["Cómo se ejecuta el sistema de control de versiones"](DECISIONES.md#cómo-se-ejecuta-el-sistema-de-control-de-versiones) de
 `DECISIONES.md`. De paso salió un error real del documento, que `{files}` y la clave `files` del JSON de
 `snapshot` nombraban conjuntos distintos de ficheros sin decirlo.
 
 Y el 2026-09-10 se cerró **el controlador de SQLite**, que era la primera de las decisiones aplazadas y
-la única que bloqueaba escribir código. El resultado y su porqué están en el apartado 14.1 de
-`DECISIONES.md`, y las cifras completas en `bench/sqlite-driver/RESULTADOS.md`. Al medirlo aparecieron
-dos correcciones al apartado 13, que daba por constante un suelo que era solo de macOS y por sin medir un
+la única que bloqueaba escribir código. El resultado y su porqué están en
+["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo), y las cifras completas en `bench/sqlite-driver/RESULTADOS.md`. Al medirlo aparecieron
+dos correcciones a ["El origen de la cifra de 25 milisegundos"](DECISIONES.md#el-origen-de-la-cifra-de-25-milisegundos), que daba por constante un suelo que era solo de macOS y por sin medir un
 almacén que ya lo está.
 
 Dos cosas que se aprendieron por el camino y conviene no volver a aprender. La primera: **ante cada hueco
@@ -50,15 +52,16 @@ ignora una carpeta, que son las dos preguntas de las que depende dónde acaba la
 se escriba, quien use otro sistema pasa por `custom` y pierde el identificador de la revisión.
 
 **`biso doctor` no comprueba que el fichero de exclusión del tablero cuadre con el sistema configurado.**
-La sección 10.1 declara que si alguien cambia la clave `vcs` después de crear el tablero, el fichero se
+["`biso init`"](spec/cmd/init.md) declara que si alguien cambia la clave `vcs` después de crear el tablero, el fichero se
 queda con el nombre del sistema anterior y hay que arreglarlo a mano. Es una comprobación que `doctor`
-podría hacer y no hace, y añadirla obliga a tocar las tres frases que cuentan las dieciocho filas de su
-tabla, así que no se hizo dentro de esa ronda.
+podría hacer y no hace, y añadirla obliga a tocar la tabla de `biso doctor`, así que no se hizo dentro
+de esa ronda.
 
-**La sección 4.13 no dice el sistema operativo de la máquina de referencia, y ahora se sabe que eso
+**["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque) no dice el sistema operativo de la máquina de referencia, y ahora se sabe que eso
 cambia mucho el margen.** Esa sección amarra el presupuesto de 25 milisegundos a "la máquina que ejecuta
 la suite de integración continua", a propósito, para no llevar dentro del documento la ficha técnica de
-un ordenador. Al medir el controlador (apartado 14.1 de `DECISIONES.md`) salió que el suelo para arrancar
+un ordenador. Al medir el controlador
+(["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo) de `DECISIONES.md`) salió que el suelo para arrancar
 un binario de Go que no hace nada es de 8,1 milisegundos en macOS y de 0,37 en Linux, veintidós veces
 menos, y que la lectura real del tablero tarda 14,5 milisegundos en el primero y 3,2 en el segundo. Las
 dos plataformas cumplen el presupuesto, así que nada está bloqueado, pero el mismo código pasa la prueba
@@ -72,7 +75,7 @@ dice cuál es. Cuando exista la integración continua habrá que fijarlo, o deci
 **La exportación al formato de Backlog.md.** No es para uso propio: es para que quien ya lo usa pueda
 probar `biso` sin salto al vacío. La advertencia es que ese formato tiene bugs abiertos que se heredarían,
 entre ellos que al editar una tarea pierde las claves de frontmatter que no conoce. La introducción de
-`SPEC.md` ya declara que la compatibilidad con Backlog.md es de modelo de datos y no de formato de fichero.
+[`docs/spec/`](spec/index.md) ya declara que la compatibilidad con Backlog.md es de modelo de datos y no de formato de fichero.
 
 **La interfaz multiproyecto**, fuera de alcance a propósito y con su propio brainstorming pendiente. De
 ella solo se recogió el requisito que afecta al almacenamiento: los tableros se enumeran por convención,
@@ -81,3 +84,31 @@ actualice solo.
 
 **El mensaje del commit `bd0c874`** describe cuatro cambios que en realidad entraron en `aaa5b96`. El
 árbol es correcto, solo el mensaje se adelantó. Sin enmendar por no reescribir historia sin petición.
+
+**El campo `origen` de los fixtures del tutorial, decidido pero sin ejecutar.** La forma combinada que
+faltaba (citar varias secciones a la vez, cada una por fichero y título) ya está decidida en
+[`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md): `origen` se separa en `source_kind`
+(`literal` o `derived`) y `source`, una lista de citas. Esa decisión se llevó además a que el tutorial
+entero nace en inglés, no solo ese campo, así que lo que falta por hacer creció con ella: traducir los
+nombres de todos los campos del formato y el contenido en español de los trece escenarios de
+`worktree-tutorial`, y las cadenas de página de `tutorial/generate.py`. Nada de eso se puede ejecutar
+desde el worktree del reparto, ya cerrado: hace falta una sesión que trabaje directamente en
+`worktree-tutorial`, con ese documento como plan de partida.
+
+---
+
+## 3. Un plan de implementación que hay que repasar antes de retomarlo
+
+El 2026-09-11 se escribió, en la rama `worktree-implementacion-almacen`, el plan del primer paso de
+["Por dónde empezar a implementar"](spec/por-donde-empezar.md) (`docs/superpowers/plans/2026-09-11-almacen.md`): el almacén SQLite, sus migraciones,
+la transacción `WithTx` y la primera medida real del presupuesto de arranque. El documento de
+arquitectura que lo motiva vive en la misma rama, en
+`docs/superpowers/specs/2026-09-10-arquitectura-implementacion-design.md`. Los dos citan `docs/SPEC.md`
+por número de sección (4.10, 4.13, 15 y otras).
+
+La rama `worktree-reparto-de-la-spec`, que retiraba `docs/SPEC.md` como fichero único y repartía su
+contenido en `docs/spec/`, ya se cerró y se mezcló en `main`. Sigue abierta `worktree-tutorial`, así
+que el plan del almacén todavía no se puede retomar tal cual: sus referencias por sección apuntan a un
+`SPEC.md` que ya no existe en esa forma. Cuando esa rama se cierre, hay que releer el plan y el
+documento de arquitectura y actualizar sus referencias a los ficheros y a la numeración que tenga
+entonces la especificación, antes de retomarlo.

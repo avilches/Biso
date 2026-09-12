@@ -30,7 +30,7 @@ pasos:
             an archived task still exists: `biso ls --archived` lists them, and the
             id is never reused
     codigo_salida: 2
-    origen: literal SPEC 10.8
+    origen: literal spec/cmd/archive.md
     comentario: |
       La ausencia de este comando está escrita en la especificación, con su mensaje y su código,
       en vez de dejar que `biso delete` caiga en el error genérico de comando desconocido. La
@@ -42,7 +42,7 @@ pasos:
     salida: |
       TASK-52  In Progress  ac 0/1  urgency 5.4  archived
     codigo_salida: 0
-    origen: derivada SPEC 10.8, 5.4
+    origen: derivada spec/cmd/archive.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       Lee con cuidado esa línea, porque dice dos cosas que parecen incompatibles: la tarea sigue en
       `In Progress` y está `archived`. No hay contradicción. Archivar no es un estado y no toca el
@@ -64,7 +64,7 @@ pasos:
     salida: |
       TASK-52  In Progress  task  low  Document the release checklist  ac 0/1  @claude  -
     codigo_salida: 0
-    origen: derivada SPEC 10.4, 10.8
+    origen: derivada spec/cmd/ls.md, spec/cmd/archive.md
     comentario: |
       Ahí sigue, entera, con su asignación intacta. Lo único que ha perdido es el arrendamiento.
 
@@ -79,7 +79,7 @@ pasos:
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
     codigo_salida: 0
-    origen: derivada SPEC 10.4, 5.4
+    origen: derivada spec/cmd/ls.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       Tres tareas donde antes había cuatro, y `TASK-19` ya no está en ninguna de las dos listas
       porque se terminó en el escenario 10. El tablero dice ahora la verdad sobre lo que se está

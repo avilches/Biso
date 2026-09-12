@@ -23,7 +23,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 10.7.1, 5.4
+    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-start, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       La urgencia ha subido de 7.0 a 11.0, y son exactamente los 4.0 del término de tarea activa.
       Nadie ha escrito ese número: se recalcula al leer, cada vez.
@@ -47,7 +47,7 @@ pasos:
       Reproducir el 5xx con un servidor de prueba, y envolver la subida en un reintento con espera
       exponencial
     codigo_salida: 0
-    origen: derivada SPEC 10.5
+    origen: derivada spec/cmd/get.md
     comentario: |
       El plan está donde debía. Lo del arrendamiento hay que explicarlo, porque no se enseña aquí:
       son dos campos guardados en la tarea, hasta cuándo vale la reserva y de quién es, y el

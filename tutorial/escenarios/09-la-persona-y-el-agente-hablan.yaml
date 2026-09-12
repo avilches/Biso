@@ -26,7 +26,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 10.7.2, 5.4
+    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-note, spec/modelo-de-datos.md#la-urgencia
   - narracion: |
       Miras cómo ha quedado esa nota.
     comando: biso get TASK-19 --section notes
@@ -36,7 +36,7 @@ pasos:
       ## Implementation Notes
       El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3.
     codigo_salida: 0
-    origen: derivada SPEC 10.5
+    origen: derivada spec/cmd/get.md
     comentario: |
       No hay ningún autor ni ningún instante junto al texto. Las notas no tienen esa estructura:
       son un solo bloque de prosa al que cada `--note` añade un párrafo (8.3), no una lista de
@@ -51,7 +51,7 @@ pasos:
       note: comment #3 by @trello:juan
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 10.7.3, 5.2
+    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-comment, spec/modelo-de-datos.md#los-comentarios
     comentario: |
       "note: comment #3 by @trello:juan" sale por stderr, con la forma exacta que da el ejemplo
       de 10.7.3. El número no es una clave estable como la de un criterio (5.1): es la posición
@@ -66,7 +66,7 @@ pasos:
       note: comment #4 by @claude
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 10.7.3, 5.2
+    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-comment, spec/modelo-de-datos.md#los-comentarios
     comentario: |
       Sin --comment-author, el autor es `me`, la identidad configurada de este tablero: @claude.
       Es el mismo `--comment-author` que existe en todos los comandos de escritura, no solo en
@@ -93,7 +93,7 @@ pasos:
       @claude, 2026-09-06 16:20
       De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos.
     codigo_salida: 0
-    origen: derivada SPEC 10.5, 5.2
+    origen: derivada spec/cmd/get.md, spec/modelo-de-datos.md#los-comentarios
     comentario: |
       Las notas son un único bloque; los comentarios son cuatro entradas firmadas, en el orden
       en que se escribieron. `## Implementation Notes` sale antes que `## Comments` aunque en la

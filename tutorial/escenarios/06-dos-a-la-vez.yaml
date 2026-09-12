@@ -32,7 +32,7 @@ pasos:
       warning: TASK-11's lease is held by @claude until 2026-09-06T15:40:18Z
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
     codigo_salida: 0
-    origen: derivada SPEC 4.3, 10.7.1, 5
+    origen: derivada spec/salida-y-terminal.md#notas-y-avisos, spec/cmd/verbos-del-ciclo.md#biso-start, spec/modelo-de-datos.md
     comentario: |
       Lo primero: la nota se ha escrito. El código de salida es 0 y la tarea ha cambiado. El aviso
       no es un rechazo, es información.
@@ -56,7 +56,7 @@ pasos:
     salida: |
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
     codigo_salida: 0
-    origen: derivada SPEC 10.7.2, 5
+    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-note, spec/modelo-de-datos.md
     comentario: |
       Ningún aviso, porque el arrendamiento es suyo. Y algo que la salida no dice: acaba de
       renovarse hasta 240 minutos después de este momento.
@@ -73,7 +73,7 @@ pasos:
       note: TASK-11 unchanged
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
     codigo_salida: 0
-    origen: derivada SPEC 10.6, 5
+    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md
     comentario: |
       Este paso parece inútil y es el que cierra el razonamiento. No ha cambiado ningún campo, lo
       dice la nota, y aun así **el arrendamiento se ha renovado**.
@@ -97,7 +97,7 @@ pasos:
       TASK-52  In Progress  task  low     Document the release checklist                    ac 0/1  -        -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
     codigo_salida: 0
-    origen: derivada SPEC 10.4, 5.4
+    origen: derivada spec/cmd/ls.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       `TASK-52` sigue en `In Progress`, con toda normalidad, y no tiene a nadie asignado. Su
       arrendamiento venció el 5 de septiembre y el estado guardado no se ha movido ni un
@@ -118,7 +118,7 @@ pasos:
       note: TASK-52 was already In Progress
       TASK-52  In Progress  ac 0/1  urgency 5.4
     codigo_salida: 0
-    origen: derivada SPEC 10.7.1, 5.4
+    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-start, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       Con una sola llamada ha hecho tres cosas: ha visto que el estado ya era el activo y lo dice
       con esa nota, se ha asignado la tarea porque no la tenía nadie, y **ha reclamado el
@@ -141,7 +141,7 @@ pasos:
       note: TASK-19 unchanged
       TASK-19  In Progress  ac 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 10.6, 5
+    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md
     comentario: |
       Otra escritura que no cambia nada y que renueva la reserva de `TASK-19` hasta 240 minutos
       después de este momento. Con esto la tarea entra en el escenario siguiente con el

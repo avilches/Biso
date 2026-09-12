@@ -21,7 +21,7 @@ pasos:
     salida: |
       TASK-62
     codigo_salida: 0
-    origen: derivada SPEC 10.3
+    origen: derivada spec/cmd/new.md
     comentario: |
       Nada de "created TASK-62" ni de repetir el título: la única línea es el identificador,
       porque eso es justo lo que no podías saber de antemano y lo demás ya lo sabías (regla 7

@@ -25,7 +25,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/6  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.2, 10.6, 5.1
+    origen: derivada spec/familias-de-banderas.md#campos-de-lista, spec/cmd/set.md, spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables
     comentario: |
       Cuatro `--ac` en la misma llamada añaden cuatro elementos nuevos, en el orden en que se
       escriben (4.9), con claves nuevas, #3, #4, #5 y #6, detrás de los #1 y #2 que ya tenía la
@@ -36,21 +36,21 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 1/6  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.4, 10.6
+    origen: derivada spec/familias-de-banderas.md#selectores-de-criterios, spec/cmd/set.md
   - narracion: |
       Los tres que probaste juntos con el mismo test, de una vez, con un rango.
     comando: biso set TASK-19 --check 3-5
     salida: |
       TASK-19  In Progress  ac 4/6  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.4, 10.6
+    origen: derivada spec/familias-de-banderas.md#selectores-de-criterios, spec/cmd/set.md
   - narracion: |
       Y dos que no son consecutivos, con una lista separada por comas.
     comando: biso set TASK-19 --check 2,6
     salida: |
       TASK-19  In Progress  ac 6/6  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.4, 10.6
+    origen: derivada spec/familias-de-banderas.md#selectores-de-criterios, spec/cmd/set.md
   - narracion: |
       Casi al momento te das cuenta de que el #2 (el del contador en el log) lo diste por bueno
       demasiado pronto, el número de intentos todavía no se ve en el log, solo el resultado
@@ -59,7 +59,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 5/6  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.4, 10.6
+    origen: derivada spec/familias-de-banderas.md#selectores-de-criterios, spec/cmd/set.md
     comentario: |
       `--uncheck` toma el mismo selector que `--check`, con el mismo efecto invertido, aquí
       "uno suelto", igual que el primer `--check` de este escenario.
@@ -70,7 +70,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 5/6  dod 1/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 8.4, 10.6
+    origen: derivada spec/familias-de-banderas.md#selectores-de-criterios, spec/cmd/set.md
     comentario: |
       "README" no encaja con la gramática de claves de 8.4 (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), así
       que se trata como texto literal y busca el elemento cuyo texto lo contenga. Solo el #5
@@ -83,7 +83,7 @@ pasos:
     salida: |
       TASK-19  Done  ac 6/6  dod 2/2  urgency 0.0
     codigo_salida: 0
-    origen: derivada SPEC 10.6, 10.7.4, 5.4
+    origen: derivada spec/cmd/set.md, spec/cmd/verbos-del-ciclo.md#biso-finish, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       `--check all` vuelve a marcar el #2, que habías desmarcado, y no toca los otros cinco, ya
       estaban marcados, y marcar dos veces el mismo criterio "se queda marcado, sin aviso, la

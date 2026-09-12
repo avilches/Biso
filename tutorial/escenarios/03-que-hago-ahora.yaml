@@ -21,7 +21,7 @@ pasos:
       TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
     codigo_salida: 0
-    origen: derivada SPEC 10.4
+    origen: derivada spec/cmd/ls.md
     comentario: |
       Cinco filas, ni una más: como son menos de las 30 que `ls` enseña por defecto, no sale
       ningún aviso de recorte por stderr, solo las filas por stdout. El orden no es el del
@@ -45,7 +45,7 @@ pasos:
       warning: 2 more tasks match; showing 3 of 5
       hint: narrow with -s, --type or -l, or ask for everything with --all
     codigo_salida: 0
-    origen: derivada SPEC 10.4
+    origen: derivada spec/cmd/ls.md
     comentario: |
       Las tres primeras filas van por stdout, y la advertencia y la sugerencia van por
       stderr: en tu terminal se ven seguidas, pero si guardas la salida en un fichero
@@ -102,7 +102,7 @@ pasos:
       ## Open Question
       (empty)
     codigo_salida: 0
-    origen: derivada SPEC 10.5
+    origen: derivada spec/cmd/get.md
     comentario: |
       No hay línea `lease`: esa solo sale cuando la tarea tiene un arrendamiento, y una tarea
       en To Do no puede tenerlo (sección 5). Las nueve secciones salen siempre, aunque estén

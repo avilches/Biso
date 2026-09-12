@@ -41,7 +41,7 @@ REGENERATE_CMD = (
 )
 
 FILENAME_RE = re.compile(r"^(\d+)-([a-z0-9]+(?:-[a-z0-9]+)*)\.yaml$")
-SOURCE_RE = re.compile(r"^(literal|derivada) SPEC \S.*$")
+SOURCE_RE = re.compile(r"^(literal|derivada) spec/\S.*$")
 
 # The fixture files are documentation, so their keys are Spanish. Naming them here keeps that
 # Spanish confined to one block instead of scattering it through the code.
@@ -80,7 +80,7 @@ INDEX_HEADING = "## Escenarios"
 TEACHES_HEADING = '!!! abstract "Qué enseña este escenario"'
 EXIT_CODE_LINE = "Código de salida: `%s`"
 DERIVED_NOTICE = (
-    "*(salida derivada de SPEC %s, no es texto literal de la especificación)*"
+    "*(salida derivada de %s, no es texto literal de la especificación)*"
 )
 REMARK_LINE = "*Nota: %s*"
 
@@ -190,8 +190,8 @@ def validate_step(rel: str, index: int, step: Any) -> list[str]:
         source = str(step[KEY_SOURCE])
         if not SOURCE_RE.match(source):
             errors.append(
-                f"{rel}, step {index}: '{KEY_SOURCE}' must read 'literal SPEC <section>' "
-                f"or 'derivada SPEC <section>', not {source!r}"
+                f"{rel}, step {index}: '{KEY_SOURCE}' must read 'literal spec/<path>' "
+                f"or 'derivada spec/<path>', not {source!r}"
             )
 
     return errors
@@ -291,6 +291,12 @@ def render_console_block(cmd: str, output: str) -> str:
     return "```console\n" + "\n".join(body) + "\n```"
 
 
+def render_source_paths(paths_text: str) -> str:
+    """Turn 'spec/a.md#x, spec/b.md' into linked, code-formatted references."""
+    paths = [p.strip() for p in paths_text.split(",")]
+    return ", ".join(f"[`{p}`]({p})" for p in paths)
+
+
 def render_step(step: dict) -> str:
     parts: list[str] = []
 
@@ -303,7 +309,8 @@ def render_step(step: dict) -> str:
 
     source = str(step[KEY_SOURCE])
     if source.startswith("derivada"):
-        parts.append(DERIVED_NOTICE % source.split("SPEC", 1)[1].strip())
+        paths_text = source[len("derivada"):].strip()
+        parts.append(DERIVED_NOTICE % render_source_paths(paths_text))
 
     remark = step.get(KEY_REMARK)
     if remark and not _is_missing(remark):

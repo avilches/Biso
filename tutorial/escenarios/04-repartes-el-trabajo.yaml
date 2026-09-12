@@ -26,7 +26,7 @@ pasos:
     salida: |
       error: --mine needs an identity; set it with biso config set me <you> or BISO_ME
     codigo_salida: 6
-    origen: literal SPEC 3.1
+    origen: literal spec/invocacion.md#variables-de-entorno
     comentario: |
       Fíjate en que no devuelve una lista vacía. Podría haberlo hecho, y sería lo cómodo de
       programar: sin identidad, ninguna tarea es "mía", así que cero resultados. Pero entonces
@@ -45,7 +45,7 @@ pasos:
     salida: |
       TASK-19  To Do  ac 0/2  urgency 7.0
     codigo_salida: 0
-    origen: derivada SPEC 10.6, 5.4
+    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       La salida no repite lo que Sara acaba de escribir: no dice "assignee: @claude". Dice el
       estado en que queda la tarea, su avance de criterios y su urgencia, que es lo que ella no
@@ -69,7 +69,7 @@ pasos:
       TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
     codigo_salida: 0
-    origen: derivada SPEC 10.4, 5.4
+    origen: derivada spec/cmd/ls.md, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       Seis filas donde antes había cinco. `TASK-19` entra en segunda posición, y ese sitio no es
       casual: la lista va por urgencia descendente y `TASK-19` vale 7.0, igual que `TASK-60`. Un
@@ -93,7 +93,7 @@ pasos:
       TASK-61  To Do  docs  medium  Rewrite the install section            ac 0/1  @claude  -
       TASK-33  To Do  task  medium  Add a retry counter to the upload log  ac 1/3  @claude  -
     codigo_salida: 0
-    origen: derivada SPEC 10.4
+    origen: derivada spec/cmd/ls.md
     comentario: |
       En `biso prime`, estas tres son las que salen en el bloque `ASSIGNED TO YOU`, que significa
       exactamente esto: tareas que una persona decidió que hicieras tú y que todavía no están en

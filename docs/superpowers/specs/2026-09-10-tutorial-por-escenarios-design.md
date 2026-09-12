@@ -2,6 +2,14 @@
 
 Diseñado el 2026-09-10. Este documento es el encargo del que se implementa el tutorial.
 
+> **La prosa de este documento cita la especificación por el número de sus secciones**, como se
+> escribió en su día. Ese mismo día `docs/SPEC.md` se repartió en los documentos de `docs/spec/`, que
+> se citan por el título de sus secciones. Estas referencias narrativas se conservan sin tocar porque
+> este documento es el encargo de una tarea ya cerrada; para traducir una, mira
+> `tools/mapa-de-secciones.txt`. La única excepción es el campo `origen` de los fixtures, que sí se
+> tradujo porque es un contrato activo que valida el generador, y que ahora cita una ruta de
+> `docs/spec/` en vez de un número.
+
 ## El problema
 
 `docs/SPEC.md` es completa y es exacta, pero es una referencia: dice qué hace cada comando, no en qué
@@ -127,7 +135,7 @@ pasos:
       warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z
       TASK-11  In Progress  ac 1/2  dod 0/2  urgencia 41
     codigo_salida: 0
-    origen: literal SPEC 4.3
+    origen: literal spec/salida-y-terminal.md#notas-y-avisos
     comentario: |
       Opcional. Lo que hay que mirar en esa salida y por qué.
 ```
@@ -140,12 +148,18 @@ Reglas del formato:
 - **`codigo_salida` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial que solo
   declara el código cuando falla enseña que el código solo importa al fallar, y en `biso` es al revés.
 - **`origen` es obligatorio** y solo admite dos formas:
-  - `literal SPEC <sección>`: la salida está copiada carácter a carácter del documento.
-  - `derivada SPEC <sección>`: la salida se ha construido aplicando las reglas de esa sección, porque la
-    spec no trae ese caso exacto escrito.
+  - `literal spec/<ruta>`: la salida está copiada carácter a carácter de ese fichero de
+    `docs/spec/`.
+  - `derivada spec/<ruta>[, spec/<ruta>...]`: la salida se ha construido aplicando las reglas de
+    esos ficheros, porque la especificación no trae ese caso exacto escrito. Con varios, separados
+    por comas.
 
-  El generador **marca visualmente las derivadas** en la página. Esa marca es el aparato de validación:
-  al revisar, lo literal ya está validado por estar en la spec y lo derivado es lo que hay que mirar.
+  `<ruta>` es la ruta relativa a `docs/spec/`, con ancla cuando la regla está dentro de un apartado
+  (`cmd/set.md#selectores-de-criterios`) y sin ella cuando es el fichero entero. El generador
+  **marca visualmente las derivadas** en la página, enlazando cada ruta al fichero real: esa marca
+  es el aparato de validación: al revisar, lo literal ya está validado por estar en la especificación
+  y lo derivado es lo que hay que mirar. Un enlace que apunte a un fichero o ancla que no existe lo
+  dice el build de MkDocs con `--strict`.
 - **Los pasos de un escenario ocurren en orden y el estado del tablero se arrastra** entre escenarios.
   El identificador `NN` del fichero fija ese orden.
 
@@ -251,3 +265,10 @@ con un enlace, sin `@import`, para que un agente lo cargue cuando trabaje en esa
 Referenciar en vez de importar tiene además una ventaja medida en esta máquina: opencode no expande
 los imports, así que un `@import` en la raíz obligaría a mantener un `opencode.json` en paralelo, y
 `link-agent-instructions.sh --check` confirma que sin él los tres agentes siguen leyendo lo mismo.
+
+**`origen` cita una ruta de `docs/spec/` y no un número de sección.** Así se escribió mientras
+`docs/SPEC.md` era un solo fichero con secciones numeradas, pero `main` lo repartió en los treinta y
+cuatro ficheros de `docs/spec/` y pasó a citar por título en todo el repositorio. Las cincuenta y
+nueve citas de los fixtures se tradujeron mecánicamente con `tools/mapa-de-secciones.txt`, que ya
+existía para ese reparto, y el generador pasó a enlazar cada ruta derivada al fichero real en vez de
+limitarse a mostrar un número que ya no significaba nada.

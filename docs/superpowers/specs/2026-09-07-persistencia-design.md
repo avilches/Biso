@@ -1,5 +1,11 @@
 # Diseño: cómo se guardan los datos de biso
 
+> **Este documento cita la especificación por el número de sus secciones**, como se escribió en su día.
+> El 2026-09-10 `docs/SPEC.md` se repartió en los documentos de `docs/spec/`, que se citan por el título
+> de sus secciones. Estas referencias se conservan sin tocar porque este documento es el acta de una
+> sesión cerrada. Para traducir una de ellas, mira el mapa de la tabla de la tarea 3 de
+> [el plan del reparto](../plans/2026-09-10-reparto-de-la-spec.md).
+
 Fecha: 2026-09-07
 
 Esta es la decisión que `CLAUDE.md` marcaba como la única que bloqueaba escribir código. La evidencia

@@ -43,14 +43,14 @@ pasos:
       @claude, 2026-09-06 09:30
       Should the retry budget be shared with the download endpoint or kept separate?
     codigo_salida: 0
-    origen: literal SPEC 10.5
+    origen: literal spec/cmd/get.md
   - narracion: |
       Ahora la tuya. En vez de fijar un número a ojo, la dejas escrita como pregunta.
     comando: 'biso ask TASK-19 "¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?"'
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 7.0
     codigo_salida: 0
-    origen: derivada SPEC 10.7.5, 5.4
+    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-ask, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       El estado no cambia, sigue en In Progress. La urgencia sí baja, de 11.0 a 7.0: el término
       de actividad de la fórmula (5.4) exige que la tarea esté en el estado activo *y* que no
@@ -67,7 +67,7 @@ pasos:
       @claude, 2026-09-06 14:10
       ¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?
     codigo_salida: 0
-    origen: derivada SPEC 10.5, 5.7
+    origen: derivada spec/cmd/get.md, spec/modelo-de-datos.md#la-pregunta-abierta
   - narracion: |
       Un rato después, mirando un endpoint parecido, encuentras la respuesta tú mismo: ya hay un
       valor fijado en otra parte del código. Respondes y la tarea queda desaparcada.
@@ -75,7 +75,7 @@ pasos:
     salida: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     codigo_salida: 0
-    origen: derivada SPEC 10.7.6, 5.4
+    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-answer, spec/modelo-de-datos.md#la-urgencia
     comentario: |
       La urgencia recupera los 11.0 de antes: waiting vuelve a ser falso y el término de
       actividad vuelve a sumar sus 4.0 puntos.
@@ -92,7 +92,7 @@ pasos:
       @claude, 2026-09-06 15:30
       Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí.
     codigo_salida: 0
-    origen: derivada SPEC 5.2, 5.3, 10.5, 10.7.6
+    origen: derivada spec/modelo-de-datos.md#los-comentarios, spec/modelo-de-datos.md#las-fechas, spec/cmd/get.md, spec/cmd/verbos-del-ciclo.md#biso-answer
     comentario: |
       El primer comentario lleva el instante en que se hizo la pregunta (14:10), no el de la
       respuesta (15:30): es la excepción de forma que anota 5.3, la pregunta se traslada tal
