@@ -87,21 +87,26 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
 ## El sitio de documentación
 
 Los documentos de `docs/` se sirven como un sitio navegable con MkDocs y el tema Material,
-definido en `mkdocs.yml`. Es utillaje de documentación, no parte del programa: no toca el código
-Go. Las dependencias de Python están fijadas con versión exacta en `docs-requirements.txt`.
+definido en `docs/docs-tooling/mkdocs/mkdocs.yml`. Es utillaje de documentación, no parte del
+programa: no toca el código Go. Las dependencias de Python están fijadas con versión exacta en
+`docs/docs-tooling/mkdocs/docs-requirements.txt`.
 
 Se ejecuta con `uv` (ya instalado en esta máquina) sin crear un entorno virtual dentro del
 repositorio ni instalar nada en el Python del sistema: `uv` resuelve las dependencias fijadas a un
-caché propio y las descarta al terminar.
+caché propio y las descarta al terminar. El `Makefile` de la raíz envuelve los comandos largos:
 
-- Servir en local con recarga automática al editar los `.md`:
-  `uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project mkdocs serve -f docs/docs-tooling/mkdocs/mkdocs.yml`
-- Construir el sitio estático en `site/` (no se versiona, ver `.gitignore`):
-  `uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project mkdocs build --strict -f docs/docs-tooling/mkdocs/mkdocs.yml`
+- `make docs-serve`: sirve el sitio en local con recarga automática al editar los `.md`.
+- `make docs-build`: regenera `docs/TUTORIAL.md` y construye el sitio estático en `site/` (no se
+  versiona, ver `.gitignore`) con `mkdocs build --strict`.
+- `make docs-doctor`: lo mismo que `docs-build`, y antes ejecuta los tres comprobadores de
+  `docs/docs-tooling/tools/` (enlaces, recuentos y referencias por número). Es el que conviene
+  lanzar antes de dar algo por terminado.
 
 `docs/TUTORIAL.md` es la única excepción a "los `.md` son la fuente de verdad": es producto
-generado a partir de los fixtures de `tutorial/escenarios/` y de `tutorial/conceptos.md`, y no se
-edita a mano (lleva su propia cabecera que lo recuerda). Se regenera con:
+generado a partir de los fixtures de `docs/docs-tooling/tutorial/escenarios/` y de
+`docs/docs-tooling/tutorial/conceptos.md`, y no se edita a mano (lleva su propia cabecera que lo
+recuerda). `make docs-build` y `make docs-doctor` ya lo regeneran; para hacerlo solo, sin construir
+el sitio:
 `uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py`
 
 ## El tutorial
