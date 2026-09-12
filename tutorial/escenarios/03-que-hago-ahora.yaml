@@ -1,28 +1,30 @@
 id: 03-que-hago-ahora
-titulo: "¿Y ahora qué hago?"
-situacion: |
+title: "¿Y ahora qué hago?"
+situation: |
   Ya sabes qué tablero es este y ya has dejado tu idea a salvo. Pero el arranque te ha
   enseñado el mapa entero del proyecto, no lo tuyo en concreto, y tienes veinte minutos
   antes de la siguiente reunión. Quieres ver qué tienes tú encima ahora mismo, y luego
   coger una y leerla entera antes de tocar nada.
-ensena:
+teaches:
   - "`biso ls` enseña como mucho 30 tareas y deja fuera las que ya están Done; lo que se
     queda fuera lo dice por stderr, nunca mezclado con las filas de datos de stdout."
   - "La urgencia que decide el orden no la escribe nadie, se recalcula cada vez que pides
     la lista, y por eso nunca aparece como columna."
-pasos:
-  - narracion: |
+steps:
+  - narration: |
       Miras qué tienes asignado, sin filtrar nada más:
-    comando: biso ls --mine
-    salida: |
+    command: biso ls --mine
+    output: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
       TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
-    codigo_salida: 0
-    origen: derivada spec/cmd/ls.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/ls.md "`biso ls`"
+    remark: |
       Cinco filas, ni una más: como son menos de las 30 que `ls` enseña por defecto, no sale
       ningún aviso de recorte por stderr, solo las filas por stdout. El orden no es el del
       identificador ni el de cuándo se crearon: es urgencia descendente, que es el criterio
@@ -32,21 +34,23 @@ pasos:
       TASK-11 y eso resta en vez de sumar. Ese número no lo escribe nadie ni se guarda en
       ningún sitio: se recalcula en el instante de leer (sección 5.4), y por eso no hay una
       columna "urgency" en esta tabla, solo el orden que produce.
-  - narracion: |
+  - narration: |
       En un tablero real esa lista no siempre cabe en 30 filas, y el aviso de lo que se ha
       quedado fuera no se mezcla nunca con las tareas: va por stderr, para que redirigir la
       salida a un fichero deje un fichero de datos limpio. Para verlo sin esperar a que el
       tablero crezca, le pones un límite más bajo que el que tienes asignado:
-    comando: biso ls --mine --limit 3
-    salida: |
+    command: biso ls --mine --limit 3
+    output: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
       warning: 2 more tasks match; showing 3 of 5
       hint: narrow with -s, --type or -l, or ask for everything with --all
-    codigo_salida: 0
-    origen: derivada spec/cmd/ls.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/ls.md "`biso ls`"
+    remark: |
       Las tres primeras filas van por stdout, y la advertencia y la sugerencia van por
       stderr: en tu terminal se ven seguidas, pero si guardas la salida en un fichero
       (`biso ls --mine --limit 3 > tareas.txt`) ese fichero tiene tres líneas, no cinco.
@@ -55,12 +59,12 @@ pasos:
       In Progress, sin contar las 190 Done que `ls` esconde por defecto) es fácil llegar a
       esas 30 sin buscarlo. `--all` quita el límite entero, y `--any-status` es lo único que
       trae de vuelta las tareas terminadas.
-  - narracion: |
+  - narration: |
       De las cinco, TASK-33 es la que más se parece a lo que acabas de dejar tú en el
       escenario anterior: apuntada, con algún criterio ya pensado pero sin empezar. Antes de
       decidir si es tuya de verdad, la lees entera:
-    comando: biso get TASK-33
-    salida: |
+    command: biso get TASK-33
+    output: |
       TASK-33  Add a retry counter to the upload log
       status     To Do                type       task
       priority   medium               urgency    4.3
@@ -101,16 +105,18 @@ pasos:
 
       ## Open Question
       (empty)
-    codigo_salida: 0
-    origen: derivada spec/cmd/get.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/get.md "`biso get`"
+    remark: |
       No hay línea `lease`: esa solo sale cuando la tarea tiene un arrendamiento, y una tarea
       en To Do no puede tenerlo (sección 5). Las nueve secciones salen siempre, aunque estén
       vacías y marcadas con `(empty)`, porque omitir una que no se ha pedido se confundiría
       con una que sí se ha pedido y ha salido vacía. Fíjate en las claves `#1`, `#2` y `#3`
       delante de cada criterio: son estables, no una posición en la lista, así que si algún
       día se quita el `#2` los otros dos siguen siendo `#1` y `#3`, nunca se renumeran.
-tablero_entra: |
+board_in: |
   55/4/190 (To Do / In Progress / Done), igual que al terminar el escenario 2.
-tablero_sale: |
+board_out: |
   Sin cambios: `ls` y `get` no escriben nunca nada. Contadores 55/4/190.

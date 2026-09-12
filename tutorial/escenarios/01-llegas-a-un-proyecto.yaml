@@ -1,21 +1,21 @@
 id: 01-llegas-a-un-proyecto
-titulo: Llegas a un proyecto que no conoces
-situacion: |
+title: Llegas a un proyecto que no conoces
+situation: |
   Te acaban de meter en un proyecto que no habías tocado nunca. Hay gente trabajando en él
   desde hace tiempo, hay tareas a medias, y tú no sabes ni por dónde se entra. Antes de tocar
   nada, quieres saber qué hay: qué se está haciendo ahora mismo, qué espera respuesta, qué te
   toca a ti y qué reglas rigen este tablero en concreto. No quieres leerte un manual entero
   para eso.
-ensena:
+teaches:
   - >-
     El arranque se lee entero una vez, al principio de la sesión, y con eso basta, sin volver a
     consultar nada más para completar un ciclo de trabajo completo.
   - "`biso where` existe para el día en que dudes de qué tablero estás tocando de verdad."
-pasos:
-  - narracion: |
+steps:
+  - narration: |
       Lo primero que haces, antes de mirar nada más, es esto:
-    comando: biso prime
-    salida: |
+    command: biso prime
+    output: |
       biso 1.0.0 - the task board of this project. This message is all you need to start.
 
       BOARD  Kex
@@ -98,9 +98,11 @@ pasos:
       and close with `biso finish <ref> --check all --check-dod all --summary "..."`.
       That is the loop. Create a task when the work needs planning or review; do small
       edits directly.
-    codigo_salida: 0
-    origen: literal spec/cmd/prime.md#la-salida-literal
-    comentario: |
+    exit_code: 0
+    source_kind: literal
+    source:
+      - spec/cmd/prime.md#la-salida-literal "La salida literal"
+    remark: |
       Esto es todo el mensaje, de arriba a abajo, y no hay una segunda pantalla después. El
       bloque BOARD dice el vocabulario real de este tablero (los tipos, las prioridades, los
       tres estados con su papel) y quién eres tú aquí. Las cuatro secciones de abajo reparten
@@ -110,22 +112,24 @@ pasos:
       escenario 3, "¿Y ahora qué hago?"). Con esto ya podrías crear una tarea, empezarla,
       trabajarla y cerrarla sin abrir ningún otro documento: ese es el criterio con el que
       está escrito este mensaje.
-  - narracion: |
+  - narration: |
       Aún así te queda una duda que `prime` no contesta: este tablero, el que acabas de leer,
       ¿es exactamente el que crees que es? Si trabajas con varias copias del proyecto a la vez
       (un worktree distinto, una carpeta clonada dos veces) conviene comprobarlo antes de
       escribir nada.
-    comando: biso where
-    salida: |
+    command: biso where
+    output: |
       id       3f9a2b1c
       board    Kex
       path     /Users/avilches/.biso/boards/kex-3f9a2b1c
       source   project pointer at /Users/avilches/Hub/Projects/Kex
       me       @claude
       tasks    248 not archived, 31 archived, highest id ever assigned TASK-290
-    codigo_salida: 0
-    origen: literal spec/cmd/where.md
-    comentario: |
+    exit_code: 0
+    source_kind: literal
+    source:
+      - spec/cmd/where.md "`biso where`"
+    remark: |
       Cuatro datos que cambian cada uno por su cuenta: el identificador no cambia jamás, el
       nombre lo cambia `biso config set project_name`, la ruta cambia si alguien mueve la
       carpeta a mano, y `source` dice de dónde ha salido esa respuesta, que aquí es el puntero
@@ -134,9 +138,9 @@ pasos:
       `biso init` como el remedio: crea un tablero nuevo y lo deja apuntado desde este
       proyecto. No hace falta más que saber que existe para este momento; sus banderas se ven
       cuando de verdad haga falta crear uno.
-tablero_entra: |
+board_in: |
   El tablero Kex tal y como lo fija el diseño del tutorial, sin ningún cambio previo.
   Contadores 54/4/190 (To Do / In Progress / Done).
-tablero_sale: |
+board_out: |
   Sin cambios: todo el escenario es de lectura, y ni `prime` ni `where` escriben nunca nada.
   Contadores 54/4/190.

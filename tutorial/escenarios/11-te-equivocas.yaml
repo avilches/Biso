@@ -1,13 +1,13 @@
 id: 11-te-equivocas
-titulo: Te equivocas
-situacion: |
+title: Te equivocas
+situation: |
   Llevas diez capítulos usando `biso` sin pensar demasiado en ello: pides una lista, pides una
   tarea, y te la da. Es fácil olvidar que detrás de cada consulta hay una regla que decide qué
   pasa cuando lo que pides no existe. Hoy tocan tres tropiezos seguidos, a propósito, porque son
   los que enseñan la regla más importante de toda la especificación: un valor que el tablero no
   conoce es un error, nunca una lista vacía. Ninguno de los tres escribe nada: este es un
   capítulo de consulta, no de escritura, así que el tablero sale exactamente como entra.
-ensena:
+teaches:
   - >-
     Un valor que el tablero no conoce es un error, se esté leyendo o escribiendo, y nunca una
     lista vacía. Por eso una lista vacía sí es un hecho sobre el tablero, y quien la recibe
@@ -24,31 +24,35 @@ ensena:
   - >-
     Cada tropiezo tiene su propio código de salida, así que un agente puede ramificar sobre el
     número sin leer el mensaje.
-pasos:
-  - narracion: |
+steps:
+  - narration: |
       Quieres ver qué queda pendiente y escribes el nombre del estado tal y como lo llamarías
       en cualquier otro gestor de tareas.
-    comando: biso ls -s Pending
-    salida: |
+    command: biso ls -s Pending
+    output: |
       error: unknown status: "Pending"
              valid statuses on this board: To Do, In Progress, Done
-    codigo_salida: 3
-    origen: literal spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos
-    comentario: |
+    exit_code: 3
+    source_kind: literal
+    source:
+      - spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos "El mismo texto vale lo mismo en los dos sentidos"
+    remark: |
       No hay ningún «Pending» en este tablero, así que el programa no te devuelve una lista
       vacía fingiendo que lo ha entendido: falla con el código 3 (BAD_VALUE) y te dice cuáles
       son los valores válidos, para que no tengas que adivinar el nombre exacto. Es el mismo
       mensaje, palabra por palabra, tanto si el valor imposible llega en un filtro de `biso ls`
       como si llega en una escritura de `biso set` (sección 6.2).
 
-  - narracion: |
+  - narration: |
       Pruebas con un valor que sí existe, pero escrito como te salga: en mayúsculas, con guion
       bajo.
-    comando: biso ls --count -s TO_DO
-    salida: "54"
-    codigo_salida: 0
-    origen: derivada spec/vocabularios.md#el-algoritmo-de-coincidencia
-    comentario: |
+    command: biso ls --count -s TO_DO
+    output: "54"
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/vocabularios.md#el-algoritmo-de-coincidencia "El algoritmo de coincidencia"
+    remark: |
       `TO_DO` no aparece tal cual en la configuración del tablero, que guarda `To Do`. Pero el
       algoritmo de coincidencia de la sección 6.1 pasa los dos valores a minúsculas y les quita
       los espacios, los guiones y los guiones bajos antes de comparar, así que `TO_DO` normaliza
@@ -56,29 +60,33 @@ pasos:
       anterior: sigue habiendo 54 tareas en `To Do`. `--count` imprime solo ese número, sin
       ninguna otra línea (sección 10.4).
 
-  - narracion: |
+  - narration: |
       Vuelves a probar, ahora con guion y mezclando mayúsculas y minúsculas.
-    comando: biso ls --count -s To-Do
-    salida: "54"
-    codigo_salida: 0
-    origen: derivada spec/vocabularios.md#el-algoritmo-de-coincidencia
-    comentario: |
+    command: biso ls --count -s To-Do
+    output: "54"
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/vocabularios.md#el-algoritmo-de-coincidencia "El algoritmo de coincidencia"
+    remark: |
       Mismo resultado, porque es el mismo filtro: `To-Do` normaliza también a `todo`. La misma
       regla quita además los espacios repetidos, así que `to  do`, con dos espacios en medio,
       también habría servido (es el ejemplo literal de la propia tabla de la sección 6.1).
       Cuatro formas distintas de teclearlo, un solo valor.
 
-  - narracion: |
+  - narration: |
       Se te ha olvidado el número de la tarea de los reintentos y escribes lo primero que
       recuerdas del título.
-    comando: biso get "retry"
-    salida: |
+    command: biso get "retry"
+    output: |
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
       TASK-19  Done         task  high    Retry the upload on 5xx                           ac 2/2  @claude  -
-    codigo_salida: 5
-    origen: derivada spec/referencias.md#la-búsqueda-por-texto
-    comentario: |
+    exit_code: 5
+    source_kind: derived
+    source:
+      - spec/referencias.md#la-búsqueda-por-texto "La búsqueda por texto"
+    remark: |
       Las tres tareas llevan «retry» en el título, así que ninguna gana por estar en el título
       mientras las otras solo lo llevan en el cuerpo (la regla de la sección 7.2): las tres son
       candidatas por igual. El programa no elige por ti. Código 5 (AMBIGUOUS), y las tres filas
@@ -92,15 +100,17 @@ pasos:
       `biso prime` («biso finish <ref> --check all --check-dod all --summary "..."»). Queda
       anotado en `tutorial/lagunas/11-13.md`.
 
-  - narracion: |
+  - narration: |
       Escribes el número a mano, pero se te cuela un dígito de más.
-    comando: biso get TASK-99
-    salida: |
+    command: biso get TASK-99
+    output: |
       error: TASK-99 has never existed on this board
       note: the highest id ever assigned here is TASK-62
-    codigo_salida: 4
-    origen: derivada spec/referencias.md#los-tres-mensajes-de-no-la-encuentro
-    comentario: |
+    exit_code: 4
+    source_kind: derived
+    source:
+      - spec/referencias.md#los-tres-mensajes-de-no-la-encuentro "Los tres mensajes de "no la encuentro""
+    remark: |
       `TASK-99` está bien formado como identificador, así que esto no es un error de uso
       (código 2): es un error de que ese identificador nunca ha existido, código 4 (NOT_FOUND),
       con la clave `never_allocated`. El texto es el literal de la sección 7.3, con el número
@@ -113,10 +123,10 @@ pasos:
       es código 2 en vez de 4, porque ahí el problema no es que la tarea no exista sino que lo
       que has escrito no tiene la forma de una referencia. Cuatro formas de equivocarte, cuatro
       códigos distintos: 2, 3, 4 y 5.
-tablero_entra: |
+board_in: |
   Igual que sale el capítulo 10: TASK-19 en Done, asignada a @claude. TASK-62, creada en el
   capítulo 2, sigue en el tablero. Contadores 54 / 4 / 191 (To Do / In Progress / Done).
-tablero_sale: |
+board_out: |
   Igual que entra. Ninguno de los cinco pasos de este capítulo escribe en el tablero: los tres
   tropiezos fallan antes de escribir nada, y las dos consultas con `--count` son lecturas.
   Contadores sin cambios: 54 / 4 / 191.

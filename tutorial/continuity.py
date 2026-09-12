@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the board counters chain up between consecutive tutorial scenarios.
 
-Every fixture declares, in `tablero_entra` and `tablero_sale`, the board state it starts from and
+Every fixture declares, in `board_in` and `board_out`, the board state it starts from and
 the one it hands over. This script pulls the "To Do / In Progress / Done" counters out of that prose
 and checks that what one scenario hands over is what the next one receives. A mismatch there means
 two scenarios are telling different stories, and it is the kind of break no single writer can see
@@ -49,8 +49,8 @@ def main():
     print("%-38s %-14s %-14s" % ("scenario", "receives", "hands over"))
     for path in paths:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
-        received = counters(data.get("tablero_entra"))
-        handed_over = counters(data.get("tablero_sale"))
+        received = counters(data.get("board_in"))
+        handed_over = counters(data.get("board_out"))
         print("%-38s %-14s %-14s" % (path.stem, show(received), show(handed_over)))
 
         if received is None or handed_over is None:

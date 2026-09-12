@@ -1,13 +1,13 @@
 id: 09-la-persona-y-el-agente-hablan
-titulo: La persona y el agente hablan
-situacion: |
+title: La persona y el agente hablan
+situation: |
   Con la duda del reintento resuelta, sigues implementando TASK-19. Vas dejando constancia de lo
   que compruebas, para que quien lea la tarea después no tenga que releer el diff entero. Pero
   también te llega algo de fuera que no es tuyo: un usuario ha reportado un problema por otro
   canal, y alguien te pide que lo dejes anotado en la tarea. Son dos cosas distintas y es fácil
   confundirlas: una nota de implementación es tu cuaderno, sin firma ni fecha propia por
   entrada; un comentario es una conversación, y siempre lleva quién lo escribió y cuándo.
-ensena:
+teaches:
   - >-
     El comando `biso note` añade un párrafo a las notas de implementación. Es un bloque de prosa
     sin autor ni instante por elemento, el cuaderno técnico de quien hace el trabajo.
@@ -18,63 +18,74 @@ ensena:
     El autor por defecto de un comentario es la identidad configurada (`me`). `--comment-author`
     deja firmarlo con otra, texto libre y sin validar, para retransmitir algo que vino de otro
     sistema.
-pasos:
-  - narracion: |
+steps:
+  - narration: |
       Terminas de encajar el reintento con el mismo patrón que ya usaba el endpoint de
       descargas, y dejas constancia de cómo quedó.
-    comando: biso note TASK-19 "El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3."
-    salida: |
+    command: biso note TASK-19 "El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3."
+    output: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-note, spec/modelo-de-datos.md#la-urgencia
-  - narracion: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/verbos-del-ciclo.md#biso-note "`biso note`"
+      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+  - narration: |
       Miras cómo ha quedado esa nota.
-    comando: biso get TASK-19 --section notes
-    salida: |
+    command: biso get TASK-19 --section notes
+    output: |
       TASK-19  Retry the upload on 5xx
 
       ## Implementation Notes
       El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3.
-    codigo_salida: 0
-    origen: derivada spec/cmd/get.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/get.md "`biso get`"
+    remark: |
       No hay ningún autor ni ningún instante junto al texto. Las notas no tienen esa estructura:
       son un solo bloque de prosa al que cada `--note` añade un párrafo (8.3), no una lista de
       entradas con autor como los comentarios (5.2). Si necesitaras saber quién escribió una
       nota o cuándo, no lo sabrías: no es ese tipo de dato.
-  - narracion: |
+  - narration: |
       Te llega un aviso: un usuario con conexión móvil ve fallos incluso con el reintento puesto.
       No es algo que hayas visto tú, así que lo entras como comentario, firmado por quien lo
       reportó.
-    comando: 'biso comment TASK-19 "Un usuario con conexión móvil ve fallos incluso después de los 3 reintentos, ¿deberíamos subir el límite en ese caso?" --comment-author @trello:juan'
-    salida: |
+    command: 'biso comment TASK-19 "Un usuario con conexión móvil ve fallos incluso después de los 3 reintentos, ¿deberíamos subir el límite en ese caso?" --comment-author @trello:juan'
+    output: |
       note: comment #3 by @trello:juan
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-comment, spec/modelo-de-datos.md#los-comentarios
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/verbos-del-ciclo.md#biso-comment "`biso comment`"
+      - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
+    remark: |
       "note: comment #3 by @trello:juan" sale por stderr, con la forma exacta que da el ejemplo
       de 10.7.3. El número no es una clave estable como la de un criterio (5.1): es la posición
       del comentario en la lista, y como los comentarios nunca se editan ni se borran
       (append-only, 10.7.3), esa posición no vuelve a cambiar. Este es el tercero de TASK-19
       porque `biso answer` ya había añadido dos en el escenario anterior.
-  - narracion: |
+  - narration: |
       Respondes tú, como tú mismo, sin banderas de autor: la identidad configurada firma por
       defecto.
-    comando: biso comment TASK-19 "De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos."
-    salida: |
+    command: biso comment TASK-19 "De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos."
+    output: |
       note: comment #4 by @claude
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-comment, spec/modelo-de-datos.md#los-comentarios
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/verbos-del-ciclo.md#biso-comment "`biso comment`"
+      - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
+    remark: |
       Sin --comment-author, el autor es `me`, la identidad configurada de este tablero: @claude.
       Es el mismo `--comment-author` que existe en todos los comandos de escritura, no solo en
       `biso comment`: el nombre no cambia porque en `biso comment` parezca redundante (10.6).
-  - narracion: |
+  - narration: |
       Pones las dos secciones una junto a otra para ver el contraste de un vistazo.
-    comando: biso get TASK-19 --section notes,comments
-    salida: |
+    command: biso get TASK-19 --section notes,comments
+    output: |
       TASK-19  Retry the upload on 5xx
 
       ## Implementation Notes
@@ -92,20 +103,23 @@ pasos:
 
       @claude, 2026-09-06 16:20
       De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos.
-    codigo_salida: 0
-    origen: derivada spec/cmd/get.md, spec/modelo-de-datos.md#los-comentarios
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/get.md "`biso get`"
+      - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
+    remark: |
       Las notas son un único bloque; los comentarios son cuatro entradas firmadas, en el orden
       en que se escribieron. `## Implementation Notes` sale antes que `## Comments` aunque en la
       bandera se haya pedido al revés (`notes,comments`): el orden de impresión de las secciones
       es el orden fijo de la ficha completa (10.5), no el orden en que se listan en `--section`.
       La especificación no lo dice de forma explícita para el caso de varias secciones a la vez;
       queda anotado en tutorial/lagunas/07-10.md.
-tablero_entra: >
+board_in: >
   TASK-19 en In Progress, ac 0/2, dod 0/2, con 2 comentarios (la pregunta y la respuesta del
   escenario 8) y sin notas todavía. Urgencia 11.0. Contadores del tablero: 54/5/190, sin cambios
   desde el escenario 8.
-tablero_sale: >
+board_out: >
   TASK-19 sigue en In Progress, ac 0/2 y dod 0/2 sin tocar. Tiene ya 1 párrafo de notas de
   implementación y 4 comentarios en total: los 2 de la pregunta y la respuesta del escenario 8,
   más el de @trello:juan y la respuesta de @claude de este escenario. Urgencia sin cambios,

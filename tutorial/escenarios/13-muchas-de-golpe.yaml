@@ -1,6 +1,6 @@
 id: 13-muchas-de-golpe
-titulo: Tocas veinte de golpe
-situacion: |
+title: Tocas veinte de golpe
+situation: |
   Última parada. Hasta aquí todo lo que has hecho ha sido sobre una tarea a la vez, y así es como
   se trabaja el noventa por ciento del tiempo.
 
@@ -10,7 +10,7 @@ situacion: |
   queda escrito?
 
   La respuesta de `biso` es que nada. Vale la pena ver por qué.
-ensena:
+teaches:
   - >-
     Todo lo que se puede hacer una vez se puede hacer cien, y con los mismos nombres de bandera.
     No hay una sintaxis aparte para el lote.
@@ -20,17 +20,20 @@ ensena:
   - >-
     `--dry-run` valida sin escribir y contesta con el código de salida: 0 si habría funcionado,
     9 si no. Es la forma de mirar antes de saltar.
-pasos:
-  - narracion: |
+steps:
+  - narration: |
       El agente empieza por lo fácil: dos tareas que hay que bajar de prioridad, en una sola
       llamada.
-    comando: biso set TASK-44 TASK-61 --priority low
-    salida: |
+    command: biso set TASK-44 TASK-61 --priority low
+    output: |
       TASK-44  To Do  ac 0/1  urgency 1.6
       TASK-61  To Do  ac 0/1  urgency 1.4
-    codigo_salida: 0
-    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md#la-urgencia
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/set.md "`biso set`"
+      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+    remark: |
       Una línea por tarea, con el mismo formato que cuando tocas una sola. No hay un modo lote que
       cambie la forma de la salida ni un resumen que sustituya al detalle: lo que aprendiste con
       una vale para las dos.
@@ -40,15 +43,18 @@ pasos:
       exactamente 3.0, los que aportaba la prioridad media, pero las dos cifras que ves están
       redondeadas a un decimal desde 4.45 y 1.45, y esos dos redondeos no van en la misma
       dirección. La urgencia sirve para ordenar una lista, no para hacer aritmética con ella.
-  - narracion: |
+  - narration: |
       Ahora una lista más larga, y con una errata dentro: una de las referencias no existe.
-    comando: biso set TASK-7 TASK-33 TASK-99 --priority medium
-    salida: |
+    command: biso set TASK-7 TASK-33 TASK-99 --priority medium
+    output: |
       error: TASK-99 has never existed on this board
       note: the highest id ever assigned here is TASK-62
-    codigo_salida: 4
-    origen: derivada spec/referencias.md#los-tres-mensajes-de-no-la-encuentro, spec/cmd/set.md
-    comentario: |
+    exit_code: 4
+    source_kind: derived
+    source:
+      - spec/referencias.md#los-tres-mensajes-de-no-la-encuentro "Los tres mensajes de "no la encuentro""
+      - spec/cmd/set.md "`biso set`"
+    remark: |
       Y esto es lo importante: **`TASK-7` y `TASK-33` no se han tocado**. No es que se hayan
       escrito y luego se haya deshecho: es que no se llegó a escribir nada, porque la validación de
       las tres referencias ocurre antes de la primera escritura.
@@ -57,14 +63,17 @@ pasos:
       después de este error tendrías que averiguar cuántas se habían escrito ya para no repetirlas,
       y eso es imposible de hacer bien desde un programa. Aquí el contrato es simple: o todas o
       ninguna.
-  - narracion: |
+  - narration: |
       Corrige la errata y esta vez, antes de escribir, pide que se lo valide sin tocar nada.
-    comando: biso set TASK-7 TASK-33 --priority medium --dry-run
-    salida: |
+    command: biso set TASK-7 TASK-33 --priority medium --dry-run
+    output: |
       2 tasks would be updated, nothing was written (--dry-run)
-    codigo_salida: 0
-    origen: derivada spec/invocacion.md#banderas-globales, spec/cmd/set.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/invocacion.md#banderas-globales "Banderas globales"
+      - spec/cmd/set.md "`biso set`"
+    remark: |
       Código 0, así que habría funcionado. Ese código es la respuesta de verdad, más que el texto:
       un programa que llame a `biso` no necesita leer nada para saber si el lote es válido.
 
@@ -73,15 +82,18 @@ pasos:
       dice que `--dry-run` vale en todos los comandos que escriben, pero no escribe la frase para
       `biso set`. Aquí se ha usado la misma forma cambiando el verbo, que es lo más probable, y
       queda anotado en tutorial/lagunas/11-13.md.
-  - narracion: |
+  - narration: |
       Con la validación en verde, ejecuta de verdad.
-    comando: biso set TASK-7 TASK-33 --priority medium
-    salida: |
+    command: biso set TASK-7 TASK-33 --priority medium
+    output: |
       TASK-7   To Do  ac 0/4  urgency 15.3
       TASK-33  To Do  ac 1/3  urgency 4.3
-    codigo_salida: 0
-    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md#la-urgencia
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/set.md "`biso set`"
+      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+    remark: |
       `TASK-7` cae de 18.3 a 15.3, que son los 3.0 que pierde al pasar de prioridad alta a media, y
       sigue siendo la más urgente del tablero con diferencia: le queda el término de fecha límite,
       que aporta 11.2 porque vence en dos días. `TASK-33` no se mueve, porque ya era de prioridad
@@ -90,16 +102,18 @@ pasos:
 
       Fíjate también en la alineación de la primera columna. El ancho lo fija el identificador más
       largo de la salida, así que `TASK-7` lleva un espacio de más para cuadrar con `TASK-33`.
-  - narracion: |
+  - narration: |
       Para acabar, el otro lote que existe: meter tareas nuevas desde un fichero. El agente ha
       recibido tres incidencias por otro canal y las tiene en un fichero, una por línea. Antes de
       importarlas, las valida.
-    comando: biso new --from incidencias.ndjson --dry-run
-    salida: |
+    command: biso new --from incidencias.ndjson --dry-run
+    output: |
       3 tasks would be created, nothing was written (--dry-run)
-    codigo_salida: 0
-    origen: literal spec/cmd/new.md
-    comentario: |
+    exit_code: 0
+    source_kind: literal
+    source:
+      - spec/cmd/new.md "`biso new`"
+    remark: |
       Esta frase sí es literal de la especificación, con otro número. Y aquí `--dry-run` es donde
       más sirve, porque un fichero de importación puede traer un tipo, un estado o una clave que
       este tablero no conoce, y un valor que el tablero no conoce siempre es un error.
@@ -111,13 +125,13 @@ pasos:
       Si la validación fallase, el código sería 9, no 4 ni 3: nueve significa exactamente "no se
       escribió nada porque la validación no pasó", y se distingue del error de un valor concreto
       justamente porque lo que informa es sobre el lote entero.
-tablero_entra: >
+board_in: >
   El tablero tal y como lo deja el escenario 12: TASK-52 archivada y sin arrendamiento, TASK-19
   terminada desde el escenario 10, TASK-62 creada en el escenario 2. TASK-44 en To Do con
   prioridad low y urgencia 1.6, TASK-61 en To Do con prioridad medium y urgencia 4.5 (4.45 antes de redondear), TASK-7 en To
   Do con prioridad high, fecha limite 2026-09-08 y urgencia 18.3, TASK-33 en To Do con prioridad
   medium y urgencia 4.3. Contadores 54/3/191.
-tablero_sale: >
+board_out: >
   TASK-44 sin cambios reales, seguia siendo de prioridad low. TASK-61 con prioridad low y urgencia
   1.4. TASK-7 con prioridad medium y urgencia 15.3. TASK-33 sin cambios, ya era medium. Ninguna
   tarea creada: las tres del fichero de incidencias no se escriben, porque el unico paso que las

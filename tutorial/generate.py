@@ -3,8 +3,9 @@
 
 Reads every tutorial/escenarios/NN-name.yaml in the order fixed by its numeric prefix, validates
 that it has the shape required by
-docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md, and writes docs/TUTORIAL.md
-preceded by the concepts section (tutorial/conceptos.md).
+docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md and
+docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md, and writes
+docs/TUTORIAL.md preceded by the concepts section (tutorial/conceptos.md).
 
 It depends on nothing beyond the standard library and PyYAML, which MkDocs already pulls in (see
 docs-requirements.txt). Run it with:
@@ -15,10 +16,6 @@ When a fixture is incomplete or malformed the script writes nothing and exits no
 every problem it found with the file and step each one is in. A generator that swallows an
 incomplete fixture and produces an incomplete page destroys the only guarantee this design offers:
 that what you read in docs/TUTORIAL.md is exactly what the fixtures say.
-
-Note on language: the code is English, per the rule in CLAUDE.md. The Spanish strings this script
-emits *into* the generated page are documentation content, not code, and they all live together in
-the PAGE COPY section below.
 """
 
 from __future__ import annotations
@@ -41,23 +38,23 @@ REGENERATE_CMD = (
 )
 
 FILENAME_RE = re.compile(r"^(\d+)-([a-z0-9]+(?:-[a-z0-9]+)*)\.yaml$")
-SOURCE_RE = re.compile(r"^(literal|derivada) spec/\S.*$")
+SOURCE_KINDS = ("literal", "derived")
+SOURCE_ITEM_RE = re.compile(r'^(\S+\.md(?:#\S+)?) "(.+)"$')
 
-# The fixture files are documentation, so their keys are Spanish. Naming them here keeps that
-# Spanish confined to one block instead of scattering it through the code.
 KEY_ID = "id"
-KEY_TITLE = "titulo"
-KEY_SITUATION = "situacion"
-KEY_TEACHES = "ensena"
-KEY_STEPS = "pasos"
-KEY_BOARD_IN = "tablero_entra"
-KEY_BOARD_OUT = "tablero_sale"
-KEY_NARRATION = "narracion"
-KEY_CMD = "comando"
-KEY_OUTPUT = "salida"
-KEY_EXIT = "codigo_salida"
-KEY_SOURCE = "origen"
-KEY_REMARK = "comentario"
+KEY_TITLE = "title"
+KEY_SITUATION = "situation"
+KEY_TEACHES = "teaches"
+KEY_STEPS = "steps"
+KEY_BOARD_IN = "board_in"
+KEY_BOARD_OUT = "board_out"
+KEY_NARRATION = "narration"
+KEY_CMD = "command"
+KEY_OUTPUT = "output"
+KEY_EXIT = "exit_code"
+KEY_SOURCE_KIND = "source_kind"
+KEY_SOURCE = "source"
+KEY_REMARK = "remark"
 
 REQUIRED_SCENARIO_FIELDS = (
     KEY_ID,
@@ -68,35 +65,33 @@ REQUIRED_SCENARIO_FIELDS = (
     KEY_BOARD_IN,
     KEY_BOARD_OUT,
 )
-REQUIRED_STEP_FIELDS = (KEY_CMD, KEY_OUTPUT, KEY_EXIT, KEY_SOURCE)
+REQUIRED_STEP_FIELDS = (KEY_CMD, KEY_OUTPUT, KEY_EXIT, KEY_SOURCE_KIND, KEY_SOURCE)
 
 
 # --------------------------------------------------------------------------
-# PAGE COPY. Spanish on purpose: this is what goes into the generated document.
+# Page copy
 # --------------------------------------------------------------------------
 
-PAGE_TITLE = "# Tutorial de biso por escenarios"
-INDEX_HEADING = "## Escenarios"
-TEACHES_HEADING = '!!! abstract "Qué enseña este escenario"'
-EXIT_CODE_LINE = "Código de salida: `%s`"
-DERIVED_NOTICE = (
-    "*(salida derivada de %s, no es texto literal de la especificación)*"
-)
-REMARK_LINE = "*Nota: %s*"
+PAGE_TITLE = "# biso tutorial, by scenario"
+INDEX_HEADING = "## Scenarios"
+TEACHES_HEADING = '!!! abstract "What this scenario teaches"'
+EXIT_CODE_LINE = "Exit code: `%s`"
+DERIVED_NOTICE = "*(derived output, see %s; not literal spec text)*"
+REMARK_LINE = "*Note: %s*"
 
 HEADER_COMMENT = (
     "<!--\n"
-    "  Fichero generado. No lo edites a mano: se sobrescribe entero cada vez que se\n"
-    "  ejecuta tutorial/generate.py.\n"
-    f"  Se regenera con: {REGENERATE_CMD}\n"
+    "  Generated file. Do not edit by hand: it is overwritten entirely every time\n"
+    "  tutorial/generate.py runs.\n"
+    f"  Regenerate it with: {REGENERATE_CMD}\n"
     "-->"
 )
 
 GENERATED_ADMONITION = (
-    '!!! warning "Documento generado"\n'
-    "    Esta página se genera automáticamente a partir de los fixtures de\n"
-    "    `tutorial/escenarios/` y de `tutorial/conceptos.md`. No la edites a mano:\n"
-    "    cualquier cambio se pierde en la siguiente generación. Para regenerarla:\n"
+    '!!! warning "Generated document"\n'
+    "    This page is generated automatically from the fixtures in\n"
+    "    `tutorial/escenarios/` and from `tutorial/conceptos.md`. Do not edit it by\n"
+    "    hand: any change is lost on the next generation. To regenerate it:\n"
     "\n"
     "    ```\n"
     f"    {REGENERATE_CMD}\n"
@@ -117,7 +112,7 @@ def _rel(path: Path) -> str:
 
 
 def _flatten(text: Any) -> str:
-    """Collapse multi-line text (titles, `ensena` items) onto a single line."""
+    """Collapse multi-line text (titles, `teaches` items) onto a single line."""
     return " ".join(str(text).split())
 
 
@@ -153,6 +148,41 @@ def discover_files() -> tuple[list[tuple[int, Path]], list[str]]:
     return numbered, errors
 
 
+def validate_source(rel: str, index: int, step: dict) -> list[str]:
+    errors: list[str] = []
+
+    kind = step.get(KEY_SOURCE_KIND)
+    if _is_missing(kind):
+        errors.append(f"{rel}, step {index}: '{KEY_SOURCE_KIND}' cannot be empty")
+    elif kind not in SOURCE_KINDS:
+        errors.append(
+            f"{rel}, step {index}: '{KEY_SOURCE_KIND}' must be 'literal' or 'derived', not {kind!r}"
+        )
+
+    source = step.get(KEY_SOURCE)
+    if _is_missing(source):
+        errors.append(f"{rel}, step {index}: '{KEY_SOURCE}' cannot be empty")
+        return errors
+    if not isinstance(source, list):
+        errors.append(f"{rel}, step {index}: '{KEY_SOURCE}' must be a list")
+        return errors
+
+    if kind == "literal" and len(source) != 1:
+        errors.append(
+            f"{rel}, step {index}: a 'literal' '{KEY_SOURCE_KIND}' must have exactly one "
+            f"'{KEY_SOURCE}' item, not {len(source)}"
+        )
+
+    for item in source:
+        if not SOURCE_ITEM_RE.match(str(item)):
+            errors.append(
+                f"{rel}, step {index}: '{KEY_SOURCE}' item must read 'path/to/file.md "
+                f'"Section title"\', not {item!r}'
+            )
+
+    return errors
+
+
 def validate_step(rel: str, index: int, step: Any) -> list[str]:
     errors: list[str] = []
     if not isinstance(step, dict):
@@ -162,10 +192,10 @@ def validate_step(rel: str, index: int, step: Any) -> list[str]:
         if field not in step:
             errors.append(f"{rel}, step {index}: missing required field '{field}'")
 
-    # 'cmd' and the source can never be empty. The output can: SPEC 10.5 says that with --section an
-    # empty section prints nothing, and that "nothing" is a legitimate result of the step rather than
-    # a field somebody forgot to fill in. The one thing the output must not be is null (a bare
-    # 'salida:' in the YAML), because that really is a half-written field.
+    # The command and the source can never be empty. The output can: the spec says that with
+    # --section an empty section prints nothing, and that "nothing" is a legitimate result of the
+    # step rather than a field somebody forgot to fill in. The one thing the output must not be is
+    # null (a bare 'output:' in the YAML), because that really is a half-written field.
     if KEY_CMD in step and step[KEY_CMD] in (None, ""):
         errors.append(f"{rel}, step {index}: '{KEY_CMD}' cannot be empty")
 
@@ -184,15 +214,8 @@ def validate_step(rel: str, index: int, step: Any) -> list[str]:
                 f"{rel}, step {index}: '{KEY_EXIT}' must be an integer, not {exit_value!r}"
             )
 
-    if KEY_SOURCE in step and step[KEY_SOURCE] in (None, ""):
-        errors.append(f"{rel}, step {index}: '{KEY_SOURCE}' cannot be empty")
-    elif KEY_SOURCE in step:
-        source = str(step[KEY_SOURCE])
-        if not SOURCE_RE.match(source):
-            errors.append(
-                f"{rel}, step {index}: '{KEY_SOURCE}' must read 'literal spec/<path>' "
-                f"or 'derivada spec/<path>', not {source!r}"
-            )
+    if KEY_SOURCE_KIND in step or KEY_SOURCE in step:
+        errors.extend(validate_source(rel, index, step))
 
     return errors
 
@@ -291,10 +314,14 @@ def render_console_block(cmd: str, output: str) -> str:
     return "```console\n" + "\n".join(body) + "\n```"
 
 
-def render_source_paths(paths_text: str) -> str:
-    """Turn 'spec/a.md#x, spec/b.md' into linked, code-formatted references."""
-    paths = [p.strip() for p in paths_text.split(",")]
-    return ", ".join(f"[`{p}`]({p})" for p in paths)
+def render_source_links(source: list[str]) -> str:
+    """Turn ['a.md "Title"', ...] into linked, code-formatted references."""
+    links = []
+    for item in source:
+        match = SOURCE_ITEM_RE.match(item)
+        path, title = match.group(1), match.group(2)
+        links.append(f"[{title}]({path})")
+    return ", ".join(links)
 
 
 def render_step(step: dict) -> str:
@@ -307,10 +334,8 @@ def render_step(step: dict) -> str:
     parts.append(render_console_block(step[KEY_CMD], step[KEY_OUTPUT]))
     parts.append(EXIT_CODE_LINE % step[KEY_EXIT])
 
-    source = str(step[KEY_SOURCE])
-    if source.startswith("derivada"):
-        paths_text = source[len("derivada"):].strip()
-        parts.append(DERIVED_NOTICE % render_source_paths(paths_text))
+    if step.get(KEY_SOURCE_KIND) == "derived":
+        parts.append(DERIVED_NOTICE % render_source_links(step[KEY_SOURCE]))
 
     remark = step.get(KEY_REMARK)
     if remark and not _is_missing(remark):

@@ -1,6 +1,6 @@
 id: 08-te-atascas
-titulo: Te atascas y alguien tiene que decidir
-situacion: |
+title: Te atascas y alguien tiene que decidir
+situation: |
   Sigues con `TASK-19`, y llegas a un punto en el que no puedes seguir sin que alguien decida
   algo: cuántos reintentos como máximo hace falta permitir antes de dar el 5xx por un fallo
   definitivo. Podrías inventarte un número, pero eso es justo lo que la regla 11 del mensaje de
@@ -18,7 +18,7 @@ situacion: |
   La tarea no cambia de estado por tener una pregunta abierta: sigue contando como en curso a
   efectos de su ficha, pero deja el bloque `IN PROGRESS` del arranque y aparece aquí en su
   lugar, para que nadie la dé por olvidada ni por activa a la vez.
-ensena:
+teaches:
   - >-
     Aparcar y desaparcar son comandos propios, `biso ask` y `biso answer`, y ninguno de los dos
     cambia el estado de la tarea.
@@ -32,57 +32,68 @@ ensena:
     El comando `biso answer` convierte la pregunta en dos comentarios en la misma escritura, uno
     con el autor y el instante originales de la pregunta, y otro con la respuesta, firmado
     ahora.
-pasos:
-  - narracion: |
+steps:
+  - narration: |
       Miras la pregunta de TASK-60 de cerca, no solo la línea recortada del arranque.
-    comando: biso get TASK-60 --section question
-    salida: |
+    command: biso get TASK-60 --section question
+    output: |
       TASK-60  Confirm the retry budget for the upload endpoint
 
       ## Open Question
       @claude, 2026-09-06 09:30
       Should the retry budget be shared with the download endpoint or kept separate?
-    codigo_salida: 0
-    origen: literal spec/cmd/get.md
-  - narracion: |
+    exit_code: 0
+    source_kind: literal
+    source:
+      - spec/cmd/get.md "`biso get`"
+  - narration: |
       Ahora la tuya. En vez de fijar un número a ojo, la dejas escrita como pregunta.
-    comando: 'biso ask TASK-19 "¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?"'
-    salida: |
+    command: 'biso ask TASK-19 "¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?"'
+    output: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 7.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-ask, spec/modelo-de-datos.md#la-urgencia
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/verbos-del-ciclo.md#biso-ask "`biso ask`"
+      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+    remark: |
       El estado no cambia, sigue en In Progress. La urgencia sí baja, de 11.0 a 7.0: el término
       de actividad de la fórmula (5.4) exige que la tarea esté en el estado activo *y* que no
       tenga pregunta abierta, así que en cuanto `waiting` pasa a cierto ese término deja de sumar
       sus 4.0 puntos. Es la misma caída de 4.0 que muestra el ejemplo de 10.7.5 sobre TASK-11
       (de 19.0 a 15.0), con los números de TASK-19.
-  - narracion: |
+  - narration: |
       Compruebas que ha quedado bien escrita.
-    comando: biso get TASK-19 --section question
-    salida: |
+    command: biso get TASK-19 --section question
+    output: |
       TASK-19  Retry the upload on 5xx
 
       ## Open Question
       @claude, 2026-09-06 14:10
       ¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?
-    codigo_salida: 0
-    origen: derivada spec/cmd/get.md, spec/modelo-de-datos.md#la-pregunta-abierta
-  - narracion: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/get.md "`biso get`"
+      - spec/modelo-de-datos.md#la-pregunta-abierta "La pregunta abierta"
+  - narration: |
       Un rato después, mirando un endpoint parecido, encuentras la respuesta tú mismo: ya hay un
       valor fijado en otra parte del código. Respondes y la tarea queda desaparcada.
-    comando: 'biso answer TASK-19 "Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí."'
-    salida: |
+    command: 'biso answer TASK-19 "Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí."'
+    output: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-answer, spec/modelo-de-datos.md#la-urgencia
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/verbos-del-ciclo.md#biso-answer "`biso answer`"
+      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+    remark: |
       La urgencia recupera los 11.0 de antes: waiting vuelve a ser falso y el término de
       actividad vuelve a sumar sus 4.0 puntos.
-  - narracion: |
+  - narration: |
       Miras los comentarios para ver cómo ha quedado el rastro.
-    comando: biso get TASK-19 --section comments
-    salida: |
+    command: biso get TASK-19 --section comments
+    output: |
       TASK-19  Retry the upload on 5xx
 
       ## Comments
@@ -91,18 +102,23 @@ pasos:
 
       @claude, 2026-09-06 15:30
       Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí.
-    codigo_salida: 0
-    origen: derivada spec/modelo-de-datos.md#los-comentarios, spec/modelo-de-datos.md#las-fechas, spec/cmd/get.md, spec/cmd/verbos-del-ciclo.md#biso-answer
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
+      - spec/modelo-de-datos.md#las-fechas "Las fechas"
+      - spec/cmd/get.md "`biso get`"
+      - spec/cmd/verbos-del-ciclo.md#biso-answer "`biso answer`"
+    remark: |
       El primer comentario lleva el instante en que se hizo la pregunta (14:10), no el de la
       respuesta (15:30): es la excepción de forma que anota 5.3, la pregunta se traslada tal
       cual la vivió el programa la primera vez. Los dos van en el orden en que `biso answer` los
       escribió, que es también su orden de inserción, y 5.2 dice que ese es el orden que se
       guarda y se muestra, no el que marca cada instante.
-tablero_entra: >
+board_in: >
   TASK-19 en In Progress, ac 0/2, dod 0/2 (claves #5 y #6), sin comentarios ni pregunta abierta.
   Urgencia 11.0. Contadores del tablero: 54/5/190, sin cambios desde el escenario 7.
-tablero_sale: >
+board_out: >
   TASK-19 sigue en In Progress, ac 0/2 y dod 0/2 sin tocar. Ya tiene 2 comentarios, en este
   orden: la pregunta que se aparcó (con su instante original) y la respuesta que la desaparcó.
   Vuelve a no tener pregunta abierta (waiting en falso). Urgencia de vuelta a 11.0, tras haber

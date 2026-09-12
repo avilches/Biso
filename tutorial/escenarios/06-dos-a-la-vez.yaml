@@ -1,6 +1,6 @@
 id: 06-dos-a-la-vez
-titulo: Dos a la vez sobre el mismo tablero
-situacion: |
+title: Dos a la vez sobre el mismo tablero
+situation: |
   Este es el escenario que más reglas enseña por línea, y ninguna de ellas se adivina.
 
   Sara y el agente trabajan sobre el mismo tablero al mismo tiempo. Nada les impide escribir sobre
@@ -8,7 +8,7 @@ situacion: |
   estaba trabajando en qué, para que el otro lo sepa antes de duplicar el esfuerzo.
 
   Eso es el arrendamiento, y hasta ahora lo has visto nacer sin mirarlo de frente.
-ensena:
+teaches:
   - >-
     Un arrendamiento no es un estado, es hasta cuándo vale una reserva. La tarea puede estar en
     el estado activo con el arrendamiento vencido, y eso no es una contradicción.
@@ -22,18 +22,22 @@ ensena:
   - >-
     Un arrendamiento vencido no privilegia a nadie, y liberarlo es una reclamación explícita de
     `biso start`. Ningún otro comando lo hace por su cuenta, ni siquiera al leer.
-pasos:
-  - narracion: |
+steps:
+  - narration: |
       Sara está revisando el problema del CRLF y descubre algo que le parece útil para `TASK-11`,
       que es del agente y que él tiene en marcha ahora mismo. Lo apunta sin pensar en quién la
       tenía.
-    comando: biso note TASK-11 "El CRLF tambien aparece en los ficheros de prueba, no solo en el diff"
-    salida: |
+    command: biso note TASK-11 "El CRLF tambien aparece en los ficheros de prueba, no solo en el diff"
+    output: |
       warning: TASK-11's lease is held by @claude until 2026-09-06T15:40:18Z
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
-    codigo_salida: 0
-    origen: derivada spec/salida-y-terminal.md#notas-y-avisos, spec/cmd/verbos-del-ciclo.md#biso-start, spec/modelo-de-datos.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/salida-y-terminal.md#notas-y-avisos "Notas y avisos"
+      - spec/cmd/verbos-del-ciclo.md#biso-start "`biso start`"
+      - spec/modelo-de-datos.md "El modelo de datos de una tarea"
+    remark: |
       Lo primero: la nota se ha escrito. El código de salida es 0 y la tarea ha cambiado. El aviso
       no es un rechazo, es información.
 
@@ -50,14 +54,17 @@ pasos:
       La urgencia sigue en 19.0 porque una nota no cambia nada de lo que la urgencia mide. Y esos
       19.0 se descomponen así: 6.0 por prioridad alta, 4.0 por estar activa, 8.0 porque hay otra
       tarea sin terminar que depende de ella, y 1.0 por tener criterios de aceptación.
-  - narracion: |
+  - narration: |
       El agente, en su sesión, sigue con lo suyo y anota su propio avance en la misma tarea.
-    comando: biso note TASK-11 "El normalizador ya pasa el caso de los ficheros de prueba"
-    salida: |
+    command: biso note TASK-11 "El normalizador ya pasa el caso de los ficheros de prueba"
+    output: |
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-note, spec/modelo-de-datos.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/verbos-del-ciclo.md#biso-note "`biso note`"
+      - spec/modelo-de-datos.md "El modelo de datos de una tarea"
+    remark: |
       Ningún aviso, porque el arrendamiento es suyo. Y algo que la salida no dice: acaba de
       renovarse hasta 240 minutos después de este momento.
 
@@ -65,16 +72,19 @@ pasos:
       pedirlo. Cualquier escritura del tenedor sobre su tarea renueva la reserva, y "cualquiera"
       son todas: los seis verbos del ciclo, `biso set` y `biso archive`. Trabajar es lo que
       mantiene la reserva viva, que es exactamente lo que quieres que signifique.
-  - narracion: |
+  - narration: |
       El agente quiere confirmar que la prioridad de esa tarea sigue siendo la que cree. La
       escribe otra vez con el mismo valor que ya tenía.
-    comando: biso set TASK-11 --priority high
-    salida: |
+    command: biso set TASK-11 --priority high
+    output: |
       note: TASK-11 unchanged
       TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/set.md "`biso set`"
+      - spec/modelo-de-datos.md "El modelo de datos de una tarea"
+    remark: |
       Este paso parece inútil y es el que cierra el razonamiento. No ha cambiado ningún campo, lo
       dice la nota, y aun así **el arrendamiento se ha renovado**.
 
@@ -85,20 +95,23 @@ pasos:
 
       La otra cara: como ningún campo de la tarea ha cambiado, la fecha de última modificación de
       la tarea **no** se toca. La reserva se renueva y la tarea no se ensucia.
-  - narracion: |
+  - narration: |
       Ahora la otra mitad del asunto. `TASK-52`, la del documento de la lista de publicación,
       lleva días en marcha y la tenía reservada `@bob`, que ya no aparece por aquí. El agente mira
       qué hay en curso.
-    comando: biso ls -s "In Progress"
-    salida: |
+    command: biso ls -s "In Progress"
+    output: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-19  In Progress  task  high    Retry the upload on 5xx                           ac 0/2  @claude  -
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
       TASK-52  In Progress  task  low     Document the release checklist                    ac 0/1  -        -
       TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
-    codigo_salida: 0
-    origen: derivada spec/cmd/ls.md, spec/modelo-de-datos.md#la-urgencia
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/ls.md "`biso ls`"
+      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+    remark: |
       `TASK-52` sigue en `In Progress`, con toda normalidad, y no tiene a nadie asignado. Su
       arrendamiento venció el 5 de septiembre y el estado guardado no se ha movido ni un
       milímetro.
@@ -111,15 +124,18 @@ pasos:
       El orden de esta lista, por si te lo preguntas, es urgencia descendente y no tiene nada que
       ver con el estado: 19.0, 11.0, 7.0, 5.4 y 3.1. `TASK-40` va última, pese a estar en marcha y
       ser de prioridad media, porque depende de `TASK-11` y estar bloqueada resta 5.0.
-  - narracion: |
+  - narration: |
       El agente decide encargarse él de esa tarea abandonada.
-    comando: biso start TASK-52
-    salida: |
+    command: biso start TASK-52
+    output: |
       note: TASK-52 was already In Progress
       TASK-52  In Progress  ac 0/1  urgency 5.4
-    codigo_salida: 0
-    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-start, spec/modelo-de-datos.md#la-urgencia
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/verbos-del-ciclo.md#biso-start "`biso start`"
+      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+    remark: |
       Con una sola llamada ha hecho tres cosas: ha visto que el estado ya era el activo y lo dice
       con esa nota, se ha asignado la tarea porque no la tenía nadie, y **ha reclamado el
       arrendamiento vencido** a su nombre.
@@ -134,24 +150,27 @@ pasos:
       tiene que pedirla otra vez con `biso start` y saldrá el aviso del primer paso. Es una
       diferencia deliberada con el patrón clásico de reserva con testigo, y está anotada como
       riesgo aceptado en la sección 11 de las decisiones de diseño.
-  - narracion: |
+  - narration: |
       Antes de volver a lo suyo, el agente comprueba que su tarea principal sigue en pie.
-    comando: biso set TASK-19 --priority high
-    salida: |
+    command: biso set TASK-19 --priority high
+    output: |
       note: TASK-19 unchanged
       TASK-19  In Progress  ac 0/2  urgency 11.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/set.md, spec/modelo-de-datos.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/set.md "`biso set`"
+      - spec/modelo-de-datos.md "El modelo de datos de una tarea"
+    remark: |
       Otra escritura que no cambia nada y que renueva la reserva de `TASK-19` hasta 240 minutos
       después de este momento. Con esto la tarea entra en el escenario siguiente con el
       arrendamiento fresco, y ya sabes que eso no ha costado ningún comando especial.
-tablero_entra: >
+board_in: >
   TASK-19 en In Progress, asignada a @claude, ac 0/2, urgencia 11.0, con plan y con arrendamiento
   vivo de @claude, tal y como la deja el escenario 5. TASK-11 en In Progress con arrendamiento
   vivo de @claude que vence el 2026-09-06T15:40:18Z. TASK-52 en In Progress, sin asignar, con
   arrendamiento vencido el 2026-09-05T09:00:00Z que era de @bob. Contadores 54/5/190.
-tablero_sale: >
+board_out: >
   TASK-19 sin cambios de estado, de asignacion ni de campos: ac 0/2, urgencia 11.0, arrendamiento
   de @claude renovado en el ultimo paso. TASK-11 con dos comentarios nuevos (la nota de @sara y la
   del agente), arrendamiento de @claude renovado, y su fecha de modificacion sin tocar por el

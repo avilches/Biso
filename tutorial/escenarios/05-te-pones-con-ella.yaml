@@ -1,11 +1,11 @@
 id: 05-te-pones-con-ella
-titulo: Te pones con ella
-situacion: |
+title: Te pones con ella
+situation: |
   El agente ya sabe que `TASK-19` es suya. Ahora va a empezarla de verdad, y eso no consiste en
   cambiarle el estado a mano: hay un comando que se llama justo como el gesto que estás haciendo.
 
   Con una sola llamada pasan cuatro cosas a la vez, y una de ellas no la has pedido.
-ensena:
+teaches:
   - >-
     Empezar una tarea es un comando con nombre propio, `biso start`, y cuesta una llamada. No es
     `biso set --status`, aunque el estado acabe igual.
@@ -15,16 +15,19 @@ ensena:
   - >-
     Un arrendamiento no es un estado. La tarea está en `In Progress` y además tiene una reserva;
     son dos cosas separadas que se guardan aparte.
-pasos:
-  - narracion: |
+steps:
+  - narration: |
       El agente coge la tarea, y de paso deja escrito por dónde piensa atacarla, para que Sara
       pueda leerlo sin preguntar.
-    comando: biso start TASK-19 --plan "Reproducir el 5xx con un servidor de prueba, y envolver la subida en un reintento con espera exponencial"
-    salida: |
+    command: biso start TASK-19 --plan "Reproducir el 5xx con un servidor de prueba, y envolver la subida en un reintento con espera exponencial"
+    output: |
       TASK-19  In Progress  ac 0/2  urgency 11.0
-    codigo_salida: 0
-    origen: derivada spec/cmd/verbos-del-ciclo.md#biso-start, spec/modelo-de-datos.md#la-urgencia
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/verbos-del-ciclo.md#biso-start "`biso start`"
+      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+    remark: |
       La urgencia ha subido de 7.0 a 11.0, y son exactamente los 4.0 del término de tarea activa.
       Nadie ha escrito ese número: se recalcula al leer, cada vez.
 
@@ -36,19 +39,21 @@ pasos:
       Si la tarea no hubiera tenido a nadie asignado, `start` le habría puesto a quien llama, y
       esa es la diferencia con lo que hizo Sara en el escenario anterior: ella asignó sin
       empezar, y `start` empieza asignando si hace falta.
-  - narracion: |
+  - narration: |
       El arrendamiento no se ve en la línea de estado, así que el agente mira la ficha para
       entender qué acaba de reservar.
-    comando: biso get TASK-19 --section plan
-    salida: |
+    command: biso get TASK-19 --section plan
+    output: |
       TASK-19  Retry the upload on 5xx
 
       ## Implementation Plan
       Reproducir el 5xx con un servidor de prueba, y envolver la subida en un reintento con espera
       exponencial
-    codigo_salida: 0
-    origen: derivada spec/cmd/get.md
-    comentario: |
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/get.md "`biso get`"
+    remark: |
       El plan está donde debía. Lo del arrendamiento hay que explicarlo, porque no se enseña aquí:
       son dos campos guardados en la tarea, hasta cuándo vale la reserva y de quién es, y el
       programa acaba de ponerlos en "ahora más 240 minutos" y en `@claude`.
@@ -61,10 +66,10 @@ pasos:
       el vencido tarde: un arrendamiento demasiado corto hace que otro agente reclame una tarea
       que alguien está trabajando de verdad, mientras que uno demasiado largo solo retrasa un
       aviso. Y como vas a ver en el escenario siguiente, ese aviso nunca impide trabajar.
-tablero_entra: >
+board_in: >
   TASK-19 en To Do, asignada a @claude, ac 0/2, urgencia 7.0, sin plan y sin arrendamiento, tal y
   como la deja el escenario 4. Contadores 55/4/190.
-tablero_sale: >
+board_out: >
   TASK-19 en In Progress, asignada a @claude, ac 0/2, urgencia 11.0, con plan y con un
   arrendamiento vivo a nombre de @claude que vence 240 minutos despues de este paso. Contadores
   54/5/190: TASK-19 sale de To Do y entra en In Progress, que es el unico cambio de estado de
