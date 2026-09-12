@@ -1403,3 +1403,66 @@ configurar su identidad solo para poder crear tareas.
 salida ya es JSON sin pedirlo, en forma de un objeto por línea, mientras que `--json` significa el
 sobre único que imprimen todos los demás. Son dos formas distintas, y aceptar la bandera en silencio
 dejaría en duda cuál de las dos sale.
+
+---
+
+## El juego de caracteres de un token
+
+La especificación no restringía ningún carácter en `labels`, `assignees`, `references`,
+`documentation`, `dependencies`, `modifiedFiles` ni en una clave de `ext`: la única regla escrita era
+que una coma dentro de un valor se escapa con `\,`, lo que de hecho dejaba pasar espacios, saltos de
+línea y cualquier símbolo. `labels` y `assignees` se imprimen en las columnas de ancho fijo de
+`biso ls` y `biso prime`, así que un espacio o un salto de línea dentro de uno de esos tokens rompía
+la tabla sin que hubiera forma de distinguir, al leerla, un token con espacio de dos tokens
+separados. Hacía falta cerrar el alfabeto en algún punto, y la pregunta era dónde.
+
+**Qué hacen las herramientas comparables.** Dos de ellas escriben una etiqueta como palabra suelta de
+una línea de comandos, que es exactamente la situación de biso:
+
+- **Taskwarrior** exige que una etiqueta sea una sola palabra que no empiece por dígito, puntuación ni
+  operador matemático. No hay espacio posible, por regla.
+- **Jira** rechaza directamente cualquier etiqueta con espacio, con el mensaje literal
+  `Labels can't have spaces`, y recomienda `-` o `_` para una etiqueta de varias palabras.
+- **GitHub** sí permite etiquetas de varias palabras (`good first issue`), pero nunca se enfrenta al
+  problema de biso: una etiqueta de GitHub se elige en un desplegable de un formulario web o llega ya
+  como cadena entrecomillada dentro de un JSON de su API, nunca como una palabra suelta que una shell
+  tenga que trocear antes de que el programa la vea.
+
+**La decisión.** Cerrar el alfabeto de `labels` y `assignees` a letras y dígitos Unicode más los
+símbolos `- _ . : @`, sin espacio, siguiendo a Taskwarrior y Jira y no a GitHub: biso es un programa
+que un agente maneja tecleando líneas de comandos, no un formulario web, así que cada etiqueta con
+espacio sería una comilla que ese agente tendría que acordarse de poner siempre, para ganar exactamente
+lo mismo que ya ofrecen `-` y `_`. Y olvidar la comilla no siempre falla alto: según qué banderas haya
+alrededor, la palabra suelta puede convertirse en un argumento inesperado (el caso bueno, error 2) o
+colarse donde no tocaba. Cerrar el alfabeto quita el problema de raíz en vez de pedir disciplina.
+
+Cerrar el alfabeto de estos dos campos tiene una consecuencia que también hay que anotar: **el escape
+de coma deja de aplicarles**. La única razón para escapar una coma es poder meterla como contenido
+literal de un valor, y una coma no está en el alfabeto cerrado de `labels` ni de `assignees`, así que
+ahí nunca hay una coma legítima que escapar. El escape sigue haciendo falta para `references`,
+`documentation` y `modifiedFiles`, que siguen siendo texto libre.
+
+**Por qué `references`, `documentation`, `dependencies` y `modifiedFiles` quedan fuera.** Los tres
+primeros de la lista de campos de lista con coma que no son `labels` ni `assignees` guardan contenido
+cuyo alfabeto no lo decide biso: una referencia o una documentación pueden ser una URL, y un fichero
+tocado es una ruta del sistema de ficheros. Cerrarles el alfabeto dejaría fuera casos legítimos
+(`/`, `?`, `#` de una URL; `/` de una ruta) a cambio de nada, porque ninguno de los tres se imprime en
+una columna de ancho fijo con otros de su misma clase de la forma en que lo hacen las etiquetas.
+`dependencies` no necesita una regla nueva porque ya tiene la suya: cada elemento es un `<ref>` y lo
+gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](spec/referencias.md), que ya distingue un identificador
+mal formado de una consulta de texto libre.
+
+**Por qué la clave de `ext` es un tercer alfabeto y no el mismo que `labels`.** Una clave de `ext`
+tiene la forma de un espacio de nombres con punto (`trello.card`, `github.issue`), así que necesita el
+punto y admite `-`/`_` para el segmento, pero no tiene ningún uso documentado para `@` ni para `:`. Y
+no puede admitir `=`, porque `--ext <clave>=<valor>` ya usa ese carácter para separar la clave del
+valor: permitirlo dentro de la clave haría ambiguo dónde termina una y empieza el otro en
+`--ext a=b=c`.
+
+**Por qué el código de salida es 2 y no 3.** El código 3 (["Códigos de salida"](spec/codigos-de-salida.md)) es para un valor
+sintácticamente correcto que el tablero no reconoce, y `labels` y `assignees` no tienen vocabulario
+cerrado al escribir (["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué)): cualquier texto que cumpla el alfabeto es válido sin que el
+tablero lo declare antes. Un carácter fuera del alfabeto no es un problema de reconocimiento sino de
+forma, la misma clase de fallo que un identificador mal formado, que ya es código 2. Tratarlo como
+código 3 habría mezclado dos preguntas distintas bajo el mismo número: "¿es sintácticamente válido?" y
+"¿el tablero lo tiene?".
