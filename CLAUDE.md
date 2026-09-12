@@ -88,7 +88,6 @@ Con eso **ya no queda nada que bloquee empezar a escribir código**: el paso 1 d
 
 - **El trabajo va en un worktree**, en `.claude/worktrees/<rama>`, nunca editando `main`
   directamente.
-- **Al terminar una tarea, se mezcla directamente a `main` y se borra el worktree, sin PR.**
 - **La documentación y los comentarios van en español.** Los identificadores del código y todo lo que
   es interfaz del programa (comandos, banderas, textos de ayuda, mensajes de error, claves JSON) van
   en inglés.
