@@ -219,7 +219,7 @@ dato que distingue este caso y el que alguien querrá comprobar:
 
 ```
 Snapshot written: snapshot.ndjson, board.json (248 tasks)
-Committed a1b2c3d to /Users/avilches/Hub/Projects/Kex, the repository this board lives in
+Committed a1b2c3d to /Users/avilches/Hub/Projects/My project, the repository this board lives in
 ```
 
 Con `--vcs push`, una tercera línea dice que se ha publicado. Sin nada que guardar, la primera línea por
@@ -257,7 +257,7 @@ git:  3 files changed, 12 insertions(+), 4 deletions(-)
     "vcs": "git",
     "committed": true,
     "commit": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
-    "repository": "/Users/avilches/.biso/boards/kex-3f9a2b1c",
+    "repository": "/Users/avilches/.biso/boards/my-project-3f9a2b1c",
     "pushed": false,
     "vcsOutput": ["[main a1b2c3d] biso snapshot: 248 tasks", " 3 files changed, 12 insertions(+), 4 deletions(-)"],
     "skipped": []

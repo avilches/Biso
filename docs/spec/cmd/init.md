@@ -29,11 +29,11 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 | `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--projects`, `--extensions`, `--prefix`, `--overwrite-config` |
 
 **`--at` es la ruta del directorio del tablero que se va a crear, no el directorio donde se crea.** Con
-`--at tablero` el tablero queda en `tablero`, no en `tablero/kex-3f9a2b1c`. Es la misma convención que
+`--at tablero` el tablero queda en `tablero`, no en `tablero/my-project-3f9a2b1c`. Es la misma convención que
 la clave `path` del puntero, que también nombra el directorio del tablero y no el que lo contiene
 (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), y no es casualidad: la ruta que recibe `--at` es exactamente la que se escribe en esa
 clave, con la misma forma. Puede ser absoluta o relativa al directorio de trabajo, y **su último componente es el nombre de la carpeta, que
-es decorativo** (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), así que `--at tablero` es tan válido como `--at kex-3f9a2b1c`.
+es decorativo** (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), así que `--at tablero` es tan válido como `--at my-project-3f9a2b1c`.
 
 ## Comportamiento
 
@@ -55,7 +55,7 @@ dato que nadie necesita y que dejaría de valer al cambiar `boards_root`.
 
 **Con `--at`, el puntero lleva la ruta en `path`, con la misma forma en que se dio `--at`**: relativa si
 `--at` era relativa, absoluta si era absoluta. `--at tablero` escribe `"path": "tablero"`;
-`--at /Users/avilches/Hub/Projects/Kex/tablero` escribe esa ruta completa. No hay bandera para elegir la
+`--at /Users/avilches/Hub/Projects/My project/tablero` escribe esa ruta completa. No hay bandera para elegir la
 forma porque la forma de `--at` ya es la elección, y esa elección es de quien llama y no del programa,
 porque depende de un dato que el programa no tiene: **dónde van a vivir las demás copias de trabajo del
 proyecto.**
@@ -168,7 +168,7 @@ código 2 y la clave `code` `board_exists`. Nombra el tablero y su ruta, porque 
 necesita saber es cuál se ha encontrado, y remite a los dos caminos que hay desde ahí:
 
 ```
-error: this project already has board 3f9a2b1c, at /Users/avilches/.biso/boards/kex-3f9a2b1c
+error: this project already has board 3f9a2b1c, at /Users/avilches/.biso/boards/my-project-3f9a2b1c
 hint: `biso where` says which rule picked it
 hint: --overwrite-config rewrites its configuration and never touches its tasks
 ```
@@ -187,7 +187,7 @@ existiera antes queda afectada.
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
 | `--at` con una ruta relativa | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta relativa, código 0 |
 | `--at` con una ruta absoluta | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta absoluta, código 0 |
-| `--at` con una ruta relativa que sale del proyecto, como `../tableros/kex` | No es un error, y el puntero la guarda tal cual: resuelve mientras la posición relativa entre el puntero y el tablero se mantenga, y el marcador confirma que el directorio al que llega es el tablero que el `id` nombra |
+| `--at` con una ruta relativa que sale del proyecto, como `../tableros/my-project` | No es un error, y el puntero la guarda tal cual: resuelve mientras la posición relativa entre el puntero y el tablero se mantenga, y el marcador confirma que el directorio al que llega es el tablero que el `id` nombra |
 | `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección ["`biso config`"](config.md) aplica a `task_prefix` |
 | Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
 | Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
@@ -268,16 +268,16 @@ revisiones.
 ## Salida
 
 Esto es lo que imprime la tercera invocación de los ejemplos de ayuda,
-`biso init Kex --at kex-board --prefix TASK --extensions trello.card` (con `--json` para el esquema
-de más abajo). El prefijo sale `TASK` porque lo fija `--prefix`, no porque se derive del nombre
-`Kex`, que sin esa bandera daría `KEX` (sección ["Identificadores"](../modelo-de-datos.md#identificadores)).
+`biso init "My project" --prefix MYP --at my-project-board --extensions trello.card` (con `--json` para el
+esquema de más abajo). El prefijo sale `MYP` porque lo fija `--prefix`, no porque se derive del nombre
+`My project`, que sin esa bandera daría `MYPROJECT` (sección ["Identificadores"](../modelo-de-datos.md#identificadores)).
 
 ```
-Created board "Kex"
+Created board "My project"
   statuses    To Do (initial) | In Progress (active) | Done (terminal)
   types       task, bug, docs
   priorities  high, medium, low
-  prefix      TASK
+  prefix      MYP
 This project now points at that board.
 Run `biso prime` to see how to use it.
 ```
@@ -286,21 +286,21 @@ La línea "This project now points at that board." aparece siempre, porque el pr
 apuntando a ese tablero, se escriba el puntero en esta llamada o ya estuviera escrito de antes
 (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)).
 
-**Esta invocación emite además las dos notas**, porque `--at kex-board` es una ruta relativa que cae
+**Esta invocación emite además las dos notas**, porque `--at my-project-board` es una ruta relativa que cae
 dentro del proyecto, que es justo el caso que las dispara. Por stderr sale esto, en este orden:
 
 ```
-note: the board lives inside this project. Ignore kex-board/ and the board keeps
+note: the board lives inside this project. Ignore my-project-board/ and the board keeps
       its own history; version it and the snapshot travels with your code.
-      Either way the database stays out, kex-board/.gitignore excludes it
-note: the location is stored as the relative path "kex-board". A working copy
+      Either way the database stays out, my-project-board/.gitignore excludes it
+note: the location is stored as the relative path "my-project-board". A working copy
       outside this project will not have that folder while git ignores it, so
       it will not find the board: use an absolute --at if you work that way
 ```
 
 No están en el bloque de arriba porque ese bloque es stdout, y las notas van por stderr como todas
 (sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). El puntero que esta llamada escribe es
-`{ "version": 1, "id": "3f9a2b1c", "path": "kex-board" }`.
+`{ "version": 1, "id": "3f9a2b1c", "path": "my-project-board" }`.
 
 ## El esquema JSON
 
@@ -311,12 +311,12 @@ No están en el bloque de arriba porque ese bloque es stdout, y las notas van po
   "generatedAt": "2026-09-06T09:12:04Z",
   "data": {
     "board": {
-      "name": "Kex",
+      "name": "My project",
       "statuses": ["To Do", "In Progress", "Done"],
       "initialStatus": "To Do", "activeStatus": "In Progress", "terminalStatus": "Done",
       "types": ["task", "bug", "docs"],
       "priorities": ["high", "medium", "low"],
-      "taskPrefix": "TASK"
+      "taskPrefix": "MYP"
     },
     "pointerCreated": true
   }
@@ -410,11 +410,11 @@ Exit codes:
 
 Examples:
   biso init
-  biso init Kex --statuses "Ideas,To Do,In Progress,Done" \
+  biso init "My project" --statuses "Ideas,To Do,In Progress,Done" \
       --initial-status Ideas --active-status "In Progress" \
       --terminal-status Done
-  biso init Kex --at kex-board --prefix TASK --extensions trello.card
-  biso init --at /tmp/tablero-nuevo --from ~/.biso/boards/kex-3f9a2b1c
+  biso init "My project" --prefix MYP --at my-project-board --extensions trello.card
+  biso init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c
 ```
 
 El segundo ejemplo deja `To Do` sin ningún papel a propósito: un tablero puede llevar estados que no

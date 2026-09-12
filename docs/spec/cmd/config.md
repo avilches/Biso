@@ -131,7 +131,7 @@ $ biso config get statuses
 To Do,In Progress,Done
 
 $ biso config list
-project_name = Kex
+project_name = My project
 statuses = To Do,In Progress,Done
 initial_status = To Do
 active_status = In Progress
@@ -176,7 +176,7 @@ Solo `config list` acepta `--json`:
   "generatedAt": "2026-09-06T09:12:04Z",
   "data": {
     "config": {
-      "project_name": "Kex",
+      "project_name": "My project",
       "statuses": ["To Do", "In Progress", "Done"],
       "initial_status": "To Do",
       "active_status": "In Progress",

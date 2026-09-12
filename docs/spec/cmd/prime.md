@@ -89,7 +89,7 @@ de este documento no dependan del nombre que le toque al tablero de turno. De pa
 ```
 biso 1.0.0 - the task board of this project. This message is all you need to start.
 
-BOARD  Kex
+BOARD  My project
   To Do 54 | In Progress 4 | Done 190
   new tasks start in To Do; `biso start` moves to In Progress; `biso finish` to Done
   types       idea, memory, task, bug, docs
@@ -247,7 +247,7 @@ THE BOARD IS EMPTY
   "data": {
     "tool": { "name": "biso", "version": "1.0.0" },
     "board": {
-      "name": "Kex",
+      "name": "My project",
       "me": "@claude",
       "statuses": ["To Do", "In Progress", "Done"],
       "initialStatus": "To Do",
@@ -339,7 +339,7 @@ Exit codes:
 Examples:
   biso prime
   biso prime --limit 10
-  biso -C ~/work/kex prime
+  biso -C ~/work/my-project prime
 ```
 
 ---

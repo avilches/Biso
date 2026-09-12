@@ -662,7 +662,7 @@ y caer al marcador solo si falla: sería más rápido y volvería a poner el mis
 lo que se acaba de quitar.
 
 **Por qué la `path` del puntero puede ser relativa, y por qué la forma la elige quien llama.** Un puntero
-que dice `/Users/avilches/Hub/Projects/Kex/tablero` solo resuelve en el ordenador donde el proyecto está
+que dice `/Users/avilches/Hub/Projects/My project/tablero` solo resuelve en el ordenador donde el proyecto está
 en esa ruta exacta, y el puntero se versiona precisamente para que viaje. Con `tablero` guardado como
 ruta relativa, mover el proyecto entero con su tablero dentro no rompe nada.
 
