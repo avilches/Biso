@@ -21,9 +21,9 @@ aceptación y un elemento de definición de hecho.
 El ciclo entero de una tarea es esto:
 
 ```
-biso start  MYP-11 --plan "1. Read the parser. 2. Add the CRLF case."
+biso start  MYP-11 --append-plan "1. Read the parser. 2. Add the CRLF case."
 biso note   MYP-11 "The parser already normalized LF, CRLF was missing"
-biso finish MYP-11 --check all --check-dod all --summary "Normalize CRLF in the diff, verified with the tests."
+biso finish MYP-11 --check-ac all --check-dod all --append-summary "Normalize CRLF in the diff, verified with the tests."
 ```
 
 ## `biso start`
@@ -31,7 +31,7 @@ biso finish MYP-11 --check all --check-dod all --summary "Normalize CRLF in the 
 ### Firma
 
 ```
-biso start <ref>... [--plan <text>] [-a <@who>]... [-s <v>] [--reopen]
+biso start <ref>... [--append-plan <text>] [-a <@who>]... [-s <v>] [--reopen]
            [--id] [--match] [cualquier bandera de campo de la seccion 8]
 ```
 
@@ -45,9 +45,11 @@ biso start <ref>... [--plan <text>] [-a <@who>]... [-s <v>] [--reopen]
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-`--plan` y `-a/--assignee` son las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), con su significado de siempre:
-**las dos añaden**. `--plan` añade al plan existente y `--set-plan` lo reemplaza; `-a` añade una
-persona y `--set-assignee` reemplaza la lista.
+`--append-plan` y `-a/--add-assignees` son las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), con su
+significado de siempre: **las dos añaden**. `--append-plan` añade al plan existente; sustituirlo entero
+se hace vaciando y añadiendo en la misma llamada (`--clear-plan --append-plan ...`), porque un bloque
+de prosa no tiene bandera de sustituir entera. `-a` añade una persona y `--replace-assignees` reemplaza
+la lista.
 
 ### Qué hace
 
@@ -69,7 +71,7 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | `-s` con un estado que no es el activo, por ejemplo `biso start MYP-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: MYP-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
 | No hay [ninguna identidad configurada](../invocacion.md#variables-de-entorno) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
-| La tarea ya tiene plan y se pasa `--plan` | Se añade al final, como toda bandera desnuda |
+| La tarea ya tiene plan y se pasa `--append-plan` | Se añade al final, como toda bandera de añadir |
 | Varias referencias | Todo o nada |
 
 ### Salida
@@ -104,11 +106,13 @@ Take one or more tasks: move them to the active status, claim the lease for
 you, assign them to you if nobody has them, and record a plan. One call.
 
 Options:
-      --plan <text>      add to the implementation plan; repeatable, and takes
-                         @file and - like every text option
-  -a, --assignee <@who>  add an assignee (--set-assignee replaces the list)
-  -s, --status <value>   use another status instead of the active one; no lease
-                         is claimed then, a lease only exists on an active task
+      --append-plan <text>       add to the implementation plan; repeatable,
+                                 and takes @file and - like every text option
+  -a, --add-assignees <@who>     add an assignee (--replace-assignees replaces
+                                 the list)
+  -s, --status <value>           use another status instead of the active one;
+                                 no lease is claimed then, a lease only exists
+                                 on an active task
       --reopen           allow starting a task that is already finished
       --id / --match     force <ref> to be an id, or free text
   -h, --help             show this help
@@ -126,7 +130,7 @@ Exit codes:
                     8  no board here
 
 Examples:
-  biso start MYP-11 --plan "1. Read the parser. 2. Add the CRLF case."
+  biso start MYP-11 --append-plan "1. Read the parser. 2. Add the CRLF case."
   biso start 11
   biso start MYP-11 MYP-12
 ```
@@ -159,19 +163,20 @@ con la gramática de identificador de la sección ["La gramática"](../referenci
 
 ```
 error: "MYP-2" looks like a task id, and `biso note` takes only one task
-hint: to note the same thing on several tasks: biso set MYP-1 MYP-2 --note "..."
-      to write that text literally:            biso note MYP-1 --note "MYP-2"
+hint: to note the same thing on several tasks: biso set MYP-1 MYP-2 --append-note "..."
+      to write that text literally:            biso note MYP-1 --append-note "MYP-2"
 ```
 
-**`--note`, la bandera de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), nunca pasa por esa comprobación**, porque no es un
-posicional: es la vía para escribir una nota que de verdad diga `MYP-2`. La misma regla vale para
-`biso comment`, con `--comment`.
+**`--append-note`, la bandera de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), nunca pasa por esa comprobación**, porque no
+es un posicional: es la vía para escribir una nota que de verdad diga `MYP-2`. La misma regla vale
+para `biso comment`, con `--comment`.
 
 ### Qué hace
 
 Añade uno o más párrafos a las notas de implementación. **Nunca reemplaza.** Para reemplazar está
-`biso set <ref> --set-notes`, que este comando no acepta por su nombre desnudo pero sí como bandera de
-campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), igual que las demás.
+vaciar y añadir en la misma llamada, `biso set <ref> --clear-notes --append-note "..."`, que este
+comando no acepta por su verbo propio pero sí como banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), igual
+que las demás.
 
 | Caso | Qué pasa |
 |---|---|
@@ -205,7 +210,7 @@ MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 Usage: biso note <ref> <text>... [options]
 
 Append one or more paragraphs to the implementation notes of ONE task. It never
-replaces anything; `biso set <ref> --set-notes` does that.
+replaces anything; clearing and appending in the same `biso set <ref>` call does.
 
 Arguments:
   ref            one task: an id, a bare number or free text
@@ -215,11 +220,11 @@ Options:
       --id / --match   force <ref> to be an id, or free text
   -h, --help           show this help
 
-Every field flag of `biso set --help` works here too. Use `--note <text>` for a
-paragraph that is not checked against the id grammar, for when the note
+Every field flag of `biso set --help` works here too. Use `--append-note <text>`
+for a paragraph that is not checked against the id grammar, for when the note
 itself looks like an id.
 
-To note the same thing on several tasks, use `biso set A B --note "..."`.
+To note the same thing on several tasks, use `biso set A B --append-note "..."`.
 
 Exit codes:
   0  appended       3  the task could not be read    7  could not be written
@@ -310,8 +315,8 @@ Examples:
 ### Firma
 
 ```
-biso finish <ref>... [--summary <text>] [--check <sel>]... [--check-dod <sel>]...
-            [--note <text>]... [--file <path>]... [-s <v>] [--strict] [--no-checks]
+biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]... [--check-dod <sel>]...
+            [--append-note <text>]... [--add-files <path>]... [-s <v>] [--strict] [--no-checks]
             [--id] [--match] [cualquier bandera de campo de la seccion 8]
 ```
 
@@ -326,7 +331,8 @@ biso finish <ref>... [--summary <text>] [--check <sel>]... [--check-dod <sel>]..
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-`--summary`, `--check`, `--check-dod`, `--note` y `--file` son las banderas de campo de siempre.
+`--append-summary`, `--check-ac`, `--check-dod`, `--append-note` y `--add-files` son las banderas de
+campo de siempre.
 
 ### Qué hace
 
@@ -335,7 +341,7 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 
 | Caso | Qué pasa |
 |---|---|
-| Quedan criterios sin marcar y no se pasó `--check` | **Se cierra igual**, con el aviso y la lista de los que faltan |
+| Quedan criterios sin marcar y no se pasó `--check-ac` | **Se cierra igual**, con el aviso y la lista de los que faltan |
 | Quedan elementos de la definición de hecho sin marcar | Igual, con su propio aviso |
 | Lo mismo, con `--strict` | Error 6, y no se escribe nada |
 | Sin `--summary` | Se cierra igual, con `warning: MYP-11 finished without a final summary` |
@@ -389,13 +395,14 @@ Close one or more tasks: check criteria, add the last note, write the final
 summary and move to the terminal status. One call.
 
 Options:
-      --summary <text>   add to the final summary; repeatable, takes @file and -
-      --check <sel>      check criteria: all, 3, 1-4, 1,3,7 or the text. With
-                         several tasks the selector has to be `all`
-      --check-dod <sel>  the same for the definition of done
-      --note <text>      one last implementation note; repeatable
-      --file <path>      record a modified file; repeatable
-  -s, --status <value>   use another status instead of the terminal one
+      --append-summary <text>  add to the final summary; repeatable, takes
+                               @file and -
+      --check-ac <sel>         check criteria: all, 3, 1-4, 1,3,7 or the text.
+                               With several tasks the selector has to be `all`
+      --check-dod <sel>        the same for the definition of done
+      --append-note <text>     one last implementation note; repeatable
+      --add-files <path>       record a modified file; repeatable
+  -s, --status <value>         use another status instead of the terminal one
       --strict           refuse to finish with unchecked criteria, unchecked
                          definition of done, unfinished subtasks or no summary
                          (default: warn and go on; see finish_strict)
@@ -412,9 +419,9 @@ Exit codes:
                                         8  no board here
 
 Examples:
-  biso finish MYP-11 --check all --check-dod all --summary "Normalizes CRLF"
-  biso finish MYP-11 --check "covers CRLF" --note "313 tests green"
-  biso finish MYP-11 MYP-12 --check all --summary "Both closed by PR 42"
+  biso finish MYP-11 --check-ac all --check-dod all --append-summary "Normalizes CRLF"
+  biso finish MYP-11 --check-ac "covers CRLF" --append-note "313 tests green"
+  biso finish MYP-11 MYP-12 --check-ac all --append-summary "Both closed by PR 42"
 ```
 
 ## `biso ask`
@@ -668,7 +675,7 @@ Exit codes:
 
 Examples:
   biso answer MYP-11 "Only text files. Binary ones are skipped entirely."
-  biso answer 11 "Yes" --ac "A binary file is never touched"
+  biso answer 11 "Yes" --add-ac "A binary file is never touched"
 ```
 
 ---

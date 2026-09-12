@@ -6,16 +6,18 @@ Una sola invocación puede tocar muchos campos. El orden en que se aplican es fi
 orden en que aparecen las banderas en la línea de comandos**, para que el resultado sea reproducible:
 
 1. Todos los `--clear-*`.
-2. Todos los `--set-*`.
+2. Todos los `--replace-*`.
 3. Todos los `--rm-*`.
-4. Los añadidos, es decir, los nombres desnudos.
+4. Los añadidos: `--add-*` y `--append-*`.
 5. Los campos escalares.
-6. Los marcados de criterios y de definición de hecho.
+6. Los marcados de criterios y de definición de hecho (`--check-ac`, `--uncheck-ac`, `--check-dod`,
+   `--uncheck-dod`).
 7. Los comentarios.
 
-Con este orden, `--clear-label --label urgent` deja exactamente una etiqueta, y `--set-ac "A"
---check all` marca los criterios recién puestos. Dentro de un mismo paso manda el orden de la línea
-de comandos: `--label b --label a` deja `b` antes que `a`. Las listas nunca se ordenan solas.
+Con este orden, `--clear-labels --add-labels urgent` deja exactamente una etiqueta, y `--clear-acs
+--add-ac "A" --check-ac all` marca el criterio recién puesto. Dentro de un mismo paso manda el orden
+de la línea de comandos: `--add-labels b --add-labels a` deja `b` antes que `a`. Las listas nunca se
+ordenan solas.
 
 ## Concurrencia, atomicidad y garantías observables
 

@@ -52,20 +52,20 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 
 | Aviso | Cuándo |
 |---|---|
-| `warning: --set-plan replaced 412 bytes of existing content` | cualquier `--set-*` que pise contenido no vacío |
+| `warning: --replace-labels replaced 2 existing labels` | cualquier `--replace-*` que sustituya una lista no vacía |
 | `warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked` | al llegar a un estado terminal con criterios sin marcar |
 | `warning: MYP-11 finished without a final summary` | al llegar a un estado terminal sin resumen |
 | `warning: MYP-11 moved to Done with 1 of 3 definition-of-done items unchecked` | al llegar a un estado terminal con la definición de hecho a medias |
 | `warning: MYP-11 has unfinished subtasks: MYP-14, MYP-15` | al terminar una tarea con subtareas vivas |
 | `warning: MYP-11 is a dependency of MYP-20, which is not finished` | al archivar una tarea de la que dependen otras vivas |
-| `warning: --clear-label has no effect on a new task` | cualquier `--clear-*` en `biso new` |
+| `warning: --clear-labels has no effect on a new task` | cualquier `--clear-*` en `biso new` |
 | `warning: MYP-11 has unresolved dependencies: MYP-4 (To Do)` | al empezar una tarea bloqueada |
 | `warning: 28 more tasks match; showing 30 of 58` | en `biso ls`, al recortar |
-| `warning: --label: "urgent" given twice, kept once` | valor repetido en una bandera de lista |
-| `warning: --desc contains a literal \n and no real newline; it will be stored as text` | ver ["Codificación y texto"](#codificación-y-texto) |
-| `warning: --note: empty value, nothing was added` | valor vacío en una bandera que añade |
+| `warning: --add-labels: "urgent" given twice, kept once` | valor repetido en una bandera de lista |
+| `warning: --append-desc contains a literal \n and no real newline; it will be stored as text` | ver ["Codificación y texto"](#codificación-y-texto) |
+| `warning: --append-note: empty value, nothing was added` | valor vacío en una bandera que añade |
 | `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada |
-| `warning: MYP-11 has no acceptance criteria` | `--check all` sobre una tarea sin criterios |
+| `warning: MYP-11 has no acceptance criteria` | `--check-ac all` sobre una tarea sin criterios |
 | `warning: 1 task could not be read and was skipped` | ver ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
 | `warning: <x> is deprecated and will be removed in 2.0` | ver la sección ["El contrato de estabilidad"](estabilidad.md) |
 | `warning: MYP-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta |
@@ -84,7 +84,7 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 - Como ese `\n` literal casi siempre es un accidente, un valor de texto que contenga la secuencia de
   dos caracteres `\` `n` y **ningún** salto de línea real produce este aviso, y se guarda igual:
   ```
-  warning: --desc contains a literal \n and no real newline; it will be stored as text
+  warning: --append-desc contains a literal \n and no real newline; it will be stored as text
   hint: use a real newline, or -d @file.md, or -d - to read from stdin
   ```
 

@@ -7,20 +7,20 @@ más palabras.
 
 ```
 biso set <ref>... [cualquier bandera de campo de la seccion 8]
-         [--check <sel>]... [--uncheck <sel>]... [--check-dod <sel>]... [--uncheck-dod <sel>]...
+         [--check-ac <sel>]... [--uncheck-ac <sel>]... [--check-dod <sel>]... [--uncheck-dod <sel>]...
          [--comment <text>]... [--comment-author <@who>] [--id] [--match]
 ```
 
 ## Parámetros propios
 
-**Todas** las banderas de las secciones ["Campos de lista"](../familias-de-banderas.md#campos-de-lista), ["Campos de prosa"](../familias-de-banderas.md#campos-de-prosa), ["Campos escalares"](../familias-de-banderas.md#campos-escalares) y ["Campos externos"](../familias-de-banderas.md#campos-externos) valen aquí, con exactamente el mismo
+**Todas** las banderas de las secciones ["Campos de lista que admiten coma"](../familias-de-banderas.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-banderas.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-banderas.md#campos-de-prosa), ["Campos escalares"](../familias-de-banderas.md#campos-escalares) y ["Campos externos"](../familias-de-banderas.md#campos-externos) valen aquí, con exactamente el mismo
 significado que en cualquier otro comando. Lo propio de `set`:
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
 | `<ref>` | | sí, una o más | referencia | | sí | no | |
-| `--check <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--uncheck` |
-| `--uncheck <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check` |
+| `--check-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--uncheck-ac` |
+| `--uncheck-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check-ac` |
 | `--check-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--uncheck-dod` |
 | `--uncheck-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check-dod` |
 | `--comment <text>` | | no | texto largo | | sí | no | |
@@ -38,13 +38,13 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Ninguna bandera de cambio | Error 2: `error: nothing to change` con un puntero a `biso get` |
 | Varias referencias | El mismo cambio se aplica a todas, con la garantía de todo o nada de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables) |
 | Varias referencias y un selector que no sea `all` (clave, rango, lista o texto) | Error 2, porque el selector de una tarea no tiene por qué significar lo mismo en otra |
-| Varias referencias y `--check all` | Válido |
+| Varias referencias y `--check-ac all` | Válido |
 | Una de varias referencias no existe | Error 4, y **no se escribe ninguna**, ni siquiera las buenas |
-| Un `--set-*` pisa contenido no vacío | Se hace, con el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) diciendo cuántos bytes ha reemplazado |
+| Un `--replace-*` sustituye una lista no vacía | Se hace, con el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) diciendo cuántos elementos ha reemplazado |
 | Paso a un estado terminal con criterios sin marcar | Se hace, con aviso |
 | Paso a un estado terminal con una pregunta abierta (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)) | Se hace, con aviso, igual que en `biso finish` (["`biso finish`"](verbos-del-ciclo.md#biso-finish)) y como atribuye la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) a cualquier llegada al estado terminal |
 | Todas las banderas dejan la tarea igual | Código 0, con `note: MYP-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (sexta precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
-| `--status` a un estado que no es el activo, `--clear-assignee` o `--rm-assignee` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
+| `--status` a un estado que no es el activo, `--clear-assignees` o `--rm-assignees` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
 | `--comment-author` sin `--comment` | Error 2 |
 | `--comment` sin `--comment-author` y sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | Error 2 |
 | La tarea no se puede leer | Error 3, y no se escribe nada |
@@ -73,7 +73,7 @@ con su propio ejemplo, pero las reglas de su forma se dicen aquí y no se repite
 Los avisos van por stderr:
 
 ```
-warning: --set-plan replaced 412 bytes of existing content
+warning: --replace-labels replaced 2 existing labels
 ```
 
 ## El esquema JSON
@@ -87,9 +87,9 @@ warning: --set-plan replaced 412 bytes of existing content
     "tasks": [
       { "id": "MYP-11", "status": "In Progress", "acDone": 1, "acTotal": 2,
         "dodDone": 0, "dodTotal": 1, "urgency": 19.0,
-        "changed": ["plan", "status"] }
+        "changed": ["labels", "status"] }
     ],
-    "warnings": [ { "code": "overwrite", "field": "plan", "bytes": 412, "task": "MYP-11" } ]
+    "warnings": [ { "code": "overwrite", "field": "labels", "count": 2, "task": "MYP-11" } ]
   }
 }
 ```
@@ -119,33 +119,44 @@ Usage: biso set <ref>... [options]
 
 Change any field of one or more tasks, all or nothing. Every flag here means
 the same in `biso new`, `biso start`, `biso note`, `biso comment`, `biso ask`,
-`biso answer`, `biso finish` and `biso archive`.
+`biso answer`, `biso finish` and `biso archive`. Every flag name says what it
+does; there is no rule to learn beyond the name.
 
-The four shapes, and there is no field that breaks them:
-  --label X        add one          --set-label X   replace the whole list
-  --rm-label X     remove one       --clear-label   empty the list
-The same works for --assignee, --ref, --doc, --dep, --file, --ac and --dod.
+List fields that take comma-separated values have four shapes, and there is no
+field that breaks them:
+  --add-labels X      add one or more       --replace-labels X   replace the whole list
+  --rm-labels X       remove one or more    --clear-labels       empty the list
+The same works for --assignees, --refs, --docs, --deps and --files.
 
-Prose fields have three, because a block of text has no single item to remove:
-  --desc X adds, --set-desc X replaces, --clear-desc empties. The same for
-  --plan, --note (whose replacement is --set-notes) and --summary.
+Criteria and definition of done have three, because a criterion's text can
+contain a comma and so is never split on one. There is no whole-list replace;
+do it by clearing and adding in the same call.
+      --add-ac <text>        add a criterion; repeatable
+      --rm-ac <sel>          remove by selector; sel is all, 3, 1-4, 1,3,7 or
+                             the criterion text. The numbers are stable #N
+                             keys. With several tasks, sel has to be all
+      --clear-acs            empty the list
+      --add-dod / --rm-dod / --clear-dods    the same, for definition of done
+      --check-ac <sel>       check criteria, by the same kind of selector
+      --uncheck-ac <sel>     the opposite
+      --check-dod <sel>      the same for definition-of-done items
+      --uncheck-dod <sel>    the opposite
 
-External fields have three too: --ext key=value sets that one key, --rm-ext key
-drops it, --clear-ext empties the map.
+Prose fields have two, because a block of text has no single item to remove.
+Replace by clearing and appending in the same call.
+      --append-desc X (-d)   append a paragraph
+      --append-plan X
+      --append-note X
+      --append-summary X
+      --clear-desc / --clear-plan / --clear-notes / --clear-summary
+
+External fields have three: --ext key=value sets that one key, --rm-ext key
+drops it, --clear-ext empties the map. There is no --replace-ext: setting a
+key already replaces its value.
 
 Scalars just take a value: -t/--title, -s/--status, --type, --priority,
 --project, -m/--milestone, -p/--parent, --due, --ordinal, --reporter. Each has
 a --clear-<field>. An empty string is never a way to clear anything.
-
-Criteria and definition of done:
-      --check <sel>          check criteria; sel is all, 3, 1-4, 1,3,7 or the
-                             criterion text. The numbers are stable #N keys.
-                             With several tasks, sel has to be all
-      --uncheck <sel>        the opposite
-      --check-dod <sel>      the same for definition-of-done items
-      --uncheck-dod <sel>    the opposite
-      --rm-ac <sel>          remove criteria by the same selector
-      --rm-dod <sel>         remove definition-of-done items
 
 Comments:
       --comment <text>       append a comment; repeatable
@@ -154,8 +165,10 @@ Comments:
 Resolution:
       --id / --match         force <ref> to be an id, or free text
 
-A --set-* over existing content is allowed and warns on stderr with how many
-bytes it replaced.
+Within one call, every --rm-*/--clear-* is applied before every --add-*/
+--append-*, regardless of the order they were written in. A --replace-* over
+a non-empty list is allowed and warns on stderr with how many items it
+replaced.
 
 Exit codes:
   0  done                    5  something matched more than one thing
@@ -165,10 +178,10 @@ Exit codes:
                              8  no board here
 
 Examples:
-  biso set MYP-11 --priority high --label parser
-  biso set MYP-11 --check 1,3 --note "Both covered by diff_test.rs"
+  biso set MYP-11 --priority high --add-labels parser
+  biso set MYP-11 --check-ac 1,3 --append-note "Both covered by diff_test.rs"
   biso set MYP-11 MYP-12 --milestone "v1.2"
-  biso set "CRLF" --set-desc @docs/bugs/BUG-02.md
+  biso set "CRLF" --clear-desc --append-desc @docs/bugs/BUG-02.md
 ```
 
 ---

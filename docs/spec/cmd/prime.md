@@ -287,7 +287,7 @@ Los valores de urgencia del ejemplo salen de los coeficientes por defecto, que e
 estabilidad permite cambiar entre versiones menores, así que las cifras exactas pueden no ser estas.
 
 Las reglas y los nombres de las banderas no viajan en el JSON: quien pide JSON es un programa, y un
-programa no necesita que le expliquen que el nombre desnudo añade.
+programa no necesita que le expliquen en prosa cómo se nombran las banderas de escritura.
 
 **Ninguna de las cuatro listas trae el cuerpo de la pregunta**, por el mismo motivo que el esquema de
 `task.list` en la sección ["`biso ls`"](ls.md) no trae el cuerpo de la tarea: es texto largo. Lo que sí llevan es la posición de

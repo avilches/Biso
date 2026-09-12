@@ -2,14 +2,15 @@
 
 ## Tres formas de pasar un valor largo
 
-Todo parámetro de tipo texto largo (`--desc`, `--plan`, `--note`, `--summary`, `--comment` y el texto
-de un criterio o de un elemento de la definición de hecho) acepta las tres:
+Todo parámetro de tipo texto largo (`--append-desc`, `--append-plan`, `--append-note`,
+`--append-summary`, `--comment` y el texto de un criterio o de un elemento de la definición de hecho)
+acepta las tres:
 
 | Forma | Significado |
 |---|---|
-| `--desc "texto"` | el texto literal |
-| `--desc @ruta/fichero.md` | el contenido del fichero, interpretado como UTF-8 |
-| `--desc -` | todo lo que llegue por la entrada estándar hasta el fin de fichero |
+| `--append-desc "texto"` | el texto literal |
+| `--append-desc @ruta/fichero.md` | el contenido del fichero, interpretado como UTF-8 |
+| `--append-desc -` | todo lo que llegue por la entrada estándar hasta el fin de fichero |
 
 Reglas:
 
@@ -21,7 +22,7 @@ Reglas:
 - **`-` solo puede aparecer una vez por invocación.** Dos parámetros que pidan la entrada estándar son
   un error de uso con código 2, porque el segundo leería un flujo agotado y guardaría el vacío sin
   que se note.
-- **Un fichero que no existe es código 4**, con el mensaje `error: --desc: file not found: docs/x.md`.
+- **Un fichero que no existe es código 4**, con el mensaje `error: --append-desc: file not found: docs/x.md`.
   Un fichero que existe pero no se puede leer es código 7.
 - **Un valor vacío, venga de donde venga, no borra nada.** Ver ["El valor vacío"](#el-valor-vacío).
 
@@ -32,8 +33,8 @@ como si llega de un fichero vacío o de una entrada estándar vacía. La regla e
 
 | Dónde | Qué pasa |
 |---|---|
-| En una bandera que añade (`--note`, `--label`, `--ac`, `--desc`) | No se añade nada, se emite `warning: --note: empty value, nothing was added` y el código sigue siendo 0 |
-| En una bandera que sustituye (`--set-notes`, `--set-label`) | Deja el campo vacío, igual que `--clear-notes`. Sustituir por nada es vaciar, y eso sí es explícito |
+| En una bandera que añade (`--append-note`, `--add-labels`, `--add-ac`, `--append-desc`) | No se añade nada, se emite `warning: --append-note: empty value, nothing was added` y el código sigue siendo 0 |
+| En una bandera que sustituye (`--replace-labels`) | Deja el campo vacío, igual que `--clear-labels`. Sustituir por nada es vaciar, y eso sí es explícito |
 | En un campo escalar (`--type ""`, `--priority ""`) | Error 3. **La cadena vacía nunca es la forma de borrar un escalar**; para eso está `--clear-type` |
 | En el título, al crear | Error 2: `error: title cannot be empty` |
 
@@ -49,27 +50,27 @@ tienen vocabulario, el `code` es `empty_scalar_value`.
 
 Tres mecanismos, en orden de preferencia:
 
-1. **`--flag=valor`** funciona siempre y es la forma recomendada: `--desc=-5 grados`.
+1. **`--flag=valor`** funciona siempre y es la forma recomendada: `--append-desc=-5 grados`.
 2. **`--`** termina el análisis de opciones: `biso new -- "-n no es una bandera"`.
 3. **Un valor que empieza por guion detrás de una bandera que exige valor se acepta tal cual**, sin
-   heurísticas. `biso set MYP-1 --note -x` guarda `-x` como nota.
+   heurísticas. `biso set MYP-1 --append-note -x` guarda `-x` como nota.
 
 Como consecuencia de la regla 3, olvidar el valor de una bandera se detecta por lo que sobra después,
-no por lo que parece: `biso set MYP-1 --note --priority high` guarda la nota `--priority` y luego
-falla con código 2 y `error: unexpected argument: high`.
+no por lo que parece: `biso set MYP-1 --append-note --priority high` guarda la nota `--priority` y
+luego falla con código 2 y `error: unexpected argument: high`.
 
 ## Repetición y listas separadas por comas
 
 Para toda bandera marcada como repetible:
 
-- Repetirla acumula: `--label a --label b` deja dos etiquetas.
-- Si además acepta lista, separar por comas acumula igual: `--label a,b` deja las mismas dos.
+- Repetirla acumula: `--add-labels a --add-labels b` deja dos etiquetas.
+- Si además acepta lista, separar por comas acumula igual: `--add-labels a,b` deja las mismas dos.
 - Las dos formas se pueden mezclar.
 - **Una coma dentro de un valor se escapa con `\,`.** Es la única forma de meter una coma en una
   etiqueta o en una referencia.
 - Los campos de texto largo y los criterios **nunca** se parten por comas.
 - Un valor repetido dentro de la misma bandera se guarda una vez y produce
-  `warning: --label: "urgent" given twice, kept once`.
+  `warning: --add-labels: "urgent" given twice, kept once`.
 
 Para toda bandera **no** repetible, es decir, los campos escalares, pasarla dos veces con valores
 distintos es un error de uso con código 2:

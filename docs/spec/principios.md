@@ -10,8 +10,10 @@ Las reglas de esta lista. El resto del documento es una consecuencia de ellas.
 2. **Un nombre significa siempre lo mismo, en todos los comandos.** No existen banderas con el
    mismo nombre y semántica distinta según dónde se usen, ni dos nombres para el mismo concepto.
 
-3. **El nombre desnudo añade. Sustituir se dice en voz alta.** `--label` añade una etiqueta y
-   `--set-label` reemplaza la lista entera.
+3. **Ninguna bandera de escritura depende de una regla que haya que conocer de antemano.** Cada una
+   lleva su propio verbo en el nombre: `--add-labels` añade, `--rm-labels` quita, `--clear-labels`
+   vacía y `--replace-labels` sustituye la lista entera. Ninguna forma se deriva de otra ni de la
+   ausencia de un prefijo.
 
 4. **La salida por defecto de una escritura es lo que quien llama no sabía.** Nunca el eco de lo que
    acaba de escribir.

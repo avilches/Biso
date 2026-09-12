@@ -229,7 +229,7 @@ that thread you lose track of the real task. All you need is to write it down so
 it won't get forgotten, and keep going.
 
 !!! abstract "What this scenario teaches"
-    - A flag's bare name adds. Repeating `--ac` twice leaves two criteria, not one overwriting the other.
+    - Each field flag says what it does in its own name. Repeating `--add-ac` twice leaves two criteria, not one overwriting the other.
     - `biso new` prints the new task's id and nothing else: no title echoed back as confirmation, no status line.
 
 Just typing the title would already keep it safe, but since it's already in your
@@ -237,7 +237,7 @@ head, it's worth also writing down why it matters and what criterion will tell y
 it's resolved. That's two more flags on the same line, and `new` accepts all of them:
 
 ```console
-$ biso new "Log the diff size before uploading" --ac "The log prints the diff size before each upload" --ac "The size also shows up when the upload fails"
+$ biso new "Log the diff size before uploading" --add-ac "The log prints the diff size before each upload" --add-ac "The size also shows up when the upload fails"
 TASK-62
 ```
 
@@ -245,7 +245,7 @@ Exit code: `0`
 
 *(derived output, see [`biso new`](spec/cmd/new.md); not literal spec text)*
 
-*Note: No "created TASK-62", no repeating the title: the only line is the id, because that's exactly what you couldn't have known beforehand, and you already knew everything else (rule 7 of the startup message, and one of the core principles: the default output of a write is whatever the caller didn't already know, never an echo of what it just wrote). The two `--ac` flags haven't replaced anything, they've added two separate criteria to a list that started out empty, because the bare name of a list field always adds (the same rule that governs every flag family). If instead of adding a second criterion you'd wanted to replace the first one, the flag would have been `--set-ac`, not `--ac` again, though you didn't need that here: a freshly created task has nothing to replace yet.*
+*Note: No "created TASK-62", no repeating the title: the only line is the id, because that's exactly what you couldn't have known beforehand, and you already knew everything else (rule 7 of the startup message, and one of the core principles: the default output of a write is whatever the caller didn't already know, never an echo of what it just wrote). The two `--add-ac` flags haven't replaced anything, they've added two separate criteria to a list that started out empty, because that is exactly what `--add-ac` says it does. There is no flag that replaces the whole list of criteria: doing that means clearing it and adding again in the same call, though you didn't need that here, a freshly created task has nothing to clear yet.*
 
 ## 3. What now? {: #escenario-03 }
 
@@ -441,7 +441,7 @@ The agent takes the task, and along the way writes down how he plans to attack i
 can read it without having to ask.
 
 ```console
-$ biso start TASK-19 --plan "Reproduce the 5xx with a test server, and wrap the upload in a retry with exponential backoff"
+$ biso start TASK-19 --append-plan "Reproduce the 5xx with a test server, and wrap the upload in a retry with exponential backoff"
 TASK-19  In Progress  ac 0/2  urgency 11.0
 ```
 
@@ -587,7 +587,7 @@ criteria, for this task to really count as finished. You stop to write it down b
 You check first whether there's already something there.
 
 !!! abstract "What this scenario teaches"
-    - The bare name of a list field adds; `--set-` replaces the whole list; `--rm-` removes one; `--clear-` empties it. The four forms work the same way for any list field, not just for the definition of done.
+    - Each field flag says what it does in its own name: `--add-` adds, `--rm-` removes, `--clear-` empties. For criteria and definition-of-done items there's no whole-list replace; doing that means clearing and adding in the same call.
     - The `#N` keys of a criterion, whether an acceptance criterion or a definition-of-done item, get assigned when the element is created and are never reassigned. Removing one from the middle doesn't renumber the ones that are left.
     - A list's key counter only ever grows, even after `--clear-`. Elements added after emptying the list don't get back the keys of the ones that were removed.
 
@@ -608,27 +608,27 @@ You write down the first thing that comes to mind: that the change should be rev
 someone else before it counts as done.
 
 ```console
-$ biso set TASK-19 --dod "Someone else reviews the change before the task counts as done"
+$ biso set TASK-19 --add-dod "Someone else reviews the change before the task counts as done"
 TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
 ```
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista](spec/familias-de-banderas.md#campos-de-lista), [`biso set`](spec/cmd/set.md), [La urgencia](spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](spec/cmd/set.md), [La urgencia](spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
 
-*Note: The bare `--dod` flag adds. It's the same verb you already know from `--ac`: it behaves the same way for any list field.*
+*Note: `--add-dod` adds. It's the same verb you already know from `--add-ac`: it behaves the same way for any list field.*
 
 And a second thing that needs to be clear before closing: that the retry behavior gets
 documented somewhere, for whoever reads this later.
 
 ```console
-$ biso set TASK-19 --dod "The retry behavior is documented in the README"
+$ biso set TASK-19 --add-dod "The retry behavior is documented in the README"
 TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 ```
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista](spec/familias-de-banderas.md#campos-de-lista), [`biso set`](spec/cmd/set.md), [La urgencia](spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](spec/cmd/set.md), [La urgencia](spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
 
 You check how they turned out, with their keys.
 
@@ -655,7 +655,7 @@ TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista](spec/familias-de-banderas.md#campos-de-lista), [Selectores de criterios](spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [Selectores de criterios](spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](spec/cmd/set.md); not literal spec text)*
 
 You check the list again to make sure what's left hasn't changed number.
 
@@ -677,16 +677,15 @@ A coworker reviews the wording and suggests rewriting the whole list at once, ad
 second entry about the tests that are needed.
 
 ```console
-$ biso set TASK-19 --set-dod "The README explains when and how many times it retries" --set-dod "The test suite covers the 5xx case"
-warning: --set-dod replaced 46 bytes of existing content
+$ biso set TASK-19 --clear-dods --add-dod "The README explains when and how many times it retries" --add-dod "The test suite covers the 5xx case"
 TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 ```
 
 Exit code: `0`
 
-*(derived output, see [Notas y avisos](spec/salida-y-terminal.md#notas-y-avisos), [Campos de lista](spec/familias-de-banderas.md#campos-de-lista), [`biso set`](spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [Sustituir un campo que no tiene bandera de \"sustituir entera\"](spec/familias-de-banderas.md#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera), [`biso set`](spec/cmd/set.md); not literal spec text)*
 
-*Note: `--set-dod` replaces the whole list. Element `#2` disappears along with the rest of the old list, and the two that come in are brand new elements. The warning about replaced bytes is described for "any --set-* that overwrites non-empty content," without restricting it to prose fields, but the only example the specification gives is for `--set-plan` (a single string), and it doesn't say how the bytes are counted when what gets replaced is a list with several elements, each with its own text. Here it's been taken as the UTF-8 bytes of the text of the single element that was there before the replacement (46, the ones in "The retry behavior is documented in the README"), as the closest reading to the single-string case the specification does cover. Noted as an open gap in tutorial/lagunas/07-10.md.*
+*Note: There's no flag that replaces the whole list of definition-of-done items in one shot, so this clears it and adds the two new items in the same call. Element `#2` disappears along with the rest of the old list, and the two that come in are brand new elements. No warning shows up here, unlike a `--replace-*` on a comma-separated list field that overwrites non-empty content: clearing was explicit, you typed it yourself, so nothing gets overwritten silently and there's nothing to warn about.*
 
 You check the keys of the two new ones.
 
@@ -701,21 +700,21 @@ TASK-19  Retry the upload on 5xx
 
 Exit code: `0`
 
-*(derived output, see [Los criterios y sus claves estables](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables), [Campos de lista](spec/familias-de-banderas.md#campos-de-lista), [`biso get`](spec/cmd/get.md); not literal spec text)*
+*(derived output, see [Los criterios y sus claves estables](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables), [Campos de lista sin coma (criterios)](spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso get`](spec/cmd/get.md); not literal spec text)*
 
-*Note: The keys are `#3` and `#4`, not `#1` and `#2`. This list's counter, inside this task, was already at 2 before anything got replaced, and replacing doesn't reset it: "the keys of earlier elements are never reused" holds even when the replacement comes after an `--rm-`, not just right after creating the task.*
+*Note: The keys are `#3` and `#4`, not `#1` and `#2`. This list's counter, inside this task, was already at 2 before anything got cleared, and clearing doesn't reset it: "the keys of earlier elements are never reused" holds even when the clear-and-add comes after an `--rm-`, not just right after creating the task.*
 
 Almost right away you realize you're polishing the wording before the code is properly
 settled. You'd rather leave it blank until the work is more mature.
 
 ```console
-$ biso set TASK-19 --clear-dod
+$ biso set TASK-19 --clear-dods
 TASK-19  In Progress  ac 0/2  urgency 11.0
 ```
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista](spec/familias-de-banderas.md#campos-de-lista), [`biso set`](spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](spec/cmd/set.md); not literal spec text)*
 
 *Note: The list ends up empty, and that's why the `dod` chunk disappears from the status line: it only shows up "whenever the task has a definition of done," and an empty list doesn't count as having one. `ac` keeps showing because those two criteria haven't been touched.*
 
@@ -723,15 +722,15 @@ A while later, with the retry already working, you go back to the final list. It
 same wording as before.
 
 ```console
-$ biso set TASK-19 --dod "The README explains when and how many times it retries" --dod "The test suite covers the 5xx case"
+$ biso set TASK-19 --add-dod "The README explains when and how many times it retries" --add-dod "The test suite covers the 5xx case"
 TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 ```
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista](spec/familias-de-banderas.md#campos-de-lista), [`biso set`](spec/cmd/set.md), [La urgencia](spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](spec/cmd/set.md), [La urgencia](spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
 
-*Note: Bare name, adds again. The keys of these two elements are `#5` and `#6`: the list's counter hasn't been reset either by the earlier `--rm-dod` or by the later `--clear-dod`, it "only ever grows," no matter what happens to the list's content.*
+*Note: `--add-dod` again. The keys of these two elements are `#5` and `#6`: the list's counter hasn't been reset either by the earlier `--rm-dod` or by the later `--clear-dods`, it "only ever grows," no matter what happens to the list's content.*
 
 ## 8. You get stuck and someone has to decide {: #escenario-08 }
 
@@ -944,27 +943,27 @@ you've already done were never written down as a criterion: the backoff and the 
 them before checking anything off, so the final record tells the whole story.
 
 !!! abstract "What this scenario teaches"
-    - The `--check` and `--uncheck` flags (and their `--check-dod` and `--uncheck-dod` counterparts) accept five selector forms, all repeatable and all combinable in the same call: a single key, a range, a comma-separated list, `all`, or the criterion's text.
-    - Checking or unchecking is always safe to repeat. `--check all` breaks nothing even if everything was already checked, and that's why closing out a cycle can always use it without first checking what's missing.
+    - The `--check-ac` and `--uncheck-ac` flags (and their `--check-dod` and `--uncheck-dod` counterparts) accept five selector forms, all repeatable and all combinable in the same call: a single key, a range, a comma-separated list, `all`, or the criterion's text.
+    - Checking or unchecking is always safe to repeat. `--check-ac all` breaks nothing even if everything was already checked, and that's why closing out a cycle can always use it without first checking what's missing.
     - Closing a task always clears its lease, no matter who's holding it. It's the invariant that governs any write that takes a task out of the active state, and `biso finish` applies it without exception.
 
 You add the two criteria you were missing, all at once.
 
 ```console
-$ biso set TASK-19 --ac "The backoff follows the same pattern as the download endpoint" --ac "There's a test that covers the repeated 5xx case" --ac "There's a test that covers the success case after retrying" --ac "The endpoint documentation mentions the retry limit"
+$ biso set TASK-19 --add-ac "The backoff follows the same pattern as the download endpoint" --add-ac "There's a test that covers the repeated 5xx case" --add-ac "There's a test that covers the success case after retrying" --add-ac "The endpoint documentation mentions the retry limit"
 TASK-19  In Progress  ac 0/6  dod 0/2  urgency 11.0
 ```
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista](spec/familias-de-banderas.md#campos-de-lista), [`biso set`](spec/cmd/set.md), [Los criterios y sus claves estables](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](spec/cmd/set.md), [Los criterios y sus claves estables](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables); not literal spec text)*
 
-*Note: Four `--ac` flags in the same call add four new elements, in the order they're written, with new keys, #3, #4, #5 and #6, after the #1 and #2 the task already had from the initial inventory.*
+*Note: Four `--add-ac` flags in the same call add four new elements, in the order they're written, with new keys, #3, #4, #5 and #6, after the #1 and #2 the task already had from the initial inventory.*
 
 You check off the first one, the one you'd already verified from the start.
 
 ```console
-$ biso set TASK-19 --check 1
+$ biso set TASK-19 --check-ac 1
 TASK-19  In Progress  ac 1/6  dod 0/2  urgency 11.0
 ```
 
@@ -975,7 +974,7 @@ Exit code: `0`
 The three you tested together with the same test, all at once, with a range.
 
 ```console
-$ biso set TASK-19 --check 3-5
+$ biso set TASK-19 --check-ac 3-5
 TASK-19  In Progress  ac 4/6  dod 0/2  urgency 11.0
 ```
 
@@ -986,7 +985,7 @@ Exit code: `0`
 And two that aren't consecutive, with a comma-separated list.
 
 ```console
-$ biso set TASK-19 --check 2,6
+$ biso set TASK-19 --check-ac 2,6
 TASK-19  In Progress  ac 6/6  dod 0/2  urgency 11.0
 ```
 
@@ -998,7 +997,7 @@ Almost right away you realize you marked #2 (the one about the log counter) too 
 number of attempts still doesn't show up in the log, only the final result. You uncheck it.
 
 ```console
-$ biso set TASK-19 --uncheck 2
+$ biso set TASK-19 --uncheck-ac 2
 TASK-19  In Progress  ac 5/6  dod 0/2  urgency 11.0
 ```
 
@@ -1006,7 +1005,7 @@ Exit code: `0`
 
 *(derived output, see [Selectores de criterios](spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](spec/cmd/set.md); not literal spec text)*
 
-*Note: `--uncheck` takes the same selector as `--check`, with the same effect inverted, here "a single one," just like the first `--check` in this scenario.*
+*Note: `--uncheck-ac` takes the same selector as `--check-ac`, with the same effect inverted, here "a single one," just like the first `--check-ac` in this scenario.*
 
 In the definition of done, you check off the one that's already finished by searching for
 its text, not by number.
@@ -1026,7 +1025,7 @@ You add the attempt count to the log, check that it now shows up, and close the 
 check off anything left, just in case you missed something, and write the summary.
 
 ```console
-$ biso finish TASK-19 --check all --check-dod all --summary "Retry with the same backoff as the download endpoint, capped at 3 attempts, attempt count visible in the log."
+$ biso finish TASK-19 --check-ac all --check-dod all --append-summary "Retry with the same backoff as the download endpoint, capped at 3 attempts, attempt count visible in the log."
 TASK-19  Done  ac 6/6  dod 2/2  urgency 0.0
 ```
 
@@ -1034,7 +1033,7 @@ Exit code: `0`
 
 *(derived output, see [`biso set`](spec/cmd/set.md), [`biso finish`](spec/cmd/verbos-del-ciclo.md#biso-finish), [La urgencia](spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
 
-*Note: `--check all` checks #2 again, the one you'd unchecked, and doesn't touch the other five, they were already checked, and checking the same criterion twice "stays checked, with no warning, the operation is idempotent." `--check-dod all` checks #6, the only one left. Urgency drops to 0.0 because the terminal state fixes it there by definition, not because it gets recalculated with the usual formula. What this line doesn't say, and is worth knowing, is that closing a task always clears `leaseExpiresAt` and `leaseHolder`, whoever is holding it. TASK-19 had been carrying @claude's lease since scenario 5; after this `biso finish` it's left without a lease, and it would end up just as empty even if another identity had been holding it. The invariant always wins over the general rule that "a write by someone else doesn't touch the lease": a finished task with a live lease is a state that not even importing the board would accept.*
+*Note: `--check-ac all` checks #2 again, the one you'd unchecked, and doesn't touch the other five, they were already checked, and checking the same criterion twice "stays checked, with no warning, the operation is idempotent." `--check-dod all` checks #6, the only one left. Urgency drops to 0.0 because the terminal state fixes it there by definition, not because it gets recalculated with the usual formula. What this line doesn't say, and is worth knowing, is that closing a task always clears `leaseExpiresAt` and `leaseHolder`, whoever is holding it. TASK-19 had been carrying @claude's lease since scenario 5; after this `biso finish` it's left without a lease, and it would end up just as empty even if another identity had been holding it. The invariant always wins over the general rule that "a write by someone else doesn't touch the lease": a finished task with a live lease is a state that not even importing the board would accept.*
 
 ## 11. You get it wrong {: #escenario-11 }
 

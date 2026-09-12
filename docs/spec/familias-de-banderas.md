@@ -5,17 +5,19 @@ repiten: cada uno dice qué campos acepta, y esta sección dice qué forma tiene
 
 ## La regla
 
-**El nombre desnudo añade. `set-` delante sustituye. `rm-` delante quita uno. `clear-` delante
-vacía.** La forma de una bandera se deduce siempre del nombre del campo, sin nombres propios y sin
-que haya que consultar nada.
+**Toda bandera de escritura dice en su propio nombre qué hace, sin excepción.** No hay ningún nombre
+"desnudo" cuyo significado dependa de una regla aparte que haya que conocer de antemano: quien lee
+`--add-labels`, `--rm-labels`, `--clear-labels` o `--replace-labels` no necesita saber nada más que esas
+cuatro palabras para saber qué hace cada una, ni falta que consultar esta sección para adivinarlo.
 
-Las cuatro variantes existen para **todo campo que guarde una lista de elementos**. Cada clase de
-campo tiene estas variantes:
+Cada clase de campo tiene exactamente las operaciones que tienen sentido para esa forma de dato, ni
+una más ni una menos:
 
 | Clase de campo | Variantes |
 |---|---|
-| Lista de elementos | las cuatro |
-| Bloque de prosa | añadir, sustituir, vaciar |
+| Lista de tokens que admite coma | añadir, quitar, vaciar, sustituir entera |
+| Lista de tokens sin comas (criterios) | añadir, quitar, vaciar |
+| Bloque de prosa | añadir al final, vaciar |
 | Mapa de claves | fijar una clave, quitar una clave, vaciar |
 | Escalar | fijar, vaciar |
 | Lista inmutable (comentarios) | solo añadir, `--comment` |
@@ -26,70 +28,125 @@ lista, ni un bloque de prosa, ni un mapa, ni un escalar, así que ninguna de est
 de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (sección
 ["El modelo de datos de una tarea"](modelo-de-datos.md)).
 
-**El significado no cambia entre comandos.** `--ac` añade un criterio en `biso new`, en `biso set`, en
+**El significado no cambia entre comandos.** `--add-ac` añade un criterio en `biso new`, en `biso set`, en
 `biso start` y en `biso finish`, y todos los comandos de escritura aceptan todas estas banderas.
 
-La regla tiene **dos desviaciones de nombre en todo el programa**, y las dos son de forma: ninguna
-cambia lo que la bandera hace, pero en las dos el nombre no se deduce entero del campo. La primera es
-el número gramatical de las notas: el añadido se llama `--note`, en singular, y su sustitución se llama
-`--set-notes`, en plural. La segunda es el sufijo de las marcas: marcar un criterio de aceptación es
-`--check` y marcar un elemento de la definición de hecho es `--check-dod`, o sea que el nombre desnudo
-está reservado para los criterios y solo la otra lista lleva el sufijo del campo, aunque las demás
-banderas de las dos lo lleven siempre (`--ac` y `--dod`, `--rm-ac` y `--rm-dod`). Lo mismo vale para
-`--uncheck` frente a `--uncheck-dod`.
+**Por qué no hay nombre desnudo.** Antes lo había: el nombre desnudo del campo añadía, y `set-`,
+`rm-` y `clear-` delante cambiaban esa operación. Funcionaba, y de hecho resolvía un fallo real medido
+en otra herramienta (Principio 3 de `DECISIONES.md`), pero exigía conocer esa regla de antemano: la
+única forma de saber qué hacía `--label` era haberla leído en algún sitio, porque el nombre por sí solo
+no lo dice. Cada bandera de esta sección lleva ahora su propio verbo (`add`, `rm`, `clear`,
+`replace`, `append`, `check`, `uncheck`), así que no hay ninguna regla que aprender antes de usarla:
+la razón completa, con la medición de por qué la forma anterior tampoco cabía ya en el mensaje de
+arranque, está en `DECISIONES.md`.
 
-## Campos de lista
+## Sustituir un campo que no tiene bandera de "sustituir entera"
 
-| Campo | Añade | Sustituye | Quita | Vacía | Acepta lista por comas |
-|---|---|---|---|---|---|
-| etiquetas | `-l, --label` | `--set-label` | `--rm-label` | `--clear-label` | sí |
-| personas asignadas | `-a, --assignee` | `--set-assignee` | `--rm-assignee` | `--clear-assignee` | sí |
-| referencias | `--ref` | `--set-ref` | `--rm-ref` | `--clear-ref` | sí |
-| documentación | `--doc` | `--set-doc` | `--rm-doc` | `--clear-doc` | sí |
-| dependencias | `--dep` | `--set-dep` | `--rm-dep` | `--clear-dep` | sí |
-| ficheros tocados | `--file` | `--set-file` | `--rm-file` | `--clear-file` | sí |
-| criterios de aceptación | `--ac` | `--set-ac` | `--rm-ac` | `--clear-ac` | **no** |
-| definición de hecho | `--dod` | `--set-dod` | `--rm-dod` | `--clear-dod` | **no** |
+Los criterios (`ac`, `dod`) y la prosa no tienen una bandera de "sustituir entera" propia
+(["Campos de lista sin coma"](#campos-de-lista-sin-coma-criterios) y ["Campos de prosa"](#campos-de-prosa)). Sustituirlos se hace vaciando y añadiendo en la misma
+llamada:
 
-Todas las de "añade" y "sustituye" son repetibles. `--rm-ac` y `--rm-dod` toman un selector de la
-sección ["Selectores de criterios"](#selectores-de-criterios).
+```
+biso set MYP-11 --clear-labels --add-labels parser,urgent
+biso set MYP-11 --clear-desc --append-desc "Reescrito entero"
+biso set MYP-11 --clear-acs --add-ac "First" --add-ac "Second"
+```
 
-**`--set-ac` y `--set-dod` crean elementos nuevos, con claves nuevas y sin marcar**, y las claves de
-los elementos anteriores no se reutilizan. Es coherente con
+Cada una deja el campo con exactamente lo que se acaba de añadir, nunca mezclado con lo que hubiera
+antes, y el orden en que se escriben las banderas en la línea de comandos no importa: **el orden fijo
+de aplicación dentro de una escritura, con los borrados siempre antes que los añadidos, está en
+["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)** y es el mismo para todos los campos, no una regla aparte de esta
+sección.
+
+Ese orden también dice qué pasa si el mismo valor aparece a la vez en la parte que añade y en la
+parte que quita de un campo: no es un error, gana el añadido, porque se resuelve después. Esto es
+distinto de `--check-ac` y `--uncheck-ac` sobre el mismo criterio, que sí es un error
+(["Selectores de criterios"](#selectores-de-criterios)): marcar y desmarcar el mismo criterio son dos peticiones contradictorias
+sobre el mismo booleano y no hay un orden que las resuelva con sentido, mientras que quitar y volver
+a añadir un elemento de una lista es una operación con un resultado bien definido.
+
+## Campos de lista que admiten coma
+
+| Campo | Añade | Quita (uno o varios) | Vacía | Sustituye entera |
+|---|---|---|---|---|
+| etiquetas | `-l, --add-labels` | `--rm-labels` | `--clear-labels` | `--replace-labels` |
+| personas asignadas | `-a, --add-assignees` | `--rm-assignees` | `--clear-assignees` | `--replace-assignees` |
+| referencias | `--add-refs` | `--rm-refs` | `--clear-refs` | `--replace-refs` |
+| documentación | `--add-docs` | `--rm-docs` | `--clear-docs` | `--replace-docs` |
+| dependencias | `--add-deps` | `--rm-deps` | `--clear-deps` | `--replace-deps` |
+| ficheros tocados | `--add-files` | `--rm-files` | `--clear-files` | `--replace-files` |
+
+Todas son repetibles, y admiten lista separada por comas además de repetición. Las de "añade" y las de
+"sustituye" se acumulan igual dentro de la misma llamada: `--replace-labels a --replace-labels b` dejaría
+la lista en `{a, b}`, no solo en `{b}`, exactamente como se acumula `--add-labels a --add-labels b`
+(["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)). La diferencia entre añadir y sustituir no está en cómo se
+escriben los valores, está en qué hacen con el resultado: uno se suma a lo que ya había, el otro lo
+sustituye entero.
+
+## Campos de lista sin coma (criterios)
+
+| Campo | Añade | Quita (selector) | Vacía |
+|---|---|---|---|
+| criterios de aceptación | `--add-ac` | `--rm-ac` | `--clear-acs` |
+| definición de hecho | `--add-dod` | `--rm-dod` | `--clear-dods` |
+
+**No existe `--replace-ac` ni `--replace-dod`.** Sustituir la lista entera de criterios se hace
+vaciando y añadiendo en la misma llamada (["Sustituir un campo que no tiene bandera de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera)):
+`biso set MYP-11 --clear-acs --add-ac "First" --add-ac "Second"`.
+
+`--add-ac` y `--add-dod` son repetibles pero **no** aceptan lista por comas, porque el texto de un
+criterio puede contener comas. `--rm-ac` y `--rm-dod` toman un selector de la sección
+["Selectores de criterios"](#selectores-de-criterios).
+
+**Los elementos nuevos se crean con claves nuevas, sin marcar, y las claves de los elementos
+anteriores no se reutilizan.** Es coherente con
 ["Los criterios y sus claves estables"](modelo-de-datos.md#los-criterios-y-sus-claves-estables): la
-clave se asigna al crear el elemento, y sustituir la lista crea elementos.
+clave se asigna al crear el elemento.
 
 ## Campos de prosa
 
-| Campo | Añade al final | Sustituye | Vacía |
-|---|---|---|---|
-| descripción | `-d, --desc` | `--set-desc` | `--clear-desc` |
-| plan | `--plan` | `--set-plan` | `--clear-plan` |
-| notas | `--note` | `--set-notes` | `--clear-notes` |
-| resumen final | `--summary` | `--set-summary` | `--clear-summary` |
+| Campo | Añade al final | Vacía |
+|---|---|---|
+| descripción | `-d, --append-desc` | `--clear-desc` |
+| plan | `--append-plan` | `--clear-plan` |
+| notas | `--append-note` | `--clear-notes` |
+| resumen final | `--append-summary` | `--clear-summary` |
 
-- Añadir a un campo vacío es lo mismo que fijarlo, así que al crear una tarea las columnas "Añade al
-  final" y "Sustituye" coinciden y no hay nada que decidir.
+**No existe una bandera que sustituya un bloque de prosa entero.** Un bloque de prosa es un único
+texto (["El modelo de datos de una tarea"](modelo-de-datos.md)), sin elementos direccionables que
+quitar uno a uno, así que no hay `--rm-*` para ninguno de los campos de la tabla de arriba. Sustituirlo
+entero se hace vaciando y añadiendo en la misma llamada: `biso set MYP-11 --clear-plan --append-plan "Nuevo plan"`.
+
+`--append-note` está en singular porque cada llamada añade un párrafo; `--clear-notes` está en plural
+porque vacía el campo `notes` entero. No es una excepción a ninguna regla: cada palabra nombra
+exactamente lo que la bandera hace.
+
+- Añadir a un campo vacío es lo mismo que fijarlo, así que al crear una tarea da igual usar `--append-*`
+  o dejarlo vacío y añadir después: el resultado es el mismo.
 - Al añadir sobre contenido existente se intercala una línea en blanco, y cada repetición de la
   bandera en la misma invocación produce su propio párrafo.
 - Añadir un valor vacío no hace nada y avisa, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
 
 ## Selectores de criterios
 
-`--check`, `--uncheck`, `--rm-ac`, `--check-dod`, `--uncheck-dod` y `--rm-dod` toman un selector.
+`--check-ac`, `--uncheck-ac`, `--rm-ac`, `--check-dod`, `--uncheck-dod` y `--rm-dod` toman un selector.
 Todos son repetibles.
+
+**Las claves de un selector son las mismas que enseña `biso get`, y no hay otro sitio donde
+consultarlas.** Un criterio se lista como `- [x] #1 The diff ignores CRLF` (["`biso get`"](cmd/get.md)); ese `#1` es
+literalmente la clave que acepta el selector, tanto en la salida de texto como en el JSON (`"key": 1`).
 
 | Selector | Ejemplo | Qué elige |
 |---|---|---|
-| `all` | `--check all` | todos los elementos de esa lista en esa tarea |
-| una clave | `--check 3` | el elemento `#3` |
-| un rango de claves | `--check 1-4` | las claves de la 1 a la 4 que existan |
-| varias claves | `--check 1,3,7` | esas tres |
-| texto | `--check "covers CRLF"` | el elemento cuyo texto contenga ese fragmento |
+| `all` | `--check-ac all` | todos los elementos de esa lista en esa tarea |
+| una clave | `--check-ac 3` | el elemento `#3` |
+| un rango de claves | `--check-ac 1-4` | las claves de la 1 a la 4 que existan |
+| varias claves | `--check-ac 1,3,7` | esas tres |
+| texto | `--check-ac "covers CRLF"` | el elemento cuyo texto contenga ese fragmento |
 
 **La regla de desambiguación, que hay que implementar tal cual.** El valor se trata como lista de
 claves **solo si el valor entero** encaja con `^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$`. En cualquier otro
-caso es un texto literal, comas incluidas. Así, `--check "1, 2 and the last one"` es una búsqueda de
+caso es un texto literal, comas incluidas. Así, `--check-ac "1, 2 and the last one"` es una búsqueda de
 texto que no encontrará nada y dará error 4, en vez de convertirse en algo a medias.
 
 | Caso límite | Resultado |
@@ -100,17 +157,20 @@ texto que no encontrará nada y dará error 4, en vez de convertirse en algo a m
 | rango donde faltan claves intermedias | se aplican las que hay, sin aviso |
 | rango invertido, `4-1` | error 2 |
 | marcar un elemento ya marcado | se queda marcado, sin aviso, la operación es idempotente |
-| `--check all` en una tarea sin criterios | sin efecto, con `warning: MYP-11 has no acceptance criteria` |
-| `--check all` sobre varias tareas | válido, cada tarea marca los suyos |
+| `--check-ac all` en una tarea sin criterios | sin efecto, con `warning: MYP-11 has no acceptance criteria` |
+| `--check-ac all` sobre varias tareas | válido, cada tarea marca los suyos |
 | una clave, un rango, una lista o un texto sobre varias tareas | error 2, porque el selector de una tarea no tiene por qué significar lo mismo en otra |
 
 **La regla de solape se aplica sobre el conjunto ya resuelto, no sobre el texto del selector.** Si
-después de resolver `--check` y `--uncheck` un mismo elemento aparece en los dos conjuntos, es error
-2, y da igual que se haya escrito `--check 3 --uncheck 3` o `--check all --uncheck 3`:
+después de resolver `--check-ac` y `--uncheck-ac` un mismo elemento aparece en los dos conjuntos, es error
+2, y da igual que se haya escrito `--check-ac 3 --uncheck-ac 3` o `--check-ac all --uncheck-ac 3`:
 
 ```
-error: --check and --uncheck both select acceptance criterion #3 of MYP-11
+error: --check-ac and --uncheck-ac both select acceptance criterion #3 of MYP-11
 ```
+
+Esta es la única familia de banderas de esta sección donde el solape es un error en vez de resolverse
+por orden (["Sustituir un campo que no tiene bandera de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera) explica por qué).
 
 ## Campos escalares
 
@@ -127,6 +187,11 @@ error: --check and --uncheck both select acceptance criterion #3 of MYP-11
 | orden manual | `--ordinal` | `--clear-ordinal` |
 | persona que reporta | `--reporter` | `--clear-reporter` |
 
+**Un escalar guarda un único valor, así que fijarlo con su propio nombre nunca es ambiguo con
+"añadir": no hay nada que añadir a un valor que no es una lista.** Por eso estos nombres se quedan sin
+prefijo, a diferencia de los campos de lista: no es una excepción a la regla de esta sección, es la
+regla aplicada a una forma de dato que solo admite una operación de escritura.
+
 Un escalar **nunca** se borra pasándole la cadena vacía, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
 
 ## Campos externos
@@ -137,8 +202,9 @@ Un escalar **nunca** se borra pasándole la cadena vacía, según ["El valor vac
 | quitar una clave | `--rm-ext <clave>` | sí |
 | vaciar el mapa entero | `--clear-ext` | no |
 
-**No existe `--set-ext`.** Fijar una clave con `--ext` ya sustituye su valor. Vaciar el mapa entero es
-`--clear-ext`, y es la única forma de vaciarlo.
+**No existe `--replace-ext`.** Fijar una clave con `--ext` ya sustituye su valor, así que una segunda
+bandera para lo mismo solo serviría para equivocarse. Vaciar el mapa entero es `--clear-ext`, y es la
+única forma de vaciarlo. Este campo ya era explícito antes del resto del rediseño de esta sección: no
+cambia nada aquí.
 
 ---
-

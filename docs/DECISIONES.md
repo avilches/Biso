@@ -34,12 +34,16 @@ informar al usuario de que algo no existe.
 comando por separado es defendible; juntos son una trampa, porque quien escribe una secuencia los mira
 juntos.
 
-**Principio 3, que el nombre desnudo añade.** Se midieron seis casos de agentes usando la variante
-destructiva de forma repetida creyendo que añadían: la bandera de plan aplicada hasta cinco veces
-sobre la misma tarea, la de referencias tres veces sobre otra, y un caso en el que un agente ejecutó
-sobre una misma tarea `--ref`, `--ref`, `--ref`, `--add-ref`, `--remove-ref` y `--clear-refs`, que es
-alguien probando a ver cuál de las seis hace lo que quiere. Ninguna de esas llamadas dio error, y el
-daño es silencioso: cada una borró lo que había escrito la anterior.
+**Principio 3, que ninguna bandera depende de una regla que haya que conocer de antemano.** Se
+midieron seis casos de agentes usando la variante destructiva de forma repetida creyendo que
+añadían: la bandera de plan aplicada hasta cinco veces sobre la misma tarea, la de referencias tres
+veces sobre otra, y un caso en el que un agente ejecutó sobre una misma tarea `--ref`, `--ref`,
+`--ref`, `--add-ref`, `--remove-ref` y `--clear-refs`, que es alguien probando a ver cuál de las seis
+hace lo que quiere. Ninguna de esas llamadas dio error, y el daño es silencioso: cada una borró lo
+que había escrito la anterior. La primera forma de este principio resolvía el problema con una regla
+única, "el nombre desnudo añade", que había que conocer de antemano para no adivinar; se sustituyó
+después por dar a cada operación su propio verbo explícito, sin ninguna regla que aprender, por el
+motivo que cuenta ["La regla"](spec/familias-de-banderas.md#la-regla) de `familias-de-banderas.md`.
 
 **Principio 4, que la salida por defecto de una escritura es lo que quien llama no sabía.** De las 237
 creaciones medidas, 215 llevaban una bandera que devolvía la ficha entera de la tarea recién creada, y
@@ -1254,14 +1258,44 @@ justo al quitar la vieja.
 **["Los tres mensajes de \"no la encuentro\""](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), por qué son distintos.** Porque las tres situaciones
 piden acciones distintas de quien llama: corregir la sintaxis, dejar de buscar, o mirar en el archivo.
 
-**["La regla"](spec/familias-de-banderas.md#la-regla), por qué cada clase de campo tiene las variantes de bandera que tiene.** Las cuatro variantes
-(`--campo`, `--set-campo`, `--rm-campo`, `--clear-campo`) existen para todo campo que guarde una
-lista, porque sobre una lista se pueden hacer las cuatro operaciones. Un bloque de prosa no tiene
-elementos que quitar de uno en uno, así que no tiene `rm-`. Un mapa de claves se manipula por clave y
-no por posición, así que su "quitar" toma una clave. Un escalar solo se fija o se vacía. Y los
-comentarios son una lista inmutable, de la que no se quita nada, así que solo admiten añadir. **La
-tabla de clases de campo no es una lista de excepciones a la regla: es la regla aplicada a cada forma
-de dato.**
+**["La regla"](spec/familias-de-banderas.md#la-regla), por qué cada clase de campo tiene las variantes de bandera que tiene, y por qué ninguna se
+llama con el nombre desnudo del campo.** Antes había cuatro variantes por cada campo de lista
+(`--campo` añadía, `--set-campo` sustituía, `--rm-campo` quitaba, `--clear-campo` vaciaba), y las
+demás clases de campo tenían el subconjunto de esas cuatro que tenía sentido para su forma de dato:
+un bloque de prosa no tiene elementos que quitar de uno en uno, así que no tenía `rm-`; un mapa de
+claves se manipula por clave y no por posición; un escalar solo se fija o se vacía; los comentarios
+son una lista inmutable que solo admite añadir. Esa parte no cambia: sigue siendo verdad que la tabla
+de clases de campo es la regla aplicada a cada forma de dato, no una lista de excepciones.
+
+**Lo que cambió es el nombre desnudo.** Funcionaba, y resolvía el fallo medido del principio 3, pero
+exigía conocer la regla de antemano para no adivinar: nada en `--label` dice que añade, hay que
+haberlo leído en algún sitio. Se sustituyó por dar a cada operación su propio verbo (`--add-labels`,
+`--rm-labels`, `--clear-labels`, `--replace-labels`, y así con cada campo), de modo que cualquier
+bandera se entiende por su nombre sin haber leído esta sección. Dos consecuencias de ese cambio:
+
+- **Los campos de lista sin coma (`ac`, `dod`) pierden la variante de "sustituir entera".**
+  `--replace-ac`/`--replace-dod` habría sido repetible igual que `--add-ac`, y repetir una bandera de
+  sustituir no la sustituye dos veces: acumula sus valores y sustituye una sola vez con el conjunto
+  acumulado (["Repetición y listas separadas por comas"](spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas)), que es una segunda pieza de comportamiento no obvio
+  encima del nombre. Sustituir esas dos listas se hace vaciando y añadiendo en la misma llamada
+  (["Orden de aplicación dentro de una escritura"](spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura)), que ya hacía falta declarar para todo lo demás y cubre el mismo caso sin una
+  bandera más que aprender.
+- **`--check` y `--uncheck` pasan a `--check-ac` y `--uncheck-ac`, simétricos con `--check-dod` y
+  `--uncheck-dod`.** La forma anterior reservaba el nombre desnudo para los criterios de aceptación y
+  obligaba a la definición de hecho a llevar el sufijo, una asimetría que la propia especificación
+  declaraba como excepción sin más justificación que la de ser la primera lista de las dos. Bajo la
+  regla nueva no hay sitio para reservar un nombre desnudo a nada, así que la asimetría desaparece
+  sola en vez de quedar documentada como caso especial.
+
+**Esto deja pendiente el mensaje de arranque.** El bloque `FIELD FLAGS` de
+["La salida literal"](spec/cmd/prime.md#la-salida-literal) enseñaba antes una sola bandera por campo (la que añadía) y una regla en `RULES`
+explicaba cómo derivar las otras tres; ese ahorro de espacio dependía exactamente del mecanismo que
+se acaba de retirar. Medido: los nombres de las banderas de campo explícitas, sin ninguna tabla que
+las derive, ocupan por sí solos más de 700 bytes, frente a los 436 del bloque `FIELD FLAGS` actual
+completo, y la parte fija del mensaje de arranque solo tiene 129 bytes de margen
+(["El presupuesto del mensaje de arranque"](#el-presupuesto-del-mensaje-de-arranque)). Cómo se enseñan las banderas nuevas dentro de ese presupuesto
+queda sin decidir a propósito, y no se ha tocado `cmd/prime.md` ni `presupuestos.md` hasta que se
+decida.
 
 **["Selectores de criterios"](spec/familias-de-banderas.md#selectores-de-criterios), por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
 su texto exacto es más frágil que quitarlo por su clave.

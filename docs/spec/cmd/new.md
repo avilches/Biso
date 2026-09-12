@@ -15,11 +15,13 @@ biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de la
 | `--from <file|->` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
 
 Todas las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md) valen aquí. En una tarea nueva no hay nada que sustituir
-ni que quitar, así que `--set-*`, `--rm-*` y `--clear-*` se aceptan y hacen lo mismo que el nombre
-desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad al crear son
-`-d/--desc`, `--ac`, `--dod`, `--type`, `--priority`, `-l/--label`, `-a/--assignee`, `--ref`,
-`--doc`, `--dep`, `-m/--milestone`, `-p/--parent`, `--due`, `--ordinal`, `--project`, `--reporter`,
-`--ext`, `--plan`, `--note`, `--summary` y `--comment`.
+ni que quitar: `--replace-*` se acepta y deja la lista igual que `--add-*`, porque no hay nada previo
+que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que actuar. `--clear-*` no
+hace nada y avisa. Las que se usan de verdad al crear son
+`-d/--append-desc`, `--add-ac`, `--add-dod`, `--type`, `--priority`, `-l/--add-labels`,
+`-a/--add-assignees`, `--add-refs`, `--add-docs`, `--add-deps`, `-m/--milestone`, `-p/--parent`,
+`--due`, `--ordinal`, `--project`, `--reporter`, `--ext`, `--append-plan`, `--append-note`,
+`--append-summary` y `--comment`.
 
 - **`--start`** crea la tarea directamente en el estado activo, asignada a `me` y con el arrendamiento
   tomado a favor de quien llama (`leaseExpiresAt` y `leaseHolder`, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), exactamente como lo haría
@@ -28,8 +30,8 @@ desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad 
   `biso new "X"` seguido de `biso start` darían dos tareas distintas. Es, junto con `biso start`, la
   única vía que fija `leaseHolder` fuera de la importación.
 - **`--comment` funciona al crear**, igual que en cualquier otro comando de escritura.
-- **`--plan`, `--note` y `--summary` no están restringidos por el estado.** Se pueden escribir al
-  crear, en cualquier estado.
+- **`--append-plan`, `--append-note` y `--append-summary` no están restringidos por el estado.** Se
+  pueden escribir al crear, en cualquier estado.
 
 ## Comportamiento, caso a caso
 
@@ -39,8 +41,8 @@ desnudo, salvo `--clear-*`, que no hace nada y avisa. Las que se usan de verdad 
 | Título muy largo | Se acepta entero, sin recortar |
 | Título repetido | Se acepta sin aviso. Dos tareas pueden llamarse igual, para eso está el identificador |
 | Valor fuera de un vocabulario cerrado | Error 3, con la lista de válidos |
-| `--dep` a una tarea inexistente | Error 4. **Las dependencias se validan al escribirlas** |
-| `--dep` a la propia tarea, o que cerraría un ciclo | Error 2 |
+| `--add-deps` a una tarea inexistente | Error 4. **Las dependencias se validan al escribirlas** |
+| `--add-deps` a la propia tarea, o que cerraría un ciclo | Error 2 |
 | `--parent` inexistente, o que cerraría un ciclo | Error 4 y error 2 respectivamente |
 | `--ext` con una clave no declarada | Error 3 |
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
@@ -159,8 +161,8 @@ error: 4 of 242 lines are invalid, nothing was written
 | `--dry-run` que habría funcionado | 0 |
 | Falta el título, banderas incompatibles, fecha mal formada, ciclo de dependencias o de padres | 2 |
 | Valor fuera de un vocabulario, clave de extensión no declarada, entrada no interpretable | 3 |
-| `--dep` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
-| `--dep` o `--parent` por texto con varias coincidencias | 5 |
+| `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
+| `--add-deps` o `--parent` por texto con varias coincidencias | 5 |
 | Cualquier fallo de validación en un lote, o un `--dry-run` que no pasa | 9 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 7 |
 | No hay tablero | 8 |
@@ -177,20 +179,20 @@ Arguments:
   title                      task title (required unless --from is given)
 
 Most used:
-  -d, --desc <text>          description; repeat to append paragraphs
-      --ac <text>            add an acceptance criterion; repeatable
-      --dod <text>           add a definition-of-done item; repeatable
-      --type <value>         configured type
-      --priority <value>     configured priority
-  -s, --status <value>       configured status (default: the initial one)
-  -l, --label <value>        add a label; repeatable or comma-separated
-  -a, --assignee <@who>      add an assignee; repeatable or comma-separated
-      --dep <ref>            add a dependency; validated, repeatable
-      --due <YYYY-MM-DD>     due date
-      --comment <text>       add a discussion comment; repeatable
-      --plan <text>          implementation plan
-      --start                create it already in the active status, assigned
-                             to you, with the lease claimed for you
+  -d, --append-desc <text>    description; repeat to append paragraphs
+      --add-ac <text>         add an acceptance criterion; repeatable
+      --add-dod <text>        add a definition-of-done item; repeatable
+      --type <value>          configured type
+      --priority <value>      configured priority
+  -s, --status <value>        configured status (default: the initial one)
+  -l, --add-labels <value>    add a label; repeatable or comma-separated
+  -a, --add-assignees <@who>  add an assignee; repeatable or comma-separated
+      --add-deps <ref>        add a dependency; validated, repeatable
+      --due <YYYY-MM-DD>      due date
+      --comment <text>        add a discussion comment; repeatable
+      --append-plan <text>    implementation plan
+      --start                 create it already in the active status, assigned
+                              to you, with the lease claimed for you
 
 Every other field flag of `biso set --help` is accepted too.
 
@@ -211,7 +213,7 @@ Exit codes:
 
 Examples:
   biso new "Normalize CRLF in the diff" --type bug --priority high
-  biso new "Add OAuth" --ac "Login succeeds" --ac "Token refreshes"
+  biso new "Add OAuth" --add-ac "Login succeeds" --add-ac "Token refreshes"
   biso new "Rewrite the installer" -d @docs/installer.md --start
   biso new --from tasks.ndjson --dry-run
 ```

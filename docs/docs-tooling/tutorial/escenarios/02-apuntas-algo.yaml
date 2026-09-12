@@ -6,8 +6,8 @@ situation: |
   that thread you lose track of the real task. All you need is to write it down somewhere
   it won't get forgotten, and keep going.
 teaches:
-  - "A flag's bare name adds. Repeating `--ac` twice leaves two criteria, not one
-    overwriting the other."
+  - "Each field flag says what it does in its own name. Repeating `--add-ac` twice
+    leaves two criteria, not one overwriting the other."
   - "`biso new` prints the new task's id and nothing else: no title echoed back as
     confirmation, no status line."
 steps:
@@ -16,8 +16,8 @@ steps:
       head, it's worth also writing down why it matters and what criterion will tell you
       it's resolved. That's two more flags on the same line, and `new` accepts all of them:
     command: >-
-      biso new "Log the diff size before uploading" --ac "The log prints the diff size
-      before each upload" --ac "The size also shows up when the upload fails"
+      biso new "Log the diff size before uploading" --add-ac "The log prints the diff size
+      before each upload" --add-ac "The size also shows up when the upload fails"
     output: |
       TASK-62
     exit_code: 0
@@ -29,12 +29,11 @@ steps:
       exactly what you couldn't have known beforehand, and you already knew everything else
       (rule 7 of the startup message, and one of the core principles: the default output of
       a write is whatever the caller didn't already know, never an echo of what it just
-      wrote). The two `--ac` flags haven't replaced anything, they've added two separate
-      criteria to a list that started out empty, because the bare name of a list field always
-      adds (the same rule that governs every flag family). If instead of adding a second
-      criterion you'd wanted to replace the first one, the flag would have been `--set-ac`,
-      not `--ac` again, though you didn't need that here: a freshly created task has nothing
-      to replace yet.
+      wrote). The two `--add-ac` flags haven't replaced anything, they've added two separate
+      criteria to a list that started out empty, because that is exactly what `--add-ac`
+      says it does. There is no flag that replaces the whole list of criteria: doing that
+      means clearing it and adding again in the same call, though you didn't need that
+      here, a freshly created task has nothing to clear yet.
 board_in: |
   54/4/190 (To Do / In Progress / Done), same as at the end of scenario 1.
 board_out: |

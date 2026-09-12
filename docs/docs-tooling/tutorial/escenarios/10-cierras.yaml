@@ -7,11 +7,11 @@ situation: |
   them before checking anything off, so the final record tells the whole story.
 teaches:
   - >-
-    The `--check` and `--uncheck` flags (and their `--check-dod` and `--uncheck-dod` counterparts)
-    accept five selector forms, all repeatable and all combinable in the same call: a single key,
-    a range, a comma-separated list, `all`, or the criterion's text.
+    The `--check-ac` and `--uncheck-ac` flags (and their `--check-dod` and `--uncheck-dod`
+    counterparts) accept five selector forms, all repeatable and all combinable in the same call:
+    a single key, a range, a comma-separated list, `all`, or the criterion's text.
   - >-
-    Checking or unchecking is always safe to repeat. `--check all` breaks nothing even if
+    Checking or unchecking is always safe to repeat. `--check-ac all` breaks nothing even if
     everything was already checked, and that's why closing out a cycle can always use it without
     first checking what's missing.
   - >-
@@ -21,22 +21,22 @@ teaches:
 steps:
   - narration: |
       You add the two criteria you were missing, all at once.
-    command: biso set TASK-19 --ac "The backoff follows the same pattern as the download endpoint" --ac "There's a test that covers the repeated 5xx case" --ac "There's a test that covers the success case after retrying" --ac "The endpoint documentation mentions the retry limit"
+    command: biso set TASK-19 --add-ac "The backoff follows the same pattern as the download endpoint" --add-ac "There's a test that covers the repeated 5xx case" --add-ac "There's a test that covers the success case after retrying" --add-ac "The endpoint documentation mentions the retry limit"
     output: |
       TASK-19  In Progress  ac 0/6  dod 0/2  urgency 11.0
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#campos-de-lista "Campos de lista"
+      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
     remark: |
-      Four `--ac` flags in the same call add four new elements, in the order they're written,
+      Four `--add-ac` flags in the same call add four new elements, in the order they're written,
       with new keys, #3, #4, #5 and #6, after the #1 and #2 the task already had from the initial
       inventory.
   - narration: |
       You check off the first one, the one you'd already verified from the start.
-    command: biso set TASK-19 --check 1
+    command: biso set TASK-19 --check-ac 1
     output: |
       TASK-19  In Progress  ac 1/6  dod 0/2  urgency 11.0
     exit_code: 0
@@ -46,7 +46,7 @@ steps:
       - spec/cmd/set.md "`biso set`"
   - narration: |
       The three you tested together with the same test, all at once, with a range.
-    command: biso set TASK-19 --check 3-5
+    command: biso set TASK-19 --check-ac 3-5
     output: |
       TASK-19  In Progress  ac 4/6  dod 0/2  urgency 11.0
     exit_code: 0
@@ -56,7 +56,7 @@ steps:
       - spec/cmd/set.md "`biso set`"
   - narration: |
       And two that aren't consecutive, with a comma-separated list.
-    command: biso set TASK-19 --check 2,6
+    command: biso set TASK-19 --check-ac 2,6
     output: |
       TASK-19  In Progress  ac 6/6  dod 0/2  urgency 11.0
     exit_code: 0
@@ -67,7 +67,7 @@ steps:
   - narration: |
       Almost right away you realize you marked #2 (the one about the log counter) too soon: the
       number of attempts still doesn't show up in the log, only the final result. You uncheck it.
-    command: biso set TASK-19 --uncheck 2
+    command: biso set TASK-19 --uncheck-ac 2
     output: |
       TASK-19  In Progress  ac 5/6  dod 0/2  urgency 11.0
     exit_code: 0
@@ -76,8 +76,8 @@ steps:
       - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
     remark: |
-      `--uncheck` takes the same selector as `--check`, with the same effect inverted, here "a
-      single one," just like the first `--check` in this scenario.
+      `--uncheck-ac` takes the same selector as `--check-ac`, with the same effect inverted, here
+      "a single one," just like the first `--check-ac` in this scenario.
   - narration: |
       In the definition of done, you check off the one that's already finished by searching for
       its text, not by number.
@@ -96,7 +96,7 @@ steps:
   - narration: |
       You add the attempt count to the log, check that it now shows up, and close the task. You
       check off anything left, just in case you missed something, and write the summary.
-    command: biso finish TASK-19 --check all --check-dod all --summary "Retry with the same backoff as the download endpoint, capped at 3 attempts, attempt count visible in the log."
+    command: biso finish TASK-19 --check-ac all --check-dod all --append-summary "Retry with the same backoff as the download endpoint, capped at 3 attempts, attempt count visible in the log."
     output: |
       TASK-19  Done  ac 6/6  dod 2/2  urgency 0.0
     exit_code: 0
@@ -106,7 +106,7 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-finish "`biso finish`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      `--check all` checks #2 again, the one you'd unchecked, and doesn't touch the other five,
+      `--check-ac all` checks #2 again, the one you'd unchecked, and doesn't touch the other five,
       they were already checked, and checking the same criterion twice "stays checked, with no
       warning, the operation is idempotent." `--check-dod all` checks #6, the only one left.
       Urgency drops to 0.0 because the terminal state fixes it there by definition, not because

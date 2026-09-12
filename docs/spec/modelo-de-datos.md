@@ -103,8 +103,8 @@ Precisiones sobre la mutabilidad:
   cualquiera de las dos condiciones, no solo la primera.** Una escritura que saca la tarea del
   estado activo (`biso finish`, o `biso set --status` a cualquier otro valor) vacía
   `leaseExpiresAt` y `leaseHolder` en esa misma escritura. Y como la condición que los sostiene es
-  la conjunción de las dos cosas, perder la segunda los vacía igual: `--clear-assignee` o
-  [`--rm-assignee`](familias-de-banderas.md#campos-de-lista) sobre una tarea activa que se queda sin ninguna persona asignada vacía los
+  la conjunción de las dos cosas, perder la segunda los vacía igual: `--clear-assignees` o
+  [`--rm-assignees`](familias-de-banderas.md#campos-de-lista-que-admiten-coma) sobre una tarea activa que se queda sin ninguna persona asignada vacía los
   campos en esa misma escritura, sea quien sea quien la haga. **[`biso archive`](cmd/archive.md) los vacía
   también**, aunque `archived` no sea un estado y archivar no saque la tarea del estado activo:
   archivar es dejar de trabajar en la tarea, y un arrendamiento es la afirmación de que alguien está

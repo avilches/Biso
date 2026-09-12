@@ -20,7 +20,7 @@ steps:
   - narration: |
       The agent takes the task, and along the way writes down how he plans to attack it, so Sara
       can read it without having to ask.
-    command: biso start TASK-19 --plan "Reproduce the 5xx with a test server, and wrap the upload in a retry with exponential backoff"
+    command: biso start TASK-19 --append-plan "Reproduce the 5xx with a test server, and wrap the upload in a retry with exponential backoff"
     output: |
       TASK-19  In Progress  ac 0/2  urgency 11.0
     exit_code: 0
