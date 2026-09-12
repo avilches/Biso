@@ -255,12 +255,16 @@ la urgencia y el orden de las listas sean reproducibles, y las cuatro estan razo
 especificacion exige dejarla sin configurar en un tablero compartido y su propio ejemplo la
 configura.
 
-**Las claves de los fixtures van todas en español y el código va todo en inglés.** Los ficheros de
-`tutorial/escenarios/` son documentación con forma de datos, así que sus claves son españolas; dos se
-habían quedado en inglés (`cmd` y `exit`) y se renombraron a `comando` y `codigo_salida`. Los tres
-scripts son código, así que van enteros en inglés, incluidos comentarios y mensajes, con la única
-excepción de las cadenas que el generador emite dentro de la página, agrupadas en un bloque marcado.
-La regla está escrita en el `CLAUDE.md` de la raíz.
+**Las claves de los fixtures fueron en español y el código en inglés, hasta que esa regla cambió.**
+Los ficheros de `tutorial/escenarios/` empezaron como documentación con forma de datos con claves
+españolas; dos se habían quedado en inglés (`cmd` y `exit`) y se renombraron a `comando` y
+`codigo_salida`. Los tres scripts fueron código en inglés desde el principio, incluidos comentarios y
+mensajes, con la única excepción de las cadenas que el generador emitía dentro de la página.
+
+Esto quedó superado por la decisión del 2026-09-11 de que el tutorial entero nace en inglés: las
+claves pasaron a `title`, `command`, `exit_code`, etc., y las cadenas de página del generador dejaron
+de ser una excepción al idioma del código porque pasaron a estar en inglés también. El contrato
+actual, con ejemplo, está en `tutorial/CLAUDE.md`.
 
 **El detalle operativo del tutorial vive en `tutorial/CLAUDE.md`.** El de la raíz solo lo referencia
 con un enlace, sin `@import`, para que un agente lo cargue cuando trabaje en esa carpeta y no antes.

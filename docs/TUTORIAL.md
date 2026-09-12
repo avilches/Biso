@@ -1100,14 +1100,14 @@ from its title.
 $ biso get "retry"
 TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
 TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
-TASK-19  Done         task  high    Retry the upload on 5xx                           ac 2/2  @claude  -
+TASK-19  Done         task  high    Retry the upload on 5xx                           ac 6/6  @claude  -
 ```
 
 Exit code: `5`
 
 *(derived output, see [La búsqueda por texto](spec/referencias.md#la-búsqueda-por-texto); not literal spec text)*
 
-*Note: All three tasks have «retry» in the title, so none of them wins by having it in the title while the others only have it in the body (the text search rule): all three are candidates equally. The program doesn't choose for you. Exit code 5 (AMBIGUOUS), and the three rows go to stdout, in the same column format as `biso ls`, sorted by urgency because none of them carries an `ordinal`: TASK-60 has an open question, so it doesn't add the active-task term, but it's high priority; TASK-33 is medium priority; TASK-19 is already done, so its urgency is 0.0 (a task in a terminal state always has urgency 0.0) and it comes last. TASK-19's `ac` value depends on how it got closed back in chapter 10, which this file can't see: it's assumed to have reached `ac 2/2`, following the closing move that `biso prime`'s own message recommends (`biso finish <ref> --check all --check-dod all --summary "..."`). That's noted in `tutorial/lagunas/11-13.md`.*
+*Note: All three tasks have «retry» in the title, so none of them wins by having it in the title while the others only have it in the body (the text search rule): all three are candidates equally. The program doesn't choose for you. Exit code 5 (AMBIGUOUS), and the three rows go to stdout, in the same column format as `biso ls`, sorted by urgency because none of them carries an `ordinal`: TASK-60 has an open question, so it doesn't add the active-task term, but it's high priority; TASK-33 is medium priority; TASK-19 is already done, so its urgency is 0.0 (a task in a terminal state always has urgency 0.0) and it comes last. TASK-19's `ac 6/6` carries straight over from how chapter 10 closes it: the two original criteria plus the four it adds there, all checked.*
 
 You type the number by hand, but an extra digit sneaks in.
 
