@@ -7,7 +7,8 @@ and checks that what one scenario hands over is what the next one receives. A mi
 two scenarios are telling different stories, and it is the kind of break no single writer can see
 from inside their own file.
 
-    uv run --with-requirements docs-requirements.txt --no-project python tutorial/continuity.py
+    uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project \
+        python docs/docs-tooling/tutorial/continuity.py
 
 Exits 0 when the chain holds and 1 when it does not.
 """

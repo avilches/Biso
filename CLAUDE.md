@@ -95,14 +95,14 @@ repositorio ni instalar nada en el Python del sistema: `uv` resuelve las depende
 caché propio y las descarta al terminar.
 
 - Servir en local con recarga automática al editar los `.md`:
-  `uv run --with-requirements docs-requirements.txt --no-project mkdocs serve`
+  `uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project mkdocs serve -f docs/docs-tooling/mkdocs/mkdocs.yml`
 - Construir el sitio estático en `site/` (no se versiona, ver `.gitignore`):
-  `uv run --with-requirements docs-requirements.txt --no-project mkdocs build --strict`
+  `uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project mkdocs build --strict -f docs/docs-tooling/mkdocs/mkdocs.yml`
 
 `docs/TUTORIAL.md` es la única excepción a "los `.md` son la fuente de verdad": es producto
 generado a partir de los fixtures de `tutorial/escenarios/` y de `tutorial/conceptos.md`, y no se
 edita a mano (lleva su propia cabecera que lo recuerda). Se regenera con:
-`uv run --with-requirements docs-requirements.txt --no-project python tutorial/generate.py`
+`uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py`
 
 ## El tutorial
 
@@ -111,7 +111,7 @@ segunda copia de la sección 10 de la especificación. Es **producto generado y 
 sale de los fixtures de `tutorial/`, donde cada paso declara su comando, su salida, su código de
 salida y si esa salida está copiada de la especificación o derivada de ella.
 
-**Si vas a tocar el tutorial, lee [`tutorial/CLAUDE.md`](tutorial/CLAUDE.md) primero**: ahí está el
+**Si vas a tocar el tutorial, lee [`tutorial/CLAUDE.md`](docs/docs-tooling/tutorial/CLAUDE.md) primero**: ahí está el
 contrato de un fixture, los tres comandos que hay que pasar después de cambiar cualquier cosa, y por
 qué existen los dos comprobadores. Para leer el tutorial no hace falta nada de eso, solo abrir el
 sitio.

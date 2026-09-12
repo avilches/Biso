@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 CERCA_RE = re.compile(r"^\s*```")
-MAPA_PATH = Path("tools/mapa-de-secciones.txt")
+MAPA_PATH = Path("docs/docs-tooling/tools/mapa-de-secciones.txt")
 
 
 def numeros_de_seccion(ruta: Path) -> set[str]:

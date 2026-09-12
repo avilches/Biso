@@ -1,7 +1,7 @@
 <!--
   Generated file. Do not edit by hand: it is overwritten entirely every time
   tutorial/generate.py runs.
-  Regenerate it with: uv run --with-requirements docs-requirements.txt --no-project python tutorial/generate.py
+  Regenerate it with: uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py
 -->
 
 # biso tutorial, by scenario
@@ -12,7 +12,7 @@
     hand: any change is lost on the next generation. To regenerate it:
 
     ```
-    uv run --with-requirements docs-requirements.txt --no-project python tutorial/generate.py
+    uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py
     ```
 
 ## Concepts
