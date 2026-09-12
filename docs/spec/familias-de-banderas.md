@@ -103,6 +103,14 @@ anteriores no se reutilizan.** Es coherente con
 ["Los criterios y sus claves estables"](modelo-de-datos.md#los-criterios-y-sus-claves-estables): la
 clave se asigna al crear el elemento.
 
+**Qué clave le toca a un elemento creado con `--add-ac` o `--add-dod` es algo que quien llama no
+puede saber de antemano**, salvo en `biso new`: en cualquier otro comando de escritura, el contador de
+esa lista ya venía de antes, y consultarlo exigiría leer la tarea primero. Por el principio 4
+(["Los principios"](principios.md), "la salida por defecto de una escritura es lo que quien llama no sabía"), esa clave es
+justo la clase de dato que la salida por defecto tiene que enseñar sin que haga falta pedirlo aparte.
+La forma exacta de cómo se enseña, en la línea de estado de ["`biso set`"](cmd/set.md#salida) y no en `biso new`, está en esa misma
+sección.
+
 ## Campos de prosa
 
 | Campo | Añade al final | Vacía |

@@ -1466,3 +1466,33 @@ tablero lo declare antes. Un carácter fuera del alfabeto no es un problema de r
 forma, la misma clase de fallo que un identificador mal formado, que ya es código 2. Tratarlo como
 código 3 habría mezclado dos preguntas distintas bajo el mismo número: "¿es sintácticamente válido?" y
 "¿el tablero lo tiene?".
+
+---
+
+## Dónde se anuncia la clave de un criterio recién creado
+
+**La decisión.** Cuando `--add-ac` o `--add-dod` crea un elemento en un comando distinto de
+`biso new`, la línea de estado por defecto (["`biso set`"](spec/cmd/set.md#salida) y los verbos del ciclo) añade `added ac #<clave>`
+o `added dod #<clave>` al final, y solo cuando la llamada crea de verdad algo. `biso new` no lo
+anuncia nunca, ni siquiera cuando crea criterios a la vez que la tarea. En `--json`, `acAdded` y
+`dodAdded` se añaden a `data.tasks` del esquema `task.write`, presentes siempre (vacíos si no se creó
+nada) en todos los comandos que comparten ese `kind`, incluido `new`.
+
+**Por qué.** El principio 4 (["Los principios"](spec/principios.md)) dice que la salida por defecto de una escritura es lo que
+quien llama no sabía, nunca el eco de lo que acaba de escribir. Sobre una tarea que ya existía, el
+contador de claves de sus criterios viene de antes, y quien llama no puede saberlo sin leer la tarea
+primero: es justo el dato que ese principio manda enseñar, y por eso va en la misma línea de estado
+que ya enseña el resto de derivados (`ac X/Y`, `dod X/Y`, `urgency`), no en un sitio aparte. Sobre una
+tarea recién creada con `biso new`, en cambio, el contador de cada lista siempre empieza en 1, así que
+la clave de cada `--add-ac` es el mismo orden en que se escribieron las banderas
+(["Los criterios y sus claves estables"](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables)): quien llama ya lo sabe, y anunciarlo sería el eco que el principio 4
+prohíbe.
+
+**Alternativas descartadas, y por qué.** Una nota de stderr, con la misma forma que `note:` o
+`warning:` de ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos), encajaría con la convención existente, pero separaría este
+dato del resto de derivados que viven en la línea de estado por la misma razón exacta (no se pueden
+saber sin leer la tarea), y lo dejaría invisible para cualquier consumo que descarte stderr, sin que
+haga falta: el contrato de estabilidad (["El contrato de estabilidad"](spec/estabilidad.md)) ya dice que el texto exacto de la
+línea de estado puede cambiar entre versiones menores, así que alargarla no rompe ninguna promesa. Una
+línea aparte en stdout, por la misma razón, multiplicaría las líneas de salida por tarea sin necesidad:
+el dato cabe en la línea que ya existe.

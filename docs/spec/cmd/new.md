@@ -66,6 +66,14 @@ de la sección ["`biso set`"](set.md), y así está dicho en el mensaje de arran
 Con `--print`, después de la línea del identificador viene la ficha completa en el formato de
 `biso get`. Con `--quiet`, solo el identificador y ninguna nota.
 
+**`biso new` no anuncia la clave de un `--add-ac` o `--add-dod` creado al mismo tiempo que la
+tarea, a diferencia de la línea de estado de `biso set` (["`biso set`"](set.md#salida)).** Una tarea nace sin ningún
+criterio, así que su contador de claves empieza siempre en 1: el primer `--add-ac` de la llamada es
+la `#1`, el segundo la `#2`, y así en el mismo orden en que se escribieron las banderas
+(["Los criterios y sus claves estables"](../modelo-de-datos.md#los-criterios-y-sus-claves-estables)). Quien llama ya lo sabe sin preguntar, así que
+imprimirlo sería el eco que el principio 4 prohíbe (["Los principios"](../principios.md)), y no la clase de dato que ese principio
+manda enseñar.
+
 ## El modo lote
 
 ```
