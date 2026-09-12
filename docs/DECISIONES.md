@@ -1395,6 +1395,44 @@ requisito de ["Cuatro requisitos aprendidos de otras herramientas"](#cuatro-requ
 
 ---
 
+## `<command>` repetible en `biso help`
+
+**La decisión.** `biso help` acepta varios nombres de comando en la misma llamada
+(["`biso help`"](spec/cmd/help.md#biso-help)): `biso help finish note` imprime la ayuda completa de
+`finish` y luego la de `note`, en el orden pedido, separadas por una línea en blanco, como si se
+hubiera llamado `biso <cmd> --help` una vez por nombre. Con `--json`, `commands` trae un elemento por
+nombre pedido, en el mismo orden, y sigue siendo solo el resumen de una línea de cada uno, nunca la
+prosa. La validación es todo o nada y ocurre antes de imprimir nada: los nombres se resuelven en el
+orden en que aparecen, y el primero que no existe hace fallar la llamada entera con el error de
+siempre (los tres nombres más parecidos a ese), sin imprimir la ayuda de ningún comando de la
+llamada, ni siquiera la de los que sí existen. `all` es un valor especial y no un nombre de comando:
+combinarlo con cualquier nombre de comando en la misma llamada es un error de uso, código 2, tanto en
+texto como en `--json`.
+
+**Por qué.** El coste que resuelve esta tarea es el mismo de siempre: un agente que necesita el
+detalle de las banderas de varios comandos para un solo encargo tenía que llamar a `--help` una vez
+por comando, multiplicando llamadas al CLI y salida consumida, aunque los necesitara todos a la vez.
+Hacer `<command>` repetible, con la misma notación `<command>...` que ya usa `<ref>...` en `finish`,
+`archive` o `set`, resuelve ese coste con la sintaxis que la especificación ya usa para "uno o
+varios", sin inventar una segunda forma. La validación todo o nada no es una regla nueva: es el mismo
+principio de la sección ["Concurrencia, atomicidad y garantías observables"](spec/garantias.md#concurrencia-atomicidad-y-garantías-observables),
+que dice que una escritura sobre varias tareas no deja la mitad hecha y calla el resto, aplicado aquí
+a una lectura. Entregar la ayuda de los nombres válidos y solo fallar en el inválido dejaría a quien
+llama sin saber si le falta algo de lo que pidió sin releer la lista completa contra la salida.
+
+**Alternativas descartadas, y por qué.** Aceptar `all` junto con nombres de comando, y tratarlo como
+"la lista más la ayuda completa de esos nombres", se descarta porque las dos formas de salida (una
+lista de una línea por comando, y la prosa completa de uno) no tienen un orden ni una combinación con
+un significado único, y ya existen dos llamadas separadas para pedir cada cosa. Ignorar `all` en
+silencio cuando aparece junto a otros nombres, tratándolo como si no se hubiera escrito, se descarta
+por la misma razón de siempre contra el silencio: quien lo escribe por error nunca se entera de que
+esa parte de su llamada no hizo nada. Devolver la ayuda de los nombres válidos y solo señalar el
+inválido con un aviso, en vez de fallar la llamada entera, se descarta porque mezclaría una salida de
+datos con un error a medias, y porque nada distingue en ese caso un nombre mal escrito de una llamada
+que de verdad quería sólo los nombres que sí existían.
+
+---
+
 ## Decisiones de detalle que cuesta reconstruir
 
 **Una tarea sin quien la reporte es válida.** El campo `reporter` toma la identidad configurada al
