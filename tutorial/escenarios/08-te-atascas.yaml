@@ -1,13 +1,12 @@
 id: 08-te-atascas
-title: Te atascas y alguien tiene que decidir
+title: You get stuck and someone has to decide
 situation: |
-  Sigues con `TASK-19`, y llegas a un punto en el que no puedes seguir sin que alguien decida
-  algo: cuántos reintentos como máximo hace falta permitir antes de dar el 5xx por un fallo
-  definitivo. Podrías inventarte un número, pero eso es justo lo que la regla 11 del mensaje de
-  arranque de `biso` pide no hacer: "Ask instead of guessing." Antes de aparcar tu pregunta,
-  mira cómo se ve una desde fuera: `TASK-60` ya tiene una abierta, y así aparece en el bloque
-  `NEEDS ANSWER` del arranque, tal y como lo imprime `biso prime` (sección 9.7 de la
-  especificación):
+  You're still on `TASK-19`, and you reach a point where you can't go on without someone deciding
+  something: how many retries at most should be allowed before treating the 5xx as a definitive
+  failure. You could just make up a number, but that's exactly what rule 11 of `biso`'s startup
+  message asks you not to do: "Ask instead of guessing." Before parking your question, take a
+  look at what one looks like from the outside: `TASK-60` already has one open, and this is how it
+  shows up in the `NEEDS ANSWER` block of the startup message, exactly as `biso prime` prints it:
 
   ```
   NEEDS ANSWER
@@ -15,26 +14,25 @@ situation: |
       Should the retry budget be shared with the download endpoint or kept separate?
   ```
 
-  La tarea no cambia de estado por tener una pregunta abierta: sigue contando como en curso a
-  efectos de su ficha, pero deja el bloque `IN PROGRESS` del arranque y aparece aquí en su
-  lugar, para que nadie la dé por olvidada ni por activa a la vez.
+  The task doesn't change state just for having an open question: it still counts as in progress
+  for its record, but it leaves the `IN PROGRESS` block of the startup message and shows up here
+  instead, so nobody mistakes it for forgotten, or for active at the same time.
 teaches:
   - >-
-    Aparcar y desaparcar son comandos propios, `biso ask` y `biso answer`, y ninguno de los dos
-    cambia el estado de la tarea.
+    Parking and unparking are their own commands, `biso ask` and `biso answer`, and neither one
+    changes the task's state.
   - >-
-    Una tarea aparcada se ve desde fuera, en el bloque `NEEDS ANSWER` del arranque y no en `IN
-    PROGRESS`, aunque su estado siga siendo el activo.
+    A parked task shows up from the outside in the `NEEDS ANSWER` block of the startup message
+    and not in `IN PROGRESS`, even though its state is still the active one.
   - >-
-    Preguntar es preferible a adivinar. Es la regla 11 del mensaje de `biso prime`, y es la
-    razón de ser de `biso ask`.
+    Asking is better than guessing. It's rule 11 of the `biso prime` message, and it's the whole
+    reason `biso ask` exists.
   - >-
-    El comando `biso answer` convierte la pregunta en dos comentarios en la misma escritura, uno
-    con el autor y el instante originales de la pregunta, y otro con la respuesta, firmado
-    ahora.
+    The `biso answer` command turns the question into two comments in the same write: one with
+    the original author and moment of the question, and another with the answer, signed now.
 steps:
   - narration: |
-      Miras la pregunta de TASK-60 de cerca, no solo la línea recortada del arranque.
+      You look closely at TASK-60's question, not just the trimmed line from the startup message.
     command: biso get TASK-60 --section question
     output: |
       TASK-60  Confirm the retry budget for the upload endpoint
@@ -47,8 +45,9 @@ steps:
     source:
       - spec/cmd/get.md "`biso get`"
   - narration: |
-      Ahora la tuya. En vez de fijar un número a ojo, la dejas escrita como pregunta.
-    command: 'biso ask TASK-19 "¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?"'
+      Now yours. Instead of picking a number out of thin air, you leave it written down as a
+      question.
+    command: 'biso ask TASK-19 "What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?"'
     output: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 7.0
     exit_code: 0
@@ -57,29 +56,29 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-ask "`biso ask`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      El estado no cambia, sigue en In Progress. La urgencia sí baja, de 11.0 a 7.0: el término
-      de actividad de la fórmula (5.4) exige que la tarea esté en el estado activo *y* que no
-      tenga pregunta abierta, así que en cuanto `waiting` pasa a cierto ese término deja de sumar
-      sus 4.0 puntos. Es la misma caída de 4.0 que muestra el ejemplo de 10.7.5 sobre TASK-11
-      (de 19.0 a 15.0), con los números de TASK-19.
+      The state doesn't change, it's still In Progress. Urgency does drop, from 11.0 to 7.0: the
+      formula's activity term requires the task to be in the active state *and* to have no open
+      question, so as soon as `waiting` becomes true that term stops adding its 4.0 points. It's
+      the same 4.0 drop that the specification's own example shows for TASK-11 (from 19.0 to
+      15.0), here with TASK-19's numbers.
   - narration: |
-      Compruebas que ha quedado bien escrita.
+      You check that it got written correctly.
     command: biso get TASK-19 --section question
     output: |
       TASK-19  Retry the upload on 5xx
 
       ## Open Question
       @claude, 2026-09-06 14:10
-      ¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?
+      What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?
     exit_code: 0
     source_kind: derived
     source:
       - spec/cmd/get.md "`biso get`"
       - spec/modelo-de-datos.md#la-pregunta-abierta "La pregunta abierta"
   - narration: |
-      Un rato después, mirando un endpoint parecido, encuentras la respuesta tú mismo: ya hay un
-      valor fijado en otra parte del código. Respondes y la tarea queda desaparcada.
-    command: 'biso answer TASK-19 "Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí."'
+      A while later, looking at a similar endpoint, you find the answer yourself: there's already
+      a value fixed somewhere else in the code. You answer, and the task gets unparked.
+    command: 'biso answer TASK-19 "There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here."'
     output: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     exit_code: 0
@@ -88,20 +87,20 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-answer "`biso answer`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      La urgencia recupera los 11.0 de antes: waiting vuelve a ser falso y el término de
-      actividad vuelve a sumar sus 4.0 puntos.
+      Urgency is back to its earlier 11.0: waiting is false again, and the activity term goes
+      back to adding its 4.0 points.
   - narration: |
-      Miras los comentarios para ver cómo ha quedado el rastro.
+      You look at the comments to see how the trail turned out.
     command: biso get TASK-19 --section comments
     output: |
       TASK-19  Retry the upload on 5xx
 
       ## Comments
       @claude, 2026-09-06 14:10
-      ¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?
+      What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?
 
       @claude, 2026-09-06 15:30
-      Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí.
+      There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here.
     exit_code: 0
     source_kind: derived
     source:
@@ -110,18 +109,18 @@ steps:
       - spec/cmd/get.md "`biso get`"
       - spec/cmd/verbos-del-ciclo.md#biso-answer "`biso answer`"
     remark: |
-      El primer comentario lleva el instante en que se hizo la pregunta (14:10), no el de la
-      respuesta (15:30): es la excepción de forma que anota 5.3, la pregunta se traslada tal
-      cual la vivió el programa la primera vez. Los dos van en el orden en que `biso answer` los
-      escribió, que es también su orden de inserción, y 5.2 dice que ese es el orden que se
-      guarda y se muestra, no el que marca cada instante.
+      The first comment carries the moment the question was asked (14:10), not the moment it was
+      answered (15:30): that's the one documented exception to the rule, the question gets
+      carried over exactly as the program first recorded it. The two comments appear in the order
+      `biso answer` wrote them, which is also their insertion order, and that's the order that
+      gets stored and shown, not the order their timestamps would suggest.
 board_in: >
-  TASK-19 en In Progress, ac 0/2, dod 0/2 (claves #5 y #6), sin comentarios ni pregunta abierta.
-  Urgencia 11.0. Contadores del tablero: 54/5/190, sin cambios desde el escenario 7.
+  TASK-19 in In Progress, ac 0/2, dod 0/2 (keys #5 and #6), with no comments or open question.
+  Urgency 11.0. Board counters: 54/5/190, unchanged since scenario 7.
 board_out: >
-  TASK-19 sigue en In Progress, ac 0/2 y dod 0/2 sin tocar. Ya tiene 2 comentarios, en este
-  orden: la pregunta que se aparcó (con su instante original) y la respuesta que la desaparcó.
-  Vuelve a no tener pregunta abierta (waiting en falso). Urgencia de vuelta a 11.0, tras haber
-  bajado a 7.0 mientras esperaba respuesta. Contadores del tablero sin cambios: 54/5/190. TASK-60
-  no se modifica en este escenario, solo se consulta como referencia de cómo se ve una pregunta
-  abierta desde fuera.
+  TASK-19 is still In Progress, ac 0/2 and dod 0/2 untouched. It now has 2 comments, in this
+  order: the question that got it parked (with its original moment) and the answer that unparked
+  it. It's back to having no open question (waiting is false). Urgency back to 11.0, after
+  dropping to 7.0 while it waited for an answer. Board counters unchanged: 54/5/190. TASK-60 isn't
+  modified in this scenario, it's only looked at as a reference for what an open question looks
+  like from the outside.

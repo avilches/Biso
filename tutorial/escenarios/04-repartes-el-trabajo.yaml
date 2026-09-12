@@ -1,27 +1,27 @@
 id: 04-repartes-el-trabajo
-title: Repartes el trabajo
+title: You hand out the work
 situation: |
-  Hasta ahora has estado mirando el tablero y apuntando cosas. Esto es distinto: hay una tarea
-  que alguien tiene que hacer, y hay que decir quién. En este proyecto trabajan una persona,
-  `@sara`, y un agente, `@claude`, sobre el mismo tablero, y `TASK-19` (reintentar la subida
-  cuando el servidor responde 5xx) lleva ahí desde el principio sin dueño.
+  So far you've been looking at the board and jotting things down. This is different: there's a
+  task someone has to do, and someone has to say who. On this project a person, `@sara`, and an
+  agent, `@claude`, work on the same board, and `TASK-19` (retry the upload when the server
+  returns a 5xx) has been sitting there unowned since the start.
 
-  Sara decide que la haga el agente. Lo que sigue es cómo se dice eso, y cómo se entera él.
+  Sara decides the agent should do it. What follows is how that gets said, and how he finds out.
 teaches:
   - >-
-    Asignar es la decisión de una persona sobre lo que otra debe hacer. No es un reparto
-    automático: `biso` no asigna nada por su cuenta.
+    Assigning is one person's decision about what another should do. It is not an automatic
+    handout: `biso` never assigns anything on its own.
   - >-
-    Un tablero compartido entre una persona y un agente deja la clave `me` sin configurar a
-    propósito, y cada uno declara su identidad en su propia sesión con `BISO_ME`. Si el tablero
-    la llevase puesta, todos compartirían identidad y `--mine` dejaría de significar nada.
+    A board shared between a person and an agent leaves the `me` key unset on purpose, and each
+    one declares their identity in their own session with `BISO_ME`. If the board had it set,
+    everyone would share the same identity and `--mine` would stop meaning anything.
   - >-
-    Asignar una tarea no crea ningún arrendamiento. Recibir trabajo y empezarlo son dos cosas
-    distintas, y la segunda tiene su propio comando.
+    Assigning a task does not create a lease. Receiving work and starting it are two different
+    things, and the second one has its own command.
 steps:
   - narration: |
-      Sara abre una terminal nueva y, antes de nada, quiere ver qué tiene ella pendiente. Todavía
-      no ha declarado quién es en esta sesión.
+      Sara opens a new terminal and, before anything else, wants to see what she has pending. She
+      hasn't declared who she is in this session yet.
     command: biso ls --mine
     output: |
       error: --mine needs an identity; set it with biso config set me <you> or BISO_ME
@@ -30,19 +30,19 @@ steps:
     source:
       - spec/invocacion.md#variables-de-entorno "Variables de entorno"
     remark: |
-      Fíjate en que no devuelve una lista vacía. Podría haberlo hecho, y sería lo cómodo de
-      programar: sin identidad, ninguna tarea es "mía", así que cero resultados. Pero entonces
-      quien lo llama no podría distinguir "no tengo nada asignado" de "no has dicho quién eres",
-      y eso es justo lo que el primer principio de la especificación prohíbe. El error tiene
-      además su propio código, el 6, así que un programa que llame a `biso` puede reaccionar sin
-      leer el mensaje.
+      Notice that it doesn't return an empty list. It could have, and that would have been the
+      easy thing to implement: with no identity, no task is "mine", so zero results. But then
+      whoever calls it couldn't tell "I have nothing assigned" apart from "you haven't said who
+      you are", and that is exactly what the first principle of the specification forbids. The
+      error also has its own code, 6, so a program calling `biso` can react without reading the
+      message.
 
-      El mensaje ofrece las dos salidas, y no son equivalentes. `biso config set me` lo escribe
-      en la configuración del tablero, donde lo verían todos; `BISO_ME` lo declara solo para esta
-      sesión. En un tablero compartido hay que usar la segunda.
+      The message offers two ways out, and they aren't equivalent. `biso config set me` writes it
+      into the board's configuration, where everyone would see it; `BISO_ME` declares it only for
+      this session. On a shared board you have to use the second one.
   - narration: |
-      Sara declara su identidad para esta sesión, que es una variable de entorno y no un comando
-      de `biso`, y le pasa la tarea al agente.
+      Sara declares her identity for this session, which is an environment variable and not a
+      `biso` command, and hands the task to the agent.
     command: biso set TASK-19 -a @claude
     output: |
       TASK-19  To Do  ac 0/2  urgency 7.0
@@ -52,19 +52,20 @@ steps:
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      La salida no repite lo que Sara acaba de escribir: no dice "assignee: @claude". Dice el
-      estado en que queda la tarea, su avance de criterios y su urgencia, que es lo que ella no
-      sabía. Es el cuarto principio de la especificación, y se cumple en todas las escrituras.
+      The output doesn't repeat what Sara just wrote: it doesn't say "assignee: @claude". It says
+      the state the task is left in, its acceptance criteria progress, and its urgency, which is
+      what she didn't know. That's the fourth principle of the specification, and it holds for
+      every write.
 
-      La urgencia es 7.0, y sale de sumar 6.0 por ser de prioridad alta y 1.0 por tener criterios
-      de aceptación. No suma el término de tarea activa, que vale 4.0, porque sigue en `To Do`:
-      asignar una tarea no la pone en marcha.
+      The urgency is 7.0, which comes from adding 6.0 for being high priority and 1.0 for having
+      acceptance criteria. It doesn't add the active-task term, worth 4.0, because the task is
+      still `To Do`: assigning a task doesn't put it in motion.
 
-      No aparece el trozo `dod` porque `TASK-19` no tiene definición de hecho, y ese trozo solo
-      sale cuando la hay.
+      The `dod` chunk doesn't show up because `TASK-19` has no definition of done, and that chunk
+      only appears when there is one.
   - narration: |
-      En su propia sesión, el agente pregunta qué le toca. Aquí `--mine` sí funciona, porque su
-      identidad está declarada.
+      In his own session, the agent asks what's his to do. Here `--mine` does work, because his
+      identity is declared.
     command: biso ls --mine
     output: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
@@ -79,22 +80,21 @@ steps:
       - spec/cmd/ls.md "`biso ls`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      Seis filas donde antes había cinco. `TASK-19` entra en segunda posición, y ese sitio no es
-      casual: la lista va por urgencia descendente y `TASK-19` vale 7.0, igual que `TASK-60`. Un
-      empate se rompe siempre por identificador ascendente, y 19 va antes que 60.
+      Six rows where there used to be five. `TASK-19` comes in second, and that spot isn't random:
+      the list sorts by descending urgency, and `TASK-19` scores 7.0, same as `TASK-60`. A tie is
+      always broken by ascending identifier, and 19 comes before 60.
 
-      Que `TASK-60` valga lo mismo que una tarea que ni ha empezado, teniendo ella prioridad alta
-      y estando en curso, tiene una explicación: `TASK-60` tiene una pregunta abierta, y el
-      término de tarea activa solo suma cuando la tarea está en el estado activo **y** no está
-      esperando respuesta. Una tarea aparcada no está siendo trabajada por nadie, así que no
-      compite por tu atención. En el escenario 8 se ve por dentro.
+      There's a reason `TASK-60` scores the same as a task that hasn't even started, despite being
+      high priority and already in progress: `TASK-60` has an open question, and the active-task
+      term only adds up when the task is in the active state **and** isn't waiting on an answer. A
+      parked task isn't being worked on by anyone, so it doesn't compete for your attention.
+      Scenario 8 shows the inside of that.
 
-      Y ojo con lo que esta lista no dice: `TASK-19` ya es del agente, pero nadie ha empezado a
-      trabajar en ella. No hay ningún arrendamiento. Para eso hace falta el comando del escenario
-      siguiente.
+      And watch what this list doesn't say: `TASK-19` already belongs to the agent, but nobody has
+      started working on it. There is no lease. That's what the next scenario's command is for.
   - narration: |
-      El mensaje de arranque cuenta lo mismo de otra forma. Si el agente volviera a lanzarlo
-      ahora, `TASK-19` habría cambiado de sitio.
+      The startup message tells the same story another way. If the agent ran it again now,
+      `TASK-19` would have moved.
     command: biso ls --mine -s "To Do"
     output: |
       TASK-19  To Do  task  high    Retry the upload on 5xx                ac 0/2  @claude  -
@@ -105,21 +105,21 @@ steps:
     source:
       - spec/cmd/ls.md "`biso ls`"
     remark: |
-      En `biso prime`, estas tres son las que salen en el bloque `ASSIGNED TO YOU`, que significa
-      exactamente esto: tareas que una persona decidió que hicieras tú y que todavía no están en
-      marcha. En el escenario 1 viste ese mensaje entero, y entonces `TASK-19` no estaba en ese
-      bloque porque no era de nadie.
+      In `biso prime`, these three are the ones that show up in the `ASSIGNED TO YOU` block,
+      which means exactly this: tasks a person decided you should do and that aren't under way
+      yet. In scenario 1 you saw that whole message, and back then `TASK-19` wasn't in that block
+      because it belonged to no one.
 
-      Fíjate también en que las columnas se han estrechado. El ancho de cada una lo decide el
-      contenido de la lista que se está imprimiendo, no una plantilla fija: al filtrar por un
-      solo estado, la columna de estado ya no necesita hueco para `In Progress`, y al desaparecer
-      las tareas de título largo, la columna del título se encoge con ellas.
+      Also notice that the columns have narrowed. The width of each one is decided by the content
+      of the list being printed, not a fixed template: once you filter down to a single state, the
+      status column no longer needs room for `In Progress`, and once the long-titled tasks
+      disappear, the title column shrinks along with them.
 board_in: >
-  TASK-19 en To Do, sin asignar, ac 0/2, urgencia 7.0. La clave `me` del tablero está sin
-  configurar y cada actor declara su identidad con BISO_ME. Contadores 55/4/190 (To Do / In
-  Progress / Done), con las 54 iniciales más la TASK-62 que creó el escenario 2.
+  TASK-19 in To Do, unassigned, ac 0/2, urgency 7.0. The board's `me` key is unset and each actor
+  declares their identity with BISO_ME. Counters 55/4/190 (To Do / In Progress / Done), the 54
+  initial tasks plus the TASK-62 that scenario 2 created.
 board_out: >
-  TASK-19 sigue en To Do y sigue con ac 0/2 y urgencia 7.0, pero ahora está asignada a @claude.
-  Sin arrendamiento: ninguno de los pasos de este escenario crea uno, porque solo `biso start` y
-  `biso new --start` lo hacen. TASK-11 se ha leído pero no se ha tocado. Contadores sin cambios,
-  55/4/190, porque ningún paso mueve una tarea de estado.
+  TASK-19 is still in To Do and still at ac 0/2 and urgency 7.0, but now assigned to @claude. No
+  lease: none of this scenario's steps creates one, because only `biso start` and `biso new
+  --start` do that. TASK-11 has been read but not touched. Counters unchanged, 55/4/190, because no
+  step moves a task between states.

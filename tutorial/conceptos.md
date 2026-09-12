@@ -1,68 +1,66 @@
-# Conceptos
+# Concepts
 
-`biso` es la herramienta con la que un agente automático, y la persona que trabaja con él, llevan
-las tareas de un proyecto. Antes de ver un solo comando conviene tener claros cinco conceptos, porque
-el resto del tutorial da por hecho que ya los conoces.
+`biso` is the tool an automated agent, and the person working alongside it, use to run the tasks of
+a project. Before looking at a single command, five concepts are worth having straight, because the
+rest of the tutorial takes them for granted.
 
-## El tablero
+## The board
 
-Un tablero es el conjunto de tareas de un proyecto junto con su configuración: qué estados existen,
-qué tipos de tarea hay, qué prioridades se pueden usar y quién es, si alguien lo es, la identidad de
-quien trabaja en él. Esa configuración no es un detalle aparte: es lo que hace que un valor tenga
-sentido o no. Un tablero no acepta cualquier texto en cualquier campo, sino solo los valores de su
-propio vocabulario.
+A board is the set of a project's tasks together with its configuration: what states exist, what
+task types there are, what priorities can be used, and who, if anyone, the identity of whoever works
+on it is. That configuration is not a side detail: it is what makes a value meaningful or not. A
+board does not accept any text in any field, only the values of its own vocabulary.
 
-De ahí sale la regla que gobierna todo lo demás: un valor que el tablero no reconoce es siempre un
-error, tanto si se está escribiendo como si se está preguntando por él, y con la misma exigencia en
-los dos casos. Preguntar por un estado que ese tablero no tiene no devuelve una lista vacía, devuelve
-un error. Como consecuencia, cuando una pregunta sí devuelve una lista vacía es porque de verdad no
-hay nada que cumpla lo pedido, y eso es información, no un fallo silencioso.
+From that comes the rule that governs everything else: a value the board does not recognize is
+always an error, whether you are writing it or asking about it, and with the same strictness in both
+cases. Asking about a state that board does not have does not return an empty list, it returns an
+error. As a consequence, when a question does return an empty list it is because there really is
+nothing that matches what was asked, and that is information, not a silent failure.
 
-## Los estados
+## States
 
-Cada tarea tiene un estado, y el estado es uno de los que ese tablero tiene configurados: no hay una
-lista fija de estados válida para todos los proyectos, cada tablero declara los suyos. Lo único que no
-se puede configurar libremente es que, de entre esos estados, tres papeles queden siempre cubiertos,
-cada uno por un estado distinto:
+Every task has a state, and the state is one of the ones that board has configured: there is no
+fixed list of states valid for every project, each board declares its own. The only thing that
+cannot be freely configured is that, among those states, three roles always stay covered, each by a
+different state:
 
-- El estado **inicial**, donde nace una tarea nueva.
-- El estado **activo**, el que se escribe cuando alguien coge una tarea para trabajar en ella.
-- El estado **terminal**, el que marca que una tarea está acabada.
+- The **initial** state, where a new task is born.
+- The **active** state, the one written when someone picks up a task to work on it.
+- The **terminal** state, the one that marks a task as done.
 
-Un papel es la función que cumple un estado, no su nombre. Dos tableros pueden llamar de forma
-distinta al estado inicial y aun así los dos tienen uno, porque el papel es obligatorio aunque la
-palabra con la que se llama no lo sea.
+A role is the function a state serves, not its name. Two boards can call the initial state
+something different and both still have one, because the role is mandatory even though the word
+used for it is not.
 
-## Criterios de aceptación y definición de hecho
+## Acceptance criteria and definition of done
 
-Una tarea puede llevar dos listas de comprobación independientes, con la misma forma: cada elemento
-tiene un texto y puede estar marcado o no, y cada elemento nace con una clave numérica propia que no
-cambia aunque se quiten otros elementos de la lista. Son dos listas, no una, y se llevan la cuenta por
-separado.
+A task can carry two independent checklists, with the same shape: each item has text and can be
+checked or not, and each item is born with its own numeric key that does not change even if other
+items are removed from the list. They are two lists, not one, and each is counted separately.
 
-La primera son los **criterios de aceptación**: cómo se sabe que el trabajo de esa tarea en concreto
-funciona. La segunda es la **definición de hecho**: lo que tiene que ser cierto antes de dar la tarea
-por cerrada, más allá de si el resultado funciona, como que otra persona la haya revisado. Ninguna de
-las dos es obligatoria, y una tarea puede llegar a su estado terminal con elementos sin marcar en
-cualquiera de las dos, porque `biso` avisa de eso pero no lo impide por defecto.
+The first are the **acceptance criteria**: how you know that particular task's work actually works.
+The second is the **definition of done**: what has to be true before calling the task closed, beyond
+whether the result works, such as someone else having reviewed it. Neither is mandatory, and a task
+can reach its terminal state with unchecked items in either of the two, because `biso` warns about
+that but does not block it by default.
 
-## La urgencia
+## Urgency
 
-La urgencia es un número que no se guarda en ningún sitio: se calcula cada vez que se lee la tarea, a
-partir de datos que sí están guardados, como la prioridad, si la tarea está activa, si bloquea o la
-bloquea otra tarea, si tiene fecha límite cercana, si tiene criterios de aceptación y cuánto tiempo
-lleva abierta. Por eso se dice que la urgencia es **derivada**: nadie la escribe directamente, y su
-valor de ahora mismo puede no ser el de dentro de un minuto, aunque nadie haya tocado la tarea,
-sencillamente porque el tiempo pasó o porque cambió alguna otra tarea de la que depende. Una tarea en
-su estado terminal tiene urgencia cero siempre, sin más cálculo.
+Urgency is a number that is not stored anywhere: it is computed every time the task is read, from
+data that is stored, such as priority, whether the task is active, whether it blocks or is blocked
+by another task, whether it has a due date coming up, whether it has acceptance criteria, and how
+long it has been open. That is why urgency is called **derived**: nobody writes it directly, and its
+value right now may not be its value a minute from now even if nobody touched the task, simply
+because time passed or some other task it depends on changed. A task in its terminal state always
+has urgency zero, with no further calculation.
 
-## La identidad declarada
+## Declared identity
 
-Un tablero puede tener configurada una identidad, el texto que dice quién eres tú cuando llamas a
-`biso`. No es obligatoria: un tablero funciona perfectamente sin que nadie la declare. Lo que cambia
-es que algunas operaciones necesitan saber quién eres para tener sentido, como pedir solo las tareas
-que son tuyas, quedarte automáticamente asignado una tarea al empezarla, firmar un comentario con tu
-nombre por defecto, o dejar una pregunta abierta a la espera de que alguien responda. Si intentas
-cualquiera de esas cosas sin identidad declarada, `biso` no adivina ni asume nada: lo dice como un
-error explícito. El resto del tablero, lo que no necesita saber quién eres, sigue funcionando igual
-con identidad declarada o sin ella.
+A board can have an identity configured: the text that says who you are when you call `biso`. It is
+not mandatory: a board works perfectly well with nobody declaring one. What changes is that some
+operations need to know who you are to make sense, such as asking only for the tasks that are yours,
+getting automatically assigned a task when you start it, signing a comment with your name by default,
+or leaving an open question waiting for someone to answer. If you try any of those without a declared
+identity, `biso` does not guess or assume anything: it says so as an explicit error. The rest of the
+board, whatever does not need to know who you are, keeps working the same with or without a declared
+identity.

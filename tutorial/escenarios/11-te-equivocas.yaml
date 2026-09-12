@@ -1,33 +1,34 @@
 id: 11-te-equivocas
-title: Te equivocas
+title: You get it wrong
 situation: |
-  Llevas diez capítulos usando `biso` sin pensar demasiado en ello: pides una lista, pides una
-  tarea, y te la da. Es fácil olvidar que detrás de cada consulta hay una regla que decide qué
-  pasa cuando lo que pides no existe. Hoy tocan tres tropiezos seguidos, a propósito, porque son
-  los que enseñan la regla más importante de toda la especificación: un valor que el tablero no
-  conoce es un error, nunca una lista vacía. Ninguno de los tres escribe nada: este es un
-  capítulo de consulta, no de escritura, así que el tablero sale exactamente como entra.
+  Ten chapters in, you've been using `biso` without thinking much about it: you ask for a list,
+  you ask for a task, and it gives it to you. It's easy to forget that behind every query there's
+  a rule deciding what happens when what you're asking for doesn't exist. Today brings three
+  stumbles in a row, on purpose, because they teach the single most important rule in the whole
+  specification: a value the board doesn't know is an error, never an empty list. None of the
+  three writes anything: this is a reading chapter, not a writing one, so the board comes out
+  exactly as it went in.
 teaches:
   - >-
-    Un valor que el tablero no conoce es un error, se esté leyendo o escribiendo, y nunca una
-    lista vacía. Por eso una lista vacía sí es un hecho sobre el tablero, y quien la recibe
-    puede actuar en consecuencia.
+    A value the board doesn't know is an error, whether you're reading or writing, and never an
+    empty list. That's why an empty list IS a fact about the board, and whoever gets one can act
+    on it.
   - >-
-    La coincidencia de vocabulario ignora mayúsculas, espacios, guiones y guiones bajos, así que
-    `TO_DO`, `to do` y `To-Do` no son tres filtros parecidos: son el mismo filtro.
+    Vocabulary matching ignores case, spaces, hyphens and underscores, so `TO_DO`, `to do` and
+    `To-Do` aren't three similar filters: they're the same filter.
   - >-
-    Una referencia de texto que encaja con varias tareas no adivina cuál querías decir: lista
-    las candidatas y te deja elegir.
+    A text reference that matches several tasks doesn't guess which one you meant: it lists the
+    candidates and lets you choose.
   - >-
-    Una referencia bien formada que el tablero nunca ha llegado a asignar es un error distinto
-    del de una tarea que sí existió y ya no está, aunque los dos mensajes empiecen igual.
+    A well-formed reference the board never got around to assigning is a different error from one
+    for a task that did exist and is gone now, even though the two messages start the same way.
   - >-
-    Cada tropiezo tiene su propio código de salida, así que un agente puede ramificar sobre el
-    número sin leer el mensaje.
+    Each stumble has its own exit code, so an agent can branch on the number without reading the
+    message.
 steps:
   - narration: |
-      Quieres ver qué queda pendiente y escribes el nombre del estado tal y como lo llamarías
-      en cualquier otro gestor de tareas.
+      You want to see what's still pending and type the status name the way you'd call it in any
+      other task tracker.
     command: biso ls -s Pending
     output: |
       error: unknown status: "Pending"
@@ -37,15 +38,15 @@ steps:
     source:
       - spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos "El mismo texto vale lo mismo en los dos sentidos"
     remark: |
-      No hay ningún «Pending» en este tablero, así que el programa no te devuelve una lista
-      vacía fingiendo que lo ha entendido: falla con el código 3 (BAD_VALUE) y te dice cuáles
-      son los valores válidos, para que no tengas que adivinar el nombre exacto. Es el mismo
-      mensaje, palabra por palabra, tanto si el valor imposible llega en un filtro de `biso ls`
-      como si llega en una escritura de `biso set` (sección 6.2).
+      There's no «Pending» on this board, so the program doesn't hand you an empty list
+      pretending it understood: it fails with code 3 (BAD_VALUE) and tells you what the valid
+      values are, so you don't have to guess the exact name. It's the same message, word for
+      word, whether the impossible value shows up in a `biso ls` filter or in a `biso set` write,
+      because the same matching rule holds the same whether you're reading or writing.
 
   - narration: |
-      Pruebas con un valor que sí existe, pero escrito como te salga: en mayúsculas, con guion
-      bajo.
+      You try a value that does exist, but typed however it comes out: in uppercase, with an
+      underscore.
     command: biso ls --count -s TO_DO
     output: "54"
     exit_code: 0
@@ -53,15 +54,14 @@ steps:
     source:
       - spec/vocabularios.md#el-algoritmo-de-coincidencia "El algoritmo de coincidencia"
     remark: |
-      `TO_DO` no aparece tal cual en la configuración del tablero, que guarda `To Do`. Pero el
-      algoritmo de coincidencia de la sección 6.1 pasa los dos valores a minúsculas y les quita
-      los espacios, los guiones y los guiones bajos antes de comparar, así que `TO_DO` normaliza
-      a `todo`, igual que `To Do`. El tablero no ha cambiado desde que terminó el capítulo
-      anterior: sigue habiendo 54 tareas en `To Do`. `--count` imprime solo ese número, sin
-      ninguna otra línea (sección 10.4).
+      `TO_DO` doesn't appear as-is in the board's configuration, which stores `To Do`. But the
+      matching algorithm lowercases both values and strips spaces, hyphens and underscores before
+      comparing, so `TO_DO` normalizes to `todo`, same as `To Do`. The board hasn't changed since
+      the previous chapter ended: there are still 54 tasks in `To Do`. `--count` prints just that
+      number, with no other line.
 
   - narration: |
-      Vuelves a probar, ahora con guion y mezclando mayúsculas y minúsculas.
+      You try again, now with a hyphen and mixed case.
     command: biso ls --count -s To-Do
     output: "54"
     exit_code: 0
@@ -69,14 +69,14 @@ steps:
     source:
       - spec/vocabularios.md#el-algoritmo-de-coincidencia "El algoritmo de coincidencia"
     remark: |
-      Mismo resultado, porque es el mismo filtro: `To-Do` normaliza también a `todo`. La misma
-      regla quita además los espacios repetidos, así que `to  do`, con dos espacios en medio,
-      también habría servido (es el ejemplo literal de la propia tabla de la sección 6.1).
-      Cuatro formas distintas de teclearlo, un solo valor.
+      Same result, because it's the same filter: `To-Do` also normalizes to `todo`. The same rule
+      also collapses repeated spaces, so `to  do`, with two spaces in the middle, would have
+      worked too (it's the literal example from the matching algorithm's own table). Four
+      different ways to type it, one single value.
 
   - narration: |
-      Se te ha olvidado el número de la tarea de los reintentos y escribes lo primero que
-      recuerdas del título.
+      You've forgotten the number of the retry task, so you type the first thing you remember
+      from its title.
     command: biso get "retry"
     output: |
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
@@ -87,21 +87,20 @@ steps:
     source:
       - spec/referencias.md#la-búsqueda-por-texto "La búsqueda por texto"
     remark: |
-      Las tres tareas llevan «retry» en el título, así que ninguna gana por estar en el título
-      mientras las otras solo lo llevan en el cuerpo (la regla de la sección 7.2): las tres son
-      candidatas por igual. El programa no elige por ti. Código 5 (AMBIGUOUS), y las tres filas
-      por stdout, en el mismo formato de columnas de `biso ls` (sección 10.4), ordenadas por
-      urgencia porque ninguna lleva `ordinal`: TASK-60 tiene una pregunta abierta, así que no
-      suma el término de tarea activa, pero es de prioridad alta; TASK-33 es de prioridad
-      media; TASK-19 ya está terminada, así que su urgencia es 0,0 (sección 5.4, «si el estado
-      de la tarea es el terminal, urgency = 0.0») y va la última. El valor de `ac` de TASK-19
-      depende de cómo se cerrara en el capítulo 10, que no está a la vista de este fichero: se
-      asume que llegó a `ac 2/2`, siguiendo el cierre que recomienda el propio mensaje de
-      `biso prime` («biso finish <ref> --check all --check-dod all --summary "..."»). Queda
-      anotado en `tutorial/lagunas/11-13.md`.
+      All three tasks have «retry» in the title, so none of them wins by having it in the title
+      while the others only have it in the body (the text search rule): all three are candidates
+      equally. The program doesn't choose for you. Exit code 5 (AMBIGUOUS), and the three rows go
+      to stdout, in the same column format as `biso ls`, sorted by urgency because none of them
+      carries an `ordinal`: TASK-60 has an open question, so it doesn't add the active-task term,
+      but it's high priority; TASK-33 is medium priority; TASK-19 is already done, so its urgency
+      is 0.0 (a task in a terminal state always has urgency 0.0) and it comes last. TASK-19's `ac`
+      value depends on how it got closed back in chapter 10, which this file can't see: it's
+      assumed to have reached `ac 2/2`, following the closing move that `biso prime`'s own
+      message recommends (`biso finish <ref> --check all --check-dod all --summary "..."`).
+      That's noted in `tutorial/lagunas/11-13.md`.
 
   - narration: |
-      Escribes el número a mano, pero se te cuela un dígito de más.
+      You type the number by hand, but an extra digit sneaks in.
     command: biso get TASK-99
     output: |
       error: TASK-99 has never existed on this board
@@ -111,22 +110,21 @@ steps:
     source:
       - spec/referencias.md#los-tres-mensajes-de-no-la-encuentro "Los tres mensajes de "no la encuentro""
     remark: |
-      `TASK-99` está bien formado como identificador, así que esto no es un error de uso
-      (código 2): es un error de que ese identificador nunca ha existido, código 4 (NOT_FOUND),
-      con la clave `never_allocated`. El texto es el literal de la sección 7.3, con el número
-      del identificador más alto sustituido por el de este tablero, `TASK-62`, que es la tarea
-      que se creó en el capítulo 2. Hay un tercer mensaje de «no la encuentro» en la misma
-      sección, para una tarea que el tablero sí llegó a asignar y que ahora ya no está
-      (archivada y después eliminada): comparte el código 4 pero no la clave, y no hace falta
-      reproducirlo aquí para que quede clara la diferencia entre los dos. Y queda un cuarto
-      tropiezo que ni siquiera hemos tocado, el identificador mal formado como `TASK-1.1`, que
-      es código 2 en vez de 4, porque ahí el problema no es que la tarea no exista sino que lo
-      que has escrito no tiene la forma de una referencia. Cuatro formas de equivocarte, cuatro
-      códigos distintos: 2, 3, 4 y 5.
+      `TASK-99` is well-formed as an identifier, so this isn't a usage error (code 2): it's an
+      error because that identifier has never existed, code 4 (NOT_FOUND), with the
+      `never_allocated` key. The text is the literal message for this case, with the highest-ever
+      identifier swapped for this board's own, `TASK-62`, the task created back in chapter 2.
+      There's a third «can't find it» message in the same family, for a task the board did get
+      around to assigning and that's gone now (archived and then deleted): it shares code 4 but
+      not the key, and there's no need to reproduce it here for the difference between the two to
+      be clear. And there's a fourth stumble we haven't even touched, a malformed identifier like
+      `TASK-1.1`, which is code 2 instead of 4, because there the problem isn't that the task
+      doesn't exist but that what you typed doesn't have the shape of a reference. Four ways to
+      get it wrong, four different codes: 2, 3, 4 and 5.
 board_in: |
-  Igual que sale el capítulo 10: TASK-19 en Done, asignada a @claude. TASK-62, creada en el
-  capítulo 2, sigue en el tablero. Contadores 54 / 4 / 191 (To Do / In Progress / Done).
+  Same as chapter 10 leaves it: TASK-19 in Done, assigned to @claude. TASK-62, created in chapter
+  2, is still on the board. Counters 54 / 4 / 191 (To Do / In Progress / Done).
 board_out: |
-  Igual que entra. Ninguno de los cinco pasos de este capítulo escribe en el tablero: los tres
-  tropiezos fallan antes de escribir nada, y las dos consultas con `--count` son lecturas.
-  Contadores sin cambios: 54 / 4 / 191.
+  Same as it comes in. None of this chapter's five steps writes to the board: the three stumbles
+  fail before writing anything, and the two `--count` queries are reads. Counters unchanged:
+  54 / 4 / 191.

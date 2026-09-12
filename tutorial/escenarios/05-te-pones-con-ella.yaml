@@ -1,25 +1,26 @@
 id: 05-te-pones-con-ella
-title: Te pones con ella
+title: You get to work on it
 situation: |
-  El agente ya sabe que `TASK-19` es suya. Ahora va a empezarla de verdad, y eso no consiste en
-  cambiarle el estado a mano: hay un comando que se llama justo como el gesto que estás haciendo.
+  The agent already knows `TASK-19` is his. Now he's going to actually start it, and that isn't
+  done by changing the state by hand: there's a command named exactly after the move you're
+  making.
 
-  Con una sola llamada pasan cuatro cosas a la vez, y una de ellas no la has pedido.
+  One single call does four things at once, and you didn't ask for one of them.
 teaches:
   - >-
-    Empezar una tarea es un comando con nombre propio, `biso start`, y cuesta una llamada. No es
-    `biso set --status`, aunque el estado acabe igual.
+    Starting a task is a command with its own name, `biso start`, and it costs one call. It is
+    not `biso set --status`, even though the state ends up the same.
   - >-
-    Al empezar nace un arrendamiento: una reserva con fecha de caducidad que dice que alguien
-    está trabajando en esa tarea ahora mismo. Ningún otro comando lo crea.
+    Starting creates a lease: a reservation with an expiry date that says someone is working on
+    that task right now. No other command creates one.
   - >-
-    Un arrendamiento no es un estado. La tarea está en `In Progress` y además tiene una reserva;
-    son dos cosas separadas que se guardan aparte.
+    A lease is not a state. The task is `In Progress` and also holds a reservation; those are two
+    separate things stored apart from each other.
 steps:
   - narration: |
-      El agente coge la tarea, y de paso deja escrito por dónde piensa atacarla, para que Sara
-      pueda leerlo sin preguntar.
-    command: biso start TASK-19 --plan "Reproducir el 5xx con un servidor de prueba, y envolver la subida en un reintento con espera exponencial"
+      The agent takes the task, and along the way writes down how he plans to attack it, so Sara
+      can read it without having to ask.
+    command: biso start TASK-19 --plan "Reproduce the 5xx with a test server, and wrap the upload in a retry with exponential backoff"
     output: |
       TASK-19  In Progress  ac 0/2  urgency 11.0
     exit_code: 0
@@ -28,49 +29,48 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-start "`biso start`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      La urgencia ha subido de 7.0 a 11.0, y son exactamente los 4.0 del término de tarea activa.
-      Nadie ha escrito ese número: se recalcula al leer, cada vez.
+      The urgency has gone up from 7.0 to 11.0, and that's exactly the 4.0 of the active-task
+      term. Nobody wrote that number: it gets recalculated on every read.
 
-      Lo que la salida no dice es lo más importante de este paso. `biso start` ha hecho cuatro
-      cosas en una sola escritura: ha puesto el estado activo, ha comprobado que la tarea ya
-      tenía a alguien asignado (a `@claude`, desde el escenario 4, así que no ha tocado nada),
-      **ha tomado el arrendamiento** a nombre de quien llama, y ha añadido el plan.
+      What the output doesn't say is the most important part of this step. `biso start` has done
+      four things in a single write: it set the active state, it checked that the task already
+      had someone assigned (`@claude`, since scenario 4, so it didn't touch that), **it took the
+      lease** in the caller's name, and it added the plan.
 
-      Si la tarea no hubiera tenido a nadie asignado, `start` le habría puesto a quien llama, y
-      esa es la diferencia con lo que hizo Sara en el escenario anterior: ella asignó sin
-      empezar, y `start` empieza asignando si hace falta.
+      If the task had had nobody assigned, `start` would have assigned it to whoever called it,
+      and that's the difference with what Sara did in the previous scenario: she assigned without
+      starting, and `start` starts by assigning if it has to.
   - narration: |
-      El arrendamiento no se ve en la línea de estado, así que el agente mira la ficha para
-      entender qué acaba de reservar.
+      The lease doesn't show up in the status line, so the agent looks at the task's record to
+      understand what he just reserved.
     command: biso get TASK-19 --section plan
     output: |
       TASK-19  Retry the upload on 5xx
 
       ## Implementation Plan
-      Reproducir el 5xx con un servidor de prueba, y envolver la subida en un reintento con espera
-      exponencial
+      Reproduce the 5xx with a test server, and wrap the upload in a retry with exponential
+      backoff
     exit_code: 0
     source_kind: derived
     source:
       - spec/cmd/get.md "`biso get`"
     remark: |
-      El plan está donde debía. Lo del arrendamiento hay que explicarlo, porque no se enseña aquí:
-      son dos campos guardados en la tarea, hasta cuándo vale la reserva y de quién es, y el
-      programa acaba de ponerlos en "ahora más 240 minutos" y en `@claude`.
+      The plan is right where it should be. The lease needs explaining, because this step doesn't
+      show it directly: it's two fields stored on the task, until when the reservation is good and
+      who holds it, and the program just set them to "now plus 240 minutes" and `@claude`.
 
-      Esos 240 minutos son la clave `lease_minutes` de la configuración del tablero, y se pueden
-      cambiar cuando se quiera sin romper nada: el vencimiento se calcula al escribir, así que
-      cambiarla solo afecta a los arrendamientos que se renueven desde ese momento.
+      Those 240 minutes are the `lease_minutes` key in the board's configuration, and you can
+      change it whenever you want without breaking anything: the expiry is computed at write time,
+      so changing it only affects leases that get renewed from that point on.
 
-      El valor por defecto es generoso a propósito. El error que hace daño es el falso vencido, no
-      el vencido tarde: un arrendamiento demasiado corto hace que otro agente reclame una tarea
-      que alguien está trabajando de verdad, mientras que uno demasiado largo solo retrasa un
-      aviso. Y como vas a ver en el escenario siguiente, ese aviso nunca impide trabajar.
+      The default is generous on purpose. The mistake that costs you is a false expiry, not a late
+      one: too short a lease lets another agent claim a task someone is genuinely working on,
+      while too long a lease only delays a warning. And as you'll see in the next scenario, that
+      warning never stops anyone from working.
 board_in: >
-  TASK-19 en To Do, asignada a @claude, ac 0/2, urgencia 7.0, sin plan y sin arrendamiento, tal y
-  como la deja el escenario 4. Contadores 55/4/190.
+  TASK-19 in To Do, assigned to @claude, ac 0/2, urgency 7.0, with no plan and no lease, exactly
+  as scenario 4 leaves it. Counters 55/4/190.
 board_out: >
-  TASK-19 en In Progress, asignada a @claude, ac 0/2, urgencia 11.0, con plan y con un
-  arrendamiento vivo a nombre de @claude que vence 240 minutos despues de este paso. Contadores
-  54/5/190: TASK-19 sale de To Do y entra en In Progress, que es el unico cambio de estado de
-  este escenario.
+  TASK-19 in In Progress, assigned to @claude, ac 0/2, urgency 11.0, with a plan and a live lease
+  in @claude's name that expires 240 minutes after this step. Counters 54/5/190: TASK-19 leaves To
+  Do and enters In Progress, the only state change in this scenario.

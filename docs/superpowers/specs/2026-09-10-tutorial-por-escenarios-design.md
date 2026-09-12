@@ -121,45 +121,47 @@ Lo que cada escenario tiene que dejar enseñado, y que no es adivinable:
 
 ```yaml
 id: 06-el-arrendamiento
-titulo: Dos agentes a la vez sobre el mismo tablero
-situacion: |
-  Prosa que plantea el apuro, antes de que aparezca ningún comando.
-ensena:
-  - Un arrendamiento no es un estado, es hasta cuándo vale la reserva.
-  - Cualquier escritura de quien lo tiene lo renueva. No hay comando de latido.
-pasos:
-  - narracion: |
-      Prosa que prepara el comando.
-    comando: biso note TASK-11 "Reescrito el parser de fechas"
-    salida: |
+title: Two agents at once on the same board
+situation: |
+  Prose that sets up the bind, before any command shows up.
+teaches:
+  - A lease is not a state, it is how long the reservation holds.
+  - Any write from whoever holds it renews it. There is no heartbeat command.
+steps:
+  - narration: |
+      Prose that sets up the command.
+    command: biso note TASK-11 "Rewrote the date parser"
+    output: |
       warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z
-      TASK-11  In Progress  ac 1/2  dod 0/2  urgencia 41
-    codigo_salida: 0
-    origen: literal spec/salida-y-terminal.md#notas-y-avisos
-    comentario: |
-      Opcional. Lo que hay que mirar en esa salida y por qué.
+      TASK-11  In Progress  ac 1/2  dod 0/2  urgency 41.0
+    exit_code: 0
+    source_kind: literal
+    source:
+      - spec/salida-y-terminal.md#notas-y-avisos "Notas y avisos"
+    remark: |
+      Optional. What to look at in that output, and why.
 ```
+
+(Forma final, decidida en
+[`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md):
+los campos van en inglés salvo el título de cada cita de `source`, que cita `docs/spec/` tal cual.
+El encargo original tenía los campos en español y `origen` citaba `SPEC.md` por número; esa forma
+quedó retirada al repartirse la especificación.)
 
 Reglas del formato:
 
-- **`salida` es lo que sale por stdout y por stderr juntos**, en el orden en que los ve una persona en
+- **`output` es lo que sale por stdout y por stderr juntos**, en el orden en que los ve una persona en
   su terminal, porque es lo que el lector va a comparar. Cuando la distinción importe (que importa en el
-  escenario 3), se dice en `comentario`.
-- **`codigo_salida` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial que solo
+  escenario 3), se dice en `remark`.
+- **`exit_code` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial que solo
   declara el código cuando falla enseña que el código solo importa al fallar, y en `biso` es al revés.
-- **`origen` es obligatorio** y solo admite dos formas:
-  - `literal spec/<ruta>`: la salida está copiada carácter a carácter de ese fichero de
-    `docs/spec/`.
-  - `derivada spec/<ruta>[, spec/<ruta>...]`: la salida se ha construido aplicando las reglas de
-    esos ficheros, porque la especificación no trae ese caso exacto escrito. Con varios, separados
-    por comas.
-
-  `<ruta>` es la ruta relativa a `docs/spec/`, con ancla cuando la regla está dentro de un apartado
-  (`cmd/set.md#selectores-de-criterios`) y sin ella cuando es el fichero entero. El generador
-  **marca visualmente las derivadas** en la página, enlazando cada ruta al fichero real: esa marca
-  es el aparato de validación: al revisar, lo literal ya está validado por estar en la especificación
-  y lo derivado es lo que hay que mirar. Un enlace que apunte a un fichero o ancla que no existe lo
-  dice el build de MkDocs con `--strict`.
+- **El campo de procedencia es obligatorio y cita `docs/spec/` por fichero y título**, no por número
+  de sección. Su forma exacta (`source_kind` + `source`, con citas combinadas cuando hacen falta
+  varias) se decidió después y está en
+  [`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md);
+  el contrato práctico, con ejemplo, está en `tutorial/CLAUDE.md`. El
+  generador enlaza cada cita de un paso derivado al fichero real, y un enlace que apunte a un fichero
+  o ancla que no existe lo dice el build de MkDocs con `--strict`.
 - **Los pasos de un escenario ocurren en orden y el estado del tablero se arrastra** entre escenarios.
   El identificador `NN` del fichero fija ese orden.
 
@@ -196,22 +198,22 @@ Dos cosas que el generador tiene que hacer bien:
 
 - **Marcar las salidas derivadas.** Una nota discreta y consistente junto al bloque, no un aviso
   aparatoso: son la mayoría de los pasos y saturaría la página.
-- **Fallar en vez de generar algo malo.** Si a un paso le falta `codigo_salida`, si `origen` no tiene una de las
-  dos formas admitidas, o si un fichero no es YAML válido, el script termina con código distinto de cero
-  y dice qué fichero y qué paso. Un generador que se traga un fixture incompleto y produce una página
-  incompleta destruye la única garantía que este diseño ofrece.
+- **Fallar en vez de generar algo malo.** Si a un paso le falta `exit_code`, si `source_kind` o `source`
+  no tienen una forma admitida, o si un fichero no es YAML válido, el script termina con código
+  distinto de cero y dice qué fichero y qué paso. Un generador que se traga un fixture incompleto y
+  produce una página incompleta destruye la única garantía que este diseño ofrece.
 
 Se ejecuta con `uv`, igual que MkDocs, y queda anotado en `CLAUDE.md` junto a los otros dos comandos.
 
 ## Lo que se ejecutará el día que exista el binario
 
 No se construye ahora, pero el formato está pensado para ello: un script recorrerá los mismos ficheros,
-lanzará cada `comando` contra un tablero real sembrado con el inventario de arriba, y comparará la salida y
+lanzará cada `command` contra un tablero real sembrado con el inventario de arriba, y comparará la salida y
 el código con lo declarado. Los ejemplos dejarán de ser simulados y pasarán a ser una batería de pruebas
 de salida literal.
 
-Por eso `comando` es una línea de comando ejecutable y no una ilustración, y por eso
-`codigo_salida` es obligatorio.
+Por eso `command` es una línea de comando ejecutable y no una ilustración, y por eso
+`exit_code` es obligatorio.
 Cualquier atajo en el formato que hoy parezca inofensivo se paga entonces.
 
 ## El reparto del trabajo

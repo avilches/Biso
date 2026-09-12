@@ -1,18 +1,18 @@
 id: 03-que-hago-ahora
-title: "¿Y ahora qué hago?"
+title: "What now?"
 situation: |
-  Ya sabes qué tablero es este y ya has dejado tu idea a salvo. Pero el arranque te ha
-  enseñado el mapa entero del proyecto, no lo tuyo en concreto, y tienes veinte minutos
-  antes de la siguiente reunión. Quieres ver qué tienes tú encima ahora mismo, y luego
-  coger una y leerla entera antes de tocar nada.
+  You already know which board this is and you've already kept your idea safe. But the
+  startup message showed you the whole map of the project, not your own corner of it, and
+  you have twenty minutes before the next meeting. You want to see what's on your plate
+  right now, then pick one and read it in full before touching anything.
 teaches:
-  - "`biso ls` enseña como mucho 30 tareas y deja fuera las que ya están Done; lo que se
-    queda fuera lo dice por stderr, nunca mezclado con las filas de datos de stdout."
-  - "La urgencia que decide el orden no la escribe nadie, se recalcula cada vez que pides
-    la lista, y por eso nunca aparece como columna."
+  - "`biso ls` shows at most 30 tasks and leaves out the ones already Done; what gets left
+    out is reported on stderr, never mixed in with the data rows on stdout."
+  - "No one writes down the urgency that decides the order, it's recalculated every time
+    you ask for the list, which is why it never shows up as a column."
 steps:
   - narration: |
-      Miras qué tienes asignado, sin filtrar nada más:
+      You look at what's assigned to you, with no other filter:
     command: biso ls --mine
     output: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
@@ -25,20 +25,21 @@ steps:
     source:
       - spec/cmd/ls.md "`biso ls`"
     remark: |
-      Cinco filas, ni una más: como son menos de las 30 que `ls` enseña por defecto, no sale
-      ningún aviso de recorte por stderr, solo las filas por stdout. El orden no es el del
-      identificador ni el de cuándo se crearon: es urgencia descendente, que es el criterio
-      por defecto cuando ninguna tarea de la lista lleva un `ordinal` manual (sección 10.4).
-      TASK-11 va primera porque suma prioridad alta, estar activa y bloquear a otra tarea sin
-      terminar; TASK-40 va la última pese a estar también en marcha, porque a ella la bloquea
-      TASK-11 y eso resta en vez de sumar. Ese número no lo escribe nadie ni se guarda en
-      ningún sitio: se recalcula en el instante de leer (sección 5.4), y por eso no hay una
-      columna "urgency" en esta tabla, solo el orden que produce.
+      Five rows, not one more: since that's fewer than the 30 `ls` shows by default, no
+      truncation warning comes out on stderr, just the rows on stdout. The order isn't by id
+      or by when they were created: it's descending urgency, which is the default criterion
+      whenever no task in the list carries a manual `ordinal` (per the rules for `biso ls`).
+      TASK-11 comes first because it adds up high priority, being active, and blocking
+      another unfinished task; TASK-40 comes last despite also being in progress, because it
+      is itself blocked by TASK-11, and that subtracts instead of adding. No one writes that
+      number down or stores it anywhere: it's recalculated the instant you read it (per how
+      urgency is defined), which is why there's no "urgency" column in this table, only the
+      order it produces.
   - narration: |
-      En un tablero real esa lista no siempre cabe en 30 filas, y el aviso de lo que se ha
-      quedado fuera no se mezcla nunca con las tareas: va por stderr, para que redirigir la
-      salida a un fichero deje un fichero de datos limpio. Para verlo sin esperar a que el
-      tablero crezca, le pones un límite más bajo que el que tienes asignado:
+      On a real board that list doesn't always fit in 30 rows, and the notice about what got
+      left out never mixes in with the tasks: it goes to stderr, so redirecting the output to
+      a file leaves a clean data file. To see that without waiting for the board to grow, you
+      set a limit lower than what's assigned to you:
     command: biso ls --mine --limit 3
     output: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
@@ -51,18 +52,18 @@ steps:
     source:
       - spec/cmd/ls.md "`biso ls`"
     remark: |
-      Las tres primeras filas van por stdout, y la advertencia y la sugerencia van por
-      stderr: en tu terminal se ven seguidas, pero si guardas la salida en un fichero
-      (`biso ls --mine --limit 3 > tareas.txt`) ese fichero tiene tres líneas, no cinco.
-      Aquí el límite lo has puesto tú con `--limit 3` para verlo con pocos datos; sin esa
-      bandera el límite por defecto es 30, y con un tablero de este tamaño (54 To Do más 4
-      In Progress, sin contar las 190 Done que `ls` esconde por defecto) es fácil llegar a
-      esas 30 sin buscarlo. `--all` quita el límite entero, y `--any-status` es lo único que
-      trae de vuelta las tareas terminadas.
+      The first three rows go to stdout, and the warning and the hint go to stderr: in your
+      terminal you see them one after another, but if you save the output to a file
+      (`biso ls --mine --limit 3 > tareas.txt`) that file has three lines, not five. Here
+      you set the limit yourself with `--limit 3` to see this with little data; without that
+      flag the default limit is 30, and with a board this size (54 To Do plus 4 In Progress,
+      not counting the 190 Done that `ls` hides by default) it's easy to reach those 30
+      without even trying. `--all` removes the limit entirely, and `--any-status` is the only
+      thing that brings back the finished tasks.
   - narration: |
-      De las cinco, TASK-33 es la que más se parece a lo que acabas de dejar tú en el
-      escenario anterior: apuntada, con algún criterio ya pensado pero sin empezar. Antes de
-      decidir si es tuya de verdad, la lees entera:
+      Of the five, TASK-33 is the one that looks most like what you just left behind in the
+      previous scenario: written down, with a criterion or two already thought out but not
+      started. Before deciding whether it's really yours, you read it in full:
     command: biso get TASK-33
     output: |
       TASK-33  Add a retry counter to the upload log
@@ -110,13 +111,13 @@ steps:
     source:
       - spec/cmd/get.md "`biso get`"
     remark: |
-      No hay línea `lease`: esa solo sale cuando la tarea tiene un arrendamiento, y una tarea
-      en To Do no puede tenerlo (sección 5). Las nueve secciones salen siempre, aunque estén
-      vacías y marcadas con `(empty)`, porque omitir una que no se ha pedido se confundiría
-      con una que sí se ha pedido y ha salido vacía. Fíjate en las claves `#1`, `#2` y `#3`
-      delante de cada criterio: son estables, no una posición en la lista, así que si algún
-      día se quita el `#2` los otros dos siguen siendo `#1` y `#3`, nunca se renumeran.
+      There's no `lease` line: that only shows up when the task has a lease, and a task in
+      To Do can't have one (per the task data model). The nine sections always appear, even
+      when empty and marked `(empty)`, because leaving out one that wasn't requested would
+      be confused with one that was requested and came back empty. Notice the `#1`, `#2` and
+      `#3` keys in front of each criterion: they're stable, not a position in the list, so
+      if `#2` ever gets removed the other two stay `#1` and `#3`, they never get renumbered.
 board_in: |
-  55/4/190 (To Do / In Progress / Done), igual que al terminar el escenario 2.
+  55/4/190 (To Do / In Progress / Done), same as at the end of scenario 2.
 board_out: |
-  Sin cambios: `ls` y `get` no escriben nunca nada. Contadores 55/4/190.
+  No changes: `ls` and `get` never write anything. Counters 55/4/190.

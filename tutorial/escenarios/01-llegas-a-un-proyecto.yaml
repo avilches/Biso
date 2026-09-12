@@ -1,19 +1,19 @@
 id: 01-llegas-a-un-proyecto
-title: Llegas a un proyecto que no conoces
+title: You land on a project you don't know
 situation: |
-  Te acaban de meter en un proyecto que no habías tocado nunca. Hay gente trabajando en él
-  desde hace tiempo, hay tareas a medias, y tú no sabes ni por dónde se entra. Antes de tocar
-  nada, quieres saber qué hay: qué se está haciendo ahora mismo, qué espera respuesta, qué te
-  toca a ti y qué reglas rigen este tablero en concreto. No quieres leerte un manual entero
-  para eso.
+  You've just been dropped into a project you've never touched before. People have been
+  working on it for a while, there are tasks half done, and you don't even know where to
+  start. Before touching anything, you want to know what's there: what's being worked on
+  right now, what's waiting for an answer, what's yours, and what rules govern this board
+  specifically. You don't want to read an entire manual just for that.
 teaches:
   - >-
-    El arranque se lee entero una vez, al principio de la sesión, y con eso basta, sin volver a
-    consultar nada más para completar un ciclo de trabajo completo.
-  - "`biso where` existe para el día en que dudes de qué tablero estás tocando de verdad."
+    You read the startup message once, at the start of the session, and that's enough: you
+    never need to look anything else up to complete a full work cycle.
+  - "`biso where` exists for the day you're not sure which board you're actually touching."
 steps:
   - narration: |
-      Lo primero que haces, antes de mirar nada más, es esto:
+      The first thing you do, before looking at anything else, is this:
     command: biso prime
     output: |
       biso 1.0.0 - the task board of this project. This message is all you need to start.
@@ -103,20 +103,20 @@ steps:
     source:
       - spec/cmd/prime.md#la-salida-literal "La salida literal"
     remark: |
-      Esto es todo el mensaje, de arriba a abajo, y no hay una segunda pantalla después. El
-      bloque BOARD dice el vocabulario real de este tablero (los tipos, las prioridades, los
-      tres estados con su papel) y quién eres tú aquí. Las cuatro secciones de abajo reparten
-      el tablero entero sin que ninguna tarea aparezca en dos sitios: lo que está en marcha,
-      lo que espera una respuesta tuya, lo que es tuyo y lo siguiente por urgencia. Nadie
-      escribe esa urgencia a mano, se recalcula cada vez que la pides (lo retomas en el
-      escenario 3, "¿Y ahora qué hago?"). Con esto ya podrías crear una tarea, empezarla,
-      trabajarla y cerrarla sin abrir ningún otro documento: ese es el criterio con el que
-      está escrito este mensaje.
+      This is the whole message, top to bottom, and there is no second screen after it. The
+      BOARD block states the actual vocabulary of this board (the types, the priorities, the
+      three states and their role) and who you are here. The four sections below split up the
+      entire board without any task showing up in two places: what's in progress, what's
+      waiting on an answer from you, what's yours, and what's next by urgency. No one writes
+      that urgency by hand, it's recalculated every time you ask for it (you'll come back to
+      this in scenario 3, "What now?"). With this alone you could already create a task, start
+      it, work on it and close it without opening any other document: that's the standard this
+      message is written to.
   - narration: |
-      Aún así te queda una duda que `prime` no contesta: este tablero, el que acabas de leer,
-      ¿es exactamente el que crees que es? Si trabajas con varias copias del proyecto a la vez
-      (un worktree distinto, una carpeta clonada dos veces) conviene comprobarlo antes de
-      escribir nada.
+      Even so, there's one doubt `prime` doesn't answer: this board, the one you just read,
+      is it exactly the one you think it is? If you work with several copies of the project at
+      once (a different worktree, a folder cloned twice), it's worth checking before you write
+      anything.
     command: biso where
     output: |
       id       3f9a2b1c
@@ -130,17 +130,17 @@ steps:
     source:
       - spec/cmd/where.md "`biso where`"
     remark: |
-      Cuatro datos que cambian cada uno por su cuenta: el identificador no cambia jamás, el
-      nombre lo cambia `biso config set project_name`, la ruta cambia si alguien mueve la
-      carpeta a mano, y `source` dice de dónde ha salido esa respuesta, que aquí es el puntero
-      del proyecto (sección 3.2). Si no hubiera ningún tablero, tanto `prime` como `where`
-      fallarían con el código 8, y el propio mensaje de error de `where` remite a
-      `biso init` como el remedio: crea un tablero nuevo y lo deja apuntado desde este
-      proyecto. No hace falta más que saber que existe para este momento; sus banderas se ven
-      cuando de verdad haga falta crear uno.
+      Four pieces of data, each changing on its own: the id never changes, the name changes
+      with `biso config set project_name`, the path changes if someone moves the folder by
+      hand, and `source` says where that answer came from, which here is the project pointer
+      (how the board gets resolved in the first place). If there were no board at all, both
+      `prime` and `where` would fail with exit code 8, and `where`'s own error message points
+      to `biso init` as the fix: it creates a new board and leaves it pointed at from this
+      project. All you need right now is to know it exists; its flags matter only when you
+      actually need to create one.
 board_in: |
-  El tablero Kex tal y como lo fija el diseño del tutorial, sin ningún cambio previo.
-  Contadores 54/4/190 (To Do / In Progress / Done).
+  The Kex board exactly as the tutorial design fixes it, with no prior changes.
+  Counters 54/4/190 (To Do / In Progress / Done).
 board_out: |
-  Sin cambios: todo el escenario es de lectura, y ni `prime` ni `where` escriben nunca nada.
-  Contadores 54/4/190.
+  No changes: the whole scenario is read only, and neither `prime` nor `where` ever write
+  anything. Counters 54/4/190.

@@ -1,28 +1,29 @@
 id: 12-aparcas-a-medias
-title: Aparcas algo a medias
+title: You park something halfway
 situation: |
-  En el escenario 6 el agente se quedó con `TASK-52`, la tarea de documentar la lista de
-  publicación que `@bob` había dejado abandonada. Le pareció que alguien tenía que recogerla.
+  In scenario 6 the agent picked up `TASK-52`, the task of documenting the release checklist that
+  `@bob` had left abandoned. It seemed like someone had to pick it up.
 
-  Ahora, con la subida ya arreglada y cerrada, la mira otra vez y cambia de opinión: nadie ha
-  publicado nada en semanas, no hay prisa, y tenerla en marcha a su nombre da una imagen falsa de
-  lo que está pasando en el tablero. No es que esté terminada. Es que no toca.
+  Now, with the upload already fixed and closed, it looks at it again and changes its mind:
+  nobody has shipped a release in weeks, there's no rush, and keeping it in progress under its
+  name gives a false picture of what's actually happening on the board. It's not that it's done.
+  It's that it's not the right time.
 
-  Eso tiene un gesto propio, y no es el que la mayoría busca primero.
+  That has its own gesture for it, and it's not the one most people reach for first.
 teaches:
   - >-
-    Archivar no es terminar. Una tarea archivada no pasa al estado terminal: sale del tablero
-    activo con el estado que tuviera.
+    Archiving isn't finishing. An archived task doesn't move to the terminal state: it leaves the
+    active board in whatever state it already had.
   - >-
-    No existe ningún comando para borrar una tarea, y esa ausencia está especificada. El
-    identificador de una tarea archivada no se reutiliza nunca.
+    There's no command to delete a task, and that absence is itself part of the specification. An
+    archived task's identifier is never reused.
   - >-
-    Archivar vacía el arrendamiento, aunque estuviera vivo y aunque archivar no saque la tarea
-    del estado activo. Un arrendamiento afirma que alguien está trabajando ahora, y archivar
-    dice justo lo contrario.
+    Archiving clears the lease, even if it was still alive and even though archiving doesn't move
+    the task out of an active state. A lease asserts that someone is working on it right now, and
+    archiving says exactly the opposite.
 steps:
   - narration: |
-      El primer impulso de casi todo el mundo es buscar cómo se borra.
+      Almost everyone's first instinct is to look for how to delete it.
     command: biso delete TASK-52
     output: |
       error: there is no delete command, on purpose
@@ -34,12 +35,13 @@ steps:
     source:
       - spec/cmd/archive.md "`biso archive`"
     remark: |
-      La ausencia de este comando está escrita en la especificación, con su mensaje y su código,
-      en vez de dejar que `biso delete` caiga en el error genérico de comando desconocido. La
-      diferencia importa: un comando desconocido te hace dudar de si lo escribiste mal, y este
-      mensaje te dice que la decisión es deliberada y cuál es el gesto que buscabas.
+      This command's absence is written into the specification, with its own message and its own
+      code, instead of letting `biso delete` fall into the generic unknown-command error. The
+      difference matters: an unknown command makes you wonder whether you typed it wrong, and
+      this message tells you the decision is deliberate and which gesture you were actually
+      looking for.
   - narration: |
-      El agente saca la tarea del tablero.
+      The agent takes the task off the board.
     command: biso archive TASK-52
     output: |
       TASK-52  In Progress  ac 0/1  urgency 5.4  archived
@@ -49,22 +51,24 @@ steps:
       - spec/cmd/archive.md "`biso archive`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      Lee con cuidado esa línea, porque dice dos cosas que parecen incompatibles: la tarea sigue en
-      `In Progress` y está `archived`. No hay contradicción. Archivar no es un estado y no toca el
-      estado: es una marca aparte que la saca del tablero activo. Si mañana se desarchivara,
-      volvería a `In Progress`, que es donde estaba.
+      Read that line carefully, because it says two things that look incompatible: the task is
+      still `In Progress` and it's `archived`. There's no contradiction. Archiving isn't a state
+      and it doesn't touch the state: it's a separate flag that takes the task off the active
+      board. If it were unarchived tomorrow, it would go back to `In Progress`, which is where it
+      already was.
 
-      Y hay algo que la línea no dice: el arrendamiento que el agente había reclamado en el
-      escenario 6 acaba de vaciarse. Eso pasa siempre al archivar, sea el arrendamiento de quien
-      sea y esté vivo o vencido, y el motivo es que conservarlo lo guardaría donde nadie lo ve,
-      porque el arranque y el listado esconden las archivadas por defecto. Si esta tarea volviera
-      al tablero dentro de tres semanas con un arrendamiento a nombre de una sesión que ya murió,
-      ese dato sería basura con aspecto de información.
+      And there's something the line doesn't say: the lease the agent had claimed back in
+      scenario 6 has just been cleared. That always happens on archiving, whoever holds the lease
+      and whether it's still alive or already expired, and the reason is that keeping it around
+      would stash it somewhere nobody looks, because both the startup message and the listing
+      hide archived tasks by default. If this task came back to the board three weeks from now
+      with a lease still held by a session that had already died, that would be garbage wearing
+      the costume of information.
 
-      La urgencia sigue calculándose, 5.4, porque la tarea sigue en un estado que no es el
-      terminal. Archivar no la pone a cero: eso lo hace terminarla.
+      Urgency is still being calculated, 5.4, because the task is still in a state that isn't the
+      terminal one. Archiving doesn't zero it out: finishing it does.
   - narration: |
-      Comprueba que no la ha perdido.
+      It checks that it hasn't lost the task.
     command: biso ls --archived
     output: |
       TASK-52  In Progress  task  low  Document the release checklist  ac 0/1  @claude  -
@@ -74,13 +78,14 @@ steps:
       - spec/cmd/ls.md "`biso ls`"
       - spec/cmd/archive.md "`biso archive`"
     remark: |
-      Ahí sigue, entera, con su asignación intacta. Lo único que ha perdido es el arrendamiento.
+      There it is, intact, still assigned to the same person. The only thing it's lost is the
+      lease.
 
-      Fíjate en que `--archived` es lo que la trae de vuelta a la vista: sin esa bandera no
-      aparece ni en `biso ls` ni en `biso prime`, y eso es lo que significa "salir del tablero
-      activo". La tarea no se ha ido a ninguna parte, se ha quitado de en medio.
+      Notice that `--archived` is what brings it back into view: without that flag it shows up in
+      neither `biso ls` nor `biso prime`, and that's what "leaving the active board" actually
+      means. The task hasn't gone anywhere, it's just been moved out of the way.
   - narration: |
-      Y para cerrar la idea, mira qué queda en marcha ahora.
+      And to close the idea, it checks what's still in progress now.
     command: biso ls -s "In Progress"
     output: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
@@ -92,16 +97,17 @@ steps:
       - spec/cmd/ls.md "`biso ls`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      Tres tareas donde antes había cuatro, y `TASK-19` ya no está en ninguna de las dos listas
-      porque se terminó en el escenario 10. El tablero dice ahora la verdad sobre lo que se está
-      haciendo, que es para lo que sirve archivar algo que no vas a tocar.
+      Three tasks where there used to be four, and `TASK-19` isn't in either list anymore because
+      it got finished back in scenario 10. The board now tells the truth about what's actually
+      being worked on, which is exactly what archiving something you're not going to touch is
+      for.
 board_in: >
-  TASK-52 en In Progress, asignada a @claude, ac 0/1, urgencia 5.4, con el arrendamiento vivo de
-  @claude que reclamo en el escenario 6. TASK-19 ya terminada desde el escenario 10. El escenario
-  11 no escribio nada. Contadores 54/4/191 (To Do / In Progress / Done), con las cuatro en curso
-  siendo TASK-11, TASK-60, TASK-52 y TASK-40.
+  TASK-52 in In Progress, assigned to @claude, ac 0/1, urgency 5.4, with the lease @claude claimed
+  back in scenario 6 still alive. TASK-19 already finished since scenario 10. Scenario 11 wrote
+  nothing. Counters 54/4/191 (To Do / In Progress / Done), with the four in progress being
+  TASK-11, TASK-60, TASK-52 and TASK-40.
 board_out: >
-  TASK-52 sigue en In Progress y sigue asignada a @claude, pero esta archivada y su arrendamiento
-  esta vacio: ni fecha de vencimiento ni tenedor. Su identificador queda reservado para siempre.
-  Ninguna otra tarea se toca. Contadores 54/3/191: In Progress baja de 4 a 3 porque los contadores
-  del arranque cuentan tareas no archivadas, no porque TASK-52 haya cambiado de estado.
+  TASK-52 is still In Progress and still assigned to @claude, but it's archived and its lease is
+  empty now: no expiry, no holder. Its identifier stays reserved forever. No other task is
+  touched. Counters 54/3/191: In Progress drops from 4 to 3 because the startup counters count
+  unarchived tasks, not because TASK-52 changed state.

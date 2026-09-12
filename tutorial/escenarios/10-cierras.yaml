@@ -1,27 +1,27 @@
 id: 10-cierras
-title: Cierras
+title: You close it
 situation: |
-  El reintento funciona, está documentado y hay quien lo ha revisado por encima en los
-  comentarios. Antes de cerrar TASK-19 repasas los criterios de aceptación, y te das cuenta de
-  que dos cosas que ya has hecho nunca quedaron anotadas como criterio: el backoff y las
-  pruebas. Las añades antes de marcar nada, para que la ficha final cuente la historia completa.
+  The retry works, it's documented, and someone has given it a quick look over in the comments.
+  Before closing TASK-19 you go back over the acceptance criteria, and realize that two things
+  you've already done were never written down as a criterion: the backoff and the tests. You add
+  them before checking anything off, so the final record tells the whole story.
 teaches:
   - >-
-    Las banderas `--check` y `--uncheck` (y sus pares `--check-dod` y `--uncheck-dod`) aceptan
-    cinco formas de selector, todas repetibles y todas combinables en la misma llamada, una
-    clave suelta, un rango, una lista separada por comas, `all`, o el texto del criterio.
+    The `--check` and `--uncheck` flags (and their `--check-dod` and `--uncheck-dod` counterparts)
+    accept five selector forms, all repeatable and all combinable in the same call: a single key,
+    a range, a comma-separated list, `all`, or the criterion's text.
   - >-
-    Marcar o desmarcar es siempre seguro de repetir. `--check all` no rompe nada aunque ya
-    estuviera todo marcado, y por eso el cierre de un ciclo siempre puede llevarlo sin mirar
-    antes qué falta.
+    Checking or unchecking is always safe to repeat. `--check all` breaks nothing even if
+    everything was already checked, and that's why closing out a cycle can always use it without
+    first checking what's missing.
   - >-
-    Cerrar una tarea vacía siempre su arrendamiento, lo tenga quien lo tenga. Es la invariante
-    que gobierna cualquier escritura que saca una tarea del estado activo, y `biso finish` la
-    aplica sin excepción.
+    Closing a task always clears its lease, no matter who's holding it. It's the invariant that
+    governs any write that takes a task out of the active state, and `biso finish` applies it
+    without exception.
 steps:
   - narration: |
-      Añades los dos criterios que te faltaban, de una vez.
-    command: biso set TASK-19 --ac "El backoff sigue el mismo patron que el endpoint de descargas" --ac "Hay un test que cubre el caso de 5xx repetido" --ac "Hay un test que cubre el caso de exito tras reintentar" --ac "La documentacion del endpoint menciona el limite de reintentos"
+      You add the two criteria you were missing, all at once.
+    command: biso set TASK-19 --ac "The backoff follows the same pattern as the download endpoint" --ac "There's a test that covers the repeated 5xx case" --ac "There's a test that covers the success case after retrying" --ac "The endpoint documentation mentions the retry limit"
     output: |
       TASK-19  In Progress  ac 0/6  dod 0/2  urgency 11.0
     exit_code: 0
@@ -31,11 +31,11 @@ steps:
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
     remark: |
-      Cuatro `--ac` en la misma llamada añaden cuatro elementos nuevos, en el orden en que se
-      escriben (4.9), con claves nuevas, #3, #4, #5 y #6, detrás de los #1 y #2 que ya tenía la
-      tarea desde el inventario inicial.
+      Four `--ac` flags in the same call add four new elements, in the order they're written,
+      with new keys, #3, #4, #5 and #6, after the #1 and #2 the task already had from the initial
+      inventory.
   - narration: |
-      Marcas el primero, el que ya tenías comprobado desde el principio.
+      You check off the first one, the one you'd already verified from the start.
     command: biso set TASK-19 --check 1
     output: |
       TASK-19  In Progress  ac 1/6  dod 0/2  urgency 11.0
@@ -45,7 +45,7 @@ steps:
       - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
   - narration: |
-      Los tres que probaste juntos con el mismo test, de una vez, con un rango.
+      The three you tested together with the same test, all at once, with a range.
     command: biso set TASK-19 --check 3-5
     output: |
       TASK-19  In Progress  ac 4/6  dod 0/2  urgency 11.0
@@ -55,7 +55,7 @@ steps:
       - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
   - narration: |
-      Y dos que no son consecutivos, con una lista separada por comas.
+      And two that aren't consecutive, with a comma-separated list.
     command: biso set TASK-19 --check 2,6
     output: |
       TASK-19  In Progress  ac 6/6  dod 0/2  urgency 11.0
@@ -65,9 +65,8 @@ steps:
       - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
   - narration: |
-      Casi al momento te das cuenta de que el #2 (el del contador en el log) lo diste por bueno
-      demasiado pronto, el número de intentos todavía no se ve en el log, solo el resultado
-      final. Lo desmarcas.
+      Almost right away you realize you marked #2 (the one about the log counter) too soon: the
+      number of attempts still doesn't show up in the log, only the final result. You uncheck it.
     command: biso set TASK-19 --uncheck 2
     output: |
       TASK-19  In Progress  ac 5/6  dod 0/2  urgency 11.0
@@ -77,11 +76,11 @@ steps:
       - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
     remark: |
-      `--uncheck` toma el mismo selector que `--check`, con el mismo efecto invertido, aquí
-      "uno suelto", igual que el primer `--check` de este escenario.
+      `--uncheck` takes the same selector as `--check`, with the same effect inverted, here "a
+      single one," just like the first `--check` in this scenario.
   - narration: |
-      En la definición de hecho, marcas el que ya está cerrado buscando por su texto, no por
-      número.
+      In the definition of done, you check off the one that's already finished by searching for
+      its text, not by number.
     command: biso set TASK-19 --check-dod "README"
     output: |
       TASK-19  In Progress  ac 5/6  dod 1/2  urgency 11.0
@@ -91,14 +90,13 @@ steps:
       - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
     remark: |
-      "README" no encaja con la gramática de claves de 8.4 (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), así
-      que se trata como texto literal y busca el elemento cuyo texto lo contenga. Solo el #5
-      ("El README explica cuándo y cuántas veces se reintenta") encaja, así que no hay ambigüedad.
+      "README" doesn't match the key grammar (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), so it's treated
+      as literal text and matches the element whose text contains it. Only #5 ("The README
+      explains when and how many times it retries") matches, so there's no ambiguity.
   - narration: |
-      Añades el número de intentos al log, comprueba que ahora sí aparece, y cierras la tarea.
-      Marcas todo lo que quede de una vez, por si te has dejado algo suelto, y escribes el
-      resumen.
-    command: biso finish TASK-19 --check all --check-dod all --summary "Retry con el mismo backoff que el endpoint de descargas, tope de 3 intentos, contador visible en el log."
+      You add the attempt count to the log, check that it now shows up, and close the task. You
+      check off anything left, just in case you missed something, and write the summary.
+    command: biso finish TASK-19 --check all --check-dod all --summary "Retry with the same backoff as the download endpoint, capped at 3 attempts, attempt count visible in the log."
     output: |
       TASK-19  Done  ac 6/6  dod 2/2  urgency 0.0
     exit_code: 0
@@ -108,29 +106,27 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-finish "`biso finish`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      `--check all` vuelve a marcar el #2, que habías desmarcado, y no toca los otros cinco, ya
-      estaban marcados, y marcar dos veces el mismo criterio "se queda marcado, sin aviso, la
-      operación es idempotente" (8.4). `--check-dod all` marca el #6, el único que quedaba. La
-      urgencia pasa a 0.0 porque el estado terminal la fija así por definición (5.4), no porque
-      se recalcule con la fórmula de siempre.
+      `--check all` checks #2 again, the one you'd unchecked, and doesn't touch the other five,
+      they were already checked, and checking the same criterion twice "stays checked, with no
+      warning, the operation is idempotent." `--check-dod all` checks #6, the only one left.
+      Urgency drops to 0.0 because the terminal state fixes it there by definition, not because
+      it gets recalculated with the usual formula.
 
-      Lo que esta línea no dice, y conviene saber, es que cerrar una tarea vacía siempre
-      `leaseExpiresAt` y `leaseHolder`, sea quien sea quien la tenga (sección 5, séptima
-      precisión, citada de nuevo en 10.6 y en 10.7.4). TASK-19 llevaba el arrendamiento de
-      @claude desde el escenario 5; con este `biso finish` queda sin arrendamiento, y quedaría
-      igual de vacío aunque lo hubiera tenido otra identidad. La invariante gana siempre sobre
-      la regla general de "una escritura ajena no toca el arrendamiento": una tarea terminada
-      con arrendamiento vivo es un estado que ni la propia importación del tablero aceptaría.
+      What this line doesn't say, and is worth knowing, is that closing a task always clears
+      `leaseExpiresAt` and `leaseHolder`, whoever is holding it. TASK-19 had been carrying
+      @claude's lease since scenario 5; after this `biso finish` it's left without a lease, and it
+      would end up just as empty even if another identity had been holding it. The invariant
+      always wins over the general rule that "a write by someone else doesn't touch the lease": a
+      finished task with a live lease is a state that not even importing the board would accept.
 board_in: >
-  TASK-19 en In Progress, ac 0/2 (2 criterios sin marcar), dod 0/2 (claves #5 y #6, sin marcar),
-  4 comentarios, 1 párrafo de notas de implementación, con arrendamiento vivo de @claude.
-  Urgencia 11.0. Contadores del tablero: 54/5/190, sin cambios desde el escenario 9.
+  TASK-19 in In Progress, ac 0/2 (2 unchecked criteria), dod 0/2 (keys #5 and #6, unchecked), 4
+  comments, 1 implementation note paragraph, with a live lease held by @claude. Urgency 11.0.
+  Board counters: 54/5/190, unchanged since scenario 9.
 board_out: >
-  TASK-19 en Done. ac 6/6: los 2 criterios originales más los 4 añadidos en este escenario
-  (claves #1 a #6), todos marcados. dod 2/2 (claves #5 y #6), todos marcados. Lleva resumen
-  final. El arrendamiento queda vacío, leaseExpiresAt y leaseHolder sin valor, por la invariante
-  de la sección 5 que vacía los dos campos en cualquier escritura que saca la tarea del estado
-  activo, y llegar al estado terminal lo hace siempre. Urgencia 0.0, por ser el estado terminal.
-  Contadores del tablero: To Do 54 | In Progress 4 | Done 191, porque TASK-19 sale de In
-  Progress y entra en Done. La espina dorsal del tutorial (TASK-19, seguida desde el escenario 4
-  hasta aquí) queda cerrada.
+  TASK-19 in Done. ac 6/6: the 2 original criteria plus the 4 added in this scenario (keys #1
+  through #6), all checked. dod 2/2 (keys #5 and #6), all checked. Carries a final summary. The
+  lease ends up empty, leaseExpiresAt and leaseHolder with no value, by the invariant that empties
+  both fields on any write that takes the task out of the active state, and reaching the terminal
+  state always does. Urgency 0.0, for being the terminal state. Board counters: To Do 54 | In
+  Progress 4 | Done 191, because TASK-19 leaves In Progress and enters Done. The tutorial's
+  backbone (TASK-19, followed from scenario 4 to here) is now closed.

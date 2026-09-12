@@ -1,29 +1,29 @@
 id: 13-muchas-de-golpe
-title: Tocas veinte de golpe
+title: You touch twenty at once
 situation: |
-  Última parada. Hasta aquí todo lo que has hecho ha sido sobre una tarea a la vez, y así es como
-  se trabaja el noventa por ciento del tiempo.
+  Last stop. So far everything you've done has been on one task at a time, and that's how you
+  work ninety percent of the time.
 
-  Pero llega el día en que hay que retocar veinte. El equipo decide que las tareas de documentación
-  bajan de prioridad este trimestre, o llega una lista de incidencias de otro sistema y hay que
-  meterlas todas. Y ahí aparece una pregunta que da miedo: si algo falla a mitad del lote, ¿qué
-  queda escrito?
+  But the day comes when you need to touch twenty at once. The team decides documentation tasks
+  drop in priority this quarter, or a list of incidents arrives from another system and all of
+  them need to go in. And that's where a scary question shows up: if something fails halfway
+  through the batch, what ends up written?
 
-  La respuesta de `biso` es que nada. Vale la pena ver por qué.
+  `biso`'s answer is nothing. It's worth seeing why.
 teaches:
   - >-
-    Todo lo que se puede hacer una vez se puede hacer cien, y con los mismos nombres de bandera.
-    No hay una sintaxis aparte para el lote.
+    Anything you can do once you can do a hundred times, with the same flag names. There's no
+    separate syntax for batches.
   - >-
-    La validación es previa y total: se comprueba el lote entero antes de escribir nada. Un lote
-    no se queda a medias, así que no hay que averiguar por dónde se rompió.
+    Validation happens upfront and in full: the whole batch gets checked before anything is
+    written. A batch never ends up half-done, so you never have to figure out where it broke.
   - >-
-    `--dry-run` valida sin escribir y contesta con el código de salida: 0 si habría funcionado,
-    9 si no. Es la forma de mirar antes de saltar.
+    `--dry-run` validates without writing and answers with the exit code: 0 if it would have
+    worked, 9 if not. It's how you look before you leap.
 steps:
   - narration: |
-      El agente empieza por lo fácil: dos tareas que hay que bajar de prioridad, en una sola
-      llamada.
+      The agent starts with the easy part: two tasks that need their priority lowered, in a
+      single call.
     command: biso set TASK-44 TASK-61 --priority low
     output: |
       TASK-44  To Do  ac 0/1  urgency 1.6
@@ -34,17 +34,17 @@ steps:
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      Una línea por tarea, con el mismo formato que cuando tocas una sola. No hay un modo lote que
-      cambie la forma de la salida ni un resumen que sustituya al detalle: lo que aprendiste con
-      una vale para las dos.
+      One line per task, in the same format as when you touch a single one. There's no batch
+      mode that changes the shape of the output, and no summary that replaces the detail: what
+      you learned with one applies to two just the same.
 
-      `TASK-44` ya era de prioridad baja, así que su urgencia no se mueve. `TASK-61` baja de 4.5 a
-      1.4, y ahí hay una lección escondida sobre leer estos números: la caída real es de
-      exactamente 3.0, los que aportaba la prioridad media, pero las dos cifras que ves están
-      redondeadas a un decimal desde 4.45 y 1.45, y esos dos redondeos no van en la misma
-      dirección. La urgencia sirve para ordenar una lista, no para hacer aritmética con ella.
+      `TASK-44` was already low priority, so its urgency doesn't move. `TASK-61` drops from 4.5
+      to 1.4, and there's a hidden lesson in there about reading these numbers: the real drop is
+      exactly 3.0, what medium priority was contributing, but the two figures you see are rounded
+      to one decimal from 4.45 and 1.45, and those two roundings don't go the same direction.
+      Urgency is for ordering a list, not for doing arithmetic on it.
   - narration: |
-      Ahora una lista más larga, y con una errata dentro: una de las referencias no existe.
+      Now a longer list, with a typo hidden inside: one of the references doesn't exist.
     command: biso set TASK-7 TASK-33 TASK-99 --priority medium
     output: |
       error: TASK-99 has never existed on this board
@@ -55,16 +55,17 @@ steps:
       - spec/referencias.md#los-tres-mensajes-de-no-la-encuentro "Los tres mensajes de "no la encuentro""
       - spec/cmd/set.md "`biso set`"
     remark: |
-      Y esto es lo importante: **`TASK-7` y `TASK-33` no se han tocado**. No es que se hayan
-      escrito y luego se haya deshecho: es que no se llegó a escribir nada, porque la validación de
-      las tres referencias ocurre antes de la primera escritura.
+      And here's what matters: **`TASK-7` and `TASK-33` haven't been touched**. It's not that
+      they got written and then undone: it's that nothing ever got written, because validating
+      all three references happens before the first write.
 
-      Piensa en lo que te ahorra. Si el lote se aplicase tarea a tarea y se detuviese al fallar,
-      después de este error tendrías que averiguar cuántas se habían escrito ya para no repetirlas,
-      y eso es imposible de hacer bien desde un programa. Aquí el contrato es simple: o todas o
-      ninguna.
+      Think about what that saves you. If the batch applied task by task and stopped on the
+      first failure, after this error you'd have to figure out how many had already been written
+      so you wouldn't repeat them, and there's no way to do that reliably from a program. The
+      contract here is simple: all of them or none of them.
   - narration: |
-      Corrige la errata y esta vez, antes de escribir, pide que se lo valide sin tocar nada.
+      It fixes the typo and this time, before writing, asks for it to be validated without
+      touching anything.
     command: biso set TASK-7 TASK-33 --priority medium --dry-run
     output: |
       2 tasks would be updated, nothing was written (--dry-run)
@@ -74,16 +75,16 @@ steps:
       - spec/invocacion.md#banderas-globales "Banderas globales"
       - spec/cmd/set.md "`biso set`"
     remark: |
-      Código 0, así que habría funcionado. Ese código es la respuesta de verdad, más que el texto:
-      un programa que llame a `biso` no necesita leer nada para saber si el lote es válido.
+      Exit code 0, so it would have worked. That code is the real answer, more than the text: a
+      program calling `biso` doesn't need to read anything to know whether the batch is valid.
 
-      El texto exacto de esta línea es una derivación. La especificación da la frase literal para el
-      lote de `biso new --from` ("242 tasks would be created, nothing was written (--dry-run)") y
-      dice que `--dry-run` vale en todos los comandos que escriben, pero no escribe la frase para
-      `biso set`. Aquí se ha usado la misma forma cambiando el verbo, que es lo más probable, y
-      queda anotado en tutorial/lagunas/11-13.md.
+      The exact text of this line is a derivation. The specification gives the literal phrase for
+      `biso new --from`'s batch ("242 tasks would be created, nothing was written (--dry-run)")
+      and says `--dry-run` works on every command that writes, but it doesn't spell out the
+      phrase for `biso set`. Here the same form was used with the verb swapped, which is the most
+      likely choice, and it's noted in tutorial/lagunas/11-13.md.
   - narration: |
-      Con la validación en verde, ejecuta de verdad.
+      With validation green, it runs it for real.
     command: biso set TASK-7 TASK-33 --priority medium
     output: |
       TASK-7   To Do  ac 0/4  urgency 15.3
@@ -94,18 +95,18 @@ steps:
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
     remark: |
-      `TASK-7` cae de 18.3 a 15.3, que son los 3.0 que pierde al pasar de prioridad alta a media, y
-      sigue siendo la más urgente del tablero con diferencia: le queda el término de fecha límite,
-      que aporta 11.2 porque vence en dos días. `TASK-33` no se mueve, porque ya era de prioridad
-      media, y aun así aparece en la salida: te dice en qué queda cada tarea que nombraste, no solo
-      las que cambiaron.
+      `TASK-7` drops from 18.3 to 15.3, the 3.0 it loses going from high to medium priority, and
+      it's still the most urgent task on the board by a wide margin: it still has the deadline
+      term, contributing 11.2 because it's due in two days. `TASK-33` doesn't move, since it was
+      already medium priority, and it still shows up in the output anyway: it tells you where
+      every task you named ends up, not just the ones that changed.
 
-      Fíjate también en la alineación de la primera columna. El ancho lo fija el identificador más
-      largo de la salida, así que `TASK-7` lleva un espacio de más para cuadrar con `TASK-33`.
+      Notice the alignment of the first column too. Its width is set by the longest identifier in
+      the output, so `TASK-7` carries an extra space to line up with `TASK-33`.
   - narration: |
-      Para acabar, el otro lote que existe: meter tareas nuevas desde un fichero. El agente ha
-      recibido tres incidencias por otro canal y las tiene en un fichero, una por línea. Antes de
-      importarlas, las valida.
+      To finish, the other kind of batch that exists: bringing in new tasks from a file. The
+      agent got three incidents through another channel and has them in a file, one per line.
+      Before importing them, it validates them.
     command: biso new --from incidencias.ndjson --dry-run
     output: |
       3 tasks would be created, nothing was written (--dry-run)
@@ -114,26 +115,27 @@ steps:
     source:
       - spec/cmd/new.md "`biso new`"
     remark: |
-      Esta frase sí es literal de la especificación, con otro número. Y aquí `--dry-run` es donde
-      más sirve, porque un fichero de importación puede traer un tipo, un estado o una clave que
-      este tablero no conoce, y un valor que el tablero no conoce siempre es un error.
+      This sentence really is literal from the specification, just with a different number. And
+      this is where `--dry-run` earns its keep most, because an import file can bring in a type,
+      a status or a key this board doesn't know, and a value the board doesn't know is always an
+      error.
 
-      Con el lote de importación eso significa que un solo campo mal escrito en la línea 200
-      impide crear las 199 anteriores. Suena severo y es lo que quieres: al revés tendrías un
-      tablero a medio importar y ninguna forma fiable de saber por dónde continuar.
+      With an import batch that means a single misspelled field on line 200 stops the 199 before
+      it from being created at all. That sounds harsh and it's exactly what you want: the
+      alternative would be a half-imported board and no reliable way to tell where it stopped.
 
-      Si la validación fallase, el código sería 9, no 4 ni 3: nueve significa exactamente "no se
-      escribió nada porque la validación no pasó", y se distingue del error de un valor concreto
-      justamente porque lo que informa es sobre el lote entero.
+      If validation failed, the code would be 9, not 4 or 3: nine means exactly "nothing was
+      written because validation didn't pass," and it's distinct from the error for one specific
+      bad value precisely because what it's reporting on is the whole batch.
 board_in: >
-  El tablero tal y como lo deja el escenario 12: TASK-52 archivada y sin arrendamiento, TASK-19
-  terminada desde el escenario 10, TASK-62 creada en el escenario 2. TASK-44 en To Do con
-  prioridad low y urgencia 1.6, TASK-61 en To Do con prioridad medium y urgencia 4.5 (4.45 antes de redondear), TASK-7 en To
-  Do con prioridad high, fecha limite 2026-09-08 y urgencia 18.3, TASK-33 en To Do con prioridad
-  medium y urgencia 4.3. Contadores 54/3/191.
+  The board as scenario 12 leaves it: TASK-52 archived with no lease, TASK-19 finished since
+  scenario 10, TASK-62 created in scenario 2. TASK-44 in To Do with low priority and urgency 1.6,
+  TASK-61 in To Do with medium priority and urgency 4.5 (4.45 before rounding), TASK-7 in To Do
+  with high priority, deadline 2026-09-08 and urgency 18.3, TASK-33 in To Do with medium priority
+  and urgency 4.3. Counters 54/3/191.
 board_out: >
-  TASK-44 sin cambios reales, seguia siendo de prioridad low. TASK-61 con prioridad low y urgencia
-  1.4. TASK-7 con prioridad medium y urgencia 15.3. TASK-33 sin cambios, ya era medium. Ninguna
-  tarea creada: las tres del fichero de incidencias no se escriben, porque el unico paso que las
-  toca es un --dry-run. Contadores sin cambios, 54/3/191, porque ningun paso mueve una tarea de
-  estado ni crea ninguna.
+  TASK-44 with no real change, it was already low priority. TASK-61 now low priority with urgency
+  1.4. TASK-7 now medium priority with urgency 15.3. TASK-33 unchanged, it was already medium. No
+  task created: the three from the incident file are never written, because the only step that
+  touches them is a --dry-run. Counters unchanged, 54/3/191, because no step moves a task between
+  states or creates one.

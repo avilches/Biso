@@ -6,6 +6,9 @@ luego se regenera la página.
 
 Su diseño, con el porqué de cada decisión, está en
 [`docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md`](../docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md).
+La forma de las citas a varias secciones a la vez y que el contenido del tutorial nace en inglés
+(a diferencia del resto de la documentación del repositorio) se decidió después, en
+[`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](../docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md).
 
 ## La idea
 
@@ -39,42 +42,53 @@ historia.
 Cada paso declara el comando, su salida, su código de salida y **de dónde sale esa salida**:
 
 ```yaml
-  - narracion: |
-      Prosa que prepara el comando.
-    comando: biso note TASK-11 "Reescrito el parser de fechas"
-    salida: |
+  - narration: |
+      Prose that sets up the command.
+    command: biso note TASK-11 "Rewrote the date parser"
+    output: |
       warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z
       TASK-11  In Progress  ac 1/2  dod 0/2  urgency 41.0
-    codigo_salida: 0
-    origen: literal spec/salida-y-terminal.md#notas-y-avisos
-    comentario: |
-      Opcional. Lo que hay que mirar en esa salida y por qué.
+    exit_code: 0
+    source_kind: literal
+    source:
+      - spec/salida-y-terminal.md#notas-y-avisos "Notas y avisos"
+    remark: |
+      Optional. What to look at in that output, and why.
 ```
 
 Las reglas que no se negocian:
 
-- **`origen` solo admite dos formas**, `literal spec/<ruta>` si la salida está copiada carácter a
-  carácter de ese fichero de `docs/spec/`, o `derivada spec/<ruta>[, spec/<ruta>...]` si se construyó
-  aplicando las reglas de esos ficheros. `<ruta>` lleva ancla cuando la regla está dentro de un
-  apartado y no cuando es el fichero entero. El generador **marca las derivadas en la página
-  enlazando cada ruta**, y esa marca es el aparato de validación: lo literal ya está validado por
-  estar en la especificación, lo derivado es lo que hay que revisar. De 59 pasos, 7 son literales.
-- **`codigo_salida` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial
+- **`source_kind` es `literal` o `derived`, y `source` es siempre una lista**, de una sola cita si
+  `source_kind` es `literal` (un texto copiado carácter a carácter solo puede salir de un sitio), de
+  una o varias si es `derived`. Cada cita de `source` tiene la forma `ruta/spec/fichero.md "Título"`,
+  con la ruta relativa a `docs/` y **el título tal cual aparece en `docs/spec/`, sin traducir**: el
+  generador lo usa literal como texto del enlace, y `docs/spec/` se queda en español aunque el
+  tutorial nazca en inglés. El generador **enlaza cada cita de un paso `derived`** en la página, y esa
+  marca es el aparato de validación: lo literal ya está validado por estar en la especificación, lo
+  derivado es lo que hay que revisar. De 59 pasos, 7 son literales.
+- **`exit_code` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial
   que solo declara el código cuando falla enseña que el código solo importa al fallar, y en `biso` es
   al revés.
-- **`salida` es stdout y stderr juntos**, en el orden en que los ve una persona en su terminal,
-  porque es lo que el lector va a comparar. Cuando la distinción importa se dice en `comentario`.
+- **`output` es stdout y stderr juntos**, en el orden en que los ve una persona en su terminal,
+  porque es lo que el lector va a comparar. Cuando la distinción importa se dice en `remark`.
 - **Nada se inventa.** Si la especificación no decide algo que un escenario necesita, no se rellena
   con lo que parezca razonable: se anota en `lagunas/` con la pregunta concreta y lo que se supuso.
   Esa carpeta alimenta `docs/PENDIENTES.md`, y es uno de los productos valiosos de escribir esto.
 - **Los escenarios comparten un tablero y ocurren en orden.** Cada fichero declara en
-  `tablero_entra` y `tablero_sale` qué estado recibe y qué estado entrega, y eso es lo que hace
+  `board_in` y `board_out` qué estado recibe y qué estado entrega, y eso es lo que hace
   visible una rotura de continuidad.
 
-Los ficheros de esta carpeta son documentación con forma de datos, así que **sus claves y su prosa
-van en español**. Los tres scripts son código, así que van enteros en inglés, con la única excepción
-de las cadenas que el generador emite dentro de la página, agrupadas en un bloque marcado al
-principio de `generate.py`.
+**El contenido del tutorial nace en inglés, al revés que el resto de la documentación del
+repositorio.** `title`, `situation`, `teaches`, `narration`, `remark`, `board_in` y `board_out` van
+en inglés; `command` y `output` ya estaban en inglés porque son texto literal de la interfaz de
+`biso`; y el título de cada cita de `source` se queda en español porque cita un fichero de
+`docs/spec/` que sigue en español. Es una excepción declarada para esta carpeta y para
+`docs/TUTORIAL.md`, no un cambio de la regla general de `CLAUDE.md` de que la documentación va en
+español: este fichero, `lagunas/*.md` y los documentos de diseño siguen en español. Los nombres de
+los ficheros y de la carpeta (`escenarios/NN-nombre.yaml`, `conceptos.md`) tampoco cambian de idioma,
+solo su contenido. Los tres scripts son código, así que van enteros en inglés, con la única excepción
+de las cadenas que el generador emite dentro de la página, que ahora también están en inglés y ya no
+son una excepción al idioma del código.
 
 ## Los tres comandos
 

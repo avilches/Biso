@@ -1,28 +1,28 @@
 id: 09-la-persona-y-el-agente-hablan
-title: La persona y el agente hablan
+title: The person and the agent talk
 situation: |
-  Con la duda del reintento resuelta, sigues implementando TASK-19. Vas dejando constancia de lo
-  que compruebas, para que quien lea la tarea después no tenga que releer el diff entero. Pero
-  también te llega algo de fuera que no es tuyo: un usuario ha reportado un problema por otro
-  canal, y alguien te pide que lo dejes anotado en la tarea. Son dos cosas distintas y es fácil
-  confundirlas: una nota de implementación es tu cuaderno, sin firma ni fecha propia por
-  entrada; un comentario es una conversación, y siempre lleva quién lo escribió y cuándo.
+  With the retry question settled, you keep implementing TASK-19. You keep a record of what you
+  check, so whoever reads the task later doesn't have to re-read the whole diff. But something
+  also comes in from outside that isn't yours: a user has reported a problem through another
+  channel, and someone asks you to leave it noted on the task. These are two different things and
+  it's easy to mix them up: an implementation note is your own notebook, with no author or
+  timestamp per entry; a comment is a conversation, and it always carries who wrote it and when.
 teaches:
   - >-
-    El comando `biso note` añade un párrafo a las notas de implementación. Es un bloque de prosa
-    sin autor ni instante por elemento, el cuaderno técnico de quien hace el trabajo.
+    The `biso note` command adds a paragraph to the implementation notes. It's a block of prose
+    with no author or timestamp per element, the technical notebook of whoever is doing the work.
   - >-
-    El comando `biso comment` añade un comentario con autor e instante. Es la vía por la que
-    entra lo que viene de fuera, y el canal de conversación con una persona.
+    The `biso comment` command adds a comment with an author and a timestamp. It's the channel
+    for anything that comes from outside, and the way to talk with a person.
   - >-
-    El autor por defecto de un comentario es la identidad configurada (`me`). `--comment-author`
-    deja firmarlo con otra, texto libre y sin validar, para retransmitir algo que vino de otro
-    sistema.
+    A comment's default author is the configured identity (`me`). `--comment-author` lets you
+    sign it with another one, free text and unvalidated, to relay something that came from
+    another system.
 steps:
   - narration: |
-      Terminas de encajar el reintento con el mismo patrón que ya usaba el endpoint de
-      descargas, y dejas constancia de cómo quedó.
-    command: biso note TASK-19 "El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3."
+      You finish fitting the retry with the same pattern the download endpoint already used, and
+      leave a record of how it turned out.
+    command: biso note TASK-19 "The exponential backoff in retry.go can be reused as-is; the limit just needs to be set to 3."
     output: |
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
     exit_code: 0
@@ -31,27 +31,27 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-note "`biso note`"
       - spec/modelo-de-datos.md#la-urgencia "La urgencia"
   - narration: |
-      Miras cómo ha quedado esa nota.
+      You check how that note turned out.
     command: biso get TASK-19 --section notes
     output: |
       TASK-19  Retry the upload on 5xx
 
       ## Implementation Notes
-      El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3.
+      The exponential backoff in retry.go can be reused as-is; the limit just needs to be set to 3.
     exit_code: 0
     source_kind: derived
     source:
       - spec/cmd/get.md "`biso get`"
     remark: |
-      No hay ningún autor ni ningún instante junto al texto. Las notas no tienen esa estructura:
-      son un solo bloque de prosa al que cada `--note` añade un párrafo (8.3), no una lista de
-      entradas con autor como los comentarios (5.2). Si necesitaras saber quién escribió una
-      nota o cuándo, no lo sabrías: no es ese tipo de dato.
+      There's no author or timestamp next to the text. Notes don't have that structure: they're a
+      single block of prose that each `--note` adds a paragraph to, not a list of entries with an
+      author like comments. If you needed to know who wrote a note or when, you wouldn't be able
+      to: that's not the kind of data it is.
   - narration: |
-      Te llega un aviso: un usuario con conexión móvil ve fallos incluso con el reintento puesto.
-      No es algo que hayas visto tú, así que lo entras como comentario, firmado por quien lo
-      reportó.
-    command: 'biso comment TASK-19 "Un usuario con conexión móvil ve fallos incluso después de los 3 reintentos, ¿deberíamos subir el límite en ese caso?" --comment-author @trello:juan'
+      You get a heads-up: a user on a mobile connection sees failures even with the retry in
+      place. It's not something you saw yourself, so you enter it as a comment, signed with
+      whoever reported it.
+    command: 'biso comment TASK-19 "A user on a mobile connection sees failures even after the 3 retries, should we raise the limit in that case?" --comment-author @trello:juan'
     output: |
       note: comment #3 by @trello:juan
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
@@ -61,15 +61,15 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-comment "`biso comment`"
       - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
     remark: |
-      "note: comment #3 by @trello:juan" sale por stderr, con la forma exacta que da el ejemplo
-      de 10.7.3. El número no es una clave estable como la de un criterio (5.1): es la posición
-      del comentario en la lista, y como los comentarios nunca se editan ni se borran
-      (append-only, 10.7.3), esa posición no vuelve a cambiar. Este es el tercero de TASK-19
-      porque `biso answer` ya había añadido dos en el escenario anterior.
+      "note: comment #3 by @trello:juan" goes to stderr, in the exact shape the specification's
+      own example gives. The number isn't a stable key like a criterion's: it's the comment's
+      position in the list, and since comments are never edited or deleted (append-only), that
+      position never changes again. This is TASK-19's third comment because `biso answer` had
+      already added two in the previous scenario.
   - narration: |
-      Respondes tú, como tú mismo, sin banderas de autor: la identidad configurada firma por
-      defecto.
-    command: biso comment TASK-19 "De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos."
+      You answer yourself, as yourself, with no author flags: the configured identity signs by
+      default.
+    command: biso comment TASK-19 "Not for now, 3 retries is the policy for the rest of the system; if it happens again we'll revisit it."
     output: |
       note: comment #4 by @claude
       TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
@@ -79,48 +79,47 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-comment "`biso comment`"
       - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
     remark: |
-      Sin --comment-author, el autor es `me`, la identidad configurada de este tablero: @claude.
-      Es el mismo `--comment-author` que existe en todos los comandos de escritura, no solo en
-      `biso comment`: el nombre no cambia porque en `biso comment` parezca redundante (10.6).
+      Without --comment-author, the author is `me`, this board's configured identity: @claude.
+      It's the same `--comment-author` that exists on every write command, not just `biso
+      comment`: the name doesn't change just because it looks redundant on `biso comment`.
   - narration: |
-      Pones las dos secciones una junto a otra para ver el contraste de un vistazo.
+      You put the two sections side by side to see the contrast at a glance.
     command: biso get TASK-19 --section notes,comments
     output: |
       TASK-19  Retry the upload on 5xx
 
       ## Implementation Notes
-      El backoff exponencial de retry.go se puede reutilizar tal cual; solo hay que fijar el límite a 3.
+      The exponential backoff in retry.go can be reused as-is; the limit just needs to be set to 3.
 
       ## Comments
       @claude, 2026-09-06 14:10
-      ¿Cuál es el número máximo de reintentos antes de dar el 5xx por fallo definitivo? ¿Hay ya un valor de referencia en otra parte del código, o hay que fijar uno nuevo?
+      What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?
 
       @claude, 2026-09-06 15:30
-      Ya hay un valor de referencia: el endpoint de descargas usa 3 reintentos con backoff exponencial en retry.go. Usa el mismo valor y la misma lógica aquí.
+      There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here.
 
       @trello:juan, 2026-09-06 16:05
-      Un usuario con conexión móvil ve fallos incluso después de los 3 reintentos, ¿deberíamos subir el límite en ese caso?
+      A user on a mobile connection sees failures even after the 3 retries, should we raise the limit in that case?
 
       @claude, 2026-09-06 16:20
-      De momento no, 3 reintentos es la política del resto del sistema; si se repite lo revisamos.
+      Not for now, 3 retries is the policy for the rest of the system; if it happens again we'll revisit it.
     exit_code: 0
     source_kind: derived
     source:
       - spec/cmd/get.md "`biso get`"
       - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
     remark: |
-      Las notas son un único bloque; los comentarios son cuatro entradas firmadas, en el orden
-      en que se escribieron. `## Implementation Notes` sale antes que `## Comments` aunque en la
-      bandera se haya pedido al revés (`notes,comments`): el orden de impresión de las secciones
-      es el orden fijo de la ficha completa (10.5), no el orden en que se listan en `--section`.
-      La especificación no lo dice de forma explícita para el caso de varias secciones a la vez;
-      queda anotado en tutorial/lagunas/07-10.md.
+      Notes are a single block; comments are four signed entries, in the order they were written.
+      `## Implementation Notes` comes before `## Comments` even though the flag asked for them in
+      the opposite order (`notes,comments`): the print order of sections is the fixed order of
+      the full record, not the order they're listed in `--section`. The specification doesn't say
+      this explicitly for the case of several sections at once; noted as an open gap in
+      tutorial/lagunas/07-10.md.
 board_in: >
-  TASK-19 en In Progress, ac 0/2, dod 0/2, con 2 comentarios (la pregunta y la respuesta del
-  escenario 8) y sin notas todavía. Urgencia 11.0. Contadores del tablero: 54/5/190, sin cambios
-  desde el escenario 8.
+  TASK-19 in In Progress, ac 0/2, dod 0/2, with 2 comments (the question and answer from scenario
+  8) and no notes yet. Urgency 11.0. Board counters: 54/5/190, unchanged since scenario 8.
 board_out: >
-  TASK-19 sigue en In Progress, ac 0/2 y dod 0/2 sin tocar. Tiene ya 1 párrafo de notas de
-  implementación y 4 comentarios en total: los 2 de la pregunta y la respuesta del escenario 8,
-  más el de @trello:juan y la respuesta de @claude de este escenario. Urgencia sin cambios,
-  11.0. Contadores del tablero sin cambios: 54/5/190.
+  TASK-19 is still In Progress, ac 0/2 and dod 0/2 untouched. It now has 1 implementation note
+  paragraph and 4 comments in total: the 2 from the question and answer in scenario 8, plus the
+  one from @trello:juan and @claude's answer in this scenario. Urgency unchanged, 11.0. Board
+  counters unchanged: 54/5/190.
