@@ -96,10 +96,10 @@ steps:
       TASK-19  Retry the upload on 5xx
 
       ## Comments
-      @claude, 2026-09-06 14:10
+      #1  @claude, 2026-09-06 14:10
       What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?
 
-      @claude, 2026-09-06 15:30
+      #2  @claude, 2026-09-06 15:30
       There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here.
     exit_code: 0
     source_kind: derived

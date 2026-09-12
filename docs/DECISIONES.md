@@ -1447,14 +1447,15 @@ literal de un valor, y una coma no está en el alfabeto cerrado de `labels` ni d
 ahí nunca hay una coma legítima que escapar. El escape sigue haciendo falta para `references`,
 `documentation` y `modifiedFiles`, que siguen siendo texto libre.
 
-**Por qué `references`, `documentation`, `dependencies` y `modifiedFiles` quedan fuera.** Los tres
-primeros de la lista de campos de lista con coma que no son `labels` ni `assignees` guardan contenido
-cuyo alfabeto no lo decide biso: una referencia o una documentación pueden ser una URL, y un fichero
-tocado es una ruta del sistema de ficheros. Cerrarles el alfabeto dejaría fuera casos legítimos
-(`/`, `?`, `#` de una URL; `/` de una ruta) a cambio de nada, porque ninguno de los tres se imprime en
-una columna de ancho fijo con otros de su misma clase de la forma en que lo hacen las etiquetas.
-`dependencies` no necesita una regla nueva porque ya tiene la suya: cada elemento es un `<ref>` y lo
-gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](spec/referencias.md), que ya distingue un identificador
+**Por qué `references`, `documentation`, `dependencies` y `modifiedFiles` quedan fuera.** De los
+campos de lista con coma que no son `labels` ni `assignees`, tres (`references`, `documentation`
+y `modifiedFiles`) guardan contenido cuyo alfabeto no lo decide biso: una referencia o una
+documentación pueden ser una URL, y un fichero tocado es una ruta del sistema de ficheros. Cerrarles
+el alfabeto dejaría fuera casos legítimos (`/`, `?`, `#` de una URL; `/` de una ruta) a cambio de nada,
+porque ninguno de los tres se imprime en una columna de ancho fijo con otros de su misma clase de la
+forma en que lo hacen las etiquetas. El cuarto, `dependencies`, no guarda ni una URL ni una ruta y no
+necesita esta razón: no necesita ninguna regla nueva porque ya tiene la suya, distinta de la de los
+otros tres. Cada elemento es un `<ref>` y lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](spec/referencias.md), que ya distingue un identificador
 mal formado de una consulta de texto libre.
 
 **Por qué la clave de `ext` es un tercer alfabeto y no el mismo que `labels`.** Una clave de `ext`

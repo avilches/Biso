@@ -13,22 +13,26 @@ cuatro palabras para saber qué hace cada una, ni falta que consultar esta secci
 Cada clase de campo tiene exactamente las operaciones que tienen sentido para esa forma de dato, ni
 una más ni una menos:
 
-Los nombres de esta columna son los mismos seis de la tabla de formas de
+La columna "Forma" usa las mismas seis palabras de la tabla de formas de
 ["El modelo de datos de una tarea"](modelo-de-datos.md), porque son la misma clasificación vista desde el lado de las
-banderas: qué se puede hacer con un campo depende de su forma, así que las dos tablas tienen que
-usar las mismas palabras para lo mismo.
+banderas: qué se puede hacer con un campo depende de su forma. **Dos formas se reparten en más de una
+fila** cuando, dentro de la misma forma, hay más de un conjunto de operaciones posible: `acceptanceCriteria`,
+`definitionOfDone` y `comments` son los tres "lista de objetos" de aquella tabla, pero los criterios y
+los comentarios no comparten las mismas banderas, así que la forma aparece dos veces, una por cada
+conjunto de operaciones.
 
-| Clase de campo (forma) | Variantes |
-|---|---|
-| Escalar | fijar, vaciar |
-| Lista de tokens | añadir, quitar, vaciar, sustituir entera |
-| Bloque de prosa | añadir al final, vaciar |
-| Mapa de claves | fijar una clave, quitar una clave, vaciar |
-| Lista de objetos, sin comas (criterios) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
-| Lista de objetos (comentarios) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
+| Forma | Clase de campo | Variantes |
+|---|---|---|
+| escalar | Escalar | fijar, vaciar |
+| lista de tokens | Lista de tokens | añadir, quitar, vaciar, sustituir entera |
+| bloque de prosa | Bloque de prosa | añadir al final, vaciar |
+| mapa de claves | Mapa de claves | fijar una clave, quitar una clave, vaciar |
+| lista de objetos | Criterios (`acceptanceCriteria`, `definitionOfDone`) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
+| lista de objetos | Comentarios (`comments`) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
 
-**`question` no entra en esta tabla.** Es un registro de tres partes (["La pregunta abierta"](modelo-de-datos.md#la-pregunta-abierta)), la sexta
-forma de la tabla de arriba, y ninguna de las otras cinco lo describe.
+**`question` no entra en esta tabla.** Es la forma "registro de tres partes" de la tabla de formas, y
+esa forma no tiene ninguna fila aquí porque no existe ninguna bandera de campo que la escriba: ninguna
+de las demás filas la describe, y no hace falta una fila vacía solo para nombrarla.
 **Ninguna bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación
 de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (sección
 ["El modelo de datos de una tarea"](modelo-de-datos.md)).
@@ -219,6 +223,17 @@ borrar uno por uno.
 `createdAt` es un instante, no un día, así que la corrección tiene que poder fijar la hora y no solo la
 fecha; `--due` es distinto porque `due` sí es un día (["El modelo de datos de una tarea"](modelo-de-datos.md)).
 
+**El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguna de las
+dos, no durante el orden de escritura.** Caen en pasos distintos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)
+(`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada una resolviera
+su selector en su propio paso, `--rm-comment` ya habría borrado el comentario para cuando
+`--set-comment-date` intentara corregirle la fecha, y el resultado sería un error 4 de "no existe" en
+vez de un conflicto. Para que la regla no dependa de ese orden, cada selector se resuelve contra la
+lista de comentarios de **antes** de la escritura, en la fase de validación que exige el principio 6
+(["Los principios"](principios.md)), exactamente como ya hace la regla de solape de `--check-ac`/`--uncheck-ac`
+(["Selectores de criterios"](#selectores-de-criterios)) sobre el conjunto ya resuelto: si una misma clave aparece en los dos
+selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
+
 | Caso límite | Resultado |
 |---|---|
 | clave que no existe | error 4: `no comment #7 on MYP-11 (keys: 1, 3)` |
@@ -228,7 +243,7 @@ fecha; `--due` es distinto porque `due` sí es un día (["El modelo de datos de 
 | `--set-comment-date` con un instante mal formado | error 2, señalando el formato ISO 8601 |
 | la misma clave en dos `--set-comment-date` con instantes distintos | error 2, misma regla que un escalar repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)) |
 | la misma clave en dos `--set-comment-date` con el mismo instante | se aplica una vez, sin aviso |
-| `--rm-comment` y `--set-comment-date` sobre la misma clave en la misma llamada | error 2, mismo trato que el solape de `--check-ac`/`--uncheck-ac` de arriba: borrar y corregir la fecha del mismo comentario a la vez es una petición contradictoria |
+| `--rm-comment` y `--set-comment-date` sobre la misma clave en la misma llamada | error 2, detectado en la validación previa de arriba: borrar y corregir la fecha del mismo comentario a la vez es una petición contradictoria |
 | `--rm-comment all` en una tarea sin comentarios | sin efecto, sin aviso |
 
 ## Campos escalares

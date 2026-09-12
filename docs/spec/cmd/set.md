@@ -78,7 +78,7 @@ con su propio ejemplo, pero las reglas de su forma se dicen aquí y no se repite
    ["Campos de lista sin coma (criterios)"](../familias-de-banderas.md#campos-de-lista-sin-coma-criterios):
    ```
    biso set MYP-11 --add-ac "There is a test" --add-ac "Docs updated"
-   MYP-11  In Progress  ac 3/4  dod 0/1  urgency 19.0  added ac #4, #5
+   MYP-11  In Progress  ac 1/4  dod 0/1  urgency 19.0  added ac #4, #5
    ```
 4. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
    más que una escritura puede añadirle, y quien lo añade es `biso archive` (["`biso archive`"](archive.md)).

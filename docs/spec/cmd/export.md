@@ -24,7 +24,7 @@ por defecto: la única bandera de `export` sobre el archivo es `--no-archived`.
 La salida es NDJSON, una tarea por línea, con **exactamente** las claves que acepta `biso new --from`,
 en la forma de objeto que esa sección define para los criterios, la definición de hecho, los
 comentarios y la pregunta abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
-y las claves estables de cada criterio.
+y las claves estables de cada criterio **y de cada comentario** (["Los criterios y sus claves estables"](../modelo-de-datos.md#los-criterios-y-sus-claves-estables), ["Los comentarios"](../modelo-de-datos.md#los-comentarios)).
 
 **Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md).** `question` sale en `export` y
 entra de vuelta con `new --from`, con sus tres partes completas.
@@ -42,7 +42,8 @@ biso snapshot
 biso -C /tmp init --at /tmp/tablero-nuevo --from ~/.biso/boards/kex-3f9a2b1c
 # los dos tableros son identicos en todos los campos no derivados, incluidos
 # los identificadores, las fechas, las claves de los criterios y sus marcas,
-# y en toda su configuracion: estados, tipos, extensiones y task_prefix
+# las claves de los comentarios, y en toda su configuracion: estados, tipos,
+# extensiones y task_prefix
 ```
 
 El `init` se ejecuta con `-C /tmp`, fuera del proyecto de origen, exactamente como en la versión
@@ -74,7 +75,8 @@ Usage: biso export [options]
 
 Write the board as NDJSON, one task per line, in exactly the shape that
 `biso new --from` reads back. Round-tripping every non-derived field is a
-tested guarantee: ids, dates, criterion keys and their checkmarks included.
+tested guarantee: ids, dates, criterion and comment keys, and checkmarks
+included.
 
 With no filters it exports everything, the finished and the archived included.
 It never inherits the default limit or the default status filter of `biso ls`.

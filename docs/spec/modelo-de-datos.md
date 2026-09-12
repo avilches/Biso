@@ -207,7 +207,11 @@ pregunta que responde.
 sistema, en UTC y con precisión de segundo.
 
 **Se pueden fijar solo al importar**, es decir, en `biso new --from`. En cualquier otro sitio son un
-hecho observado y no un dato que se negocie.
+hecho observado y no un dato que se negocie, **con una única excepción**: el instante de un
+comentario ya escrito se puede corregir con `--set-comment-date`
+(["Comentarios"](familias-de-banderas.md#comentarios), ["Borrar o corregir la fecha de un comentario"](../DECISIONES.md#borrar-o-corregir-la-fecha-de-un-comentario) de `DECISIONES.md`). Es una corrección de un dato ya
+observado, no una negociación nueva, y por eso no abre la puerta a hacer lo mismo con `createdAt`,
+`updatedAt` ni con `question.askedAt`.
 
 **Una excepción de forma, no de fondo:** `biso answer` escribe el comentario en que se convierte la
 pregunta con el instante en que esa pregunta se hizo, no con el de la respuesta. No negocia nada,
