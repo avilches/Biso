@@ -85,12 +85,12 @@ Todos son repetibles.
 | una clave | `--check 3` | el elemento `#3` |
 | un rango de claves | `--check 1-4` | las claves de la 1 a la 4 que existan |
 | varias claves | `--check 1,3,7` | esas tres |
-| texto | `--check "cubre CRLF"` | el elemento cuyo texto contenga ese fragmento |
+| texto | `--check "covers CRLF"` | el elemento cuyo texto contenga ese fragmento |
 
 **La regla de desambiguación, que hay que implementar tal cual.** El valor se trata como lista de
 claves **solo si el valor entero** encaja con `^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$`. En cualquier otro
-caso es un texto literal, comas incluidas. Así, `--check "1, 2 y el ultimo"` es una búsqueda de texto
-que no encontrará nada y dará error 4, en vez de convertirse en algo a medias.
+caso es un texto literal, comas incluidas. Así, `--check "1, 2 and the last one"` es una búsqueda de
+texto que no encontrará nada y dará error 4, en vez de convertirse en algo a medias.
 
 | Caso límite | Resultado |
 |---|---|

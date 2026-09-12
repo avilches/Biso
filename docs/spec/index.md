@@ -29,7 +29,12 @@ esa herramienta, y no hay ninguna intención de que lo haga, como consta en
 **Convención de idioma.** La prosa de estos documentos va en español. Todo lo que es interfaz del
 programa (nombres de comando, banderas, textos de ayuda, mensajes de error, claves JSON y claves de
 configuración) va en inglés, porque es lo que la persona o el agente que usa el programa lee y
-escribe.
+escribe. **El contenido de los ejemplos va también en inglés**, aunque la prosa que los rodea siga en
+español: el título, la descripción, los criterios de aceptación, la definición de hecho, el plan, las
+notas, el resumen final, los comentarios y la pregunta abierta de cualquier tarea de ejemplo (TASK-11
+y las demás que aparecen en los documentos de `cmd/`) se escriben en inglés, por el mismo motivo que
+el resto de la interfaz: es contenido que en un tablero real escribiría la persona o el agente que usa
+el programa, no prosa de la especificación.
 
 ## Por dónde empezar y en qué orden
 

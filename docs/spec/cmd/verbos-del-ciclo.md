@@ -21,9 +21,9 @@ aceptación y un elemento de definición de hecho.
 El ciclo entero de una tarea es esto:
 
 ```
-biso start  TASK-11 --plan "1. Leer el parser. 2. Anadir el caso CRLF."
-biso note   TASK-11 "El parser ya normalizaba LF, faltaba CRLF"
-biso finish TASK-11 --check all --check-dod all --summary "Normaliza CRLF en el diff, verificado con las pruebas."
+biso start  TASK-11 --plan "1. Read the parser. 2. Add the CRLF case."
+biso note   TASK-11 "The parser already normalized LF, CRLF was missing"
+biso finish TASK-11 --check all --check-dod all --summary "Normalize CRLF in the diff, verified with the tests."
 ```
 
 ## `biso start`
@@ -363,7 +363,7 @@ Por stderr, cuando toca:
 
 ```
 warning: TASK-11 moved to Done with 1 of 2 acceptance criteria unchecked
-  #3 Hay un test que lo cubre
+  #3 There is a test that covers it
 ```
 
 ### Códigos de salida

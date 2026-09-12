@@ -78,7 +78,7 @@ ignoran. Las claves son las del modelo de datos de la sección ["El modelo de da
 Ejemplo de una línea, con todos los tipos compuestos:
 
 ```json
-{"id":"TASK-101","title":"El diff no normaliza CRLF","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["TASK-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"El diff ignora el CRLF","checked":true},{"key":3,"text":"Hay un test","checked":false}],"definitionOfDone":[{"key":1,"text":"Revisado","checked":true}],"comments":[{"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reportado desde Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Es un CRLF o tambien un CR suelto?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
+{"id":"TASK-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["TASK-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":true}],"comments":[{"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 ```
 
 Las reglas del lote, todas obligatorias:

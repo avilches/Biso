@@ -57,29 +57,29 @@ files      -
 ext        trello.card=5f2a8c1e3b9d4a7f6e0c2b81
 
 ## Description
-El diff compara byte a byte y marca como distintas dos lineas que solo difieren
-en el fin de linea.
+The diff compares byte by byte and marks as different two lines that only
+differ in the line ending.
 
 ## Acceptance Criteria
-- [x] #1 El diff ignora el CRLF
-- [ ] #3 Hay un test que lo cubre
+- [x] #1 The diff ignores CRLF
+- [ ] #3 There is a test that covers it
 
 ## Definition of Done
-- [ ] #1 Revisado por otra persona
+- [ ] #1 Reviewed by someone else
 
 ## Implementation Plan
-1. Leer el parser.
-2. Anadir el caso CRLF.
+1. Read the parser.
+2. Add the CRLF case.
 
 ## Implementation Notes
-El parser ya normalizaba LF, faltaba CRLF.
+The parser already normalized LF, CRLF was missing.
 
 ## Final Summary
 (empty)
 
 ## Comments
 @avilches, 2026-09-06 10:02
-Esto lo reporto un usuario con un repositorio clonado en Windows.
+A user with a Windows clone reported this.
 
 ## Open Question
 (empty)
@@ -109,8 +109,8 @@ Con `--section ac`, solo el encabezado con el identificador y el título, y la s
 TASK-11  Normalize CRLF in the diff
 
 ## Acceptance Criteria
-- [x] #1 El diff ignora el CRLF
-- [ ] #3 Hay un test que lo cubre
+- [x] #1 The diff ignores CRLF
+- [ ] #3 There is a test that covers it
 ```
 
 Con `--section question` sobre TASK-60, la tarea con la pregunta abierta del ejemplo de la sección ["La salida literal"](prime.md#la-salida-literal), la
@@ -164,14 +164,14 @@ Es el objeto de `task.list` más los campos del cuerpo:
   "data": {
     "task": {
       "id": "TASK-11",
-      "description": "El diff compara byte a byte...",
-      "acceptanceCriteria": [ { "key": 1, "text": "El diff ignora el CRLF", "checked": true },
-                              { "key": 3, "text": "Hay un test que lo cubre", "checked": false } ],
-      "definitionOfDone": [ { "key": 1, "text": "Revisado por otra persona", "checked": false } ],
-      "plan": "1. Leer el parser.\n2. Anadir el caso CRLF.",
-      "notes": "El parser ya normalizaba LF, faltaba CRLF.",
+      "description": "The diff compares byte by byte...",
+      "acceptanceCriteria": [ { "key": 1, "text": "The diff ignores CRLF", "checked": true },
+                              { "key": 3, "text": "There is a test that covers it", "checked": false } ],
+      "definitionOfDone": [ { "key": 1, "text": "Reviewed by someone else", "checked": false } ],
+      "plan": "1. Read the parser.\n2. Add the CRLF case.",
+      "notes": "The parser already normalized LF, CRLF was missing.",
       "summary": null,
-      "comments": [ { "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "Esto lo reporto..." } ],
+      "comments": [ { "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "A user with a Windows clone..." } ],
       "question": null,
       "blocks": ["TASK-40"],
       "urgencyBreakdown": { "priority": 6.0, "active": { "value": 4.0, "reason": null }, "blocking": 8.0,
