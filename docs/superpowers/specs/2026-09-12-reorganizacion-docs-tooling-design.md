@@ -98,9 +98,11 @@ que hace `biso doctor` con las comprobaciones del programa.
 1. `comprobar_enlaces.py` sobre `CLAUDE.md`, `bench/sqlite-driver/README.md` y
    `bench/sqlite-driver/RESULTADOS.md` (los `.md` de fuera de `docs/`; ya no hace falta pasarle
    `INTEGRATION.md`, que se muda dentro de `docs/`).
-2. `comprobar_recuentos.py` sobre `docs/spec/*.md`, `docs/spec/cmd/*.md` y `docs/*.md`.
-3. `comprobar_referencias.py` sobre `docs/spec/*.md` y `docs/spec/cmd/*.md`.
-4. Regenera `docs/TUTORIAL.md` ejecutando `tutorial/generate.py`.
+2. Regenera `docs/TUTORIAL.md` ejecutando `tutorial/generate.py`. Va antes que los dos comprobadores
+   siguientes a propósito: `comprobar_recuentos.py` revisa `docs/TUTORIAL.md`, y si se ejecutara
+   antes de regenerar, comprobaría la versión vieja del fichero en vez de la que se va a commitear.
+3. `comprobar_recuentos.py` sobre `docs/spec/*.md`, `docs/spec/cmd/*.md` y `docs/*.md`.
+4. `comprobar_referencias.py` sobre `docs/spec/*.md` y `docs/spec/cmd/*.md`.
 5. `mkdocs build --strict` con `docs/docs-tooling/mkdocs/mkdocs.yml`.
 
 Se invoca así, porque el último paso necesita MkDocs instalado:
@@ -116,7 +118,14 @@ uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-p
   ubicación, dos niveles más arriba), `site_dir: ../../../site` (para que el sitio generado siga
   apareciendo en la raíz) y `exclude_docs: | docs-tooling/` (para que MkDocs no trate los scripts,
   los `.yaml` de los escenarios ni los `.pyc` como contenido a publicar). La exclusión existente
-  `not_in_nav: | superpowers/` no cambia.
+  `not_in_nav: | superpowers/` no cambia. El comentario que hay junto a la validación de enlaces
+  ("Lo que esto NO cubre: los ficheros Markdown de fuera de `docs/`, como `CLAUDE.md`,
+  `INTEGRATION.md` y los de `bench/`") deja de mencionar `INTEGRATION.md`, porque se muda dentro
+  de `docs/`.
+- **`tools/comprobar_enlaces.py`**: su docstring cita `INTEGRATION.md` como ejemplo de fichero que
+  cubre y en su línea de invocación de ejemplo
+  (`python tools/comprobar_enlaces.py CLAUDE.md INTEGRATION.md bench/sqlite-driver/*.md`). Se quita
+  de los dos sitios, porque deja de ser un fichero de fuera de `docs/`.
 - **`CLAUDE.md`** (raíz) y **`tutorial/CLAUDE.md`**: cada comando `uv run --with-requirements
   docs-requirements.txt --no-project mkdocs ...` pasa a usar
   `docs/docs-tooling/mkdocs/docs-requirements.txt` y añade `-f docs/docs-tooling/mkdocs/mkdocs.yml`;
