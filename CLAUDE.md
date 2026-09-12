@@ -20,6 +20,18 @@ La spec está escrita para que se pueda implementar el CLI entero sin preguntar 
 cubre, lo correcto es añadirlo a la especificación y luego implementarlo, no resolverlo solo en el
 código. Y si una regla parece arbitraria, su razón está en [`docs/DECISIONES.md`](docs/DECISIONES.md) antes de cambiarla.
 
+**Cómo se escribe una decisión nueva en `DECISIONES.md`.** Nunca como una crónica de cómo fue
+cambiando de opinión ("primero se hizo A, luego se probó B, y al final C"): eso obliga a quien lo lea
+a reconstruir cuál es la que manda hoy. Toda entrada dice primero, y como único hecho normativo, la
+decisión vigente ahora mismo, en un párrafo que se pueda citar sin más contexto. Las alternativas
+que se consideraron y se descartaron van después, dentro de esa misma entrada, marcadas
+explícitamente como descartadas y con la razón por la que se descartaron, nunca contadas como pasos
+intermedios de una narrativa que el lector tiene que seguir en orden para saber en qué quedó. Si una
+decisión nueva deja obsoleta una entrada anterior, esa entrada vieja se corrige en el sitio donde
+vive, no se deja contradicha a distancia: se dice explícitamente que esa pieza ya no es cierta y se
+enlaza a la entrada que la sustituye, igual que se corrigió aquí mismo la afirmación de que los
+comentarios eran una lista que solo admitía añadir cuando dejó de serlo.
+
 ["Por dónde empezar a implementar"](docs/spec/por-donde-empezar.md) dice el orden en que cada pieza paga lo que cuesta: el modelo de
 datos, el algoritmo de coincidencia (una función pura de la que dependen todos los comandos), los
 comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
