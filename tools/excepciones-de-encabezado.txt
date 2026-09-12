@@ -1,0 +1,21 @@
+# Las excepciones de encabezado del reparto de docs/SPEC.md en docs/spec/, declaradas una a
+# una. Sin esta declaracion el comprobador no sabe distinguir un encabezado que cambia a
+# proposito de uno que se perdio por error, y no puede dar el visto bueno a un reparto correcto.
+#
+# Se comprueba en las dos direcciones: un encabezado que cambia sin estar aqui es un error, y
+# una linea de aqui que no llegue a ocurrir tambien, porque querria decir que esta lista se ha
+# quedado desfasada.
+#
+# Los siete H1 que nacen de la nada, porque su fichero reune piezas que antes no tenian un
+# titulo comun, o porque el titulo viejo hablaba de un documento en singular.
+nuevo: Vocabulario de esta especificación
+nuevo: Banderas globales, entorno y configuración de máquina
+nuevo: Terminal, flujos de salida y codificación
+nuevo: Cómo se pasa un valor
+nuevo: Orden de escritura, concurrencia y datos dañados
+nuevo: Los presupuestos de arranque y de tamaño
+nuevo: La ayuda: `biso help` y `biso --help`
+
+# Los dos titulos que se pierden, porque nombraban agrupaciones que dejan de existir.
+perdido: Vocabulario de este documento
+perdido: Reglas transversales

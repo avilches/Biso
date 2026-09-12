@@ -1,5 +1,11 @@
 # Plan de aplicación del modelo de estados
 
+> **Este documento cita la especificación por el número de sus secciones**, como se escribió en su día.
+> El 2026-09-10 `docs/SPEC.md` se repartió en los documentos de `docs/spec/`, que se citan por el título
+> de sus secciones. Estas referencias se conservan sin tocar porque este documento es el acta de una
+> sesión cerrada. Para traducir una de ellas, mira el mapa de la tabla de la tarea 3 de
+> [el plan del reparto](2026-09-10-reparto-de-la-spec.md).
+
 > **Para quien ejecute esto de forma automática:** SUB-SKILL OBLIGATORIA. Usa
 > `superpowers:subagent-driven-development` (recomendada) o `superpowers:executing-plans` para
 > ejecutar tarea a tarea. Los pasos usan casillas (`- [ ]`) para llevar la cuenta.
