@@ -5,21 +5,48 @@
 ### Firma
 
 ```
-biso help [<command> | all]
+biso help [<command>... | all]
 ```
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
-| `<command>` | | no | nombre de comando, o `all` | ninguno | no | no | |
+| `<command>` | | no | nombre de comando, o `all` | ninguno | sí | no | |
 
 | Caso | Qué pasa |
 |---|---|
 | Sin argumento | Imprime la ["ayuda de primer nivel"](#la-ayuda-de-primer-nivel), igual que `biso --help` |
-| Con un nombre de comando | Imprime la ayuda de ese comando, igual que `biso <cmd> --help` |
-| Con `all` | Imprime la ayuda de primer nivel más la lista de los comandos de administración, cada uno con su línea |
-| Con un nombre que no existe | Error 4, con los tres nombres más parecidos |
+| Con uno o varios nombres de comando, todos existentes | Imprime la ayuda completa de cada uno, en el orden pedido, en la misma llamada |
+| Con `all`, y ningún nombre de comando además | Imprime la ayuda de primer nivel más la lista de los comandos de administración, cada uno con su línea |
+| Con `all` junto a uno o más nombres de comando | Error 2: `all` no se combina con nombres de comando |
+| Con uno o varios nombres, y alguno no existe | Error 4, con los tres nombres más parecidos al primero que no existe en el orden pedido; no imprime la ayuda de ningún comando de la llamada, ni siquiera de los que sí existen |
 
 `biso help` funciona **sin tablero**.
+
+### Varios comandos en una sola llamada
+
+`biso help finish note` imprime la ayuda completa de `finish` y a continuación la de `note`, en el
+orden en que se pidieron, cada una igual que si se hubiera llamado por separado con
+`biso <cmd> --help`. Entre el bloque de un comando y el del siguiente se intercala una línea en
+blanco.
+
+**La validación es todo o nada, y ocurre antes de imprimir nada.** Los nombres pedidos se resuelven
+en el orden en que aparecen, y en cuanto uno no existe, la llamada entera falla con el error de
+siempre (los tres nombres más parecidos a ese, no a los demás) y no se imprime la ayuda de ningún
+comando de la llamada, ni la de los que existen antes de él en la lista ni la de los que vienen
+después. Es el mismo criterio de todo o nada de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables),
+aplicado aquí a una lectura en vez de a una escritura: una llamada que pide varias cosas a la vez no
+entrega la mitad y calla el resto.
+
+**`all` es un valor especial, no un nombre de comando, y no se combina con ninguno en la misma
+llamada.** Pide una lista de comandos, no la ayuda completa de uno, y las dos formas de salida no
+tienen una combinación con un significado único: no hay un orden razonable entre "la lista" y "la
+ayuda completa de X", y quien quiere las dos cosas ya puede pedirlas en dos llamadas. Combinarlos es
+un error de uso:
+
+```
+error: help: "all" cannot be combined with a command name
+hint: run `biso help all` on its own, or list only command names
+```
 
 ### Salida de `biso help all`
 
@@ -60,43 +87,58 @@ una clave sería mover el problema de analizarla a otro sitio; la lista de coman
 y es lo que le sirve a un agente para descubrir la interfaz sin leer nada. Los resúmenes son los mismos
 que imprime la ["ayuda de primer nivel"](#la-ayuda-de-primer-nivel).
 
-`biso help --json` y `biso help all --json` traen la lista entera, y `biso help <comando> --json` la trae
-con un solo elemento, el de ese comando. La clave `commands` está siempre y siempre es una lista, así que
-nadie tiene que mirar el argumento para saber qué forma va a recibir. La ayuda completa de un comando se
-sigue pidiendo como siempre, sin `--json`, con `biso help <comando>` o `biso <comando> --help`.
+`biso help --json` y `biso help all --json` traen la lista entera, y `biso help <comando>... --json`
+trae un elemento por cada nombre pedido, en el mismo orden, tal y como hoy trae uno solo cuando se
+pide un único nombre. La clave `commands` está siempre y siempre es una lista, así que nadie tiene que
+mirar el argumento para saber qué forma va a recibir. La ayuda completa de un comando se sigue
+pidiendo como siempre, sin `--json`, con `biso help <comando>` o `biso <comando> --help`; `--json` con
+varios nombres no cambia esto, sigue trayendo solo el resumen de cada uno, nunca la prosa. `all`
+combinado con un nombre de comando falla igual con `--json` que sin él, antes de que se emita ningún
+sobre.
 
 ### Códigos de salida
 
 | Desenlace | Código |
 |---|---:|
 | Ayuda impresa | 0 |
-| El comando no existe | 4 |
+| `all` combinado con uno o más nombres de comando | 2 |
+| Alguno de los comandos pedidos no existe | 4 |
 
 ### `biso help --help`
 
 ```
-Usage: biso help [command|all]
+Usage: biso help [command...|all]
 
-Print the top-level help, or the help of one command, or the top-level help
-plus the nine administrative commands with `all`. Works without a board.
+Print the top-level help, the help of one or more commands, or the top-level
+help plus the nine administrative commands with `all`. Works without a board.
+
+Given more than one command name, prints the full help of each one, in the
+order given, in the same call, as if `biso <cmd> --help` had been called once
+per name, with a blank line between one command's help and the next. A name
+that does not exist fails the whole call before anything is printed, even the
+help of the names that do exist earlier in the list. `all` is not a command
+name and does not combine with one.
 
 With --json this prints the command list and its one-line summaries, never
 the prose help: a help text is written to be read, and the list is the part
-that is data.
+that is data. Given several names, `commands` carries one element per name,
+in the same order.
 
 Arguments:
-  command        a command name, or `all`
+  command        one or more command names, or `all` on its own
 
 Options:
       --json     machine-readable envelope with the command list
 
 Exit codes:
   0  help printed
+  2  usage error, such as `all` combined with a command name
   4  no such command
 
 Examples:
   biso help
   biso help finish
+  biso help finish note
   biso help all
 ```
 
