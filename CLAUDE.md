@@ -81,6 +81,8 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
 - **Nunca em-dash**, en ningún texto: ni en documentación, ni en código, ni en mensajes de commit.
 - **Los mensajes de commit y las descripciones de PR no llevan coautoría** ni mención de haber sido
   generados por un agente.
+- **Toda tarea de Backlog.md pertenece al menos a un milestone.** Si no está claro a cuál, se
+  pregunta antes de crearla; si el milestone que le corresponde no existe todavía, se crea.
 
 ## El sitio de documentación
 
