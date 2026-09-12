@@ -1687,7 +1687,7 @@ aquí sigue sin commitear, para y dilo, no lo commitees tú.**
 > viejo `SPEC.md` a la vez, separadas por coma (`derivada SPEC 5.2, 5.3, 10.5, 10.7.6`), una forma que
 > ni el paso 1 de esta tarea ni el mapa de la tarea 3 contemplan. Hace falta decidir cómo se cita eso en
 > la forma nueva antes de tocar esos doce escenarios. El detalle está en la entrada "El campo `origen`
-> de los fixtures del tutorial" de [`docs/PENDIENTES.md`](../../PENDIENTES.md#2-decisiones-aplazadas-a-propósito).
+> de los fixtures del tutorial" de `docs/PENDIENTES.md`.
 
 **Files:**
 - Modify: `tutorial/generar.py`

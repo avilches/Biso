@@ -1,114 +1,64 @@
-# Lo que queda por cerrar en la especificación
+# El estado del trabajo en curso
 
-Este documento existe porque [`docs/spec/`](spec/index.md) está escrito para implementarse sin preguntar nada, y estas
-son las preguntas que todavía se le pueden hacer. Ninguna impide empezar a implementar: la especificación
-es coherente y completa en todo lo que el trabajo diario toca. Lo que sigue son huecos que un
-implementador encontraría al llegar a un rincón concreto, incoherencias que no cambian el comportamiento,
-y decisiones aplazadas a propósito.
+Este documento es volátil: dice qué se está haciendo ahora mismo, qué sigue después y en qué orden, y qué
+conviene tener en cuenta mientras dura el desarrollo. No es documentación del proyecto ni un registro de
+decisiones: eso vive en [`docs/DECISIONES.md`](DECISIONES.md) o en el fichero de `docs/` que corresponda.
+Cuando no quede nada por hacer, este fichero se borra.
 
-**Cuando una entrada se cierra, se quita de aquí.** El 2026-09-09 se cerró todo lo que quedaba de las dos
-revisiones de la rama de persistencia: los nueve huecos que un implementador habría tenido que rellenar
-solo, el orden de implementación de ["Por dónde empezar a implementar"](spec/por-donde-empezar.md), la última incoherencia de vocabulario y los cinco
-huecos que habían aparecido al cerrar los demás.
-["El control de versiones, la instantánea y los códigos que salieron de ahí"](DECISIONES.md#el-control-de-versiones-la-instantánea-y-los-códigos-que-salieron-de-ahí) de `DECISIONES.md` guarda el porqué de
-los que llevaban una decisión de fondo detrás, y ["Decisiones aplazadas a propósito"](#2-decisiones-aplazadas-a-propósito) conserva las decisiones que siguen
-aplazadas a propósito.
+## AHORA EN CURSO
 
-Ese mismo día se cerró después **el contrato de ejecución del sistema de control de versiones**, que era
-el primero de los tres huecos que la ronda había abierto: qué se hace con lo que escriben las órdenes, si
-hay tiempo máximo de espera y qué rutas da `{files}`. Las reglas quedaron en un apartado de
-["`biso snapshot`"](spec/cmd/snapshot.md) que vale igual para `git` y para `custom`, y el porqué en
-["Cómo se ejecuta el sistema de control de versiones"](DECISIONES.md#cómo-se-ejecuta-el-sistema-de-control-de-versiones) de
-`DECISIONES.md`. De paso salió un error real del documento, que `{files}` y la clave `files` del JSON de
-`snapshot` nombraban conjuntos distintos de ficheros sin decirlo.
+**Cerrar la rama `worktree-tutorial` y mezclarla a `main`.** Le falta terminar el trabajo del campo
+`origen` de los fixtures del tutorial: separarlo en `source_kind` (`literal` o `derived`) y `source`, una
+lista de citas, según el diseño de
+[`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md).
+Esa decisión llevó además a que el tutorial entero nazca en inglés, así que falta traducir los nombres de
+todos los campos del formato y el contenido en español de los trece escenarios de `worktree-tutorial`, y
+las cadenas de página de `tutorial/generate.py`. Cuando esté, se mezcla a `main` y se borra el worktree.
 
-Y el 2026-09-10 se cerró **el controlador de SQLite**, que era la primera de las decisiones aplazadas y
-la única que bloqueaba escribir código. El resultado y su porqué están en
-["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo), y las cifras completas en `bench/sqlite-driver/RESULTADOS.md`. Al medirlo aparecieron
-dos correcciones a ["El origen de la cifra de 25 milisegundos"](DECISIONES.md#el-origen-de-la-cifra-de-25-milisegundos), que daba por constante un suelo que era solo de macOS y por sin medir un
-almacén que ya lo está.
+## SIGUIENTE
 
-Dos cosas que se aprendieron por el camino y conviene no volver a aprender. La primera: **ante cada hueco
-merece la pena preguntarse si existe porque falta decidir algo o porque sobra la cosa que lo abre.** El
-hueco de `--board` no se rellenó, se disolvió al retirar la bandera cuando se vio que `-C` ya llegaba a
-todo lo que ella prometía, y el de la instantánea que no podía cruzar de máquina se cerró al revés, no
-dándole una vía sino dejando de cablear git y admitiendo que el sistema de control de versiones es una
-elección del usuario. La segunda: **no escribas aquí una frase que cuente elementos sin contarlos.** Al
-revisar este documento se descubrió que sus propios recuentos estaban desincronizados tres veces, que es
-exactamente el fallo que él denuncia como dominante en la especificación.
+1. **Repasar y retomar el plan del almacén.** El plan del primer paso de implementación (el almacén
+   SQLite, sus migraciones, la transacción `WithTx` y la primera medida real del presupuesto de arranque)
+   está escrito en la rama `worktree-implementacion-almacen`, en
+   `docs/superpowers/plans/2026-09-11-almacen.md`, junto con el documento de arquitectura que lo motiva en
+   `docs/superpowers/specs/2026-09-10-arquitectura-implementacion-design.md`. Los dos citan `docs/SPEC.md`
+   por número de sección, y ese fichero ya no existe: hay que releerlos y actualizar sus referencias a los
+   ficheros y anclas de `docs/spec/` antes de ejecutarlo. Bloqueado hasta que se cierre `worktree-tutorial`.
 
----
+2. **Añadir a `biso doctor` la comprobación del fichero de exclusión.** ["`biso init`"](spec/cmd/init.md)
+   declara que si alguien cambia la clave `vcs` después de crear el tablero, el fichero de exclusión se
+   queda con el nombre del sistema anterior y hay que arreglarlo a mano. `biso doctor` podría comprobar
+   ese desajuste y no lo hace; añadirlo implica tocar la tabla de comprobaciones de
+   [`biso doctor`](spec/cmd/doctor.md).
 
-## 1. Huecos abiertos
+3. **Fijar el sistema operativo de referencia del presupuesto de arranque.**
+   ["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque) lo amarra a "la máquina
+   que ejecuta la suite de integración continua", pero el margen medido cambia mucho según la plataforma
+   (en macOS el suelo de arranque es de 8,1 ms, en Linux de 0,37 ms). Cuando exista integración continua,
+   hay que fijar esa plataforma en el documento o decir explícitamente que da igual y por qué.
 
-Ninguno impide implementar la versión 1.0 con `git`, que es el valor por defecto y el único camino
-medido. Los dos primeros los abrió la ronda del control de versiones del 2026-09-09; el tercero salió al
-medir el controlador de SQLite el 2026-09-10.
+4. **Escribir la receta de otro sistema de control de versiones distinto de `git` (opcional).** El
+   catálogo de sistemas de control de versiones solo tiene a `git` documentado: cuál es la raíz de un
+   repositorio, si un directorio está dentro de uno y si ignora una carpeta. Sin esa receta, Mercurial,
+   Jujutsu o Subversion pasan por `custom` y pierden el identificador de la revisión. No bloquea la
+   versión 1.0.
 
-**El catálogo tiene un solo miembro conocido, así que la palabra promete más de lo que hay.** `git` es el
-único sistema cuya receta está escrita, y la de cualquier otro (Mercurial, Jujutsu, Subversion) no existe:
-habría que decir cómo se le pregunta si un directorio está dentro de un repositorio, cuál es su raíz y si
-ignora una carpeta, que son las dos preguntas de las que depende dónde acaba la revisión. Mientras eso no
-se escriba, quien use otro sistema pasa por `custom` y pierde el identificador de la revisión.
+5. **Diseñar la exportación al formato de Backlog.md.** Es para que quien ya usa Backlog.md pueda probar
+   `biso` sin salto al vacío, no para uso propio. Ese formato tiene bugs abiertos que se heredarían, entre
+   ellos que al editar una tarea pierde las claves de frontmatter que no conoce. La compatibilidad con
+   Backlog.md que declara [`docs/spec/index.md`](spec/index.md) es de modelo de datos, no de formato de
+   fichero.
 
-**`biso doctor` no comprueba que el fichero de exclusión del tablero cuadre con el sistema configurado.**
-["`biso init`"](spec/cmd/init.md) declara que si alguien cambia la clave `vcs` después de crear el tablero, el fichero se
-queda con el nombre del sistema anterior y hay que arreglarlo a mano. Es una comprobación que `doctor`
-podría hacer y no hace, y añadirla obliga a tocar la tabla de `biso doctor`, así que no se hizo dentro
-de esa ronda.
+6. **Diseñar la interfaz multiproyecto.** Fuera de alcance a propósito y con su propio brainstorming
+   pendiente. De ella solo se recogió el requisito que afecta al almacenamiento: los tableros se enumeran
+   por convención, con una raíz por defecto más una lista explícita de raíces adicionales, sin ningún
+   registro que se actualice solo.
 
-**["El presupuesto de arranque"](spec/presupuestos.md#el-presupuesto-de-arranque) no dice el sistema operativo de la máquina de referencia, y ahora se sabe que eso
-cambia mucho el margen.** Esa sección amarra el presupuesto de 25 milisegundos a "la máquina que ejecuta
-la suite de integración continua", a propósito, para no llevar dentro del documento la ficha técnica de
-un ordenador. Al medir el controlador
-(["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo) de `DECISIONES.md`) salió que el suelo para arrancar
-un binario de Go que no hace nada es de 8,1 milisegundos en macOS y de 0,37 en Linux, veintidós veces
-menos, y que la lectura real del tablero tarda 14,5 milisegundos en el primero y 3,2 en el segundo. Las
-dos plataformas cumplen el presupuesto, así que nada está bloqueado, pero el mismo código pasa la prueba
-con una vez y siete décimas de margen o con casi ocho según el sistema del ejecutor, y el documento no
-dice cuál es. Cuando exista la integración continua habrá que fijarlo, o decir que da igual y por qué.
+## TENER EN CUENTA
 
----
-
-## 2. Decisiones aplazadas a propósito
-
-**La exportación al formato de Backlog.md.** No es para uso propio: es para que quien ya lo usa pueda
-probar `biso` sin salto al vacío. La advertencia es que ese formato tiene bugs abiertos que se heredarían,
-entre ellos que al editar una tarea pierde las claves de frontmatter que no conoce. La introducción de
-[`docs/spec/`](spec/index.md) ya declara que la compatibilidad con Backlog.md es de modelo de datos y no de formato de fichero.
-
-**La interfaz multiproyecto**, fuera de alcance a propósito y con su propio brainstorming pendiente. De
-ella solo se recogió el requisito que afecta al almacenamiento: los tableros se enumeran por convención,
-con una raíz por defecto más una lista explícita de raíces adicionales, sin ningún registro que se
-actualice solo.
-
-**El mensaje del commit `bd0c874`** describe cuatro cambios que en realidad entraron en `aaa5b96`. El
-árbol es correcto, solo el mensaje se adelantó. Sin enmendar por no reescribir historia sin petición.
-
-**El campo `origen` de los fixtures del tutorial, decidido pero sin ejecutar.** La forma combinada que
-faltaba (citar varias secciones a la vez, cada una por fichero y título) ya está decidida en
-[`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md): `origen` se separa en `source_kind`
-(`literal` o `derived`) y `source`, una lista de citas. Esa decisión se llevó además a que el tutorial
-entero nace en inglés, no solo ese campo, así que lo que falta por hacer creció con ella: traducir los
-nombres de todos los campos del formato y el contenido en español de los trece escenarios de
-`worktree-tutorial`, y las cadenas de página de `tutorial/generate.py`. Nada de eso se puede ejecutar
-desde el worktree del reparto, ya cerrado: hace falta una sesión que trabaje directamente en
-`worktree-tutorial`, con ese documento como plan de partida.
-
----
-
-## 3. Un plan de implementación que hay que repasar antes de retomarlo
-
-El 2026-09-11 se escribió, en la rama `worktree-implementacion-almacen`, el plan del primer paso de
-["Por dónde empezar a implementar"](spec/por-donde-empezar.md) (`docs/superpowers/plans/2026-09-11-almacen.md`): el almacén SQLite, sus migraciones,
-la transacción `WithTx` y la primera medida real del presupuesto de arranque. El documento de
-arquitectura que lo motiva vive en la misma rama, en
-`docs/superpowers/specs/2026-09-10-arquitectura-implementacion-design.md`. Los dos citan `docs/SPEC.md`
-por número de sección (4.10, 4.13, 15 y otras).
-
-La rama `worktree-reparto-de-la-spec`, que retiraba `docs/SPEC.md` como fichero único y repartía su
-contenido en `docs/spec/`, ya se cerró y se mezcló en `main`. Sigue abierta `worktree-tutorial`, así
-que el plan del almacén todavía no se puede retomar tal cual: sus referencias por sección apuntan a un
-`SPEC.md` que ya no existe en esa forma. Cuando esa rama se cierre, hay que releer el plan y el
-documento de arquitectura y actualizar sus referencias a los ficheros y a la numeración que tenga
-entonces la especificación, antes de retomarlo.
+- Ramas abiertas ahora mismo: `worktree-tutorial` (ver AHORA EN CURSO) y
+  `worktree-implementacion-almacen` (el plan del almacén de SIGUIENTE #1, con referencias a `docs/SPEC.md`
+  todavía sin actualizar).
+- El mensaje del commit `bd0c874` describe cuatro cambios que en realidad entraron en `aaa5b96`. El árbol
+  es correcto, solo el mensaje se adelantó. No se enmienda sin que se pida explícitamente reescribir
+  historia.
