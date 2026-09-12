@@ -1,6 +1,6 @@
 # El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`
 
-Este documento cierra la decisión que `docs/PENDIENTES.md` tenía anotada como aplazada a propósito y que ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go) de
+Este documento cierra la decisión que quedó aplazada a propósito y que ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go) de
 `docs/DECISIONES.md` declaraba como lo primero que la implementación tenía que
 resolver. Está escrito para que su contenido acabe en esa misma sección. El banco de pruebas del que
 salen todas las cifras está en este mismo directorio, y su [`README.md`](README.md) dice cómo se

@@ -73,7 +73,8 @@ Las reglas que no se negocian:
   porque es lo que el lector va a comparar. Cuando la distinción importa se dice en `remark`.
 - **Nada se inventa.** Si la especificación no decide algo que un escenario necesita, no se rellena
   con lo que parezca razonable: se anota en `lagunas/` con la pregunta concreta y lo que se supuso.
-  Esa carpeta alimenta `docs/PENDIENTES.md`, y es uno de los productos valiosos de escribir esto.
+  Esa carpeta alimenta las tareas de seguimiento del tablero, y es uno de los productos valiosos de
+  escribir esto.
 - **Los escenarios comparten un tablero y ocurren en orden.** Cada fichero declara en
   `board_in` y `board_out` qué estado recibe y qué estado entrega, y eso es lo que hace
   visible una rotura de continuidad.

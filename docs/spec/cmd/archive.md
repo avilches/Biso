@@ -4,7 +4,7 @@
 
 ```
 biso archive <ref>... [--unarchive] [--id] [--match]
-             [cualquier bandera de campo de la seccion 8]
+             [cualquier bandera de campo de las familias de banderas]
 ```
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |

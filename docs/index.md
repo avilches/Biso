@@ -14,5 +14,3 @@ Esta documentación reúne los documentos del proyecto:
   podría parecer arbitraria, y la evidencia que la sostiene.
 - **[Estado del arte](ESTADO-DEL-ARTE.md)**: el inventario de los gestores de tareas para agentes
   que ya existen, y el catálogo de sus fallos frente a las respuestas de `biso`.
-- **[Pendientes](PENDIENTES.md)**: los huecos que la especificación todavía no decide, las
-  incoherencias que no cambian el comportamiento, y las decisiones aplazadas a propósito.

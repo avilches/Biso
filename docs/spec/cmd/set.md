@@ -6,7 +6,7 @@ más palabras.
 ## Firma
 
 ```
-biso set <ref>... [cualquier bandera de campo de la seccion 8]
+biso set <ref>... [cualquier bandera de campo de las familias de banderas]
          [--check-ac <sel>]... [--uncheck-ac <sel>]... [--check-dod <sel>]... [--uncheck-dod <sel>]...
          [--comment <text>]... [--comment-author <@who>] [--id] [--match]
 ```

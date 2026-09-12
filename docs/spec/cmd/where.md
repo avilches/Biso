@@ -30,9 +30,9 @@ que remite el error de código 8, y el que hace visible una resolución que de o
 
 ```
 id       3f9a2b1c
-board    Kex
-path     /Users/avilches/.biso/boards/kex-3f9a2b1c
-source   project pointer at /Users/avilches/Hub/Projects/Kex
+board    My project
+path     /Users/avilches/.biso/boards/my-project-3f9a2b1c
+source   project pointer at /Users/avilches/Hub/Projects/My project
 me       @claude
 tasks    248 not archived, 31 archived, highest id ever assigned MYP-290
 ```
@@ -91,9 +91,9 @@ la fila donde más confunde, porque justo al lado hay un recuento de estados.
   "generatedAt": "2026-09-06T09:12:04Z",
   "data": {
     "id": "3f9a2b1c",
-    "board": "Kex",
-    "path": "/Users/avilches/.biso/boards/kex-3f9a2b1c",
-    "source": "project pointer at /Users/avilches/Hub/Projects/Kex",
+    "board": "My project",
+    "path": "/Users/avilches/.biso/boards/my-project-3f9a2b1c",
+    "source": "project pointer at /Users/avilches/Hub/Projects/My project",
     "me": "@claude",
     "counts": { "notArchived": 248, "archived": 31, "highestIdEverAssigned": "MYP-290" }
   }
@@ -129,7 +129,7 @@ Exit codes:
 
 Examples:
   biso where
-  biso -C ~/work/kex where
+  biso -C ~/work/my-project where
 ```
 
 ---

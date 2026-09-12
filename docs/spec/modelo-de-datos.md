@@ -321,7 +321,7 @@ answer`, y para eso hacen falta su autor y su instante originales, no los de qui
   clave que ya cubre un `--prefix` con algo que no sean letras (la sección [`biso init`](cmd/init.md)).
 - **"Letra" no incluye los diacríticos**, para que un nombre de tablero con cualquier carácter
   Unicode derive un prefijo predecible. La derivación pasa primero el nombre por el paso de
-  normalizar(x)` (sección ["El algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia)) que quita los acentos, las diéresis y las cedillas, y solo entonces
+  `normalizar(x)` (sección ["El algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia)) que quita los acentos, las diéresis y las cedillas, y solo entonces
   se queda con lo que sean letras ASCII. Así un tablero llamado `Peña` deriva `PENA`, y uno llamado
   `Café` deriva `CAFE`.
 - **Un identificador no se reutiliza jamás**, ni después de archivar una tarea ni después de

@@ -37,9 +37,9 @@ La garantía que la suite de pruebas comprueba:
 
 ```bash
 biso snapshot
-# escribe snapshot.ndjson y board.json en ~/.biso/boards/kex-3f9a2b1c, el propio
+# escribe snapshot.ndjson y board.json en ~/.biso/boards/my-project-3f9a2b1c, el propio
 # directorio del tablero de origen (biso where lo muestra en su fila "path")
-biso -C /tmp init --at /tmp/tablero-nuevo --from ~/.biso/boards/kex-3f9a2b1c
+biso -C /tmp init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c
 # los dos tableros son identicos en todos los campos no derivados, incluidos
 # los identificadores, las fechas, las claves de los criterios y sus marcas,
 # y en toda su configuracion: estados, tipos, extensiones y task_prefix

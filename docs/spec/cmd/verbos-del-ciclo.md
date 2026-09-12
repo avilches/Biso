@@ -32,7 +32,7 @@ biso finish MYP-11 --check-ac all --check-dod all --append-summary "Normalize CR
 
 ```
 biso start <ref>... [--append-plan <text>] [-a <@who>]... [-s <v>] [--reopen]
-           [--id] [--match] [cualquier bandera de campo de la seccion 8]
+           [--id] [--match] [cualquier bandera de campo de las familias de banderas]
 ```
 
 ### Parámetros propios
@@ -140,7 +140,7 @@ Examples:
 ### Firma
 
 ```
-biso note <ref> [<text>...] [--id] [--match] [cualquier bandera de campo de la seccion 8]
+biso note <ref> [<text>...] [--id] [--match] [cualquier bandera de campo de las familias de banderas]
 ```
 
 ### Parámetros propios
@@ -247,7 +247,7 @@ que entra lo que viene de fuera.
 
 ```
 biso comment <ref> [<text>...] [--comment-author <@who>]
-             [--id] [--match] [cualquier bandera de campo de la seccion 8]
+             [--id] [--match] [cualquier bandera de campo de las familias de banderas]
 ```
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
@@ -317,7 +317,7 @@ Examples:
 ```
 biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]... [--check-dod <sel>]...
             [--append-note <text>]... [--add-files <path>]... [-s <v>] [--strict] [--no-checks]
-            [--id] [--match] [cualquier bandera de campo de la seccion 8]
+            [--id] [--match] [cualquier bandera de campo de las familias de banderas]
 ```
 
 ### Parámetros propios
@@ -429,7 +429,7 @@ Examples:
 ### Firma
 
 ```
-biso ask <ref> <text>... [--id] [--match] [cualquier bandera de campo de la seccion 8]
+biso ask <ref> <text>... [--id] [--match] [cualquier bandera de campo de las familias de banderas]
 ```
 
 ### Parámetros propios
@@ -549,7 +549,7 @@ Examples:
 ### Firma
 
 ```
-biso answer <ref> <text>... [--id] [--match] [cualquier bandera de campo de la seccion 8]
+biso answer <ref> <text>... [--id] [--match] [cualquier bandera de campo de las familias de banderas]
 ```
 
 ### Parámetros propios

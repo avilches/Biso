@@ -111,7 +111,7 @@ tablero sin ningún paso adicional. Estas reglas gobiernan su lectura:
   más arriba. Si la búsqueda acaba sin nada, el error nombra ese directorio, porque explica el fallo
   mejor que decir solo que no se encontró el tablero.
 - **El nombre de la carpeta del tablero es decorativo, y nadie resuelve nunca por él.** Al crearla,
-  `biso init` la llama `<slug>-<id>`, por ejemplo `kex-3f9a2b1c`, porque eso hace legible un listado de
+  `biso init` la llama `<slug>-<id>`, por ejemplo `my-project-3f9a2b1c`, porque eso hace legible un listado de
   la raíz por defecto. Pero renombrarla no rompe nada, ni la renombra `biso` cuando cambia el nombre
   del tablero (["`biso config`"](cmd/config.md)), ni hay comprobación alguna sobre ella.
 - **Cómo se busca cuando el `path` no resuelve, o cuando no hay `path`**: se recorren la raíz por
@@ -129,8 +129,8 @@ la misma identidad es exactamente lo que esta persistencia no admite. Sale con *
 
 ```
 error: board 3f9a2b1c is in two places, and biso will not choose between them
-        /Users/avilches/.biso/boards/kex-3f9a2b1c
-        /Volumes/work/boards/kex-3f9a2b1c
+        /Users/avilches/.biso/boards/my-project-3f9a2b1c
+        /Volumes/work/boards/my-project-3f9a2b1c
 hint: rename or remove one of the two directories
 ```
 
