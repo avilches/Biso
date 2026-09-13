@@ -196,8 +196,21 @@ Cómo se calcula el resumen, para que la implementación sea única:
   Los cuatro excluyen las tareas terminadas y las archivadas.
 - Se imprimen en este orden: `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU` y `NEXT UP`.
   **Un bloque sin filas no se imprime**, ni siquiera su encabezado. **Sin identidad configurada,
-  `ASSIGNED TO YOU` no se imprime nunca**, aunque el resto del mensaje se imprime igual, con
-  `you are (not set)` en el bloque `BOARD`.
+  `ASSIGNED TO YOU` no se imprime nunca**, aunque el resto del mensaje se imprime igual. La línea de
+  identidad del bloque `BOARD` es entonces, literalmente:
+
+  ```
+    you are     (not set: run biso as BISO_ME=@you biso ...)
+  ```
+
+  Va por stdout, dentro del mensaje, y no como una `note:` por stderr, porque `biso prime` no imprime
+  nada por stderr y porque quien lanza el arranque desde un hook no suele ver ese canal. Sin la pista,
+  el bloque `ASSIGNED TO YOU` desaparecería en silencio y quien tenga tareas asignadas no sabría por
+  qué no las ve. **Nombra solo `BISO_ME` y nunca `biso config set me`**: si no hay identidad, la clave
+  `me` no está puesta y la variable basta, mientras que configurar `me` en un tablero compartido haría
+  que todo el mundo compartiera identidad (["`biso config`"](config.md)). La línea ocupa 59 bytes
+  con su salto de línea, frente a los 22 de `you are     @claude`, y cabe en el resumen de ["El presupuesto de tamaño"](../presupuestos.md#el-presupuesto-de-tamaño). Con `--json`
+  no hay pista: el campo `board.me` vale `null`.
 - `IN PROGRESS` lista las tareas del estado activo sin pregunta abierta, ordenadas por la regla de
   orden de la sección ["`biso ls`"](ls.md), sin límite. Cada tarea cuyo arrendamiento está vencido (el campo derivado
   `leaseExpired` de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md)) lleva, igual que `NEEDS ANSWER` con su pregunta, una segunda línea

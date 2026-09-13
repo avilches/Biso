@@ -18,7 +18,7 @@
 | Autor por defecto de un comentario | Error 2 si no se ha pasado `--comment-author`: `error: --comment-author is required, no identity is configured` |
 | Autor de la pregunta, en `biso ask` | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` (["`biso ask`"](cmd/verbos-del-ciclo.md#biso-ask)) |
 | Autor de la respuesta, en `biso answer` | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` (["`biso answer`"](cmd/verbos-del-ciclo.md#biso-answer)) |
-| La línea `you are` de `biso prime` | `you are     (not set)`, con una nota que remite a `biso config set me` |
+| La línea `you are` de `biso prime` | La línea sale por stdout, dentro del bloque `BOARD`, como `you are     (not set: run biso as BISO_ME=@you biso ...)`, sin ninguna `note:` por stderr (["`biso prime`"](cmd/prime.md#la-salida-literal)) |
 
 ## Configuración de máquina
 
