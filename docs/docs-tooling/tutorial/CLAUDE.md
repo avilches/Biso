@@ -112,7 +112,7 @@ generador que se traga un fixture incompleto destruye la única garantía de est
 Los otros dos existen porque había números en los fixtures que nadie podía verificar leyendo un solo
 fichero:
 
-- `urgency.py` calcula la urgencia de cada tarea según ["La urgencia"](../../spec/modelo-de-datos.md#la-urgencia), con el
+- `urgency.py` calcula la urgencia de cada tarea según ["La urgencia"](../../spec/modelo-de-datos/urgencia.md#la-urgencia), con el
   desglose de cada término, y las ordena por la regla de `biso ls`. Los escenarios ordenan listas por
   urgencia, y ese orden hay que poder reproducirlo en vez de creerse un número escrito por alguien.
   Reproduce el `urgency 19.0` que la especificación imprime para `TASK-11`, que es la comprobación de

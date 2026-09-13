@@ -1,7 +1,7 @@
 # El arrendamiento de una tarea
 
 Esta página reúne las reglas de `leaseExpiresAt` y `leaseHolder`, los dos campos de ["El modelo de
-datos de una tarea"](modelo-de-datos.md) que dicen si alguien está trabajando ahora mismo en una tarea
+datos de una tarea"](modelo-de-datos/index.md) que dicen si alguien está trabajando ahora mismo en una tarea
 activa y hasta cuándo vale esa reserva. El nombre "arrendamiento", y por qué no es un estado, están en
 ["Vocabulario de esta especificación"](vocabulario.md).
 

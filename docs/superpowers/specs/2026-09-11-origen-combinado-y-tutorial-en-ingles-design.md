@@ -125,8 +125,8 @@ Cada cita de un paso `derived` se convierte en un enlace real de Markdown, con e
 texto del enlace, dentro de la nota que ya existe para marcar las salidas derivadas:
 
 ```
-*(derived output, see [Los comentarios](spec/modelo-de-datos.md#los-comentarios),
-[Las fechas](spec/modelo-de-datos.md#las-fechas), [`biso get`](spec/cmd/get.md),
+*(derived output, see [Los comentarios](spec/modelo-de-datos/comentarios.md#los-comentarios),
+[Las fechas](spec/modelo-de-datos/fechas.md#las-fechas), [`biso get`](spec/cmd/get.md),
 [`biso answer`](spec/cmd/verbos-del-ciclo.md#biso-answer); not literal spec text)*
 ```
 

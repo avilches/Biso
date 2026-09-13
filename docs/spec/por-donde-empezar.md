@@ -8,7 +8,7 @@ En el orden en que cada pieza paga lo que cuesta:
    que lo deciden en el apartado ["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](../DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo) de `DECISIONES.md`. **Lo que se escribe aquí es la prueba del
    presupuesto de arranque de la sección ["El presupuesto de arranque"](presupuestos.md#el-presupuesto-de-arranque)**, que no se puede escribir antes de que el almacén
    exista y que hasta ahora solo se ha medido con un programa de prueba y no con el comando de verdad.
-2. **El modelo de datos lógico** de la sección ["El modelo de datos de una tarea"](modelo-de-datos.md), con las claves estables de los criterios y el
+2. **El modelo de datos lógico** de la sección ["El modelo de datos de una tarea"](modelo-de-datos/index.md), con las claves estables de los criterios y el
    rechazo explícito de lo desconocido.
 3. **El algoritmo de coincidencia** de la sección ["El algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia), que es una función pura de veinte líneas y de
    la que dependen todos los comandos.

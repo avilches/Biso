@@ -32,7 +32,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       One line per task, in the same format as when you touch a single one. There's no batch
       mode that changes the shape of the output, and no summary that replaces the detail: what
@@ -93,7 +93,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       `TASK-7` drops from 18.3 to 15.3, the 3.0 it loses going from high to medium priority, and
       it's still the most urgent task on the board by a wide margin: it still has the deadline

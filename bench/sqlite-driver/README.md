@@ -70,7 +70,7 @@ trabajo**, y que lo único distinto sea hablar con la base de datos. Por eso el 
 partido así:
 
 - `internal/board/` es el trabajo de verdad, y lo comparten los cuatro: el modelo de tarea
-  reducido a lo que `biso ls` imprime, la fórmula de ["La urgencia"](../../docs/spec/modelo-de-datos.md#la-urgencia), la
+  reducido a lo que `biso ls` imprime, la fórmula de ["La urgencia"](../../docs/spec/modelo-de-datos/urgencia.md#la-urgencia), la
   regla de orden y el formato de las ocho columnas de [`biso ls`](../../docs/spec/cmd/ls.md), medido en celdas de terminal.
 - `internal/board/schema.go` tiene el esquema del tablero y las **cinco consultas** que
   `biso ls` necesita, y ni una más: la primera regla de ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque) prohíbe leer lo que la

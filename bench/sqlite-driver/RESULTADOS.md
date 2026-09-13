@@ -50,7 +50,7 @@ Ocupa 1.441.792 bytes en modo WAL. La tabla es a propósito mayor que lo que la 
 porque un tablero real tiene tareas terminadas y archivadas.
 
 **Los cuatro binarios hacen el mismo trabajo, y se comprueba antes de medir.** Abren la base de
-datos, ejecutan las cinco consultas que `biso ls` necesita, calculan ["la urgencia"](../../docs/spec/modelo-de-datos.md#la-urgencia),
+datos, ejecutan las cinco consultas que `biso ls` necesita, calculan ["la urgencia"](../../docs/spec/modelo-de-datos/urgencia.md#la-urgencia),
 ordenan con la tupla de [`biso ls`](../../docs/spec/cmd/ls.md), recortan al límite de 30 e imprimen las ocho columnas alineadas en
 celdas de terminal. Sobre el mismo tablero los cuatro producen una salida **idéntica byte a byte**,
 en macOS y en Linux, y el script se niega a dar la medida por buena si dejan de coincidir.

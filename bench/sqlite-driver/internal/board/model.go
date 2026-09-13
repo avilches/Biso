@@ -1,6 +1,6 @@
 // Package board contiene el modelo minimo de tarea, el calculo de urgencia, la
 // regla de orden y el formato de columnas de `biso ls`, tal y como los definen
-// docs/spec/modelo-de-datos.md (con su seccion "La urgencia") y docs/spec/cmd/ls.md.
+// docs/spec/modelo-de-datos/index.md (con su pagina "La urgencia" en urgencia.md) y docs/spec/cmd/ls.md.
 //
 // Este paquete es identico para los cuatro controladores que se comparan: lo
 // unico que cambia entre binarios es como se abre la base de datos y como se
@@ -28,7 +28,7 @@ const (
 
 // Task es la tarea reducida a los campos que `biso ls` necesita para imprimir
 // sus ocho columnas y para calcular la urgencia. No es el modelo completo de
-// docs/spec/modelo-de-datos.md a proposito: la primera regla de "El presupuesto
+// docs/spec/modelo-de-datos/index.md a proposito: la primera regla de "El presupuesto
 // de arranque" (docs/spec/presupuestos.md) prohibe leer lo que la invocacion no
 // va a usar.
 type Task struct {
@@ -58,7 +58,7 @@ type Task struct {
 }
 
 // Coefficients son los siete pesos configurables de "La urgencia"
-// (docs/spec/modelo-de-datos.md).
+// (docs/spec/modelo-de-datos/urgencia.md).
 type Coefficients struct {
 	Priority float64
 	Active   float64
@@ -116,7 +116,7 @@ func priorityWeight(p string) float64 {
 	}
 }
 
-// ComputeUrgency aplica la formula de "La urgencia" (docs/spec/modelo-de-datos.md).
+// ComputeUrgency aplica la formula de "La urgencia" (docs/spec/modelo-de-datos/urgencia.md).
 func ComputeUrgency(t *Task, c Coefficients, now time.Time) float64 {
 	if t.Status == TerminalStatus {
 		return 0.0

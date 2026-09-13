@@ -37,7 +37,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [`biso note`](../spec/cmd/verbos-del-ciclo.md#biso-note), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso note`](../spec/cmd/verbos-del-ciclo.md#biso-note), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 You check how that note turned out.
 
@@ -67,7 +67,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [`biso comment`](../spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](../spec/modelo-de-datos.md#los-comentarios), [Comentarios](../spec/familias-de-banderas.md#comentarios); not literal spec text)*
+*(derived output, see [`biso comment`](../spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](../spec/modelo-de-datos/comentarios.md#los-comentarios), [Comentarios](../spec/familias-de-banderas.md#comentarios); not literal spec text)*
 
 *Note: "note: comment #3 by @trello:juan" goes to stderr, in the exact shape the specification's own example gives. The number is a stable key, exactly like a criterion's: it's assigned once when the comment is created and never reassigned, even if an earlier comment is later removed with `--rm-comment`. A comment's body and author are never edited, by any flag; only its date can be corrected, with `--set-comment-date`, and the whole comment can be removed entirely. This is TASK-19's third comment because `biso answer` had already added two in the previous scenario.*
 
@@ -82,7 +82,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [`biso comment`](../spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](../spec/modelo-de-datos.md#los-comentarios); not literal spec text)*
+*(derived output, see [`biso comment`](../spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](../spec/modelo-de-datos/comentarios.md#los-comentarios); not literal spec text)*
 
 *Note: Without --comment-author, the author is `me`, this board's configured identity: @claude. It's the same `--comment-author` that exists on every write command, not just `biso comment`: the name doesn't change just because it looks redundant on `biso comment`.*
 
@@ -111,6 +111,6 @@ Not for now, 3 retries is the policy for the rest of the system; if it happens a
 
 Exit code: `0`
 
-*(derived output, see [`biso get`](../spec/cmd/get.md), [Los comentarios](../spec/modelo-de-datos.md#los-comentarios); not literal spec text)*
+*(derived output, see [`biso get`](../spec/cmd/get.md), [Los comentarios](../spec/modelo-de-datos/comentarios.md#los-comentarios); not literal spec text)*
 
 *Note: Notes are a single block; comments are four signed entries, in the order they were written. `## Implementation Notes` comes before `## Comments` even though the flag asked for them in the opposite order (`notes,comments`): the print order of sections is the fixed order of the full record, not the order they're listed in `--section`. The specification doesn't say this explicitly for the case of several sections at once; noted as an open gap in tutorial/lagunas/07-10.md.*

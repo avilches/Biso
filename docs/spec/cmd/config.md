@@ -32,12 +32,12 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `labels` | lista | vacía |
 | `assignees` | lista | vacía |
 | `extensions` | lista | vacía |
-| `task_prefix` | texto de solo letras | se deriva de `project_name` en mayúsculas (sección ["Identificadores"](../modelo-de-datos.md#identificadores)) |
+| `task_prefix` | texto de solo letras | se deriva de `project_name` en mayúsculas (sección ["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)) |
 | `me` | texto de persona | `BISO_ME` si está definida |
 | `default_limit` | entero >= 0 | 30 |
 | `finish_strict` | booleano | falso |
 | `lease_minutes` | entero > 0 | 240 |
-| `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver ["La urgencia"](../modelo-de-datos.md#la-urgencia) para el término de cada uno y su valor por defecto |
+| `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia) para el término de cada uno y su valor por defecto |
 
 **`project_name` es el nombre del tablero, y cambiarlo no toca el sistema de ficheros.** Ninguna clave
 de esta tabla lo hace. La carpeta del tablero se queda con el nombre que tenga, aunque sea el slug de un
@@ -61,7 +61,7 @@ nunca se acepta vale igual.
 **Renombrar no toca nunca el `task_prefix`.** Se derivó una vez al crear el tablero y desde entonces
 vive por su cuenta en esa clave. Cambiar `project_name` no lo recalcula, aunque el nombre nuevo diera un
 `task_prefix` distinto si el tablero se creara hoy. Y si el nombre nuevo no deja ninguna letra con la
-que derivar uno (sección ["Identificadores"](../modelo-de-datos.md#identificadores)), tampoco es un error aquí, porque `task_prefix` ya está fijado y no se
+que derivar uno (sección ["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)), tampoco es un error aquí, porque `task_prefix` ya está fijado y no se
 recalcula al renombrar.
 
 Lo mismo vale para `biso init --overwrite-config` (sección ["`biso init`"](init.md)), y solo cuando se da `<name>`

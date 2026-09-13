@@ -3,7 +3,7 @@ package board
 // Schema es el esquema del tablero, con la forma que "La decision de
 // persistencia" (docs/DECISIONES.md) da por hecha: una base de datos SQLite por
 // tablero, con la configuracion dentro de ella y una tabla por cada campo de
-// lista del modelo de docs/spec/modelo-de-datos.md.
+// lista del modelo de docs/spec/modelo-de-datos/index.md.
 //
 // No pretende ser el esquema definitivo de `biso`. Pretende costar lo mismo de
 // leer: los mismos indices, el mismo numero de tablas que `biso ls` tiene que

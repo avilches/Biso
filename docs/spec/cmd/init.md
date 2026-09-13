@@ -24,7 +24,7 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 | `--priorities <list>` | | no | lista | `high, medium, low` | sí | sí | |
 | `--projects <list>` | | no | lista | vacía | sí | sí | |
 | `--extensions <list>` | | no | lista | vacía | sí | sí | |
-| `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificadores"](../modelo-de-datos.md#identificadores)) | no | no | |
+| `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)) | no | no | |
 | `--overwrite-config` | | no | booleano | falso | no | no | |
 | `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--projects`, `--extensions`, `--prefix`, `--overwrite-config` |
 
@@ -195,7 +195,7 @@ existiera antes queda afectada.
 | Varias banderas de papel nombran el mismo estado | Error 2, con los papeles y el estado que comparten |
 | `--statuses` con menos de tres estados | Error 2, diciendo cuántos hacen falta y por qué |
 | `--prefix` con algo que no sean letras | Error 2, `code` `invalid_prefix` |
-| Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección ["Identificadores"](../modelo-de-datos.md#identificadores)) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
+| Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección ["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
 | `--at` a un directorio donde no se puede escribir | Error 7 |
 | `--from` junto con `<name>`, con cualquier bandera de vocabulario, o con `--overwrite-config` | Error 2 |
 | `--from` a un directorio al que le falta `snapshot.ndjson`, `board.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
@@ -270,7 +270,7 @@ revisiones.
 Esto es lo que imprime la tercera invocación de los ejemplos de ayuda,
 `biso init "My project" --prefix MYP --at my-project-board --extensions trello.card` (con `--json` para el
 esquema de más abajo). El prefijo sale `MYP` porque lo fija `--prefix`, no porque se derive del nombre
-`My project`, que sin esa bandera daría `MYPROJECT` (sección ["Identificadores"](../modelo-de-datos.md#identificadores)).
+`My project`, que sin esa bandera daría `MYPROJECT` (sección ["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)).
 
 ```
 Created board "My project"

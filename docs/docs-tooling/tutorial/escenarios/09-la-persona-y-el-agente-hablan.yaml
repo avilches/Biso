@@ -29,7 +29,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/verbos-del-ciclo.md#biso-note "`biso note`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
   - narration: |
       You check how that note turned out.
     command: biso get TASK-19 --section notes
@@ -59,7 +59,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/verbos-del-ciclo.md#biso-comment "`biso comment`"
-      - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
+      - spec/modelo-de-datos/comentarios.md#los-comentarios "Los comentarios"
       - spec/familias-de-banderas.md#comentarios "Comentarios"
     remark: |
       "note: comment #3 by @trello:juan" goes to stderr, in the exact shape the specification's
@@ -80,7 +80,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/verbos-del-ciclo.md#biso-comment "`biso comment`"
-      - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
+      - spec/modelo-de-datos/comentarios.md#los-comentarios "Los comentarios"
     remark: |
       Without --comment-author, the author is `me`, this board's configured identity: @claude.
       It's the same `--comment-author` that exists on every write command, not just `biso
@@ -110,7 +110,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/get.md "`biso get`"
-      - spec/modelo-de-datos.md#los-comentarios "Los comentarios"
+      - spec/modelo-de-datos/comentarios.md#los-comentarios "Los comentarios"
     remark: |
       Notes are a single block; comments are four signed entries, in the order they were written.
       `## Implementation Notes` comes before `## Comments` even though the flag asked for them in

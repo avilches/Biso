@@ -53,7 +53,7 @@ TASK-52  In Progress  ac 0/1  urgency 5.4  archived
 
 Exit code: `0`
 
-*(derived output, see [`biso archive`](../spec/cmd/archive.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso archive`](../spec/cmd/archive.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: Read that line carefully, because it says two things that look incompatible: the task is still `In Progress` and it's `archived`. There's no contradiction. Archiving isn't a state and it doesn't touch the state: it's a separate flag that takes the task off the active board. If it were unarchived tomorrow, it would go back to `In Progress`, which is where it already was. And there's something the line doesn't say: the lease the agent had claimed back in scenario 6 has just been cleared. That always happens on archiving, whoever holds the lease and whether it's still alive or already expired, and the reason is that keeping it around would stash it somewhere nobody looks, because both the startup message and the listing hide archived tasks by default. If this task came back to the board three weeks from now with a lease still held by a session that had already died, that would be garbage wearing the costume of information. Urgency is still being calculated, 5.4, because the task is still in a state that isn't the terminal one. Archiving doesn't zero it out: finishing it does.*
 
@@ -81,6 +81,6 @@ TASK-40  In Progress  task  medium  Split the config loader                     
 
 Exit code: `0`
 
-*(derived output, see [`biso ls`](../spec/cmd/ls.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso ls`](../spec/cmd/ls.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: Three tasks where there used to be four, and `TASK-19` isn't in either list anymore because it got finished back in scenario 10. The board now tells the truth about what's actually being worked on, which is exactly what archiving something you're not going to touch is for.*

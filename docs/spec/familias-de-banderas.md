@@ -14,7 +14,7 @@ Cada clase de campo tiene exactamente las operaciones que tienen sentido para es
 una más ni una menos:
 
 **La "Forma" de esta tabla es una clasificación de comportamiento de escritura, no el tipo del
-campo.** Se deriva del tipo concreto de ["El modelo de datos de una tarea"](modelo-de-datos.md): a
+campo.** Se deriva del tipo concreto de ["El modelo de datos de una tarea"](modelo-de-datos/index.md): a
 efectos de qué bandera tiene sentido ofrecer, da igual si un valor único es `string`, `enum(...)`,
 `date`, `int`, `float` o `bool`, porque a todos les basta con fijar y vaciar, así que esos tipos
 comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa";
@@ -38,7 +38,7 @@ forma no tiene ninguna fila aquí porque no existe ninguna bandera de campo que 
 de las demás filas la describe, y no hace falta una fila vacía solo para nombrarla.
 **Ninguna bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación
 de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (sección
-["El modelo de datos de una tarea"](modelo-de-datos.md)).
+["El modelo de datos de una tarea"](modelo-de-datos/index.md)).
 
 **El significado no cambia entre comandos.** `--add-ac` añade un criterio en `biso new`, en `biso set`, en
 `biso start` y en `biso finish`, y todos los comandos de escritura aceptan todas estas banderas.
@@ -112,7 +112,7 @@ criterio puede contener comas. `--rm-ac` y `--rm-dod` toman un selector de la se
 
 **Los elementos nuevos se crean con claves nuevas, sin marcar, y las claves de los elementos
 anteriores no se reutilizan.** Es coherente con
-["Los criterios y sus claves estables"](modelo-de-datos.md#los-criterios-y-sus-claves-estables): la
+["Los criterios y sus claves estables"](modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables): la
 clave se asigna al crear el elemento.
 
 **Qué clave le toca a un elemento creado con `--add-ac` o `--add-dod` es algo que quien llama no
@@ -133,7 +133,7 @@ sección.
 | resumen final | `--append-summary` | `--clear-summary` |
 
 **No existe una bandera que sustituya un bloque de prosa entero.** Un bloque de prosa es un único
-texto (["El modelo de datos de una tarea"](modelo-de-datos.md)), sin elementos direccionables que
+texto (["El modelo de datos de una tarea"](modelo-de-datos/index.md)), sin elementos direccionables que
 quitar uno a uno, así que no hay `--rm-*` para ninguno de los campos de la tabla de arriba. Sustituirlo
 entero se hace vaciando y añadiendo en la misma llamada: `biso set MYP-11 --clear-plan --append-plan "Nuevo plan"`.
 
@@ -224,7 +224,7 @@ borrar uno por uno.
 
 **`--set-comment-date` toma un instante UTC completo (`YYYY-MM-DDTHH:MM:SSZ`), no una fecha suelta.**
 `createdAt` es un instante, no un día, así que la corrección tiene que poder fijar la hora y no solo la
-fecha; `--due` es distinto porque `due` sí es un día (["El modelo de datos de una tarea"](modelo-de-datos.md)).
+fecha; `--due` es distinto porque `due` sí es un día (["El modelo de datos de una tarea"](modelo-de-datos/index.md)).
 
 **Dónde corta el `=` de `--set-comment-date`, cuando el selector es un texto que a su vez puede traer
 el signo `=`.** El valor se divide por el **último** `=` de la cadena, nunca por el primero: todo lo

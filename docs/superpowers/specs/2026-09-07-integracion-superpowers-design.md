@@ -202,7 +202,7 @@ Y en su sección "Finish", dos órdenes consecutivas:
 
 O sea: el propio autor identifica que las decisiones tomadas en tu nombre solo te llegan por un
 mensaje final, y que ese mensaje muere con la sesión. **Los `comments` de `biso` son inmutables,
-con autor y con fecha (sección ["Los comentarios"](../../spec/modelo-de-datos.md#los-comentarios)). El encaje es exacto, y viene ya justificado
+con autor y con fecha (sección ["Los comentarios"](../../spec/modelo-de-datos/comentarios.md#los-comentarios)). El encaje es exacto, y viene ya justificado
 desde el otro lado.** Este es el argumento más fuerte a favor de toda la integración.
 
 ### `DECISIONES.md` ya descarta el canal fácil
@@ -227,7 +227,7 @@ no se puede usar sin contradecir la decisión que justifica la existencia de `bi
 
 ### No hace falta añadir ni un campo
 
-El modelo lógico de la sección ["El modelo de datos de una tarea"](../../spec/modelo-de-datos.md) ya tiene sitio para todo lo que produce una
+El modelo lógico de la sección ["El modelo de datos de una tarea"](../../spec/modelo-de-datos/index.md) ya tiene sitio para todo lo que produce una
 sesión con Superpowers. Inventario de lo que se usa:
 
 | Campo de `biso` | Bandera | Qué guardaría de una sesión con Superpowers |
@@ -581,7 +581,7 @@ regenerarlos y a comprobar que coinciden carácter a carácter.
 
 **En este repositorio:**
 
-- `docs/spec/`, sección ["El modelo de datos de una tarea"](../../spec/modelo-de-datos.md), el modelo de datos y sus campos.
+- `docs/spec/`, sección ["El modelo de datos de una tarea"](../../spec/modelo-de-datos/index.md), el modelo de datos y sus campos.
 - `docs/spec/`, secciones ["Qué resuelve este comando"](../../spec/cmd/prime.md#qué-resuelve-este-comando), ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presupuesto-de-tamaño), ["Qué entra en el mensaje y qué se relega a `--help`"](../../spec/cmd/prime.md#qué-entra-en-el-mensaje-y-qué-se-relega-a---help) y ["La salida literal"](../../spec/cmd/prime.md#la-salida-literal), el mensaje de arranque, su presupuesto y su texto
   literal.
 - `docs/spec/`, sección ["`biso ls`"](../../spec/cmd/ls.md), los filtros de `biso ls`, incluidos `--not-blocked` y `--waiting`.

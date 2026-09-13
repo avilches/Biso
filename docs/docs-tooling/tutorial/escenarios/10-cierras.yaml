@@ -29,7 +29,7 @@ steps:
     source:
       - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
+      - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
     remark: |
       Four `--add-ac` flags in the same call add four new elements, in the order they're written,
       with new keys, #3, #4, #5 and #6, after the #1 and #2 the task already had from the initial
@@ -104,7 +104,7 @@ steps:
     source:
       - spec/cmd/set.md "`biso set`"
       - spec/cmd/verbos-del-ciclo.md#biso-finish "`biso finish`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       `--check-ac all` checks #2 again, the one you'd unchecked, and doesn't touch the other five,
       they were already checked, and checking the same criterion twice "stays checked, with no

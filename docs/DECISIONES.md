@@ -378,7 +378,7 @@ arranque lo destaque en su propio bloque.
 
 **Queda resuelta, y no con el papel que este apartado imaginaba.** Aplicando el criterio de
 ["El criterio de estado frente a campo"](#el-criterio-de-estado-frente-a-campo), una pregunta abierta puede detener una tarea en cualquier punto del camino, así que no podía ser
-un estado: es el campo `question` de ["La pregunta abierta"](spec/modelo-de-datos.md#la-pregunta-abierta), con su derivado `waiting`, los
+un estado: es el campo `question` de ["La pregunta abierta"](spec/modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta), con su derivado `waiting`, los
 verbos `biso ask` y `biso answer`, y el bloque `NEEDS ANSWER` del mensaje de arranque, que es
 exactamente el bloque propio que este apartado pedía.
 
@@ -781,7 +781,7 @@ resuelve de golpe sacar la identidad del nombre, precisamente porque lo que iden
 **La tercera: por qué tampoco una bandera que acepte el identificador.** Aquí no hay ningún obstáculo
 técnico, hay algo peor: no hay ningún caso de uso que se sostenga. El identificador de ocho hexadecimales
 no aparece en el trabajo diario, porque las tareas se nombran con `<PREFIX>-<n>` y ese prefijo se deriva
-de `project_name`, no del `id` del tablero (["Identificadores"](spec/modelo-de-datos.md#identificadores)), así que nadie lo tiene delante ni lo teclea. El
+de `project_name`, no del `id` del tablero (["Identificadores"](spec/modelo-de-datos/identificadores.md#identificadores)), así que nadie lo tiene delante ni lo teclea. El
 único momento en que el `id` manda es cuando el puntero lo trae y su `path` no resuelve, y ahí la
 búsqueda **ya recorre sola** la raíz por defecto y las raíces adicionales mirando el marcador `<id>.id` de
 cada carpeta, sin que nadie tenga que pasar ninguna bandera. El otro caso imaginable, que un mensaje de
@@ -1457,7 +1457,7 @@ no va.
 **["Repetición y listas separadas por comas"](spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas), por qué los campos de texto largo no se parten por comas.** Porque una coma dentro de una frase
 es normal, y partir por ella convertiría una descripción en varias.
 
-**["Las fechas"](spec/modelo-de-datos.md#las-fechas), por qué las fechas se pueden fijar al importar y no en el uso normal.** Sin esa excepción no se
+**["Las fechas"](spec/modelo-de-datos/fechas.md#las-fechas), por qué las fechas se pueden fijar al importar y no en el uso normal.** Sin esa excepción no se
 puede importar el histórico de otro sistema conservando cuándo pasó cada cosa, que es el tercer
 requisito de ["Cuatro requisitos aprendidos de otras herramientas"](#cuatro-requisitos-aprendidos-de-otras-herramientas), en este mismo documento.
 
@@ -1600,7 +1600,7 @@ primero: es justo el dato que ese principio manda enseñar, y por eso va en la m
 que ya enseña el resto de derivados (`ac X/Y`, `dod X/Y`, `urgency`), no en un sitio aparte. Sobre una
 tarea recién creada con `biso new`, en cambio, el contador de cada lista siempre empieza en 1, así que
 la clave de cada `--add-ac` es el mismo orden en que se escribieron las banderas
-(["Los criterios y sus claves estables"](spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables)): quien llama ya lo sabe, y anunciarlo sería el eco que el principio 4
+(["Los criterios y sus claves estables"](spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)): quien llama ya lo sabe, y anunciarlo sería el eco que el principio 4
 prohíbe.
 
 **Alternativas descartadas, y por qué.** Una nota de stderr, con la misma forma que `note:` o
@@ -1658,7 +1658,7 @@ quien ya sabe usar `--rm-ac` no aprende nada nuevo para usar `--rm-comment`.
 ## Se retiran `project` y `milestone`
 
 **La decisión.** La tarea no tiene ningún campo dedicado a agrupar trabajo. La agrupación real, la de
-una tarea grande con subtareas propias, se resuelve con `parent` (sección ["El modelo de datos de una tarea"](spec/modelo-de-datos.md)):
+una tarea grande con subtareas propias, se resuelve con `parent` (sección ["El modelo de datos de una tarea"](spec/modelo-de-datos/index.md)):
 cualquier tarea con hijas, sea cual sea su `type`, actúa como grupo, sin que haga falta marcarla de
 ninguna forma especial. Quien quiera además distinguir esas tareas grandes de las demás por su
 naturaleza puede declarar un valor `epic` en `types` (sección [`biso config`](spec/cmd/config.md)) y

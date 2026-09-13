@@ -36,7 +36,7 @@ TASK-19  In Progress  ac 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [`biso start`](../spec/cmd/verbos-del-ciclo.md#biso-start), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso start`](../spec/cmd/verbos-del-ciclo.md#biso-start), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: The urgency has gone up from 7.0 to 11.0, and that's exactly the 4.0 of the active-task term. Nobody wrote that number: it gets recalculated on every read. What the output doesn't say is the most important part of this step. `biso start` has done four things in a single write: it set the active state, it checked that the task already had someone assigned (`@claude`, since scenario 4, so it didn't touch that), **it took the lease** in the caller's name, and it added the plan. If the task had had nobody assigned, `start` would have assigned it to whoever called it, and that's the difference with what Sara did in the previous scenario: she assigned without starting, and `start` starts by assigning if it has to.*
 
