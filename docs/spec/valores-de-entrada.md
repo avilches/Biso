@@ -33,8 +33,8 @@ como si llega de un fichero vacío o de una entrada estándar vacía. La regla e
 
 | Dónde | Qué pasa |
 |---|---|
-| En una bandera que añade (`--append-note`, `--add-labels`, `--add-ac`, `--append-desc`) | No se añade nada, se emite `warning: --append-note: empty value, nothing was added` y el código sigue siendo 0 |
-| En una bandera que sustituye (`--replace-labels`) | Deja el campo vacío, igual que `--clear-labels`. Sustituir por nada es vaciar, y eso sí es explícito |
+| En un flag que añade (`--append-note`, `--add-labels`, `--add-ac`, `--append-desc`) | No se añade nada, se emite `warning: --append-note: empty value, nothing was added` y el código sigue siendo 0 |
+| En un flag que sustituye (`--replace-labels`) | Deja el campo vacío, igual que `--clear-labels`. Sustituir por nada es vaciar, y eso sí es explícito |
 | En un campo escalar (`--type ""`, `--priority ""`) | Error 3. **La cadena vacía nunca es la forma de borrar un escalar**; para eso está `--clear-type` |
 | En el título, al crear | Error 2: `error: title cannot be empty` |
 
@@ -51,19 +51,19 @@ tienen vocabulario, el `code` es `empty_scalar_value`.
 Tres mecanismos, en orden de preferencia:
 
 1. **`--flag=valor`** funciona siempre y es la forma recomendada: `--append-desc=-5 grados`.
-2. **`--`** termina el análisis de opciones: `biso new -- "-n no es una bandera"`.
-3. **Un valor que empieza por guion detrás de una bandera que exige valor se acepta tal cual**, sin
+2. **`--`** termina el análisis de opciones: `biso new -- "-n no es un flag"`.
+3. **Un valor que empieza por guion detrás de un flag que exige valor se acepta tal cual**, sin
    heurísticas. `biso set MYP-1 --append-note -x` guarda `-x` como nota.
 
-Como consecuencia de la regla 3, olvidar el valor de una bandera se detecta por lo que sobra después,
+Como consecuencia de la regla 3, olvidar el valor de un flag se detecta por lo que sobra después,
 no por lo que parece: `biso set MYP-1 --append-note --priority high` guarda la nota `--priority` y
 luego falla con código 2 y `error: unexpected argument: high`.
 
 ## Repetición y listas separadas por comas
 
-Para toda bandera marcada como repetible:
+Para todo flag marcado como repetible:
 
-- Repetirla acumula: `--add-labels a --add-labels b` deja dos etiquetas.
+- Repetirlo acumula: `--add-labels a --add-labels b` deja dos etiquetas.
 - Si además acepta lista, separar por comas acumula igual: `--add-labels a,b` deja las mismas dos.
 - Las dos formas se pueden mezclar.
 - **Una coma dentro de un valor se escapa con `\,`.** Es la única forma de meter una coma en una
@@ -71,10 +71,10 @@ Para toda bandera marcada como repetible:
   clave de `ext` nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
   (["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token)).
 - Los campos de texto largo y los criterios **nunca** se parten por comas.
-- Un valor repetido dentro de la misma bandera se guarda una vez y produce
+- Un valor repetido dentro del mismo flag se guarda una vez y produce
   `warning: --add-labels: "urgent" given twice, kept once`.
 
-Para toda bandera **no** repetible, es decir, los campos escalares, pasarla dos veces con valores
+Para todo flag **no** repetible, es decir, los campos escalares, pasarlo dos veces con valores
 distintos es un error de uso con código 2:
 
 ```

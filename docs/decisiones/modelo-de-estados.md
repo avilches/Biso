@@ -160,7 +160,7 @@ y archivar es dejar de trabajar, así que conservarlo lo esconde donde nadie lo 
 sesión muerta.
 
 **Una escritura que no cambia ningún campo también late, y esto es lo que un implementador desharía
-creyendo que optimiza.** `biso set` con todas sus banderas dando el valor que la tarea ya tiene sale con
+creyendo que optimiza.** `biso set` con todos sus flags dando el valor que la tarea ya tiene sale con
 código 0 y con `note: MYP-11 unchanged`, y aun así renueva `leaseExpiresAt` si quien llama es el
 tenedor. Salta a la vista el atajo contrario, no escribir nada cuando no hay nada que escribir, y es un
 error: el latido de este arrendamiento no es un comando propio, es cualquier escritura que el agente ya
@@ -172,7 +172,7 @@ renovación es un hecho del arrendamiento, no una modificación de la tarea, y l
 porque habla de la tarea.
 
 **Y `biso new --start` reclama el arrendamiento, porque es el atajo de dos llamadas y la equivalencia
-tiene que ser real.** ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas) justifica esa bandera como el ahorro de `biso new` más `biso start`;
+tiene que ser real.** ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas) justifica ese flag como el ahorro de `biso new` más `biso start`;
 si creara la tarea activa y asignada pero sin arrendamiento, las dos vías darían dos tareas distintas y
 la única forma de saberlo sería leer la letra pequeña. La excepción simétrica es `biso start -s` con un
 estado que no es el activo: ahí no se fija arrendamiento, porque fijarlo rompería la invariante de
@@ -332,8 +332,8 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   empujaría a rodear la herramienta, el mismo argumento que ya vale en ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas) para `finish` y
   los criterios sin marcar.
 - **El filtro de dependencias no excluye las tareas aparcadas.** `--not-blocked` mira solo
-  dependencias, así que un agente que elija trabajo únicamente con esa bandera se lleva también las
+  dependencias, así que un agente que elija trabajo únicamente con ese flag se lleva también las
   que esperan una respuesta. La consulta correcta añade `--not-waiting`, y así lo dicen tanto la
-  descripción de la bandera como el ejemplo de la ayuda de `biso ls`. El riesgo se queda, pero
+  descripción del flag como el ejemplo de la ayuda de `biso ls`. El riesgo se queda, pero
   encogido: el nombre ya no promete que la tarea esté lista para trabajar, solo que no esté bloqueada,
   que es lo que mide. El porqué del nombre está en ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas).

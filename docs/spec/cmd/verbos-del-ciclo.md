@@ -1,6 +1,6 @@
 # Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`
 
-Los seis aceptan **todas** las banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md), igual que `set`. No son un
+Los seis aceptan **todos** los flags de campo de la sección ["Las familias de flags"](../familias-de-flags.md), igual que `set`. No son un
 subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que el gesto frecuente
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
@@ -32,7 +32,7 @@ biso finish MYP-11 --check-ac all --check-dod all --append-summary "Normalize CR
 
 ```
 biso start <ref>... [--append-plan <text>] [-a <@who>]... [-s <v>] [--reopen]
-           [--id] [--match] [cualquier bandera de campo de las familias de banderas]
+           [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
 ### Parámetros propios
@@ -45,10 +45,10 @@ biso start <ref>... [--append-plan <text>] [-a <@who>]... [-s <v>] [--reopen]
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-`--append-plan` y `-a/--add-assignees` son las banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md), con su
+`--append-plan` y `-a/--add-assignees` son los flags de campo de la sección ["Las familias de flags"](../familias-de-flags.md), con su
 significado de siempre: **las dos añaden**. `--append-plan` añade al plan existente; sustituirlo entero
 se hace vaciando y añadiendo en la misma llamada (`--clear-plan --append-plan ...`), porque un bloque
-de prosa no tiene bandera de sustituir entera. `-a` añade una persona y `--replace-assignees` reemplaza
+de prosa no tiene flag de sustituir entera. `-a` añade una persona y `--replace-assignees` reemplaza
 la lista.
 
 ### Qué hace
@@ -71,7 +71,7 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | `-s` con un estado que no es el activo, por ejemplo `biso start MYP-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: MYP-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
 | No hay [ninguna identidad configurada](../invocacion.md#variables-de-entorno) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
-| La tarea ya tiene plan y se pasa `--append-plan` | Se añade al final, como toda bandera de añadir |
+| La tarea ya tiene plan y se pasa `--append-plan` | Se añade al final, como todo flag de añadir |
 | Varias referencias | Todo o nada |
 
 ### Salida
@@ -89,7 +89,7 @@ permite cambiar entre versiones menores, así que la cifra exacta puede no ser e
 |---|---:|
 | Empezada | 0 |
 | Ya estaba terminada y no hay `--reopen` | 6 |
-| Referencia mal formada, banderas incompatibles | 2 |
+| Referencia mal formada, flags incompatibles | 2 |
 | Valor fuera de un vocabulario, tarea ilegible | 3 |
 | Referencia inexistente | 4 |
 | Referencia ambigua | 5 |
@@ -140,7 +140,7 @@ Examples:
 ### Firma
 
 ```
-biso note <ref> [<text>...] [--id] [--match] [cualquier bandera de campo de las familias de banderas]
+biso note <ref> [<text>...] [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
 ### Parámetros propios
@@ -167,7 +167,7 @@ hint: to note the same thing on several tasks: biso set MYP-1 MYP-2 --append-not
       to write that text literally:            biso note MYP-1 --append-note "MYP-2"
 ```
 
-**`--append-note`, la bandera de campo de la sección ["Las familias de banderas"](../familias-de-flags.md), nunca pasa por esa comprobación**, porque no
+**`--append-note`, el flag de campo de la sección ["Las familias de flags"](../familias-de-flags.md), nunca pasa por esa comprobación**, porque no
 es un posicional: es la vía para escribir una nota que de verdad diga `MYP-2`. La misma regla vale
 para `biso comment`, con `--comment`.
 
@@ -175,12 +175,12 @@ para `biso comment`, con `--comment`.
 
 Añade uno o más párrafos a las notas de implementación. **Nunca reemplaza.** Para reemplazar está
 vaciar y añadir en la misma llamada, `biso set <ref> --clear-notes --append-note "..."`, que este
-comando no acepta por su verbo propio pero sí como banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md), igual
+comando no acepta por su verbo propio pero sí como flags de campo de la sección ["Las familias de flags"](../familias-de-flags.md), igual
 que las demás.
 
 | Caso | Qué pasa |
 |---|---|
-| Sin ningún texto y sin ninguna bandera de campo | Error 2 |
+| Sin ningún texto y sin ningún flag de campo | Error 2 |
 | Texto vacío | No añade nada y avisa, según ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) |
 | La tarea no tiene notas todavía | Se crean |
 | Varios textos | Un párrafo por texto, en el orden dado |
@@ -247,7 +247,7 @@ que entra lo que viene de fuera.
 
 ```
 biso comment <ref> [<text>...] [--comment-author <@who>]
-             [--id] [--match] [cualquier bandera de campo de las familias de banderas]
+             [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
@@ -321,7 +321,7 @@ Examples:
 ```
 biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]... [--check-dod <sel>]...
             [--append-note <text>]... [--add-files <path>]... [-s <v>] [--strict] [--no-checks]
-            [--id] [--match] [cualquier bandera de campo de las familias de banderas]
+            [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
 ### Parámetros propios
@@ -335,7 +335,7 @@ biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]... [--check-do
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-`--append-summary`, `--check-ac`, `--check-dod`, `--append-note` y `--add-files` son las banderas de
+`--append-summary`, `--check-ac`, `--check-dod`, `--append-note` y `--add-files` son los flags de
 campo de siempre.
 
 ### Qué hace
@@ -382,7 +382,7 @@ warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked
 |---|---:|
 | Cerrada | 0 |
 | `--strict` y falta algo | 6, y no se escribe nada |
-| Banderas incompatibles, selector por clave con varias tareas | 2 |
+| Flags incompatibles, selector por clave con varias tareas | 2 |
 | Valor fuera de un vocabulario, tarea ilegible | 3 |
 | Referencia o criterio inexistente | 4 |
 | Referencia o criterio ambiguo | 5 |
@@ -433,7 +433,7 @@ Examples:
 ### Firma
 
 ```
-biso ask <ref> <text>... [--id] [--match] [cualquier bandera de campo de las familias de banderas]
+biso ask <ref> <text>... [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
 ### Parámetros propios
@@ -450,7 +450,7 @@ Cada texto es un párrafo propio del cuerpo de la pregunta, igual que en [`biso 
 
 Se aplica la misma regla del texto que parece un identificador que [`biso note`](#biso-note): un
 posicional que encaja con la gramática de identificador de la sección ["La gramática"](../referencias.md#la-gramática) es error 2. Pero el mensaje
-es propio, porque `biso ask` no tiene una bandera de campo que escriba `question`, así que la única
+es propio, porque `biso ask` no tiene un flag de campo que escriba `question`, así que la única
 salida es `@fichero` o `-`, nunca `--note`:
 
 ```
@@ -464,7 +464,7 @@ configurada](../invocacion.md#variables-de-entorno).
 ### Qué hace
 
 Llena el campo [`question`](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) con el autor y el instante que fija el programa y el texto dado,
-junto con cualquier otra bandera de campo que se haya pasado en la misma escritura. **No cambia el
+junto con cualquier otro flag de campo que se haya pasado en la misma escritura. **No cambia el
 estado de la tarea.**
 
 | Caso | Qué pasa |
@@ -506,7 +506,7 @@ cierto.
 |---|---:|
 | Preguntada | 0 |
 | Ya hay una pregunta abierta, o la tarea ya está en el estado terminal | 6 |
-| Referencia mal formada, banderas incompatibles, posicional que parece un identificador | 2 |
+| Referencia mal formada, flags incompatibles, posicional que parece un identificador | 2 |
 | Sin identidad configurada | 2 |
 | Pregunta vacía, tarea ilegible | 3 |
 | Referencia inexistente, o fichero de `@` inexistente | 4 |
@@ -553,7 +553,7 @@ Examples:
 ### Firma
 
 ```
-biso answer <ref> <text>... [--id] [--match] [cualquier bandera de campo de las familias de banderas]
+biso answer <ref> <text>... [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
 ### Parámetros propios
@@ -569,7 +569,7 @@ Cada texto es un párrafo propio de la respuesta, igual que en [`biso ask`](#bis
 
 Se aplica la misma regla del texto que parece un identificador que [`biso note`](#biso-note): un
 posicional que encaja con la gramática de identificador de la sección ["La gramática"](../referencias.md#la-gramática) es error 2. Pero el mensaje
-es propio, porque `biso answer` no tiene una bandera de campo que escriba `question`, así que la única
+es propio, porque `biso answer` no tiene un flag de campo que escriba `question`, así que la única
 salida es `@fichero` o `-`, nunca `--note`:
 
 ```
@@ -608,7 +608,7 @@ instante de cada uno sigue diciendo la verdad.
 | El texto está vacío (`biso answer MYP-11 ""`) | Error 3: `error: the answer cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
 | Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
-| Se pasan además banderas de campo | Se aplican igual, como en cualquier verbo del ciclo |
+| Se pasan además flags de campo | Se aplican igual, como en cualquier verbo del ciclo |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
 | La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get` |
 | La tarea está en el estado terminal | Se hace igual que en cualquier otro estado |
@@ -639,7 +639,7 @@ La urgencia recupera el término de actividad de ["La urgencia"](../modelo-de-da
 |---|---:|
 | Respondida | 0 |
 | La tarea no tiene pregunta abierta | 6 |
-| Referencia mal formada, banderas incompatibles, posicional que parece un identificador, falta el texto | 2 |
+| Referencia mal formada, flags incompatibles, posicional que parece un identificador, falta el texto | 2 |
 | Sin identidad configurada | 2 |
 | Respuesta vacía, tarea ilegible | 3 |
 | Referencia inexistente | 4 |

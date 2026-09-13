@@ -8,9 +8,9 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
 - Los ["Códigos de salida"](codigos-de-salida.md) y su significado.
 - Los identificadores `code` de la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), con la regla de
   ampliación que allí se dice.
-- El nombre y el significado de cada comando y de cada bandera. **Una bandera nunca cambia de
+- El nombre y el significado de cada comando y de cada flag. **Un flag nunca cambia de
   semántica**, y en particular ninguna que hoy añade pasará a reemplazar. Si hiciera falta el
-  comportamiento contrario, se añade una bandera nueva con otro nombre.
+  comportamiento contrario, se añade un flag nuevo con otro nombre.
 - Las claves de `data` en cada `kind` de JSON. Se pueden añadir claves; las que hay no se quitan ni
   cambian de tipo.
 - El ["algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia), idéntico al leer y al escribir.

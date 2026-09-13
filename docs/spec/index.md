@@ -27,7 +27,7 @@ esa herramienta, y no hay ninguna intención de que lo haga, como consta en
 [Lo que se deja fuera a propósito](fuera-de-alcance.md).
 
 **Convención de idioma.** La prosa de estos documentos va en español. Todo lo que es interfaz del
-programa (nombres de comando, banderas, textos de ayuda, mensajes de error, claves JSON y claves de
+programa (nombres de comando, flags, textos de ayuda, mensajes de error, claves JSON y claves de
 configuración) va en inglés, porque es lo que la persona o el agente que usa el programa lee y
 escribe. **El contenido de los ejemplos va también en inglés**, aunque la prosa que los rodea siga en
 español: el título, la descripción, los criterios de aceptación, la definición de hecho, el plan, las
@@ -54,10 +54,10 @@ referencia a un código concreto en otra página no dice nada.
 
 [Flags globales](cmd/flags-globales.md), [Entorno y configuración de
 máquina](invocacion.md) y [Cómo se elige el tablero](resolucion-del-tablero.md) explican qué pasa
-antes de que el programa llegue a interpretar el comando: qué banderas valen para todos, y con qué
+antes de que el programa llegue a interpretar el comando: qué flags valen para todos, y con qué
 tablero va a trabajar. [Terminal, flujos de salida y codificación](salida-y-terminal.md) y [Cómo se
 pasa un valor](valores-de-entrada.md) terminan ese bloque: qué imprime el programa según haya terminal
-de por medio o no, y de qué formas se le puede pasar el valor de cualquier bandera. Ninguna de estas
+de por medio o no, y de qué formas se le puede pasar el valor de cualquier flag. Ninguna de estas
 páginas depende de un comando concreto.
 
 ### El modelo de datos, con las reglas que lo escriben
@@ -74,8 +74,8 @@ cómo se valida el valor de los campos que tienen un vocabulario cerrado.
 ### La gramática de la entrada que comparten los comandos
 
 [Cómo se resuelve una referencia a una
-tarea](referencias.md) y [Las familias de banderas](familias-de-flags.md) definen de una vez la
-forma que tiene nombrar una tarea y la forma que tiene cada bandera de escritura. Estas reglas valen
+tarea](referencias.md) y [Las familias de flags](familias-de-flags.md) definen de una vez la
+forma que tiene nombrar una tarea y la forma que tiene cada flag de escritura. Estas reglas valen
 para todos los comandos y no se repiten en cada uno: un comando solo las menciona cuando se aparta de
 ellas, y ninguno lo hace salvo donde se diga.
 

@@ -1,11 +1,11 @@
-# Las familias de banderas
+# Las familias de flags
 
-Esta sección define de una vez la forma de todas las banderas de escritura. Los comandos no la
+Esta sección define de una vez la forma de todos los flags de escritura. Los comandos no la
 repiten: cada uno dice qué campos acepta, y esta sección dice qué forma tiene cada campo.
 
 ## La regla
 
-**Toda bandera de escritura dice en su propio nombre qué hace, sin excepción.** No hay ningún nombre
+**Todo flag de escritura dice en su propio nombre qué hace, sin excepción.** No hay ningún nombre
 "desnudo" cuyo significado dependa de una regla aparte que haya que conocer de antemano: quien lee
 `--add-labels`, `--rm-labels`, `--clear-labels` o `--replace-labels` no necesita saber nada más que esas
 cuatro palabras para saber qué hace cada una, ni falta que consultar esta sección para adivinarlo.
@@ -15,13 +15,13 @@ una más ni una menos:
 
 **La "Forma" de esta tabla es una clasificación de comportamiento de escritura, no el tipo del
 campo.** Se deriva del tipo concreto de ["El modelo de datos de una tarea"](modelo-de-datos/index.md): a
-efectos de qué bandera tiene sentido ofrecer, da igual si un valor único es `string`, `enum(...)`,
+efectos de qué flag tiene sentido ofrecer, da igual si un valor único es `string`, `enum(...)`,
 `date`, `int`, `float` o `bool`, porque a todos les basta con fijar y vaciar, así que esos tipos
 comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa";
 `map<string,string>` es "mapa de claves"; y `list<Criterion>` / `list<Comment>` son "lista de
 objetos". **Dos formas se reparten en más de una fila** cuando, dentro de la misma forma, hay más de
 un conjunto de operaciones posible: `acceptanceCriteria`, `definitionOfDone` y `comments` son los tres
-"lista de objetos", pero los criterios y los comentarios no comparten las mismas banderas, así que la
+"lista de objetos", pero los criterios y los comentarios no comparten los mismos flags, así que la
 forma aparece dos veces, una por cada conjunto de operaciones.
 
 | Forma | Clase de campo | Variantes |
@@ -34,27 +34,27 @@ forma aparece dos veces, una por cada conjunto de operaciones.
 | lista de objetos | Comentarios (`comments`) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
 
 **`question` no entra en esta tabla.** Es de tipo `Question`, un valor único y no una lista, y esa
-forma no tiene ninguna fila aquí porque no existe ninguna bandera de campo que la escriba: ninguna
+forma no tiene ninguna fila aquí porque no existe ningún flag de campo que la escriba: ninguna
 de las demás filas la describe, y no hace falta una fila vacía solo para nombrarla.
-**Ninguna bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación
+**Ningún flag de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación
 de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (sección
 ["El modelo de datos de una tarea"](modelo-de-datos/index.md)).
 
 **El significado no cambia entre comandos.** `--add-ac` añade un criterio en `biso new`, en `biso set`, en
-`biso start` y en `biso finish`, y todos los comandos de escritura aceptan todas estas banderas.
+`biso start` y en `biso finish`, y todos los comandos de escritura aceptan todos estos flags.
 
 **Por qué no hay nombre desnudo.** Antes lo había: el nombre desnudo del campo añadía, y `set-`,
 `rm-` y `clear-` delante cambiaban esa operación. Funcionaba, y de hecho resolvía un fallo real medido
 en otra herramienta (Principio 3 de ["La evidencia detrás de los siete principios"](../decisiones/principios-y-mantenimiento.md#la-evidencia-detrás-de-los-siete-principios)), pero exigía conocer esa regla de antemano: la
 única forma de saber qué hacía `--label` era haberla leído en algún sitio, porque el nombre por sí solo
-no lo dice. Cada bandera de esta sección lleva ahora su propio verbo (`add`, `rm`, `clear`,
+no lo dice. Cada flag de esta sección lleva ahora su propio verbo (`add`, `rm`, `clear`,
 `replace`, `append`, `check`, `uncheck`), así que no hay ninguna regla que aprender antes de usarla:
 la razón completa, con la medición de por qué la forma anterior tampoco cabía ya en el mensaje de
-arranque, está en ["El grid completo de banderas de campo en el mensaje de arranque, medido con un agente real"](../decisiones/vocabulario-y-mensaje-de-arranque.md#el-grid-completo-de-banderas-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real).
+arranque, está en ["El grid completo de flags de campo en el mensaje de arranque, medido con un agente real"](../decisiones/vocabulario-y-mensaje-de-arranque.md#el-grid-completo-de-flags-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real).
 
-## Sustituir un campo que no tiene bandera de "sustituir entera"
+## Sustituir un campo que no tiene flag de "sustituir entera"
 
-Los criterios (`ac`, `dod`) y la prosa no tienen una bandera de "sustituir entera" propia
+Los criterios (`ac`, `dod`) y la prosa no tienen un flag de "sustituir entera" propia
 (["Campos de lista sin coma"](#campos-de-lista-sin-coma-criterios) y ["Campos de prosa"](#campos-de-prosa)). Sustituirlos se hace vaciando y añadiendo en la misma
 llamada:
 
@@ -65,7 +65,7 @@ biso set MYP-11 --clear-acs --add-ac "First" --add-ac "Second"
 ```
 
 Cada una deja el campo con exactamente lo que se acaba de añadir, nunca mezclado con lo que hubiera
-antes, y el orden en que se escriben las banderas en la línea de comandos no importa: **el orden fijo
+antes, y el orden en que se escriben los flags en la línea de comandos no importa: **el orden fijo
 de aplicación dentro de una escritura, con los borrados siempre antes que los añadidos, está en
 ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)** y es el mismo para todos los campos, no una regla aparte de esta
 sección.
@@ -103,7 +103,7 @@ sustituye entero.
 | definición de hecho | `--add-dod` | `--rm-dod` | `--clear-dods` |
 
 **No existe `--replace-ac` ni `--replace-dod`.** Sustituir la lista entera de criterios se hace
-vaciando y añadiendo en la misma llamada (["Sustituir un campo que no tiene bandera de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera)):
+vaciando y añadiendo en la misma llamada (["Sustituir un campo que no tiene flag de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera)):
 `biso set MYP-11 --clear-acs --add-ac "First" --add-ac "Second"`.
 
 `--add-ac` y `--add-dod` son repetibles pero **no** aceptan lista por comas, porque el texto de un
@@ -132,19 +132,19 @@ sección.
 | notas | `--append-note` | `--clear-notes` |
 | resumen final | `--append-summary` | `--clear-summary` |
 
-**No existe una bandera que sustituya un bloque de prosa entero.** Un bloque de prosa es un único
+**No existe un flag que sustituya un bloque de prosa entero.** Un bloque de prosa es un único
 texto (["El modelo de datos de una tarea"](modelo-de-datos/index.md)), sin elementos direccionables que
 quitar uno a uno, así que no hay `--rm-*` para ninguno de los campos de la tabla de arriba. Sustituirlo
 entero se hace vaciando y añadiendo en la misma llamada: `biso set MYP-11 --clear-plan --append-plan "Nuevo plan"`.
 
 `--append-note` está en singular porque cada llamada añade un párrafo; `--clear-notes` está en plural
 porque vacía el campo `notes` entero. No es una excepción a ninguna regla: cada palabra nombra
-exactamente lo que la bandera hace.
+exactamente lo que el flag hace.
 
 - Añadir a un campo vacío es lo mismo que fijarlo, así que al crear una tarea da igual usar `--append-*`
   o dejarlo vacío y añadir después: el resultado es el mismo.
-- Al añadir sobre contenido existente se intercala una línea en blanco, y cada repetición de la
-  bandera en la misma invocación produce su propio párrafo.
+- Al añadir sobre contenido existente se intercala una línea en blanco, y cada repetición del
+  flag en la misma invocación produce su propio párrafo.
 - Añadir un valor vacío no hace nada y avisa, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
 
 ## Selectores de criterios
@@ -189,18 +189,18 @@ después de resolver `--check-ac` y `--uncheck-ac` un mismo elemento aparece en 
 error: --check-ac and --uncheck-ac both select acceptance criterion #3 of MYP-11
 ```
 
-Esta es la única familia de banderas de esta sección donde el solape es un error en vez de resolverse
-por orden (["Sustituir un campo que no tiene bandera de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera) explica por qué).
+Esta es la única familia de flags de esta sección donde el solape es un error en vez de resolverse
+por orden (["Sustituir un campo que no tiene flag de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera) explica por qué).
 
 ## Comentarios
 
-| Operación | Bandera | Repetible |
+| Operación | Flag | Repetible |
 |---|---|---|
 | añadir | `--comment <text>` | sí |
 | borrar uno o varios enteros | `--rm-comment <sel>` | sí |
 | corregir solo la fecha de uno o varios | `--set-comment-date <sel>=<instante>` | sí |
 
-**No existe una bandera que edite el cuerpo o el autor de un comentario ya escrito, y no va a
+**No existe un flag que edite el cuerpo o el autor de un comentario ya escrito, y no va a
 existir.** Un comentario es el registro de una conversación, y lo único que se concede aquí es
 corregir un metadato (la fecha) o retirar el comentario entero, nunca reescribir lo que se dijo. La
 razón, con el caso medido que la motiva, está en ["Borrar o corregir la fecha de un comentario"](../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).
@@ -291,14 +291,14 @@ Un escalar **nunca** se borra pasándole la cadena vacía, según ["El valor vac
 
 ## Campos externos
 
-| Operación | Bandera | Repetible |
+| Operación | Flag | Repetible |
 |---|---|---|
 | fijar una clave | `--ext <clave>=<valor>` | sí |
 | quitar una clave | `--rm-ext <clave>` | sí |
 | vaciar el mapa entero | `--clear-ext` | no |
 
-**No existe `--replace-ext`.** Fijar una clave con `--ext` ya sustituye su valor, así que una segunda
-bandera para lo mismo solo serviría para equivocarse. Vaciar el mapa entero es `--clear-ext`, y es la
+**No existe `--replace-ext`.** Fijar una clave con `--ext` ya sustituye su valor, así que un segundo
+flag para lo mismo solo serviría para equivocarse. Vaciar el mapa entero es `--clear-ext`, y es la
 única forma de vaciarlo. Este campo ya era explícito antes del resto del rediseño de esta sección: no
 cambia nada aquí.
 

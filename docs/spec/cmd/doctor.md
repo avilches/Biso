@@ -10,7 +10,7 @@ biso doctor [--fix]
 |---|---|---|---|---|---|---|---|
 | `--fix` | | no | booleano | falso | no | no | ninguno |
 
-**`biso doctor` sin `--fix` es de solo lectura**, y `--print` y `--dry-run` de la sección ["Banderas globales"](flags-globales.md#banderas-globales) son error 2
+**`biso doctor` sin `--fix` es de solo lectura**, y `--print` y `--dry-run` de la sección ["Flags globales"](flags-globales.md#flags-globales) son error 2
 igual que en cualquier otro comando de lectura. **Con `--fix` es un comando de escritura**: ahí
 `--dry-run` reporta qué se repararía sin reparar nada, y `--print` no añade nada, porque `doctor` no
 imprime fichas de tareas.

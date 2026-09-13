@@ -22,5 +22,5 @@ gestores de tareas maduros, Backlog.md y Taskwarrior, y de los fallos documentad
 - [La persistencia](persistencia.md)
 - [El lenguaje de implementación y el rendimiento](lenguaje-y-rendimiento.md)
 - [El vocabulario y el mensaje de arranque](vocabulario-y-mensaje-de-arranque.md)
-- [Comandos y banderas](comandos-y-flags.md)
+- [Comandos y flags](comandos-y-flags.md)
 - [Decisiones de detalle](detalles.md)

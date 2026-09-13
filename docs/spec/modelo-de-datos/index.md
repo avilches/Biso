@@ -32,8 +32,8 @@ propios.
 
 Precisiones:
 
-- **`archived` solo lo cambia `biso archive` y `biso archive --unarchive`.** No hay una bandera de
-  campo de la sección ["Las familias de banderas"](../familias-de-flags.md) para él: archivar es un gesto de flujo de trabajo con nombre propio,
+- **`archived` solo lo cambia `biso archive` y `biso archive --unarchive`.** No hay un flag de
+  campo de la sección ["Las familias de flags"](../familias-de-flags.md) para él: archivar es un gesto de flujo de trabajo con nombre propio,
   según el principio 5.
 - **`leaseExpiresAt` lo fija el programa a `ahora + lease_minutes`** (clave de [configuración](../cmd/config.md)); ver [La renovación](../lease.md#la-renovación) en `lease.md` para cuándo.
 - **`leaseHolder` solo lo fija el programa, con [`biso start`](../cmd/verbos-del-ciclo.md#biso-start) y con [`biso new --start`](../cmd/new.md)**; ver [La renovación](../lease.md#la-renovación) en `lease.md`.
@@ -76,7 +76,7 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
   pasa `--author` y de si hay identidad configurada; están completas en ["El autor de una
   tarea"](autor.md).
 - **`comments` no se edita nunca por una escritura general sobre la tarea.** El cuerpo y el autor de
-  un comentario no se editan jamás, por ninguna vía; lo único que admiten las banderas dedicadas de
+  un comentario no se editan jamás, por ninguna vía; lo único que admiten los flags dedicados de
   ["Comentarios"](../familias-de-flags.md#comentarios) es borrar el comentario entero
   (`--rm-comment`) o corregir únicamente su fecha (`--set-comment-date`). La razón, con el caso que
   la motiva, está en
@@ -103,7 +103,7 @@ demás páginas remiten a ella.
 
 ## Precisiones generales sobre la mutabilidad
 
-- **"No mutable" significa que ninguna bandera del programa lo cambia.** `updatedAt` lo reescribe el
+- **"No mutable" significa que ningún flag del programa lo cambia.** `updatedAt` lo reescribe el
   programa en cada operación que cambie algo.
 - **Se pueden fijar fechas solo al importar**, es decir, en `biso new --from`; los detalles completos
   están en ["Las fechas"](fechas.md).

@@ -87,14 +87,14 @@ recorta es contenido, no el tope.
 **Esto no es "el tope nunca sube", es "el tope sube solo cuando reducir ya no es posible sin perder
 algo".** La medida de aquel momento, 4.818 de 5.120 bytes, tenía 302 de margen: nunca había hecho falta
 apretar para caber, así que esta regla no se había puesto a prueba todavía. El margen que de verdad
-mandaba no era ese, sino el de la parte fija, que con las banderas nuevas `--check-dod` y
+mandaba no era ese, sino el de la parte fija, que con los flags nuevos `--check-dod` y
 `--uncheck-dod` en la rejilla de `FIELD FLAGS` había bajado a 129 bytes de los 3.456: cualquier texto
 nuevo en el bloque fijo tenía que caber ahí, no en los 302 del total.
 
-**Ese punto llegó, y las cifras de este apartado son historia.** El rediseño de las banderas de campo
-de TASK-24 dejó pendiente cómo enseñarlas dentro de este presupuesto, y el experimento con un agente
-real de TASK-25 (["El grid completo de banderas de campo en el mensaje de arranque, medido con un
-agente real"](#el-grid-completo-de-banderas-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real),
+**Ese punto llegó, y las cifras de este apartado son historia.** El rediseño de los flags de campo
+de TASK-24 dejó pendiente cómo enseñarlos dentro de este presupuesto, y el experimento con un agente
+real de TASK-25 (["El grid completo de flags de campo en el mensaje de arranque, medido con un
+agente real"](#el-grid-completo-de-flags-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real),
 más abajo en este documento) subió el tope de 5.120 a **5.504 bytes**, y la parte fija de 3.456 a
 **3.840**, con datos y no por conveniencia: es justo el caso que este apartado predijo, uno donde
 reducir el bloque fijo ya solo se podía a costa de perder información que un agente necesita para no
@@ -104,7 +104,7 @@ momento del modelo de estados; la medida vigente hoy está en la entrada enlazad
 
 ---
 
-## El grid completo de banderas de campo en el mensaje de arranque, medido con un agente real
+## El grid completo de flags de campo en el mensaje de arranque, medido con un agente real
 
 **Decisión vigente.** El bloque `FIELD FLAGS` de `biso prime` enseña las cuatro formas explícitas de
 cada campo de lista (añadir, quitar, vaciar, sustituir), sin ninguna regla que las derive, y el tope
@@ -114,13 +114,13 @@ midió contra las otras dos alternativas y ganó.
 
 **El experimento.** Sobre tres redacciones candidatas del bloque `FIELD FLAGS`/`RULES` (mostrar solo
 la forma de añadir con una regla de sufijos que deriva las otras tres; no mostrar ningún nombre de
-bandera y remitir a `--help`; mostrar las cuatro formas explícitas de cada campo) se dieron veinte
+flag y remitir a `--help`; mostrar las cuatro formas explícitas de cada campo) se dieron veinte
 encargos en lenguaje llano a Claude Sonnet por variante y tipo de encargo, con `claude-ibm -p --bare
 --system-prompt`, sin más contexto que el mensaje de `prime` simulado de cada variante y sin acceso a
 ninguna herramienta. Los encargos: crear una tarea asignándola a alguien (`--add-assignees`,
 un campo que solo aparece en `FIELD FLAGS`), añadir una etiqueta a una existente (`--add-labels`) y
 quitarle una etiqueta (`--rm-labels`). Se contó en cuántas de las veinte el comando propuesto usaba el
-nombre de bandera correcto a la primera.
+nombre de flag correcto a la primera.
 
 | Variante | Asignar | Añadir etiqueta | Quitar etiqueta |
 |---|---:|---:|---:|
@@ -130,7 +130,7 @@ nombre de bandera correcto a la primera.
 | Grid completo, las cuatro formas explícitas de cada campo | 20/20 | 20/20 | 20/20 |
 
 **Remitir a `--help` falla siempre, y de una forma que explica por qué.** Sin ningún nombre de
-bandera en el mensaje, el modelo no se queda callado ni consulta nada, porque el encargo es de una
+flag en el mensaje, el modelo no se queda callado ni consulta nada, porque el encargo es de una
 sola vuelta y no tiene ninguna herramienta que llamar: inventa un nombre plausible y equivocado,
 siempre del mismo tipo (`--label`, `--add-label`, `--rm-label` en singular, cuando el real es
 plural). Esto confirma con datos lo que ya decía la sección
@@ -164,13 +164,13 @@ en la parte fija y 320 en el total, proporciones parecidas a las que dejaba el r
 **Alternativas descartadas:**
 
 - *Remitir a `--help`.* Descartada por el 0/60 medido arriba, y porque contradice el criterio ya
-  escrito de que los nombres de bandera, al ser lo que no se puede adivinar, tienen que entrar en el
+  escrito de que los nombres de flag, al ser lo que no se puede adivinar, tienen que entrar en el
   mensaje.
 - *Regla de sufijos, incluso corregida.* Descartada pese a igualar en acierto al grid completo,
   porque mide más bytes en total una vez escrita con la precisión que exige no confundir.
 
 **Lo que este experimento no mide.** `--help` sigue haciendo falta para todo lo que
 ["Qué entra en el mensaje y qué se relega a `--help`"](../spec/cmd/prime.md#qué-entra-en-el-mensaje-y-qué-se-relega-a---help) ya declaraba fuera del mensaje de arranque:
-valores, tipos e incompatibilidades de cada bandera, el formato de lote de `new --from`, los comandos
-de administración y los casos límite. El grid completo elimina la adivinanza del *nombre* de una
-bandera de escritura, no la necesidad de `--help` para todo lo demás.
+valores, tipos e incompatibilidades de cada flag, el formato de lote de `new --from`, los comandos
+de administración y los casos límite. El grid completo elimina la adivinanza del *nombre* de un
+flag de escritura, no la necesidad de `--help` para todo lo demás.

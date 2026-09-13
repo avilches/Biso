@@ -30,7 +30,7 @@ CARDINALES = (
     "veintiuna|veintidos|veintidós|treinta|[0-9]+"
 )
 SUSTANTIVOS = (
-    "reglas|filas|comandos|codigos|códigos|banderas|secciones|apartados|documentos|"
+    "reglas|filas|comandos|codigos|códigos|flags|secciones|apartados|documentos|"
     "principios|garantias|garantías|mensajes|campos|verbos|criterios|columnas|entradas|"
     "tipos|familias|errores|avisos|estados|precisiones|comprobaciones|requisitos|decisiones"
 )

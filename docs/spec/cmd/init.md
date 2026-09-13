@@ -55,7 +55,7 @@ dato que nadie necesita y que dejaría de valer al cambiar `boards_root`.
 
 **Con `--at`, el puntero lleva la ruta en `path`, con la misma forma en que se dio `--at`**: relativa si
 `--at` era relativa, absoluta si era absoluta. `--at tablero` escribe `"path": "tablero"`;
-`--at /Users/avilches/Hub/Projects/My project/tablero` escribe esa ruta completa. No hay bandera para elegir la
+`--at /Users/avilches/Hub/Projects/My project/tablero` escribe esa ruta completa. No hay flag para elegir la
 forma porque la forma de `--at` ya es la elección, y esa elección es de quien llama y no del programa,
 porque depende de un dato que el programa no tiene: **dónde van a vivir las demás copias de trabajo del
 proyecto.**
@@ -137,7 +137,7 @@ no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máqui
 mismo tablero. Y no reescribe el puntero, porque ya era correcto.
 
 **Sin `--statuses`**, el tablero nace con `To Do, In Progress, Done`, con los papeles inicial, activo y
-terminal en ese orden. **Con `--statuses`**, hacen falta las tres banderas de papel,
+terminal en ese orden. **Con `--statuses`**, hacen falta los tres flags de papel,
 `--initial-status`, `--active-status` y `--terminal-status`, con los mismos nombres que las claves de
 configuración a las que corresponden.
 
@@ -149,7 +149,7 @@ reglas del lote de `biso new --from` (sección ["`biso new`"](new.md)): valida e
 vocabulario de `board.json` antes de escribir nada y, solo si todo es válido, escribe primero la
 configuración y después las tareas. Como `board.json` ya trae el nombre del tablero, los estados,
 los tipos, las prioridades, los proyectos, las extensiones y el prefijo del tablero de origen,
-**`--from` es incompatible con `<name>` y con cualquier bandera de vocabulario**: no hay nada que
+**`--from` es incompatible con `<name>` y con cualquier flag de vocabulario**: no hay nada que
 decidir, todo viene del fichero. `--at` sigue valiendo igual que en un `init` normal, porque gobierna
 dónde queda el tablero nuevo, no su vocabulario. **`--overwrite-config` en cambio es incompatible con
 `--from`.** No es una restricción arbitraria: `--overwrite-config` reescribe la configuración de un
@@ -173,7 +173,7 @@ hint: `biso where` says which rule picked it
 hint: --overwrite-config rewrites its configuration and never touches its tasks
 ```
 
-**`--dry-run` vale en este comando** (sección ["Banderas globales"](flags-globales.md#banderas-globales)), y es donde más sirve: valida los argumentos y, con
+**`--dry-run` vale en este comando** (sección ["Flags globales"](flags-globales.md#flags-globales)), y es donde más sirve: valida los argumentos y, con
 `--from`, la instantánea entera contra el vocabulario que ella misma trae, sin crear ni escribir nada,
 y sale 0 si habría funcionado y 7 si no. `--print`, en cambio, es error 2, porque ninguna tarea que
 existiera antes queda afectada.
@@ -182,25 +182,25 @@ existiera antes queda afectada.
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
 | El directorio de destino tiene una base de datos que no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 21 nombra, y también lo que necesita un clon traído a otra máquina, que llega con la carpeta versionada y sin base de datos |
-| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
+| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que ese flag significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
 | `--at` con una ruta relativa | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta relativa, código 0 |
 | `--at` con una ruta absoluta | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta absoluta, código 0 |
 | `--at` con una ruta relativa que sale del proyecto, como `../tableros/my-project` | No es un error, y el puntero la guarda tal cual: resuelve mientras la posición relativa entre el puntero y el tablero se mantenga, y el marcador confirma que el directorio al que llega es el tablero que el `id` nombra |
 | `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección ["`biso config`"](config.md) aplica a `task_prefix` |
-| Falta alguna de las tres banderas de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
-| Una bandera de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
-| Una bandera de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
-| Varias banderas de papel nombran el mismo estado | Error 2, con los papeles y el estado que comparten |
+| Falta alguno de los tres flags de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
+| Un flag de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
+| Un flag de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
+| Varios flags de papel nombran el mismo estado | Error 2, con los papeles y el estado que comparten |
 | `--statuses` con menos de tres estados | Error 2, diciendo cuántos hacen falta y por qué |
 | `--prefix` con algo que no sean letras | Error 2, `code` `invalid_prefix` |
 | Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
 | `--at` a un directorio donde no se puede escribir | Error 8 |
-| `--from` junto con `<name>`, con cualquier bandera de vocabulario, o con `--overwrite-config` | Error 2 |
+| `--from` junto con `<name>`, con cualquier flag de vocabulario, o con `--overwrite-config` | Error 2 |
 | `--from` a un directorio al que le falta `snapshot.ndjson`, `board.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
 | `--from` cuyo `board.json` no se puede interpretar como JSON, o lleva una clave desconocida | Error 2, `code` `invalid_snapshot_config` |
-| `--from` cuyo `board.json` tiene el mismo problema que haría fallar con Error 2 a la bandera de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría esa bandera |
+| `--from` cuyo `board.json` tiene el mismo problema que haría fallar con Error 2 al flag de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría ese flag |
 | `--from` cuyo `snapshot.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
 | `--from` cuyo `board.json` declara un vocabulario que ninguna tarea de `snapshot.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `board.json`, tenga tareas que lo usen entero o no |
 | `--from` cuyo `board.json` trae `me` o `default_limit`, porque se escribió a mano o con una versión anterior | No es un error, y tampoco se importan: `biso snapshot` no las escribe y `init --from` no las lee, con `note: me and default_limit are not restored, they belong to whoever uses the board`. No son claves desconocidas, así que no caen en el error 2 de la fila de arriba |
@@ -270,7 +270,7 @@ revisiones.
 Esto es lo que imprime la tercera invocación de los ejemplos de ayuda,
 `biso init "My project" --prefix MYP --at my-project-board --extensions trello.card` (con `--json` para el
 esquema de más abajo). El prefijo sale `MYP` porque lo fija `--prefix`, no porque se derive del nombre
-`My project`, que sin esa bandera daría `MYPROJECT` (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)).
+`My project`, que sin ese flag daría `MYPROJECT` (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)).
 
 ```
 Created board "My project"

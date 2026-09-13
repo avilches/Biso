@@ -7,7 +7,7 @@
 # internal/phase arranca dentro de main y no puede ver nada de lo que pasa antes.
 #
 # Un `init` caro se paga en cada una de las muchas invocaciones que un agente hace
-# a lo largo de una sesion, y no hay ninguna bandera del programa que lo evite, asi
+# a lo largo de una sesion, y no hay ningun flag del programa que lo evite, asi
 # que es la clase de coste que decide una eleccion.
 #
 # Las columnas que imprime son: milisegundos que tarda ese init, el paquete, y la

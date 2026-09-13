@@ -7,7 +7,7 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 |---:|---|---|---|
 | 0 | `OK` | La operación terminó y se aplicó | `biso new "Algo"` |
 | 1 | `INTERNAL` | Fallo no previsto del programa | una excepción no capturada |
-| 2 | `USAGE` | La línea de comandos está mal formada | bandera desconocida, falta un obligatorio, banderas incompatibles, identificador mal formado, bandera de escritura en un comando de lectura |
+| 2 | `USAGE` | La línea de comandos está mal formada | flag desconocido, falta un obligatorio, flags incompatibles, identificador mal formado, flag de escritura en un comando de lectura |
 | 3 | `BAD_VALUE` | El valor que llega es sintácticamente correcto pero el tablero no lo reconoce, o un dato guardado no se puede interpretar | `--status "Pending"` en un tablero cuyos estados son otros |
 | 4 | `NOT_FOUND` | La entidad referida no existe | `biso get MYP-999` |
 | 5 | `AMBIGUOUS` | La referencia encaja con más de una entidad | `biso get "parser"` con tres coincidencias |

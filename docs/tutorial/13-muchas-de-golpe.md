@@ -69,7 +69,7 @@ $ biso set TASK-7 TASK-33 --priority medium --dry-run
 
 Exit code: `0`
 
-*(derived output, see [Banderas globales](../spec/cmd/flags-globales.md#banderas-globales), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Flags globales](../spec/cmd/flags-globales.md#flags-globales), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 *Note: Exit code 0, so it would have worked. That code is the real answer, more than the text: a program calling `biso` doesn't need to read anything to know whether the batch is valid. The exact text of this line is a derivation. The specification gives the literal phrase for `biso new --from`'s batch ("242 tasks would be created, nothing was written (--dry-run)") and says `--dry-run` works on every command that writes, but it doesn't spell out the phrase for `biso set`. Here the same form was used with the verb swapped, which is the most likely choice, and it's noted in tutorial/lagunas/11-13.md.*
 

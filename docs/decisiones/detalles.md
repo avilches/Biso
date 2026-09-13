@@ -9,9 +9,9 @@ filtro `--mine` falla, la autoasignación de `start` avisa, y el autor de un com
 `biso answer` son un error. La razón es que un tablero de una sola persona no tiene por qué
 configurar su identidad solo para poder crear tareas.
 
-**`biso export --json` es un error y no una bandera sin efecto.** `export` es el único comando cuya
+**`biso export --json` es un error y no un flag sin efecto.** `export` es el único comando cuya
 salida ya es JSON sin pedirlo, en forma de un objeto por línea, mientras que `--json` significa el
-sobre único que imprimen todos los demás. Son dos formas distintas, y aceptar la bandera en silencio
+sobre único que imprimen todos los demás. Son dos formas distintas, y aceptar el flag en silencio
 dejaría en duda cuál de las dos sale.
 
 ---
@@ -23,7 +23,7 @@ símbolos `- _ . : @`, sin espacio, siguiendo a Taskwarrior y Jira y no a GitHub
 más abajo): biso es un programa que un agente maneja tecleando líneas de comandos, no un formulario
 web, así que cada etiqueta con espacio sería una comilla que ese agente tendría que acordarse de poner
 siempre, para ganar exactamente lo mismo que ya ofrecen `-` y `_`. Y olvidar la comilla no siempre
-falla alto: según qué banderas haya alrededor, la palabra suelta puede convertirse en un argumento
+falla alto: según qué flags haya alrededor, la palabra suelta puede convertirse en un argumento
 inesperado (el caso bueno, error 2) o colarse donde no tocaba. Cerrar el alfabeto quita el problema de
 raíz en vez de pedir disciplina. `references`, `documentation`, `dependencies` y `modifiedFiles` no
 llevan esta restricción, y una clave de `ext` lleva un tercer alfabeto distinto; el porqué de cada una
@@ -98,7 +98,7 @@ contador de claves de sus criterios viene de antes, y quien llama no puede saber
 primero: es justo el dato que ese principio manda enseñar, y por eso va en la misma línea de estado
 que ya enseña el resto de derivados (`ac X/Y`, `dod X/Y`, `urgency`), no en un sitio aparte. Sobre una
 tarea recién creada con `biso new`, en cambio, el contador de cada lista siempre empieza en 1, así que
-la clave de cada `--add-ac` es el mismo orden en que se escribieron las banderas
+la clave de cada `--add-ac` es el mismo orden en que se escribieron los flags
 (["Los criterios y sus claves estables"](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)): quien llama ya lo sabe, y anunciarlo sería el eco que el principio 4
 prohíbe.
 
@@ -115,7 +115,7 @@ el dato cabe en la línea que ya existe.
 
 ## Borrar o corregir la fecha de un comentario
 
-**La decisión.** `biso` añade banderas dedicadas para comentarios ya escritos: `--rm-comment <sel>`
+**La decisión.** `biso` añade flags dedicados para comentarios ya escritos: `--rm-comment <sel>`
 borra uno o varios enteros, y `--set-comment-date <sel>=<instante>` corrige solo su fecha. El
 selector es el mismo de ["Selectores de criterios"](../spec/familias-de-flags.md#selectores-de-criterios), con la clave del comentario en vez de la del
 criterio. **No existe, y no va a existir, ninguna forma de editar el cuerpo o el autor de un

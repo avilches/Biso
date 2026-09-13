@@ -116,7 +116,7 @@ steps:
     source_kind: derived
     source:
       - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera "Sustituir un campo que no tiene bandera de \"sustituir entera\""
+      - spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera "Sustituir un campo que no tiene flag de \"sustituir entera\""
       - spec/cmd/set.md "`biso set`"
     remark: |
       There's no flag that replaces the whole list of definition-of-done items in one shot, so

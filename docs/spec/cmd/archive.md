@@ -4,7 +4,7 @@
 
 ```
 biso archive <ref>... [--unarchive] [--id] [--match]
-             [cualquier bandera de campo de las familias de banderas]
+             [cualquier flag de campo de las familias de flags]
 ```
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
@@ -48,7 +48,7 @@ MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0  archived
 | Desenlace | Código |
 |---|---:|
 | Archivada o desarchivada | 0 |
-| `biso delete`, o banderas incompatibles | 2 |
+| `biso delete`, o flags incompatibles | 2 |
 | Tarea ilegible | 3 |
 | Tarea inexistente | 4 |
 | Referencia ambigua | 5 |

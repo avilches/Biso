@@ -61,14 +61,14 @@ Reglas de combinación de filtros:
 - **El estado terminal se excluye por defecto**, y `--any-status` es la única forma de incluirlo.
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
-- **`--blocked` es incompatible con `--not-blocked`.** Las dos miran las dependencias sin terminar y
+- **`--blocked` es incompatible con `--not-blocked`.** Los dos miran las dependencias sin terminar y
   no el estado, así que se combinan con cualquier filtro de estado y con los dos pares de abajo.
-  `--not-blocked` por sí sola no dice que la tarea se pueda coger: descarta la que espera a otra
+  `--not-blocked` por sí solo no dice que la tarea se pueda coger: descarta la que espera a otra
   tarea, no la que espera una respuesta ni la que ya lleva alguien.
-- **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada una con su
-  opuesta.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
-  razón de ser: sin ellas, pedir la cola activa obligaría a escribir `-s "In Progress"`, el nombre
-  concreto de un tablero concreto, y la misma consulta dejaría de servir en otro. Las cuatro son
+- **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada uno con su
+  opuesto.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
+  razón de ser: sin ellos, pedir la cola activa obligaría a escribir `-s "In Progress"`, el nombre
+  concreto de un tablero concreto, y la misma consulta dejaría de servir en otro. Los cuatro son
   compatibles con `-s`, con `--not-status` y con `--any-status`, porque filtran sobre el mismo eje sin
   contradecirse: `-s "To Do" --active` es una lista vacía en unos tableros y no en otros. La regla
   general: **dos filtros que se contradicen por construcción son incompatibles. Una combinación de
@@ -251,7 +251,7 @@ y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado
 |---|---:|
 | Listado, incluso vacío o con tareas saltadas | 0 |
 | Un valor de filtro no existe en el tablero | 3 |
-| Banderas incompatibles, `--limit` negativo, `--sort` inventado, fecha mal formada | 2 |
+| Flags incompatibles, `--limit` negativo, `--sort` inventado, fecha mal formada | 2 |
 | `--parent` a una tarea que no existe | 4 |
 | `--parent` por texto con varias coincidencias | 5 |
 | `--mine` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | 6 |

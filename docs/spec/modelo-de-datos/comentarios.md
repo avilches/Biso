@@ -24,8 +24,8 @@ quede ordenada por él: `biso answer` añade al final un comentario con un insta
 pregunta que responde.
 
 **El cuerpo y el autor de un comentario no se editan nunca, por ninguna vía.** Un comentario es el
-registro de una conversación, y lo que se dijo no se reescribe. Lo que sí se puede corregir, con las
-banderas dedicadas de ["Comentarios"](../familias-de-flags.md#comentarios) y nunca con una escritura general sobre la
+registro de una conversación, y lo que se dijo no se reescribe. Lo que sí se puede corregir, con los
+flags dedicados de ["Comentarios"](../familias-de-flags.md#comentarios) y nunca con una escritura general sobre la
 tarea, es borrar el comentario entero (`--rm-comment`) o corregir únicamente su fecha
 (`--set-comment-date`). La razón, con el caso que la motiva, está en
 ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).

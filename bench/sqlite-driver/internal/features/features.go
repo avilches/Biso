@@ -18,7 +18,7 @@
 //     salida 8.
 //   - busy_timeout: sin el, dos escrituras a la vez fallan en vez de esperar.
 //   - Puntos de retorno: "Orden de aplicacion dentro de una escritura"
-//     (docs/spec/garantias.md) aplica varias banderas dentro de una escritura,
+//     (docs/spec/garantias.md) aplica varios flags dentro de una escritura,
 //     y el lote de `biso new --from` valida entero antes de escribir.
 //   - integrity_check: es una de las dos comprobaciones que "La decision de
 //     persistencia" anade a `biso doctor` (docs/spec/cmd/doctor.md).

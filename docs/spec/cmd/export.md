@@ -14,10 +14,10 @@ biso export [-o <file|->] [--no-archived] [cualquier filtro de biso ls, salvo --
 
 **`biso export` sin filtros exporta el tablero entero**: todos los estados, el terminal incluido, y
 todas las tareas, las archivadas incluidas. **No hereda ni el límite por defecto de `biso ls` ni su
-exclusión del estado terminal**, y no existe aquí ninguna bandera `--all`. Los filtros de `biso ls` se
-aceptan para acotar a propósito, y las banderas de forma de `ls` no, porque un volcado no tiene forma
+exclusión del estado terminal**, y no existe aquí ningún flag `--all`. Los filtros de `biso ls` se
+aceptan para acotar a propósito, y los flags de forma de `ls` no, porque un volcado no tiene forma
 que elegir. **Tampoco se aceptan `--archived` ni `--only-archived`**, porque las archivadas ya salen
-por defecto: la única bandera de `export` sobre el archivo es `--no-archived`.
+por defecto: el único flag de `export` sobre el archivo es `--no-archived`.
 
 ## La garantía de simetría
 
@@ -63,7 +63,7 @@ separado, pero ya no es la única manera de reconstruir un tablero entero.
 |---|---:|
 | Exportado, aunque sean cero tareas | 0 |
 | Alguna tarea se ha saltado por ilegible | 6 |
-| Banderas de forma de `ls`, `--archived`, `--only-archived`, `--json`, o incompatibles | 2 |
+| Flags de forma de `ls`, `--archived`, `--only-archived`, `--json`, o incompatibles | 2 |
 | Un valor de filtro no existe en el tablero | 3 |
 | No se puede escribir el fichero de salida | 8 |
 | No hay tablero | 20 |

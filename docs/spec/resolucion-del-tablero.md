@@ -8,8 +8,8 @@ Un proyecto tiene un tablero, y el programa lo encuentra por este orden. Gana el
    tablero le corresponde. Se busca en el directorio de trabajo y en sus ancestros, con el tope de la
    regla que cierra esta lista.
 
-**Las dos parten del directorio de trabajo**, que es el directorio actual salvo que la bandera global
-`-C` o la variable `BISO_CWD` digan otro (sección ["Banderas globales"](cmd/flags-globales.md#banderas-globales)). Por eso `-C` es lo único que hace falta para
+**Las dos parten del directorio de trabajo**, que es el directorio actual salvo que el flag global
+`-C` o la variable `BISO_CWD` digan otro (sección ["Flags globales"](cmd/flags-globales.md#flags-globales)). Por eso `-C` es lo único que hace falta para
 trabajar contra otro tablero sin moverse: apuntando al directorio de un tablero se llega por la
 primera vía, y apuntando a un proyecto cualquiera se llega por la segunda, al tablero que ese
 proyecto tenga.

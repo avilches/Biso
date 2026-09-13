@@ -129,7 +129,7 @@ y ["Riesgos conocidos y aceptados del modelo de estados"](../decisiones/modelo-d
 `https://github.com/MrLesk/Backlog.md/issues/990`, si un agente copia la descripción ya renderizada,
 con sus marcadores de sección incluidos, y la reenvía como entrada, los marcadores se anidan y las
 ediciones sucesivas se van tragando los criterios de aceptación y las notas, que desaparecen de la
-salida. En `https://github.com/MrLesk/Backlog.md/issues/1000`, confundir banderas crea un criterio
+salida. En `https://github.com/MrLesk/Backlog.md/issues/1000`, confundir flags crea un criterio
 fantasma en silencio. En `https://github.com/MrLesk/Backlog.md/issues/1008`, un subencabezado dentro de
 una sección la trunca, porque el patrón que la extrae no distingue dos almohadillas de tres.
 
@@ -203,7 +203,7 @@ preserva marcas de tiempo.
 ## 11. El proceso de fondo
 
 **Quién lo sufre.** Beads. Tuvo daemon, hacía una sola cosa (traerse cambios en la máquina receptora) y
-sus banderas sugerían que hacía mucho más, lo que generaba expectativas equivocadas. **Se eliminó por
+sus flags sugerían que hacía mucho más, lo que generaba expectativas equivocadas. **Se eliminó por
 completo** al cambiar de motor. Y el comentario más citado de quien lo reemplazó por algo más simple
 dice que empezó a pelearse con él varias veces por semana porque su daemon de fondo se puso a
 sincronizar las cosas equivocadas (`https://news.ycombinator.com/item?id=46487580`). En el mismo hilo,
@@ -260,7 +260,7 @@ y eso se dice en voz alta en vez de disimularse.
 
 **Quién lo sufre.** Backlog.md, en `https://github.com/MrLesk/Backlog.md/issues/919`: pasar un hito que
 no coincide con nada **crea un hito virtual en silencio**. Y en
-`https://github.com/MrLesk/Backlog.md/issues/824`, la bandera `--json` estaba documentada en el README
+`https://github.com/MrLesk/Backlog.md/issues/824`, el flag `--json` estaba documentada en el README
 y rechazada por todos los comandos de lectura, con el reportante encontrando la cadena compilada en el
 binario pero no conectada.
 

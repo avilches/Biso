@@ -1,4 +1,4 @@
-# Comandos y banderas
+# Comandos y flags
 
 ## El porqué de reglas concretas
 
@@ -20,14 +20,14 @@ vacía.
 **Esta sección tenía una tercera entrada, sobre por qué el hito pasó a validar igual que una
 etiqueta.** Ya no aplica: `milestone` se retiró entero, no solo su validación.
 ["Se retiran `project` y `milestone`"](detalles.md#se-retiran-project-y-milestone), más abajo en este documento,
-explica la decisión vigente. Lo que queda de aquella entrada, y sigue siendo cierto, es que la
-bandera `--unchecked` no es una asimetría del principio 1 porque quien la escribe pide explícitamente
+explica la decisión vigente. Lo que queda de aquella entrada, y sigue siendo cierto, es que el
+flag `--unchecked` no es una asimetría del principio 1 porque quien la escribe pide explícitamente
 una lista sin garantía, algo que el programa nunca decide callar por su cuenta.
 
 **["Los tres mensajes de \"no la encuentro\""](../spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), por qué son distintos.** Porque las tres situaciones
 piden acciones distintas de quien llama: corregir la sintaxis, dejar de buscar, o mirar en el archivo.
 
-**["La regla"](../spec/familias-de-flags.md#la-regla), por qué cada clase de campo tiene las variantes de bandera que tiene, y por qué ninguna se
+**["La regla"](../spec/familias-de-flags.md#la-regla), por qué cada clase de campo tiene las variantes de flag que tiene, y por qué ninguna se
 llama con el nombre desnudo del campo.** Antes había cuatro variantes por cada campo de lista
 (`--campo` añadía, `--set-campo` sustituía, `--rm-campo` quitaba, `--clear-campo` vaciaba), y las
 demás clases de campo tenían el subconjunto de esas cuatro que tenía sentido para su forma de dato:
@@ -45,15 +45,15 @@ regla funcionando.
 exigía conocer la regla de antemano para no adivinar: nada en `--label` dice que añade, hay que
 haberlo leído en algún sitio. Se sustituyó por dar a cada operación su propio verbo (`--add-labels`,
 `--rm-labels`, `--clear-labels`, `--replace-labels`, y así con cada campo), de modo que cualquier
-bandera se entiende por su nombre sin haber leído esta sección. Dos consecuencias de ese cambio:
+flag se entiende por su nombre sin haber leído esta sección. Dos consecuencias de ese cambio:
 
 - **Los campos de lista sin coma (`ac`, `dod`) pierden la variante de "sustituir entera".**
-  `--replace-ac`/`--replace-dod` habría sido repetible igual que `--add-ac`, y repetir una bandera de
+  `--replace-ac`/`--replace-dod` habría sido repetible igual que `--add-ac`, y repetir un flag de
   sustituir no la sustituye dos veces: acumula sus valores y sustituye una sola vez con el conjunto
   acumulado (["Repetición y listas separadas por comas"](../spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas)), que es una segunda pieza de comportamiento no obvio
   encima del nombre. Sustituir esas dos listas se hace vaciando y añadiendo en la misma llamada
-  (["Orden de aplicación dentro de una escritura"](../spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura)), que ya hacía falta declarar para todo lo demás y cubre el mismo caso sin una
-  bandera más que aprender.
+  (["Orden de aplicación dentro de una escritura"](../spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura)), que ya hacía falta declarar para todo lo demás y cubre el mismo caso sin un
+  flag más que aprender.
 - **`--check` y `--uncheck` pasan a `--check-ac` y `--uncheck-ac`, simétricos con `--check-dod` y
   `--uncheck-dod`.** La forma anterior reservaba el nombre desnudo para los criterios de aceptación y
   obligaba a la definición de hecho a llevar el sufijo, una asimetría que la propia especificación
@@ -62,19 +62,19 @@ bandera se entiende por su nombre sin haber leído esta sección. Dos consecuenc
   sola en vez de quedar documentada como caso especial.
 
 **Esto había dejado pendiente el mensaje de arranque, y ya no lo está.** El bloque `FIELD FLAGS` de
-["La salida literal"](../spec/cmd/prime.md#la-salida-literal) enseñaba antes una sola bandera por campo (la que añadía) y una regla en `RULES`
+["La salida literal"](../spec/cmd/prime.md#la-salida-literal) enseñaba antes un solo flag por campo (la que añadía) y una regla en `RULES`
 explicaba cómo derivar las otras tres; ese ahorro de espacio dependía exactamente del mecanismo que
-se acaba de retirar. Cómo enseñar las banderas nuevas dentro del presupuesto de bytes se dejó sin
+se acaba de retirar. Cómo enseñar los flags nuevos dentro del presupuesto de bytes se dejó sin
 decidir a propósito, sin tocar `cmd/prime.md` ni `presupuestos.md`, hasta medirlo con un agente real
 en vez de razonarlo: la decisión, con el experimento que la sostiene, está en
-["El grid completo de banderas de campo en el mensaje de arranque, medido con un agente real"](vocabulario-y-mensaje-de-arranque.md#el-grid-completo-de-banderas-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real),
+["El grid completo de flags de campo en el mensaje de arranque, medido con un agente real"](vocabulario-y-mensaje-de-arranque.md#el-grid-completo-de-flags-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real),
 más abajo en este documento.
 
 **["Selectores de criterios"](../spec/familias-de-flags.md#selectores-de-criterios), por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
 su texto exacto es más frágil que quitarlo por su clave.
 
-**["Campos externos"](../spec/familias-de-flags.md#campos-externos), por qué no existe una bandera que sustituya el mapa de campos externos entero.** Fijar una clave
-ya es sustituir su valor, así que una segunda bandera para lo mismo solo serviría para equivocarse. Y
+**["Campos externos"](../spec/familias-de-flags.md#campos-externos), por qué no existe un flag que sustituya el mapa de campos externos entero.** Fijar una clave
+ya es sustituir su valor, así que un segundo flag para lo mismo solo serviría para equivocarse. Y
 una que sustituyese el mapa entero con la sintaxis `clave=valor` sería una forma silenciosa de borrar
 la identidad externa de una tarea al escribir otra.
 
@@ -90,7 +90,7 @@ tablero de ejemplo era `Ideas, To Do, In Progress, Blocked, Done`, cuyo penúlti
 un ejemplo literal de `biso init` que lo creaba así, mientras que tanto la salida de `biso config list`
 como el esquema JSON de `biso prime` declaraban que el estado activo de ese mismo tablero era
 `In Progress`. Las dos cosas no podían ser ciertas a la vez, y la regla solo parecía funcionar porque
-el tablero por defecto tenía justo tres estados. Se sustituye por tres banderas explícitas,
+el tablero por defecto tenía justo tres estados. Se sustituye por tres flags explícitos,
 `--initial-status`, `--active-status` y `--terminal-status`, con el mismo argumento de ["El algoritmo de coincidencia"](../spec/vocabularios.md#el-algoritmo-de-coincidencia): una regla
 que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
 
@@ -121,16 +121,16 @@ que cumplía: miraba solo dependencias, así que `biso ls --ready` devolvía tam
 en una pregunta, que es justo lo que un agente no puede coger. De los dos nombres sobrevive `blocked`
 porque ya tiene entrada propia en la tabla de ["Vocabulario de esta especificación"](../spec/vocabulario.md), porque da nombre al
 término `urgency.blocked` de la fórmula de urgencia, y porque nombra el hecho que de verdad se calcula.
-Y el nombre nuevo tampoco promete estar lista para trabajar, porque ninguna bandera sola puede: eso
+Y el nombre nuevo tampoco promete estar lista para trabajar, porque ningún flag solo puede: eso
 son varios filtros, y cuántos depende de qué se busque. Descartar lo bloqueado y lo aparcado son dos,
 `--not-blocked --not-waiting`; quien quiera además tarea sin empezar añade `--not-active`, que es el
 filtro con el que el propio mensaje de arranque describe su bloque `NEXT UP` (["La salida literal"](../spec/cmd/prime.md#la-salida-literal)); y quien la quiera
-sin dueño, `--unassigned`. El cambio quita una clave del JSON y renombra una bandera,
+sin dueño, `--unassigned`. El cambio quita una clave del JSON y renombra un flag,
 que son las dos cosas que el ["contrato de estabilidad"](../spec/estabilidad.md) promete no tocar nunca, y por eso se hace
 ahora: ese contrato obliga a partir de la versión 1.0 y todavía no hay ninguna versión publicada.
 Después de 1.0 esta limpieza ya no se podría hacer.
 
-**["`biso set`"](../spec/cmd/set.md), por qué `set` no repite en su tabla las banderas de campo.** Porque repetirlas invitaría a que
+**["`biso set`"](../spec/cmd/set.md), por qué `set` no repite en su tabla los flags de campo.** Porque repetirlos invitaría a que
 divergieran, que es como se rompen los documentos largos.
 
 **["`biso set`"](../spec/cmd/set.md), por qué la línea de estado encoge cuando la tarea no tiene criterios, en vez de imprimir un
@@ -178,7 +178,7 @@ combinarlo con cualquier nombre de comando en la misma llamada es un error de us
 texto como en `--json`.
 
 **Por qué.** El coste que resuelve esta tarea es el mismo de siempre: un agente que necesita el
-detalle de las banderas de varios comandos para un solo encargo tenía que llamar a `--help` una vez
+detalle de los flags de varios comandos para un solo encargo tenía que llamar a `--help` una vez
 por comando, multiplicando llamadas al CLI y salida consumida, aunque los necesitara todos a la vez.
 Hacer `<command>` repetible, con la misma notación `<command>...` que ya usa `<ref>...` en `finish`,
 `archive` o `set`, resuelve ese coste con la sintaxis que la especificación ya usa para "uno o

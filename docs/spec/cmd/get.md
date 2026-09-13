@@ -36,7 +36,7 @@ La resolución de `<ref>` está en la sección ["Cómo se resuelve una referenci
 
 **Sin `--section`, la ficha completa imprime siempre las nueve secciones fijas, vacías incluidas,
 marcadas con `(empty)`.** Es solo con `--section` que una sección vacía se omite en vez de imprimirse
-vacía; sin la bandera, omitir una sección la confundiría con una que no se ha pedido.
+vacía; sin el flag, omitir una sección la confundiría con una que no se ha pedido.
 
 ## Salida
 
@@ -182,9 +182,9 @@ Es el objeto de `task.list` más los campos del cuerpo:
 ```
 
 **`urgencyBreakdown` solo sale con `--explain-urgency`**, igual que el desglose de la salida de texto, y
-el ejemplo de arriba es el de una llamada que la lleva. Es la única clave de todo el documento que una
-bandera añade, y la excepción a la regla de las claves siempre presentes está declarada en la sección ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), junto
-con la otra cosa que `biso get` hace con sus banderas: recortar `data.task` con `--section`.
+el ejemplo de arriba es el de una llamada que la lleva. Es la única clave de todo el documento que un
+flag añade, y la excepción a la regla de las claves siempre presentes está declarada en la sección ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), junto
+con la otra cosa que `biso get` hace con sus flags: recortar `data.task` con `--section`.
 
 `urgencyBreakdown.active` es el único término que no es un número suelto: `value` es el número que
 entra en la suma, el producto del coeficiente por el factor, igual que en los demás términos.

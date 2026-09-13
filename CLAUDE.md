@@ -89,7 +89,7 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
   La única excepción son las cadenas en español que un generador emite **dentro** de un documento,
   porque eso es contenido de la documentación y no del código; van agrupadas en un sitio y marcadas
   como tales, no repartidas por el fichero.
-- **Todo lo que es interfaz del programa va en inglés**: comandos, banderas, textos de ayuda,
+- **Todo lo que es interfaz del programa va en inglés**: comandos, flags, textos de ayuda,
   mensajes de error y claves JSON.
 - **Nunca em-dash**, en ningún texto: ni en documentación, ni en código, ni en mensajes de commit.
 - **Los mensajes de commit y las descripciones de PR no llevan coautoría** ni mención de haber sido

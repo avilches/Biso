@@ -17,9 +17,9 @@ informar al usuario de que algo no existe.
 comando por separado es defendible; juntos son una trampa, porque quien escribe una secuencia los mira
 juntos.
 
-**Principio 3, que ninguna bandera depende de una regla que haya que conocer de antemano.** Se
+**Principio 3, que ningún flag depende de una regla que haya que conocer de antemano.** Se
 midieron seis casos de agentes usando la variante destructiva de forma repetida creyendo que
-añadían: la bandera de plan aplicada hasta cinco veces sobre la misma tarea, la de referencias tres
+añadían: el flag de plan aplicada hasta cinco veces sobre la misma tarea, la de referencias tres
 veces sobre otra, y un caso en el que un agente ejecutó sobre una misma tarea `--ref`, `--ref`,
 `--ref`, `--add-ref`, `--remove-ref` y `--clear-refs`, que es alguien probando a ver cuál de las seis
 hace lo que quiere. Ninguna de esas llamadas dio error, y el daño es silencioso: cada una borró lo
@@ -29,10 +29,10 @@ después por dar a cada operación su propio verbo explícito, sin ninguna regla
 motivo que cuenta ["La regla"](../spec/familias-de-flags.md#la-regla) de `familias-de-flags.md`.
 
 **Principio 4, que la salida por defecto de una escritura es lo que quien llama no sabía.** De las 237
-creaciones medidas, 215 llevaban una bandera que devolvía la ficha entera de la tarea recién creada, y
+creaciones medidas, 215 llevaban un flag que devolvía la ficha entera de la tarea recién creada, y
 sumaron 179.369 bytes, casi la cuarta parte de toda la salida del estudio, sin dar el único dato que
-el agente no tenía, que es el identificador. La mediana de una creación pasa de 154 bytes sin esa
-bandera a 1.333 con ella, un factor de 8,7.
+el agente no tenía, que es el identificador. La mediana de una creación pasa de 154 bytes sin ese
+flag a 1.333 con ella, un factor de 8,7.
 
 **Principio 5, que un gesto del flujo de trabajo es un comando.** De las 159 ediciones medidas, 112
 cambian exactamente un campo, hay 82 pares de ediciones consecutivas sobre la misma tarea, y el ciclo
@@ -45,7 +45,7 @@ cuando el entorno bloqueó los comandos compuestos que hacían falta, los agente
 85 ficheros de tarea a mano, 76 ediciones y 9 creaciones, que es exactamente lo que la herramienta
 prohíbe en la instrucción que ella misma inyecta en cada proyecto.
 
-**Principio 7, que la salida no depende del terminal.** La bandera `--plain` de la herramienta
+**Principio 7, que la salida no depende del terminal.** El flag `--plain` de la herramienta
 estudiada tiene doble vida: en unos comandos apaga una interfaz interactiva y en otros enciende un
 volcado completo. Medido fuera de un terminal, en los comandos de lectura no cambia un solo byte y
 aparece 191 veces sin ningún efecto; en el de creación multiplica la salida por 3,3 y en el de edición

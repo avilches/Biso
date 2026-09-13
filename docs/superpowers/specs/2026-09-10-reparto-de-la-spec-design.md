@@ -91,7 +91,7 @@ el de tamaño del mensaje de 5.120 bytes (hoy 9.5). Están a setecientas líneas
 del contrato de estabilidad los discute juntos, porque uno se congela en el contrato y el otro no.
 
 **La resolución del tablero se emancipa** a `resolucion-del-tablero.md`. Hoy es la sección 3.2, una
-subsección de "Banderas globales", que no es lo que es, y es la sección más citada de toda la
+subsección de "Flags globales", que no es lo que es, y es la sección más citada de toda la
 especificación con 61 referencias entrantes.
 
 **La ayuda se reúne** en `cmd/help.md`. Hoy la sección 11 habla de `biso --help` y la 10.13 del comando
@@ -189,7 +189,7 @@ estados. La diferencia es si el número forma parte del contrato del programa o 
 contenido del documento. Lo primero se queda y no caduca porque una prueba lo sostiene. Lo segundo se va.
 
 **El comprobador.** Un script que busca un número cardinal, en cifra o en palabra, seguido de uno de una
-lista corta de sustantivos que nombran partes del documento: reglas, filas, comandos, códigos, banderas,
+lista corta de sustantivos que nombran partes del documento: reglas, filas, comandos, códigos, flags,
 secciones, apartados, documentos, principios, garantías, mensajes, campos, verbos, criterios, columnas,
 entradas, tipos, familias, errores, avisos, estados. Hoy encuentra unas cuarenta frases. Las normativas
 se declaran en una lista de excepciones indexada por el texto de la frase, no por el número de línea, para
@@ -264,8 +264,8 @@ Al terminar, todas estas tienen que cumplirse a la vez:
 - 646 referencias por número en 13 ficheros, ninguna en forma de enlace.
 - `docs/SPEC.md`: 5.762 líneas, 317 KB. Sección 10: 3.595 líneas, el 62 %.
 - Secciones de nivel 2 de `SPEC.md`, en líneas: vocabulario 34, principios 28, códigos de salida 46,
-  banderas globales 368, reglas transversales 362, modelo de datos 303, vocabularios 101, referencias 81,
-  familias de banderas 142, `prime` 381, comandos 3.595, ayuda 42, contrato JSON 129, estabilidad 49,
+  flags globales 368, reglas transversales 362, modelo de datos 303, vocabularios 101, referencias 81,
+  familias de flags 142, `prime` 381, comandos 3.595, ayuda 42, contrato JSON 129, estabilidad 49,
   fuera de alcance 44, por dónde empezar 26.
 - Los catorce comandos de la sección 10, en líneas: `init` 423, `where` 136, `new` 220, `ls` 330,
   `get` 244, `set` 175, verbos del ciclo 673, `archive` 89, `export` 109, `config` 272, `doctor` 339,

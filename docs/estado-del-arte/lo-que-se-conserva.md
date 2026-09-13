@@ -3,7 +3,7 @@
 De todo el ruido salen tres cosas que nadie quiere perder: **el grafo de dependencias**, **poder dejar
 fuera del listado lo que no se puede coger ahora**, y **poder fichar una tarea de forma atómica**. Las
 tres están ya en la especificación de `biso` como `dependencies`, como los filtros que se combinan en
-`biso ls --not-blocked --not-waiting`, y como `biso start`. La segunda no es una sola bandera a
+`biso ls --not-blocked --not-waiting`, y como `biso start`. La segunda no es un solo flag a
 propósito: ninguna puede decir por sí misma que una tarea esté lista, porque cuántos filtros hace falta
 descartar depende de qué se busque, y ["El porqué de reglas concretas"](../decisiones/comandos-y-flags.md#el-porqué-de-reglas-concretas) cuenta por qué se retiró el
 nombre `--ready`, que lo prometía sin poder cumplirlo.

@@ -29,8 +29,8 @@ Los tres documentos viajan juntos: quien ejecute este plan tiene que leer el dis
 
 Valen para todas las tareas y no se repiten en cada una.
 
-- **La documentación y los comentarios van en español.** Los identificadores, los comandos, las
-  banderas, los textos de ayuda, los mensajes de error y las claves JSON van en inglés.
+- **La documentación y los comentarios van en español.** Los identificadores, los comandos, los
+  flags, los textos de ayuda, los mensajes de error y las claves JSON van en inglés.
 - **Nunca em-dash**, en ningún texto. Se comprueba con `grep -c '—' <fichero>`, que tiene que dar 0.
 - **Los mensajes de commit no llevan coautoría** ni mención de haber sido generados por un agente.
 - **Las tildes de un mensaje de commit no son un requisito y no son un hallazgo.** La prosa de la
@@ -342,7 +342,7 @@ cuenta en `task_prefix`, que además es inmutable en cuanto hay alguna tarea.
 
 - [ ] **Paso 2: Cerrar la puerta de atrás de `biso init --overwrite-config`**
 
-Si esa bandera puede cambiar `project_name` sobre un tablero que ya existe, la carpeta se quedaría con el
+Si ese flag puede cambiar `project_name` sobre un tablero que ya existe, la carpeta se quedaría con el
 nombre viejo. Comprobarlo y resolverlo con la misma forma que ya se usó para `task_prefix`. Si resulta que
 ya está cerrado, decirlo en el informe en vez de tocar nada.
 
@@ -637,7 +637,7 @@ Y una frase más, que sale de una pregunta del usuario sobre si `doctor` iba a s
 **ningún comando de `biso` pregunta nada por la entrada estándar, ni `doctor` con `--fix` ni ninguno otro.**
 La misma orden sirve para una persona y para un agente, y lo único que cambia es quién lee la salida: la
 persona lee el informe, el agente mira el código de salida. El motivo de escribirlo, en vez de dejarlo
-implícito en que la firma no tenga banderas de interacción, es que **un agente que recibe una pregunta se
+implícito en que la firma no tenga flags de interacción, es que **un agente que recibe una pregunta se
 queda colgado para siempre**, así que conviene que quien implemente sepa que eso no es una posibilidad que
 se le haya olvidado contemplar. Si la sección 4 ya lo dice de forma general para todos los comandos, basta
 con remitir ahí en vez de repetirlo.
@@ -691,7 +691,7 @@ exigir que git esté instalado.
 
 Con la estructura completa de un comando: firma, parámetros, comportamiento, casos límite, salida
 literal, esquema JSON, códigos de salida y ayuda. Escribe los dos ficheros y, si el directorio del
-tablero es un repositorio de git, commitea. Una bandera para no commitear. **Decir explícitamente que
+tablero es un repositorio de git, commitea. Un flag para no commitear. **Decir explícitamente que
 ningún otro comando ejecuta git**, porque ejecutar `git` cuesta unos 12 milisegundos medidos y el
 presupuesto de arranque de la tarea 9 no lo admite en el camino caliente.
 

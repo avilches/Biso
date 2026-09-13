@@ -230,7 +230,7 @@ no se puede usar sin contradecir la decisión que justifica la existencia de `bi
 El modelo lógico de la sección ["El modelo de datos de una tarea"](../../spec/modelo-de-datos/index.md) ya tiene sitio para todo lo que produce una
 sesión con Superpowers. Inventario de lo que se usa:
 
-| Campo de `biso` | Bandera | Qué guardaría de una sesión con Superpowers |
+| Campo de `biso` | Flag | Qué guardaría de una sesión con Superpowers |
 |---|---|---|
 | `description` | `-d --desc` | El qué y el porqué, salido de la fase de entender de `brainstorming` |
 | `acceptanceCriteria` | `--ac` | Los criterios de éxito acordados en el diseño |
@@ -387,7 +387,7 @@ De la sección ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presu
 | Resumen del tablero (`BOARD` y los cuatro bloques) | 1.664 | 1.491 | **173** |
 | **Total** | **5.120** | **4.818** | **302** |
 
-**El hueco de la parte fija se ha encogido y eso cambia lo que se puede proponer.** Las banderas
+**El hueco de la parte fija se ha encogido y eso cambia lo que se puede proponer.** Los flags
 `--check-dod` y `--uncheck-dod` entraron en la rejilla de `FIELD FLAGS`, y con ellas la parte fija
 pasó de 3.255 a 3.327 bytes: de los 201 libres que había quedan 129. El resumen del tablero no se ha
 movido, así que el total baja de 374 a 302 libres. Los 302 no sirven para medir texto nuevo del
@@ -412,7 +412,7 @@ file, --note for a decision, ask when a person must choose. Keep no notes elsewh
 ```
 
 Ese texto mide **164 bytes** con su salto de línea final, y la parte fija tiene hoy **129 libres**.
-Cuando este apartado se escribió había 201 y por eso decía que cabía; con las banderas nuevas de
+Cuando este apartado se escribió había 201 y por eso decía que cabía; con los flags nuevos de
 `FIELD FLAGS` ya no cabe, y le faltan 35 bytes. No es un número que corregir: es que la propuesta, tal
 como está escrita, no entra.
 

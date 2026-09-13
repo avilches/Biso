@@ -10,11 +10,11 @@ biso snapshot [--vcs <mode>]
 |---|---|---|---|---|---|---|---|
 | `--vcs <mode>` | | no | `none`, `commit` o `push` | `commit` | no | no | ninguno |
 
-**`biso snapshot` no cambia ningún dato del tablero**, así que la sección ["Banderas globales"](flags-globales.md#banderas-globales) lo clasifica junto a
+**`biso snapshot` no cambia ningún dato del tablero**, así que la sección ["Flags globales"](flags-globales.md#flags-globales) lo clasifica junto a
 `export` entre los comandos donde `--print` y `--dry-run` son error de uso con código 2: no hay
 ninguna tarea afectada que imprimir, ni ninguna escritura de tarea que simular.
 
-**No tiene bandera `-o`/`--out`.** A diferencia de `export`, que escribe donde se le diga,
+**No tiene flag `-o`/`--out`.** A diferencia de `export`, que escribe donde se le diga,
 `snapshot` escribe siempre en el propio directorio del tablero (["`biso init`"](init.md)), con nombre fijo:
 `snapshot.ndjson` y `board.json`. Es la instantánea del tablero para sí mismo, no un volcado a otra
 parte; para volcar a otra parte está `export`.
@@ -63,7 +63,7 @@ escribió su temporal.
 ## El sistema de control de versiones
 
 El sistema lo dice la clave `vcs` de la configuración de máquina (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)), con `git` por defecto,
-`none` para no ejecutar nada y `custom` para uno que `biso` no conoce. La bandera `--vcs` de este
+`none` para no ejecutar nada y `custom` para uno que `biso` no conoce. El flag `--vcs` de este
 comando elige qué se hace en esta llamada, y no cambia esa configuración:
 
 | `--vcs` | Qué hace |
@@ -125,8 +125,8 @@ demás, el historial del tablero es estrictamente local hasta que alguien le añ
 
 **Y hay que decir qué arrastra `--vcs push` cuando la revisión ha ido al repositorio del proyecto**:
 publica esa rama entera, así que se lleva también los commits de código que estuvieran pendientes.
-Es lo que la bandera promete, y quien la escribe ya está pidiendo publicar, así que `biso` no se niega
-ni publica a medias; lo que hace es no ponerla por defecto, que es el motivo de que el valor por defecto
+Es lo que el flag promete, y quien lo escribe ya está pidiendo publicar, así que `biso` no se niega
+ni publica a medias; lo que hace es no ponerlo por defecto, que es el motivo de que el valor por defecto
 sea `commit`.
 
 **Con `custom` no hay ninguna de esas dos preguntas.** `biso` ejecuta la orden `commit` que declare la

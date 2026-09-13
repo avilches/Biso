@@ -35,7 +35,7 @@ existe. Se nombran aquí porque una regla general que no nombra a nadie invita a
 donde no las hay.
 
 **Una escritura que no cambia ningún campo renueva igual**: [`biso set`](cmd/set.md) con todas sus
-banderas dando el valor que la tarea ya tiene sale con código 0 y con `note: MYP-11 unchanged`, y aun
+flags dando el valor que la tarea ya tiene sale con código 0 y con `note: MYP-11 unchanged`, y aun
 así renueva `leaseExpiresAt`, porque sigue siendo una escritura del tenedor sobre su tarea y el latido
 no puede depender de si los valores coincidían por casualidad. Esa renovación no toca `updatedAt`,
 porque ningún campo de la tarea ha cambiado, y deja vacía la lista `changed` del [esquema
@@ -62,7 +62,7 @@ frase sería falsa: `biso start -s <estado>` con un estado que no es el activo n
 ya que fijarlo ahí rompería la invariante de [El vaciado](#el-vaciado), y deja los campos como los
 dejaría cualquier otra escritura. Una tarea que llega a activa y asignada por cualquier otra vía no
 tiene arrendamiento hasta que alguien llame a `biso start` sobre ella, y esas vías son exactamente
-dos: las banderas de campo de la sección ["Las familias de banderas"](familias-de-flags.md), por
+dos: los flags de campo de la sección ["Las familias de flags"](familias-de-flags.md), por
 ejemplo `biso set --status`, ninguna de las cuales lo puede crear, y [la importación](#la-importación).
 
 ## El vaciado

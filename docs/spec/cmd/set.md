@@ -6,7 +6,7 @@ más palabras.
 ## Firma
 
 ```
-biso set <ref>... [cualquier bandera de campo de las familias de banderas]
+biso set <ref>... [cualquier flag de campo de las familias de flags]
          [--check-ac <sel>]... [--uncheck-ac <sel>]... [--check-dod <sel>]... [--uncheck-dod <sel>]...
          [--comment <text>]... [--comment-author <@who>]
          [--rm-comment <sel>]... [--set-comment-date <sel>=<instante>]... [--id] [--match]
@@ -14,7 +14,7 @@ biso set <ref>... [cualquier bandera de campo de las familias de banderas]
 
 ## Parámetros propios
 
-**Todas** las banderas de las secciones ["Campos de lista que admiten coma"](../familias-de-flags.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-flags.md#campos-de-prosa), ["Campos escalares"](../familias-de-flags.md#campos-escalares) y ["Campos externos"](../familias-de-flags.md#campos-externos) valen aquí, con exactamente el mismo
+**Todos** los flags de las secciones ["Campos de lista que admiten coma"](../familias-de-flags.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-flags.md#campos-de-prosa), ["Campos escalares"](../familias-de-flags.md#campos-escalares) y ["Campos externos"](../familias-de-flags.md#campos-externos) valen aquí, con exactamente el mismo
 significado que en cualquier otro comando. Lo propio de `set`:
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
@@ -38,7 +38,7 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 
 | Caso | Qué pasa |
 |---|---|
-| Ninguna bandera de cambio | Error 2: `error: nothing to change` con un puntero a `biso get` |
+| Ningún flag de cambio | Error 2: `error: nothing to change` con un puntero a `biso get` |
 | Varias referencias | El mismo cambio se aplica a todas, con la garantía de todo o nada de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables) |
 | Varias referencias y un selector que no sea `all` (clave, rango, lista o texto) | Error 2, porque el selector de una tarea no tiene por qué significar lo mismo en otra |
 | Varias referencias y `--check-ac all` | Válido |
@@ -46,7 +46,7 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Un `--replace-*` sustituye una lista no vacía | Se hace, con el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) diciendo cuántos elementos ha reemplazado |
 | Paso a un estado terminal con criterios sin marcar | Se hace, con aviso |
 | Paso a un estado terminal con una pregunta abierta (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)) | Se hace, con aviso, igual que en `biso finish` (["`biso finish`"](verbos-del-ciclo.md#biso-finish)) y como atribuye la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) a cualquier llegada al estado terminal |
-| Todas las banderas dejan la tarea igual | Código 0, con `note: MYP-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (["La renovación"](../lease.md#la-renovación) de `lease.md`) |
+| Todos los flags dejan la tarea igual | Código 0, con `note: MYP-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (["La renovación"](../lease.md#la-renovación) de `lease.md`) |
 | `--status` a un estado que no es el activo, `--clear-assignees` o `--rm-assignees` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 | `--comment-author` sin `--comment` | Error 2 |
 | `--comment` sin `--comment-author` y sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | Error 2 |
@@ -109,7 +109,7 @@ warning: --replace-labels replaced 2 existing labels
 
 `kind` es `task.write` para `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y
 `archive`, para que quien consuma la salida no tenga que distinguir qué verbo la produjo. `changed`
-dice qué campos han cambiado de verdad, que no es lo mismo que qué banderas se han pasado. En el lote
+dice qué campos han cambiado de verdad, que no es lo mismo que qué flags se han pasado. En el lote
 de `new --from`, las 242 tareas van en `data.tasks` de **un solo sobre**, no en 242 objetos sueltos.
 
 **`acAdded` y `dodAdded` son las claves que la llamada acaba de crear**, en el mismo orden en que se
@@ -123,7 +123,7 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 | Desenlace | Código |
 |---|---:|
 | Cambio aplicado, o nada que cambiar | 0 |
-| Sin banderas de cambio, banderas incompatibles, selector por clave con varias tareas, solape | 2 |
+| Sin flags de cambio, flags incompatibles, selector por clave con varias tareas, solape | 2 |
 | Valor fuera de un vocabulario, clave de extensión no declarada, tarea ilegible | 3 |
 | Alguna referencia no existe, o un selector de texto no encaja con ningún criterio o comentario | 4 |
 | Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios o comentarios | 5 |

@@ -4,7 +4,7 @@
 
 | Variable | Equivale a | Precedencia |
 |---|---|---|
-| `BISO_CWD` | `--cwd` | la bandera gana |
+| `BISO_CWD` | `--cwd` | el flag gana |
 | `BISO_ME` | la identidad de quien llama, para `--mine` y para el autor por defecto de los comentarios | la clave `me` de la configuración gana; si no está, esta variable |
 | `BISO_LIMIT` | el límite por defecto de `biso ls` | `--limit` gana, luego esta variable, luego la clave `default_limit`, luego 30 |
 | `NO_COLOR` | `--color never`, si está definida con cualquier valor | `--color` gana |

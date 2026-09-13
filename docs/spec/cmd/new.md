@@ -3,7 +3,7 @@
 ## Firma
 
 ```
-biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de las familias de banderas]
+biso new [<title>] [--start] [--from <file|->] [cualquier flag de campo de las familias de flags]
 ```
 
 ## Parámetros propios
@@ -14,7 +14,7 @@ biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de la
 | `--start` | | no | booleano | falso | no | no | `-s`, `--from` |
 | `--from <file|->` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
 
-Todas las banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md) valen aquí. En una tarea nueva no hay nada que sustituir
+Todos los flags de campo de la sección ["Las familias de flags"](../familias-de-flags.md) valen aquí. En una tarea nueva no hay nada que sustituir
 ni que quitar: `--replace-*` se acepta y deja la lista igual que `--add-*`, porque no hay nada previo
 que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que actuar. `--clear-*` no
 hace nada y avisa. Las que se usan de verdad al crear son
@@ -69,7 +69,7 @@ Con `--print`, después de la línea del identificador viene la ficha completa e
 **`biso new` no anuncia la clave de un `--add-ac` o `--add-dod` creado al mismo tiempo que la
 tarea, a diferencia de la línea de estado de `biso set` (["`biso set`"](set.md#salida)).** Una tarea nace sin ningún
 criterio, así que su contador de claves empieza siempre en 1: el primer `--add-ac` de la llamada es
-la `#1`, el segundo la `#2`, y así en el mismo orden en que se escribieron las banderas
+la `#1`, el segundo la `#2`, y así en el mismo orden en que se escribieron los flags
 (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)). Quien llama ya lo sabe sin preguntar, así que
 imprimirlo sería el eco que el principio 4 prohíbe (["Los principios"](../principios.md)), y no la clase de dato que ese principio
 manda enseñar.
@@ -132,7 +132,7 @@ Las reglas del lote, todas obligatorias:
   `biso snapshot` y `biso init --from` (["`biso export`"](export.md), ["`biso snapshot`"](snapshot.md)) trae también su `task_prefix`, así que los `id`
   de su `snapshot.ndjson` siempre lo llevan puesto.
 - **`archived` se acepta como booleano.** Por defecto, si la clave no aparece, la tarea se crea sin
-  archivar. Ningún otro comando tiene una bandera de campo para él: fuera de la importación,
+  archivar. Ningún otro comando tiene un flag de campo para él: fuera de la importación,
   archivar se hace con `biso archive`.
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
   escriben, y el mensaje dice la línea y la clave.
@@ -140,7 +140,7 @@ Las reglas del lote, todas obligatorias:
   por tanto un fallo de validación.
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de
   la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables).
-- Un lote no admite `--start` ni ninguna bandera de campo: todo va en el fichero.
+- Un lote no admite `--start` ni ningún flag de campo: todo va en el fichero.
 
 Salida del lote, una línea por tarea, en el orden del fichero:
 
@@ -172,7 +172,7 @@ error: 4 of 242 lines are invalid, nothing was written
 |---|---:|
 | Tarea o lote creado | 0 |
 | `--dry-run` que habría funcionado | 0 |
-| Falta el título, banderas incompatibles, fecha mal formada, ciclo de dependencias o de padres | 2 |
+| Falta el título, flags incompatibles, fecha mal formada, ciclo de dependencias o de padres | 2 |
 | Valor fuera de un vocabulario, clave de extensión no declarada, entrada no interpretable | 3 |
 | `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
 | `--add-deps` o `--parent` por texto con varias coincidencias | 5 |

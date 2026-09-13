@@ -148,7 +148,7 @@ type Error struct {
     // Las cinco claves de detalle de la sección 12.2, cada una presente solo en el
     // subconjunto de codes que le corresponde según esa misma tabla; en los demás
     // casos queda en su cero y se omite al serializar (omitempty).
-    Field     string   // en los del código 3, y los del 2 que nombran una bandera
+    Field     string   // en los del código 3, y los del 2 que nombran un flag
     Given     string   // acompaña siempre a Field
     Valid     []string // en los que rechazan un valor contra un conjunto conocido
     Details   []*Error // solo en batch_invalid y dry_run_failed, misma forma, uno por fallo
@@ -182,20 +182,20 @@ El contrato de `SPEC.md` incluye reglas que una librería de propósito general 
 
 - Tres formas de dar el mismo valor largo (literal, `@fichero`, `-` para entrada estándar), con
   `@@` como único escape y con la regla de que `-` solo puede aparecer una vez por invocación
-  entera, no una vez por bandera (sección 4.5).
-- Un valor vacío que no borra nada salvo en las banderas que sustituyen (sección 4.6).
-- Un valor que empieza por guion se acepta tal cual detrás de una bandera que exige valor, sin
-  heurísticas; olvidar un valor se detecta por lo que sobra después, no por lo que parece una
-  bandera (sección 4.7).
+  entera, no una vez por flag (sección 4.5).
+- Un valor vacío que no borra nada salvo en los flags que sustituyen (sección 4.6).
+- Un valor que empieza por guion se acepta tal cual detrás de un flag que exige valor, sin
+  heurísticas; olvidar un valor se detecta por lo que sobra después, no por lo que parece un
+  flag (sección 4.7).
 - El texto literal de cada `--help` está fijado carácter a carácter en `SPEC.md`.
 
 Ninguna librería de parseo genera esto por defecto, y forzarla a hacerlo significa sobreescribir su
 comportamiento en casi todos los comandos, que es perder la ventaja de usarla. Por eso
 `internal/cli` tiene su propio analizador: una tabla de especificación por comando (nombre de
-bandera, si acepta valor, si es de las "tres formas" de la 4.5, si es lista o escalar, sección 8 de
+flag, si acepta valor, si es de las "tres formas" de la 4.5, si es lista o escalar, sección 8 de
 `SPEC.md`) recorrida por una única función de parseo genérica, de forma que las reglas
 transversales se escriben una sola vez y no trece. Además de 4.5 a 4.7, esa tabla es también la que
-resuelve 4.8 (una bandera de lista marcada como repetible acumula valores en cada aparición, en vez
+resuelve 4.8 (un flag de lista marcada como repetible acumula valores en cada aparición, en vez
 de quedarse con la última, que es lo que hace una librería genérica por defecto) y 4.9 (la función
 de parseo no aplica los cambios en el orden en que llegaron en `argv`, sino que los clasifica en las
 siete categorías fijas de esa sección, de "todos los `--clear-*`" hasta "los comentarios", y dentro

@@ -97,7 +97,7 @@ Lo que cada escenario tiene que dejar enseñado, y que no es adivinable:
 
 - **1**: que el arranque se lee entero una vez y ya no hace falta nada más, y que `where` existe para
   cuando dudas de qué tablero estás tocando.
-- **2**: que el nombre desnudo de una bandera añade, y que `new` imprime el identificador y nada más.
+- **2**: que el nombre desnudo de un flag añade, y que `new` imprime el identificador y nada más.
 - **3**: que la lista corta a 30 y esconde las terminadas, y que lo dice por stderr. Que la urgencia es
   derivada y no se escribe.
 - **4**: que `--mine` no funciona sin identidad declarada, y que asignar es una decisión de una persona

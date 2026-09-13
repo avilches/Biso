@@ -16,7 +16,7 @@ encargo resuelto con la asignación que ya existe, retirando lo que la ensuciaba
 
 Este documento va por su tercera versión. Las dos primeras pasaron sendas revisiones adversariales que
 encontraron veinticinco problemas entre las dos, incluidos un tope que rompía el contrato de
-estabilidad, un bloque nuevo que se tragaba el tablero, una bandera que hoy es un error de uso, y
+estabilidad, un bloque nuevo que se tragaba el tablero, un flag que hoy es un error de uso, y
 quince sitios de `SPEC.md` sin contabilizar. Lo que sigue lleva esos arreglos, y la sección 12 recoge
 lo que queda como riesgo aceptado.
 
@@ -125,14 +125,14 @@ El argumento para exigirlas está ya escrito en el apartado 6.1 de `DECISIONES.m
 adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
 
 Los cinco casos límite de `biso init`, todos con error 2 porque son problemas de argumentos, que es
-como esa sección clasifica hoy cualquier problema de sus banderas:
+como esa sección clasifica hoy cualquier problema de sus flags:
 
 | Caso | Mensaje |
 |---|---|
-| Falta alguna de las tres banderas de papel, habiendo `--statuses` | Las tres nombradas, diciendo cuáles faltan |
-| Una bandera de papel sin `--statuses` | Que los papeles solo se fijan junto a la lista de estados |
-| Una bandera de papel nombra un estado que no está en `--statuses` | El valor y la lista de estados |
-| Dos banderas de papel nombran el mismo estado | Los dos papeles y el estado que comparten |
+| Falta alguno de los tres flags de papel, habiendo `--statuses` | Las tres nombradas, diciendo cuáles faltan |
+| Un flag de papel sin `--statuses` | Que los papeles solo se fijan junto a la lista de estados |
+| Un flag de papel nombra un estado que no está en `--statuses` | El valor y la lista de estados |
+| Dos flags de papel nombran el mismo estado | Los dos papeles y el estado que comparten |
 | `--statuses` con menos de tres estados | Cuántos hacen falta y por qué |
 
 Y los dos que aparecen en `biso config set`, los dos con **error 6** y el identificador
@@ -269,7 +269,7 @@ con tres partes, y la tabla de clases, según el apartado 6 de `DECISIONES.md`, 
 excepciones a la regla: es la regla aplicada a cada forma de dato". En su lugar se aplica el patrón que
 la especificación ya usa para `archived`:
 
-> **Ninguna bandera de campo escribe `question`.** Lo escriben `biso ask`, `biso answer` y la
+> **Ningún flag de campo escribe `question`.** Lo escriben `biso ask`, `biso answer` y la
 > importación de `biso new --from`, y nadie más.
 
 Eso resuelve tres problemas de una vez. No hay `--question` que sustituya en silencio una pregunta que
@@ -278,7 +278,7 @@ hay que inventar una clase de campo para un registro compuesto.
 
 ### 5.2. Los dos verbos
 
-Son verbos y no banderas por el principio 5, que dice que un gesto del flujo de trabajo es un comando.
+Son verbos y no flags por el principio 5, que dice que un gesto del flujo de trabajo es un comando.
 Sin ellos, responder cuesta dos llamadas, una para el comentario y otra para vaciar el campo.
 
 **Ninguno de los dos acepta `--comment-author`.** El autor de la pregunta y el de la respuesta son
@@ -312,7 +312,7 @@ distinto tiene `--comment`, que sigue funcionando en los dos verbos con su autor
 | La tarea no tiene pregunta abierta | Error 6, con la pista de usar `biso comment` |
 | Sin texto | Error 2. Una respuesta sin respuesta no cierra nada |
 | Sin identidad configurada | Error 2, el mismo `code` que `ask` |
-| Se pasan además banderas de campo | Se aplican igual, como en cualquier verbo del ciclo |
+| Se pasan además flags de campo | Se aplican igual, como en cualquier verbo del ciclo |
 
 **El orden dentro de la escritura**, que la sección 4.9 exige fijar y no dejar al orden de la línea de
 comandos: los dos comentarios del verbo se añaden **antes** que cualquier comentario que venga de
@@ -323,7 +323,7 @@ fecha pasada y se añade al final. **Los comentarios se guardan y se muestran en
 que es lo que `SPEC.md` hace hoy sin decirlo, y el instante de cada uno dice la verdad. Conviene
 escribirlo donde se define la lista.
 
-Los dos aceptan las demás banderas de campo de la sección 8, como el resto de verbos del ciclo. El caso
+Los dos aceptan los demás flags de campo de la sección 8, como el resto de verbos del ciclo. El caso
 de uso real de eso es responder y concretar a la vez:
 
 ```
@@ -452,7 +452,7 @@ Los cuatro bloques excluyen las tareas terminadas y las archivadas, igual que ho
 ### 6.2. El presupuesto: el tope total no se mueve
 
 El añadido a la parte fija son unos 55 bytes de las dos órdenes nuevas y 214 de la regla nueva, en
-total **269**. No hay ninguna bandera de campo nueva, así que la rejilla `FIELD FLAGS` no cambia. La
+total **269**. No hay ningún flag de campo nueva, así que la rejilla `FIELD FLAGS` no cambia. La
 parte fija pasa de 2.963 a unos **3.232**.
 
 El resumen del tablero pierde lo que ocupaban `Ideas` y `Blocked` en la línea de recuento y en las
@@ -489,7 +489,7 @@ tenerlas todas delante en vez de dos:
 
 1. Renombra la clave JSON `defaultStatus`, y las claves de `data` "no se quitan".
 2. Renombra la clave JSON `notStartedHidden`, por lo mismo.
-3. Cambia la semántica de `--limit` en `biso prime`, y "una bandera nunca cambia de semántica".
+3. Cambia la semántica de `--limit` en `biso prime`, y "un flag nunca cambia de semántica".
 4. Retira `default_assignee`, y retirar una funcionalidad exige un ciclo de aviso.
 5. Mueve el reparto interno del presupuesto, aunque no el tope.
 
@@ -599,7 +599,7 @@ biso finish TASK-11 --check all --summary "Normaliza CRLF en texto, salta binari
 ```
 
 Los filtros del día a día. **Las consultas del agente llevan `--not-waiting` porque `biso prime` aplica
-la precedencia y `biso ls` no**, así que sin esa bandera los dos leerían el mismo tablero de dos
+la precedencia y `biso ls` no**, así que sin ese flag los dos leerían el mismo tablero de dos
 maneras distintas:
 
 | Quién | Qué quiere saber | Comando |
@@ -638,7 +638,7 @@ maneras distintas:
 | # | Dónde | Qué |
 |---|---|---|
 | 10 | Sección 10, cabecera y tabla | De diecisiete comandos a diecinueve, y de nueve del ciclo a once |
-| 11 | Sección 10, texto de cierre | `ask` y `answer` entran en la lista de comandos que aceptan banderas de campo |
+| 11 | Sección 10, texto de cierre | `ask` y `answer` entran en la lista de comandos que aceptan flags de campo |
 | 12 | Sección 10.1 | Se retira la regla posicional; los cinco casos límite; se quita el aviso de los dos estados |
 | 13 | Sección 10.3 | Se retira `default_assignee`; `new --from` acepta `question`; el ejemplo de NDJSON lo incluye |
 | 14 | Sección 10.4 | Los cuatro filtros nuevos con sus incompatibilidades; `waiting` en el JSON del listado |
@@ -647,7 +647,7 @@ maneras distintas:
 | 17 | Sección 10.7 | Los dos verbos nuevos, con su orden de aplicación dentro de la escritura |
 | 18 | Sección 10.7.1 | `biso start` avisa sobre una tarea aparcada |
 | 19 | Sección 10.7.4 | `biso finish` avisa sobre una tarea aparcada |
-| 20 | Sección 10.9 | `question` en `export`, los cuatro filtros, y el guion de simetría con las banderas de papel |
+| 20 | Sección 10.9 | `question` en `export`, los cuatro filtros, y el guion de simetría con los flags de papel |
 | 21 | Sección 10.10 | `initial_status`; mínimo de tres estados; papeles distintos; se retira `default_assignee` |
 | 22 | Sección 10.11 | `biso doctor` comprueba la invariante de los tres papeles |
 | 23 | Sección 11 | La ayuda de primer nivel lista `ask` y `answer`, y su cifra de líneas |
@@ -724,7 +724,7 @@ terminal por defecto, así que `biso ls --waiting` no la encuentra sin `--any-st
 la alternativa, impedir cerrar una tarea con una pregunta abierta, empuja a rodear la herramienta.
 
 **`--ready` no excluye las aparcadas.** `ready` mira solo dependencias, así que un agente que elija
-trabajo con esa bandera, que es lo que su nombre invita a hacer, se las lleva. La consulta correcta
+trabajo con ese flag, que es lo que su nombre invita a hacer, se las lleva. La consulta correcta
 lleva `--not-waiting`. Está anotado porque el nombre engaña.
 
 **`ready` y `blocked` siguen siendo complementarios**, dos campos derivados para un solo hecho. Es

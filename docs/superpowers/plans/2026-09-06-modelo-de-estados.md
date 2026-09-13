@@ -30,7 +30,7 @@ de fuera. Cada tarea de aquí cita los números de esa lista que cubre.
 Salen del `CLAUDE.md` del proyecto y de `DECISIONES.md`, y valen para todas las tareas:
 
 - **La prosa va en español. Todo lo que es interfaz del programa va en inglés**: nombres de comando,
-  banderas, textos de ayuda, mensajes de error, claves JSON y claves de configuración.
+  flags, textos de ayuda, mensajes de error, claves JSON y claves de configuración.
 - **Nunca un em-dash (`—`)**, en ningún texto: ni en los documentos, ni en los mensajes de commit.
 - **Los mensajes de commit no llevan coautoría** ni mención de haber sido generados por un agente.
 - **Cuando un dato tenga que aparecer en dos sitios, uno remite al otro** en vez de repetirlo.
@@ -201,7 +201,7 @@ grep -n 'penúltimo\|dos estados\|Menos de dos' docs/SPEC.md
 
 Esperado: cinco líneas. Las dos de `penúltimo` son la regla posicional, en 10.1 y en su ayuda.
 
-- [ ] **Paso 2: retirar la regla posicional y escribir las banderas**
+- [ ] **Paso 2: retirar la regla posicional y escribir los flags**
 
 En 10.1: se van las tres filas que asignan papeles por posición, la fila de "exactamente dos estados" y
 la de "menos de dos estados". Entran `--initial-status`, `--active-status` y `--terminal-status` en la
@@ -306,7 +306,7 @@ Esperado: `0`.
 
 Con la estructura que usan los otros cuatro verbos: firma, tabla de parámetros propios, qué hace, las
 tablas de casos del apartado 5.2 del diseño, salida, códigos de salida y ayuda. **Ninguno de los dos
-acepta `--comment-author`**, y la ayuda de `answer` lo dice, porque la sección 10.6 declara esa bandera
+acepta `--comment-author`**, y la ayuda de `answer` lo dice, porque la sección 10.6 declara ese flag
 como "requiere `--comment`".
 
 Este es el texto literal de las dos ayudas:
@@ -438,7 +438,7 @@ En 10.9 los cuatro filtros se aceptan igual que el resto de filtros de `ls`, y `
 lo que escribe `export`, con sus tres partes.
 
 **Y hay que arreglar el guion de la garantía de simetría de esa misma sección**, que hoy invoca
-`biso init Kex --statuses "..."` sin banderas de papel. Desde la tarea 4, esa llamada es un error 2,
+`biso init Kex --statuses "..."` sin flags de papel. Desde la tarea 4, esa llamada es un error 2,
 así que el documento estaría publicando como prueba un guion que no se puede ejecutar. Hay que
 añadirle `--initial-status`, `--active-status` y `--terminal-status` con los estados que corresponda.
 No cambies ahí la lista de estados: eso es la tarea 10.

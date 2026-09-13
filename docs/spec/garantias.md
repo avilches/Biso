@@ -3,7 +3,7 @@
 ## Orden de aplicación dentro de una escritura
 
 Una sola invocación puede tocar muchos campos. El orden en que se aplican es fijo y **no depende del
-orden en que aparecen las banderas en la línea de comandos**, para que el resultado sea reproducible:
+orden en que aparecen los flags en la línea de comandos**, para que el resultado sea reproducible:
 
 1. Todos los `--clear-*`.
 2. Todos los `--replace-*`.

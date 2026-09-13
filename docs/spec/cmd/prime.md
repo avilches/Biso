@@ -30,9 +30,9 @@ biso prime [--full] [--limit <n>] [--json]
 - `--limit` acota juntas las secciones `ASSIGNED TO YOU` y `NEXT UP`: su valor son filas repartidas
   entre las dos, en ese orden de preferencia, con una sola línea de recuento al final de la última que
   se imprima. Con `0`, las dos desaparecen y se queda solo esa línea.
-- `--full` añade al final la lista completa de banderas de `biso new` y `biso set`. Es para una
+- `--full` añade al final la lista completa de flags de `biso new` y `biso set`. Es para una
   persona que está aprendiendo la herramienta, no para el arranque de un agente.
-- `--json` es la bandera global de la sección ["Banderas globales"](flags-globales.md#banderas-globales), y aquí es lo único que la restringe: no se puede
+- `--json` es el flag global de la sección ["Flags globales"](flags-globales.md#flags-globales), y aquí es lo único que la restringe: no se puede
   combinar con `--full`, porque el JSON no lleva texto de ayuda.
 
 ## Qué hace, caso a caso
@@ -57,7 +57,7 @@ Entra:
 
 - Las diez órdenes del ciclo de trabajo con su forma de uso. Quien no sabe que existe `biso finish`
   no va a escribir `biso finish --help`.
-- **Los nombres de todas las banderas de campo**, en una rejilla de cinco líneas.
+- **Los nombres de todos los flags de campo**, en una rejilla de cinco líneas.
 - El vocabulario real de este tablero, con **el recuento por estado** y con la marca de cuál es el
   estado de las tareas nuevas, cuál el activo y cuál el terminal.
 - Las reglas que no son adivinables.
@@ -66,7 +66,7 @@ Entra:
 
 Se queda fuera, y va a `biso <cmd> --help` o a `biso help <cmd>...` cuando hacen falta varios de golpe:
 
-- Los valores, los tipos y las incompatibilidades de cada bandera. El mensaje da los nombres, que es
+- Los valores, los tipos y las incompatibilidades de cada flag. El mensaje da los nombres, que es
   lo que no se puede adivinar; la ayuda da el detalle, que es lo que se consulta cuando se necesita.
 - El formato de lote de `biso new --from` y el esquema JSON completo.
 - `biso export`, `biso config`, `biso doctor`, `biso archive`, `biso where` y `biso board`, que no
@@ -292,8 +292,8 @@ THE BOARD IS EMPTY
 Los valores de urgencia del ejemplo salen de los coeficientes por defecto, que el contrato de
 estabilidad permite cambiar entre versiones menores, así que las cifras exactas pueden no ser estas.
 
-Las reglas y los nombres de las banderas no viajan en el JSON: quien pide JSON es un programa, y un
-programa no necesita que le expliquen en prosa cómo se nombran las banderas de escritura.
+Las reglas y los nombres de los flags no viajan en el JSON: quien pide JSON es un programa, y un
+programa no necesita que le expliquen en prosa cómo se nombran los flags de escritura.
 
 **Ninguna de las cuatro listas trae el cuerpo de la pregunta**, por el mismo motivo que el esquema de
 `task.list` en la sección ["`biso ls`"](ls.md) no trae el cuerpo de la tarea: es texto largo. Lo que sí llevan es la posición de

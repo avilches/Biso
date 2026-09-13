@@ -471,7 +471,7 @@ que aparecen en la tabla.
 | `docs/spec/vocabulario.md` | 30-63 | 34 | Vocabulario de esta especificación |
 | `docs/spec/principios.md` | 64-91 | 28 | Los principios |
 | `docs/spec/codigos-de-salida.md` | 92-137 | 46 | Códigos de salida |
-| `docs/spec/invocacion.md` | 138-205, 434-505 | 140 | Banderas globales, entorno y configuración de máquina |
+| `docs/spec/invocacion.md` | 138-205, 434-505 | 140 | Flags globales, entorno y configuración de máquina |
 | `docs/spec/resolucion-del-tablero.md` | 206-433 | 228 | Cómo se elige el tablero |
 | `docs/spec/salida-y-terminal.md` | 511-598 | 88 | Terminal, flujos de salida y codificación |
 | `docs/spec/valores-de-entrada.md` | 599-674 | 76 | Cómo se pasa un valor |
@@ -480,7 +480,7 @@ que aparecen en la tabla.
 | `docs/spec/presupuestos.md` | 813-867, 1545-1585 | 96 | Los presupuestos de arranque y de tamaño |
 | `docs/spec/vocabularios.md` | 1171-1271 | 101 | Los vocabularios del tablero y la regla de validación |
 | `docs/spec/referencias.md` | 1272-1352 | 81 | Cómo se resuelve una referencia a una tarea |
-| `docs/spec/familias-de-banderas.md` | 1353-1494 | 142 | Las familias de banderas |
+| `docs/spec/familias-de-flags.md` | 1353-1494 | 142 | Las familias de flags |
 | `docs/spec/cmd/index.md` | 1876-1926 | 51 | Los comandos |
 | `docs/spec/cmd/prime.md` | 1495-1544, 1586-1875 | 340 | `biso prime`, el arranque de una sesión |
 | `docs/spec/cmd/init.md` | 1927-2349 | 423 | `biso init` |
@@ -507,7 +507,7 @@ Las cinco mudanzas que no son un corte limpio, y que el diseño justifica:
 - **`biso prime` se une a los comandos** y su presupuesto de tamaño (9.5, líneas 1545-1585) se va a
   `presupuestos.md` con el de arranque (4.13, líneas 813-867). Por eso `cmd/prime.md` recibe dos rangos
   con un hueco en medio.
-- **La resolución del tablero** (3.2) sale de dentro de las banderas globales, que se quedan con el
+- **La resolución del tablero** (3.2) sale de dentro de los flags globales, que se quedan con el
   resto de la sección 3 en `invocacion.md`, también con un hueco en medio.
 - **Los identificadores** (4.11, líneas 722-745) se van con el modelo de datos, porque hablan de los
   identificadores de las tareas. Van **al final** del fichero, detrás de la sección 5 entera, y por eso su
@@ -549,7 +549,7 @@ porque el título viejo hablaba de un documento en singular:
 | Fichero | H1 nuevo |
 |---|---|
 | `docs/spec/vocabulario.md` | Vocabulario de esta especificación |
-| `docs/spec/invocacion.md` | Banderas globales, entorno y configuración de máquina |
+| `docs/spec/invocacion.md` | Flags globales, entorno y configuración de máquina |
 | `docs/spec/salida-y-terminal.md` | Terminal, flujos de salida y codificación |
 | `docs/spec/valores-de-entrada.md` | Cómo se pasa un valor |
 | `docs/spec/garantias.md` | Orden de escritura, concurrencia y datos dañados |
@@ -754,7 +754,7 @@ python3 tools/verificar_mudanza.py --excepciones tools/excepciones-de-encabezado
 
 Expected: `la mudanza es fiel: cada fichero lleva su contenido y no falta ni sobra nada`, código 0.
 
-**La bandera `--excepciones` no es opcional, y su fichero es donde viven las excepciones de encabezado
+**El flag `--excepciones` no es opcional, y su fichero es donde viven las excepciones de encabezado
 de la tabla de más arriba.** Sin ella el comprobador no puede dar el visto bueno a un reparto correcto, porque
 los nueve encabezados que cambian a propósito le parecen nueve errores. Con ella, la lista deja de ser prosa
 y pasa a comprobarse en las dos direcciones: un encabezado que cambia sin estar declarado es un error, y una
@@ -1420,7 +1420,7 @@ Expected: FAIL con `ModuleNotFoundError: No module named 'comprobar_recuentos'`.
 - [ ] **Step 3: Escribir el script**
 
 Crea `tools/comprobar_recuentos.py`. Los sustantivos que busca son los que nombran partes del propio
-documento: `reglas`, `filas`, `comandos`, `codigos`, `códigos`, `banderas`, `secciones`, `apartados`,
+documento: `reglas`, `filas`, `comandos`, `codigos`, `códigos`, `flags`, `secciones`, `apartados`,
 `documentos`, `principios`, `garantias`, `garantías`, `mensajes`, `campos`, `verbos`, `criterios`,
 `columnas`, `entradas`, `tipos`, `familias`, `errores`, `avisos`, `estados`, `precisiones`,
 `comprobaciones`, `requisitos`, `decisiones`. Los cardinales, en cifra o en palabra de `dos` a `treinta`.
@@ -1458,7 +1458,7 @@ CARDINALES = (
     "veintiuna|veintidos|veintidós|treinta|[0-9]+"
 )
 SUSTANTIVOS = (
-    "reglas|filas|comandos|codigos|códigos|banderas|secciones|apartados|documentos|"
+    "reglas|filas|comandos|codigos|códigos|flags|secciones|apartados|documentos|"
     "principios|garantias|garantías|mensajes|campos|verbos|criterios|columnas|entradas|"
     "tipos|familias|errores|avisos|estados|precisiones|comprobaciones|requisitos|decisiones"
 )

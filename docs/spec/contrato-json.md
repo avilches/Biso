@@ -63,7 +63,7 @@ todos los errores y las cinco de detalle, con la regla de cuándo acompañan:
 | Clave | En qué errores aparece |
 |---|---|
 | `exitCode`, `code`, `message` | En todos, siempre |
-| `field` y `given` | En los que nombran una bandera, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran una bandera |
+| `field` y `given` | En los que nombran un flag, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran un flag |
 | `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs` |
 | `details` | Solo en `batch_invalid` y en `dry_run_failed`, y es una lista de objetos de esta misma forma, uno por fallo |
 | `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió la orden que falló (["`biso snapshot`"](cmd/snapshot.md)) |
@@ -111,12 +111,12 @@ anterior a esta rama.
 - Un campo sin valor es `null`, nunca la cadena vacía ni la ausencia de la clave. **Ninguna clave va ni
   viene según los datos**: la que está documentada para un `kind` aparece siempre que se emite ese
   `kind`, valga lo que valga, para que nadie tenga que distinguir entre "no está" y "no tiene valor".
-- **La única excepción son las claves que gobierna una bandera**, y se sostiene porque quien llama sabe
-  qué banderas ha escrito: no tiene que mirar la salida para averiguar qué va a encontrarse en ella. Lo
+- **La única excepción son las claves que gobierna un flag**, y se sostiene porque quien llama sabe
+  qué flags ha escrito: no tiene que mirar la salida para averiguar qué va a encontrarse en ella. Lo
   que la regla de arriba prohíbe es lo otro, que la presencia de una clave dependa de los datos, que es
   justo lo que el consumidor no puede prever. Estas son todas las que hay en el documento:
 
-  | Clave | `kind` | La bandera que la gobierna |
+  | Clave | `kind` | El flag que la gobierna |
   |---|---|---|
   | `data.task.urgencyBreakdown` | `task.get` | Solo aparece con `--explain-urgency` (["`biso get`"](cmd/get.md)) |
   | Las demás claves de `data.task` | `task.get` | Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas, y ninguna otra (["`biso get`"](cmd/get.md)) |

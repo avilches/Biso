@@ -118,7 +118,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [Sustituir un campo que no tiene bandera de \"sustituir entera\"](../spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [Sustituir un campo que no tiene flag de \"sustituir entera\"](../spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 *Note: There's no flag that replaces the whole list of definition-of-done items in one shot, so this clears it and adds the two new items in the same call. Element `#2` disappears along with the rest of the old list, and the two that come in are brand new elements. No warning shows up here, unlike a `--replace-*` on a comma-separated list field that overwrites non-empty content: clearing was explicit, you typed it yourself, so nothing gets overwritten silently and there's nothing to warn about.*
 

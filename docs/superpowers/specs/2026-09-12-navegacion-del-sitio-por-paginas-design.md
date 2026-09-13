@@ -34,7 +34,7 @@ o bifurcar la fuente.
 apartado.** Partir por cada uno de los treinta apartados de `DECISIONES.md` habría exigido reescribir
 cada enlace cruzado del repositorio que hoy cita un apartado suelto dentro del fichero grande (varios,
 desde `docs/spec/` y desde este mismo `CLAUDE.md`). Agrupando en 6-8 páginas por área (modelo de
-estados, persistencia, lenguaje y rendimiento, comandos y banderas, formato de datos, y el resto de
+estados, persistencia, lenguaje y rendimiento, comandos y flags, formato de datos, y el resto de
 decisiones de detalle) la mayoría de esos enlaces se quedan apuntando al mismo fichero, y solo hace
 falta corregir los que cambien de página. `ESTADO-DEL-ARTE.md` se parte en tres, una por cada una de
 sus partes actuales (las herramientas, el catálogo de problemas, y lo que la gente quiere conservar).
@@ -52,8 +52,8 @@ con su propio `index.md` de portada:
   milisegundos.
 - `lenguaje-y-rendimiento.md`: por qué Go, y por qué `modernc.org/sqlite` sin `cgo`.
 - `vocabulario-y-mensaje-de-arranque.md`: la regla de coincidencia de vocabulario, el presupuesto del
-  mensaje de arranque, y el grid completo de banderas de campo.
-- `comandos-y-banderas.md`: el porqué de reglas concretas, y `<command>` repetible en `biso help`.
+  mensaje de arranque, y el grid completo de flags de campo.
+- `comandos-y-flags.md`: el porqué de reglas concretas, y `<command>` repetible en `biso help`.
 - `detalles.md`: el resto de decisiones de detalle que cuesta reconstruir, del juego de caracteres de
   un token a la retirada de `project` y `milestone`.
 - `estado-del-arte/herramientas.md`, `catalogo-de-problemas.md` y `lo-que-se-conserva.md`: las tres

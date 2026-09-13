@@ -160,7 +160,7 @@ el `init`, para que la traducción de `libc` pueda ofrecer `getservbyname`. En e
 `/etc/services` tiene 13.926 líneas. Es decir que **`biso ls`, un programa que no abre un socket en
 su vida, gastaría entre el 10 y el 13 por ciento de su presupuesto entero parseando la lista de
 puertos de Internet antes de mirar el tablero**, en cada una de las muchas invocaciones que un
-agente hace a lo largo de una sesión. No hay ninguna bandera ni etiqueta de compilación que lo
+agente hace a lo largo de una sesión. No hay ningún flag ni etiqueta de compilación que lo
 apague: `libc_darwin.go` importa ese paquete sin condiciones.
 
 **Y en Linux no existe.** Esta es la razón por la que había que medir en Linux y no extrapolar. El

@@ -80,10 +80,10 @@ conjunto contra el que valida `--assignee`.
 **Ni las etiquetas ni las personas tienen vocabulario cerrado al escribir.** Escribir una etiqueta
 nueva la incorpora al conjunto, y a partir de ese momento filtrar por ella funciona.
 
-Está la bandera `--unchecked` de `biso ls` y `biso export`, que apaga **las comprobaciones contra
+Está el flag `--unchecked` de `biso ls` y `biso export`, que apaga **las comprobaciones contra
 estos conjuntos, las de etiquetas y personas, y ninguna otra**: los vocabularios configurados de
 `--status`, `--type` y `--priority` siguen validando, y `--parent` sigue resolviendo su referencia.
-La bandera no cambia ninguna otra cosa.
+El flag no cambia ninguna otra cosa.
 
 ---
 

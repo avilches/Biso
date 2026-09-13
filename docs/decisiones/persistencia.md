@@ -182,7 +182,7 @@ tiene ningún dato que el programa no tenga, y ese argumento era falso: el dato 
 vivir las demás copias de trabajo del proyecto, y eso solo lo sabe una persona. Con los worktrees dentro
 del proyecto, que es la convención de esta máquina, la relativa es la buena; con los worktrees fuera del
 proyecto, la única que resuelve es la absoluta, porque el directorio del tablero no está ni en la copia ni
-en ninguno de sus ancestros. No hace falta ninguna bandera nueva para ofrecer esa elección, porque la
+en ninguno de sus ancestros. No hace falta ningún flag nuevo para ofrecer esa elección, porque la
 forma de `--at` ya la expresa.
 
 **Por qué guardar siempre la ruta absoluta se consideró y se descartó.** Es tentador, porque una ruta
@@ -224,27 +224,27 @@ directorio personal que lo exprese, con el trabajo fuera de la home o sin `HOME`
 componente de una ruta absoluta es siempre un directorio del sistema o el contenedor de los directorios
 personales de todo el mundo, así que un puntero ahí no puede estar a propósito.
 
-**Por qué se retiran la bandera `--board` y la variable `BISO_BOARD`.** Eran las dos primeras de las
-cuatro vías por las que ["Cómo se elige el tablero"](../spec/resolucion-del-tablero.md) encontraba un tablero, y la tabla de banderas
-globales las resumía como "Usa ese tablero directamente, sin buscar", con un valor que ["Banderas globales"](../spec/cmd/flags-globales.md#banderas-globales)
+**Por qué se retiran el flag `--board` y la variable `BISO_BOARD`.** Eran las dos primeras de las
+cuatro vías por las que ["Cómo se elige el tablero"](../spec/resolucion-del-tablero.md) encontraba un tablero, y la tabla de flags
+globales las resumía como "Usa ese tablero directamente, sin buscar", con un valor que ["Flags globales"](../spec/cmd/flags-globales.md#flags-globales)
 describía como "el nombre o el localizador de un tablero, en la forma que el almacenamiento imponga".
 Esa vaguedad se sostenía mientras la persistencia estuviera sin decidir. Con la persistencia ya decidida
 había que contestar si el valor era un nombre, un identificador de ocho hexadecimales o una ruta, sobre
 qué raíces buscaba y qué pasaba cuando encajaba con dos tableros de la máquina. La respuesta no es
-elegir una de las tres formas, ni partir la bandera en tres: es que la bandera ya no hace falta. El
+elegir una de las tres formas, ni partir el flag en tres: es que el flag ya no hace falta. El
 razonamiento tiene cuatro patas, y las cuatro hacen falta.
 
-**La primera: lo que `--board` prometía ya lo daba `-C`.** La bandera `--cwd`, con su forma corta `-C`,
+**La primera: lo que `--board` prometía ya lo daba `-C`.** El flag `--cwd`, con su forma corta `-C`,
 dice "resuelve el tablero desde ahí, sin cambiar el directorio del proceso", y la resolución que arranca
 desde ese directorio ya reconoce las dos cosas que alguien querría nombrar. Si el directorio contiene
 `board.db`, la vía del directorio de trabajo dice que el tablero es ese y no se busca nada más. Si el
 directorio es el de un proyecto, la vía del puntero lee su `.biso.json` ahí o en cualquier ancestro. Así
-que `-C <directorio del tablero>` y `-C <directorio del proyecto>` cubren juntos todo lo que la bandera
-retirada podía nombrar sin ambigüedad. Y para fijarlo durante una sesión entera, que era el único uso
-propio de `BISO_BOARD` frente a la bandera, ya está `BISO_CWD`, que ["Variables de entorno"](../spec/invocacion.md#variables-de-entorno) declara equivalente a
-`--cwd` con la bandera ganando.
+que `-C <directorio del tablero>` y `-C <directorio del proyecto>` cubren juntos todo lo que el flag
+retirado podía nombrar sin ambigüedad. Y para fijarlo durante una sesión entera, que era el único uso
+propio de `BISO_BOARD` frente al flag, ya está `BISO_CWD`, que ["Variables de entorno"](../spec/invocacion.md#variables-de-entorno) declara equivalente a
+`--cwd` con el flag ganando.
 
-**La segunda: por qué no se sustituye por una bandera que acepte el nombre del tablero.** Es la pata que
+**La segunda: por qué no se sustituye por un flag que acepte el nombre del tablero.** Es la pata que
 más falta va a hacer, porque nombrar el tablero por su nombre es lo primero que se le ocurre a
 cualquiera. El obstáculo es que **el nombre de un tablero no está en el sistema de ficheros**. Lo que hay
 en el disco es una carpeta llamada `<slug>-<id>`, y ese trozo legible es decorativo a propósito:
@@ -264,25 +264,25 @@ que dos proyectos de la misma máquina se llamen igual, y lo declara como una de
 resuelve de golpe sacar la identidad del nombre, precisamente porque lo que identifica a un tablero es su
 `id` y no cómo se llama.
 
-**La tercera: por qué tampoco una bandera que acepte el identificador.** Aquí no hay ningún obstáculo
+**La tercera: por qué tampoco un flag que acepte el identificador.** Aquí no hay ningún obstáculo
 técnico, hay algo peor: no hay ningún caso de uso que se sostenga. El identificador de ocho hexadecimales
 no aparece en el trabajo diario, porque las tareas se nombran con `<PREFIX>-<n>` y ese prefijo se deriva
 de `project_name`, no del `id` del tablero (["Identificador de tarea"](../spec/modelo-de-datos/identificadores.md#identificador-de-tarea)), así que nadie lo tiene delante ni lo teclea. El
 único momento en que el `id` manda es cuando el puntero lo trae y su `path` no resuelve, y ahí la
 búsqueda **ya recorre sola** la raíz por defecto y las raíces adicionales mirando el marcador `<id>.id` de
-cada carpeta, sin que nadie tenga que pasar ninguna bandera. El otro caso imaginable, que un mensaje de
+cada carpeta, sin que nadie tenga que pasar ningún flag. El otro caso imaginable, que un mensaje de
 error te enseñe un identificador y quieras usarlo, es precisamente aquel en el que ese tablero **no está
-en esta máquina**, que es lo que el error `pointer_unresolved` dice con todas las letras: ninguna bandera
+en esta máquina**, que es lo que el error `pointer_unresolved` dice con todas las letras: ningún flag
 alcanza un tablero que no existe en el disco.
 
-**La cuarta: la garantía que se pierde, y por qué no valía una bandera para conservarla.** Hay una
-diferencia real entre las banderas, y conviene no disimularla. `--board` prometía usar ese tablero
+**La cuarta: la garantía que se pierde, y por qué no valía un flag para conservarla.** Hay una
+diferencia real entre los flags, y conviene no disimularla. `--board` prometía usar ese tablero
 directamente, sin buscar, mientras que `-C` sí sube por los ancestros, de modo que apuntar con `-C` a un
 directorio equivocado puede terminar en silencio en el tablero del proyecto que lo contenga. Parece un
-argumento para conservar la bandera, y se cae solo en cuanto se lee ["Cómo se elige el tablero"](../spec/resolucion-del-tablero.md) entera, porque ese
+argumento para conservar el flag, y se cae solo en cuanto se lee ["Cómo se elige el tablero"](../spec/resolucion-del-tablero.md) entera, porque ese
 riesgo ya está aceptado en el caso general: "El precio de no tener ese freno es que un proyecto sin
-puntero propio hereda el del proyecto que lo contenga, si lo hay, y se acepta a propósito". Añadir una
-bandera cuyo único valor fuera evitar en un caso concreto un riesgo que la especificación acepta a
+puntero propio hereda el del proyecto que lo contenga, si lo hay, y se acepta a propósito". Añadir un
+flag cuyo único valor fuera evitar en un caso concreto un riesgo que la especificación acepta a
 propósito en el caso general sería incoherente, y encima daría la impresión de que el caso general está
 protegido cuando no lo está. Lo que sí hace visible el caso, y ya existe, es `biso where`, cuya fila
 `source` nombra el directorio del que salió el puntero, y el bloque `BOARD` del mensaje de arranque, que
@@ -292,7 +292,7 @@ Cómo eligen su almacén las demás herramientas del espacio, y las de fuera de 
 ["Cómo se apunta a un almacén distinto del que la herramienta encuentra sola"](../estado-del-arte/herramientas.md#cómo-se-apunta-a-un-almacén-distinto-del-que-la-herramienta-encuentra-sola),
 que cierra la parte 1 de "Estado del arte". El resumen es que ninguna acepta el nombre legible de un
 almacén para elegirlo, que todas apuntan con una ruta, y que las dos que sí admiten un nombre lo hacen
-en una bandera aparte de la de la ruta y contra un registro previo que lo declara.
+en un flag aparte de la de la ruta y contra un registro previo que lo declara.
 
 **Y la consecuencia que esto deja, que conviene ver antes de tocar nada.** Con las dos vías retiradas
 quedan dos, y la primera, la que reconoce un directorio como tablero porque contiene `board.db`, deja de
@@ -339,7 +339,7 @@ remoto. Leída al pie de la letra, la redacción anterior habría creado ahí un
 repositorio, que es el peor de los resultados posibles.
 
 **El riesgo que se acepta con `--vcs push` en ese caso.** Publicar el repositorio del proyecto arrastra
-también los commits de código que estuvieran pendientes en esa rama. Se acepta porque es lo que la bandera
+también los commits de código que estuvieran pendientes en esa rama. Se acepta porque es lo que el flag
 promete y porque quien la escribe ya está pidiendo publicar: negarse a hacerlo, o hacerlo a medias, sería
 sorprender a quien pidió una cosa clara. La alternativa que se descartó, error de uso en ese caso, rompía
 un guion que llame igual desde varios proyectos configurados de formas distintas.

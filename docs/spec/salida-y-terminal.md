@@ -61,9 +61,9 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 | `warning: --clear-labels has no effect on a new task` | cualquier `--clear-*` en `biso new` |
 | `warning: MYP-11 has unresolved dependencies: MYP-4 (To Do)` | al empezar una tarea bloqueada |
 | `warning: 28 more tasks match; showing 30 of 58` | en `biso ls`, al recortar |
-| `warning: --add-labels: "urgent" given twice, kept once` | valor repetido en una bandera de lista |
+| `warning: --add-labels: "urgent" given twice, kept once` | valor repetido en un flag de lista |
 | `warning: --append-desc contains a literal \n and no real newline; it will be stored as text` | ver ["Codificación y texto"](#codificación-y-texto) |
-| `warning: --append-note: empty value, nothing was added` | valor vacío en una bandera que añade |
+| `warning: --append-note: empty value, nothing was added` | valor vacío en un flag que añade |
 | `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada |
 | `warning: MYP-11 has no acceptance criteria` | `--check-ac all` sobre una tarea sin criterios |
 | `warning: MYP-11 has no comments` | `--rm-comment all` sobre una tarea sin comentarios (["Comentarios"](familias-de-flags.md#comentarios)) |

@@ -141,7 +141,7 @@ nav:
     - Los presupuestos de arranque y de tamano: spec/presupuestos.md
     - Los vocabularios del tablero y la regla de validacion: spec/vocabularios.md
     - Como se resuelve una referencia a una tarea: spec/referencias.md
-    - Las familias de banderas: spec/familias-de-flags.md
+    - Las familias de flags: spec/familias-de-flags.md
     - Comandos:
       - Los comandos: spec/cmd/index.md
       - Flags globales: spec/cmd/flags-globales.md
@@ -171,7 +171,7 @@ nav:
     - La persistencia: decisiones/persistencia.md
     - El lenguaje de implementacion y el rendimiento: decisiones/lenguaje-y-rendimiento.md
     - El vocabulario y el mensaje de arranque: decisiones/vocabulario-y-mensaje-de-arranque.md
-    - Comandos y banderas: decisiones/comandos-y-flags.md
+    - Comandos y flags: decisiones/comandos-y-flags.md
     - Decisiones de detalle: decisiones/detalles.md
   - Estado del arte:
     - estado-del-arte/index.md

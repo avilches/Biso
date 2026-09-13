@@ -72,7 +72,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/cmd/flags-globales.md#banderas-globales "Banderas globales"
+      - spec/cmd/flags-globales.md#flags-globales "Flags globales"
       - spec/cmd/set.md "`biso set`"
     remark: |
       Exit code 0, so it would have worked. That code is the real answer, more than the text: a

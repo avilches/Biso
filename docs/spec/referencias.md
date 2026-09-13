@@ -11,7 +11,7 @@ Todos los comandos que reciben `<ref>` usan exactamente esta rutina. No hay vari
 | `#<n>` | `#11` | igual que el anterior |
 | cualquier otra cosa | `"CRLF"` | consulta de texto |
 
-Estas banderas fuerzan la interpretación, y valen en todos los comandos que aceptan una referencia:
+Estos flags fuerzan la interpretación, y valen en todos los comandos que aceptan una referencia:
 
 - `--id` obliga a interpretar como identificador. Con un valor que no encaje en la gramática, error 2.
 - `--match` obliga a interpretar como texto, y sirve para buscar una tarea que se llame "42".

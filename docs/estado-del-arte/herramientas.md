@@ -147,9 +147,9 @@ el problema es el mismo y las maduras llevan más tiempo tropezando con él.
 **La conclusión, primero: al almacén se apunta con una ruta, no con un nombre.** Ninguna de las
 herramientas miradas acepta el nombre legible de un almacén para elegirlo. Los nombres solo aparecen
 donde existe un registro previo que los declara, como los contextos de `kubectl` o los sockets con
-nombre de `tmux`, y siempre en una bandera distinta de la de la ruta, con una regla escrita que dice
+nombre de `tmux`, y siempre en un flag distinto del de la ruta, con una regla escrita que dice
 cuál gana cuando se dan las dos, y gana la ruta. El segundo patrón es igual de consistente: la vía a
-otro almacén se reparte en varias banderas estrechas, cada una con su variable de entorno, en vez de una
+otro almacén se reparte en varios flags estrechos, cada uno con su variable de entorno, en vez de una
 sola cadena que lo admita todo.
 
 **git.** Tres mandos independientes: `-C` cambia el directorio de partida, `--git-dir` nombra el
@@ -158,9 +158,9 @@ almacén y `--work-tree` la copia de trabajo, y los dos últimos tienen su varia
 propia documentación avisa de que dar `--git-dir` apaga el descubrimiento hacia arriba. No hay ninguna
 forma de nombrar un repositorio local por un nombre: solo rutas.
 
-**gh.** Una sola bandera, `-R, --repo`, con una sola gramática, `[HOST/]OWNER/REPO`. No admite ni una
+**gh.** Una sola flag, `-R, --repo`, con una sola gramática, `[HOST/]OWNER/REPO`. No admite ni una
 URL, ni el nombre de un remoto, ni una ruta local. No tiene equivalente de `-C`, y lo piden desde 2020
-en `https://github.com/cli/cli/issues/2228`, que sigue sin resolver. Qué gana entre la bandera y la
+en `https://github.com/cli/cli/issues/2228`, que sigue sin resolver. Qué gana entre el flag y la
 variable `GH_REPO` no está dicho en su documentación, así que aquí no se afirma.
 
 **Taskwarrior.** Su `data.location` es una ruta, `TASKDATA` la sobrescribe, y la línea de comandos gana
@@ -168,7 +168,7 @@ sobre las dos con `rc.data.location=`. Lo que más importa para comparar es otra
 contexto **no elige almacén**. Es un filtro permanente sobre el mismo conjunto de datos, así que quien
 viene de ahí puede esperar que cambiar de contexto cambie de almacén, cuando lo que cambia es la vista.
 
-**Backlog.md.** No tiene ninguna bandera general para esto. Localiza por raíz de git más la carpeta
+**Backlog.md.** No tiene ningún flag general para esto. Localiza por raíz de git más la carpeta
 `backlog/`, y su directorio se fija al inicializar y a partir de ahí es de solo lectura. Sus tropiezos
 están documentados y encajan con problemas que este documento ya cataloga:
 `https://github.com/MrLesk/Backlog.md/issues/466` pide precisamente un argumento o una variable de
@@ -185,12 +185,12 @@ resolución, y `https://github.com/gastownhall/beads/issues/6353` es su sincroni
 repositorio equivocado.
 
 **El contraejemplo que mide lo que cuesta la cadena polimórfica es `restic`**, que sí tiene una sola
-bandera, `-r`, capaz de admitir una ruta local, un servidor y varios servicios de almacenamiento. Lo
+flag, `-r`, capaz de admitir una ruta local, un servidor y varios servicios de almacenamiento. Lo
 paga por escrito y en su propio código: si la cadena no es una ruta existente y contiene dos puntos hay
 que decidir si eso es un esquema o parte de un nombre, y ese caso está marcado como ambiguo; hace falta
 además un caso especial para las unidades de Windows, donde `C:` no es ningún esquema; y su mensaje de
 error tiene que enseñar al usuario un prefijo `local:` que nadie escribiría por su cuenta, solo para
-poder desambiguar lo que la gramática única no distingue. Una sola bandera que lo admite todo no ahorra
+poder desambiguar lo que la gramática única no distingue. Una sola flag que lo admite todo no ahorra
 las reglas, las esconde dentro y las paga en mensajes de error.
 
 **Dos precedentes de desempate.** `kubectl` separa `--kubeconfig`, que es una ruta, de `--context`, que

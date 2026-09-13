@@ -18,9 +18,9 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   dice.
 - **No hay servidor de integración ni protocolo de herramientas.** La interfaz de la versión 1.0 es
   esta línea de comandos y su salida JSON.
-- **No hay ninguna bandera ni variable de entorno que nombre un tablero.** El tablero se elige por
+- **No hay ningún flag ni variable de entorno que nombre un tablero.** El tablero se elige por
   las dos vías de la sección ["Cómo se elige el tablero"](resolucion-del-tablero.md), y `-C` ya alcanza tanto el directorio de un tablero como el de un
-  proyecto que apunte a uno, así que una bandera para nombrarlo no añadiría nada (sección ["El presupuesto del mensaje de arranque"](../decisiones/vocabulario-y-mensaje-de-arranque.md#el-presupuesto-del-mensaje-de-arranque)).
+  proyecto que apunte a uno, así que un flag para nombrarlo no añadiría nada (sección ["El presupuesto del mensaje de arranque"](../decisiones/vocabulario-y-mensaje-de-arranque.md#el-presupuesto-del-mensaje-de-arranque)).
 - **No hay una interfaz multiproyecto.** Cada invocación resuelve un único tablero (sección ["Cómo se elige el tablero"](resolucion-del-tablero.md)), y no
   hay ningún comando que lea o agregue varios a la vez, aunque la máquina entera tenga más de uno
   (sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina)): quien necesite verlos juntos los recorre uno por uno desde fuera.

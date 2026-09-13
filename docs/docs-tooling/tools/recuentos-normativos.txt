@@ -10,7 +10,7 @@ cuatro requisitos
 cuatro decisiones
 tres mensajes
 tres estados
-tres banderas
+tres flags
 nueve secciones
 dos secciones
 ocho columnas

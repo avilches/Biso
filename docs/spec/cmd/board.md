@@ -39,7 +39,7 @@ control de la propia interfaz y que no se combinan entre sí:
   según su propio `type`, tantos grupos como valores en uso entre las tareas visibles.
 
 Sin agrupar, que es lo que se ve por defecto, las tareas quedan sueltas dentro de cada columna de
-estado. La agrupación es solo de esta interfaz: no existe ninguna bandera equivalente en `biso ls` ni
+estado. La agrupación es solo de esta interfaz: no existe ningún flag equivalente en `biso ls` ni
 en `biso prime`, aunque las dos ya permiten filtrar por `-p/--parent` y por `--type`
 (secciones [`biso ls`](ls.md) y [`biso set`](set.md)).
 
@@ -75,7 +75,7 @@ abierto un navegador, y es `false` con `--no-open`.
 | Desenlace | Código |
 |---|---:|
 | El servidor se ha parado limpiamente | 0 |
-| Puerto fuera de rango, o banderas incompatibles | 2 |
+| Puerto fuera de rango, o flags incompatibles | 2 |
 | No hay terminal, o el puerto está ocupado | 8 |
 | No hay tablero | 20 |
 
