@@ -189,7 +189,7 @@ existiera antes queda afectada.
 | `--at` con una ruta absoluta | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta absoluta, código 0 |
 | `--at` con una ruta relativa que sale del proyecto, como `../tableros/my-project` | No es un error, y el puntero la guarda tal cual: resuelve mientras la posición relativa entre el puntero y el tablero se mantenga, y el marcador confirma que el directorio al que llega es el tablero que el `id` nombra |
 | `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección ["`biso config`"](config.md) aplica a `task_prefix` |
-| Falta alguno de los tres flags de papel, habiendo `--statuses` | Error 2, con las tres nombradas y cuáles faltan |
+| Falta alguno de los tres flags de papel, habiendo `--statuses` | Error 2, con los tres nombrados y cuáles faltan |
 | Un flag de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
 | Un flag de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
 | Varios flags de papel nombran el mismo estado | Error 2, con los papeles y el estado que comparten |

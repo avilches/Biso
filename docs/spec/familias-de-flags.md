@@ -244,9 +244,9 @@ selector de `--set-comment-date`, en cambio, puede ser un texto libre sin alfabe
 necesita su propia regla de corte, y esa regla es "por el último" precisamente porque aquí sí puede
 haber más de un `=` en la cadena.
 
-**El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguna de las
+**El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguno de los
 dos, no durante el orden de escritura.** Caen en pasos distintos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)
-(`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada una resolviera
+(`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada uno resolviera
 su selector en su propio paso, `--rm-comment` ya habría borrado el comentario para cuando
 `--set-comment-date` intentara corregirle la fecha, y el resultado sería un error 4 de "no existe" en
 vez de un conflicto. Para que la regla no dependa de ese orden, cada selector se resuelve contra la

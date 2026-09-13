@@ -158,7 +158,7 @@ almacén y `--work-tree` la copia de trabajo, y los dos últimos tienen su varia
 propia documentación avisa de que dar `--git-dir` apaga el descubrimiento hacia arriba. No hay ninguna
 forma de nombrar un repositorio local por un nombre: solo rutas.
 
-**gh.** Una sola flag, `-R, --repo`, con una sola gramática, `[HOST/]OWNER/REPO`. No admite ni una
+**gh.** Un solo flag, `-R, --repo`, con una sola gramática, `[HOST/]OWNER/REPO`. No admite ni una
 URL, ni el nombre de un remoto, ni una ruta local. No tiene equivalente de `-C`, y lo piden desde 2020
 en `https://github.com/cli/cli/issues/2228`, que sigue sin resolver. Qué gana entre el flag y la
 variable `GH_REPO` no está dicho en su documentación, así que aquí no se afirma.
@@ -190,7 +190,7 @@ paga por escrito y en su propio código: si la cadena no es una ruta existente y
 que decidir si eso es un esquema o parte de un nombre, y ese caso está marcado como ambiguo; hace falta
 además un caso especial para las unidades de Windows, donde `C:` no es ningún esquema; y su mensaje de
 error tiene que enseñar al usuario un prefijo `local:` que nadie escribiría por su cuenta, solo para
-poder desambiguar lo que la gramática única no distingue. Una sola flag que lo admite todo no ahorra
+poder desambiguar lo que la gramática única no distingue. Un solo flag que lo admite todo no ahorra
 las reglas, las esconde dentro y las paga en mensajes de error.
 
 **Dos precedentes de desempate.** `kubectl` separa `--kubeconfig`, que es una ruta, de `--context`, que

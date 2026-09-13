@@ -16,8 +16,8 @@ comando puede redefinir ninguno de ellos ni cambiar su significado.
 
 Reglas de aplicación, que hay que implementar tal cual:
 
-- **Ninguna de las dos se ignora nunca en silencio**, y las dos son error de uso con código 2 allí
-  donde no tienen nada que hacer. Lo que cambia es dónde es eso, porque cada una está definida sobre
+- **Ninguno de los dos se ignora nunca en silencio**, y los dos son error de uso con código 2 allí
+  donde no tienen nada que hacer. Lo que cambia es dónde es eso, porque cada uno está definido sobre
   una cosa distinta: `--print` sobre las tareas que una escritura afecta, y `--dry-run` sobre la
   validación que precede a una escritura.
 - **`--dry-run` es error 2 en los comandos de lectura.** En `prime`, `where`, `ls`, `get`, `export`,

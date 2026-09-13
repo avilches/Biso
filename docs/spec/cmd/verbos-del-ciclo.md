@@ -227,7 +227,7 @@ itself looks like an id.
 To note the same thing on several tasks, use `biso set A B --append-note "..."`.
 
 Exit codes:
-  0  appended       3  the task could not be read    7  --dry-run did not pass
+  0  appended       3  the task could not be read     7  --dry-run did not pass
   2  bad usage      4  not found                      8  could not be written
                     5  ambiguous                     20  no board here
 
@@ -305,7 +305,7 @@ can be removed with --rm-comment, and only its date corrected with
 --set-comment-date, both in `biso set --help`.
 
 Exit codes:
-  0  appended       3  the task could not be read    7  --dry-run did not pass
+  0  appended       3  the task could not be read     7  --dry-run did not pass
   2  bad usage      4  not found                      8  could not be written
                     5  ambiguous                     20  no board here
 

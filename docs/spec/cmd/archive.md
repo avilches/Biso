@@ -75,7 +75,7 @@ Every field flag of `biso set --help` works here too.
 There is no delete command. Archiving is the way.
 
 Exit codes:
-  0  archived       3  the task could not be read    7  --dry-run did not pass
+  0  archived       3  the task could not be read     7  --dry-run did not pass
   2  bad usage      4  not found                      8  could not be written
                     5  ambiguous                     20  no board here
 

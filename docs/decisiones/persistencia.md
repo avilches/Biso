@@ -292,7 +292,7 @@ Cómo eligen su almacén las demás herramientas del espacio, y las de fuera de 
 ["Cómo se apunta a un almacén distinto del que la herramienta encuentra sola"](../estado-del-arte/herramientas.md#cómo-se-apunta-a-un-almacén-distinto-del-que-la-herramienta-encuentra-sola),
 que cierra la parte 1 de "Estado del arte". El resumen es que ninguna acepta el nombre legible de un
 almacén para elegirlo, que todas apuntan con una ruta, y que las dos que sí admiten un nombre lo hacen
-en un flag aparte de la de la ruta y contra un registro previo que lo declara.
+en un flag aparte del de la ruta y contra un registro previo que lo declara.
 
 **Y la consecuencia que esto deja, que conviene ver antes de tocar nada.** Con las dos vías retiradas
 quedan dos, y la primera, la que reconoce un directorio como tablero porque contiene `board.db`, deja de

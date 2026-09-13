@@ -19,7 +19,7 @@ juntos.
 
 **Principio 3, que ningún flag depende de una regla que haya que conocer de antemano.** Se
 midieron seis casos de agentes usando la variante destructiva de forma repetida creyendo que
-añadían: el flag de plan aplicada hasta cinco veces sobre la misma tarea, la de referencias tres
+añadían: el flag de plan aplicado hasta cinco veces sobre la misma tarea, el de referencias tres
 veces sobre otra, y un caso en el que un agente ejecutó sobre una misma tarea `--ref`, `--ref`,
 `--ref`, `--add-ref`, `--remove-ref` y `--clear-refs`, que es alguien probando a ver cuál de las seis
 hace lo que quiere. Ninguna de esas llamadas dio error, y el daño es silencioso: cada una borró lo

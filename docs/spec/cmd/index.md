@@ -33,7 +33,7 @@ lista a sí mismo en su propio mensaje.
 parámetros de cada comando.** Un comando solo las menciona cuando le impone una restricción
 adicional, y estas son todas las restricciones que hay en todo el documento: `prime --full` no se
 combina con `--json`, `config` solo acepta `--json` en su subcomando `list`, `export` rechaza
-`--json` con código 2, y `--print` y `--dry-run` no valen donde no tienen nada que hacer, cada una
+`--json` con código 2, y `--print` y `--dry-run` no valen donde no tienen nada que hacer, cada uno
 en su propia lista, según la regla de la sección ["Flags globales"](flags-globales.md#flags-globales).
 
 El caso de `export` merece una línea, porque es el único comando cuya salida ya es JSON sin pedirlo:
