@@ -163,6 +163,7 @@ nav:
     - El contrato de estabilidad: spec/estabilidad.md
     - Lo que se deja fuera a proposito: spec/fuera-de-alcance.md
     - Por donde empezar a implementar: spec/por-donde-empezar.md
+    - Que hay implementado y que no: spec/estado-de-implementacion.md
   - Decisiones de diseno:
     - decisiones/index.md
     - Los principios, y como se mantiene la especificacion: decisiones/principios-y-mantenimiento.md
