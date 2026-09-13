@@ -6,7 +6,7 @@ sistema, en UTC y con precisión de segundo.
 **Se pueden fijar solo al importar**, es decir, en `biso new --from`. En cualquier otro sitio son un
 hecho observado y no un dato que se negocie, **con una única excepción**: el instante de un
 comentario ya escrito se puede corregir con `--set-comment-date`
-(["Comentarios"](../familias-de-banderas.md#comentarios), ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario)). Es una corrección de un dato ya
+(["Comentarios"](../familias-de-flags.md#comentarios), ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario)). Es una corrección de un dato ya
 observado, no una negociación nueva, y por eso no abre la puerta a hacer lo mismo con `createdAt`,
 `updatedAt` ni con `question.askedAt`.
 

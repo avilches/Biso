@@ -6,7 +6,7 @@ Cada elemento de `comments` es del tipo `Comment`, con clave, autor, instante y 
 |---|---|---|
 | `key` | `int` positivo | el programa al crear el comentario |
 | `author` | `string` libre | quien llama, y por defecto la identidad `me` |
-| `createdAt` | `date` (instante UTC) | el programa, salvo al importar o con `--set-comment-date` (["Comentarios"](../familias-de-banderas.md#comentarios)) |
+| `createdAt` | `date` (instante UTC) | el programa, salvo al importar o con `--set-comment-date` (["Comentarios"](../familias-de-flags.md#comentarios)) |
 | `body` | `text` | quien llama |
 
 **La clave se asigna al crear el comentario, con un contador propio de esa lista dentro de esa
@@ -25,7 +25,7 @@ pregunta que responde.
 
 **El cuerpo y el autor de un comentario no se editan nunca, por ninguna vía.** Un comentario es el
 registro de una conversación, y lo que se dijo no se reescribe. Lo que sí se puede corregir, con las
-banderas dedicadas de ["Comentarios"](../familias-de-banderas.md#comentarios) y nunca con una escritura general sobre la
+banderas dedicadas de ["Comentarios"](../familias-de-flags.md#comentarios) y nunca con una escritura general sobre la
 tarea, es borrar el comentario entero (`--rm-comment`) o corregir únicamente su fecha
 (`--set-comment-date`). La razón, con el caso que la motiva, está en
 ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).

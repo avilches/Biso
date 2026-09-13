@@ -70,7 +70,7 @@ $ biso get TASK-33
 TASK-33  Add a retry counter to the upload log
 status     To Do                type       task
 priority   medium               urgency    4.3
-assignees  @claude              reporter   @avilches
+assignees  @claude              author     @avilches
 labels     -                    parent     -
 due        -                    ordinal    -
 created    2026-08-20 09:40     updated    2026-09-03 16:15

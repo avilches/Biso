@@ -49,7 +49,7 @@ TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: `--add-dod` adds. It's the same verb you already know from `--add-ac`: it behaves the same way for any list field.*
 
@@ -63,7 +63,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 You check how they turned out, with their keys.
 
@@ -90,7 +90,7 @@ TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [Selectores de criterios](../spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [Selectores de criterios](../spec/familias-de-flags.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 You check the list again to make sure what's left hasn't changed number.
 
@@ -118,7 +118,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [Sustituir un campo que no tiene bandera de \"sustituir entera\"](../spec/familias-de-banderas.md#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [Sustituir un campo que no tiene bandera de \"sustituir entera\"](../spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 *Note: There's no flag that replaces the whole list of definition-of-done items in one shot, so this clears it and adds the two new items in the same call. Element `#2` disappears along with the rest of the old list, and the two that come in are brand new elements. No warning shows up here, unlike a `--replace-*` on a comma-separated list field that overwrites non-empty content: clearing was explicit, you typed it yourself, so nothing gets overwritten silently and there's nothing to warn about.*
 
@@ -135,7 +135,7 @@ TASK-19  Retry the upload on 5xx
 
 Exit code: `0`
 
-*(derived output, see [Los criterios y sus claves estables](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso get`](../spec/cmd/get.md); not literal spec text)*
+*(derived output, see [Los criterios y sus claves estables](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [`biso get`](../spec/cmd/get.md); not literal spec text)*
 
 *Note: The keys are `#3` and `#4`, not `#1` and `#2`. This list's counter, inside this task, was already at 2 before anything got cleared, and clearing doesn't reset it: "the keys of earlier elements are never reused" holds even when the clear-and-add comes after an `--rm-`, not just right after creating the task.*
 
@@ -149,7 +149,7 @@ TASK-19  In Progress  ac 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 *Note: The list ends up empty, and that's why the `dod` chunk disappears from the status line: it only shows up "whenever the task has a definition of done," and an empty list doesn't count as having one. `ac` keeps showing because those two criteria haven't been touched.*
 
@@ -163,6 +163,6 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: `--add-dod` again. The keys of these two elements are `#5` and `#6`: the list's counter hasn't been reset either by the earlier `--rm-dod` or by the later `--clear-dods`, it "only ever grows," no matter what happens to the list's content.*

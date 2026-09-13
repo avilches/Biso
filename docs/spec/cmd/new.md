@@ -14,13 +14,13 @@ biso new [<title>] [--start] [--from <file|->] [cualquier bandera de campo de la
 | `--start` | | no | booleano | falso | no | no | `-s`, `--from` |
 | `--from <file|->` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
 
-Todas las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md) valen aquí. En una tarea nueva no hay nada que sustituir
+Todas las banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md) valen aquí. En una tarea nueva no hay nada que sustituir
 ni que quitar: `--replace-*` se acepta y deja la lista igual que `--add-*`, porque no hay nada previo
 que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que actuar. `--clear-*` no
 hace nada y avisa. Las que se usan de verdad al crear son
 `-d/--append-desc`, `--add-ac`, `--add-dod`, `--type`, `--priority`, `-l/--add-labels`,
 `-a/--add-assignees`, `--add-refs`, `--add-docs`, `--add-deps`, `-p/--parent`,
-`--due`, `--ordinal`, `--reporter`, `--ext`, `--append-plan`, `--append-note`,
+`--due`, `--ordinal`, `--author`, `--ext`, `--append-plan`, `--append-note`,
 `--append-summary` y `--comment`.
 
 - **`--start`** crea la tarea directamente en el estado activo, asignada a `me` y con el arrendamiento

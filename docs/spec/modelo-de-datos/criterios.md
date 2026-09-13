@@ -17,7 +17,7 @@ la lista.
 
 Consecuencias que hay que respetar en toda la implementación:
 
-- Los selectores de la sección ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) trabajan sobre la clave, **nunca** sobre la posición.
+- Los selectores de la sección ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) trabajan sobre la clave, **nunca** sobre la posición.
 - `acTotal` y `dodTotal`, allá donde aparezcan, son **el número de elementos presentes**, nunca la
   clave más alta. Una tarea con los criterios `#1` y `#3` tiene `acTotal` igual a 2.
 - Los elementos se muestran y se exportan en el orden en que están en la lista, que es el orden en

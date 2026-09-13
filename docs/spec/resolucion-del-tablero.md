@@ -9,7 +9,7 @@ Un proyecto tiene un tablero, y el programa lo encuentra por este orden. Gana el
    regla que cierra esta lista.
 
 **Las dos parten del directorio de trabajo**, que es el directorio actual salvo que la bandera global
-`-C` o la variable `BISO_CWD` digan otro (sección ["Banderas globales"](invocacion.md#banderas-globales)). Por eso `-C` es lo único que hace falta para
+`-C` o la variable `BISO_CWD` digan otro (sección ["Banderas globales"](cmd/flags-globales.md#banderas-globales)). Por eso `-C` es lo único que hace falta para
 trabajar contra otro tablero sin moverse: apuntando al directorio de un tablero se llega por la
 primera vía, y apuntando a un proyecto cualquiera se llega por la segunda, al tablero que ese
 proyecto tenga.
@@ -145,7 +145,7 @@ que hace con la base de datos ilegible de la sección ["Qué pasa con un dato qu
 **El `<slug>` del nombre de la carpeta se deriva de `project_name`, nunca es el nombre literal**:
 `project_name` es texto libre, y copiarlo tal cual metería espacios y mayúsculas en una ruta que
 alguien va a teclear. La derivación reutiliza el mismo paso de `normalizar(x)` (sección ["El algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia)) que ya usa
-la derivación de `task_prefix` (sección ["Identificadores"](modelo-de-datos/identificadores.md#identificadores)): pasar el nombre a minúsculas según Unicode y quitarle
+la derivación de `task_prefix` (sección ["Identificador de tarea"](modelo-de-datos/identificadores.md#identificador-de-tarea)): pasar el nombre a minúsculas según Unicode y quitarle
 los diacríticos. Después, cada tirada de caracteres que no sean una letra ASCII ni un dígito ASCII se
 colapsa en un solo guion, recortando los que queden en los extremos. Así, `Kex` da `kex`, `Mi Proyecto`
 da `mi-proyecto`, y `Peña 2026` da `pena-2026`. Ningún carácter de `project_name`, incluido un separador
@@ -165,7 +165,7 @@ reescribe el puntero adoptando el `id` que ya lleva (["`biso init`"](cmd/init.md
 
 **El slug y el `task_prefix` arrancan del mismo `project_name` pero fallan por motivos distintos, y
 hay que comprobar los dos.** `"2026"` da un slug válido, `2026`, pero no da ningún prefijo, porque no
-le queda ninguna letra ASCII (sección ["Identificadores"](modelo-de-datos/identificadores.md#identificadores)); `"///"` da un slug vacío y también un prefijo vacío. Que
+le queda ninguna letra ASCII (sección ["Identificador de tarea"](modelo-de-datos/identificadores.md#identificador-de-tarea)); `"///"` da un slug vacío y también un prefijo vacío. Que
 una de las dos derivaciones salga bien no dice nada de la otra, así que ninguna de las dos
 comprobaciones sustituye a la otra.
 

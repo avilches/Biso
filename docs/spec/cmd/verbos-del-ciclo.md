@@ -1,6 +1,6 @@
 # Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`
 
-Los seis aceptan **todas** las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), igual que `set`. No son un
+Los seis aceptan **todas** las banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md), igual que `set`. No son un
 subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que el gesto frecuente
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
@@ -45,7 +45,7 @@ biso start <ref>... [--append-plan <text>] [-a <@who>]... [-s <v>] [--reopen]
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-`--append-plan` y `-a/--add-assignees` son las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), con su
+`--append-plan` y `-a/--add-assignees` son las banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md), con su
 significado de siempre: **las dos añaden**. `--append-plan` añade al plan existente; sustituirlo entero
 se hace vaciando y añadiendo en la misma llamada (`--clear-plan --append-plan ...`), porque un bloque
 de prosa no tiene bandera de sustituir entera. `-a` añade una persona y `--replace-assignees` reemplaza
@@ -167,7 +167,7 @@ hint: to note the same thing on several tasks: biso set MYP-1 MYP-2 --append-not
       to write that text literally:            biso note MYP-1 --append-note "MYP-2"
 ```
 
-**`--append-note`, la bandera de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), nunca pasa por esa comprobación**, porque no
+**`--append-note`, la bandera de campo de la sección ["Las familias de banderas"](../familias-de-flags.md), nunca pasa por esa comprobación**, porque no
 es un posicional: es la vía para escribir una nota que de verdad diga `MYP-2`. La misma regla vale
 para `biso comment`, con `--comment`.
 
@@ -175,7 +175,7 @@ para `biso comment`, con `--comment`.
 
 Añade uno o más párrafos a las notas de implementación. **Nunca reemplaza.** Para reemplazar está
 vaciar y añadir en la misma llamada, `biso set <ref> --clear-notes --append-note "..."`, que este
-comando no acepta por su verbo propio pero sí como banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md), igual
+comando no acepta por su verbo propio pero sí como banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md), igual
 que las demás.
 
 | Caso | Qué pasa |
@@ -272,7 +272,7 @@ MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 
 Y por stderr, `note: comment #2 by @trello:juan`. Ese `#2` es la `key` que acaba de recibir el
 comentario (["Los comentarios"](../modelo-de-datos/comentarios.md#los-comentarios)), la misma que después acepta `--rm-comment` y `--set-comment-date`
-(["Comentarios"](../familias-de-banderas.md#comentarios)).
+(["Comentarios"](../familias-de-flags.md#comentarios)).
 
 ### Códigos de salida
 

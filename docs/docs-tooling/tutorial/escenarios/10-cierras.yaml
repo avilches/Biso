@@ -27,7 +27,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
     remark: |
@@ -42,7 +42,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
+      - spec/familias-de-flags.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
   - narration: |
       The three you tested together with the same test, all at once, with a range.
@@ -52,7 +52,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
+      - spec/familias-de-flags.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
   - narration: |
       And two that aren't consecutive, with a comma-separated list.
@@ -62,7 +62,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
+      - spec/familias-de-flags.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
   - narration: |
       Almost right away you realize you marked #2 (the one about the log counter) too soon: the
@@ -73,7 +73,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
+      - spec/familias-de-flags.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
     remark: |
       `--uncheck-ac` takes the same selector as `--check-ac`, with the same effect inverted, here
@@ -87,7 +87,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
+      - spec/familias-de-flags.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
     remark: |
       "README" doesn't match the key grammar (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), so it's treated

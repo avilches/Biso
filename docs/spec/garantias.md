@@ -24,7 +24,7 @@ ordenan solas.
 la llamada.** Como `--comment` va en el último paso, un comentario que la propia llamada añade nunca
 es un objetivo válido de las otras dos: su clave se resuelve contra la lista de antes de que
 `--rm-comment` actúe en el paso 3, así que referenciarla en la misma llamada es la misma clase de
-fallo que una clave que no existe todavía (["Comentarios"](familias-de-banderas.md#comentarios)).
+fallo que una clave que no existe todavía (["Comentarios"](familias-de-flags.md#comentarios)).
 
 ## Concurrencia, atomicidad y garantías observables
 

@@ -29,12 +29,12 @@ lista a sí mismo en su propio mensaje.
 | `help` | La ayuda de primer nivel y la de cada comando | no |
 | `snapshot` | Escribe la instantánea del tablero en su propio directorio y la guarda en el control de versiones | no |
 
-**Las banderas globales de la sección ["Banderas globales"](../invocacion.md#banderas-globales) valen en todos ellos y no se repiten en las tablas de
+**Las banderas globales de la sección ["Banderas globales"](flags-globales.md#banderas-globales) valen en todos ellos y no se repiten en las tablas de
 parámetros de cada comando.** Un comando solo las menciona cuando le impone una restricción
 adicional, y estas son todas las restricciones que hay en todo el documento: `prime --full` no se
 combina con `--json`, `config` solo acepta `--json` en su subcomando `list`, `export` rechaza
 `--json` con código 2, y `--print` y `--dry-run` no valen donde no tienen nada que hacer, cada una
-en su propia lista, según la regla de la sección ["Banderas globales"](../invocacion.md#banderas-globales).
+en su propia lista, según la regla de la sección ["Banderas globales"](flags-globales.md#banderas-globales).
 
 El caso de `export` merece una línea, porque es el único comando cuya salida ya es JSON sin pedirlo:
 son objetos JSON, uno por línea, y `--json` pide el sobre único de la sección ["El contrato JSON"](../contrato-json.md), que es otra forma
@@ -45,7 +45,7 @@ error: --json does not apply to export
        its output is already one JSON object per line
 ```
 
-**Todos los comandos que escriben aceptan todas las banderas de campo de la sección ["Las familias de banderas"](../familias-de-banderas.md)**, con el mismo
+**Todos los comandos que escriben aceptan todas las banderas de campo de la sección ["Las familias de banderas"](../familias-de-flags.md)**, con el mismo
 nombre y el mismo significado. Eso vale para `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`,
 `answer` y `archive`. Lo que distingue a unos de otros no es qué campos aceptan, sino qué hacen por
 defecto. Las tablas de parámetros de cada comando enumeran solo lo que es propio de ese comando.

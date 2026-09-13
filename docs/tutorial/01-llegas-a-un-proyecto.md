@@ -54,7 +54,7 @@ FIELD FLAGS  (same names, same meaning, in every command above that writes)
   -t --title  -s --status  --type   --priority  -a --assignee  -l --label
   -d --desc   --ac         --dod    --plan      --note         --summary
   --dep       --ref        --doc    --file      -p --parent    --due
-  --ordinal   --ext K=V    --reporter            --comment
+  --ordinal   --ext K=V    --author              --comment
   --check     --uncheck             --check-dod --uncheck-dod
 
 RULES  (none of these are guessable; they are the whole learning curve)

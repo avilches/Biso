@@ -10,7 +10,7 @@ ampliarlo), `date` (una fecha o un instante; el formato exacto se dice en la fil
 `float`, `bool`, `list<string>` (varios valores simples separados por coma al escribir,
 direccionables por su propio valor, nunca por posición), y `map<string,string>` (pares clave-valor
 con las claves declaradas de antemano, direccionables por su clave). Los campos con estructura
-propia usan tres tipos con nombre, cada uno definido en su propia página: `list<Criterion>`,
+propia usan tipos con nombre, cada uno definido en su propia página: `list<Criterion>`,
 `list<Comment>` y `Question` (esta última con un único valor, nunca una lista).
 
 **¿Tiene fecha y autor propios, y se puede señalar uno a uno?** Solo se aplica a los tipos con
@@ -19,11 +19,7 @@ estables"](criterios.md) para `Criterion`, ["Los comentarios"](comentarios.md) p
 ["La pregunta abierta"](pregunta-abierta.md) para `Question`. Ningún otro tipo tiene fecha ni autor
 propios.
 
-Las tablas siguientes agrupan los campos según quién decide su valor: los que fija el programa
-solo, los que fija quien llama, y los que se derivan y nunca se guardan. Un campo con reglas mixtas
-aparece en la tabla del que lo fija normalmente, con una nota que explica la mezcla.
-
-## Los campos que fija el programa
+## Campos automáticos
 
 | Campo | Tipo | Obligatorio | Mutable |
 |---|---|---|---|
@@ -37,7 +33,7 @@ aparece en la tabla del que lo fija normalmente, con una nota que explica la mez
 Precisiones:
 
 - **`archived` solo lo cambia `biso archive` y `biso archive --unarchive`.** No hay una bandera de
-  campo de la sección ["Las familias de banderas"](../familias-de-banderas.md) para él: archivar es un gesto de flujo de trabajo con nombre propio,
+  campo de la sección ["Las familias de banderas"](../familias-de-flags.md) para él: archivar es un gesto de flujo de trabajo con nombre propio,
   según el principio 5.
 - **`leaseExpiresAt` lo fija el programa a `ahora + lease_minutes`** (clave de [configuración](../cmd/config.md)); ver [La renovación](../lease.md#la-renovación) en `lease.md` para cuándo.
 - **`leaseHolder` solo lo fija el programa, con [`biso start`](../cmd/verbos-del-ciclo.md#biso-start) y con [`biso new --start`](../cmd/new.md)**; ver [La renovación](../lease.md#la-renovación) en `lease.md`.
@@ -46,7 +42,7 @@ Precisiones:
   [`lease.md`](../lease.md), porque dominan la mutabilidad de una tarea mucho más que cualquier otro
   campo.
 
-## Los campos que fija quien llama
+## Campos fijados por el usuario
 
 | Campo | Tipo | Obligatorio | Mutable |
 |---|---|---|---|
@@ -56,7 +52,7 @@ Precisiones:
 | `priority` | `enum(...)`, configurable (ver `priorities` en [`biso config`](../cmd/config.md)) | no | sí |
 | `parent` | `string` (referencia a otra tarea) | no | sí |
 | `assignees` | `list<string>` (textos de persona) | no | sí |
-| `reporter` | `string` (texto de persona); ver ["Quién reporta una tarea"](quien-reporta.md) | no | sí |
+| `author` | `string` (texto de persona); ver ["El autor de una tarea"](autor.md) | no | sí |
 | `labels` | `list<string>` | no | sí |
 | `dependencies` | `list<string>` (referencias a tareas) | no | sí |
 | `references` | `list<string>` | no | sí |
@@ -76,12 +72,12 @@ Precisiones:
 
 Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 
-- **`reporter` se fija una sola vez, al crear la tarea, y con reglas propias** que dependen de si se
-  pasa `--reporter` y de si hay identidad configurada; están completas en ["Quién reporta una
-  tarea"](quien-reporta.md).
+- **`author` se fija una sola vez, al crear la tarea, y con reglas propias** que dependen de si se
+  pasa `--author` y de si hay identidad configurada; están completas en ["El autor de una
+  tarea"](autor.md).
 - **`comments` no se edita nunca por una escritura general sobre la tarea.** El cuerpo y el autor de
   un comentario no se editan jamás, por ninguna vía; lo único que admiten las banderas dedicadas de
-  ["Comentarios"](../familias-de-banderas.md#comentarios) es borrar el comentario entero
+  ["Comentarios"](../familias-de-flags.md#comentarios) es borrar el comentario entero
   (`--rm-comment`) o corregir únicamente su fecha (`--set-comment-date`). La razón, con el caso que
   la motiva, está en
   ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).

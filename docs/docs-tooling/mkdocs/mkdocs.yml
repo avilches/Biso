@@ -122,28 +122,29 @@ nav:
     - Vocabulario de esta especificacion: spec/vocabulario.md
     - Los principios: spec/principios.md
     - Codigos de salida: spec/codigos-de-salida.md
-    - Banderas globales, entorno y configuracion de maquina: spec/invocacion.md
+    - Entorno y configuracion de maquina: spec/invocacion.md
     - Como se elige el tablero: spec/resolucion-del-tablero.md
     - Terminal, flujos de salida y codificacion: spec/salida-y-terminal.md
     - Como se pasa un valor: spec/valores-de-entrada.md
     - Orden de escritura, concurrencia y datos danados: spec/garantias.md
     - El modelo de datos de una tarea:
       - spec/modelo-de-datos/index.md
-      - Los criterios y sus claves estables: spec/modelo-de-datos/criterios.md
-      - Los comentarios: spec/modelo-de-datos/comentarios.md
+      - Identificador de tarea: spec/modelo-de-datos/identificadores.md
       - Las fechas: spec/modelo-de-datos/fechas.md
       - La urgencia: spec/modelo-de-datos/urgencia.md
-      - Los campos externos: spec/modelo-de-datos/campos-externos.md
-      - Quien reporta una tarea: spec/modelo-de-datos/quien-reporta.md
+      - El autor de una tarea: spec/modelo-de-datos/autor.md
+      - Los criterios y sus claves estables: spec/modelo-de-datos/criterios.md
       - La pregunta abierta: spec/modelo-de-datos/pregunta-abierta.md
-      - Identificadores: spec/modelo-de-datos/identificadores.md
+      - Los comentarios: spec/modelo-de-datos/comentarios.md
+      - Los campos externos: spec/modelo-de-datos/campos-externos.md
     - El arrendamiento de una tarea: spec/lease.md
     - Los presupuestos de arranque y de tamano: spec/presupuestos.md
     - Los vocabularios del tablero y la regla de validacion: spec/vocabularios.md
     - Como se resuelve una referencia a una tarea: spec/referencias.md
-    - Las familias de banderas: spec/familias-de-banderas.md
+    - Las familias de banderas: spec/familias-de-flags.md
     - Comandos:
       - Los comandos: spec/cmd/index.md
+      - Flags globales: spec/cmd/flags-globales.md
       - biso prime, el arranque de una sesion: spec/cmd/prime.md
       - biso init: spec/cmd/init.md
       - biso where: spec/cmd/where.md
@@ -170,7 +171,7 @@ nav:
     - La persistencia: decisiones/persistencia.md
     - El lenguaje de implementacion y el rendimiento: decisiones/lenguaje-y-rendimiento.md
     - El vocabulario y el mensaje de arranque: decisiones/vocabulario-y-mensaje-de-arranque.md
-    - Comandos y banderas: decisiones/comandos-y-banderas.md
+    - Comandos y banderas: decisiones/comandos-y-flags.md
     - Decisiones de detalle: decisiones/detalles.md
   - Estado del arte:
     - estado-del-arte/index.md

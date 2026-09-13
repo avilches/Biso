@@ -14,20 +14,20 @@ biso set <ref>... [cualquier bandera de campo de las familias de banderas]
 
 ## Parámetros propios
 
-**Todas** las banderas de las secciones ["Campos de lista que admiten coma"](../familias-de-banderas.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-banderas.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-banderas.md#campos-de-prosa), ["Campos escalares"](../familias-de-banderas.md#campos-escalares) y ["Campos externos"](../familias-de-banderas.md#campos-externos) valen aquí, con exactamente el mismo
+**Todas** las banderas de las secciones ["Campos de lista que admiten coma"](../familias-de-flags.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-flags.md#campos-de-prosa), ["Campos escalares"](../familias-de-flags.md#campos-escalares) y ["Campos externos"](../familias-de-flags.md#campos-externos) valen aquí, con exactamente el mismo
 significado que en cualquier otro comando. Lo propio de `set`:
 
 | Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
 |---|---|---|---|---|---|---|---|
 | `<ref>` | | sí, una o más | referencia | | sí | no | |
-| `--check-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--uncheck-ac` |
-| `--uncheck-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check-ac` |
-| `--check-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--uncheck-dod` |
-| `--uncheck-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-banderas.md#selectores-de-criterios) | solape con `--check-dod` |
+| `--check-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--uncheck-ac` |
+| `--uncheck-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--check-ac` |
+| `--check-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--uncheck-dod` |
+| `--uncheck-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--check-dod` |
 | `--comment <text>` | | no | texto largo | | sí | no | |
 | `--comment-author <@who>` | | no | texto libre | `me` | no | no | requiere `--comment` |
-| `--rm-comment <sel>` | | no | selector ["Comentarios"](../familias-de-banderas.md#comentarios) | | sí | ver ["Comentarios"](../familias-de-banderas.md#comentarios) | solape con `--set-comment-date` sobre la misma clave |
-| `--set-comment-date <sel>=<instante>` | | no | selector ["Comentarios"](../familias-de-banderas.md#comentarios) + instante UTC | | sí | ver ["Comentarios"](../familias-de-banderas.md#comentarios) | solape con `--rm-comment` sobre la misma clave |
+| `--rm-comment <sel>` | | no | selector ["Comentarios"](../familias-de-flags.md#comentarios) | | sí | ver ["Comentarios"](../familias-de-flags.md#comentarios) | solape con `--set-comment-date` sobre la misma clave |
+| `--set-comment-date <sel>=<instante>` | | no | selector ["Comentarios"](../familias-de-flags.md#comentarios) + instante UTC | | sí | ver ["Comentarios"](../familias-de-flags.md#comentarios) | solape con `--rm-comment` sobre la misma clave |
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
@@ -75,7 +75,7 @@ con su propio ejemplo, pero las reglas de su forma se dicen aquí y no se repite
    definición de hecho, y las dos piezas pueden ir juntas en la misma línea si la llamada crea de las
    dos clases a la vez. **Si la llamada no crea ningún criterio, esta pieza no aparece**, y la línea es
    exactamente la de antes. La razón de que vaya aquí y no en `biso new` está en
-   ["Campos de lista sin coma (criterios)"](../familias-de-banderas.md#campos-de-lista-sin-coma-criterios):
+   ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios):
    ```
    biso set MYP-11 --add-ac "There is a test" --add-ac "Docs updated"
    MYP-11  In Progress  ac 1/4  dod 0/1  urgency 19.0  added ac #4, #5
@@ -174,7 +174,7 @@ drops it, --clear-ext empties the map. There is no --replace-ext: setting a
 key already replaces its value.
 
 Scalars just take a value: -t/--title, -s/--status, --type, --priority,
--p/--parent, --due, --ordinal, --reporter. Each has a --clear-<field>. An
+-p/--parent, --due, --ordinal, --author. Each has a --clear-<field>. An
 empty string is never a way to clear anything.
 
 Comments:

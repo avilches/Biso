@@ -280,7 +280,7 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 | tarea padre | `-p, --parent` | `--clear-parent` |
 | fecha límite | `--due` | `--clear-due` |
 | orden manual | `--ordinal` | `--clear-ordinal` |
-| persona que reporta | `--reporter` | `--clear-reporter` |
+| autor de la tarea | `--author` | `--clear-author` |
 
 **Un escalar guarda un único valor, así que fijarlo con su propio nombre nunca es ambiguo con
 "añadir": no hay nada que añadir a un valor que no es una lista.** Por eso estos nombres se quedan sin

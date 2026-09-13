@@ -10,3 +10,19 @@
   padding-left: 0.6rem;
   border-left: 1px solid var(--md-default-fg-color--lightest);
 }
+
+/* Material parte palabras por en medio: `.md-typeset` trae `overflow-wrap: break-word`,
+   y encima `.md-typeset a`, `.md-typeset code`, `.md-typeset mark` y `.md-typeset kbd`
+   traen `word-break: break-word`. Aqui se anulan las dos reglas para que una linea solo
+   se corte entre palabras. No toca el desbordamiento horizontal de las tablas ni de los
+   bloques de codigo, que ya lo resuelven por su cuenta con su propio `overflow: auto`
+   (el envoltorio de las tablas y `.md-typeset pre > code`), ajeno a estas dos propiedades. */
+.md-typeset,
+.md-typeset a,
+.md-typeset code,
+.md-typeset mark,
+.md-typeset kbd {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
+}

@@ -5,7 +5,7 @@ fuera del listado lo que no se puede coger ahora**, y **poder fichar una tarea d
 tres están ya en la especificación de `biso` como `dependencies`, como los filtros que se combinan en
 `biso ls --not-blocked --not-waiting`, y como `biso start`. La segunda no es una sola bandera a
 propósito: ninguna puede decir por sí misma que una tarea esté lista, porque cuántos filtros hace falta
-descartar depende de qué se busque, y ["El porqué de reglas concretas"](../decisiones/comandos-y-banderas.md#el-porqué-de-reglas-concretas) cuenta por qué se retiró el
+descartar depende de qué se busque, y ["El porqué de reglas concretas"](../decisiones/comandos-y-flags.md#el-porqué-de-reglas-concretas) cuenta por qué se retiró el
 nombre `--ready`, que lo prometía sin poder cumplirlo.
 
 Y dos que rechaza de forma consistente: **el proceso en segundo plano** y **el almacén opaco**. El

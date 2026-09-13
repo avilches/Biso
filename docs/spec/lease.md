@@ -62,7 +62,7 @@ frase sería falsa: `biso start -s <estado>` con un estado que no es el activo n
 ya que fijarlo ahí rompería la invariante de [El vaciado](#el-vaciado), y deja los campos como los
 dejaría cualquier otra escritura. Una tarea que llega a activa y asignada por cualquier otra vía no
 tiene arrendamiento hasta que alguien llame a `biso start` sobre ella, y esas vías son exactamente
-dos: las banderas de campo de la sección ["Las familias de banderas"](familias-de-banderas.md), por
+dos: las banderas de campo de la sección ["Las familias de banderas"](familias-de-flags.md), por
 ejemplo `biso set --status`, ninguna de las cuales lo puede crear, y [la importación](#la-importación).
 
 ## El vaciado
@@ -72,7 +72,7 @@ las dos condiciones, no solo la primera.** Una escritura que saca la tarea del e
 (`biso finish`, o `biso set --status` a cualquier otro valor) vacía `leaseExpiresAt` y `leaseHolder`
 en esa misma escritura. Y como la condición que los sostiene es la conjunción de las dos cosas, perder
 la segunda los vacía igual: `--clear-assignees` o
-[`--rm-assignees`](familias-de-banderas.md#campos-de-lista-que-admiten-coma) sobre una tarea activa
+[`--rm-assignees`](familias-de-flags.md#campos-de-lista-que-admiten-coma) sobre una tarea activa
 que se queda sin ninguna persona asignada vacía los campos en esa misma escritura, sea quien sea quien
 la haga.
 

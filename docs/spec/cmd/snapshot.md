@@ -10,7 +10,7 @@ biso snapshot [--vcs <mode>]
 |---|---|---|---|---|---|---|---|
 | `--vcs <mode>` | | no | `none`, `commit` o `push` | `commit` | no | no | ninguno |
 
-**`biso snapshot` no cambia ningún dato del tablero**, así que la sección ["Banderas globales"](../invocacion.md#banderas-globales) lo clasifica junto a
+**`biso snapshot` no cambia ningún dato del tablero**, así que la sección ["Banderas globales"](flags-globales.md#banderas-globales) lo clasifica junto a
 `export` entre los comandos donde `--print` y `--dry-run` son error de uso con código 2: no hay
 ninguna tarea afectada que imprimir, ni ninguna escritura de tarea que simular.
 

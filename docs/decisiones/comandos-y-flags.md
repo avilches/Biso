@@ -27,7 +27,7 @@ una lista sin garantía, algo que el programa nunca decide callar por su cuenta.
 **["Los tres mensajes de \"no la encuentro\""](../spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), por qué son distintos.** Porque las tres situaciones
 piden acciones distintas de quien llama: corregir la sintaxis, dejar de buscar, o mirar en el archivo.
 
-**["La regla"](../spec/familias-de-banderas.md#la-regla), por qué cada clase de campo tiene las variantes de bandera que tiene, y por qué ninguna se
+**["La regla"](../spec/familias-de-flags.md#la-regla), por qué cada clase de campo tiene las variantes de bandera que tiene, y por qué ninguna se
 llama con el nombre desnudo del campo.** Antes había cuatro variantes por cada campo de lista
 (`--campo` añadía, `--set-campo` sustituía, `--rm-campo` quitaba, `--clear-campo` vaciaba), y las
 demás clases de campo tenían el subconjunto de esas cuatro que tenía sentido para su forma de dato:
@@ -35,7 +35,7 @@ un bloque de prosa no tiene elementos que quitar de uno en uno, así que no ten�
 claves se manipula por clave y no por posición; un escalar solo se fija o se vacía; los comentarios,
 en aquel momento, solo admitían añadir. **Esa última pieza ya no es cierta**: ["Borrar o corregir la fecha de un comentario"](detalles.md#borrar-o-corregir-la-fecha-de-un-comentario), más abajo en
 este documento, añade dos operaciones más, y la forma vigente de la clase está en
-["Comentarios"](../spec/familias-de-banderas.md#comentarios) y no aquí. Lo que sigue siendo cierto, y es lo que este párrafo quería decir, es
+["Comentarios"](../spec/familias-de-flags.md#comentarios) y no aquí. Lo que sigue siendo cierto, y es lo que este párrafo quería decir, es
 que la tabla de clases de campo aplica exactamente las operaciones que tienen sentido para cada forma
 de dato, no una lista de excepciones: que el conjunto de un escalar sea distinto del de un mapa, o que
 el de los comentarios haya crecido de uno a tres elementos, no es una excepción a la regla, es la
@@ -70,10 +70,10 @@ en vez de razonarlo: la decisión, con el experimento que la sostiene, está en
 ["El grid completo de banderas de campo en el mensaje de arranque, medido con un agente real"](vocabulario-y-mensaje-de-arranque.md#el-grid-completo-de-banderas-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real),
 más abajo en este documento.
 
-**["Selectores de criterios"](../spec/familias-de-banderas.md#selectores-de-criterios), por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
+**["Selectores de criterios"](../spec/familias-de-flags.md#selectores-de-criterios), por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
 su texto exacto es más frágil que quitarlo por su clave.
 
-**["Campos externos"](../spec/familias-de-banderas.md#campos-externos), por qué no existe una bandera que sustituya el mapa de campos externos entero.** Fijar una clave
+**["Campos externos"](../spec/familias-de-flags.md#campos-externos), por qué no existe una bandera que sustituya el mapa de campos externos entero.** Fijar una clave
 ya es sustituir su valor, así que una segunda bandera para lo mismo solo serviría para equivocarse. Y
 una que sustituyese el mapa entero con la sintaxis `clave=valor` sería una forma silenciosa de borrar
 la identidad externa de una tarea al escribir otra.

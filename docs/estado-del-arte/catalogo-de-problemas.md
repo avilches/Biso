@@ -31,7 +31,7 @@ alta.
 **Qué hace `biso`.** Un tablero es uno, con un solo asignador. Los identificadores siguen siendo
 secuenciales y legibles, porque el fallo no viene de que sean secuenciales, viene de que cada copia de
 trabajo asigne por su cuenta. Compartir entre máquinas más adelante se hace reservando rangos, y los
-huecos que eso deja ya son legales por escrito en ["Identificadores"](../spec/modelo-de-datos/identificadores.md#identificadores).
+huecos que eso deja ya son legales por escrito en ["Identificador de tarea"](../spec/modelo-de-datos/identificadores.md#identificador-de-tarea).
 
 ## 2. El estado de las tareas se bifurca con la rama
 
@@ -94,7 +94,7 @@ muerto libera solo. Y no intenta cruzar máquinas, porque un tablero es uno.
 escanea las carpetas de activas y completadas pero no la de archivadas, así que el identificador vuelve
 a estar libre y quedan dos ficheros distintos con el mismo identificador en carpetas distintas.
 
-**Qué hace `biso`.** ["Identificadores"](../spec/modelo-de-datos/identificadores.md#identificadores) lo prohíbe expresamente: un identificador no se reutiliza jamás, y
+**Qué hace `biso`.** ["Identificador de tarea"](../spec/modelo-de-datos/identificadores.md#identificador-de-tarea) lo prohíbe expresamente: un identificador no se reutiliza jamás, y
 el tablero sabe en todo momento cuál es el más alto que ha llegado a asignar, dato que se guarda aparte
 de las tareas presentes. Eso es también lo que le permite dar
 [tres mensajes distintos de "no la encuentro"](../spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), distinguiendo un identificador mal formado, uno que nunca existió, y uno

@@ -60,7 +60,7 @@ steps:
     source:
       - spec/cmd/verbos-del-ciclo.md#biso-comment "`biso comment`"
       - spec/modelo-de-datos/comentarios.md#los-comentarios "Los comentarios"
-      - spec/familias-de-banderas.md#comentarios "Comentarios"
+      - spec/familias-de-flags.md#comentarios "Comentarios"
     remark: |
       "note: comment #3 by @trello:juan" goes to stderr, in the exact shape the specification's
       own example gives. The number is a stable key, exactly like a criterion's: it's assigned

@@ -16,7 +16,7 @@ Reglas:
 
 - **Un texto que empieza de verdad por `@` se escribe `@@`.** El primer `@` se descarta y el resto es
   literal. Es la única secuencia de escape del programa.
-- **Los campos de persona nunca interpretan el `@`.** `--assignee`, `--reporter` y `--comment-author`
+- **Los campos de persona nunca interpretan el `@`.** `--assignee`, `--author` y `--comment-author`
   toman su valor tal cual, así que `--comment-author @trello:juan` guarda ese texto y no intenta leer
   ningún fichero.
 - **`-` solo puede aparecer una vez por invocación.** Dos parámetros que pidan la entrada estándar son
@@ -43,7 +43,7 @@ como si llega de un fichero vacío o de una entrada estándar vacía. La regla e
 que sigue la regla del ["algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia) y el
 `code` es el de un valor desconocido (`unknown_status` y análogos, con el mensaje de
 ["El mismo texto vale lo mismo en los dos sentidos"](vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos)).
-Para los demás escalares (`--reporter ""`, `--ordinal ""`, `--due ""`), que no
+Para los demás escalares (`--author ""`, `--ordinal ""`, `--due ""`), que no
 tienen vocabulario, el `code` es `empty_scalar_value`.
 
 ## Valores que empiezan por guion
@@ -85,7 +85,7 @@ error: --status given twice with different values: "In Progress" and "Done"
 
 `labels`, `assignees` y las claves de `ext` (["Campos externos"](modelo-de-datos/campos-externos.md#los-campos-externos)) son los únicos
 campos de esta sección cuyo alfabeto está cerrado. Los demás campos de lista de la tabla de
-["Campos de lista que admiten coma"](familias-de-banderas.md#campos-de-lista-que-admiten-coma), es decir `references`, `documentation`,
+["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma), es decir `references`, `documentation`,
 `dependencies` y `modifiedFiles`, son texto libre y no tienen ninguna restricción de caracteres: una
 referencia o una documentación pueden ser una URL, y un fichero tocado es una ruta, y ninguna de las
 dos cosas admite cerrarle el alfabeto sin dejar fuera casos legítimos. `dependencies` tampoco la

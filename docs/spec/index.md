@@ -52,8 +52,8 @@ referencia a un código concreto en otra página no dice nada.
 
 ### Cómo se invoca el programa, antes de tocar ningún dato
 
-[Banderas globales, entorno y configuración
-de máquina](invocacion.md) y [Cómo se elige el tablero](resolucion-del-tablero.md) explican qué pasa
+[Flags globales](cmd/flags-globales.md), [Entorno y configuración de
+máquina](invocacion.md) y [Cómo se elige el tablero](resolucion-del-tablero.md) explican qué pasa
 antes de que el programa llegue a interpretar el comando: qué banderas valen para todos, y con qué
 tablero va a trabajar. [Terminal, flujos de salida y codificación](salida-y-terminal.md) y [Cómo se
 pasa un valor](valores-de-entrada.md) terminan ese bloque: qué imprime el programa según haya terminal
@@ -74,7 +74,7 @@ cómo se valida el valor de los campos que tienen un vocabulario cerrado.
 ### La gramática de la entrada que comparten los comandos
 
 [Cómo se resuelve una referencia a una
-tarea](referencias.md) y [Las familias de banderas](familias-de-banderas.md) definen de una vez la
+tarea](referencias.md) y [Las familias de banderas](familias-de-flags.md) definen de una vez la
 forma que tiene nombrar una tarea y la forma que tiene cada bandera de escritura. Estas reglas valen
 para todos los comandos y no se repiten en cada uno: un comando solo las menciona cuando se aparta de
 ellas, y ninguno lo hace salvo donde se diga.

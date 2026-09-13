@@ -1,4 +1,4 @@
-# Identificadores
+# Identificador de tarea
 
 - Un identificador es `<PREFIX>-<n>`, con `n` entero positivo. `PREFIX` viene de la configuración
   (`task_prefix`).

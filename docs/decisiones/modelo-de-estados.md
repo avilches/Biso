@@ -112,7 +112,7 @@ agujero que el artículo cierra aquí queda entreabierto: el tenedor viejo que d
 anotar o cerrar la tarea que otro reclamó, y si vuelve a llamar a `biso start` se la lleva de vuelta,
 con aviso y sin impedimento. Se acepta porque rechazar la escritura sería lo único de todo el programa
 que impide trabajar por el estado en que está una tarea: las dependencias sin terminar avisan, la
-pregunta abierta avisa, y un arrendamiento ajeno avisa igual, por el motivo de ["El porqué de reglas concretas"](comandos-y-banderas.md#el-porqué-de-reglas-concretas), que un
+pregunta abierta avisa, y un arrendamiento ajeno avisa igual, por el motivo de ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas), que un
 bloqueo de flujo no evita el trabajo duplicado y sí empuja a rodear la herramienta. Lo que la
 comprobación del tenedor sí cierra, y es lo que se gana, son las dos cosas que el aviso no puede dar:
 que una escritura de otra identidad nunca renueve el plazo ajeno ni se atribuya el arrendamiento, y que
@@ -172,7 +172,7 @@ renovación es un hecho del arrendamiento, no una modificación de la tarea, y l
 porque habla de la tarea.
 
 **Y `biso new --start` reclama el arrendamiento, porque es el atajo de dos llamadas y la equivalencia
-tiene que ser real.** ["El porqué de reglas concretas"](comandos-y-banderas.md#el-porqué-de-reglas-concretas) justifica esa bandera como el ahorro de `biso new` más `biso start`;
+tiene que ser real.** ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas) justifica esa bandera como el ahorro de `biso new` más `biso start`;
 si creara la tarea activa y asignada pero sin arrendamiento, las dos vías darían dos tareas distintas y
 la única forma de saberlo sería leer la letra pequeña. La excepción simétrica es `biso start -s` con un
 estado que no es el activo: ahí no se fija arrendamiento, porque fijarlo rompería la invariante de
@@ -305,7 +305,7 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   `leaseExpiresAt` y `leaseHolder`, con el aviso de ["Notas y avisos"](../spec/salida-y-terminal.md#notas-y-avisos). Un agente que despierta
   después de que otro reclamara su tarea puede comentarla, anotarla o cerrarla, y con `biso start`
   llevársela de vuelta. Se acepta por coherencia con "avisa, no impide", el mismo argumento de
-  ["El porqué de reglas concretas"](comandos-y-banderas.md#el-porqué-de-reglas-concretas) que vale para las dependencias sin terminar y para la pregunta abierta: un bloqueo de flujo no evita
+  ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas) que vale para las dependencias sin terminar y para la pregunta abierta: un bloqueo de flujo no evita
   el trabajo duplicado, solo empuja a rodear la herramienta. Lo que el arrendamiento sí garantiza es que
   una tarea no se quede cogida para siempre, que nadie renueve ni se atribuya un arrendamiento ajeno, y
   que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una (["Saber si alguien está trabajando de verdad"](#saber-si-alguien-está-trabajando-de-verdad)).
@@ -329,11 +329,11 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   avisa pero no impide, los bloques del mensaje de arranque excluyen terminadas y archivadas, y
   `biso ls` excluye el estado terminal por defecto, así que `biso ls --waiting` no la encuentra sin
   `--any-status`. Se acepta porque la alternativa, impedir cerrar una tarea con una pregunta abierta,
-  empujaría a rodear la herramienta, el mismo argumento que ya vale en ["El porqué de reglas concretas"](comandos-y-banderas.md#el-porqué-de-reglas-concretas) para `finish` y
+  empujaría a rodear la herramienta, el mismo argumento que ya vale en ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas) para `finish` y
   los criterios sin marcar.
 - **El filtro de dependencias no excluye las tareas aparcadas.** `--not-blocked` mira solo
   dependencias, así que un agente que elija trabajo únicamente con esa bandera se lleva también las
   que esperan una respuesta. La consulta correcta añade `--not-waiting`, y así lo dicen tanto la
   descripción de la bandera como el ejemplo de la ayuda de `biso ls`. El riesgo se queda, pero
   encogido: el nombre ya no promete que la tarea esté lista para trabajar, solo que no esté bloqueada,
-  que es lo que mide. El porqué del nombre está en ["El porqué de reglas concretas"](comandos-y-banderas.md#el-porqué-de-reglas-concretas).
+  que es lo que mide. El porqué del nombre está en ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas).

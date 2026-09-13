@@ -26,7 +26,7 @@ hace lo que quiere. Ninguna de esas llamadas dio error, y el daño es silencioso
 que había escrito la anterior. La primera forma de este principio resolvía el problema con una regla
 única, "el nombre desnudo añade", que había que conocer de antemano para no adivinar; se sustituyó
 después por dar a cada operación su propio verbo explícito, sin ninguna regla que aprender, por el
-motivo que cuenta ["La regla"](../spec/familias-de-banderas.md#la-regla) de `familias-de-banderas.md`.
+motivo que cuenta ["La regla"](../spec/familias-de-flags.md#la-regla) de `familias-de-flags.md`.
 
 **Principio 4, que la salida por defecto de una escritura es lo que quien llama no sabía.** De las 237
 creaciones medidas, 215 llevaban una bandera que devolvía la ficha entera de la tarea recién creada, y

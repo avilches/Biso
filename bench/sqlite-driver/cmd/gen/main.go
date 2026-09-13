@@ -119,7 +119,7 @@ func run(out string, live int, seed int64) error {
 	}
 
 	insTask, err := tx.Prepare(`
-INSERT INTO task(id, title, status, type, priority, project, milestone, parent, reporter,
+INSERT INTO task(id, title, status, type, priority, project, milestone, parent, author,
                  due, ordinal, created_at, updated_at, archived,
                  lease_expires_at, lease_holder,
                  description, plan, notes, summary,

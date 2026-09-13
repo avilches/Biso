@@ -34,7 +34,7 @@ TASK-19  In Progress  ac 0/6  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [Los criterios y sus claves estables](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [Los criterios y sus claves estables](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables); not literal spec text)*
 
 *Note: Four `--add-ac` flags in the same call add four new elements, in the order they're written, with new keys, #3, #4, #5 and #6, after the #1 and #2 the task already had from the initial inventory.*
 
@@ -47,7 +47,7 @@ TASK-19  In Progress  ac 1/6  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Selectores de criterios](../spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Selectores de criterios](../spec/familias-de-flags.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 The three you tested together with the same test, all at once, with a range.
 
@@ -58,7 +58,7 @@ TASK-19  In Progress  ac 4/6  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Selectores de criterios](../spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Selectores de criterios](../spec/familias-de-flags.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 And two that aren't consecutive, with a comma-separated list.
 
@@ -69,7 +69,7 @@ TASK-19  In Progress  ac 6/6  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Selectores de criterios](../spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Selectores de criterios](../spec/familias-de-flags.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 Almost right away you realize you marked #2 (the one about the log counter) too soon: the
 number of attempts still doesn't show up in the log, only the final result. You uncheck it.
@@ -81,7 +81,7 @@ TASK-19  In Progress  ac 5/6  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Selectores de criterios](../spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Selectores de criterios](../spec/familias-de-flags.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 *Note: `--uncheck-ac` takes the same selector as `--check-ac`, with the same effect inverted, here "a single one," just like the first `--check-ac` in this scenario.*
 
@@ -95,7 +95,7 @@ TASK-19  In Progress  ac 5/6  dod 1/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Selectores de criterios](../spec/familias-de-banderas.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Selectores de criterios](../spec/familias-de-flags.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
 *Note: "README" doesn't match the key grammar (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), so it's treated as literal text and matches the element whose text contains it. Only #5 ("The README explains when and how many times it retries") matches, so there's no ambiguity.*
 

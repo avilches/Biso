@@ -10,7 +10,7 @@ biso doctor [--fix]
 |---|---|---|---|---|---|---|---|
 | `--fix` | | no | booleano | falso | no | no | ninguno |
 
-**`biso doctor` sin `--fix` es de solo lectura**, y `--print` y `--dry-run` de la sección ["Banderas globales"](../invocacion.md#banderas-globales) son error 2
+**`biso doctor` sin `--fix` es de solo lectura**, y `--print` y `--dry-run` de la sección ["Banderas globales"](flags-globales.md#banderas-globales) son error 2
 igual que en cualquier otro comando de lectura. **Con `--fix` es un comando de escritura**: ahí
 `--dry-run` reporta qué se repararía sin reparar nada, y `--print` no añade nada, porque `doctor` no
 imprime fichas de tareas.
@@ -121,7 +121,7 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Ciclos de tarea padre | error | no |
 | Claves de criterio repetidas dentro de una tarea | error | no |
 | `leaseExpiresAt` o `leaseHolder` con valor en una tarea que no está a la vez en el estado activo y asignada, o uno de los dos con valor y el otro vacío | error | sí, vaciando los dos |
-| El identificador más alto que el tablero recuerda haber asignado (["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)) es menor que el identificador más alto de una tarea existente | error | sí |
+| El identificador más alto que el tablero recuerda haber asignado (["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) es menor que el identificador más alto de una tarea existente | error | sí |
 | Falta el marcador `<id>.id` en el directorio del tablero (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) | error | sí, escribiéndolo con el `id` que lleva la base de datos |
 | El marcador `<id>.id` nombra un `id` distinto del que lleva la base de datos | error | no, hay que decidir a mano |
 | Una raíz de `boards_extra_roots` (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) no existe o no se puede leer | aviso | no, es configuración de la máquina o un disco sin montar |

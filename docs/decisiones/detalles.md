@@ -2,7 +2,7 @@
 
 ## Decisiones de detalle que cuesta reconstruir
 
-**Una tarea sin quien la reporte es válida.** El campo `reporter` toma la identidad configurada al
+**Una tarea sin autor es válida.** El campo `author` toma la identidad configurada al
 crear la tarea, y si no hay ninguna se queda vacío **sin avisar**. Es deliberadamente distinto de los
 otros cinco sitios donde hace falta una identidad (tabla de ["Variables de entorno"](../spec/invocacion.md#variables-de-entorno)): el
 filtro `--mine` falla, la autoasignación de `start` avisa, y el autor de un comentario, `biso ask` y
@@ -117,7 +117,7 @@ el dato cabe en la línea que ya existe.
 
 **La decisión.** `biso` añade banderas dedicadas para comentarios ya escritos: `--rm-comment <sel>`
 borra uno o varios enteros, y `--set-comment-date <sel>=<instante>` corrige solo su fecha. El
-selector es el mismo de ["Selectores de criterios"](../spec/familias-de-banderas.md#selectores-de-criterios), con la clave del comentario en vez de la del
+selector es el mismo de ["Selectores de criterios"](../spec/familias-de-flags.md#selectores-de-criterios), con la clave del comentario en vez de la del
 criterio. **No existe, y no va a existir, ninguna forma de editar el cuerpo o el autor de un
 comentario ya escrito.** Cada comentario recibe además una clave estable, igual que un criterio de
 aceptación, porque sin ella no hay forma de señalar cuál se quiere borrar o corregir sin que se mueva

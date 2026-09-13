@@ -32,7 +32,7 @@ biso prime [--full] [--limit <n>] [--json]
   se imprima. Con `0`, las dos desaparecen y se queda solo esa línea.
 - `--full` añade al final la lista completa de banderas de `biso new` y `biso set`. Es para una
   persona que está aprendiendo la herramienta, no para el arranque de un agente.
-- `--json` es la bandera global de la sección ["Banderas globales"](../invocacion.md#banderas-globales), y aquí es lo único que la restringe: no se puede
+- `--json` es la bandera global de la sección ["Banderas globales"](flags-globales.md#banderas-globales), y aquí es lo único que la restringe: no se puede
   combinar con `--full`, porque el JSON no lleva texto de ayuda.
 
 ## Qué hace, caso a caso
@@ -82,7 +82,7 @@ Esto es exactamente lo que `biso prime` imprime por stdout con un tablero de eje
 por stderr.
 
 **Ese tablero fija `task_prefix` a `MYP` explícitamente**, en vez de dejar que se derive de
-`project_name` como haría por defecto (la sección ["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)), para que los identificadores de todos los ejemplos
+`project_name` como haría por defecto (la sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)), para que los identificadores de todos los ejemplos
 de este documento no dependan del nombre que le toque al tablero de turno. De paso queda demostrado que
 `task_prefix` se puede fijar a mano.
 
@@ -110,7 +110,7 @@ COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
   -t --title  -s --status  --type --clear-type  --priority --clear-priority
-  -p --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --reporter --clear-reporter
+  -p --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author
   -l --add-labels --rm-labels --clear-labels --replace-labels
   -a --add-assignees --rm-assignees --clear-assignees --replace-assignees
   --add-refs --rm-refs --clear-refs --replace-refs

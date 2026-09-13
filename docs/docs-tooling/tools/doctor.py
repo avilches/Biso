@@ -74,6 +74,7 @@ def main(argv: list[str]) -> int:
                 *expand(
                     "docs/spec/*.md",
                     "docs/spec/cmd/*.md",
+                    "docs/spec/modelo-de-datos/*.md",
                     "docs/*.md",
                     "docs/tutorial/*.md",
                     "docs/decisiones/*.md",
@@ -86,7 +87,7 @@ def main(argv: list[str]) -> int:
             [
                 sys.executable,
                 str(TOOLS_DIR / "comprobar_referencias.py"),
-                *expand("docs/spec/*.md", "docs/spec/cmd/*.md"),
+                *expand("docs/spec/*.md", "docs/spec/cmd/*.md", "docs/spec/modelo-de-datos/*.md"),
             ],
         ),
         (

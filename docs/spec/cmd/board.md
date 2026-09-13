@@ -25,7 +25,7 @@ abrirla, ni la abre nadie por su cuenta.
 ## Agrupación visual
 
 La interfaz enseña un Kanban con las columnas fijas por `status`, en el orden configurado. Además,
-admite agrupar las tarjetas dentro de esas columnas de dos formas independientes, elegibles con un
+admite agrupar las tareas dentro de esas columnas de dos formas independientes, elegibles con un
 control de la propia interfaz y que no se combinan entre sí:
 
 - **Por padre** (`parent`): cada tarea con alguna hija actúa de cabecera de un grupo, con su propio
@@ -38,7 +38,7 @@ control de la propia interfaz y que no se combinan entre sí:
 - **Por tipo** (`type`): una partición plana que no mira la jerarquía. Cada tarea cae en un grupo
   según su propio `type`, tantos grupos como valores en uso entre las tareas visibles.
 
-Sin agrupar, que es lo que se ve por defecto, las tarjetas quedan sueltas dentro de cada columna de
+Sin agrupar, que es lo que se ve por defecto, las tareas quedan sueltas dentro de cada columna de
 estado. La agrupación es solo de esta interfaz: no existe ninguna bandera equivalente en `biso ls` ni
 en `biso prime`, aunque las dos ya permiten filtrar por `-p/--parent` y por `--type`
 (secciones [`biso ls`](ls.md) y [`biso set`](set.md)).

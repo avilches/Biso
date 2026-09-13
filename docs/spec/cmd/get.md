@@ -44,7 +44,7 @@ vacía; sin la bandera, omitir una sección la confundiría con una que no se ha
 MYP-11  Normalize CRLF in the diff
 status     In Progress          type       bug
 priority   high                 urgency    19.0
-assignees  @claude              reporter   @avilches
+assignees  @claude              author     @avilches
 labels     parser               parent     -
 due        -                    ordinal    -
 created    2026-09-06 09:12     updated    2026-09-06 11:40

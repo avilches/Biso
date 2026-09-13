@@ -199,7 +199,7 @@ igual que las demás.
         "type": "bug",
         "priority": "high",
         "assignees": ["@claude"],
-        "reporter": "@avilches",
+        "author": "@avilches",
         "labels": ["parser"],
         "parent": null,
         "dependencies": [],

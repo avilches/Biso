@@ -67,7 +67,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [`biso comment`](../spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](../spec/modelo-de-datos/comentarios.md#los-comentarios), [Comentarios](../spec/familias-de-banderas.md#comentarios); not literal spec text)*
+*(derived output, see [`biso comment`](../spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](../spec/modelo-de-datos/comentarios.md#los-comentarios), [Comentarios](../spec/familias-de-flags.md#comentarios); not literal spec text)*
 
 *Note: "note: comment #3 by @trello:juan" goes to stderr, in the exact shape the specification's own example gives. The number is a stable key, exactly like a criterion's: it's assigned once when the comment is created and never reassigned, even if an earlier comment is later removed with `--rm-comment`. A comment's body and author are never edited, by any flag; only its date can be corrected, with `--set-comment-date`, and the whole comment can be removed entirely. This is TASK-19's third comment because `biso answer` had already added two in the previous scenario.*
 

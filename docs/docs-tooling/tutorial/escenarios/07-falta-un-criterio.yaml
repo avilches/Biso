@@ -44,7 +44,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
@@ -59,7 +59,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
   - narration: |
@@ -84,8 +84,8 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/familias-de-banderas.md#selectores-de-criterios "Selectores de criterios"
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#selectores-de-criterios "Selectores de criterios"
       - spec/cmd/set.md "`biso set`"
   - narration: |
       You check the list again to make sure what's left hasn't changed number.
@@ -115,8 +115,8 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/familias-de-banderas.md#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera "Sustituir un campo que no tiene bandera de \"sustituir entera\""
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-bandera-de-sustituir-entera "Sustituir un campo que no tiene bandera de \"sustituir entera\""
       - spec/cmd/set.md "`biso set`"
     remark: |
       There's no flag that replaces the whole list of definition-of-done items in one shot, so
@@ -139,7 +139,7 @@ steps:
     source_kind: derived
     source:
       - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
-      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/get.md "`biso get`"
     remark: |
       The keys are `#3` and `#4`, not `#1` and `#2`. This list's counter, inside this task, was
@@ -155,7 +155,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
     remark: |
       The list ends up empty, and that's why the `dod` chunk disappears from the status line: it
@@ -170,7 +170,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |

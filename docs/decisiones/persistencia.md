@@ -226,7 +226,7 @@ personales de todo el mundo, así que un puntero ahí no puede estar a propósit
 
 **Por qué se retiran la bandera `--board` y la variable `BISO_BOARD`.** Eran las dos primeras de las
 cuatro vías por las que ["Cómo se elige el tablero"](../spec/resolucion-del-tablero.md) encontraba un tablero, y la tabla de banderas
-globales las resumía como "Usa ese tablero directamente, sin buscar", con un valor que ["Banderas globales"](../spec/invocacion.md#banderas-globales)
+globales las resumía como "Usa ese tablero directamente, sin buscar", con un valor que ["Banderas globales"](../spec/cmd/flags-globales.md#banderas-globales)
 describía como "el nombre o el localizador de un tablero, en la forma que el almacenamiento imponga".
 Esa vaguedad se sostenía mientras la persistencia estuviera sin decidir. Con la persistencia ya decidida
 había que contestar si el valor era un nombre, un identificador de ocho hexadecimales o una ruta, sobre
@@ -267,7 +267,7 @@ resuelve de golpe sacar la identidad del nombre, precisamente porque lo que iden
 **La tercera: por qué tampoco una bandera que acepte el identificador.** Aquí no hay ningún obstáculo
 técnico, hay algo peor: no hay ningún caso de uso que se sostenga. El identificador de ocho hexadecimales
 no aparece en el trabajo diario, porque las tareas se nombran con `<PREFIX>-<n>` y ese prefijo se deriva
-de `project_name`, no del `id` del tablero (["Identificadores"](../spec/modelo-de-datos/identificadores.md#identificadores)), así que nadie lo tiene delante ni lo teclea. El
+de `project_name`, no del `id` del tablero (["Identificador de tarea"](../spec/modelo-de-datos/identificadores.md#identificador-de-tarea)), así que nadie lo tiene delante ni lo teclea. El
 único momento en que el `id` manda es cuando el puntero lo trae y su `path` no resuelve, y ahí la
 búsqueda **ya recorre sola** la raíz por defecto y las raíces adicionales mirando el marcador `<id>.id` de
 cada carpeta, sin que nadie tenga que pasar ninguna bandera. El otro caso imaginable, que un mensaje de

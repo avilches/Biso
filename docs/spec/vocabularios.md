@@ -73,9 +73,9 @@ error: unknown status: "Pending"
 de la configuración y de las que lleva cualquier tarea del tablero, **incluidas las archivadas y las
 que están en el estado terminal**. **El conjunto de personas se define con la clave `assignees` de la
 configuración y con los valores de `assignees` de cualquier tarea, archivadas y terminadas incluidas.
-Los valores de `reporter` no entran en este conjunto**, porque no hay ningún filtro `--reporter`: una
-persona que solo ha reportado tareas y nunca las ha tenido asignadas no pertenece al conjunto contra
-el que valida `--assignee`.
+Los valores de `author` no entran en este conjunto**, porque no hay ningún filtro `--author`: una
+persona que solo consta como autora de la tarea y nunca la ha tenido asignada no pertenece al
+conjunto contra el que valida `--assignee`.
 
 **Ni las etiquetas ni las personas tienen vocabulario cerrado al escribir.** Escribir una etiqueta
 nueva la incorpora al conjunto, y a partir de ese momento filtrar por ella funciona.

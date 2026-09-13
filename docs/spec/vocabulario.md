@@ -24,8 +24,6 @@ prohibirlas a secas, porque algunas de ellas tienen un uso legítimo:
 
 - **columna** nombra únicamente una columna de la tabla que imprimen `biso ls` y `biso prime`, que
   tiene ocho. Un estado del tablero no se llama nunca columna.
-- **tarjeta** y **ticket** nombran únicamente lo que otra herramienta tiene, como una tarjeta de
-  Trello. Lo de `biso` es una tarea.
 - **panel** no se usa nunca: el conjunto de tareas es el tablero, y lo que abre `biso board` es la
   interfaz web.
 - **bloqueada** no se usa nunca referida a una persona. Eso es una pregunta abierta.

@@ -26,7 +26,7 @@ CREATE TABLE task (
   project           TEXT,
   milestone         TEXT,
   parent            INTEGER REFERENCES task(id),
-  reporter          TEXT,
+  author            TEXT,
   due               TEXT,
   ordinal           INTEGER,
   created_at        TEXT    NOT NULL,
