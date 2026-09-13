@@ -39,13 +39,25 @@ por igual): tiene que decidirla código que sepa distinguir un comando de otro.
 
 La solución es una variable de entorno, `BISO_DOCS_SERVE`, que exporta únicamente el target
 `docs-serve` del `Makefile` antes de invocar `mkdocs serve`. Un hook nuevo de MkDocs,
-`docs/docs-tooling/mkdocs/notas_lectura.py`, comprueba esa variable en `on_config` y solo
-entonces añade las entradas correspondientes a `config.extra_javascript` y
-`config.extra_css`. Seguirá el mismo patrón que el hook existente,
-`excluir_superpowers_del_buscador.py`, ya registrado en la clave `hooks:` de `mkdocs.yml`.
+`docs/docs-tooling/mkdocs/notas_lectura.py`, comprueba esa variable y solo entonces actúa.
+
+No usa `extra_javascript`/`extra_css`: esas claves solo sirven para ficheros que viven dentro
+de `docs_dir` y no están excluidos por `exclude_docs` (el único caso que hay hoy,
+`stylesheets/extra.css`, vive fuera de `docs-tooling/` precisamente por eso), y
+`docs/docs-tooling/` sí está excluido. Poner ahí el JS y el CSS y referenciarlos con esas
+claves los dejaría sin servir ni siquiera en `docs-serve`, comprobado construyendo el sitio de
+prueba: nada de lo que hay bajo `docs-tooling/` aparece en `site/`.
+
+En su lugar, el hook usa el evento `on_post_page`: cuando `BISO_DOCS_SERVE` está puesta, lee
+`notas_lectura.js` y `notas_lectura.css` del disco (ficheros hermanos del propio hook, dentro
+de `docs/docs-tooling/mkdocs/`) e inyecta su contenido como texto, envuelto en
+`<style>`/`<script>`, justo antes de `</body>` del HTML ya generado de cada página. Sigue el
+mismo patrón que el hook existente, `excluir_superpowers_del_buscador.py` (trabajar sobre el
+contenido en memoria, sin escribir ni copiar ningún fichero), y se registra junto a él en la
+clave `hooks:` de `mkdocs.yml`.
 
 `docs-build` y `docs-doctor` no tocan esa variable, así que el sitio que producen es
-exactamente el de hoy: sin el botón, sin el JS ni el CSS asociados.
+exactamente el de hoy: ni una etiqueta de más en el HTML, ni un fichero de más en `site/`.
 
 ## El fichero de notas
 
@@ -131,7 +143,7 @@ intermedio de "procesada pero no borrada".
 
 - `docs/docs-tooling/mkdocs/mkdocs.yml`: registra el nuevo hook en la clave `hooks:`.
 - `docs/docs-tooling/mkdocs/notas_lectura.py`: hook nuevo, en inglés (comentarios incluidos),
-  seleccionado según `BISO_DOCS_SERVE`, añade `extra_javascript`/`extra_css`.
+  que en `on_post_page` inyecta el JS y el CSS como texto según `BISO_DOCS_SERVE`.
 - `docs/docs-tooling/mkdocs/notas_lectura.js`, `notas_lectura.css`: el botón, el panel y su
   estilo. Código en inglés.
 - `Makefile`: el target `docs-serve` exporta `BISO_DOCS_SERVE=1` antes de invocar
