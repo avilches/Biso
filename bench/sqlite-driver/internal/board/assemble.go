@@ -98,7 +98,7 @@ func (c *Collected) Finish(now time.Time, limit int) (out string, shown, total i
 	return sb.String(), shown, total
 }
 
-// TruncationWarning devuelve el aviso de recorte de la seccion 10.4, o la
+// TruncationWarning devuelve el aviso de recorte de docs/spec/cmd/ls.md, o la
 // cadena vacia si no se ha recortado nada.
 func TruncationWarning(shown, total int) string {
 	if shown >= total {

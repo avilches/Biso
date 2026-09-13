@@ -8,21 +8,26 @@
 //
 // Lo que se comprueba, y de donde sale la exigencia:
 //
-//   - Modo WAL: la seccion 4.10 de docs/SPEC.md promete que una lectura nunca
-//     falla por una escritura en curso, y la seccion 12 de docs/DECISIONES.md
-//     nombra el modo WAL como lo que da esa garantia.
-//   - BEGIN IMMEDIATE: es el acceso exclusivo de escritura del que hablan la
-//     4.10 y el codigo de salida 7.
+//   - Modo WAL: "Concurrencia, atomicidad y garantias observables"
+//     (docs/spec/garantias.md) promete que una lectura nunca falla por una
+//     escritura en curso, y "El controlador de SQLite es modernc.org/sqlite,
+//     sin cgo" (docs/DECISIONES.md) nombra el modo WAL como lo que da esa
+//     garantia.
+//   - BEGIN IMMEDIATE: es el acceso exclusivo de escritura del que hablan
+//     "Concurrencia, atomicidad y garantias observables" y el codigo de
+//     salida 7.
 //   - busy_timeout: sin el, dos escrituras a la vez fallan en vez de esperar.
-//   - Puntos de retorno: la seccion 4.9 aplica varias banderas dentro de una
-//     escritura, y el lote de `biso new --from` valida entero antes de escribir.
-//   - integrity_check: es una de las dos comprobaciones que la seccion 12 anade
-//     a `biso doctor`.
+//   - Puntos de retorno: "Orden de aplicacion dentro de una escritura"
+//     (docs/spec/garantias.md) aplica varias banderas dentro de una escritura,
+//     y el lote de `biso new --from` valida entero antes de escribir.
+//   - integrity_check: es una de las dos comprobaciones que "La decision de
+//     persistencia" anade a `biso doctor` (docs/spec/cmd/doctor.md).
 //   - Claves ajenas: el esquema usa REFERENCES para las dependencias y el padre.
 //   - user_version: es donde vive la version del esquema para migrar.
 //   - Consultas recursivas: el grafo de dependencias y el `parent` son arboles.
 //   - Modulo JSON: hace falta si `ext` o los criterios se guardan como JSON.
-//   - FTS5: es la via barata para `--search` de la seccion 7.2.
+//   - FTS5: es la via barata para "La busqueda por texto"
+//     (docs/spec/referencias.md), que usa `--search`.
 package features
 
 import (
@@ -116,7 +121,8 @@ func RunSQL(name string, open func(path string) (*sql.DB, error)) int {
 		return nil
 	})
 
-	// El acceso exclusivo de escritura de la seccion 4.10.
+	// El acceso exclusivo de escritura de "Concurrencia, atomicidad y
+	// garantias observables".
 	report(name, "begin_immediate", func() error {
 		if _, err := db.Exec(`BEGIN IMMEDIATE`); err != nil {
 			return err
@@ -163,7 +169,8 @@ func RunSQL(name string, open func(path string) (*sql.DB, error)) int {
 	report(name, "analyze", func() error { return exec(db, `ANALYZE`) })
 
 	// Dos conexiones a la vez sobre el mismo fichero: una lee mientras la otra
-	// tiene una escritura abierta, que es lo que la seccion 4.10 promete.
+	// tiene una escritura abierta, que es lo que promete "Concurrencia,
+	// atomicidad y garantias observables".
 	report(name, "read_during_write", func() error {
 		writer, err := open(path)
 		if err != nil {

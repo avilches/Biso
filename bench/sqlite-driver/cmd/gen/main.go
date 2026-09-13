@@ -1,6 +1,6 @@
-// gen crea un tablero de prueba con la forma que describen la seccion 5 de
-// docs/SPEC.md (el modelo de datos) y la seccion 12 de docs/DECISIONES.md (una
-// base de datos SQLite por tablero).
+// gen crea un tablero de prueba con la forma que describen
+// docs/spec/modelo-de-datos.md (el modelo de datos) y "La decision de
+// persistencia" de docs/DECISIONES.md (una base de datos SQLite por tablero).
 //
 // Se compila con modernc.org/sqlite a proposito, para que generar el tablero no
 // necesite ninguna herramienta de C. El fichero que sale es un SQLite corriente

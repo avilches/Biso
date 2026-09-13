@@ -1,9 +1,9 @@
 package board
 
-// Schema es el esquema del tablero, con la forma que la seccion 12 de
-// docs/DECISIONES.md da por hecha: una base de datos SQLite por tablero, con la
-// configuracion dentro de ella y una tabla por cada campo de lista del modelo
-// de la seccion 5 de docs/SPEC.md.
+// Schema es el esquema del tablero, con la forma que "La decision de
+// persistencia" (docs/DECISIONES.md) da por hecha: una base de datos SQLite por
+// tablero, con la configuracion dentro de ella y una tabla por cada campo de
+// lista del modelo de docs/spec/modelo-de-datos.md.
 //
 // No pretende ser el esquema definitivo de `biso`. Pretende costar lo mismo de
 // leer: los mismos indices, el mismo numero de tablas que `biso ls` tiene que
@@ -103,16 +103,16 @@ CREATE TABLE ext (
 `
 
 // Las cinco consultas que `biso ls` necesita, y ni una mas. La primera regla de
-// la seccion 4.13 de docs/SPEC.md prohibe leer lo que la invocacion no va a
-// imprimir, asi que aqui no se leen ni comentarios, ni etiquetas, ni prosa, ni
-// campos externos: `biso ls` no imprime ninguno de ellos.
+// "El presupuesto de arranque" (docs/spec/presupuestos.md) prohibe leer lo que
+// la invocacion no va a imprimir, asi que aqui no se leen ni comentarios, ni
+// etiquetas, ni prosa, ni campos externos: `biso ls` no imprime ninguno de ellos.
 const (
 	// QueryConfig trae la configuracion del tablero, de donde salen los siete
 	// coeficientes de urgencia y el nombre del estado terminal.
 	QueryConfig = `SELECT key, value FROM board`
 
 	// QueryTasks trae las tareas vivas y no terminales, que es el filtro por
-	// defecto de `biso ls` de la seccion 10.4.
+	// defecto de `biso ls` de docs/spec/cmd/ls.md.
 	QueryTasks = `
 SELECT id, title, status,
        COALESCE(type, ''), COALESCE(priority, ''), COALESCE(due, ''),

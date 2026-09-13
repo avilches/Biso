@@ -1,6 +1,6 @@
 // Package board contiene el modelo minimo de tarea, el calculo de urgencia, la
 // regla de orden y el formato de columnas de `biso ls`, tal y como los definen
-// las secciones 5, 5.4 y 10.4 de docs/SPEC.md.
+// docs/spec/modelo-de-datos.md (con su seccion "La urgencia") y docs/spec/cmd/ls.md.
 //
 // Este paquete es identico para los cuatro controladores que se comparan: lo
 // unico que cambia entre binarios es como se abre la base de datos y como se
@@ -17,18 +17,20 @@ import (
 	"unicode"
 )
 
-// TerminalStatus y ActiveStatus son los dos papeles de estado que la seccion 6
-// de SPEC.md declara. El banco los deja fijos porque el generador crea siempre
-// el mismo vocabulario.
+// TerminalStatus y ActiveStatus son dos de los tres papeles de estado que
+// docs/spec/cmd/config.md declara en su seccion "Las claves" (initial_status,
+// active_status, terminal_status). El banco los deja fijos porque el generador
+// crea siempre el mismo vocabulario.
 const (
 	TerminalStatus = "Done"
 	ActiveStatus   = "In Progress"
 )
 
 // Task es la tarea reducida a los campos que `biso ls` necesita para imprimir
-// sus ocho columnas y para calcular la urgencia. No es el modelo completo de la
-// seccion 5 de SPEC.md a proposito: la primera regla de la seccion 4.13 prohibe
-// leer lo que la invocacion no va a usar.
+// sus ocho columnas y para calcular la urgencia. No es el modelo completo de
+// docs/spec/modelo-de-datos.md a proposito: la primera regla de "El presupuesto
+// de arranque" (docs/spec/presupuestos.md) prohibe leer lo que la invocacion no
+// va a usar.
 type Task struct {
 	ID         int64
 	Title      string
@@ -55,7 +57,8 @@ type Task struct {
 	Urgency float64
 }
 
-// Coefficients son los siete pesos configurables de la seccion 5.4 de SPEC.md.
+// Coefficients son los siete pesos configurables de "La urgencia"
+// (docs/spec/modelo-de-datos.md).
 type Coefficients struct {
 	Priority float64
 	Active   float64
@@ -66,7 +69,7 @@ type Coefficients struct {
 	Age      float64
 }
 
-// DefaultCoefficients devuelve los valores por defecto de la seccion 5.4.
+// DefaultCoefficients devuelve los valores por defecto de "La urgencia".
 func DefaultCoefficients() Coefficients {
 	return Coefficients{
 		Priority: 6.0,
@@ -113,7 +116,7 @@ func priorityWeight(p string) float64 {
 	}
 }
 
-// ComputeUrgency aplica la formula de la seccion 5.4 de SPEC.md.
+// ComputeUrgency aplica la formula de "La urgencia" (docs/spec/modelo-de-datos.md).
 func ComputeUrgency(t *Task, c Coefficients, now time.Time) float64 {
 	if t.Status == TerminalStatus {
 		return 0.0
@@ -141,7 +144,7 @@ func ComputeUrgency(t *Task, c Coefficients, now time.Time) float64 {
 		ageTerm = 0
 	}
 	u += c.Age * ageTerm
-	// Redondeo a un decimal, como manda la seccion 5.4.
+	// Redondeo a un decimal, como manda "La urgencia".
 	return float64(int64(u*10+copySign(0.5, u))) / 10.0
 }
 
@@ -172,7 +175,7 @@ func proximity(due string, now time.Time) float64 {
 	return p
 }
 
-// SortDefault aplica la tupla de orden por defecto de la seccion 10.4: primero
+// SortDefault aplica la tupla de orden por defecto de docs/spec/cmd/ls.md: primero
 // las que tienen `ordinal`, ascendente; entre las que no lo tienen, `urgency`
 // descendente; y cualquier empate por identificador ascendente.
 func SortDefault(tasks []*Task) {
@@ -195,7 +198,7 @@ func SortDefault(tasks []*Task) {
 }
 
 // cellWidth devuelve la anchura en celdas de terminal de una runa, con la regla
-// de la seccion 10.4: las marcas combinantes miden cero, los ideogramas de Asia
+// de docs/spec/cmd/ls.md: las marcas combinantes miden cero, los ideogramas de Asia
 // oriental y los emoji miden dos, y todo lo demas mide una.
 func cellWidth(r rune) int {
 	if unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Me, r) {
@@ -269,7 +272,7 @@ const titleCells = 100
 // Row es una fila ya formateada en sus ocho valores, antes de rellenar anchos.
 type Row [8]string
 
-// BuildRows construye las ocho columnas de la seccion 10.4 para las tareas
+// BuildRows construye las ocho columnas de docs/spec/cmd/ls.md para las tareas
 // dadas, en el orden en que llegan.
 func BuildRows(tasks []*Task) []Row {
 	rows := make([]Row, 0, len(tasks))
@@ -307,7 +310,7 @@ func dash(s string) string {
 }
 
 // Render escribe la tabla con dos espacios entre columnas y las columnas 1 a 7
-// rellenadas al ancho de su valor mas largo, como manda la seccion 10.4.
+// rellenadas al ancho de su valor mas largo, como manda docs/spec/cmd/ls.md.
 func Render(rows []Row, out *strings.Builder) {
 	var widths [8]int
 	for _, r := range rows {

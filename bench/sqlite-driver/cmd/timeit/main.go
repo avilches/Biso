@@ -4,9 +4,9 @@
 // esperar a que termine, y quedarse con la distribucion de los tiempos.
 //
 // Lo que mide incluye el fork y el exec, el arranque del runtime de Go y el
-// trabajo del programa, que es exactamente el "reloj de pared" del que habla la
-// seccion 4.13 de docs/SPEC.md. La salida y los errores del proceso medido se
-// descartan, para no pagar el coste de la tuberia.
+// trabajo del programa, que es exactamente el "reloj de pared" del que habla
+// "El presupuesto de arranque" (docs/spec/presupuestos.md). La salida y los
+// errores del proceso medido se descartan, para no pagar el coste de la tuberia.
 //
 // Uso: timeit -n 200 -warmup 20 -label ls-modernc -- ./bin/ls-modernc board.db
 package main
