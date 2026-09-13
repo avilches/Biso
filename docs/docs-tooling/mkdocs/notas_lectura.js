@@ -57,7 +57,7 @@
       "</div>" +
       '<div class="notas-lectura-field">' +
       "<label>Nota</label>" +
-      '<textarea id="notas-lectura-note" rows="3"></textarea>' +
+      '<textarea id="notas-lectura-note" rows="5"></textarea>' +
       "</div>" +
       '<div class="notas-lectura-actions">' +
       '<button type="button" class="notas-lectura-cancel">Cancelar</button>' +
@@ -81,7 +81,11 @@
       return;
     }
     if (panel.classList.contains("is-open")) {
-      closePanel();
+      hidePanel();
+      return;
+    }
+    if (picked) {
+      showPanel();
       return;
     }
     startPicking();
@@ -160,12 +164,26 @@
     refField.value = buildReference();
     quoteField.value = picked ? collapseWhitespace(picked.textContent) : "";
     noteField.value = "";
+    showPanel();
+  }
+
+  function showPanel() {
     panel.classList.add("is-open");
-    noteField.focus();
+    focusNoteField();
+  }
+
+  function hidePanel() {
+    panel.classList.remove("is-open");
+  }
+
+  function focusNoteField() {
+    window.requestAnimationFrame(function () {
+      noteField.focus();
+    });
   }
 
   function closePanel() {
-    panel.classList.remove("is-open");
+    hidePanel();
     picked = null;
   }
 
