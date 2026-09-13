@@ -95,7 +95,7 @@ body.notas-lectura-picking * {
   color: var(--md-default-fg-color--light);
 }
 
-#notas-lectura-panel .notas-lectura-copy {
+#notas-lectura-panel .notas-lectura-save {
   background: var(--md-primary-fg-color);
   color: var(--md-primary-bg-color);
 }

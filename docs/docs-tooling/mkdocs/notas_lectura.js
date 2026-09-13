@@ -1,17 +1,19 @@
-// Reading-notes button: an element picker (like a browser inspector) that copies a
-// ready-to-paste line for docs/docs-tooling/notas-pendientes.md to the clipboard.
+// Reading-notes button: an element picker (like a browser inspector) that saves a
+// ready-to-process line to notas-pendientes.md, at the repository root, through the
+// /__notas_lectura__/save endpoint that notas_lectura.py adds to the dev server.
 // Injected only during `mkdocs serve` by notas_lectura.py; never ships in `mkdocs build`.
 (function () {
   "use strict";
 
   var BLOCK_SELECTOR =
     "p, li, h1, h2, h3, h4, h5, h6, pre, blockquote, table, img, dt, dd";
+  var SAVE_PATH = "/__notas_lectura__/save";
 
   var picking = false;
   var highlighted = null;
   var picked = null;
 
-  var button, overlay, panel, refField, quoteField, noteField, copyButton;
+  var button, overlay, panel, refField, quoteField, noteField, saveButton;
 
   function init() {
     if (document.getElementById("notas-lectura-button")) {
@@ -59,16 +61,16 @@
       "</div>" +
       '<div class="notas-lectura-actions">' +
       '<button type="button" class="notas-lectura-cancel">Cancelar</button>' +
-      '<button type="button" class="notas-lectura-copy">Copiar</button>' +
+      '<button type="button" class="notas-lectura-save">Guardar</button>' +
       "</div>";
 
     refField = el.querySelector("#notas-lectura-ref");
     quoteField = el.querySelector("#notas-lectura-quote");
     noteField = el.querySelector("#notas-lectura-note");
-    copyButton = el.querySelector(".notas-lectura-copy");
+    saveButton = el.querySelector(".notas-lectura-save");
 
     el.querySelector(".notas-lectura-cancel").addEventListener("click", closePanel);
-    copyButton.addEventListener("click", copyNote);
+    saveButton.addEventListener("click", saveNote);
 
     return el;
   }
@@ -184,21 +186,39 @@
     return text.replace(/\s+/g, " ").trim();
   }
 
-  function copyNote() {
+  function saveNote() {
     var line = buildLine();
-    var original = copyButton.textContent;
-    navigator.clipboard.writeText(line).then(
-      function () {
-        copyButton.textContent = "Copiado";
+    var original = saveButton.textContent;
+
+    fetch(SAVE_PATH, { method: "POST", body: line })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("save failed with status " + response.status);
+        }
+        saveButton.textContent = "Guardado";
         setTimeout(function () {
-          copyButton.textContent = original;
+          saveButton.textContent = original;
           closePanel();
         }, 900);
+      })
+      .catch(function () {
+        copyToClipboardAsFallback(line, original);
+      });
+  }
+
+  function copyToClipboardAsFallback(line, original) {
+    navigator.clipboard.writeText(line).then(
+      function () {
+        saveButton.textContent = "No se pudo guardar, copiado";
+        setTimeout(function () {
+          saveButton.textContent = original;
+          closePanel();
+        }, 1800);
       },
       function () {
-        copyButton.textContent = "Error al copiar";
+        saveButton.textContent = "Error al guardar";
         setTimeout(function () {
-          copyButton.textContent = original;
+          saveButton.textContent = original;
         }, 1500);
       }
     );
