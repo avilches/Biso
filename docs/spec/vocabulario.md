@@ -14,9 +14,9 @@
 | **pregunta abierta**, aparcada | Lo que detiene una tarea a la espera de una persona. No es un estado | `question`, `waiting` |
 | **archivada** | Fuera del tablero activo sin perder nada. No es un estado | `archived` |
 | **bloqueada** | Depende de alguna tarea sin terminar. Solo dependencias, nunca personas | `blocked` |
-| **persona** | Quien encarga y quien responde | |
+| **persona** | Quien encarga y quien responde. No es un campo, sino el tipo de valor que llevan estos campos | `assignees`, `author`, y el `author` de un comentario o de la pregunta |
 | **agente** | El programa automático que coge tareas y las hace | |
-| **criterio** | Un elemento de las dos listas de comprobación | `acceptanceCriteria`, `definitionOfDone` |
+| **criterio** | Un elemento de las dos listas de comprobación: `acceptanceCriteria` comprueba que el trabajo hace lo que se pidió, `definitionOfDone` que la tarea cumple lo necesario para poder cerrarse | `acceptanceCriteria`, `definitionOfDone` |
 | **comentario** | Una entrada del histórico cuyo cuerpo y autor no se editan nunca, aunque su fecha se pueda corregir o el comentario entero se pueda borrar | `comments` |
 
 Estas palabras quedan restringidas por las reglas de abajo, y conviene decir a qué en vez de

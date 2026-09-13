@@ -34,16 +34,20 @@ Las reglas que acompañan a la tabla:
   siempre dice cuál de las dos ha ocurrido.
 - **El código 1 es un fallo del programa, no de quien llama.** La reacción correcta es informar, no
   reintentar con otros parámetros.
-- **Los códigos 20, 21 y 22 son los tres desenlaces malos de resolver el tablero, y son tres porque el
-  remedio de cada uno es otro.** Con el 20 no hay tablero y `biso init` lo crea; con el 21 el tablero
-  está ahí y hay que reconstruirlo desde una instantánea con `biso init --from`, que es lo único que lo
-  arregla; con el 22 hay dos y hay que quitar o renombrar uno de los dos directorios a mano. Por eso el
-  daño del almacén no comparte número con la ausencia de tablero, aunque para quien llama las tres
-  frases empiecen igual: quien ramifica sobre el número tiene que poder elegir el remedio sin leer el
-  mensaje, que es el principio de la sección ["Los principios"](principios.md). **Ni el 21 ni el 22 aparecen en la tabla de códigos de
-  salida de cada comando**, porque no son desenlaces propios de ninguno sino del tablero entero, igual
-  que el 1. La excepción es `biso where`, que existe justamente para explicar la resolución y los lleva
-  los dos en su tabla (["`biso where`"](cmd/where.md)).
+- **Los códigos 20, 21 y 22 son los tres desenlaces malos de resolver el tablero, y cada uno tiene un
+  remedio distinto**:
+    - **20.** No hay ningún tablero accesible. El remedio es `biso init`, que crea uno.
+    - **21.** El tablero está donde tiene que estar, pero su almacén no se puede leer. El único remedio
+      es reconstruirlo desde una instantánea con `biso init --from`.
+    - **22.** El mismo identificador de tablero aparece en dos sitios. El remedio es a mano: quitar o
+      renombrar uno de los dos directorios.
+
+  Cada desenlace tiene su propio código, en vez de compartir uno, porque quien ramifica sobre el número tiene que poder elegir el remedio
+  sin leer el mensaje, que es el principio de la sección ["Los principios"](principios.md). **Ni el 21
+  ni el 22 aparecen en la tabla de códigos de salida de cada comando**, porque no son desenlaces propios
+  de ninguno sino del tablero entero, igual que el 1. La excepción es `biso where`, que existe
+  justamente para explicar la resolución y los lleva los dos en su tabla
+  (["`biso where`"](cmd/where.md)).
 
 ---
 

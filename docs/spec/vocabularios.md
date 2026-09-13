@@ -33,8 +33,8 @@ Con este algoritmo, y para un tablero cuyo estado es `To Do`:
 | `To-Do` | `todo` | coincide |
 | `TO_DO` | `todo` | coincide |
 | `to  do` | `todo` | coincide |
-| `Pending` | `pending` | error 3 |
-| `Todos` | `todos` | error 3 |
+| `To Do.` | `todo.` | error 3 |
+| `To.Do` | `to.do` | error 3 |
 
 **No hay coincidencia por prefijo ni por parecido.**
 

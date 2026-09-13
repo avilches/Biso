@@ -3,23 +3,33 @@
 Valen para todos los comandos, se pueden escribir antes o después del nombre del comando, y ningún
 comando puede redefinir ninguno de ellos ni cambiar su significado.
 
-| Flag | Corta | Tipo | Por defecto | Qué hace |
+Flags con valor:
+
+| Flag | Corta | Valores | Por defecto | Qué hace |
 |---|---|---|---|---|
-| `--cwd <path>` | `-C` | ruta | el directorio actual | Resuelve el tablero desde ahí, sin cambiar el directorio del proceso |
-| `--json` | | booleano | falso | Toda la salida de datos es JSON, en el sobre de la sección ["El sobre"](../contrato-json.md#el-sobre) |
-| `--quiet` | `-q` | booleano | falso | Reduce la salida a lo mínimo. Ver más abajo |
-| `--print` | | booleano | falso | Después de escribir, imprime la ficha completa de cada tarea afectada |
+| `--cwd <path>` | `-C` | una ruta | el directorio actual | Resuelve el tablero desde ahí, sin cambiar el directorio del proceso |
 | `--color <when>` | | `auto`, `always`, `never` | `auto` | Control de los códigos de color |
-| `--dry-run` | | booleano | falso | Valida todo, no escribe nada. Sale 0 si habría funcionado y 7 si no |
-| `--version` | `-V` | booleano | | Imprime `biso 1.0.0` y sale con 0 |
-| `--help` | `-h` | booleano | | Imprime la ayuda del comando y sale con 0 |
+
+Los flags que siguen no llevan valor: ponerlos lo activa, y no ponerlos lo deja como está.
+`--json`, `--quiet`, `--print` y `--dry-run` activan un modo mientras están puestos, y ese modo está
+desactivado si no se ponen. `--version` y `--help` no son un modo: son una acción que imprime algo y
+termina el programa con código 0 en cuanto se lee, sin más.
+
+| Flag | Corta | Qué hace |
+|---|---|---|
+| `--json` | | Toda la salida de datos es JSON, en el sobre de la sección ["El sobre"](../contrato-json.md#el-sobre) |
+| `--quiet` | `-q` | Reduce la salida a lo mínimo. Ver más abajo |
+| `--print` | | Después de escribir, imprime la ficha completa de cada tarea afectada |
+| `--dry-run` | | Valida todo, no escribe nada. Sale 0 si habría funcionado y 7 si no |
+| `--version` | `-V` | Imprime `biso 1.0.0` y sale con 0 |
+| `--help` | `-h` | Imprime la ayuda del comando y sale con 0 |
 
 Reglas de aplicación, que hay que implementar tal cual:
 
-- **Ninguno de los dos se ignora nunca en silencio**, y los dos son error de uso con código 2 allí
-  donde no tienen nada que hacer. Lo que cambia es dónde es eso, porque cada uno está definido sobre
-  una cosa distinta: `--print` sobre las tareas que una escritura afecta, y `--dry-run` sobre la
-  validación que precede a una escritura.
+- **`--print` y `--dry-run` no se ignoran nunca en silencio: allí donde no tienen nada que hacer, los
+  dos son error de uso con código 2.** Lo que cambia entre ellos es dónde es eso, porque cada uno está
+  definido sobre una cosa distinta: `--print` sobre las tareas que una escritura afecta, y `--dry-run`
+  sobre la validación que precede a una escritura.
 - **`--dry-run` es error 2 en los comandos de lectura.** En `prime`, `where`, `ls`, `get`, `export`,
   `snapshot`, `config get`, `config list`, `board`, `help` y `biso doctor` sin `--fix`, con el mensaje
   `error: --dry-run does not apply to a read-only command`. `biso doctor --fix` es la excepción: con

@@ -1,7 +1,9 @@
 # Los campos externos
 
-`ext` es un `map<string,string>` de clave a texto para guardar la identidad de una tarea en otro
-sistema. La regla es la siguiente:
+`ext` es un `map<string,string>` de clave a texto para guardar cualquier valor que el usuario quiera
+asociar a la tarea, bajo una clave elegida por él. Guardar la identidad de la tarea en otro sistema,
+como una tarjeta de Trello, es un ejemplo de uso, no la definición del campo. La regla es la
+siguiente:
 
 - El tablero **declara** en su configuración qué claves admite, en la lista `extensions`.
 - Escribir una clave declarada funciona: `biso set MYP-1 --ext trello.card=5f2a8c1e3b9d4a7f`.

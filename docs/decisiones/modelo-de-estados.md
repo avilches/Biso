@@ -34,14 +34,16 @@ vez en el estado activo, así que nunca queda en el conjunto de "asignada y sin 
 importa.
 
 **Lo que esta decisión cuesta, para que no se descubra por sorpresa.** El caso de uso que motivó el
-requisito era arrastrar una tarjeta desde el móvil para que un agente se ponga con una tarea. Con la
-asignación como encargo, el gesto pasa a ser asignar a un miembro, que sigue siendo viable desde un
-móvil pero ya no es un arrastre, así que la frase que describía el caso de uso queda anticuada y no
-describe ya la herramienta. Cuando se especifique la sincronización con un sistema externo, mover una
-tarjeta de columna en ese sistema no significará nada para `biso`, y esa decisión hay que tomarla
-entonces a propósito, no por sorpresa. Y no hay forma de decir "esto es tuyo, pero todavía no": con la
-asignación como única señal, asignar autoriza a empezar de inmediato, y quien necesite esa espera tiene
-que no asignar hasta que toque, o usar una fecha límite.
+requisito venía de un proyecto en el que Backlog.md se sincronizaba con Trello, y Trello hacía de
+interfaz en el móvil: ahí se arrastraba la tarjeta de una columna a otra y el cambio llegaba al
+tablero. `biso` no tiene arrastre ni columnas que mover, así que ese gesto no existe aquí. Con la
+asignación como encargo, el gesto equivalente es asignar la tarea a un agente, que sigue siendo viable
+desde el móvil pero es un gesto distinto: nombrar a alguien, no desplazar nada. Cuando se especifique
+la sincronización con un sistema externo como Trello, mover una tarjeta de columna en ese sistema no
+significará nada para `biso` por sí mismo, y esa correspondencia habrá que definirla entonces a
+propósito, no por sorpresa. Y no hay forma de decir "esto es tuyo, pero todavía no": con la asignación
+como única señal, asignar autoriza a empezar de inmediato, y quien necesite esa espera tiene que no
+asignar hasta que toque, o usar una fecha límite.
 
 ### Saber si alguien está trabajando de verdad
 

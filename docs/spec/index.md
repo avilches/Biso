@@ -38,9 +38,6 @@ el programa, no prosa de la especificación.
 
 ## Por dónde empezar y en qué orden
 
-El orden de la barra lateral no es alfabético: cada parte presupone la anterior, así que conviene
-leerlas en ese orden la primera vez y usarlas como referencia suelta las siguientes.
-
 ### Los fundamentos, antes que cualquier regla concreta
 
 [Vocabulario de esta especificación](vocabulario.md)
@@ -84,7 +81,7 @@ ellas, y ninguno lo hace salvo donde se diga.
 [Los comandos](cmd/index.md) explica cómo se agrupan y cuáles
 aparecen en `biso --help` frente a `biso help all`. El primero de la lista es [`biso prime`](cmd/prime.md),
 el comando con el que arranca una sesión y que resume el estado del tablero; el resto de los comandos
-sigue después, en el orden de la barra lateral.
+sigue después, en el orden de esa página.
 
 ### Al final, los contratos y lo que falta
 

@@ -13,22 +13,24 @@ con las claves declaradas de antemano, direccionables por su clave). Los campos 
 propia usan tipos con nombre, cada uno definido en su propia página: `list<Criterion>`,
 `list<Comment>` y `Question` (esta última con un único valor, nunca una lista).
 
-**¿Tiene fecha y autor propios, y se puede señalar uno a uno?** Solo se aplica a los tipos con
-nombre, y cada uno lo contesta en su propia página: ["Los criterios y sus claves
+**¿Tiene fecha y autor propios, y una clave estable para señalar un elemento suyo dentro de una
+lista?** Esa pregunta solo tiene sentido para los tipos con nombre, es decir, los que tienen
+estructura propia en vez de ser un valor simple como `string` o `list<string>`: `Criterion`,
+`Comment` y `Question`. Cada uno la contesta en su propia página: ["Los criterios y sus claves
 estables"](criterios.md) para `Criterion`, ["Los comentarios"](comentarios.md) para `Comment`,
 ["La pregunta abierta"](pregunta-abierta.md) para `Question`. Ningún otro tipo tiene fecha ni autor
 propios.
 
 ## Campos automáticos
 
-| Campo | Tipo | Obligatorio | Mutable |
+| Campo | Tipo | Nullable | Mutable |
 |---|---|---|---|
-| `id` | `string` (`PREFIX-<n>`) | sí | no |
-| `createdAt` | `date` (instante UTC, precisión de segundo) | sí | solo al importar |
-| `updatedAt` | `date` (instante UTC, precisión de segundo) | sí | solo al importar |
-| `archived` | `bool` | sí, `false` por defecto | sí, solo con `biso archive` / `--unarchive`, o al importar |
-| `leaseExpiresAt` | `date` (instante UTC) | no | sí, ver [`lease.md`](../lease.md), o al importar |
-| `leaseHolder` | `string` (texto de persona) | no | sí, solo con esos dos, o al importar; ver [`lease.md`](../lease.md) |
+| `id` | `string` (`PREFIX-<n>`) | no | no |
+| `createdAt` | `date` (instante UTC, precisión de segundo) | no | solo al importar |
+| `updatedAt` | `date` (instante UTC, precisión de segundo) | no | solo al importar |
+| `archived` | `bool` | no, `false` por defecto | sí, solo con `biso archive` / `--unarchive`, o al importar |
+| `leaseExpiresAt` | `date` (instante UTC) | sí | sí, ver [`lease.md`](../lease.md), o al importar |
+| `leaseHolder` | `string` (texto de persona) | sí | sí, solo con esos dos, o al importar; ver [`lease.md`](../lease.md) |
 
 Precisiones:
 
@@ -44,31 +46,31 @@ Precisiones:
 
 ## Campos fijados por el usuario
 
-| Campo | Tipo | Obligatorio | Mutable |
-|---|---|---|---|
-| `title` | `string` | sí | sí |
-| `status` | `enum(...)`, configurable (ver `statuses` en [`biso config`](../cmd/config.md)) | sí | sí |
-| `type` | `enum(...)`, configurable (ver `types` en [`biso config`](../cmd/config.md)) | no | sí |
-| `priority` | `enum(...)`, configurable (ver `priorities` en [`biso config`](../cmd/config.md)) | no | sí |
-| `parent` | `string` (referencia a otra tarea) | no | sí |
-| `assignees` | `list<string>` (textos de persona) | no | sí |
-| `author` | `string` (texto de persona); ver ["El autor de una tarea"](autor.md) | no | sí |
-| `labels` | `list<string>` | no | sí |
-| `dependencies` | `list<string>` (referencias a tareas) | no | sí |
-| `references` | `list<string>` | no | sí |
-| `documentation` | `list<string>` | no | sí |
-| `modifiedFiles` | `list<string>` | no | sí |
-| `due` | `date` (`YYYY-MM-DD`) | no | sí |
-| `ordinal` | `int` (>= 0) | no | sí |
-| `ext` | `map<string,string>` | no | sí |
-| `description` | `text` | no | sí |
-| `plan` | `text` | no | sí |
-| `notes` | `text` | no | sí |
-| `summary` | `text` | no | sí |
-| `acceptanceCriteria` | `list<Criterion>`; ver ["Los criterios y sus claves estables"](criterios.md) | no | sí |
-| `definitionOfDone` | `list<Criterion>`; ver ["Los criterios y sus claves estables"](criterios.md) | no | sí |
-| `comments` | `list<Comment>`; ver ["Los comentarios"](comentarios.md) | no | se añade, se borra entero, o se corrige solo la fecha; nunca se edita el cuerpo ni el autor |
-| `question` | `Question`; ver ["La pregunta abierta"](pregunta-abierta.md) | no | sí, solo con `biso ask`, `biso answer`, o al importar |
+| Campo | Tipo | Notas |
+|---|---|---|
+| `title` | `string` | obligatorio |
+| `status` | `enum(...)`, configurable (ver `statuses` en [`biso config`](../cmd/config.md)) | obligatorio |
+| `type` | `enum(...)`, configurable (ver `types` en [`biso config`](../cmd/config.md)) | |
+| `priority` | `enum(...)`, configurable (ver `priorities` en [`biso config`](../cmd/config.md)) | |
+| `parent` | `string` (referencia a otra tarea) | |
+| `assignees` | `list<string>` (textos de persona) | |
+| `author` | `string` (texto de persona); ver ["El autor de una tarea"](autor.md) | |
+| `labels` | `list<string>` | |
+| `dependencies` | `list<string>` (referencias a tareas) | |
+| `references` | `list<string>` | |
+| `documentation` | `list<string>` | |
+| `modifiedFiles` | `list<string>` | |
+| `due` | `date` (`YYYY-MM-DD`) | |
+| `ordinal` | `int` (>= 0) | |
+| `ext` | `map<string,string>` | |
+| `description` | `text` | |
+| `plan` | `text` | |
+| `notes` | `text` | |
+| `summary` | `text` | |
+| `acceptanceCriteria` | `list<Criterion>`; ver ["Los criterios y sus claves estables"](criterios.md) | |
+| `definitionOfDone` | `list<Criterion>`; ver ["Los criterios y sus claves estables"](criterios.md) | |
+| `comments` | `list<Comment>`; ver ["Los comentarios"](comentarios.md) | se añade, se borra entero, o se corrige solo la fecha; nunca se edita el cuerpo ni el autor |
+| `question` | `Question`; ver ["La pregunta abierta"](pregunta-abierta.md) | solo se cambia con `biso ask`, `biso answer`, o al importar |
 
 Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 
@@ -103,7 +105,8 @@ demás páginas remiten a ella.
 
 ## Precisiones generales sobre la mutabilidad
 
-- **"No mutable" significa que ningún flag del programa lo cambia.** `updatedAt` lo reescribe el
-  programa en cada operación que cambie algo.
+- **"No mutable" significa que ningún flag del programa lo cambia**, como pasa con `id` en la tabla
+  de Campos automáticos. `updatedAt` lo reescribe el programa en cada operación que cambie algo,
+  aunque ningún flag lo controle.
 - **Se pueden fijar fechas solo al importar**, es decir, en `biso new --from`; los detalles completos
   están en ["Las fechas"](fechas.md).

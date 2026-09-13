@@ -18,10 +18,12 @@ demás, y un `Comment` se direcciona siempre por su `key`, nunca por su posició
 existe en este tablero, y un sistema externo puede usar su propia convención, por ejemplo
 `@trello:juan`.
 
-**Los comentarios se guardan y se muestran en orden de inserción, no en orden de `createdAt`.** El
-instante de cada uno sigue diciendo la verdad sobre cuándo se escribió, aunque la lista completa no
-quede ordenada por él: `biso answer` añade al final un comentario con un instante pasado, el de la
-pregunta que responde.
+**Los comentarios se guardan y se muestran en el orden en que se crean, no en el de `createdAt`.**
+Cada comentario nuevo se añade al final de la lista, y ese es el orden en que se listan siempre.
+Corregir la fecha de un comentario con `--set-comment-date` no lo mueve de sitio, aunque la fecha
+nueva sea futura: sigue apareciendo donde estaba. El instante de cada uno sigue diciendo la verdad
+sobre cuándo se escribió, aunque la lista completa no quede ordenada por él: `biso answer` añade al
+final un comentario con un instante pasado, el de la pregunta que responde.
 
 **El cuerpo y el autor de un comentario no se editan nunca, por ninguna vía.** Un comentario es el
 registro de una conversación, y lo que se dijo no se reescribe. Lo que sí se puede corregir, con los

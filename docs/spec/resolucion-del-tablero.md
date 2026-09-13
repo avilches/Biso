@@ -1,18 +1,58 @@
 # Cómo se elige el tablero
 
+## Cómo nace un tablero
+
+Un tablero nace con `biso init` (sección ["`biso init`"](cmd/init.md)): crea el tablero, que vive en
+un directorio propio, normalmente fuera del proyecto salvo que se pida lo contrario con `--at`, y
+escribe en el proyecto un puntero que dice a qué tablero pertenece. Esta página explica ese puntero
+y cómo cualquier comando posterior vuelve a encontrar el tablero a partir de él; los flags de `init`,
+sus mensajes y sus casos límite están en su propia página.
+
+```
+/Users/avilches/Hub/Projects/My project/
+└── .biso.json
+
+/Users/avilches/.biso/boards/
+└── my-project-3f9a2b1c/
+    ├── board.db
+    └── 3f9a2b1c.id
+```
+
+El puntero, `.biso.json`, se queda en el proyecto y se versiona con él. El tablero, con su base de
+datos `board.db` y su marcador `3f9a2b1c.id`, vive en la raíz por defecto de la máquina porque este
+`init` no llevaba `--at`.
+
+## Cómo se busca el tablero
+
+### El orden de búsqueda
+
 Un proyecto tiene un tablero, y el programa lo encuentra por este orden. Gana el primero que exista:
 
 1. **El directorio de trabajo, cuando es el directorio de un tablero.** Se reconoce porque contiene
    el fichero `board.db`, y entonces el tablero es ese y no se busca nada más.
 2. **El puntero del proyecto**, que es una marca que `biso init` deja en el proyecto y que dice qué
-   tablero le corresponde. Se busca en el directorio de trabajo y en sus ancestros, con el tope de la
-   regla que cierra esta lista.
+   tablero le corresponde. Se busca en el directorio de trabajo y en sus ancestros, con el tope que
+   se explica más abajo en esta misma sección.
 
 **Las dos parten del directorio de trabajo**, que es el directorio actual salvo que el flag global
 `-C` o la variable `BISO_CWD` digan otro (sección ["Flags globales"](cmd/flags-globales.md#flags-globales)). Por eso `-C` es lo único que hace falta para
 trabajar contra otro tablero sin moverse: apuntando al directorio de un tablero se llega por la
 primera vía, y apuntando a un proyecto cualquiera se llega por la segunda, al tablero que ese
 proyecto tenga.
+
+Esto es lo que hace la segunda vía cuando se llama desde un subdirectorio del proyecto: sube por los
+ancestros hasta encontrar el puntero.
+
+```
+/Users/avilches/Hub/Projects/My project/
+├── .biso.json
+└── src/
+    └── cli/          <- biso se ejecuta aquí
+```
+
+Desde `src/cli/` no hay ni `board.db` ni `.biso.json`, así que la búsqueda sube: `src/` tampoco lo
+tiene, y `My project/` sí. Ahí encuentra el puntero y resuelve el tablero que nombra, sin que importe
+desde qué subdirectorio se haya llamado.
 
 **La raíz por defecto de la máquina** (sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina)) no es una vía más de esta lista: es el
 directorio donde `biso init` sin `--at` crea los tableros nuevos. Volver a encontrar un tablero ya
@@ -36,19 +76,42 @@ ya está señalado con el dedo, y un tablero al que le falte el marcador tiene q
 precisamente para que `biso doctor --fix` se lo devuelva (["`biso doctor`"](cmd/doctor.md#qué-comprueba)). Exigirlo también aquí dejaría sin
 arreglo el único estado que ese arreglo existe para arreglar.
 
+### El tope de la búsqueda hacia arriba
+
 **El tope de la búsqueda hacia arriba es el directorio personal de quien llama**, el que dice la
 variable `HOME`, cuando el directorio de trabajo está dentro de él: el recorrido comprueba ese
-directorio y no sube más, sea cual sea su ruta. Desde `/Users/avilches/Hub/Projects/Biso/src` sube
-hasta `/Users/avilches` y para ahí, sin llegar a `/Users` ni a la raíz, y con un directorio personal
-en `/root` pararía en `/root`.
+directorio y no sube más, sea cual sea su ruta.
+
+```
+/Users/avilches/                     <- HOME: aquí para la búsqueda
+└── Hub/
+    └── Projects/
+        └── Biso/
+            └── src/                 <- biso se ejecuta aquí
+```
+
+Desde `/Users/avilches/Hub/Projects/Biso/src` la búsqueda sube por `Biso/`, `Projects/` y `Hub/` y
+para en `/Users/avilches`, sin llegar a `/Users` ni a la raíz. Si ninguno de esos directorios tiene el
+puntero, el resultado es el mensaje de la subsección ["Cuando no hay tablero que encontrar"](#cuando-no-hay-tablero-que-encontrar). Con un directorio
+personal en `/root` el recorrido pararía en `/root`.
 
 **Cuando el directorio de trabajo cae fuera del directorio personal**, o cuando `HOME` no está
-definido, el tope es el segundo componente de la ruta, de modo que desde `/Volumes/disco/proyecto` para
-en `/Volumes/disco` y desde `/opt/proyecto/src` para en `/opt/proyecto`. Es el mismo criterio de la
-regla de arriba aplicado donde no hay directorio personal que lo exprese: no salir del área de trabajo
-de quien llama. El número no sale de contar niveles por costumbre, sino de que el primer componente de
-una ruta absoluta es siempre un directorio del sistema o el contenedor de los directorios personales de
-todo el mundo, y un puntero ahí no puede estar a propósito, solo por accidente.
+definido, el tope es el segundo componente de la ruta:
+
+```
+/Volumes/disco/                      <- tope de la búsqueda
+└── proyecto/
+    └── ...                          <- biso se ejecuta en algún punto de aquí
+```
+
+Desde `/Volumes/disco/proyecto` la búsqueda para en `/Volumes/disco`, y desde `/opt/proyecto/src`
+pararía en `/opt/proyecto`. Es el mismo criterio de la regla de arriba aplicado donde no hay directorio
+personal que lo exprese: no salir del área de trabajo de quien llama. El número no sale de contar
+niveles por costumbre, sino de que el primer componente de una ruta absoluta es siempre un directorio
+del sistema o el contenedor de los directorios personales de todo el mundo, y un puntero ahí no puede
+estar a propósito, solo por accidente.
+
+### La independencia del control de versiones
 
 **Nada en esta búsqueda depende del control de versiones.** No se busca la raíz de ningún repositorio,
 no se para al encontrar la marca de uno, y no se ejecuta ningún programa para preguntarlo. La razón es
@@ -59,6 +122,8 @@ crea el repositorio del tablero la primera vez que se ejecuta, de modo que el mi
 sitio respondería una cosa antes y otra después. El precio de no tener ese freno es que un proyecto sin puntero propio hereda el del
 proyecto que lo contenga, si lo hay, y se acepta a propósito: la sección ["La decisión de persistencia"](../decisiones/persistencia.md#la-decisión-de-persistencia) dice por
 qué, y `biso where` enseña siempre de qué directorio salió el puntero que ha resuelto.
+
+### Cuando no hay tablero que encontrar
 
 Si nada de eso existe, cualquier comando salvo `init`, `where`, `help`, `--help` y `--version` aborta
 antes de ejecutar su propia lógica, con código 20 y este mensaje por stderr:
@@ -71,6 +136,10 @@ hint: `biso init` creates one, `biso where` explains what was searched
 Los cinco exentos no abortan así: `init`, `help`, `--help` y `--version` no necesitan tablero para
 hacer su trabajo, y `biso where` lo necesita pero lo comprueba por su cuenta, con su propio mensaje y
 su propio código 20 cuando no lo encuentra (sección ["`biso where`"](cmd/where.md)).
+
+## El puntero del proyecto
+
+### El fichero `.biso.json` y sus claves
 
 **El puntero** es el fichero `.biso.json` que `biso init` escribe en el directorio desde el que se le
 llama, que es la raíz del proyecto en el uso normal, y que se versiona con el proyecto. Nada obliga a
@@ -85,14 +154,19 @@ claves:
 | `path` | ruta del directorio del tablero, absoluta o relativa | no | solo cuando el tablero no vive en una de las raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina) |
 
 Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
-tablero sin ningún paso adicional. Estas reglas gobiernan su lectura:
+tablero sin ningún paso adicional.
+
+### Cómo se lee el puntero
+
+Estas reglas gobiernan la lectura del puntero:
 
 - Una clave desconocida en el puntero es un error.
 - **`path` nombra el directorio del tablero, no el directorio que lo contiene.** Es la ruta que se
   abre, sin concatenarle nada.
 - **Una `path` relativa se resuelve respecto al directorio que contiene el fichero puntero**, nunca
   respecto al directorio de trabajo. El motivo es el principio de que ningún comportamiento depende de
-  dónde se ejecute el programa (sección ["Los principios"](principios.md)): con la búsqueda hacia arriba de esta misma sección, el
+  dónde se ejecute el programa (sección ["Los principios"](principios.md)): con la búsqueda por ancestros explicada más arriba, en
+  ["Cómo se busca el tablero"](#cómo-se-busca-el-tablero), el
   puntero se encuentra desde cualquier subdirectorio del proyecto, así que resolver contra el
   directorio de trabajo haría que el mismo puntero nombrara tableros distintos según desde qué
   subdirectorio se llamara. Una `path` que empiece por `~/` se expande al directorio personal de quien
@@ -117,30 +191,13 @@ tablero sin ningún paso adicional. Estas reglas gobiernan su lectura:
 - **Cómo se busca cuando el `path` no resuelve, o cuando no hay `path`**: se recorren la raíz por
   defecto y después las raíces adicionales (sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina)), en ese orden, mirando en cada carpeta si
   contiene el marcador `<id>.id`. Y una `path` relativa que no resuelve en el directorio del puntero se
-  prueba, tal cual, contra cada uno de sus ancestros hasta el mismo tope que cierra esta sección. Ese
+  prueba, tal cual, contra cada uno de sus ancestros hasta el mismo tope explicado antes, en
+  ["Cómo se busca el tablero"](#cómo-se-busca-el-tablero). Ese
   último paso es el que hace que un tablero que vive dentro del proyecto se siga encontrando desde una
   copia de trabajo que no lo tiene, como un worktree de git, donde el puntero está versionado y el
   directorio del tablero no.
 
-**Si el mismo `id` aparece en dos sitios, es un error** que nombra los dos directorios y no elige
-ninguno, porque elegir sería escribir en un tablero que quien llama no ha nombrado, y dos almacenes con
-la misma identidad es exactamente lo que esta persistencia no admite. Sale con **código 22**
-(`AMBIGUOUS_BOARD`, sección ["Códigos de salida"](codigos-de-salida.md)), con la clave `code` `ambiguous_board_id`, y con este mensaje por stderr:
-
-```
-error: board 3f9a2b1c is in two places, and biso will not choose between them
-        /Users/avilches/.biso/boards/my-project-3f9a2b1c
-        /Volumes/work/boards/my-project-3f9a2b1c
-hint: rename or remove one of the two directories
-```
-
-Tiene su propio código de salida y no el 20 porque su remedio no se parece a los otros dos: aquí no
-falta un tablero que `biso init` pueda crear, sobra uno que solo una persona puede decidir cuál es. El
-error lo da cualquier comando que tenga que resolver el tablero, y también `biso init`, que recorre las
-mismas raíces para comprobar que el `id` que va a acuñar o a adoptar no exista ya (["`biso init`"](cmd/init.md)). **`biso
-doctor` no lo comprueba**, y no es un olvido: para llegar a ejecutarse, `doctor` necesita un tablero
-resuelto, así que en un tablero duplicado aborta con este mismo error antes de comprobar nada, igual
-que hace con la base de datos ilegible de la sección ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar).
+### Cómo se deriva el nombre de la carpeta
 
 **El `<slug>` del nombre de la carpeta se deriva de `project_name`, nunca es el nombre literal**:
 `project_name` es texto libre, y copiarlo tal cual metería espacios y mayúsculas en una ruta que
@@ -158,25 +215,24 @@ resolviendo aunque alguien renombre la carpeta o mueva el tablero a otra raíz, 
 con el tablero y no con su nombre; y que cambiar el nombre de un tablero no toque el sistema de ficheros
 en absoluto (["`biso config`"](cmd/config.md)).
 
-**El único caso que sigue pidiendo una corrección a mano** es mover o renombrar a mano el directorio de
-un tablero que vive fuera de las raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina), porque entonces su `path` deja de resolver y
-no hay ninguna raíz que recorrer para encontrarlo. Se arregla con `biso init --at <ruta nueva>`, que
-reescribe el puntero adoptando el `id` que ya lleva (["`biso init`"](cmd/init.md)).
-
 **El slug y el `task_prefix` arrancan del mismo `project_name` pero fallan por motivos distintos, y
 hay que comprobar los dos.** `"2026"` da un slug válido, `2026`, pero no da ningún prefijo, porque no
 le queda ninguna letra ASCII (sección ["Identificador de tarea"](modelo-de-datos/identificadores.md#identificador-de-tarea)); `"///"` da un slug vacío y también un prefijo vacío. Que
 una de las dos derivaciones salga bien no dice nada de la otra, así que ninguna de las dos
 comprobaciones sustituye a la otra.
 
+### Cómo `biso init` genera el id y escribe el puntero
+
 `biso init` genera el `id` de la fuente de números aleatorios del sistema, comprobando que no exista ya
 en ninguna de las raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina), que es una lectura de directorio por raíz, y escribe el
 puntero siempre que no exista ya uno: sin `--at`, con el tablero en la raíz por defecto y **sin clave
 `path`**, porque ahí lo encuentra la búsqueda por marcador; con `--at`, con el tablero donde se le diga
 y esa ruta en `path` (sección ["`biso init`"](cmd/init.md)). Cuando ya existe un puntero sin tablero aquí, la excepción es la de
-más abajo: adopta el `id` que ya lleva en vez de generar uno nuevo, y no reescribe el puntero. `biso
+la subsección ["El puntero nombra un tablero que no está en esta máquina"](#el-puntero-nombra-un-tablero-que-no-está-en-esta-máquina): adopta el `id` que ya lleva en vez de generar uno nuevo, y no reescribe el puntero. `biso
 where` dice cuál se ha usado y por qué (sección ["`biso where`"](cmd/where.md)). No hay ningún caso en el que haya que escribirlo
 a mano.
+
+### La ruta relativa o absoluta
 
 **La forma de la `path` la elige quien llama, con la forma que le da a `--at`** (sección ["`biso init`"](cmd/init.md)), y las dos
 sobreviven a cosas distintas. La relativa sobrevive a que el proyecto entero se mueva de sitio con su
@@ -192,14 +248,54 @@ arriba y la ruta relativa funciona. Cuando el worktree vive fuera del proyecto, 
 lo contenga y la relativa no puede resolver: ahí hace falta la absoluta, y por eso la elección no puede
 ser del programa.
 
-**Dos proyectos distintos pueden apuntar legalmente al mismo tablero.** No hay forma de distinguir "dos
-copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", porque el mecanismo es
-el mismo puntero, y compartir es precisamente para lo que existe.
+**El único caso que sigue pidiendo una corrección a mano** es mover o renombrar a mano el directorio de
+un tablero que vive fuera de las raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina), porque entonces su `path` deja de resolver y
+no hay ninguna raíz que recorrer para encontrarlo. Se arregla con `biso init --at <ruta nueva>`, que
+reescribe el puntero adoptando el `id` que ya lleva (["`biso init`"](cmd/init.md)).
+
+## Casos especiales y errores
+
+### El mismo id en dos sitios
+
+**Si el mismo `id` aparece en dos sitios, es un error** que nombra los dos directorios y no elige
+ninguno, porque elegir sería escribir en un tablero que quien llama no ha nombrado, y dos almacenes con
+la misma identidad es exactamente lo que esta persistencia no admite.
+
+```
+/Users/avilches/.biso/boards/
+└── my-project-3f9a2b1c/
+    ├── board.db
+    └── 3f9a2b1c.id
+
+/Volumes/work/boards/
+└── my-project-3f9a2b1c/
+    ├── board.db
+    └── 3f9a2b1c.id
+```
+
+Sale con **código 22** (`AMBIGUOUS_BOARD`, sección ["Códigos de salida"](codigos-de-salida.md)), con la clave `code` `ambiguous_board_id`, y con este mensaje por stderr:
+
+```
+error: board 3f9a2b1c is in two places, and biso will not choose between them
+        /Users/avilches/.biso/boards/my-project-3f9a2b1c
+        /Volumes/work/boards/my-project-3f9a2b1c
+hint: rename or remove one of the two directories
+```
+
+Tiene su propio código de salida y no el 20 porque su remedio no se parece a los otros dos: aquí no
+falta un tablero que `biso init` pueda crear, sobra uno que solo una persona puede decidir cuál es. El
+error lo da cualquier comando que tenga que resolver el tablero, y también `biso init`, que recorre las
+mismas raíces para comprobar que el `id` que va a acuñar o a adoptar no exista ya (["`biso init`"](cmd/init.md)). **`biso
+doctor` no lo comprueba**, y no es un olvido: para llegar a ejecutarse, `doctor` necesita un tablero
+resuelto, así que en un tablero duplicado aborta con este mismo error antes de comprobar nada, igual
+que hace con la base de datos ilegible de la sección ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar).
+
+### El puntero se pierde
 
 **Si el puntero se pierde** (se borra a mano, o el proyecto se clona sin haberlo commiteado antes), la
 recuperación es explícita, nunca automática, y consiste en una sola cosa: `biso init --at <ruta>` con
 la ruta del directorio del tablero que ya existe, que escribe un puntero nuevo con ese `path`,
-relativa o absoluta según la regla de arriba (sección ["`biso init`"](cmd/init.md)). Es lo único que arregla el proyecto,
+relativa o absoluta según la regla de la subsección ["La ruta relativa o absoluta"](#la-ruta-relativa-o-absoluta) (sección ["`biso init`"](cmd/init.md)). Es lo único que arregla el proyecto,
 porque es lo único que deja el puntero otra vez donde lo ven todos sus subdirectorios y todas sus
 copias de trabajo.
 
@@ -208,8 +304,7 @@ puede hacer mientras tanto**: llega al tablero por la primera vía, pero solo en
 se escribe, y no deja nada apuntado, así que el comando siguiente vuelve a no encontrar nada. Sin
 escribir el puntero, el proyecto no vuelve a encontrar su tablero por su cuenta.
 
-**Un tablero cuyo proyecto ya no existe queda huérfano** en la raíz por defecto, y ningún comando de
-hoy lo ve.
+### El puntero nombra un tablero que no está en esta máquina
 
 **Si el puntero existe pero nombra un tablero que esta máquina no tiene** (lo típico al clonar el
 proyecto en otro ordenador), el mensaje es otro, porque aquí sí hay un puntero. Dice que hay uno, qué
@@ -224,5 +319,15 @@ El código de salida sigue siendo 20, porque para quien llama la situación es l
 con el que trabajar, y el remedio también es el mismo, `biso init`. Lo que cambia es la clave `code`
 del sobre JSON (sección ["El contrato JSON"](contrato-json.md)), que aquí es `pointer_unresolved` en vez de `no_board`.
 
----
+### Un tablero huérfano
 
+**Un tablero cuyo proyecto ya no existe queda huérfano** en la raíz por defecto, y ningún comando de
+hoy lo ve.
+
+### Compartir un tablero entre proyectos
+
+**Dos proyectos distintos pueden apuntar legalmente al mismo tablero.** No hay forma de distinguir "dos
+copias de trabajo del mismo proyecto" de "dos proyectos que comparten tablero", porque el mecanismo es
+el mismo puntero, y compartir es precisamente para lo que existe.
+
+---
