@@ -84,7 +84,7 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
 ## Reglas de este repositorio
 
 - **El trabajo va en un worktree**, en `.claude/worktrees/<rama>`, nunca editando `main`
-  directamente, a no ser que lo pida el usuario.x
+  directamente, a no ser que lo pida el usuario.
 - **La documentación va en español**: `docs/`, este fichero y los demás `CLAUDE.md` del
   repositorio. La única excepción es el contenido de las páginas del tutorial (`docs/tutorial/*.md`),
   de la página de Conceptos (`docs/concepts.md`) y de los fixtures que las generan
