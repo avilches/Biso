@@ -1,9 +1,11 @@
 # Dependencias fijadas del utillaje de documentacion (MkDocs + Material), no del programa Go.
 # Se usan solo para generar el sitio a partir de docs/*.md; no forman parte del binario de biso.
 # Regenerar con:
-#   uv pip compile - --python-version 3.12 --no-header -o docs-requirements.txt <<< mkdocs-material
+#   printf 'mkdocs-material\nmkdocs-git-revision-date-localized-plugin\n' | uv pip compile - --python-version 3.12 --no-header -o docs-requirements.txt
 babel==2.18.0
-    # via mkdocs-material
+    # via
+    #   mkdocs-git-revision-date-localized-plugin
+    #   mkdocs-material
 backrefs==8.0
     # via mkdocs-material
 certifi==2026.7.22
@@ -16,6 +18,10 @@ colorama==0.4.6
     # via mkdocs-material
 ghp-import==2.1.0
     # via mkdocs
+gitdb==4.0.12
+    # via gitpython
+gitpython==3.1.62
+    # via mkdocs-git-revision-date-localized-plugin
 idna==3.19
     # via requests
 jinja2==3.1.6
@@ -36,11 +42,13 @@ mergedeep==1.3.4
     #   mkdocs
     #   mkdocs-get-deps
 mkdocs==1.6.1
-    # via mkdocs-material
+    # via
+    #   mkdocs-git-revision-date-localized-plugin
+    #   mkdocs-material
 mkdocs-get-deps==0.2.2
     # via mkdocs
+mkdocs-git-revision-date-localized-plugin==1.5.4
 mkdocs-material==9.7.7
-    # via -r requirements.in (mkdocs-material)
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
 packaging==26.3
@@ -69,6 +77,8 @@ requests==2.34.2
     # via mkdocs-material
 six==1.17.0
     # via python-dateutil
+smmap==5.0.3
+    # via gitdb
 urllib3==2.7.0
     # via requests
 watchdog==6.0.0

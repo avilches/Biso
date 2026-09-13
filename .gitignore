@@ -9,6 +9,10 @@ __pycache__/
 # `uv run --with-requirements docs-requirements.txt --no-project mkdocs build`.
 site/
 
+# Cache del plugin git-revision-date-localized: fechas de ultima modificacion
+# por fichero, derivadas del propio historial de git. Se regenera sola.
+docs/docs-tooling/mkdocs/.cache/
+
 # Configuracion local de los IDE de JetBrains. Es de cada maquina y de cada
 # persona, no del proyecto.
 .idea/
