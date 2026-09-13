@@ -32,7 +32,7 @@ Un proyecto tiene un tablero, y el programa lo encuentra por este orden. Gana el
    el fichero `board.db`, y entonces el tablero es ese y no se busca nada más.
 2. **El puntero del proyecto**, que es una marca que `biso init` deja en el proyecto y que dice qué
    tablero le corresponde. Se busca en el directorio de trabajo y en sus ancestros, con el tope que
-   se explica más abajo en esta misma sección.
+   explica ["El tope de la búsqueda hacia arriba"](#el-tope-de-la-búsqueda-hacia-arriba).
 
 **Las dos parten del directorio de trabajo**, que es el directorio actual salvo que el flag global
 `-C` o la variable `BISO_CWD` digan otro (sección ["Flags globales"](cmd/flags-globales.md#flags-globales)). Por eso `-C` es lo único que hace falta para

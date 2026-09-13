@@ -27,7 +27,7 @@ Con este algoritmo, y para un tablero cuyo estado es `To Do`:
 
 | Entrada | `normalizar` | Resultado |
 |---|---|---|
-| `To Do` | `todo` | coincide, por el paso a |
+| `To Do` | `todo` | coincide exactamente, por el paso a |
 | `todo` | `todo` | coincide |
 | `TODO` | `todo` | coincide |
 | `To-Do` | `todo` | coincide |
