@@ -1,14 +1,18 @@
 # El tutorial de `biso`
 
-Esta carpeta es la fuente de `docs/TUTORIAL.md`, que es **producto generado y no se edita a mano**.
-Si has llegado aquí para cambiar algo del tutorial, lo que se toca es un fichero de esta carpeta y
-luego se regenera la página.
+Esta carpeta es la fuente de las páginas del tutorial (`docs/tutorial/*.md`) y de la página de
+Conceptos (`docs/concepts.md`, publicada bajo el tab Inicio del sitio), que son **producto generado
+y no se editan a mano**. Si has llegado aquí para cambiar algo del tutorial, lo que se toca es un
+fichero de esta carpeta y luego se regeneran las páginas.
 
 Su diseño, con el porqué de cada decisión, está en
 [`docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md`](../../superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md).
 La forma de las citas a varias secciones a la vez y que el contenido del tutorial nace en inglés
 (a diferencia del resto de la documentación del repositorio) se decidió después, en
 [`docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md`](../../superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md).
+Que el tutorial se generara como una página por escenario, y que Conceptos se sacara a su propia
+página bajo Inicio manteniendo el inglés, se decidió en
+[`docs/superpowers/specs/2026-09-12-navegacion-del-sitio-por-paginas-design.md`](../../superpowers/specs/2026-09-12-navegacion-del-sitio-por-paginas-design.md).
 
 ## La idea
 
@@ -30,10 +34,10 @@ historia.
 | Ruta | Qué es |
 |---|---|
 | `escenarios/NN-nombre.yaml` | Un capítulo. El orden lo fija el prefijo numérico |
-| `conceptos.md` | La sección de conceptos desde cero que abre la página |
+| `conceptos.md` | Los conceptos desde cero, publicados como su propia página bajo Inicio |
 | `tablero.yaml` | El tablero de ejemplo: su configuración y sus nueve tareas |
 | `lagunas/*.md` | Lo que la especificación no decide y hubo que suponer |
-| `generate.py` | Escribe `docs/TUTORIAL.md` |
+| `generate.py` | Escribe `docs/tutorial/*.md` y `docs/concepts.md` |
 | `urgency.py` | Calcula la urgencia de cada tarea |
 | `continuity.py` | Comprueba que los escenarios encadenan |
 
@@ -83,13 +87,13 @@ Las reglas que no se negocian:
 repositorio.** `title`, `situation`, `teaches`, `narration`, `remark`, `board_in` y `board_out` van
 en inglés; `command` y `output` ya estaban en inglés porque son texto literal de la interfaz de
 `biso`; y el título de cada cita de `source` se queda en español porque cita un fichero de
-`docs/spec/` que sigue en español. Es una excepción declarada para esta carpeta y para
-`docs/TUTORIAL.md`, no un cambio de la regla general de `CLAUDE.md` de que la documentación va en
-español: este fichero, `lagunas/*.md` y los documentos de diseño siguen en español. Los nombres de
-los ficheros y de la carpeta (`escenarios/NN-nombre.yaml`, `conceptos.md`) tampoco cambian de idioma,
-solo su contenido. Los tres scripts son código, así que van enteros en inglés, con la única excepción
-de las cadenas que el generador emite dentro de la página, que ahora también están en inglés y ya no
-son una excepción al idioma del código.
+`docs/spec/` que sigue en español. Es una excepción declarada para esta carpeta, para
+`docs/tutorial/*.md` y para `docs/concepts.md`, no un cambio de la regla general de `CLAUDE.md` de
+que la documentación va en español: este fichero, `lagunas/*.md` y los documentos de diseño siguen
+en español. Los nombres de los ficheros y de la carpeta (`escenarios/NN-nombre.yaml`,
+`conceptos.md`) tampoco cambian de idioma, solo su contenido. Los tres scripts son código, así que
+van enteros en inglés, con la única excepción de las cadenas que el generador emite dentro de las
+páginas, que ahora también están en inglés y ya no son una excepción al idioma del código.
 
 ## Los tres comandos
 
@@ -101,7 +105,7 @@ uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-p
 uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/continuity.py
 ```
 
-`generate.py` escribe la página, y **falla sin escribir nada** si a un paso le falta el código de
+`generate.py` escribe las páginas, y **falla sin escribir nada** si a un paso le falta el código de
 salida, si `origen` no tiene una de las dos formas admitidas o si un fichero no es YAML válido. Un
 generador que se traga un fixture incompleto destruye la única garantía de este diseño.
 
@@ -118,7 +122,7 @@ fichero:
   `TASK-62` que crea el escenario 2.
 
 **Después de tocar cualquier fixture, hay que pasar los tres**: regenerar, y luego los dos
-comprobadores. Y construir el sitio, que es la comprobación de que la página entra bien:
+comprobadores. Y construir el sitio, que es la comprobación de que las páginas entran bien:
 
 ```
 uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project mkdocs build --strict -f docs/docs-tooling/mkdocs/mkdocs.yml

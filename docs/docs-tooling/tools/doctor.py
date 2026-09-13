@@ -2,11 +2,11 @@
 """Ejecuta de punta a punta el pipeline de comprobacion y generacion de la documentacion.
 
 Encadena, en este orden exacto, los pasos que hoy se ejecutan sueltos: comprobar los enlaces
-de los ficheros que quedan fuera de docs/, regenerar docs/TUTORIAL.md, comprobar los recuentos
-y las referencias por numero de docs/spec/ y docs/*.md, y construir el sitio con MkDocs en modo
-estricto. El orden no es arbitrario: la regeneracion del tutorial va antes de
-comprobar_recuentos.py porque ese comprobador revisa docs/TUTORIAL.md, y si se ejecutara sobre
-la version vieja del fichero estaria comprobando lo que no se va a commitear.
+de los ficheros que quedan fuera de docs/, regenerar las paginas del tutorial, comprobar los
+recuentos y las referencias por numero de docs/spec/, docs/*.md y docs/tutorial/*.md, y construir el sitio con
+MkDocs en modo estricto. El orden no es arbitrario: la regeneracion del tutorial va antes de
+comprobar_recuentos.py porque ese comprobador revisa las paginas generadas, y si se ejecutara
+sobre la version vieja estaria comprobando lo que no se va a commitear.
 
 No se detiene en el primer fallo: ejecuta los cinco pasos siempre, acumula cuales fallaron e
 imprime un resumen al final, igual que hace `biso doctor` con las comprobaciones del programa.
@@ -62,7 +62,7 @@ def main(argv: list[str]) -> int:
             ],
         ),
         (
-            "regenerar docs/TUTORIAL.md",
+            "regenerar las paginas del tutorial",
             [sys.executable, str(TUTORIAL_DIR / "generate.py")],
         ),
         (
@@ -70,7 +70,7 @@ def main(argv: list[str]) -> int:
             [
                 sys.executable,
                 str(TOOLS_DIR / "comprobar_recuentos.py"),
-                *expand("docs/spec/*.md", "docs/spec/cmd/*.md", "docs/*.md"),
+                *expand("docs/spec/*.md", "docs/spec/cmd/*.md", "docs/*.md", "docs/tutorial/*.md"),
             ],
         ),
         (

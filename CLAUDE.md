@@ -79,8 +79,9 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
 - **El trabajo va en un worktree**, en `.claude/worktrees/<rama>`, nunca editando `main`
   directamente, a no ser que lo pida el usuario.x
 - **La documentación va en español**: `docs/`, este fichero y los demás `CLAUDE.md` del
-  repositorio. La única excepción es el contenido de `docs/TUTORIAL.md` y de los fixtures que lo
-  generan (`tutorial/escenarios/*.yaml`, `tutorial/conceptos.md`), declarada y razonada en
+  repositorio. La única excepción es el contenido de las páginas del tutorial (`docs/tutorial/*.md`),
+  de la página de Conceptos (`docs/concepts.md`) y de los fixtures que las generan
+  (`tutorial/escenarios/*.yaml`, `tutorial/conceptos.md`), declarada y razonada en
   `tutorial/CLAUDE.md`: ese tutorial nace en inglés.
 - **El código fuente va entero en inglés, sea Go o Python.** No es solo cuestión de los
   identificadores: los comentarios, los docstrings y los mensajes que la propia herramienta imprime
@@ -111,25 +112,26 @@ caché propio y las descarta al terminar. El `Makefile` de la raíz envuelve los
 - `make` (sin argumentos): genera la documentación entera; es el alias de `docs-build`. El día que
   exista código Go, este objetivo también lo compilará.
 - `make docs-serve`: sirve el sitio en local con recarga automática al editar los `.md`.
-- `make docs-build`: regenera `docs/TUTORIAL.md` y construye el sitio estático en `site/` (no se
-  versiona, ver `.gitignore`) con `mkdocs build --strict`.
+- `make docs-build`: regenera las páginas del tutorial y de Conceptos, y construye el sitio
+  estático en `site/` (no se versiona, ver `.gitignore`) con `mkdocs build --strict`.
 - `make docs-doctor`: lo mismo que `docs-build`, y antes ejecuta los tres comprobadores de
   `docs/docs-tooling/tools/` (enlaces, recuentos y referencias por número). Es el que conviene
   lanzar antes de dar algo por terminado.
 
-`docs/TUTORIAL.md` es la única excepción a "los `.md` son la fuente de verdad": es producto
-generado a partir de los fixtures de `docs/docs-tooling/tutorial/escenarios/` y de
-`docs/docs-tooling/tutorial/conceptos.md`, y no se edita a mano (lleva su propia cabecera que lo
-recuerda). `make docs-build` y `make docs-doctor` ya lo regeneran; para hacerlo solo, sin construir
-el sitio:
+`docs/tutorial/*.md` y `docs/concepts.md` son la única excepción a "los `.md` son la fuente de
+verdad": son producto generado a partir de los fixtures de `docs/docs-tooling/tutorial/escenarios/`
+y de `docs/docs-tooling/tutorial/conceptos.md`, y no se editan a mano (llevan su propia cabecera que
+lo recuerda). `make docs-build` y `make docs-doctor` ya los regeneran; para hacerlo solo, sin
+construir el sitio:
 `uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py`
 
 ## El tutorial
 
-`docs/TUTORIAL.md` enseña `biso` desde cero por situaciones y no por comandos, para no ser una
-segunda copia de la sección 10 de la especificación. Es **producto generado y no se edita a mano**:
-sale de los fixtures de `tutorial/`, donde cada paso declara su comando, su salida, su código de
-salida y si esa salida está copiada de la especificación o derivada de ella.
+El tutorial (`docs/tutorial/*.md`, con los conceptos en `docs/concepts.md` bajo Inicio) enseña
+`biso` desde cero por situaciones y no por comandos, para no ser una segunda copia de la sección 10
+de la especificación. Es **producto generado y no se edita a mano**: sale de los fixtures de
+`tutorial/`, donde cada paso declara su comando, su salida, su código de salida y si esa salida está
+copiada de la especificación o derivada de ella.
 
 **Si vas a tocar el tutorial, lee [`tutorial/CLAUDE.md`](docs/docs-tooling/tutorial/CLAUDE.md) primero**: ahí está el
 contrato de un fixture, los tres comandos que hay que pasar después de cambiar cualquier cosa, y por

@@ -1,0 +1,40 @@
+<!--
+  Generated file. Do not edit by hand: it is overwritten entirely every time
+  tutorial/generate.py runs.
+  Regenerate it with: uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py
+-->
+
+# 2. Something comes to mind and you don't want to lose it
+
+!!! warning "Generated document"
+    This page is generated automatically from the fixtures in
+    `tutorial/escenarios/`. Do not edit it by hand: any change is lost on the
+    next generation. To regenerate it:
+
+    ```
+    uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py
+    ```
+
+You're in the middle of something else when you notice something that needs fixing in
+the file uploader. It's not what you're working on right now, and if you keep pulling on
+that thread you lose track of the real task. All you need is to write it down somewhere
+it won't get forgotten, and keep going.
+
+!!! abstract "What this scenario teaches"
+    - Each field flag says what it does in its own name. Repeating `--add-ac` twice leaves two criteria, not one overwriting the other.
+    - `biso new` prints the new task's id and nothing else: no title echoed back as confirmation, no status line.
+
+Just typing the title would already keep it safe, but since it's already in your
+head, it's worth also writing down why it matters and what criterion will tell you
+it's resolved. That's two more flags on the same line, and `new` accepts all of them:
+
+```console
+$ biso new "Log the diff size before uploading" --add-ac "The log prints the diff size before each upload" --add-ac "The size also shows up when the upload fails"
+TASK-62
+```
+
+Exit code: `0`
+
+*(derived output, see [`biso new`](../spec/cmd/new.md); not literal spec text)*
+
+*Note: No "created TASK-62", no repeating the title: the only line is the id, because that's exactly what you couldn't have known beforehand, and you already knew everything else (rule 7 of the startup message, and one of the core principles: the default output of a write is whatever the caller didn't already know, never an echo of what it just wrote). The two `--add-ac` flags haven't replaced anything, they've added two separate criteria to a list that started out empty, because that is exactly what `--add-ac` says it does. There is no flag that replaces the whole list of criteria: doing that means clearing it and adding again in the same call, though you didn't need that here, a freshly created task has nothing to clear yet.*

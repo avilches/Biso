@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Generate docs/TUTORIAL.md from the fixtures in tutorial/escenarios/.
+"""Generate the tutorial pages from the fixtures in tutorial/escenarios/ and tutorial/conceptos.md.
 
 Reads every tutorial/escenarios/NN-name.yaml in the order fixed by its numeric prefix, validates
 that it has the shape required by
 docs/superpowers/specs/2026-09-10-tutorial-por-escenarios-design.md and
-docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md, and writes
-docs/TUTORIAL.md preceded by the concepts section (tutorial/conceptos.md).
+docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.md, and writes:
+
+- docs/tutorial/index.md: the tutorial's landing page, with the numbered list of scenarios.
+- docs/tutorial/NN-name.md: one page per scenario, named after its fixture.
+- docs/concepts.md: the concepts page, copied from tutorial/conceptos.md.
 
 It depends on nothing beyond the standard library and PyYAML, which MkDocs already pulls in (see
 docs-requirements.txt). Run it with:
@@ -16,12 +19,13 @@ docs-requirements.txt). Run it with:
 When a fixture is incomplete or malformed the script writes nothing and exits non-zero, listing
 every problem it found with the file and step each one is in. A generator that swallows an
 incomplete fixture and produces an incomplete page destroys the only guarantee this design offers:
-that what you read in docs/TUTORIAL.md is exactly what the fixtures say.
+that what you read in the generated pages is exactly what the fixtures say.
 """
 
 from __future__ import annotations
 
 import re
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -32,7 +36,9 @@ TUTORIAL_DIR = Path(__file__).resolve().parent
 REPO_ROOT = TUTORIAL_DIR.parent.parent.parent
 SCENARIOS_DIR = TUTORIAL_DIR / "escenarios"
 CONCEPTS_PATH = TUTORIAL_DIR / "conceptos.md"
-OUTPUT_PATH = REPO_ROOT / "docs" / "TUTORIAL.md"
+TUTORIAL_OUTPUT_DIR = REPO_ROOT / "docs" / "tutorial"
+CONCEPTS_OUTPUT_PATH = REPO_ROOT / "docs" / "concepts.md"
+OBSOLETE_OUTPUT_PATH = REPO_ROOT / "docs" / "TUTORIAL.md"
 
 REGENERATE_CMD = (
     "uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project "
@@ -74,7 +80,14 @@ REQUIRED_STEP_FIELDS = (KEY_CMD, KEY_OUTPUT, KEY_EXIT, KEY_SOURCE_KIND, KEY_SOUR
 # Page copy
 # --------------------------------------------------------------------------
 
-PAGE_TITLE = "# biso tutorial, by scenario"
+INDEX_TITLE = "# biso tutorial, by scenario"
+INDEX_INTRO = (
+    "Thirteen scenarios follow the life of `TASK-19`, from the moment it is handed out to the "
+    "moment it closes. Read them in order: each one continues on the same example board where "
+    "the last left off.\n"
+    "\n"
+    "New to `biso`'s vocabulary? Start with [Concepts](../concepts.md)."
+)
 INDEX_HEADING = "## Scenarios"
 TEACHES_HEADING = '!!! abstract "What this scenario teaches"'
 EXIT_CODE_LINE = "Exit code: `%s`"
@@ -92,8 +105,19 @@ HEADER_COMMENT = (
 GENERATED_ADMONITION = (
     '!!! warning "Generated document"\n'
     "    This page is generated automatically from the fixtures in\n"
-    "    `tutorial/escenarios/` and from `tutorial/conceptos.md`. Do not edit it by\n"
-    "    hand: any change is lost on the next generation. To regenerate it:\n"
+    "    `tutorial/escenarios/`. Do not edit it by hand: any change is lost on the\n"
+    "    next generation. To regenerate it:\n"
+    "\n"
+    "    ```\n"
+    f"    {REGENERATE_CMD}\n"
+    "    ```"
+)
+
+CONCEPTS_ADMONITION = (
+    '!!! warning "Generated document"\n'
+    "    This page is generated automatically from `tutorial/conceptos.md`. Do not\n"
+    "    edit it by hand: any change is lost on the next generation. To regenerate\n"
+    "    it:\n"
     "\n"
     "    ```\n"
     f"    {REGENERATE_CMD}\n"
@@ -277,7 +301,7 @@ def load_scenarios() -> tuple[list[dict], list[str]]:
             continue
 
         data["_number"] = number
-        data["_slug"] = f"escenario-{number:02d}"
+        data["_filename"] = f"{path.stem}.md"
         scenarios.append(data)
 
     return scenarios, errors
@@ -286,25 +310,6 @@ def load_scenarios() -> tuple[list[dict], list[str]]:
 # --------------------------------------------------------------------------
 # Markdown rendering
 # --------------------------------------------------------------------------
-
-
-def demote_headings(markdown_text: str, levels: int = 1) -> str:
-    """Push Markdown headings down by `levels`, leaving alone any inside a ``` fence."""
-    out_lines = []
-    in_fence = False
-    heading_re = re.compile(r"^(#+)( .*)$")
-    for line in markdown_text.splitlines():
-        if line.strip().startswith("```"):
-            in_fence = not in_fence
-            out_lines.append(line)
-            continue
-        if not in_fence:
-            match = heading_re.match(line)
-            if match:
-                out_lines.append("#" * (len(match.group(1)) + levels) + match.group(2))
-                continue
-        out_lines.append(line)
-    return "\n".join(out_lines)
 
 
 def render_console_block(cmd: str, output: str) -> str:
@@ -317,12 +322,17 @@ def render_console_block(cmd: str, output: str) -> str:
 
 
 def render_source_links(source: list[str]) -> str:
-    """Turn ['a.md "Title"', ...] into linked, code-formatted references."""
+    """Turn ['a.md "Title"', ...] into linked, code-formatted references.
+
+    Each path in a fixture's `source` is written relative to `docs/`, per the contract in
+    tutorial/CLAUDE.md. Scenario pages live one level below that, in docs/tutorial/, so the link
+    needs the matching `../` to still resolve.
+    """
     links = []
     for item in source:
         match = SOURCE_ITEM_RE.match(item)
         path, title = match.group(1), match.group(2)
-        links.append(f"[{title}]({path})")
+        links.append(f"[{title}](../{path})")
     return ", ".join(links)
 
 
@@ -353,29 +363,37 @@ def render_teaches(teaches: list) -> str:
     return "\n".join(lines)
 
 
-def render_scenario(data: dict) -> str:
-    heading = f"## {data['_number']}. {_flatten(data[KEY_TITLE])} {{: #{data['_slug']} }}"
+def render_scenario_page(data: dict) -> str:
+    heading = f"# {data['_number']}. {_flatten(data[KEY_TITLE])}"
     situation = str(data[KEY_SITUATION]).strip("\n")
     steps = [render_step(step) for step in data[KEY_STEPS]]
-    return "\n\n".join([heading, situation, render_teaches(data[KEY_TEACHES]), *steps])
-
-
-def render_index(scenarios: list[dict]) -> str:
-    lines = [INDEX_HEADING, ""]
-    for data in scenarios:
-        lines.append(f"{data['_number']}. [{_flatten(data[KEY_TITLE])}](#{data['_slug']})")
-    return "\n".join(lines)
-
-
-def build_document(scenarios: list[dict], concepts_md: str) -> str:
     parts = [
         HEADER_COMMENT,
-        PAGE_TITLE,
+        heading,
         GENERATED_ADMONITION,
-        demote_headings(concepts_md.strip("\n")),
-        render_index(scenarios),
+        situation,
+        render_teaches(data[KEY_TEACHES]),
+        *steps,
     ]
-    parts.extend(render_scenario(data) for data in scenarios)
+    return "\n\n".join(parts) + "\n"
+
+
+def render_index_page(scenarios: list[dict]) -> str:
+    lines = [INDEX_HEADING, ""]
+    for data in scenarios:
+        lines.append(f"{data['_number']}. [{_flatten(data[KEY_TITLE])}]({data['_filename']})")
+    parts = [
+        HEADER_COMMENT,
+        INDEX_TITLE,
+        GENERATED_ADMONITION,
+        INDEX_INTRO,
+        "\n".join(lines),
+    ]
+    return "\n\n".join(parts) + "\n"
+
+
+def render_concepts_page(concepts_md: str) -> str:
+    parts = [HEADER_COMMENT, CONCEPTS_ADMONITION, concepts_md.strip("\n")]
     return "\n\n".join(parts) + "\n"
 
 
@@ -394,15 +412,31 @@ def main() -> int:
         for error in errors:
             print(f"error: {error}", file=sys.stderr)
         print(
-            f"error: {len(errors)} problem(s) found; {_rel(OUTPUT_PATH)} was not written",
+            f"error: {len(errors)} problem(s) found; the tutorial pages were not written",
             file=sys.stderr,
         )
         return 1
 
-    document = build_document(scenarios, CONCEPTS_PATH.read_text(encoding="utf-8"))
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(document, encoding="utf-8")
-    print(f"wrote {_rel(OUTPUT_PATH)} from {len(scenarios)} scenario(s)")
+    index_page = render_index_page(scenarios)
+    concepts_page = render_concepts_page(CONCEPTS_PATH.read_text(encoding="utf-8"))
+    scenario_pages = {data["_filename"]: render_scenario_page(data) for data in scenarios}
+
+    if TUTORIAL_OUTPUT_DIR.exists():
+        shutil.rmtree(TUTORIAL_OUTPUT_DIR)
+    TUTORIAL_OUTPUT_DIR.mkdir(parents=True)
+    (TUTORIAL_OUTPUT_DIR / "index.md").write_text(index_page, encoding="utf-8")
+    for filename, content in scenario_pages.items():
+        (TUTORIAL_OUTPUT_DIR / filename).write_text(content, encoding="utf-8")
+
+    CONCEPTS_OUTPUT_PATH.write_text(concepts_page, encoding="utf-8")
+
+    if OBSOLETE_OUTPUT_PATH.exists():
+        OBSOLETE_OUTPUT_PATH.unlink()
+
+    print(
+        f"wrote {_rel(TUTORIAL_OUTPUT_DIR)}/ ({len(scenarios)} scenario page(s) + index.md) "
+        f"and {_rel(CONCEPTS_OUTPUT_PATH)}"
+    )
     return 0
 
 

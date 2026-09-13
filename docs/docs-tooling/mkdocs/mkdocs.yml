@@ -94,8 +94,24 @@ markdown_extensions:
       alternate_style: true
 
 nav:
-  - Inicio: index.md
-  - Tutorial: TUTORIAL.md
+  - Inicio:
+    - index.md
+    - Conceptos: concepts.md
+  - Tutorial:
+    - tutorial/index.md
+    - "1. You land on a project you don't know": tutorial/01-llegas-a-un-proyecto.md
+    - "2. Something comes to mind and you don't want to lose it": tutorial/02-apuntas-algo.md
+    - "3. What now?": tutorial/03-que-hago-ahora.md
+    - "4. You hand out the work": tutorial/04-repartes-el-trabajo.md
+    - "5. You get to work on it": tutorial/05-te-pones-con-ella.md
+    - "6. Two at once on the same board": tutorial/06-dos-a-la-vez.md
+    - "7. Halfway through, a criterion is missing": tutorial/07-falta-un-criterio.md
+    - "8. You get stuck and someone has to decide": tutorial/08-te-atascas.md
+    - "9. The person and the agent talk": tutorial/09-la-persona-y-el-agente-hablan.md
+    - "10. You close it": tutorial/10-cierras.md
+    - "11. You get it wrong": tutorial/11-te-equivocas.md
+    - "12. You park something halfway": tutorial/12-aparcas-a-medias.md
+    - "13. You touch twenty at once": tutorial/13-muchas-de-golpe.md
   - Especificacion:
     - "biso: especificacion del CLI de gestion de tareas": spec/index.md
     - Vocabulario de esta especificacion: spec/vocabulario.md

@@ -1,0 +1,115 @@
+<!--
+  Generated file. Do not edit by hand: it is overwritten entirely every time
+  tutorial/generate.py runs.
+  Regenerate it with: uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py
+-->
+
+# 3. What now?
+
+!!! warning "Generated document"
+    This page is generated automatically from the fixtures in
+    `tutorial/escenarios/`. Do not edit it by hand: any change is lost on the
+    next generation. To regenerate it:
+
+    ```
+    uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py
+    ```
+
+You already know which board this is and you've already kept your idea safe. But the
+startup message showed you the whole map of the project, not your own corner of it, and
+you have twenty minutes before the next meeting. You want to see what's on your plate
+right now, then pick one and read it in full before touching anything.
+
+!!! abstract "What this scenario teaches"
+    - `biso ls` shows at most 30 tasks and leaves out the ones already Done; what gets left out is reported on stderr, never mixed in with the data rows on stdout.
+    - No one writes down the urgency that decides the order, it's recalculated every time you ask for the list, which is why it never shows up as a column.
+
+You look at what's assigned to you, with no other filter:
+
+```console
+$ biso ls --mine
+TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
+TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
+TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
+TASK-33  To Do        task  medium  Add a retry counter to the upload log             ac 1/3  @claude  -
+TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -
+```
+
+Exit code: `0`
+
+*(derived output, see [`biso ls`](../spec/cmd/ls.md); not literal spec text)*
+
+*Note: Five rows, not one more: since that's fewer than the 30 `ls` shows by default, no truncation warning comes out on stderr, just the rows on stdout. The order isn't by id or by when they were created: it's descending urgency, which is the default criterion whenever no task in the list carries a manual `ordinal` (per the rules for `biso ls`). TASK-11 comes first because it adds up high priority, being active, and blocking another unfinished task; TASK-40 comes last despite also being in progress, because it is itself blocked by TASK-11, and that subtracts instead of adding. No one writes that number down or stores it anywhere: it's recalculated the instant you read it (per how urgency is defined), which is why there's no "urgency" column in this table, only the order it produces.*
+
+On a real board that list doesn't always fit in 30 rows, and the notice about what got
+left out never mixes in with the tasks: it goes to stderr, so redirecting the output to
+a file leaves a clean data file. To see that without waiting for the board to grow, you
+set a limit lower than what's assigned to you:
+
+```console
+$ biso ls --mine --limit 3
+TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
+TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
+TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
+warning: 2 more tasks match; showing 3 of 5
+hint: narrow with -s, --type or -l, or ask for everything with --all
+```
+
+Exit code: `0`
+
+*(derived output, see [`biso ls`](../spec/cmd/ls.md); not literal spec text)*
+
+*Note: The first three rows go to stdout, and the warning and the hint go to stderr: in your terminal you see them one after another, but if you save the output to a file (`biso ls --mine --limit 3 > tareas.txt`) that file has three lines, not five. Here you set the limit yourself with `--limit 3` to see this with little data; without that flag the default limit is 30, and with a board this size (54 To Do plus 4 In Progress, not counting the 190 Done that `ls` hides by default) it's easy to reach those 30 without even trying. `--all` removes the limit entirely, and `--any-status` is the only thing that brings back the finished tasks.*
+
+Of the five, TASK-33 is the one that looks most like what you just left behind in the
+previous scenario: written down, with a criterion or two already thought out but not
+started. Before deciding whether it's really yours, you read it in full:
+
+```console
+$ biso get TASK-33
+TASK-33  Add a retry counter to the upload log
+status     To Do                type       task
+priority   medium               urgency    4.3
+assignees  @claude              reporter   @avilches
+labels     -                    parent     -
+due        -                    ordinal    -
+created    2026-08-20 09:40     updated    2026-09-03 16:15
+depends    -                    blocks     -
+refs       -
+docs       -
+files      -
+ext        -
+
+## Description
+Every failed upload retries silently. The log does not say how many attempts it took,
+so debugging one means reconstructing it by hand from scattered timestamps.
+
+## Acceptance Criteria
+- [x] #1 Every retry is counted in the log
+- [ ] #2 The counter shows up in the final summary
+- [ ] #3 A test covers three retries in a row
+
+## Definition of Done
+(empty)
+
+## Implementation Plan
+(empty)
+
+## Implementation Notes
+(empty)
+
+## Final Summary
+(empty)
+
+## Comments
+(empty)
+
+## Open Question
+(empty)
+```
+
+Exit code: `0`
+
+*(derived output, see [`biso get`](../spec/cmd/get.md); not literal spec text)*
+
+*Note: There's no `lease` line: that only shows up when the task has a lease, and a task in To Do can't have one (per the task data model). The nine sections always appear, even when empty and marked `(empty)`, because leaving out one that wasn't requested would be confused with one that was requested and came back empty. Notice the `#1`, `#2` and `#3` keys in front of each criterion: they're stable, not a position in the list, so if `#2` ever gets removed the other two stay `#1` and `#3`, they never get renumbered.*
