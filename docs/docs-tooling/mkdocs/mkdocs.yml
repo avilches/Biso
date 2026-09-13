@@ -34,9 +34,13 @@ theme:
         name: Cambiar a modo claro
   features:
     - content.code.copy
+    - content.tabs.link
     - navigation.top
     - navigation.tracking
     - navigation.sections
+    - navigation.tabs
+    - navigation.instant
+    - navigation.instant.progress
     - toc.follow
     - search.suggest
     - search.highlight
@@ -44,6 +48,10 @@ theme:
 plugins:
   - search:
       lang: es
+  - git-revision-date-localized:
+      type: date
+      locale: es
+      fallback_to_build_date: true
 
 # El plugin de busqueda de esta version no admite excluir un directorio entero desde aqui
 # (solo lee `search.exclude` del frontmatter de cada pagina), asi que ese comportamiento lo
