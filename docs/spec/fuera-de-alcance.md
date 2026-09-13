@@ -3,11 +3,14 @@
 Nombrar lo que no está evita que alguien lo dé por olvidado.
 
 - **No hay `biso delete`.** Está especificado que no existe y qué contesta si se intenta (["`biso archive`"](cmd/archive.md)).
-- **No hay entidades de hito, documento ni decisión.** El hito es un campo de la tarea y no una
-  entidad con ciclo de vida propio: no se crea, no se cierra, no tiene fecha ni descripción, y no hay
-  ninguna clave de configuración que lo declare. Eso no impide que `-m/--milestone` valide al filtrar,
-  porque el conjunto contra el que valida es derivado de lo que las tareas usan (["Qué valida cada filtro, y contra qué"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué)) y no una lista
-  que haya que mantener aparte. La documentación se apunta con `--doc`, que es una lista de textos.
+- **No hay entidades de documento ni de decisión.** La documentación se apunta con `--doc`, que es
+  una lista de textos, y una decisión de diseño no tiene comando propio: vive en la documentación del
+  proyecto, no en el tablero.
+- **No hay campo de hito ni de proyecto en la tarea.** Hubo un campo `milestone` y un campo `project`,
+  y los dos se retiraron: la agrupación real se resuelve con `parent` (una tarea con hijas, de
+  cualquier `type`) y con `type` (una partición plana), sin ningún campo dedicado solo a agrupar. El
+  porqué, con las alternativas descartadas, está en
+  ["Se retiran `project` y `milestone`"](../DECISIONES.md#se-retiran-project-y-milestone) de `docs/DECISIONES.md`.
 - **No hay contextos de sesión**, es decir, filtros por defecto guardados que cambien lo que devuelve
   una consulta sin que se vea en la línea de comandos.
 - **No hay recurrencia, ni seguimiento de tiempo, ni subtareas con numeración propia.** Una subtarea

@@ -4,9 +4,9 @@
 
 ```
 biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] [--only-archived]
-        [--type <v>]... [--priority <v>]... [--project <v>]...
+        [--type <v>]... [--priority <v>]...
         [-l <label>]... [--label-or <label>]... [-a <@who>]... [--mine] [--unassigned]
-        [-m <milestone>] [-p <ref>] [--blocked] [--not-blocked] [--waiting] [--not-waiting]
+        [-p <ref>] [--blocked] [--not-blocked] [--waiting] [--not-waiting]
         [--active] [--not-active] [--overdue] [--due-before <date>]
         [--search <text>] [--unchecked]
         [--sort <field>] [--reverse] [--limit <n>] [--all] [--ids] [--count]
@@ -23,13 +23,11 @@ biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] 
 | `--only-archived` | | no | booleano | falso | no | no | `--archived` |
 | `--type <v>` | | no | vocabulario | | sí | sí | |
 | `--priority <v>` | | no | vocabulario | | sí | sí | |
-| `--project <v>` | | no | vocabulario | | sí | sí | |
 | `--label <l>` | `-l` | no | etiqueta | | sí | sí | |
 | `--label-or <l>` | | no | etiqueta | | sí | sí | |
 | `--assignee <@w>` | `-a` | no | persona | | sí | sí | `--mine`, `--unassigned` |
 | `--mine` | | no | booleano | falso | no | no | `-a`, `--unassigned` |
 | `--unassigned` | | no | booleano | falso | no | no | `-a`, `--mine` |
-| `--milestone <m>` | `-m` | no | hito | | no | no | |
 | `--parent <ref>` | `-p` | no | referencia | | no | no | |
 | `--blocked` | | no | booleano | falso | no | no | `--not-blocked` |
 | `--not-blocked` | | no | booleano | falso | no | no | `--blocked` |
@@ -53,13 +51,13 @@ Reglas de combinación de filtros:
 - **Filtros de campos distintos se combinan con `y`.** `-s "To Do" --type bug` son las que cumplen las
   dos cosas.
 - **Valores repetidos del mismo campo se combinan con `o`.** `--type bug --type docs` son las de
-  cualquiera de los tipos. Esto vale para `--status`, `--type`, `--priority`, `--project`,
-  `--assignee` y `--label-or`.
+  cualquiera de los tipos. Esto vale para `--status`, `--type`, `--priority`, `--assignee` y
+  `--label-or`.
 - **`-l/--label` es la única que se combina con `y`.** `-l frontend -l bug` son las que llevan las
   dos. Para el `o` está `--label-or`, que valida igual.
-- **`--unchecked` apaga la comprobación de existencia de `-l`, `--label-or`, `-a` y `-m`, y ninguna
-  otra.** No cambia cómo se combinan ni afecta a ningún otro filtro. Los vocabularios configurados
-  siguen validando, y `-p/--parent` sigue resolviendo su referencia.
+- **`--unchecked` apaga la comprobación de existencia de `-l`, `--label-or` y `-a`, y ninguna otra.**
+  No cambia cómo se combinan ni afecta a ningún otro filtro. Los vocabularios configurados siguen
+  validando, y `-p/--parent` sigue resolviendo su referencia.
 - **El estado terminal se excluye por defecto**, y `--any-status` es la única forma de incluirlo.
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
@@ -99,7 +97,7 @@ ordenadas por identificador.
 | Caso | Qué pasa |
 |---|---|
 | Filtro con un valor fuera del vocabulario | Error 3, con la lista de válidos |
-| `-l` con una etiqueta, `-a` con una persona o `-m` con un hito que el tablero no tiene | Error 3, con las cinco más parecidas |
+| `-l` con una etiqueta o `-a` con una persona que el tablero no tiene | Error 3, con las cinco más parecidas |
 | Lo mismo con `--unchecked` | Se acepta, y probablemente no devuelve nada |
 | Filtro válido sin resultados | Ninguna línea por stdout, `note: no tasks match` por stderr, código **0** |
 | Hay más resultados que el límite | Se imprimen los primeros y sale el aviso de recorte |
@@ -200,11 +198,9 @@ igual que las demás.
         "status": "In Progress",
         "type": "bug",
         "priority": "high",
-        "project": null,
         "assignees": ["@claude"],
         "reporter": "@avilches",
         "labels": ["parser"],
-        "milestone": null,
         "parent": null,
         "dependencies": [],
         "references": ["docs/bugs/BUG-02.md"],
@@ -279,13 +275,11 @@ Filters (repeat or comma-separate; same field is OR, different fields are AND):
       --only-archived        only archived tasks
       --type <value>         configured type
       --priority <value>     configured priority
-      --project <value>      configured project
   -l, --label <value>        label; several labels are ANDed
       --label-or <value>     label; several are ORed
   -a, --assignee <@who>      assignee
       --mine                 assigned to you
       --unassigned           assigned to nobody
-  -m, --milestone <text>     milestone, matched like any board value
   -p, --parent <ref>         subtasks of this task
       --blocked              something unfinished blocks it
       --not-blocked          nothing unfinished blocks it; it may still be
@@ -297,9 +291,9 @@ Filters (repeat or comma-separate; same field is OR, different fields are AND):
       --overdue              past its due date
       --due-before <date>    due before YYYY-MM-DD
       --search <text>        free text; see `biso get --help` for the scope
-      --unchecked            do not check that the labels, assignees and
-                             milestones you filter by exist on the board;
-                             nothing else changes
+      --unchecked            do not check that the labels and assignees you
+                             filter by exist on the board; nothing else
+                             changes
 
 Shape:
       --sort <field>         urgency, id, ordinal, due, updated, created, title

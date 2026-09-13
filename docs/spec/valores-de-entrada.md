@@ -39,7 +39,7 @@ como si llega de un fichero vacío o de una entrada estándar vacía. La regla e
 | En el título, al crear | Error 2: `error: title cannot be empty` |
 
 **El `code` de un escalar vacío depende de si el campo tiene vocabulario cerrado.** Para `status`,
-`type`, `priority` y `project`, una cadena vacía es un valor que no coincide con nada configurado, así
+`type` y `priority`, una cadena vacía es un valor que no coincide con nada configurado, así
 que sigue la regla del ["algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia) y el
 `code` es el de un valor desconocido (`unknown_status` y análogos, con el mensaje de
 ["El mismo texto vale lo mismo en los dos sentidos"](vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos)).

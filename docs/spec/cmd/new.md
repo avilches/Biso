@@ -19,8 +19,8 @@ ni que quitar: `--replace-*` se acepta y deja la lista igual que `--add-*`, porq
 que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que actuar. `--clear-*` no
 hace nada y avisa. Las que se usan de verdad al crear son
 `-d/--append-desc`, `--add-ac`, `--add-dod`, `--type`, `--priority`, `-l/--add-labels`,
-`-a/--add-assignees`, `--add-refs`, `--add-docs`, `--add-deps`, `-m/--milestone`, `-p/--parent`,
-`--due`, `--ordinal`, `--project`, `--reporter`, `--ext`, `--append-plan`, `--append-note`,
+`-a/--add-assignees`, `--add-refs`, `--add-docs`, `--add-deps`, `-p/--parent`,
+`--due`, `--ordinal`, `--reporter`, `--ext`, `--append-plan`, `--append-note`,
 `--append-summary` y `--comment`.
 
 - **`--start`** crea la tarea directamente en el estado activo, asignada a `me` y con el arrendamiento

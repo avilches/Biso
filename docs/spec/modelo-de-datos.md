@@ -26,8 +26,6 @@ cuatro formas la respuesta es siempre la misma y ya está en la tabla de arriba.
 | `status` | escalar | uno del vocabulario de estados | sí | quien llama | sí |
 | `type` | escalar | uno del vocabulario de tipos | no | quien llama | sí |
 | `priority` | escalar | uno del vocabulario de prioridades | no | quien llama | sí |
-| `project` | escalar | uno del vocabulario de proyectos | no | quien llama | sí |
-| `milestone` | escalar | texto de hito | no | quien llama | sí |
 | `parent` | escalar | referencia a otra tarea | no | quien llama | sí |
 | `assignees` | lista de tokens | textos de persona | no | quien llama | sí |
 | `reporter` | escalar | texto de persona | no | el programa al crear, o quien llama; ver ["Quién reporta una tarea"](#quién-reporta-una-tarea) | sí |

@@ -136,10 +136,10 @@ COMMANDS  (`biso <cmd> --help` for the detail of any flag)
   biso comment <ref> "TEXT" [--comment-author @who]
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
-  -t --title  -s --status  --type   --priority  --project      -a --assignee
-  -l --label  -d --desc    --ac     --dod       --plan         --note
-  --summary   --dep        --ref    --doc       --file         -m --milestone
-  -p --parent --due        --ordinal --ext K=V  --reporter     --comment
+  -t --title  -s --status  --type   --priority  -a --assignee  -l --label
+  -d --desc   --ac         --dod    --plan      --note         --summary
+  --dep       --ref        --doc    --file      -p --parent    --due
+  --ordinal   --ext K=V    --reporter            --comment
   --check     --uncheck             --check-dod --uncheck-dod
 
 RULES  (none of these are guessable; they are the whole learning curve)
@@ -305,9 +305,8 @@ TASK-33  Add a retry counter to the upload log
 status     To Do                type       task
 priority   medium               urgency    4.3
 assignees  @claude              reporter   @avilches
-labels     -                    milestone  -
-parent     -                    due        -
-project    -                    ordinal    -
+labels     -                    parent     -
+due        -                    ordinal    -
 created    2026-08-20 09:40     updated    2026-09-03 16:15
 depends    -                    blocks     -
 refs       -

@@ -22,6 +22,27 @@ abrirla, ni la abre nadie por su cuenta.
 | `--no-open` | Arranca y solo imprime la dirección |
 | El tablero cambia mientras está abierto | La interfaz recarga. Nunca muestra una versión en caché de una tarea que otro proceso ha cambiado |
 
+## Agrupación visual
+
+La interfaz enseña un Kanban con las columnas fijas por `status`, en el orden configurado. Además,
+admite agrupar las tarjetas dentro de esas columnas de dos formas independientes, elegibles con un
+control de la propia interfaz y que no se combinan entre sí:
+
+- **Por padre** (`parent`): cada tarea con alguna hija actúa de cabecera de un grupo, con su propio
+  título y su propio estado, y sus hijas aparecen debajo. Es un nivel exactamente: la jerarquía no se
+  recorre más allá del padre inmediato de cada tarea, sea cual sea el `type` del padre, así que no
+  hace falta ninguna marca especial para que una tarea grande actúe de epic. Una tarea sin hijas y sin
+  padre no entra en ningún grupo. Cerrar o archivar la tarea padre no hace desaparecer el grupo: la
+  cabecera se sigue mostrando con su título y su estado mientras alguna hija siga siendo visible con
+  los filtros activos, y el grupo entero deja de aparecer solo cuando ninguna hija lo es.
+- **Por tipo** (`type`): una partición plana que no mira la jerarquía. Cada tarea cae en un grupo
+  según su propio `type`, tantos grupos como valores en uso entre las tareas visibles.
+
+Sin agrupar, que es lo que se ve por defecto, las tarjetas quedan sueltas dentro de cada columna de
+estado. La agrupación es solo de esta interfaz: no existe ninguna bandera equivalente en `biso ls` ni
+en `biso prime`, aunque las dos ya permiten filtrar por `-p/--parent` y por `--type`
+(secciones [`biso ls`](ls.md) y [`biso set`](set.md)).
+
 ## Salida
 
 ```

@@ -29,7 +29,6 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `terminal_status` | uno de `statuses` | `Done`, al crear el tablero sin `--statuses` |
 | `types` | lista | `task, bug, docs` |
 | `priorities` | lista | `high, medium, low` |
-| `projects` | lista | vacía |
 | `labels` | lista | vacía |
 | `assignees` | lista | vacía |
 | `extensions` | lista | vacía |
@@ -138,7 +137,6 @@ active_status = In Progress
 terminal_status = Done
 types = idea,memory,task,bug,docs
 priorities = high,medium,low
-projects =
 labels =
 assignees =
 extensions = trello.card
@@ -156,14 +154,14 @@ urgency.criteria = 1.0
 urgency.age = 0.5
 ```
 
-**`config list` imprime las veintitrés claves, siempre, en el orden de la tabla de claves de arriba**, y
+**`config list` imprime las veintidós claves, siempre, en el orden de la tabla de claves de arriba**, y
 los siete coeficientes de la urgencia con el nombre con el que `config set` los acepta, uno por línea.
 Lo que `list` enseña es exactamente el conjunto de claves que `set` admite, y por eso no puede haber
 ninguna que solo se vea con `--json`: una clave escondida es una clave que nadie sabe que puede cambiar.
 
 **Una lista vacía se imprime como la clave, el igual y nada detrás**, que es lo mismo que hace
-`config get` de una lista vacía, así que las tres listas que nacen vacías (`projects`, `labels` y
-`assignees`) aparecen igual en un tablero recién creado.
+`config get` de una lista vacía, así que las dos listas que nacen vacías (`labels` y `assignees`)
+aparecen igual en un tablero recién creado.
 
 ## El esquema JSON
 
@@ -183,7 +181,6 @@ Solo `config list` acepta `--json`:
       "terminal_status": "Done",
       "types": ["idea", "memory", "task", "bug", "docs"],
       "priorities": ["high", "medium", "low"],
-      "projects": [],
       "labels": [],
       "assignees": [],
       "extensions": ["trello.card"],
@@ -230,7 +227,6 @@ Keys:
   terminal_status    what `biso finish` sets        (one of statuses)
   types              configured task types
   priorities         configured priorities
-  projects           configured projects
   labels             labels that filters accept on top of the ones in use
   assignees          assignees that filters accept on top of the ones in use
   extensions         declared external field keys, such as trello.card

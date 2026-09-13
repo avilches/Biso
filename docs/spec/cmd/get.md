@@ -45,9 +45,8 @@ MYP-11  Normalize CRLF in the diff
 status     In Progress          type       bug
 priority   high                 urgency    19.0
 assignees  @claude              reporter   @avilches
-labels     parser               milestone  -
-parent     -                    due        -
-project    -                    ordinal    -
+labels     parser               parent     -
+due        -                    ordinal    -
 created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     MYP-40
 lease      2026-09-06 15:40     holder     @claude
