@@ -16,7 +16,7 @@ import (
 	"bisobench/internal/phase"
 )
 
-// DefaultLimit es el limite por defecto de `biso ls` (seccion 10.4 de SPEC.md).
+// DefaultLimit es el limite por defecto de `biso ls` (docs/spec/cmd/ls.md).
 const DefaultLimit = 30
 
 // Main hace lo que hara `biso ls`: abrir la base de datos, leer las tareas
