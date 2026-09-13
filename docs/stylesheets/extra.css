@@ -1,0 +1,12 @@
+/* Distingue visualmente, en el menu lateral, un grupo de navegacion (una seccion con
+   paginas propias) de un enlace suelto, y da mas margen a sus hijos para que la
+   jerarquia se note aunque el grupo este contraido. */
+.md-nav__item--section > .md-nav__link {
+  font-weight: 700;
+}
+
+.md-nav__item--nested > .md-nav {
+  margin-left: 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--md-default-fg-color--lightest);
+}
