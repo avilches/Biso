@@ -5,8 +5,19 @@
   font-weight: 700;
 }
 
-.md-nav__item--nested > .md-nav {
-  margin-left: 0.5rem;
+/* Material define su propio margin-left para esta misma caja con
+   `[dir=ltr] .md-nav__item--section>.md-nav{margin-left:-.6rem}`, mas especifico que un
+   selector de dos clases porque suma un selector de atributo. Sin igualar esa
+   especificidad aqui, cualquier margin-left que se ponga en esta regla no hace nada: el
+   navegador sigue aplicando el -0.6rem de Material pase lo que pase aqui debajo. Por eso
+   la linea seguia flotando en el mismo sitio de antes por mucho que se cambiara este
+   valor. Con `-0.6rem` la caja queda a ras del borde de la lista abuela (compensa
+   exactamente el padding-left que le puso esa lista), y el propio padding-left de esta
+   nota es lo unico que separa la linea del texto del hijo. Poner aqui `margin-left: 0`
+   deshace esa compensacion y adelanta la linea esos mismos 0.6rem (unos 10px), que es el
+   ajuste que se pidio. */
+[dir=ltr] .md-nav__item--nested > .md-nav {
+  margin-left: 0;
   padding-left: 0.6rem;
   border-left: 1px solid var(--md-default-fg-color--lightest);
 }
@@ -25,4 +36,28 @@
   overflow-wrap: normal;
   word-break: normal;
   hyphens: manual;
+}
+
+/* Las cabeceras necesitan mas aire en documentos tan largos como los de spec/ y
+   decisiones/, y un peso algo mayor para que corten un parrafo denso: por defecto
+   Material las deja casi tan finas como el propio texto. */
+.md-typeset h2 {
+  margin-top: 2.2em;
+  font-weight: 500;
+}
+
+.md-typeset h3 {
+  font-weight: 500;
+}
+
+/* Las tablas se leen como la salida en columnas de `biso ls` o `biso prime`: una regla
+   bajo la cabecera y filas separadas por una linea fina, sin la caja con sombra que
+   Material dibuja por defecto alrededor de cualquier tabla. */
+.md-typeset table:not([class]) {
+  border: none;
+  border-radius: 0;
+}
+
+.md-typeset table:not([class]) th {
+  border-bottom: 0.1rem solid var(--md-default-fg-color--light);
 }

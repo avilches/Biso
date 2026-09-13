@@ -37,6 +37,13 @@ datos, el algoritmo de coincidencia (una función pura de la que dependen todos 
 comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
 exportación, y el resto.
 
+["Qué hay implementado y qué no"](docs/spec/estado-de-implementacion.md) es la contrapartida de la especificación: dice, paso
+a paso, si lo de arriba ya existe en código o sigue siendo solo texto. Antes de planificar la tarea
+de un paso se confirma con quien la encarga qué anclas de la especificación va a cubrir, y al
+cerrarla se actualiza esa página; si el comportamiento real terminó siendo distinto del texto
+original, la especificación se corrige en el mismo cambio, según la cuarta costumbre de
+["Los principios, y cómo se mantiene la especificación"](docs/decisiones/principios-y-mantenimiento.md).
+
 ## La persistencia
 
 Un board o tablero es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un

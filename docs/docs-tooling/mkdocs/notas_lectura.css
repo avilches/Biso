@@ -40,14 +40,14 @@ body.notas-lectura-picking * {
   right: 1.2rem;
   bottom: 4.6rem;
   z-index: 10000;
-  width: min(24rem, calc(100vw - 2.4rem));
-  padding: 0.9rem;
+  width: min(30rem, calc(100vw - 2.4rem));
+  padding: 1.1rem;
   border-radius: 0.4rem;
   background: var(--md-default-bg-color);
   color: var(--md-default-fg-color);
   box-shadow: var(--md-shadow-z2);
   display: none;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
 }
 
 #notas-lectura-panel.is-open {

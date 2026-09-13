@@ -60,13 +60,18 @@ fallo dominante, y con diferencia, fue siempre el mismo: **dos copias distantes 
 dejan de coincidir**. Una lista de campos que aparece en varias secciones, una cifra publicada en tres
 sitios, un código de salida que está en la tabla de un comando pero no en su texto de ayuda.
 
-De ahí salen tres costumbres que conviene mantener al editar:
+De ahí salen estas costumbres que conviene mantener al editar:
 
 1. **Cuando un dato tenga que aparecer en dos sitios, que uno remita al otro** en vez de repetirlo.
 2. **Los ejemplos de salida se generan ejecutando el algoritmo, no se escriben a mano.** Los del
    listado y los del mensaje de arranque fallaron tres revisiones seguidas mientras se escribieron a
    mano, y dejaron de fallar en cuanto se generaron.
 3. **Al corregir una afirmación, búscala en todo el documento** antes de darla por corregida.
+4. **Un paso de implementación no se da por empezado sin decir qué anclas de la especificación va a
+   cubrir, ni por terminado sin actualizar su fila en [Qué hay implementado y qué
+   no](../spec/estado-de-implementacion.md).** Si el comportamiento real terminó siendo distinto del
+   texto original, la especificación se corrige en ese mismo cambio: esa página nunca debe quedar
+   más optimista que el código.
 
 Y una cuarta, sobre este documento en particular: la especificación no justifica sus decisiones, y esa
 regla es fácil de romper sin darse cuenta. La justificación no solo se esconde en la prosa, también en
