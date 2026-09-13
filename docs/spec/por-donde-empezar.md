@@ -5,7 +5,7 @@ En el orden en que cada pieza paga lo que cuesta:
 1. **El almacén**: abrir o crear la base de datos, el modo WAL y la transacción dentro de la que
    ocurre cualquier escritura, que es de lo que dependen las garantías de la sección ["Concurrencia, atomicidad y garantías observables"](garantias.md#concurrencia-atomicidad-y-garantías-observables). El
    controlador ya está elegido, `modernc.org/sqlite` sobre `database/sql` y sin `cgo`, con las cifras
-   que lo deciden en el apartado ["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](../DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo) de `DECISIONES.md`. **Lo que se escribe aquí es la prueba del
+   que lo deciden en el apartado ["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](../decisiones/lenguaje-y-rendimiento.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo). **Lo que se escribe aquí es la prueba del
    presupuesto de arranque de la sección ["El presupuesto de arranque"](presupuestos.md#el-presupuesto-de-arranque)**, que no se puede escribir antes de que el almacén
    exista y que hasta ahora solo se ha medido con un programa de prueba y no con el comando de verdad.
 2. **El modelo de datos lógico** de la sección ["El modelo de datos de una tarea"](modelo-de-datos/index.md), con las claves estables de los criterios y el

@@ -102,7 +102,7 @@ la prohíben: Taskwarrior exige que una etiqueta sea una sola palabra, y Jira re
 cualquier etiqueta con espacio. GitHub sí permite etiquetas de varias palabras, pero nunca se
 enfrenta a este problema porque una etiqueta de GitHub nunca se teclea suelta en una shell: se elige
 en un desplegable o llega ya como cadena entrecomillada dentro de un JSON. La razón completa, con la
-comparación entera, está en ["El juego de caracteres de un token"](../DECISIONES.md#el-juego-de-caracteres-de-un-token) de `DECISIONES.md`.
+comparación entera, está en ["El juego de caracteres de un token"](../decisiones/detalles.md#el-juego-de-caracteres-de-un-token).
 
 **La clave de `ext` no admite `@` ni `:`, porque no tienen ningún uso documentado ahí, ni tampoco
 `=`, porque `--ext <clave>=<valor>` ya usa ese carácter para separar la clave del valor**: si se

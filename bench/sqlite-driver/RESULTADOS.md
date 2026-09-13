@@ -1,7 +1,6 @@
 # El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`
 
-Este documento cierra la decisión que quedó aplazada a propósito y que ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go) de
-`docs/DECISIONES.md` declaraba como lo primero que la implementación tenía que
+Este documento cierra la decisión que quedó aplazada a propósito y que ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go) declaraba como lo primero que la implementación tenía que
 resolver. Está escrito para que su contenido acabe en esa misma sección. El banco de pruebas del que
 salen todas las cifras está en este mismo directorio, y su [`README.md`](README.md) dice cómo se
 vuelve a ejecutar.
@@ -88,10 +87,10 @@ Tres cosas que estas dos tablas dicen y conviene leer despacio.
 hace absolutamente nada cuesta 8,1 milisegundos, de modo que de los 14,5 milisegundos del candidato
 que se recomienda solo 6,4 son atribuibles a leer el tablero. En Linux ese suelo es de 0,37
 milisegundos, veintidós veces menos. Esto **confirma con más fuerza el argumento aritmético de
-["La decisión de persistencia"](../../docs/DECISIONES.md#la-decisión-de-persistencia) contra tener un daemon**: un daemon solo puede ahorrar lo que hay por encima del suelo, y
+["La decisión de persistencia"](../../docs/decisiones/persistencia.md#la-decisión-de-persistencia) contra tener un daemon**: un daemon solo puede ahorrar lo que hay por encima del suelo, y
 en la máquina donde el suelo es 8,1 de 14,5 no hay casi nada que ahorrar.
 
-**La segunda: la cifra de 5,2 milisegundos que ["El origen de la cifra de 25 milisegundos"](../../docs/DECISIONES.md#el-origen-de-la-cifra-de-25-milisegundos) da como "el suelo del sistema
+**La segunda: la cifra de 5,2 milisegundos que ["El origen de la cifra de 25 milisegundos"](../../docs/decisiones/persistencia.md#el-origen-de-la-cifra-de-25-milisegundos) da como "el suelo del sistema
 operativo" es una cifra de macOS, no una constante.** Aquí ese suelo sale en 8,1 de mediana y 4,8
 de mínimo, del mismo orden que lo que esa misma sección midió, pero en Linux es 0,37. Eso no invalida el
 presupuesto de 25 milisegundos, porque un presupuesto holgado sigue siendo holgado, pero sí hay que
@@ -120,7 +119,7 @@ volver a mirar. Medianas:
 
 El coste crece de forma esencialmente lineal, como ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque) anticipa. Con diez veces las
 tareas, los cuatro siguen dentro del presupuesto en Linux y ninguno lo cumple ya en macOS. Es decir
-que el margen de "tres veces" del que hablaba ["El origen de la cifra de 25 milisegundos"](../../docs/DECISIONES.md#el-origen-de-la-cifra-de-25-milisegundos) se conserva en la máquina de referencia
+que el margen de "tres veces" del que hablaba ["El origen de la cifra de 25 milisegundos"](../../docs/decisiones/persistencia.md#el-origen-de-la-cifra-de-25-milisegundos) se conserva en la máquina de referencia
 y no en el portátil, y que un tablero de miles de tareas obligaría a mirar esto otra vez.
 
 ---
@@ -206,7 +205,7 @@ Las dos filas de `mattn` hay que leerlas juntas, porque por separado engañan.
 Con `CGO_ENABLED=1`, que es lo que ese controlador necesita para hacer algo, la compilación cruzada
 **falla en `runtime/cgo`**: hace falta un compilador de C que produzca código para el sistema
 destino, y esta máquina solo tiene el de Apple para macOS. No es un obstáculo insalvable, hay
-cadenas de herramientas cruzadas y hay contenedores, pero es exactamente lo que ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go)
+cadenas de herramientas cruzadas y hay contenedores, pero es exactamente lo que ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go)
 llamaba "complica generar binarios para otras plataformas", y ahora está comprobado en vez de
 supuesto.
 
@@ -250,7 +249,7 @@ iteración:
 
 `mattn` da el binario más pequeño y tarda **dos veces y media más en compilar en frío**, porque hay
 que compilar la biblioteca de SQLite en C, que son 269.653 líneas en un solo fichero. En caliente los cuatro
-son iguales, porque ninguno recompila la dependencia. ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go) escogió Go frente a Rust
+son iguales, porque ninguno recompila la dependencia. ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go) escogió Go frente a Rust
 poniendo el ciclo de desarrollo por delante del rendimiento, y ese mismo criterio aquí penaliza a
 `cgo` en la primera compilación de cada máquina y de cada `run` de integración continua, no en la
 del día a día.
@@ -270,7 +269,7 @@ Comprobado ejecutando las consultas de verdad contra cada uno, no leyendo su doc
 misma versión de SQLite, la 3.53.4: modo WAL, `BEGIN IMMEDIATE` como acceso exclusivo de escritura
 de ["Concurrencia, atomicidad y garantías observables"](../../docs/spec/garantias.md#concurrencia-atomicidad-y-garantías-observables), puntos de retorno, vuelta atrás de una transacción, `busy_timeout`, claves
 ajenas, `user_version` para versionar el esquema, `PRAGMA integrity_check` que `biso doctor`
-necesita desde ["La decisión de persistencia"](../../docs/DECISIONES.md#la-decisión-de-persistencia), `wal_checkpoint(TRUNCATE)`, `ANALYZE`, consultas recursivas para el
+necesita desde ["La decisión de persistencia"](../../docs/decisiones/persistencia.md#la-decisión-de-persistencia), `wal_checkpoint(TRUNCATE)`, `ANALYZE`, consultas recursivas para el
 árbol de `parent` y el grafo de dependencias, el módulo JSON y las funciones de ventana. Y los
 cuatro dejan leer desde una segunda conexión mientras una primera tiene una escritura abierta, que
 es literalmente lo que esa misma sección de garantías promete.
@@ -294,7 +293,7 @@ en `LIKE` para texto no ASCII con ninguno de ellos.
 ## 6. Lo que costó escribir cada prueba
 
 Esta sección no tiene cifras de reloj: es lo que se aprendió al programar de verdad las cuatro
-pruebas, que es un dato del mismo tipo que el que ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go) usó para elegir Go frente a Rust.
+pruebas, que es un dato del mismo tipo que el que ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go) usó para elegir Go frente a Rust.
 Como allí, lo que se mide es el coste de escribir el programa, no el de ejecutarlo.
 
 **Los tres que hablan por `database/sql` no son tres implementaciones, son una.** El cargador
@@ -350,7 +349,7 @@ más que el milisegundo que gana en Linux.
 
 **Segundo: entre los tres que quedan, el rendimiento tampoco decide.** En la máquina de referencia
 están entre 2,47 y 3,15 milisegundos, los tres casi ocho veces por debajo del presupuesto, y los
-separa 0,68 milisegundos, que es el 2,7 por ciento de 25. Es la misma situación que ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go)
+separa 0,68 milisegundos, que es el 2,7 por ciento de 25. Es la misma situación que ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go)
 describió al elegir el lenguaje, y merece la misma respuesta: cuando el rendimiento ya no distingue, decide lo
 que cuesta escribir y mantener el programa.
 

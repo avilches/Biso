@@ -13,7 +13,7 @@ comportamiento depende de dónde se ejecute el programa.
 
 **Qué define esta especificación y qué no.** Define la interfaz del programa y el modelo de datos
 lógico de una tarea, no el porqué de cómo se guardan los datos: esa decisión, con su razonamiento y su
-evidencia, vive en [`docs/DECISIONES.md`](../DECISIONES.md), y ninguno de estos documentos la repite.
+evidencia, vive en ["Decisiones de diseño"](../decisiones/index.md), y ninguno de estos documentos la repite.
 Aquí aparece el mecanismo solo donde afecta al comportamiento observable, como el fichero puntero
 `.biso.json` de [Cómo se elige el tablero](resolucion-del-tablero.md) o la base de datos SQLite que
 [`biso doctor`](cmd/doctor.md) comprueba; donde no lo afecta, la especificación enuncia el requisito

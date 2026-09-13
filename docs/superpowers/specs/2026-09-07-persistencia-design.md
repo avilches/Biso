@@ -10,7 +10,7 @@ Fecha: 2026-09-07
 
 Esta es la decisión que `CLAUDE.md` marcaba como la única que bloqueaba escribir código. La evidencia
 sobre cómo lo han resuelto (y roto) las demás herramientas está en
-[`../../ESTADO-DEL-ARTE.md`](../../ESTADO-DEL-ARTE.md), y este documento no la repite: la cita.
+[`../../ESTADO-DEL-ARTE.md`](../../estado-del-arte/index.md), y este documento no la repite: la cita.
 
 ## 1. Qué se decide
 

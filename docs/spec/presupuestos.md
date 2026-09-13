@@ -38,7 +38,7 @@ Estas reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
    documentado está en este documento y no en otra herramienta: la resolución del tablero llevaba una
    comprobación de un `.git` en cada directorio del camino hacia arriba, para frenar la búsqueda del
    puntero, y se retiró al ver que además de costar comprobaciones en cada llamada no protegía de lo
-   que pretendía (sección ["La decisión de persistencia"](../DECISIONES.md#la-decisión-de-persistencia) de `DECISIONES.md`).
+   que pretendía (sección ["La decisión de persistencia"](../decisiones/persistencia.md#la-decisión-de-persistencia)).
 2. **Ningún comando ejecuta un programa ajeno en su camino caliente.** `biso snapshot` es la única
    excepción, y así lo dice la sección ["`biso snapshot`"](cmd/snapshot.md). Invocar `git`, que es el sistema de control de versiones
    por defecto, cuesta unos 12 milisegundos medidos, casi la mitad de este presupuesto entero gastada en
@@ -50,7 +50,7 @@ Estas reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
    ese comando ya está fuera del camino caliente por definición.
 3. **La palanca mayor no es que cada llamada sea más rápida: es que haga falta hacer menos llamadas.**
    Para eso existe `biso prime` (sección ["`biso prime`, el arranque de una sesión"](cmd/prime.md)), que sustituye el ciclo entero de leer guías sueltas y
-   encadenar comandos por un solo mensaje al principio de la sesión; la sección ["El presupuesto del mensaje de arranque"](../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`
+   encadenar comandos por un solo mensaje al principio de la sesión; la sección ["El presupuesto del mensaje de arranque"](../decisiones/vocabulario-y-mensaje-de-arranque.md#el-presupuesto-del-mensaje-de-arranque)
    mide lo que cuesta la alternativa de no tenerlo.
 
 ---

@@ -18,9 +18,9 @@ La spec está escrita para que se pueda implementar el CLI entero sin preguntar 
 
 **No hay que rediseñar nada por libre.** Si al implementar aparece un caso que la especificación no
 cubre, lo correcto es añadirlo a la especificación y luego implementarlo, no resolverlo solo en el
-código. Y si una regla parece arbitraria, su razón está en [`docs/DECISIONES.md`](docs/DECISIONES.md) antes de cambiarla.
+código. Y si una regla parece arbitraria, su razón está en ["Decisiones de diseño"](docs/decisiones/index.md) antes de cambiarla.
 
-**Cómo se escribe una decisión nueva en `DECISIONES.md`.** Nunca como una crónica de cómo fue
+**Cómo se escribe una decisión nueva en las páginas de decisiones de diseño (`docs/decisiones/`).** Nunca como una crónica de cómo fue
 cambiando de opinión ("primero se hizo A, luego se probó B, y al final C"): eso obliga a quien lo lea
 a reconstruir cuál es la que manda hoy. Toda entrada dice primero, y como único hecho normativo, la
 decisión vigente ahora mismo, en un párrafo que se pueda citar sin más contexto. Las alternativas
@@ -43,18 +43,18 @@ Un board o tablero es una base de datos SQLite en un directorio propio fuera del
 fichero puntero versionado en git, con una exportación opcional a texto que sí se podría commitea para el historial
 (`biso snapshot`). Sin daemon, y sin fusionar nunca dos almacenes escritos por separado (la exportación vive
 donde está la base de datos, no con el proyecto). El porqué de  cada pieza, con su aritmética, está en
-["La decisión de persistencia"](docs/DECISIONES.md#la-decisión-de-persistencia), que enlaza a su vez a [`docs/ESTADO-DEL-ARTE.md`](docs/ESTADO-DEL-ARTE.md), la investigación
+["La decisión de persistencia"](docs/decisiones/persistencia.md#la-decisión-de-persistencia), que enlaza a su vez a ["Estado del arte"](docs/estado-del-arte/index.md), la investigación
 sobre las demás herramientas del espacio y por qué fallan.
 
 ## El lenguaje y el controlador de SQLite
 
 Lenguaje: **Go**. Presupuesto de ["El presupuesto de arranque"](docs/spec/presupuestos.md#el-presupuesto-de-arranque): 25 milisegundos de reloj para `biso ls` y `biso prime`
-sobre un tablero de 300 tareas. El razonamiento completo, con las cifras, está en ["El lenguaje de implementación es Go"](docs/DECISIONES.md#el-lenguaje-de-implementación-es-go).
+sobre un tablero de 300 tareas. El razonamiento completo, con las cifras, está en ["El lenguaje de implementación es Go"](docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go).
 
 El controlador de SQLite es `modernc.org/sqlite`, sobre la interfaz estándar `database/sql` y sin
 `cgo`, porque el enlace con la biblioteca en C no compila de forma cruzada para Linux ni para Windows.
 El razonamiento está en
-["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](docs/DECISIONES.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo), y el banco de
+["El controlador de SQLite es `modernc.org/sqlite`, sin `cgo`"](docs/decisiones/lenguaje-y-rendimiento.md#el-controlador-de-sqlite-es-moderncorgsqlite-sin-cgo), y el banco de
 pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `README.md`.
 
 ## Cosas que conviene tener presentes al implementar

@@ -84,7 +84,7 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
   ["Comentarios"](../familias-de-banderas.md#comentarios) es borrar el comentario entero
   (`--rm-comment`) o corregir únicamente su fecha (`--set-comment-date`). La razón, con el caso que
   la motiva, está en
-  ["Borrar o corregir la fecha de un comentario"](../../DECISIONES.md#borrar-o-corregir-la-fecha-de-un-comentario) de `DECISIONES.md`.
+  ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).
 - **`question` se llena con `biso ask` (autor e instante los fija el programa, el cuerpo lo da quien
   llama) y se vacía con `biso answer`.** Los tres detalles están en ["La pregunta abierta"](pregunta-abierta.md).
 

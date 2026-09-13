@@ -207,7 +207,7 @@ desde el otro lado.** Este es el argumento más fuerte a favor de toda la integr
 
 ### `DECISIONES.md` ya descarta el canal fácil
 
-La sección ["El presupuesto del mensaje de arranque"](../../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md` dice, literalmente:
+La sección ["El presupuesto del mensaje de arranque"](../../decisiones/vocabulario-y-mensaje-de-arranque.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md` dice, literalmente:
 
 > `biso prime` sustituye por completo a las guías de instrucciones y a cualquier inyección de texto
 > en los ficheros de convenciones del proyecto.
@@ -379,7 +379,7 @@ Comprobado además que hoy la especificación no contiene ni una sola aparición
 
 ### El presupuesto del mensaje de arranque, con los números
 
-De la sección ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presupuesto-de-tamaño) y de la sección ["El presupuesto del mensaje de arranque"](../../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`:
+De la sección ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presupuesto-de-tamaño) y de la sección ["El presupuesto del mensaje de arranque"](../../decisiones/vocabulario-y-mensaje-de-arranque.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`:
 
 | Parte | Tope | Ocupado hoy | Libre |
 |---|---:|---:|---:|
@@ -507,7 +507,7 @@ Las dos alternativas si la respuesta es que no:
   creada desde un worktree podría no verse desde `main`, y que entonces el registro duradero dejaría
   de serlo justo cuando más falta hace. Estaba bien identificado: es la peor propiedad de las
   herramientas que guardan las tareas como ficheros del árbol de trabajo, donde el estado se bifurca
-  con la rama y una incidencia cerrada en una rama reaparece abierta en la principal. La sección ["La decisión de persistencia"](../../DECISIONES.md#la-decisión-de-persistencia)
+  con la rama y una incidencia cerrada en una rama reaparece abierta en la principal. La sección ["La decisión de persistencia"](../../decisiones/persistencia.md#la-decisión-de-persistencia)
   de `docs/DECISIONES.md` no lo mitiga, lo elimina: un tablero es una base de datos SQLite en un
   directorio propio **fuera** del proyecto, localizada por el fichero puntero versionado
   `.biso.json`, así que no hay ninguna rama que contenga la tarea y un worktree ve exactamente el
@@ -534,7 +534,7 @@ Las dos alternativas si la respuesta es que no:
   conserva igual. En esa configuración, "la historia de git es el registro ahora" vuelve a ser cierta
   en cuanto alguien ejecuta `biso snapshot`, y lo que cruza a otra máquina cruza con el proyecto.
 - **El arrendamiento con caducidad existe precisamente para el fallo que motiva este documento**:
-  detectar una tarea que un agente cogió y cuya sesión murió sin liberarla. La sección ["Saber si alguien está trabajando de verdad"](../../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de
+  detectar una tarea que un agente cogió y cuya sesión murió sin liberarla. La sección ["Saber si alguien está trabajando de verdad"](../../decisiones/modelo-de-estados.md#saber-si-alguien-está-trabajando-de-verdad) de
   `docs/DECISIONES.md` ya lo resuelve, dentro de un capítulo titulado "El modelo de estados: cuatro
   requisitos, cerrados": se guardan `leaseExpiresAt` y `leaseHolder`, un plazo vencido no saca la
   tarea del estado activo por sí solo, y quien reclama una tarea vencida lo hace con el mismo
@@ -562,7 +562,7 @@ En este orden, y ninguno de los pasos depende de que exista una línea de códig
 2. **La frase del `prime`**, si la decisión de la sección ["La decisión abierta"](#la-decisión-abierta) es que sí: primero dejarla en 129 bytes o
    menos, o recortar antes lo que haga falta del bloque fijo, porque con su tamaño de hoy no cabe;
    luego editar la salida literal de la sección ["La salida literal"](../../spec/cmd/prime.md#la-salida-literal), **recalcular los bytes de las
-   dos partes** y actualizar los números de la sección ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presupuesto-de-tamaño) y de la sección ["El presupuesto del mensaje de arranque"](../../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`, que hoy
+   dos partes** y actualizar los números de la sección ["El presupuesto de tamaño"](../../spec/presupuestos.md#el-presupuesto-de-tamaño) y de la sección ["El presupuesto del mensaje de arranque"](../../decisiones/vocabulario-y-mensaje-de-arranque.md#el-presupuesto-del-mensaje-de-arranque) de `docs/DECISIONES.md`, que hoy
    dicen 3.327 y 4.818.
 3. **La entrada en `docs/DECISIONES.md`** explicando por qué esa frase entra y por qué no se nombra
    a Superpowers. Sin eso, la siguiente sesión que vea la frase la puede quitar por parecer ajena al
@@ -587,9 +587,9 @@ regenerarlos y a comprobar que coinciden carácter a carácter.
 - `docs/spec/`, sección ["`biso ls`"](../../spec/cmd/ls.md), los filtros de `biso ls`, incluidos `--not-blocked` y `--waiting`.
 - `docs/spec/`, sección ["El contrato de estabilidad"](../../spec/estabilidad.md), el contrato de estabilidad, que congela el tope de 5.120 bytes.
 - `docs/spec/`, sección ["Lo que se deja fuera a propósito"](../../spec/fuera-de-alcance.md), lo que se deja fuera a propósito.
-- `docs/DECISIONES.md` sección ["El presupuesto del mensaje de arranque"](../../DECISIONES.md#el-presupuesto-del-mensaje-de-arranque), el presupuesto del mensaje de arranque y la decisión de sustituir
+- `docs/DECISIONES.md` sección ["El presupuesto del mensaje de arranque"](../../decisiones/vocabulario-y-mensaje-de-arranque.md#el-presupuesto-del-mensaje-de-arranque), el presupuesto del mensaje de arranque y la decisión de sustituir
   las guías de instrucciones.
-- `docs/DECISIONES.md` sección ["Saber si alguien está trabajando de verdad"](../../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad), el arrendamiento con caducidad, ya decidido.
+- `docs/DECISIONES.md` sección ["Saber si alguien está trabajando de verdad"](../../decisiones/modelo-de-estados.md#saber-si-alguien-está-trabajando-de-verdad), el arrendamiento con caducidad, ya decidido.
 
 **Fuera de este repositorio:**
 

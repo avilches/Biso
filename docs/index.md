@@ -10,7 +10,7 @@ Esta documentación reúne los documentos del proyecto:
 - **[Especificación](spec/index.md)**: define todos los comandos con su firma, sus parámetros, su
   comportamiento en los casos límite, la salida literal que imprimen, su esquema JSON y sus códigos
   de salida. Es el documento del que se implementa todo.
-- **[Decisiones de diseño](DECISIONES.md)**: la razón de cada decisión de la especificación que
+- **[Decisiones de diseño](decisiones/index.md)**: la razón de cada decisión de la especificación que
   podría parecer arbitraria, y la evidencia que la sostiene.
-- **[Estado del arte](ESTADO-DEL-ARTE.md)**: el inventario de los gestores de tareas para agentes
+- **[Estado del arte](estado-del-arte/index.md)**: el inventario de los gestores de tareas para agentes
   que ya existen, y el catálogo de sus fallos frente a las respuestas de `biso`.
