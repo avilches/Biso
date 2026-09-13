@@ -177,9 +177,14 @@
   }
 
   function focusNoteField() {
-    window.requestAnimationFrame(function () {
-      noteField.focus();
-    });
+    // Force a synchronous reflow so the browser has already laid out the
+    // panel as visible before we focus, in the same task as the click that
+    // opened it. Deferring this focus call (eg. via requestAnimationFrame)
+    // moves it out of the click's user-gesture context, which left the
+    // textarea "focused" but unable to receive typed input until the user
+    // blurred it and refocused it by hand.
+    void panel.offsetHeight;
+    noteField.focus();
   }
 
   function closePanel() {
