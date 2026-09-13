@@ -137,6 +137,24 @@ def test_wrap_app_routes_the_save_path_to_save_app(monkeypatch, tmp_path):
     assert body == [b"original"]
 
 
+def test_wrap_app_delegates_a_get_on_the_save_path_to_the_original_app(monkeypatch, tmp_path):
+    notes_file = tmp_path / "notas-pendientes.md"
+    notes_file.write_text("", encoding="utf-8")
+    monkeypatch.setattr(notas_lectura, "NOTES_PATH", notes_file)
+
+    def original_app(environ, start_response):
+        start_response("404 Not Found", [])
+        return [b"not the save endpoint"]
+
+    wrapped = notas_lectura.wrap_app_with_save_endpoint(original_app)
+
+    status, _headers, body = _call_wsgi_app(wrapped, "GET", notas_lectura.SAVE_PATH_INFO)
+
+    assert status == "404 Not Found"
+    assert body == [b"not the save endpoint"]
+    assert notes_file.read_text(encoding="utf-8") == ""
+
+
 def test_on_serve_wraps_the_app_only_when_notes_enabled(monkeypatch):
     class FakeServer:
         def __init__(self):
