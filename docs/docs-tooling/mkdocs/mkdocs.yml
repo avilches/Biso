@@ -45,6 +45,12 @@ plugins:
   - search:
       lang: es
 
+# El plugin de busqueda de esta version no admite excluir un directorio entero desde aqui
+# (solo lee `search.exclude` del frontmatter de cada pagina), asi que ese comportamiento lo
+# fija este hook: saca docs/superpowers/ del indice de busqueda sin tocar cada fichero.
+hooks:
+  - excluir_superpowers_del_buscador.py
+
 # Un enlace a un fichero que no existe, a un ancla que no existe, o escrito de una forma que
 # MkDocs no reconoce pasa a ser un aviso, y con --strict, un fallo de build. Es lo que sostiene
 # la convencion de citar por el titulo de la seccion en vez de por su numero: una referencia
