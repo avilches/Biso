@@ -3,7 +3,8 @@
 
 Encadena, en este orden exacto, los pasos que hoy se ejecutan sueltos: comprobar los enlaces
 de los ficheros que quedan fuera de docs/, regenerar las paginas del tutorial, comprobar los
-recuentos y las referencias por numero de docs/spec/, docs/*.md y docs/tutorial/*.md, y construir el sitio con
+recuentos y las referencias por numero de docs/spec/, docs/*.md, docs/tutorial/*.md, docs/decisiones/*.md
+y docs/estado-del-arte/*.md, y construir el sitio con
 MkDocs en modo estricto. El orden no es arbitrario: la regeneracion del tutorial va antes de
 comprobar_recuentos.py porque ese comprobador revisa las paginas generadas, y si se ejecutara
 sobre la version vieja estaria comprobando lo que no se va a commitear.
@@ -70,7 +71,14 @@ def main(argv: list[str]) -> int:
             [
                 sys.executable,
                 str(TOOLS_DIR / "comprobar_recuentos.py"),
-                *expand("docs/spec/*.md", "docs/spec/cmd/*.md", "docs/*.md", "docs/tutorial/*.md"),
+                *expand(
+                    "docs/spec/*.md",
+                    "docs/spec/cmd/*.md",
+                    "docs/*.md",
+                    "docs/tutorial/*.md",
+                    "docs/decisiones/*.md",
+                    "docs/estado-del-arte/*.md",
+                ),
             ],
         ),
         (

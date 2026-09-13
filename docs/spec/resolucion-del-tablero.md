@@ -57,7 +57,7 @@ que la sección ["`biso snapshot`"](cmd/snapshot.md) declara que el control de v
 manos de una herramienta ajena, y además una que la cambiaría sin avisar, porque es `biso snapshot` quien
 crea el repositorio del tablero la primera vez que se ejecuta, de modo que el mismo comando en el mismo
 sitio respondería una cosa antes y otra después. El precio de no tener ese freno es que un proyecto sin puntero propio hereda el del
-proyecto que lo contenga, si lo hay, y se acepta a propósito: la sección ["La decisión de persistencia"](../DECISIONES.md#la-decisión-de-persistencia) de `DECISIONES.md` dice por
+proyecto que lo contenga, si lo hay, y se acepta a propósito: la sección ["La decisión de persistencia"](../decisiones/persistencia.md#la-decisión-de-persistencia) dice por
 qué, y `biso where` enseña siempre de qué directorio salió el puntero que ha resuelto.
 
 Si nada de eso existe, cualquier comando salvo `init`, `where`, `help`, `--help` y `--version` aborta

@@ -16,7 +16,7 @@ principio 1 de ["Los principios"](principios.md) no admite.
 **`leaseExpired` no cambia nunca el `status` guardado.** Dice que el arrendamiento de una tarea activa
 venció, pero el estado guardado sigue siendo el activo hasta que alguien lo cambia con una escritura
 explícita: lo que vence es la reclamación, no el estado (sección ["Saber si alguien está trabajando de
-verdad"](../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de `DECISIONES.md`). No hay una
+verdad"](../decisiones/modelo-de-estados.md#saber-si-alguien-está-trabajando-de-verdad)). No hay una
 escritura diferida que la saque del estado activo por su cuenta, porque eso haría que un comando
 tocara tareas que no nombró, y porque `biso prime`, que no escribe nunca, mostraría un estado que una
 escritura ajena y posterior podría cambiar. Liberar el arrendamiento vencido es la reclamación
@@ -90,7 +90,7 @@ Con la precedencia al revés quedaría una tarea terminada con un arrendamiento 
 lo que [La importación](#la-importación) rechaza al importar, así que `biso export` produciría un
 fichero que su propio `biso init --from` rechaza y la prueba de simetría de ["El contrato de
 estabilidad"](estabilidad.md) fallaría (sección ["Saber si alguien está trabajando de
-verdad"](../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de `DECISIONES.md`). **Y los
+verdad"](../decisiones/modelo-de-estados.md#saber-si-alguien-está-trabajando-de-verdad)). **Y los
 campos van siempre juntos**: ninguna escritura, y tampoco la importación, deja uno con valor y el otro
 vacío.
 

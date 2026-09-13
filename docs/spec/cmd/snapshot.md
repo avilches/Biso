@@ -30,7 +30,7 @@ criterio. `board.json` es la configuración del tablero, en la misma forma que i
 quien usa el tablero y no propiedades suyas, y la primera hace daño de verdad al viajar: restaurar la
 instantánea de otra persona con `biso init --from` dejaría su identidad configurada como la del tablero,
 y un tablero con `me` puesto anula `--mine`, porque entonces todo el mundo comparte identidad (sección
-["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `DECISIONES.md`). Un tablero restaurado nace por tanto sin identidad y con el límite por defecto,
+["Riesgos conocidos y aceptados del modelo de estados"](../../decisiones/modelo-de-estados.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados)). Un tablero restaurado nace por tanto sin identidad y con el límite por defecto,
 y quien restaura pone la suya con `biso config set me`. La garantía de simetría de ["`biso export`"](export.md) sigue cubriendo
 todo lo demás y **no cuenta estas dos claves**, que es la única cosa que exportar e importar no
 reproduce campo a campo.

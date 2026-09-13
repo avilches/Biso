@@ -6,7 +6,7 @@
 > sesión cerrada. Para traducir una de ellas, mira el mapa de la tabla de la tarea 3 de
 > [el plan del reparto](../plans/2026-09-10-reparto-de-la-spec.md).
 
-Este documento cierra los cuatro requisitos que la sección 9 de [`DECISIONES.md`](../../DECISIONES.md)
+Este documento cierra los cuatro requisitos que la sección 9 de [`DECISIONES.md`](../../decisiones/index.md)
 dejó identificados y sin incorporar. No es la especificación: es la decisión y su razón, escrita para
 que aplicarla a [`SPEC.md`](../../spec/index.md) y a `DECISIONES.md` sea mecánico. La sección 11 es la lista
 de esos cambios, uno a uno.

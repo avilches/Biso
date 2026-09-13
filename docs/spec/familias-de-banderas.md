@@ -45,12 +45,12 @@ de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso ar
 
 **Por qué no hay nombre desnudo.** Antes lo había: el nombre desnudo del campo añadía, y `set-`,
 `rm-` y `clear-` delante cambiaban esa operación. Funcionaba, y de hecho resolvía un fallo real medido
-en otra herramienta (Principio 3 de `DECISIONES.md`), pero exigía conocer esa regla de antemano: la
+en otra herramienta (Principio 3 de ["La evidencia detrás de los siete principios"](../decisiones/principios-y-mantenimiento.md#la-evidencia-detrás-de-los-siete-principios)), pero exigía conocer esa regla de antemano: la
 única forma de saber qué hacía `--label` era haberla leído en algún sitio, porque el nombre por sí solo
 no lo dice. Cada bandera de esta sección lleva ahora su propio verbo (`add`, `rm`, `clear`,
 `replace`, `append`, `check`, `uncheck`), así que no hay ninguna regla que aprender antes de usarla:
 la razón completa, con la medición de por qué la forma anterior tampoco cabía ya en el mensaje de
-arranque, está en `DECISIONES.md`.
+arranque, está en ["El grid completo de banderas de campo en el mensaje de arranque, medido con un agente real"](../decisiones/vocabulario-y-mensaje-de-arranque.md#el-grid-completo-de-banderas-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real).
 
 ## Sustituir un campo que no tiene bandera de "sustituir entera"
 
@@ -203,8 +203,7 @@ por orden (["Sustituir un campo que no tiene bandera de \"sustituir entera\""](#
 **No existe una bandera que edite el cuerpo o el autor de un comentario ya escrito, y no va a
 existir.** Un comentario es el registro de una conversación, y lo único que se concede aquí es
 corregir un metadato (la fecha) o retirar el comentario entero, nunca reescribir lo que se dijo. La
-razón, con el caso medido que la motiva, está en ["Borrar o corregir la fecha de un comentario"](../DECISIONES.md#borrar-o-corregir-la-fecha-de-un-comentario) de
-`DECISIONES.md`.
+razón, con el caso medido que la motiva, está en ["Borrar o corregir la fecha de un comentario"](../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).
 
 **`--rm-comment` y `--set-comment-date` toman el mismo selector que `--rm-ac` y `--check-ac`**
 (["Selectores de criterios"](#selectores-de-criterios)), con la clave de un comentario en vez de la de un criterio y el

@@ -4,7 +4,7 @@ docs_dir: ../..
 site_dir: ../../../site
 
 # docs/superpowers/ guarda los documentos de diseno y los planes de las sesiones de
-# brainstorming. Se publican, porque ESTADO-DEL-ARTE.md enlaza a uno de ellos, pero no
+# brainstorming. Se publican, porque estado-del-arte/index.md enlaza a uno de ellos, pero no
 # entran en el menu lateral para no mezclarlos con los documentos principales.
 not_in_nav: |
   superpowers/
@@ -162,5 +162,17 @@ nav:
     - El contrato de estabilidad: spec/estabilidad.md
     - Lo que se deja fuera a proposito: spec/fuera-de-alcance.md
     - Por donde empezar a implementar: spec/por-donde-empezar.md
-  - Decisiones de diseno: DECISIONES.md
-  - Estado del arte: ESTADO-DEL-ARTE.md
+  - Decisiones de diseno:
+    - decisiones/index.md
+    - Los principios, y como se mantiene la especificacion: decisiones/principios-y-mantenimiento.md
+    - El modelo de estados: decisiones/modelo-de-estados.md
+    - La persistencia: decisiones/persistencia.md
+    - El lenguaje de implementacion y el rendimiento: decisiones/lenguaje-y-rendimiento.md
+    - El vocabulario y el mensaje de arranque: decisiones/vocabulario-y-mensaje-de-arranque.md
+    - Comandos y banderas: decisiones/comandos-y-banderas.md
+    - Decisiones de detalle: decisiones/detalles.md
+  - Estado del arte:
+    - estado-del-arte/index.md
+    - "Parte 1. Las herramientas": estado-del-arte/herramientas.md
+    - "Parte 2. El catalogo de problemas": estado-del-arte/catalogo-de-problemas.md
+    - "Parte 3. Lo que la gente quiere conservar, y lo que rechaza": estado-del-arte/lo-que-se-conserva.md

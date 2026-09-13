@@ -71,7 +71,7 @@ Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
 | `warning: <x> is deprecated and will be removed in 2.0` | ver la sección ["El contrato de estabilidad"](estabilidad.md) |
 | `warning: MYP-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta |
 | `warning: MYP-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta |
-| `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al escribir sobre una tarea cuyo arrendamiento está vivo y es de otra identidad, con `biso start` o con cualquier otra escritura (["La renovación"](lease.md#la-renovación) de `lease.md`, ["Saber si alguien está trabajando de verdad"](../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de `DECISIONES.md`, y ["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)) |
+| `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al escribir sobre una tarea cuyo arrendamiento está vivo y es de otra identidad, con `biso start` o con cualquier otra escritura (["La renovación"](lease.md#la-renovación) de `lease.md`, ["Saber si alguien está trabajando de verdad"](../decisiones/modelo-de-estados.md#saber-si-alguien-está-trabajando-de-verdad), y ["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)) |
 
 ## Codificación y texto
 

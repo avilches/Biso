@@ -3,8 +3,7 @@
 Este directorio contesta con números la única decisión que quedaba antes de escribir código,
 aplazada a propósito hasta tener datos: cómo habla el programa con SQLite.
 El resultado, con su tabla y su recomendación, está en
-[`RESULTADOS.md`](RESULTADOS.md), y su contenido está escrito para acabar en ["El lenguaje de implementación es Go"](../../docs/DECISIONES.md#el-lenguaje-de-implementación-es-go) de
-`docs/DECISIONES.md`.
+[`RESULTADOS.md`](RESULTADOS.md), y su contenido está escrito para acabar en ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go).
 
 Lo que se mide es el presupuesto de ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque): 25 milisegundos de reloj
 para `biso ls` sobre un tablero de 300 tareas.

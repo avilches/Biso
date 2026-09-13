@@ -6,7 +6,7 @@ declara pagina a pagina en su frontmatter. Poner ese frontmatter a mano en cada 
 de superpowers/ se olvidaria en el siguiente plan o diseno que se anada ahi, asi que este
 hook lo fija en cuanto MkDocs lee cada pagina, para las que ya existen y las que vengan.
 
-superpowers/ se sigue publicando (lo exige el enlace de docs/ESTADO-DEL-ARTE.md a un
+superpowers/ se sigue publicando (lo exige el enlace de docs/estado-del-arte/index.md a un
 diseno concreto) y se sigue sacando del menu con `not_in_nav` en mkdocs.yml: esto solo
 evita que una busqueda devuelva un plan de sesion en vez de un documento principal.
 """

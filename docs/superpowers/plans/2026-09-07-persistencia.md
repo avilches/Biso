@@ -22,7 +22,7 @@ la especificación que se pueden revisar y rechazar por separado.
 **Herramientas:** Markdown, `grep`, `wc -c`. Ninguna dependencia nueva.
 
 **Diseño:** [`../specs/2026-09-07-persistencia-design.md`](../specs/2026-09-07-persistencia-design.md).
-La evidencia sobre otras herramientas está en [`../../ESTADO-DEL-ARTE.md`](../../ESTADO-DEL-ARTE.md).
+La evidencia sobre otras herramientas está en [`../../ESTADO-DEL-ARTE.md`](../../estado-del-arte/index.md).
 Los tres documentos viajan juntos: quien ejecute este plan tiene que leer el diseño antes de empezar.
 
 ## Restricciones globales
