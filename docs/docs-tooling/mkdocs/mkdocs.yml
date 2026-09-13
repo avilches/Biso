@@ -39,11 +39,15 @@ theme:
     - navigation.tracking
     - navigation.sections
     - navigation.tabs
+    - navigation.indexes
     - navigation.instant
     - navigation.instant.progress
     - toc.follow
     - search.suggest
     - search.highlight
+
+extra_css:
+  - stylesheets/extra.css
 
 plugins:
   - search:
