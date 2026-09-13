@@ -174,8 +174,8 @@ drops it, --clear-ext empties the map. There is no --replace-ext: setting a
 key already replaces its value.
 
 Scalars just take a value: -t/--title, -s/--status, --type, --priority,
---project, -m/--milestone, -p/--parent, --due, --ordinal, --reporter. Each has
-a --clear-<field>. An empty string is never a way to clear anything.
+-p/--parent, --due, --ordinal, --reporter. Each has a --clear-<field>. An
+empty string is never a way to clear anything.
 
 Comments:
       --comment <text>            append a comment; repeatable
@@ -205,7 +205,7 @@ Exit codes:
 Examples:
   biso set MYP-11 --priority high --add-labels parser
   biso set MYP-11 --check-ac 1,3 --append-note "Both covered by diff_test.rs"
-  biso set MYP-11 MYP-12 --milestone "v1.2"
+  biso set MYP-11 MYP-12 --due 2026-09-20
   biso set "CRLF" --clear-desc --append-desc @docs/bugs/BUG-02.md
 ```
 

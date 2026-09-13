@@ -96,13 +96,12 @@ frases y esa vivía en una celda.
 ## Lo que se deja fuera, y por qué
 
 - **Los hitos como entidad.** En el estudio, el comando de crear hitos se usó 22 veces, pero los
-  comandos de documentos y de decisiones no se usaron ni una sola vez en seis días. `biso` conserva el
-  hito como campo de la tarea y no crea una entidad con ciclo de vida propio: no hay comando que cree
-  un hito, ni clave de configuración que lo declare, ni fecha ni estado propios. Que no haya entidad
-  no quiere decir que la bandera no valide, y conviene no confundir las dos cosas: `--milestone`
-  valida contra el conjunto de hitos que las tareas usan de hecho (["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué)), que es derivado
-  y se llena solo. Lo que sí sería contradictorio es hacerla validar contra "los hitos definidos",
-  porque nada declara ese conjunto y nadie podría llenarlo.
+  comandos de documentos y de decisiones no se usaron ni una sola vez en seis días. Por eso `biso`
+  conservó el hito como campo de la tarea en vez de crear una entidad con ciclo de vida propio: sin
+  comando que lo creara, sin clave de configuración que lo declarase, sin fecha ni estado propios.
+  **Esta pieza ya no es cierta: `milestone` se retiró entero, no solo como entidad.**
+  ["Se retiran `project` y `milestone`"](#se-retiran-project-y-milestone), más abajo en este
+  documento, explica por qué el campo dejó de hacer falta y qué ocupa su lugar.
 - **El servidor de integración.** En 1.280 transcripciones no hubo una sola llamada al servidor de
   herramientas que la herramienta estudiada ofrece, pese a estar disponible. Al analizarlo se vio que
   arregla buena parte de los errores de parámetros y **ninguno** de los problemas de granularidad. Las
@@ -1308,32 +1307,22 @@ Cada entrada dice la sección de la especificación a la que corresponde.
 **["El algoritmo de coincidencia"](spec/vocabularios.md#el-algoritmo-de-coincidencia), por qué no hay coincidencia por prefijo ni por parecido al resolver una referencia.** Una regla
 que adivina acierta a veces, y acertar a veces es peor que fallar siempre, porque enseña a confiar.
 
-**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las tareas archivadas cuentan en los conjuntos de etiquetas, personas e hitos contra
+**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las tareas archivadas cuentan en los conjuntos de etiquetas y personas contra
 los que validan los filtros.** Es lo que impide que un filtro que hoy funciona deje de funcionar
 mañana por archivar la última tarea que lo usaba.
 
-**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las etiquetas, las personas y los hitos no tienen vocabulario cerrado al escribir, pero
-sus filtros sí validan.** No tienen vocabulario cerrado porque su utilidad es que se puedan inventar
+**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué las etiquetas y las personas no tienen vocabulario cerrado al escribir, pero sus
+filtros sí validan.** No tienen vocabulario cerrado porque su utilidad es que se puedan inventar
 sobre la marcha. Y validar al leer no es una asimetría con la escritura: es la aplicación del
 principio 1, que dice que un filtro que no puede encajar con nada es un error y no una respuesta
 vacía.
 
-**["Qué valida cada filtro, y contra qué"](spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué), por qué el hito validaba y ahora valida.** El hito era la excepción, con un `--milestone` que
-nunca fallaba y devolvía una lista vacía ante cualquier errata. La razón que se daba era que no hay
-entidad de hito, pero el argumento del párrafo de arriba no distingue en nada al hito de la etiqueta:
-las dos son texto que quien llama se inventa, ninguna de las dos se declara antes de usarla, y en las
-dos una errata al filtrar produce exactamente el fallo que el principio 1 existe para evitar. Lo que
-hacía falta no era una entidad, sino un conjunto contra el que comparar, y ese conjunto ya estaba
-ahí sin que nadie lo escribiera: los hitos que las tareas llevan de hecho. Con eso, **el hito era la
-última asimetría del principio 1 dentro de la especificación, y deja de serlo.**
-
-La excepción que queda, la bandera `--unchecked`, no es de la misma clase y por eso se conserva. La
-diferencia está en quién decide: una asimetría es el programa el que decide callar, sin que quien
-llama lo sepa ni pueda evitarlo, mientras que `--unchecked` la pide quien llama, en la misma línea de
-comandos, y quien la escribe está declarando que acepta una lista vacía sin garantía. Un
-comportamiento que se pide no engaña a nadie. Por eso `--unchecked` pasa a apagar también la
-comprobación del hito: dejar el hito fuera de la escapatoria declarada crearía una asimetría nueva
-justo al quitar la vieja.
+**Esta sección tenía una tercera entrada, sobre por qué el hito pasó a validar igual que una
+etiqueta.** Ya no aplica: `milestone` se retiró entero, no solo su validación.
+["Se retiran `project` y `milestone`"](#se-retiran-project-y-milestone), más abajo en este documento,
+explica la decisión vigente. Lo que queda de aquella entrada, y sigue siendo cierto, es que la
+bandera `--unchecked` no es una asimetría del principio 1 porque quien la escribe pide explícitamente
+una lista sin garantía, algo que el programa nunca decide callar por su cuenta.
 
 **["Los tres mensajes de \"no la encuentro\""](spec/referencias.md#los-tres-mensajes-de-no-la-encuentro), por qué son distintos.** Porque las tres situaciones
 piden acciones distintas de quien llama: corregir la sintaxis, dejar de buscar, o mirar en el archivo.
@@ -1663,3 +1652,55 @@ su propio selector completo. Darle a los comentarios una segunda forma de direcc
 más pobre, solo para ahorrarse un campo, habría creado dos maneras de resolver "cuál elemento de una
 lista" en el mismo documento en vez de una. Reutilizar el selector entero, en cambio, significa que
 quien ya sabe usar `--rm-ac` no aprende nada nuevo para usar `--rm-comment`.
+
+---
+
+## Se retiran `project` y `milestone`
+
+**La decisión.** La tarea no tiene ningún campo dedicado a agrupar trabajo. La agrupación real, la de
+una tarea grande con subtareas propias, se resuelve con `parent` (sección ["El modelo de datos de una tarea"](spec/modelo-de-datos.md)):
+cualquier tarea con hijas, sea cual sea su `type`, actúa como grupo, sin que haga falta marcarla de
+ninguna forma especial. Quien quiera además distinguir esas tareas grandes de las demás por su
+naturaleza puede declarar un valor `epic` en `types` (sección [`biso config`](spec/cmd/config.md)) y
+usarlo como cualquier otro tipo, sin que eso exija ningún campo ni comportamiento nuevo. La partición
+plana, la que separa tareas por su naturaleza sin mirar la jerarquía, ya la da ese mismo `type`. Ni
+`project`/`projects` ni `milestone` sobreviven a esta decisión: se retiran de la especificación
+entera, sin sustituto.
+
+**Por qué no un campo `project` en la tarea.** Era un escalar con vocabulario cerrado, declarado en la
+lista `projects` de la configuración, igual que `type` o `priority`. Compartía nombre con
+`project_name`, la clave que da nombre al tablero entero, así que dos conceptos completamente
+distintos ("a qué proyecto lógico pertenece esta tarea dentro del tablero" y "cómo se llama el
+tablero") competían por la misma palabra en la misma herramienta. Y no había ningún caso de uso
+medido, en ninguna de las herramientas comparables de `ESTADO-DEL-ARTE.md`, que pidiera agrupar las
+tareas de un mismo tablero por un proyecto declarado aparte.
+
+**Por qué no un campo `epic` nuevo.** Se consideró, y se descarta. `parent` ya resuelve exactamente lo
+mismo con una tarea real detrás, con su propio `status` y sus propios criterios, en vez de un texto
+suelto sin ciclo de vida. Añadir `epic` como escalar habría creado dos nombres para el mismo concepto,
+"de qué agrupación mayor es esto parte", en contra del principio 2 de la especificación. La
+confirmación de que `parent` es la vía correcta viene de herramientas pensadas específicamente para
+agentes de código: Beads, de Steve Yegge, no tiene ningún campo `epic` separado, trata `epic` como un
+valor más de su `type` y agrupa enteramente por el grafo de padres; TaskMaster AI resuelve lo mismo
+con subtareas anidadas de identificador estable, también sin campo dedicado.
+
+**Por qué se retira también `milestone`, después de haberlo defendido como campo.** Corrige
+["Los hitos como entidad"](#lo-que-se-deja-fuera-y-por-qué), más arriba en este documento. `milestone`
+cubría un caso real y distinto del de `parent`: un cajón para agrupar tareas sueltas sin crear una
+tarea nueva, sin exigirles ciclo de vida y sin configuración previa. Ese caso sigue siendo real, pero
+`milestone` no era la única manera de resolverlo y arrastraba una palabra con connotación de fecha
+límite que no tenía nada que ver con lo que el campo hacía, que era texto puro sin fecha propia. La
+vía que queda escrita para el futuro, si el caso vuelve a aparecer con datos que lo justifiquen, son
+las labels con ámbito al estilo GitLab (`clave::valor`, por ejemplo `group::Decisiones`), que ya caben
+en el alfabeto cerrado de `labels` (sección ["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token): el `:` ya está
+permitido) y que añadirían exclusividad real, como mucho un valor por `clave` en la misma tarea, sin
+declarar nada de antemano en la configuración, a diferencia de `ext`. No se implementa ahora: es la
+vía descartada que queda anotada para no reabrir la pregunta sin motivo, con el mismo criterio de
+evidencia con el que se había defendido `milestone` la primera vez.
+
+**Por qué no `ext`.** `ext` ya es un mapa de clave declarada a texto, pero su papel declarado es
+guardar la identidad de la tarea en otro sistema, no agrupar, y no tiene ningún filtro en `biso ls` ni
+vocabulario derivado. Usarlo para agrupar habría exigido, o bien construirle un filtro y un vocabulario
+derivado que hoy no tiene, que es exactamente lo que ya hacía `milestone` y por tanto no ahorra nada,
+o bien agrupar en el board por una dimensión que no se puede consultar por ningún otro sitio de la
+herramienta, una asimetría nueva entre lo que se ve y lo que se puede pedir por la línea de comandos.

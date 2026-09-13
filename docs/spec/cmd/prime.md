@@ -110,7 +110,6 @@ COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
   -t --title  -s --status  --type --clear-type  --priority --clear-priority
-  --project --clear-project  -m --milestone --clear-milestone
   -p --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --reporter --clear-reporter
   -l --add-labels --rm-labels --clear-labels --replace-labels
   -a --add-assignees --rm-assignees --clear-assignees --replace-assignees

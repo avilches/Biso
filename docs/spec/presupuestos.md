@@ -89,7 +89,7 @@ fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 
 Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
 
-El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.184 bytes** con el tablero del ejemplo: **3.695** de
+El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.136 bytes** con el tablero del ejemplo: **3.647** de
 parte fija y **1.489** de resumen. Las dos partes caben dentro de su tope.
 
 **El número que congela el contrato de estabilidad de la sección ["El contrato de estabilidad"](estabilidad.md) es el total, 5.504 bytes**, porque

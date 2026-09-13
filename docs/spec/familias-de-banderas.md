@@ -275,8 +275,6 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 | estado | `-s, --status` | no se puede, es obligatorio |
 | tipo | `--type` | `--clear-type` |
 | prioridad | `--priority` | `--clear-priority` |
-| proyecto | `--project` | `--clear-project` |
-| hito | `-m, --milestone` | `--clear-milestone` |
 | tarea padre | `-p, --parent` | `--clear-parent` |
 | fecha límite | `--due` | `--clear-due` |
 | orden manual | `--ordinal` | `--clear-ordinal` |

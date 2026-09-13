@@ -1,8 +1,7 @@
 # Los vocabularios del tablero y la regla de validación
 
-Hay campos con vocabulario cerrado, definido en la configuración: `status`, `type` y `priority`.
-Un cuarto, `project`, lo tiene solo si el tablero declara proyectos. Para todos ellos rige una sola
-regla, **idéntica al escribir y al leer**.
+Hay campos con vocabulario cerrado, definido en la configuración: `status`, `type` y `priority`. Para
+todos ellos rige una sola regla, **idéntica al escribir y al leer**.
 
 ## El algoritmo de coincidencia
 
@@ -64,10 +63,9 @@ error: unknown status: "Pending"
 
 | Filtro | Conjunto contra el que valida | Si no encaja |
 |---|---|---|
-| `--status`, `--type`, `--priority`, `--project` | el vocabulario configurado | error 3 |
+| `--status`, `--type`, `--priority` | el vocabulario configurado | error 3 |
 | `--label` y `--label-or` | el conjunto de etiquetas del tablero, definido abajo | error 3, con las cinco más parecidas |
 | `--assignee` | el conjunto de personas del tablero, definido abajo | error 3, con las cinco más parecidas |
-| `--milestone` | el conjunto de hitos del tablero, definido abajo | error 3, con las cinco más parecidas |
 | `--parent` | la resolución de referencias de la sección ["Cómo se resuelve una referencia a una tarea"](referencias.md) | error 2, 4 o 5 |
 | `--search` | nada, es texto libre | nunca falla |
 
@@ -79,23 +77,13 @@ Los valores de `reporter` no entran en este conjunto**, porque no hay ningún fi
 persona que solo ha reportado tareas y nunca las ha tenido asignadas no pertenece al conjunto contra
 el que valida `--assignee`.
 
-**El conjunto de hitos del tablero es solo derivado**: son los valores de `milestone` que lleva
-cualquier tarea del tablero, **archivadas y terminadas incluidas**, y nada más. Es el único de los
-tres que no tiene mitad declarada, porque no existe ninguna clave `milestones` en la configuración
-de [`biso config`](cmd/config.md) ni ninguna bandera de `biso init` que la escriba, así que **un hito existe exactamente
-mientras alguna tarea lo lleve escrito**. Un tablero en el que ninguna tarea tiene hito tiene el
-conjunto vacío, y entonces cualquier `--milestone` es error 3; el mensaje lo dice tal cual, sin
-sugerencias, porque no hay ninguna que ofrecer.
-
-**Ni las etiquetas, ni las personas, ni los hitos tienen vocabulario cerrado al escribir.** Escribir
-una etiqueta nueva la incorpora al conjunto, y a partir de ese momento filtrar por ella funciona. Con
-el hito pasa lo mismo: `biso set MYP-1 -m "v1.2"` es lo que hace que `v1.2` exista para
-`biso ls -m "v1.2"`, y la última tarea que deja de llevarlo lo saca del conjunto.
+**Ni las etiquetas ni las personas tienen vocabulario cerrado al escribir.** Escribir una etiqueta
+nueva la incorpora al conjunto, y a partir de ese momento filtrar por ella funciona.
 
 Está la bandera `--unchecked` de `biso ls` y `biso export`, que apaga **las comprobaciones contra
-estos conjuntos, las de etiquetas, personas e hitos, y ninguna otra**: los vocabularios configurados
-de `--status`, `--type`, `--priority` y `--project` siguen validando, y `--parent` sigue resolviendo
-su referencia. La bandera no cambia ninguna otra cosa.
+estos conjuntos, las de etiquetas y personas, y ninguna otra**: los vocabularios configurados de
+`--status`, `--type` y `--priority` siguen validando, y `--parent` sigue resolviendo su referencia.
+La bandera no cambia ninguna otra cosa.
 
 ---
 
