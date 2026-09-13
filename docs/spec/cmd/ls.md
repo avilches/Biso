@@ -241,7 +241,7 @@ El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el co
 permite cambiar entre versiones menores, así que la cifra exacta puede no ser esta.
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
-comentarios. Para eso está `biso get`. Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) sí están todos,
+comentarios. Para eso está `biso get`. Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) sí están todos,
 `blocks` incluido. `truncated` es explícito para que nadie tenga que comparar `shown` con `matched`,
 y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado.
 

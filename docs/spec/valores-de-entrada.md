@@ -83,7 +83,7 @@ error: --status given twice with different values: "In Progress" and "Done"
 
 ## El juego de caracteres de un token
 
-`labels`, `assignees` y las claves de `ext` (["Campos externos"](modelo-de-datos.md#los-campos-externos)) son los únicos
+`labels`, `assignees` y las claves de `ext` (["Campos externos"](modelo-de-datos/campos-externos.md#los-campos-externos)) son los únicos
 campos de esta sección cuyo alfabeto está cerrado. Los demás campos de lista de la tabla de
 ["Campos de lista que admiten coma"](familias-de-banderas.md#campos-de-lista-que-admiten-coma), es decir `references`, `documentation`,
 `dependencies` y `modifiedFiles`, son texto libre y no tienen ninguna restricción de caracteres: una

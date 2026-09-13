@@ -49,7 +49,7 @@ TASK-19  To Do  ac 0/2  urgency 7.0
 
 Exit code: `0`
 
-*(derived output, see [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: The output doesn't repeat what Sara just wrote: it doesn't say "assignee: @claude". It says the state the task is left in, its acceptance criteria progress, and its urgency, which is what she didn't know. That's the fourth principle of the specification, and it holds for every write. The urgency is 7.0, which comes from adding 6.0 for being high priority and 1.0 for having acceptance criteria. It doesn't add the active-task term, worth 4.0, because the task is still `To Do`: assigning a task doesn't put it in motion. The `dod` chunk doesn't show up because `TASK-19` has no definition of done, and that chunk only appears when there is one.*
 
@@ -68,7 +68,7 @@ TASK-40  In Progress  task  medium  Split the config loader                     
 
 Exit code: `0`
 
-*(derived output, see [`biso ls`](../spec/cmd/ls.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso ls`](../spec/cmd/ls.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: Six rows where there used to be five. `TASK-19` comes in second, and that spot isn't random: the list sorts by descending urgency, and `TASK-19` scores 7.0, same as `TASK-60`. A tie is always broken by ascending identifier, and 19 comes before 60. There's a reason `TASK-60` scores the same as a task that hasn't even started, despite being high priority and already in progress: `TASK-60` has an open question, and the active-task term only adds up when the task is in the active state **and** isn't waiting on an answer. A parked task isn't being worked on by anyone, so it doesn't compete for your attention. Scenario 8 shows the inside of that. And watch what this list doesn't say: `TASK-19` already belongs to the agent, but nobody has started working on it. There is no lease. That's what the next scenario's command is for.*
 

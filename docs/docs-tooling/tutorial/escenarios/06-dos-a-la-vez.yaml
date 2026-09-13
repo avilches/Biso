@@ -35,7 +35,7 @@ steps:
     source:
       - spec/salida-y-terminal.md#notas-y-avisos "Notas y avisos"
       - spec/cmd/verbos-del-ciclo.md#biso-start "`biso start`"
-      - spec/modelo-de-datos.md "El modelo de datos de una tarea"
+      - spec/modelo-de-datos/index.md "El modelo de datos de una tarea"
     remark: |
       First thing: the note got written. The exit code is 0 and the task has changed. The warning
       is not a rejection, it's information.
@@ -63,7 +63,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/verbos-del-ciclo.md#biso-note "`biso note`"
-      - spec/modelo-de-datos.md "El modelo de datos de una tarea"
+      - spec/modelo-de-datos/index.md "El modelo de datos de una tarea"
     remark: |
       No warning, because the lease is his. And something the output doesn't say: it just got
       renewed until 240 minutes after this moment.
@@ -83,7 +83,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md "El modelo de datos de una tarea"
+      - spec/modelo-de-datos/index.md "El modelo de datos de una tarea"
     remark: |
       This step looks useless, and it's the one that closes the argument. It hasn't changed any
       field, the note says so, and yet **the lease has been renewed**.
@@ -110,7 +110,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/ls.md "`biso ls`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       `TASK-52` is still `In Progress`, perfectly normally, and has nobody assigned. Its lease
       expired on September 5th and the stored state hasn't moved an inch.
@@ -133,7 +133,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/verbos-del-ciclo.md#biso-start "`biso start`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       With a single call he's done three things: he's seen that the state was already active and
       says so with that note, he's been assigned the task because nobody had it, and **he's
@@ -161,7 +161,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md "El modelo de datos de una tarea"
+      - spec/modelo-de-datos/index.md "El modelo de datos de una tarea"
     remark: |
       Another write that changes nothing and renews `TASK-19`'s reservation until 240 minutes
       after this moment. With this, the task enters the next scenario with a fresh lease, and you

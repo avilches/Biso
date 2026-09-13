@@ -49,7 +49,7 @@ TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: `--add-dod` adds. It's the same verb you already know from `--add-ac`: it behaves the same way for any list field.*
 
@@ -63,7 +63,7 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 You check how they turned out, with their keys.
 
@@ -104,7 +104,7 @@ TASK-19  Retry the upload on 5xx
 
 Exit code: `0`
 
-*(derived output, see [Los criterios y sus claves estables](../spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables), [`biso get`](../spec/cmd/get.md); not literal spec text)*
+*(derived output, see [Los criterios y sus claves estables](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), [`biso get`](../spec/cmd/get.md); not literal spec text)*
 
 *Note: This is the central point of the scenario. The surviving element is still `#2`, it hasn't become `#1`. The program fixes a key when the element is created and never moves it: that's why checking or removing by number is safe even when the list has lost elements along the way, and why a task can perfectly well have criteria `#2` and `#7` without that being anyone's mistake.*
 
@@ -135,7 +135,7 @@ TASK-19  Retry the upload on 5xx
 
 Exit code: `0`
 
-*(derived output, see [Los criterios y sus claves estables](../spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables), [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso get`](../spec/cmd/get.md); not literal spec text)*
+*(derived output, see [Los criterios y sus claves estables](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso get`](../spec/cmd/get.md); not literal spec text)*
 
 *Note: The keys are `#3` and `#4`, not `#1` and `#2`. This list's counter, inside this task, was already at 2 before anything got cleared, and clearing doesn't reset it: "the keys of earlier elements are never reused" holds even when the clear-and-add comes after an `--rm-`, not just right after creating the task.*
 
@@ -163,6 +163,6 @@ TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: `--add-dod` again. The keys of these two elements are `#5` and `#6`: the list's counter hasn't been reset either by the earlier `--rm-dod` or by the later `--clear-dods`, it "only ever grows," no matter what happens to the list's content.*

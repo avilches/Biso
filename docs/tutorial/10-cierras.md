@@ -34,7 +34,7 @@ TASK-19  In Progress  ac 0/6  dod 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [Los criterios y sus claves estables](../spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables); not literal spec text)*
+*(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [Los criterios y sus claves estables](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables); not literal spec text)*
 
 *Note: Four `--add-ac` flags in the same call add four new elements, in the order they're written, with new keys, #3, #4, #5 and #6, after the #1 and #2 the task already had from the initial inventory.*
 
@@ -109,6 +109,6 @@ TASK-19  Done  ac 6/6  dod 2/2  urgency 0.0
 
 Exit code: `0`
 
-*(derived output, see [`biso set`](../spec/cmd/set.md), [`biso finish`](../spec/cmd/verbos-del-ciclo.md#biso-finish), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso set`](../spec/cmd/set.md), [`biso finish`](../spec/cmd/verbos-del-ciclo.md#biso-finish), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: `--check-ac all` checks #2 again, the one you'd unchecked, and doesn't touch the other five, they were already checked, and checking the same criterion twice "stays checked, with no warning, the operation is idempotent." `--check-dod all` checks #6, the only one left. Urgency drops to 0.0 because the terminal state fixes it there by definition, not because it gets recalculated with the usual formula. What this line doesn't say, and is worth knowing, is that closing a task always clears `leaseExpiresAt` and `leaseHolder`, whoever is holding it. TASK-19 had been carrying @claude's lease since scenario 5; after this `biso finish` it's left without a lease, and it would end up just as empty even if another identity had been holding it. The invariant always wins over the general rule that "a write by someone else doesn't touch the lease": a finished task with a live lease is a state that not even importing the board would accept.*

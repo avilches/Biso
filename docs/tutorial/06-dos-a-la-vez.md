@@ -41,7 +41,7 @@ TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 
 Exit code: `0`
 
-*(derived output, see [Notas y avisos](../spec/salida-y-terminal.md#notas-y-avisos), [`biso start`](../spec/cmd/verbos-del-ciclo.md#biso-start), [El modelo de datos de una tarea](../spec/modelo-de-datos.md); not literal spec text)*
+*(derived output, see [Notas y avisos](../spec/salida-y-terminal.md#notas-y-avisos), [`biso start`](../spec/cmd/verbos-del-ciclo.md#biso-start), [El modelo de datos de una tarea](../spec/modelo-de-datos/index.md); not literal spec text)*
 
 *Note: First thing: the note got written. The exit code is 0 and the task has changed. The warning is not a rejection, it's information. That's deliberate, and the specification argues for it: a flow block doesn't prevent duplicate work. If `biso` had told her "you can't write here", Sara would have written the note somewhere else, or edited the store by hand, and then the board would be lying. It's the same call as with unfinished dependencies and open questions: it warns, it doesn't block. Second thing, and it's easy to miss: this write **hasn't touched the lease**. It hasn't renewed it, because Sara isn't the one holding it, and it hasn't stolen it, because only `biso start` does that. It's still `@claude`'s and it still expires at the same time. The urgency is still 19.0 because a note doesn't change anything urgency measures. And that 19.0 breaks down as: 6.0 for high priority, 4.0 for being active, 8.0 because another unfinished task depends on it, and 1.0 for having acceptance criteria.*
 
@@ -55,7 +55,7 @@ TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 
 Exit code: `0`
 
-*(derived output, see [`biso note`](../spec/cmd/verbos-del-ciclo.md#biso-note), [El modelo de datos de una tarea](../spec/modelo-de-datos.md); not literal spec text)*
+*(derived output, see [`biso note`](../spec/cmd/verbos-del-ciclo.md#biso-note), [El modelo de datos de una tarea](../spec/modelo-de-datos/index.md); not literal spec text)*
 
 *Note: No warning, because the lease is his. And something the output doesn't say: it just got renewed until 240 minutes after this moment. That's the central idea. There's no `biso heartbeat`, no `biso renew`, no flag to ask for one. Any write by the holder on their task renews the reservation, and "any" means all of them: the six cycle verbs, `biso set`, and `biso archive`. Working is what keeps the reservation alive, which is exactly what you want it to mean.*
 
@@ -70,7 +70,7 @@ TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 
 Exit code: `0`
 
-*(derived output, see [`biso set`](../spec/cmd/set.md), [El modelo de datos de una tarea](../spec/modelo-de-datos.md); not literal spec text)*
+*(derived output, see [`biso set`](../spec/cmd/set.md), [El modelo de datos de una tarea](../spec/modelo-de-datos/index.md); not literal spec text)*
 
 *Note: This step looks useless, and it's the one that closes the argument. It hasn't changed any field, the note says so, and yet **the lease has been renewed**. It had to work that way: if the heartbeat depended on values actually changing, a write that happens to match what was already there would let die the reservation of someone who really is working. The renewal looks at who is writing and to what, not whether they happened to change something. The other side of it: since no field on the task changed, the task's last-modified date is **not** touched. The reservation is renewed and the task stays clean.*
 
@@ -89,7 +89,7 @@ TASK-40  In Progress  task  medium  Split the config loader                     
 
 Exit code: `0`
 
-*(derived output, see [`biso ls`](../spec/cmd/ls.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso ls`](../spec/cmd/ls.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: `TASK-52` is still `In Progress`, perfectly normally, and has nobody assigned. Its lease expired on September 5th and the stored state hasn't moved an inch. That's not an oversight, it's the rule: what expires is the claim, not the state. Nothing is going to pull it out of `In Progress` on its own, because doing so would mean a command touching tasks you didn't name, and because `biso prime`, which never writes, would end up showing a state that someone else's next write could change. The order of this list, in case you're wondering, is descending urgency and has nothing to do with state: 19.0, 11.0, 7.0, 5.4, and 3.1. `TASK-40` comes last, despite being in progress and medium priority, because it depends on `TASK-11` and being blocked subtracts 5.0.*
 
@@ -103,7 +103,7 @@ TASK-52  In Progress  ac 0/1  urgency 5.4
 
 Exit code: `0`
 
-*(derived output, see [`biso start`](../spec/cmd/verbos-del-ciclo.md#biso-start), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso start`](../spec/cmd/verbos-del-ciclo.md#biso-start), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: With a single call he's done three things: he's seen that the state was already active and says so with that note, he's been assigned the task because nobody had it, and **he's claimed the expired lease** in his own name. That claim happens inside the same transaction that checks it was still expired, and that detail matters: if two agents claim the same expired lease at the same instant, only one wins. There's no window where both believe it's theirs. What that check doesn't do is silence `@bob` if he ever comes back. He can still note, comment on, and close this task, because writing is never forbidden; what he can no longer do is renew or reclaim a reservation that now belongs to someone else, and if he wants it back he has to ask for it again with `biso start`, and he'll get the same warning as the first step. It is a deliberate difference from the classic fencing-token reservation pattern, and it's documented as an accepted risk in the design decisions, under the heading about known risks of the state model.*
 
@@ -118,6 +118,6 @@ TASK-19  In Progress  ac 0/2  urgency 11.0
 
 Exit code: `0`
 
-*(derived output, see [`biso set`](../spec/cmd/set.md), [El modelo de datos de una tarea](../spec/modelo-de-datos.md); not literal spec text)*
+*(derived output, see [`biso set`](../spec/cmd/set.md), [El modelo de datos de una tarea](../spec/modelo-de-datos/index.md); not literal spec text)*
 
 *Note: Another write that changes nothing and renews `TASK-19`'s reservation until 240 minutes after this moment. With this, the task enters the next scenario with a fresh lease, and you already know that didn't cost any special command.*

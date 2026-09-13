@@ -54,9 +54,9 @@ la lista.
 ### Qué hace
 
 Cuatro cosas en una escritura: pone el estado activo, **asigna la tarea a `me` si no tiene ninguna
-persona asignada**, toma el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) a favor de
+persona asignada**, toma el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md)) a favor de
 quien llama (renovándolo si ya era suyo, reclamándolo si estaba vencido, o tomándolo si era de otra
-identidad: es el único comando que hace las tres cosas sobre una tarea que ya existe, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), y
+identidad: es el único comando que hace las tres cosas sobre una tarea que ya existe, sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md)), y
 añade el plan si se ha pasado. Con `-s` a un estado que no es el activo no hay arrendamiento que tomar,
 y la fila correspondiente de la tabla dice qué pasa entonces.
 
@@ -65,7 +65,7 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | La tarea ya está en el estado activo | Se aplica el resto igual, con `note: MYP-11 was already In Progress` |
 | La tarea ya está en el estado terminal | Error 6, salvo con `--reopen`, que la devuelve al estado activo |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
-| La tarea tiene [una pregunta abierta](../modelo-de-datos.md#la-pregunta-abierta) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
+| La tarea tiene [una pregunta abierta](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
 | El arrendamiento de la tarea está vencido (`leaseExpired`, ["Cuándo cuenta como vencido"](../lease.md#cuándo-cuenta-como-vencido) de `lease.md`) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (["La renovación"](../lease.md#la-renovación) de `lease.md`), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `DECISIONES.md` |
 | El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
 | `-s` con un estado que no es el activo, por ejemplo `biso start MYP-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
@@ -271,7 +271,7 @@ MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
 Y por stderr, `note: comment #2 by @trello:juan`. Ese `#2` es la `key` que acaba de recibir el
-comentario (["Los comentarios"](../modelo-de-datos.md#los-comentarios)), la misma que después acepta `--rm-comment` y `--set-comment-date`
+comentario (["Los comentarios"](../modelo-de-datos/comentarios.md#los-comentarios)), la misma que después acepta `--rm-comment` y `--set-comment-date`
 (["Comentarios"](../familias-de-banderas.md#comentarios)).
 
 ### Códigos de salida
@@ -351,7 +351,7 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | Sin `--summary` | Se cierra igual, con `warning: MYP-11 finished without a final summary` |
 | Sin `--summary` y con `--strict` | Error 6 |
 | La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
-| La tarea tiene [una pregunta abierta](../modelo-de-datos.md#la-pregunta-abierta) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
+| La tarea tiene [una pregunta abierta](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
 | La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 | La tarea tiene el arrendamiento y `-s` la lleva a otro estado que tampoco es el activo | Los campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
@@ -367,7 +367,7 @@ Quien quiera la política dura tiene `--strict`, y puede fijarla por defecto con
 MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0
 ```
 
-La urgencia de una tarea en el estado terminal es cero por definición, según la sección ["La urgencia"](../modelo-de-datos.md#la-urgencia).
+La urgencia de una tarea en el estado terminal es cero por definición, según la sección ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia).
 
 Por stderr, cuando toca:
 
@@ -463,7 +463,7 @@ configurada](../invocacion.md#variables-de-entorno).
 
 ### Qué hace
 
-Llena el campo [`question`](../modelo-de-datos.md#la-pregunta-abierta) con el autor y el instante que fija el programa y el texto dado,
+Llena el campo [`question`](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) con el autor y el instante que fija el programa y el texto dado,
 junto con cualquier otra bandera de campo que se haya pasado en la misma escritura. **No cambia el
 estado de la tarea.**
 
@@ -496,7 +496,7 @@ hint: reopen it first with `biso start MYP-11 --reopen`
 MYP-11  In Progress  ac 1/2  dod 0/1  urgency 15.0
 ```
 
-La urgencia queda por debajo de los 19.0 del ejemplo de ["La urgencia"](../modelo-de-datos.md#la-urgencia) porque el término de actividad exige
+La urgencia queda por debajo de los 19.0 del ejemplo de ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia) porque el término de actividad exige
 también que no haya pregunta abierta: la tarea sigue en el estado activo, pero `waiting` ya es
 cierto.
 
@@ -583,10 +583,10 @@ con otro autor tiene `biso comment --comment-author`, que sigue funcionando como
 
 ### Qué hace
 
-Vacía el campo [`question`](../modelo-de-datos.md#la-pregunta-abierta) en una sola escritura, con tres efectos en este orden exacto:
+Vacía el campo [`question`](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) en una sola escritura, con tres efectos en este orden exacto:
 
-1. Añade al [histórico de comentarios](../modelo-de-datos.md#los-comentarios) uno con el `author`, el `askedAt` y el `body` que guardaba
-   el campo: la pregunta se convierte literalmente en un comentario, con su autor y su [instante](../modelo-de-datos.md#las-fechas)
+1. Añade al [histórico de comentarios](../modelo-de-datos/comentarios.md#los-comentarios) uno con el `author`, el `askedAt` y el `body` que guardaba
+   el campo: la pregunta se convierte literalmente en un comentario, con su autor y su [instante](../modelo-de-datos/fechas.md#las-fechas)
    originales.
 2. Añade detrás un segundo comentario con el texto de la respuesta, firmado por [la identidad
    configurada](../invocacion.md#variables-de-entorno) y con el instante de ahora.
@@ -597,7 +597,7 @@ comentarios, los dos que escribe este verbo van siempre antes que cualquier `--c
 pasado en la misma escritura. El vaciado del campo `question` es un paso propio de `biso answer`,
 posterior a todos los de ["Orden de aplicación dentro de una escritura"](../garantias.md#orden-de-aplicación-dentro-de-una-escritura), y es siempre el último efecto de la escritura.
 
-Como los [comentarios](../modelo-de-datos.md#los-comentarios) se guardan y se muestran en orden de inserción y no de instante, el
+Como los [comentarios](../modelo-de-datos/comentarios.md#los-comentarios) se guardan y se muestran en orden de inserción y no de instante, el
 comentario de la pregunta queda antes que el de la respuesta aunque su instante sea anterior, y el
 instante de cada uno sigue diciendo la verdad.
 
@@ -631,7 +631,7 @@ hint: use `biso comment` to add a comment
 MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 ```
 
-La urgencia recupera el término de actividad de ["La urgencia"](../modelo-de-datos.md#la-urgencia), porque `waiting` vuelve a ser falso.
+La urgencia recupera el término de actividad de ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia), porque `waiting` vuelve a ser falso.
 
 ### Códigos de salida
 

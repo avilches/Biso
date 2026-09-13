@@ -121,7 +121,7 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Ciclos de tarea padre | error | no |
 | Claves de criterio repetidas dentro de una tarea | error | no |
 | `leaseExpiresAt` o `leaseHolder` con valor en una tarea que no está a la vez en el estado activo y asignada, o uno de los dos con valor y el otro vacío | error | sí, vaciando los dos |
-| El identificador más alto que el tablero recuerda haber asignado (["Identificadores"](../modelo-de-datos.md#identificadores)) es menor que el identificador más alto de una tarea existente | error | sí |
+| El identificador más alto que el tablero recuerda haber asignado (["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)) es menor que el identificador más alto de una tarea existente | error | sí |
 | Falta el marcador `<id>.id` en el directorio del tablero (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) | error | sí, escribiéndolo con el `id` que lleva la base de datos |
 | El marcador `<id>.id` nombra un `id` distinto del que lleva la base de datos | error | no, hay que decidir a mano |
 | Una raíz de `boards_extra_roots` (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) no existe o no se puede leer | aviso | no, es configuración de la máquina o un disco sin montar |

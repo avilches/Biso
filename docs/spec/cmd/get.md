@@ -115,7 +115,7 @@ MYP-11  Normalize CRLF in the diff
 Con `--section question` sobre MYP-60, la tarea con la pregunta abierta del ejemplo de la sección ["La salida literal"](prime.md#la-salida-literal), la
 sección sale rellena con una forma parecida a la de `## Comments`: el autor y el instante en una línea
 y el cuerpo debajo, pero **sin la clave**, porque `question` es del tipo `Question`, un valor único y
-no una lista direccionable (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)): no hay un selector que pueda señalar "la pregunta número tal".
+no una lista direccionable (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)): no hay un selector que pueda señalar "la pregunta número tal".
 
 ```
 MYP-60  Confirm the retry budget for the upload endpoint
@@ -141,7 +141,7 @@ urgency 19.0
 ```
 
 El término `active` vale `1.00` solo si el estado es el activo y la tarea no tiene una pregunta
-abierta (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)); en cualquier otro caso vale `0.00`, y la etiqueta dice cuál de los dos motivos se
+abierta (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)); en cualquier otro caso vale `0.00`, y la etiqueta dice cuál de los dos motivos se
 aplica: `not active` si el estado no es el activo, `active, waiting` si lo es pero la tarea espera una
 respuesta.
 

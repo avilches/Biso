@@ -82,7 +82,7 @@ Esto es exactamente lo que `biso prime` imprime por stdout con un tablero de eje
 por stderr.
 
 **Ese tablero fija `task_prefix` a `MYP` explícitamente**, en vez de dejar que se derive de
-`project_name` como haría por defecto (la sección ["Identificadores"](../modelo-de-datos.md#identificadores)), para que los identificadores de todos los ejemplos
+`project_name` como haría por defecto (la sección ["Identificadores"](../modelo-de-datos/identificadores.md#identificadores)), para que los identificadores de todos los ejemplos
 de este documento no dependan del nombre que le toque al tablero de turno. De paso queda demostrado que
 `task_prefix` se puede fijar a mano.
 
@@ -200,7 +200,7 @@ Cómo se calcula el resumen, para que la implementación sea única:
   `you are (not set)` en el bloque `BOARD`.
 - `IN PROGRESS` lista las tareas del estado activo sin pregunta abierta, ordenadas por la regla de
   orden de la sección ["`biso ls`"](ls.md), sin límite. Cada tarea cuyo arrendamiento está vencido (el campo derivado
-  `leaseExpired` de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) lleva, igual que `NEEDS ANSWER` con su pregunta, una segunda línea
+  `leaseExpired` de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md)) lleva, igual que `NEEDS ANSWER` con su pregunta, una segunda línea
   indentada con la forma `lease expired <leaseExpiresAt>, was held by <leaseHolder>`. Es el único de
   los cuatro bloques que la lleva, porque es el único cuya etiqueta afirma que alguien está
   trabajando ahora mismo, y un arrendamiento vencido contradice justo esa afirmación. Esta línea, como

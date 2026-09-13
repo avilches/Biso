@@ -50,7 +50,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       The output doesn't repeat what Sara just wrote: it doesn't say "assignee: @claude". It says
       the state the task is left in, its acceptance criteria progress, and its urgency, which is
@@ -78,7 +78,7 @@ steps:
     source_kind: derived
     source:
       - spec/cmd/ls.md "`biso ls`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       Six rows where there used to be five. `TASK-19` comes in second, and that spot isn't random:
       the list sorts by descending urgency, and `TASK-19` scores 7.0, same as `TASK-60`. A tie is

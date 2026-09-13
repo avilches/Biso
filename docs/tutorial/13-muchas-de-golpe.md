@@ -41,7 +41,7 @@ TASK-61  To Do  ac 0/1  urgency 1.4
 
 Exit code: `0`
 
-*(derived output, see [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: One line per task, in the same format as when you touch a single one. There's no batch mode that changes the shape of the output, and no summary that replaces the detail: what you learned with one applies to two just the same. `TASK-44` was already low priority, so its urgency doesn't move. `TASK-61` drops from 4.5 to 1.4, and there's a hidden lesson in there about reading these numbers: the real drop is exactly 3.0, what medium priority was contributing, but the two figures you see are rounded to one decimal from 4.45 and 1.45, and those two roundings don't go the same direction. Urgency is for ordering a list, not for doing arithmetic on it.*
 
@@ -83,7 +83,7 @@ TASK-33  To Do  ac 1/3  urgency 4.3
 
 Exit code: `0`
 
-*(derived output, see [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos.md#la-urgencia); not literal spec text)*
+*(derived output, see [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
 *Note: `TASK-7` drops from 18.3 to 15.3, the 3.0 it loses going from high to medium priority, and it's still the most urgent task on the board by a wide margin: it still has the deadline term, contributing 11.2 because it's due in two days. `TASK-33` doesn't move, since it was already medium priority, and it still shows up in the output anyway: it tells you where every task you named ends up, not just the ones that changed. Notice the alignment of the first column too. Its width is set by the longest identifier in the output, so `TASK-7` carries an extra space to line up with `TASK-33`.*
 

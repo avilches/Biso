@@ -1,5 +1,5 @@
 // gen crea un tablero de prueba con la forma que describen
-// docs/spec/modelo-de-datos.md (el modelo de datos) y "La decision de
+// docs/spec/modelo-de-datos/index.md (el modelo de datos) y "La decision de
 // persistencia" de docs/DECISIONES.md (una base de datos SQLite por tablero).
 //
 // Se compila con modernc.org/sqlite a proposito, para que generar el tablero no

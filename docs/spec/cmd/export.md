@@ -24,9 +24,9 @@ por defecto: la única bandera de `export` sobre el archivo es `--no-archived`.
 La salida es NDJSON, una tarea por línea, con **exactamente** las claves que acepta `biso new --from`,
 en la forma de objeto que esa sección define para los criterios, la definición de hecho, los
 comentarios y la pregunta abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
-y las claves estables de cada criterio **y de cada comentario** (["Los criterios y sus claves estables"](../modelo-de-datos.md#los-criterios-y-sus-claves-estables), ["Los comentarios"](../modelo-de-datos.md#los-comentarios)).
+y las claves estables de cada criterio **y de cada comentario** (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), ["Los comentarios"](../modelo-de-datos/comentarios.md#los-comentarios)).
 
-**Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md).** `question` sale en `export` y
+**Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md).** `question` sale en `export` y
 entra de vuelta con `new --from`, con sus tres partes completas.
 
 `export` solo lleva las tareas: reconstruir un tablero entero, con su vocabulario y no solo con sus

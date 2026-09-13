@@ -46,7 +46,7 @@ steps:
     source:
       - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       `--add-dod` adds. It's the same verb you already know from `--add-ac`: it behaves the same
       way for any list field.
@@ -61,7 +61,7 @@ steps:
     source:
       - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
   - narration: |
       You check how they turned out, with their keys.
     command: biso get TASK-19 --section dod
@@ -98,7 +98,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
+      - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
       - spec/cmd/get.md "`biso get`"
     remark: |
       This is the central point of the scenario. The surviving element is still `#2`, it hasn't
@@ -138,7 +138,7 @@ steps:
     exit_code: 0
     source_kind: derived
     source:
-      - spec/modelo-de-datos.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
+      - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
       - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/get.md "`biso get`"
     remark: |
@@ -172,7 +172,7 @@ steps:
     source:
       - spec/familias-de-banderas.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
       - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos.md#la-urgencia "La urgencia"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
       `--add-dod` again. The keys of these two elements are `#5` and `#6`: the list's counter
       hasn't been reset either by the earlier `--rm-dod` or by the later `--clear-dods`, it "only

@@ -70,7 +70,7 @@ Con `--print`, después de la línea del identificador viene la ficha completa e
 tarea, a diferencia de la línea de estado de `biso set` (["`biso set`"](set.md#salida)).** Una tarea nace sin ningún
 criterio, así que su contador de claves empieza siempre en 1: el primer `--add-ac` de la llamada es
 la `#1`, el segundo la `#2`, y así en el mismo orden en que se escribieron las banderas
-(["Los criterios y sus claves estables"](../modelo-de-datos.md#los-criterios-y-sus-claves-estables)). Quien llama ya lo sabe sin preguntar, así que
+(["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)). Quien llama ya lo sabe sin preguntar, así que
 imprimirlo sería el eco que el principio 4 prohíbe (["Los principios"](../principios.md)), y no la clase de dato que ese principio
 manda enseñar.
 
@@ -83,7 +83,7 @@ biso new --from tareas.ndjson --dry-run
 ```
 
 La entrada es **NDJSON**: un objeto JSON por línea. Las líneas vacías y las que empiezan por `#` se
-ignoran. Las claves son las del modelo de datos de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md), en `camelCase`.
+ignoran. Las claves son las del modelo de datos de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md), en `camelCase`.
 
 Ejemplo de una línea, con todos los tipos compuestos:
 
@@ -103,11 +103,11 @@ Las reglas del lote, todas obligatorias:
 - **`comments` es una lista de objetos** con `author`, `createdAt`, `body` y, opcionalmente, `key`.
   `createdAt` es opcional y, si falta, se pone el instante de la importación. `key` sigue la misma
   regla que la de `acceptanceCriteria` y `definitionOfDone`
-  (["Los criterios y sus claves estables"](../modelo-de-datos.md#los-criterios-y-sus-claves-estables)): si falta, se asigna con la siguiente clave libre del
+  (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)): si falta, se asigna con la siguiente clave libre del
   contador de comentarios de esa tarea, y una `key` repetida dentro de los comentarios de la misma
   tarea es un fallo de validación. Es lo que hace cierta la simetría de `biso export` para la clave de
   un comentario (["`biso export`"](export.md)).
-- **`question` se acepta como objeto** con `author`, `askedAt` y `body` (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)) en el lote de `--from`.
+- **`question` se acepta como objeto** con `author`, `askedAt` y `body` (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)) en el lote de `--from`.
   `askedAt` es opcional y, si falta, se pone el instante de la importación, igual que `createdAt` en
   `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.
 - **`id`, `createdAt` y `updatedAt` se aceptan aquí y solo aquí.** Un `id` ya ocupado es un fallo de
@@ -136,7 +136,7 @@ Las reglas del lote, todas obligatorias:
   archivar se hace con `biso archive`.
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
   escriben, y el mensaje dice la línea y la clave.
-- **Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) no se aceptan.** En la entrada son claves desconocidas y
+- **Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) no se aceptan.** En la entrada son claves desconocidas y
   por tanto un fallo de validación.
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de
   la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables).
