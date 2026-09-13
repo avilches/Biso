@@ -248,7 +248,7 @@ un campo derivado no puede cambiar un campo guardado. Si nada escribe, la tarea 
 estado activo guardado por muy vencido que esté su arrendamiento.
 
 Lo que se guarda es el instante de caducidad (`leaseExpiresAt`) y quién tiene el arrendamiento
-(`leaseHolder`), los dos sin valor salvo en una tarea activa y asignada (["El modelo de datos de una tarea"](spec/modelo-de-datos.md)). Lo
+(`leaseHolder`), los dos sin valor salvo en una tarea activa y asignada (["El vaciado"](spec/lease.md#el-vaciado) de `lease.md`). Lo
 que caduca sigue siendo, como decía la redacción original, "estoy en ello" y no "esto es tuyo": el
 campo derivado `leaseExpired` dice que el arrendamiento venció, pero el estado guardado no cambia
 solo, nunca. Liberarlo es una escritura explícita, y sigue sin hacer falta un comando nuevo para eso:
@@ -281,7 +281,7 @@ comprobación es comparar y sustituir dentro de una transacción que ya existía
 **Pero lo que se implementa no es ese token de vallado, y apartarse de él es deliberado.** Un token de
 vallado rechaza la escritura entera de quien ya no es el propietario. `biso` la acepta: la escritura de
 una identidad que no es `leaseHolder` se hace igual y solo deja intactos los campos del
-arrendamiento, con el aviso de ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos) (sexta precisión de ["El modelo de datos de una tarea"](spec/modelo-de-datos.md)). Así que el
+arrendamiento, con el aviso de ["Notas y avisos"](spec/salida-y-terminal.md#notas-y-avisos) (["La renovación"](spec/lease.md#la-renovación) de `lease.md`). Así que el
 agujero que el artículo cierra aquí queda entreabierto: el tenedor viejo que despierta puede comentar,
 anotar o cerrar la tarea que otro reclamó, y si vuelve a llamar a `biso start` se la lleva de vuelta,
 con aviso y sin impedimento. Se acepta porque rechazar la escritura sería lo único de todo el programa

@@ -3,59 +3,59 @@
 Este es el modelo **lógico**. Describe qué campos tiene una tarea, de qué tipo son y quién los
 escribe. No dice nada de cómo se guardan.
 
-**Todo campo es de una de seis formas, y la tabla de abajo dice cuál para cada uno, sin excepción:**
+**Todo campo tiene un tipo concreto, y la tabla de abajo lo dice para cada uno, sin excepción.** Los
+tipos son `string` (texto de una línea), `text` (bloque de prosa, con saltos de línea), `enum(...)`
+(un vocabulario cerrado, entre paréntesis; dice "configurable" cuando el tablero puede ampliarlo),
+`date` (una fecha o un instante; el formato exacto se dice en la fila del campo), `int`, `float`,
+`bool`, `list<string>` (varios valores simples separados por coma al escribir, direccionables por su
+propio valor, nunca por posición), y `map<string,string>` (pares clave-valor con las claves
+declaradas de antemano, direccionables por su clave). Los campos con estructura propia usan tres
+tipos con nombre, cada uno definido en su propia sección: `list<Criterion>`, `list<Comment>` y
+`Question` (esta última con un único valor, nunca una lista).
 
-| Forma | Qué es | Ningún elemento tiene fecha/autor propios, salvo que se diga | Se direcciona por |
-|---|---|---|---|
-| escalar | un solo valor: texto, número, booleano, fecha o instante | (no aplica, no es una lista) | no aplica |
-| lista de tokens | varios valores del mismo tipo simple, separados por coma al escribir | cierto | por su propio valor, nunca por posición ni por clave |
-| bloque de prosa | un solo texto largo, que puede tener saltos de línea | (no aplica) | no aplica |
-| mapa de claves | pares clave-valor, con las claves declaradas de antemano | cierto | por su clave |
-| lista de objetos | varios elementos, cada uno con más de un campo propio | depende del campo, se dice en su fila | por una clave estable que el programa asigna al crear, nunca por posición |
-| registro de tres partes | como un elemento de una lista de objetos, pero solo hay uno, nunca una lista | depende del campo, se dice en su fila | no aplica, solo hay uno |
+**¿Tiene fecha y autor propios, y se puede señalar uno a uno?** Solo se aplica a los tipos con
+nombre, y cada uno lo contesta en su propia sección: ["Los criterios y sus claves
+estables"](#los-criterios-y-sus-claves-estables) para `Criterion`, ["Los comentarios"](#los-comentarios)
+para `Comment`, ["La pregunta abierta"](#la-pregunta-abierta) para `Question`. Ningún otro tipo tiene
+fecha ni autor propios.
 
-Con esto, la pregunta "¿tiene fecha y autor propios, y se puede señalar uno a uno?" se contesta para
-cualquier campo sin salir de este documento: si su forma es "lista de objetos" o "registro de tres
-partes", la fila de la tabla siguiente o su sección propia lo dice explícitamente; para las otras
-cuatro formas la respuesta es siempre la misma y ya está en la tabla de arriba.
-
-| Campo | Forma | Tipo lógico | Obligatorio | Quién lo fija | Mutable |
-|---|---|---|---|---|---|
-| `id` | escalar | identificador `PREFIX-<n>` | sí | el programa | no |
-| `title` | escalar | texto de una línea | sí | quien llama | sí |
-| `status` | escalar | uno del vocabulario de estados | sí | quien llama | sí |
-| `type` | escalar | uno del vocabulario de tipos | no | quien llama | sí |
-| `priority` | escalar | uno del vocabulario de prioridades | no | quien llama | sí |
-| `parent` | escalar | referencia a otra tarea | no | quien llama | sí |
-| `assignees` | lista de tokens | textos de persona | no | quien llama | sí |
-| `reporter` | escalar | texto de persona | no | el programa al crear, o quien llama; ver ["Quién reporta una tarea"](#quién-reporta-una-tarea) | sí |
-| `labels` | lista de tokens | textos | no | quien llama | sí |
-| `dependencies` | lista de tokens | referencias a tareas | no | quien llama | sí |
-| `references` | lista de tokens | textos | no | quien llama | sí |
-| `documentation` | lista de tokens | textos | no | quien llama | sí |
-| `modifiedFiles` | lista de tokens | textos | no | quien llama | sí |
-| `due` | escalar | fecha `YYYY-MM-DD` | no | quien llama | sí |
-| `ordinal` | escalar | entero >= 0 | no | quien llama | sí |
-| `createdAt` | escalar | instante UTC | sí | el programa | solo al importar |
-| `updatedAt` | escalar | instante UTC | sí | el programa | solo al importar |
-| `archived` | escalar | booleano | sí, `false` por defecto | el programa, con `biso archive` | sí, solo con `biso archive` / `--unarchive`, o al importar |
-| `leaseExpiresAt` | escalar | instante UTC | no | el programa, a `ahora + lease_minutes` (clave de [configuración](cmd/config.md)); ver la sexta precisión de abajo para cuándo | sí, ver las tres últimas precisiones de abajo, o al importar |
-| `leaseHolder` | escalar | texto de persona | no | el programa, solo con [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y con [`biso new --start`](cmd/new.md); ver la sexta precisión de abajo | sí, solo con esos dos, o al importar; ver las tres últimas precisiones de abajo |
-| `urgency` | escalar | decimal, derivado | derivado | el programa | no, se recalcula al leer |
-| `ext` | mapa de claves | clave declarada a texto | no | quien llama | sí |
-| `description` | bloque de prosa | texto largo | no | quien llama | sí |
-| `plan` | bloque de prosa | texto largo | no | quien llama | sí |
-| `notes` | bloque de prosa | texto largo | no | quien llama | sí |
-| `summary` | bloque de prosa | texto largo | no | quien llama | sí |
-| `acceptanceCriteria` | lista de objetos | criterios, sin fecha ni autor propios; ver ["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables) | no | quien llama | sí |
-| `definitionOfDone` | lista de objetos | criterios, sin fecha ni autor propios; ver ["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables) | no | quien llama | sí |
-| `comments` | lista de objetos | comentarios, con fecha y autor propios; ver ["Los comentarios"](#los-comentarios) | no | quien llama | se añade, se borra entero, o se corrige solo la fecha; ver la precisión de abajo |
-| `question` | registro de tres partes | con fecha y autor propios, igual que un comentario; ver ["La pregunta abierta"](#la-pregunta-abierta) | no | mixto, según la parte; ver ["La pregunta abierta"](#la-pregunta-abierta) | sí, solo con `biso ask`, `biso answer`, o al importar |
-| `acDone`, `acTotal`, `dodDone`, `dodTotal` | escalar | entero, derivado | derivado | el programa | no, se recalculan al leer |
-| `commentCount` | escalar | entero, derivado | derivado | el programa | no, se recalcula al leer |
-| `blocks` | lista de tokens | referencias, derivado | derivado | el programa | no, se recalcula al leer |
-| `blocked`, `waiting` | escalar | booleano, derivado | derivado | el programa | no, se recalculan al leer |
-| `leaseExpired` | escalar | booleano, derivado | derivado | el programa | no, se recalcula al leer |
+| Campo | Tipo | Obligatorio | Quién lo fija | Mutable |
+|---|---|---|---|---|
+| `id` | `string` (`PREFIX-<n>`) | sí | el programa | no |
+| `title` | `string` | sí | quien llama | sí |
+| `status` | `enum(...)`, configurable (ver `statuses` en [`biso config`](cmd/config.md)) | sí | quien llama | sí |
+| `type` | `enum(...)`, configurable (ver `types` en [`biso config`](cmd/config.md)) | no | quien llama | sí |
+| `priority` | `enum(...)`, configurable (ver `priorities` en [`biso config`](cmd/config.md)) | no | quien llama | sí |
+| `parent` | `string` (referencia a otra tarea) | no | quien llama | sí |
+| `assignees` | `list<string>` (textos de persona) | no | quien llama | sí |
+| `reporter` | `string` (texto de persona) | no | el programa al crear, o quien llama; ver ["Quién reporta una tarea"](#quién-reporta-una-tarea) | sí |
+| `labels` | `list<string>` | no | quien llama | sí |
+| `dependencies` | `list<string>` (referencias a tareas) | no | quien llama | sí |
+| `references` | `list<string>` | no | quien llama | sí |
+| `documentation` | `list<string>` | no | quien llama | sí |
+| `modifiedFiles` | `list<string>` | no | quien llama | sí |
+| `due` | `date` (`YYYY-MM-DD`) | no | quien llama | sí |
+| `ordinal` | `int` (>= 0) | no | quien llama | sí |
+| `createdAt` | `date` (instante UTC, precisión de segundo) | sí | el programa | solo al importar |
+| `updatedAt` | `date` (instante UTC, precisión de segundo) | sí | el programa | solo al importar |
+| `archived` | `bool` | sí, `false` por defecto | el programa, con `biso archive` | sí, solo con `biso archive` / `--unarchive`, o al importar |
+| `leaseExpiresAt` | `date` (instante UTC) | no | el programa, a `ahora + lease_minutes` (clave de [configuración](cmd/config.md)); ver [La renovación](lease.md#la-renovación) en `lease.md` para cuándo | sí, ver [`lease.md`](lease.md), o al importar |
+| `leaseHolder` | `string` (texto de persona) | no | el programa, solo con [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y con [`biso new --start`](cmd/new.md); ver [La renovación](lease.md#la-renovación) en `lease.md` | sí, solo con esos dos, o al importar; ver [`lease.md`](lease.md) |
+| `urgency` | `float`, derivado | derivado | el programa | no, se recalcula al leer |
+| `ext` | `map<string,string>` | no | quien llama | sí |
+| `description` | `text` | no | quien llama | sí |
+| `plan` | `text` | no | quien llama | sí |
+| `notes` | `text` | no | quien llama | sí |
+| `summary` | `text` | no | quien llama | sí |
+| `acceptanceCriteria` | `list<Criterion>`; ver ["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables) | no | quien llama | sí |
+| `definitionOfDone` | `list<Criterion>`; ver ["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables) | no | quien llama | sí |
+| `comments` | `list<Comment>`; ver ["Los comentarios"](#los-comentarios) | no | quien llama | se añade, se borra entero, o se corrige solo la fecha; nunca se edita el cuerpo ni el autor |
+| `question` | `Question`; ver ["La pregunta abierta"](#la-pregunta-abierta) | no | mixto, según la parte; ver ["La pregunta abierta"](#la-pregunta-abierta) | sí, solo con `biso ask`, `biso answer`, o al importar |
+| `acDone`, `acTotal`, `dodDone`, `dodTotal` | `int`, derivado | derivado | el programa | no, se recalculan al leer |
+| `commentCount` | `int`, derivado | derivado | el programa | no, se recalcula al leer |
+| `blocks` | `list<string>`, derivado | derivado | el programa | no, se recalcula al leer |
+| `blocked`, `waiting` | `bool`, derivado | derivado | el programa | no, se recalculan al leer |
+| `leaseExpired` | `bool`, derivado | derivado | el programa | no, se recalcula al leer |
 
 Precisiones sobre la mutabilidad:
 
@@ -75,96 +75,28 @@ Precisiones sobre la mutabilidad:
   clave desconocida: `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`,
   `blocks`, `blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos derivados del
   documento; las demás secciones remiten a ella.
-- **`leaseExpired` no cambia el `status` guardado, nunca.** Vale cierto cuando `leaseExpiresAt`
-  tiene valor y ese instante es anterior al reloj de quien lee, y **vale falso cuando
-  `leaseExpiresAt` está vacío**, que es el caso de toda tarea sin arrendamiento: no hay ningún
-  estado en el que este derivado se quede sin valor, porque un derivado que no se pudiera calcular
-  es justo lo que el principio 1 de la sección ["Los principios"](principios.md) no admite. Dice que el arrendamiento de una tarea
-  activa venció, pero el estado guardado sigue siendo el activo hasta que alguien lo cambia con una
-  escritura explícita: lo que vence es la reclamación, no el estado (sección ["Saber si alguien está trabajando de verdad"](../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de
-  `DECISIONES.md`). No hay una escritura diferida que la saque del estado activo por su cuenta, porque
-  eso haría que un comando tocara tareas que no nombró, y porque `biso prime`, que no escribe nunca,
-  mostraría un estado que una escritura ajena y posterior podría cambiar. Liberar el arrendamiento
-  vencido es la reclamación explícita que hace [`biso start`](cmd/verbos-del-ciclo.md#biso-start), no un efecto secundario de
-  ningún otro comando.
-- **Renovar `leaseExpiresAt` y fijar o transferir `leaseHolder` son cosas distintas, y solo la
-  segunda pasa por `biso start` o por su atajo `biso new --start`.** Cualquier escritura sobre una
-  tarea activa y asignada renueva `leaseExpiresAt` a `ahora + lease_minutes`, pero solo
-  cuando quien llama ya es `leaseHolder`. **Cualquier escritura son todas**, sin ninguna excepción:
-  los [seis verbos del ciclo](cmd/verbos-del-ciclo.md), [`biso set`](cmd/set.md) y [`biso archive`](cmd/archive.md), que son los
-  comandos que llegan a escribir sobre una tarea que ya existe. Se nombran aquí porque una regla
-  general que no nombra a nadie invita a buscarle excepciones donde no las hay. **Una escritura que
-  no cambia ningún campo renueva igual**: [`biso set`](cmd/set.md) con todas sus banderas dando el valor que la
-  tarea ya tiene sale con código 0 y con `note: MYP-11 unchanged`, y aun así renueva
-  `leaseExpiresAt`, porque sigue siendo una escritura del tenedor sobre su tarea y el latido no
-  puede depender de si los valores coincidían por casualidad. Esa renovación no toca `updatedAt`,
-  porque ningún campo de la tarea ha cambiado, y deja vacía la lista `changed` del [esquema JSON](cmd/set.md); la nota sigue siendo cierta, porque habla de los campos de la tarea y ninguno cambió. Si la
-  tarea no tiene arrendamiento todavía, escribir sobre ella no lo crea: fijarlo por primera vez es
-  parte de lo que hace `biso start`, igual que reclamarlo vencido o tomarlo de [otra identidad](cmd/verbos-del-ciclo.md#biso-start). Una escritura de una identidad distinta de `leaseHolder` mientras el arrendamiento está
-  vivo no toca ninguno de los campos: avisa con el mismo
-  `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z` de [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y de la tabla de
-  la sección ["Notas y avisos"](salida-y-terminal.md#notas-y-avisos), y el resto de la escritura se hace igual. **Con una sola excepción, y es que esa
-  misma escritura rompa la invariante de la precisión siguiente**: si deja la tarea fuera del estado
-  activo, sin ninguna persona asignada o archivada, los campos se vacían en esa misma escritura,
-  sea quien sea quien la haga, y el aviso de que el arrendamiento era de otra identidad se emite
-  igual. Una escritura de una identidad distinta mientras el arrendamiento está vencido tampoco lo
-  toca, y lo deja vencido: quien comenta, anota o cierra una tarea no ha reclamado nada. **Reclamar
-  es de [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y de su atajo [`biso new --start`](cmd/new.md), y de nadie más**, con una
-  excepción que hay que nombrar porque sin ella la frase sería falsa: `biso start -s <estado>` con
-  un estado que no es el activo no fija arrendamiento, ya que fijarlo ahí rompería la invariante de
-  la precisión siguiente, y deja los campos como los dejaría cualquier otra escritura. Una tarea
-  que llega a activa y asignada por cualquier otra vía no tiene arrendamiento hasta que alguien
-  llame a `biso start` sobre ella, y esas vías son exactamente dos: las banderas de campo de la
-  sección ["Las familias de banderas"](familias-de-banderas.md), por ejemplo `biso set --status`, ninguna de las cuales lo puede crear, y la
-  importación, que es de lo que trata la última precisión.
-- **Los campos solo tienen valor en una tarea activa y asignada, y se vacían al perder
-  cualquiera de las dos condiciones, no solo la primera.** Una escritura que saca la tarea del
-  estado activo (`biso finish`, o `biso set --status` a cualquier otro valor) vacía
-  `leaseExpiresAt` y `leaseHolder` en esa misma escritura. Y como la condición que los sostiene es
-  la conjunción de las dos cosas, perder la segunda los vacía igual: `--clear-assignees` o
-  [`--rm-assignees`](familias-de-banderas.md#campos-de-lista-que-admiten-coma) sobre una tarea activa que se queda sin ninguna persona asignada vacía los
-  campos en esa misma escritura, sea quien sea quien la haga. **[`biso archive`](cmd/archive.md) los vacía
-  también**, aunque `archived` no sea un estado y archivar no saque la tarea del estado activo:
-  archivar es dejar de trabajar en la tarea, y un arrendamiento es la afirmación de que alguien está
-  trabajando ahora, así que conservarlo lo guardaría donde nadie lo ve, porque `biso prime` y
-  `biso ls` excluyen las archivadas por defecto, y `--unarchive` la devolvería al tablero semanas
-  después a nombre de una sesión que ya murió. **Esta precisión gana siempre sobre la anterior, y
-  por eso la invariante se enuncia aquí y el aviso allí.** Cuando quien escribe no es
-  `leaseHolder`, el aviso de que el arrendamiento es de otra identidad se emite igual, pero los dos
-  campos se vacían: `@sara` haciendo `biso finish MYP-11` sobre una tarea arrendada por `@claude` la
-  deja terminada y sin arrendamiento. Con la precedencia al revés quedaría una tarea terminada con un
-  arrendamiento vivo, que es exactamente lo que la última precisión rechaza al importar, así que
-  `biso export` produciría un fichero que su propio `biso init --from` rechaza y la prueba de
-  simetría de la sección ["El contrato de estabilidad"](estabilidad.md) fallaría (sección ["Saber si alguien está trabajando de verdad"](../DECISIONES.md#saber-si-alguien-está-trabajando-de-verdad) de `DECISIONES.md`). **Y los campos van
-  siempre juntos**: ninguna escritura, y tampoco la importación, deja uno con valor y el otro vacío.
-- **La importación los escribe con el valor que traiga el fichero, y es la única vía que lo hace.**
-  Los dos son campos guardados y no derivados, así que [`biso export`](cmd/export.md) los escribe y [`biso new --from`](cmd/new.md)
-  los lee de vuelta como cualquier otro, que es lo que hace cierta la garantía de simetría de [`biso export`](cmd/export.md)
-  sin una lista de excepciones que mantener. La invariante de la precisión anterior se comprueba al
-  importar, y en sus dos mitades. Una línea que traiga `leaseExpiresAt` o `leaseHolder` sobre una
-  tarea que no esté a la vez en el estado activo y asignada a alguien es un fallo de validación del
-  [lote](cmd/new.md), igual que una clave desconocida. Y una línea que traiga uno de los campos y no el
-  otro es el mismo fallo, con el mismo trato: los dos vienen juntos o no viene ninguno, porque un
-  `leaseHolder` sin `leaseExpiresAt` sería un arrendamiento que no caduca nunca, y un
-  `leaseExpiresAt` sin `leaseHolder` una reserva de nadie. Un arrendamiento importado no privilegia
-  a nadie: `leaseExpired` se recalcula contra el reloj de la máquina que lee, así que el que llegue
-  caducado sale caducado y [`biso start`](cmd/verbos-del-ciclo.md#biso-start) lo reclama, y el que llegue vivo a nombre de otra
-  identidad solo produce el aviso de la sección ["Notas y avisos"](salida-y-terminal.md#notas-y-avisos) hasta que caduque.
+
+**Las reglas de `leaseExpiresAt` y `leaseHolder` (cuándo cuenta como vencido el arrendamiento, cuándo
+se renueva, cuándo se vacía y qué hace la importación con ellos) tienen su propio documento,
+[`lease.md`](lease.md), porque dominan la mutabilidad de una tarea mucho más que cualquier otro campo
+y no son el tema principal de este.**
 
 ## Los criterios y sus claves estables
 
-`acceptanceCriteria` y `definitionOfDone` son listas del mismo tipo, y cada elemento tiene tres cosas:
+`acceptanceCriteria` y `definitionOfDone` son listas del mismo tipo, `Criterion`, y cada elemento
+tiene tres partes, sin fecha ni autor propios:
 
 | Parte | Tipo | Quién la fija |
 |---|---|---|
-| `key` | entero positivo | el programa al crear el elemento |
-| `text` | texto | quien llama |
-| `checked` | booleano | quien llama |
+| `key` | `int` positivo | el programa al crear el elemento |
+| `text` | `string` | quien llama |
+| `checked` | `bool` | quien llama |
 
 **La clave se asigna al crear el elemento, con un contador propio de esa lista dentro de esa tarea, y
 no se reasigna nunca.** Quitar un elemento no mueve las claves de los demás: una tarea puede tener
 perfectamente los criterios `#1` y `#3` y ninguno más. Cada tarea lleva dos contadores, uno por
-lista, que solo crecen.
+lista, que solo crecen. Un `Criterion` se direcciona siempre por su `key`, nunca por su posición en
+la lista.
 
 Consecuencias que hay que respetar en toda la implementación:
 
@@ -176,19 +108,19 @@ Consecuencias que hay que respetar en toda la implementación:
 
 ## Los comentarios
 
-Cada comentario tiene clave, autor, instante y cuerpo:
+Cada elemento de `comments` es del tipo `Comment`, con clave, autor, instante y cuerpo propios:
 
 | Parte | Tipo | Quién la fija |
 |---|---|---|
-| `key` | entero positivo | el programa al crear el comentario |
-| `author` | texto libre | quien llama, y por defecto la identidad `me` |
-| `createdAt` | instante UTC | el programa, salvo al importar o con `--set-comment-date` (["Comentarios"](familias-de-banderas.md#comentarios)) |
-| `body` | texto largo | quien llama |
+| `key` | `int` positivo | el programa al crear el comentario |
+| `author` | `string` libre | quien llama, y por defecto la identidad `me` |
+| `createdAt` | `date` (instante UTC) | el programa, salvo al importar o con `--set-comment-date` (["Comentarios"](familias-de-banderas.md#comentarios)) |
+| `body` | `text` | quien llama |
 
 **La clave se asigna al crear el comentario, con un contador propio de esa lista dentro de esa
-tarea, y no se reasigna nunca**, exactamente igual que la de un criterio
+tarea, y no se reasigna nunca**, exactamente igual que la de un `Criterion`
 (["Los criterios y sus claves estables"](#los-criterios-y-sus-claves-estables)). Borrar un comentario no mueve las claves de los
-demás.
+demás, y un `Comment` se direcciona siempre por su `key`, nunca por su posición.
 
 **El autor es texto libre y no se valida contra nada.** Un comentario puede venir de alguien que no
 existe en este tablero, y un sistema externo puede usar su propia convención, por ejemplo
@@ -223,12 +155,12 @@ toma el instante de la importación.
 cuenta aparte a propósito. Si no viene, no se rellena con nada: la tarea llega sin arrendamiento, que
 es lo que significa no traerlo. Rellenarla con el instante de la importación crearía un arrendamiento
 que nadie ha reclamado, y encima a nombre de nadie, porque `leaseHolder` no es una fecha y no tiene
-ningún valor por defecto que ponerle. Los dos vienen juntos o no viene ninguno (precisión octava de
-esta misma sección).
+ningún valor por defecto que ponerle. Los dos vienen juntos o no viene ninguno (la regla de
+[La importación](lease.md#la-importación) en `lease.md`).
 
 ## La urgencia
 
-`urgency` es un decimal derivado que se recalcula en cada lectura y **nunca se guarda**. Es el segundo
+`urgency` es un `float` derivado que se recalcula en cada lectura y **nunca se guarda**. Es el segundo
 criterio de la tupla de orden por defecto de `biso ls`, después de `ordinal` ([`biso ls`](cmd/ls.md)), y el que ordena
 el resumen de `biso prime`.
 
@@ -281,8 +213,8 @@ regla de orden completa de la sección [`biso ls`](cmd/ls.md).
 
 ## Los campos externos
 
-`ext` es un mapa de clave a texto para guardar la identidad de una tarea en otro sistema. La regla
-es la siguiente:
+`ext` es un `map<string,string>` de clave a texto para guardar la identidad de una tarea en otro
+sistema. La regla es la siguiente:
 
 - El tablero **declara** en su configuración qué claves admite, en la lista `extensions`.
 - Escribir una clave declarada funciona: `biso set MYP-1 --ext trello.card=5f2a8c1e3b9d4a7f`.
@@ -315,13 +247,14 @@ trae aplica las mismas reglas de esta tabla.
 
 ## La pregunta abierta
 
-`question` es un registro de tres partes, con la misma forma que [un comentario](#los-comentarios):
+`question` es del tipo `Question`, un único valor y nunca una lista, con la misma forma que un
+[`Comment`](#los-comentarios):
 
 | Parte | Tipo | Quién la fija |
 |---|---|---|
-| `author` | texto libre | el programa, con la identidad `me`, salvo al importar |
-| `askedAt` | instante UTC | el programa, salvo al importar |
-| `body` | texto largo | quien llama |
+| `author` | `string` libre | el programa, con la identidad `me`, salvo al importar |
+| `askedAt` | `date` (instante UTC) | el programa, salvo al importar |
+| `body` | `text` | quien llama |
 
 Vacío es lo normal. Con contenido significa que la tarea espera la respuesta de una persona, esté en
 el estado que esté, y entonces el derivado `waiting` es cierto; vacío, `waiting` es falso. Lleva tres
@@ -358,4 +291,3 @@ answer`, y para eso hacen falta su autor y su instante originales, no los de qui
   secuencia no tenga huecos**. Un hueco es normal y nunca es un error.
 - El tablero sabe en todo momento cuál es el identificador más alto que ha llegado a asignar, y ese
   dato se usa en los mensajes de la sección ["Los tres mensajes de \"no la encuentro\""](referencias.md#los-tres-mensajes-de-no-la-encuentro) y en `biso doctor`.
-

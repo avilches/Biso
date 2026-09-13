@@ -24,7 +24,7 @@ hace nada y avisa. Las que se usan de verdad al crear son
 `--append-summary` y `--comment`.
 
 - **`--start`** crea la tarea directamente en el estado activo, asignada a `me` y con el arrendamiento
-  tomado a favor de quien llama (`leaseExpiresAt` y `leaseHolder`, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), exactamente como lo haría
+  tomado a favor de quien llama (`leaseExpiresAt` y `leaseHolder`, ["El arrendamiento de una tarea"](../lease.md)), exactamente como lo haría
   `biso start` sobre ella. Es el atajo de esas dos llamadas, así que la equivalencia tiene que ser real:
   si `--start` dejara la tarea activa y asignada sin arrendamiento, `biso new "X" --start` y
   `biso new "X"` seguido de `biso start` darían dos tareas distintas. Es, junto con `biso start`, la
@@ -48,7 +48,7 @@ hace nada y avisa. Las que se usan de verdad al crear son
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
 | `--due` en el pasado | Se acepta, con aviso |
 | `-d @fichero` que no existe | Error 4 |
-| `--start` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) y sin `-a` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Es el mismo caso que la fila equivalente de `biso start` (["`biso start`"](verbos-del-ciclo.md#biso-start)) |
+| `--start` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) y sin `-a` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (["El arrendamiento de una tarea"](../lease.md)). Es el mismo caso que la fila equivalente de `biso start` (["`biso start`"](verbos-del-ciclo.md#biso-start)) |
 | `--start` con `-a @sara` y una identidad configurada distinta | La tarea queda asignada a `@sara` y el arrendamiento es de quien llama, igual que en `biso start`: quien lo toma es quien escribe, no quien figura en `assignees` |
 | Todo bien | Se crea la tarea, código 0 |
 
@@ -113,7 +113,7 @@ Las reglas del lote, todas obligatorias:
 - **`id`, `createdAt` y `updatedAt` se aceptan aquí y solo aquí.** Un `id` ya ocupado es un fallo de
   validación; un `id` libre se reserva y el tablero no lo volverá a asignar.
 - **`leaseExpiresAt` y `leaseHolder` se aceptan aquí con el valor que traiga el fichero**, que es lo
-  que hace cierta la garantía de simetría de ["`biso export`"](export.md) para ellos dos. La invariante de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) se
+  que hace cierta la garantía de simetría de ["`biso export`"](export.md) para ellos dos. La invariante de ["El vaciado"](../lease.md#el-vaciado) de `lease.md` se
   comprueba en la validación, en sus dos mitades, y cada una es un fallo que nombra la línea y el campo.
   Una línea que traiga cualquiera de los dos sobre una tarea que no esté a la vez en el estado activo y
   asignada a alguien es un fallo de validación. Y una línea que traiga uno de los dos y no el otro
