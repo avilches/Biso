@@ -6,7 +6,7 @@ UV_DOCS := uv run --with-requirements $(DOCS_TOOLING)/mkdocs/docs-requirements.t
 all: docs-build ## Genera todo: hoy solo la documentacion; cuando exista codigo Go, tambien el binario
 
 docs-serve: ## Sirve la documentacion en local con recarga automatica al editar
-	$(UV_DOCS) mkdocs serve -f $(DOCS_TOOLING)/mkdocs/mkdocs.yml
+	BISO_DOCS_SERVE=1 $(UV_DOCS) mkdocs serve -f $(DOCS_TOOLING)/mkdocs/mkdocs.yml
 
 docs-build: ## Regenera el tutorial y construye el sitio de documentacion en site/
 	$(UV_DOCS) python $(DOCS_TOOLING)/tutorial/generate.py

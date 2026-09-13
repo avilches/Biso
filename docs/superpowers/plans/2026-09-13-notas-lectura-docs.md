@@ -593,10 +593,11 @@ Run:
 rm -rf /tmp/biso-notas-build-sin
 uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project \
   mkdocs build --strict -f docs/docs-tooling/mkdocs/mkdocs.yml -d /tmp/biso-notas-build-sin
-grep -rl "notas-lectura-button" /tmp/biso-notas-build-sin || echo "ausente, como se espera"
+grep -rl "notas-lectura-button" /tmp/biso-notas-build-sin | grep -v "/superpowers/" || echo "ausente, como se espera"
 ```
-Expected: `ausente, como se espera` (el `grep -rl` no encuentra nada y devuelve 1, así que se
-ejecuta el `echo` del `||`).
+Expected: `ausente, como se espera`. El `grep -v "/superpowers/"` es necesario: esta misma spec
+y este mismo plan se publican bajo `docs/superpowers/` (con el código de ejemplo dentro), así
+que sin excluirlos el `grep` encontraría un falso positivo en esas dos páginas.
 
 - [ ] **Step 7: Verificar que `mkdocs build` con la variable puesta sí lo incluye**
 

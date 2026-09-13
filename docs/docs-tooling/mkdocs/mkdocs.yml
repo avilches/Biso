@@ -62,6 +62,7 @@ plugins:
 # fija este hook: saca docs/superpowers/ del indice de busqueda sin tocar cada fichero.
 hooks:
   - excluir_superpowers_del_buscador.py
+  - notas_lectura.py
 
 # Un enlace a un fichero que no existe, a un ancla que no existe, o escrito de una forma que
 # MkDocs no reconoce pasa a ser un aviso, y con --strict, un fallo de build. Es lo que sostiene

@@ -1,0 +1,101 @@
+/* Reading-notes button, panel and element-picker overlay. Injected only by notas_lectura.py
+   during `mkdocs serve`; never part of a `mkdocs build` output. */
+
+#notas-lectura-button {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  z-index: 10000;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 1.3rem;
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  box-shadow: var(--md-shadow-z2);
+}
+
+#notas-lectura-button.is-picking {
+  background: var(--md-accent-fg-color);
+}
+
+body.notas-lectura-picking,
+body.notas-lectura-picking * {
+  cursor: crosshair !important;
+}
+
+#notas-lectura-overlay {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  border: 2px solid var(--md-accent-fg-color);
+  border-radius: 0.2rem;
+  display: none;
+}
+
+#notas-lectura-panel {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 4.6rem;
+  z-index: 10000;
+  width: min(24rem, calc(100vw - 2.4rem));
+  padding: 0.9rem;
+  border-radius: 0.4rem;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  box-shadow: var(--md-shadow-z2);
+  display: none;
+  font-size: 0.7rem;
+}
+
+#notas-lectura-panel.is-open {
+  display: block;
+}
+
+#notas-lectura-panel .notas-lectura-field {
+  margin-bottom: 0.6rem;
+}
+
+#notas-lectura-panel label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+}
+
+#notas-lectura-panel textarea,
+#notas-lectura-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.2rem;
+  padding: 0.3rem;
+}
+
+#notas-lectura-panel .notas-lectura-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+#notas-lectura-panel button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 0.2rem;
+  border: none;
+  padding: 0.35rem 0.7rem;
+}
+
+#notas-lectura-panel .notas-lectura-cancel {
+  background: transparent;
+  color: var(--md-default-fg-color--light);
+}
+
+#notas-lectura-panel .notas-lectura-copy {
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+}
