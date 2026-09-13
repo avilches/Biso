@@ -64,7 +64,9 @@ páginas depende de un comando concreto.
 
 [Orden de escritura, concurrencia y datos
 dañados](garantias.md) dice qué garantiza el programa antes de que aparezca ningún campo. [El modelo de
-datos de una tarea](modelo-de-datos.md) es la lista de esos campos. [Los presupuestos de arranque y de
+datos de una tarea](modelo-de-datos.md) es la lista de esos campos, y [El arrendamiento de una
+tarea](lease.md) desarrolla aparte las reglas de `leaseExpiresAt` y `leaseHolder`, que dominan la
+mutabilidad de una tarea mucho más que cualquier otro campo. [Los presupuestos de arranque y de
 tamaño](presupuestos.md) son los límites que ese modelo y el arranque del programa tienen que respetar.
 [Los vocabularios del tablero y la regla de validación](vocabularios.md) cierra el bloque explicando
 cómo se valida el valor de los campos que tienen un vocabulario cerrado.

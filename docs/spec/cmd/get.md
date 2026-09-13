@@ -91,7 +91,7 @@ Los encabezados de esta salida son un formato de presentación, no un formato de
 
 **La línea `lease` sale solo cuando la tarea tiene arrendamiento**, y entonces sale con sus campos:
 `lease` es `leaseExpiresAt`, con el mismo formato de instante que `created` y `updated`, y `holder` es
-`leaseHolder` (sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Los dos aparecen y desaparecen juntos, porque la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md) no admite uno sin
+`leaseHolder` (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Los dos aparecen y desaparecen juntos, porque esa misma regla no admite uno sin
 el otro. Pertenece al bloque de metadatos, así que la trae `--section meta` y no ninguna otra sección.
 Es la única línea condicional de ese bloque, y por eso va al final de las líneas de dos campos: así
 ninguna de las de arriba cambia de sitio según la tarea. Eso no choca con la regla de que la ficha
@@ -114,8 +114,8 @@ MYP-11  Normalize CRLF in the diff
 
 Con `--section question` sobre MYP-60, la tarea con la pregunta abierta del ejemplo de la sección ["La salida literal"](prime.md#la-salida-literal), la
 sección sale rellena con una forma parecida a la de `## Comments`: el autor y el instante en una línea
-y el cuerpo debajo, pero **sin la clave**, porque `question` es un registro de tres partes y no una
-lista direccionable (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)): no hay un selector que pueda señalar "la pregunta número tal".
+y el cuerpo debajo, pero **sin la clave**, porque `question` es del tipo `Question`, un valor único y
+no una lista direccionable (["La pregunta abierta"](../modelo-de-datos.md#la-pregunta-abierta)): no hay un selector que pueda señalar "la pregunta número tal".
 
 ```
 MYP-60  Confirm the retry budget for the upload endpoint

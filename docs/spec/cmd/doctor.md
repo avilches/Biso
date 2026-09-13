@@ -139,7 +139,7 @@ denunciar algo que la sección ["`biso config`"](config.md) permite explícitame
 campos son lo que sobra, y el estado y la lista de personas asignadas son el dato: vaciarlos deja la
 tarea exactamente como estaba, mientras que arreglarla al revés, poniéndola activa o asignándole a
 alguien para justificar el arrendamiento, cambiaría el trabajo del tablero para salvar una reserva que
-ya no vale. La invariante que comprueba es la de la séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md), la misma que
+ya no vale. La invariante que comprueba es la de ["El vaciado"](../lease.md#el-vaciado) de `lease.md`, la misma que
 `biso new --from` aplica al importar (["`biso new`"](new.md)), y cae en el segundo de los dos casos de arriba: ninguna
 escritura de `biso` la puede romper, así que si un tablero llega a ese estado es por daño externo, como
 una base de datos escrita a mano, restaurada a medias o venida de otra versión. Sin `--fix` sale bajo

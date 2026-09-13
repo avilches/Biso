@@ -13,13 +13,16 @@ cuatro palabras para saber qué hace cada una, ni falta que consultar esta secci
 Cada clase de campo tiene exactamente las operaciones que tienen sentido para esa forma de dato, ni
 una más ni una menos:
 
-La columna "Forma" usa las mismas seis palabras de la tabla de formas de
-["El modelo de datos de una tarea"](modelo-de-datos.md), porque son la misma clasificación vista desde el lado de las
-banderas: qué se puede hacer con un campo depende de su forma. **Dos formas se reparten en más de una
-fila** cuando, dentro de la misma forma, hay más de un conjunto de operaciones posible: `acceptanceCriteria`,
-`definitionOfDone` y `comments` son los tres "lista de objetos" de aquella tabla, pero los criterios y
-los comentarios no comparten las mismas banderas, así que la forma aparece dos veces, una por cada
-conjunto de operaciones.
+**La "Forma" de esta tabla es una clasificación de comportamiento de escritura, no el tipo del
+campo.** Se deriva del tipo concreto de ["El modelo de datos de una tarea"](modelo-de-datos.md): a
+efectos de qué bandera tiene sentido ofrecer, da igual si un valor único es `string`, `enum(...)`,
+`date`, `int`, `float` o `bool`, porque a todos les basta con fijar y vaciar, así que esos tipos
+comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa";
+`map<string,string>` es "mapa de claves"; y `list<Criterion>` / `list<Comment>` son "lista de
+objetos". **Dos formas se reparten en más de una fila** cuando, dentro de la misma forma, hay más de
+un conjunto de operaciones posible: `acceptanceCriteria`, `definitionOfDone` y `comments` son los tres
+"lista de objetos", pero los criterios y los comentarios no comparten las mismas banderas, así que la
+forma aparece dos veces, una por cada conjunto de operaciones.
 
 | Forma | Clase de campo | Variantes |
 |---|---|---|
@@ -30,8 +33,8 @@ conjunto de operaciones.
 | lista de objetos | Criterios (`acceptanceCriteria`, `definitionOfDone`) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
 | lista de objetos | Comentarios (`comments`) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
 
-**`question` no entra en esta tabla.** Es la forma "registro de tres partes" de la tabla de formas, y
-esa forma no tiene ninguna fila aquí porque no existe ninguna bandera de campo que la escriba: ninguna
+**`question` no entra en esta tabla.** Es de tipo `Question`, un valor único y no una lista, y esa
+forma no tiene ninguna fila aquí porque no existe ninguna bandera de campo que la escriba: ninguna
 de las demás filas la describe, y no hace falta una fila vacía solo para nombrarla.
 **Ninguna bandera de campo escribe `question`**: lo escriben `biso ask`, `biso answer` y la importación
 de `biso new --from`, y nadie más, igual que `archived` solo lo cambia `biso archive` (sección
