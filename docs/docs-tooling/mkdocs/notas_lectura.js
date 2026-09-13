@@ -186,14 +186,22 @@
 
   function copyNote() {
     var line = buildLine();
-    navigator.clipboard.writeText(line).then(function () {
-      var original = copyButton.textContent;
-      copyButton.textContent = "Copiado";
-      setTimeout(function () {
-        copyButton.textContent = original;
-        closePanel();
-      }, 900);
-    });
+    var original = copyButton.textContent;
+    navigator.clipboard.writeText(line).then(
+      function () {
+        copyButton.textContent = "Copiado";
+        setTimeout(function () {
+          copyButton.textContent = original;
+          closePanel();
+        }, 900);
+      },
+      function () {
+        copyButton.textContent = "Error al copiar";
+        setTimeout(function () {
+          copyButton.textContent = original;
+        }, 1500);
+      }
+    );
   }
 
   function buildLine() {

@@ -18,6 +18,11 @@ def test_notes_enabled_when_env_var_set(monkeypatch):
     assert notas_lectura.notes_enabled() is True
 
 
+def test_notes_disabled_when_env_var_set_but_empty(monkeypatch):
+    monkeypatch.setenv("BISO_DOCS_SERVE", "")
+    assert notas_lectura.notes_enabled() is False
+
+
 def test_build_snippet_wraps_css_and_js():
     snippet = notas_lectura.build_snippet("console.log(1)", "body{color:red}")
     assert "<style>body{color:red}</style>" in snippet
