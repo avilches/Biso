@@ -61,7 +61,7 @@ proyecto que lo contenga, si lo hay, y se acepta a propósito: la sección ["La 
 qué, y `biso where` enseña siempre de qué directorio salió el puntero que ha resuelto.
 
 Si nada de eso existe, cualquier comando salvo `init`, `where`, `help`, `--help` y `--version` aborta
-antes de ejecutar su propia lógica, con código 8 y este mensaje por stderr:
+antes de ejecutar su propia lógica, con código 20 y este mensaje por stderr:
 
 ```
 error: no board here, and none configured for this project
@@ -70,7 +70,7 @@ hint: `biso init` creates one, `biso where` explains what was searched
 
 Los cinco exentos no abortan así: `init`, `help`, `--help` y `--version` no necesitan tablero para
 hacer su trabajo, y `biso where` lo necesita pero lo comprueba por su cuenta, con su propio mensaje y
-su propio código 8 cuando no lo encuentra (sección ["`biso where`"](cmd/where.md)).
+su propio código 20 cuando no lo encuentra (sección ["`biso where`"](cmd/where.md)).
 
 **El puntero** es el fichero `.biso.json` que `biso init` escribe en el directorio desde el que se le
 llama, que es la raíz del proyecto en el uso normal, y que se versiona con el proyecto. Nada obliga a
@@ -124,7 +124,7 @@ tablero sin ningún paso adicional. Estas reglas gobiernan su lectura:
 
 **Si el mismo `id` aparece en dos sitios, es un error** que nombra los dos directorios y no elige
 ninguno, porque elegir sería escribir en un tablero que quien llama no ha nombrado, y dos almacenes con
-la misma identidad es exactamente lo que esta persistencia no admite. Sale con **código 11**
+la misma identidad es exactamente lo que esta persistencia no admite. Sale con **código 22**
 (`AMBIGUOUS_BOARD`, sección ["Códigos de salida"](codigos-de-salida.md)), con la clave `code` `ambiguous_board_id`, y con este mensaje por stderr:
 
 ```
@@ -134,7 +134,7 @@ error: board 3f9a2b1c is in two places, and biso will not choose between them
 hint: rename or remove one of the two directories
 ```
 
-Tiene su propio código de salida y no el 8 porque su remedio no se parece a los otros dos: aquí no
+Tiene su propio código de salida y no el 20 porque su remedio no se parece a los otros dos: aquí no
 falta un tablero que `biso init` pueda crear, sobra uno que solo una persona puede decidir cuál es. El
 error lo da cualquier comando que tenga que resolver el tablero, y también `biso init`, que recorre las
 mismas raíces para comprobar que el `id` que va a acuñar o a adoptar no exista ya (["`biso init`"](cmd/init.md)). **`biso
@@ -220,7 +220,7 @@ error: this project's pointer names board 3f9a2b1c, which is not on this machine
 hint: `biso init` creates it here, adopting id 3f9a2b1c
 ```
 
-El código de salida sigue siendo 8, porque para quien llama la situación es la misma: no hay tablero
+El código de salida sigue siendo 20, porque para quien llama la situación es la misma: no hay tablero
 con el que trabajar, y el remedio también es el mismo, `biso init`. Lo que cambia es la clave `code`
 del sobre JSON (sección ["El contrato JSON"](contrato-json.md)), que aquí es `pointer_unresolved` en vez de `no_board`.
 

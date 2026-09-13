@@ -48,7 +48,7 @@ mismas garantías que cualquier otra.
 
 **Eso quita de en medio la única operación que no podía ser atómica.** Mover un directorio no cabe dentro
 de una transacción de SQLite, así que renombrar el tablero habría sido escribir la configuración y
-después mover la carpeta, con un estado intermedio observable si la segunda mitad fallaba, un error 7
+después mover la carpeta, con un estado intermedio observable si la segunda mitad fallaba, un error 8
 propio para el fallo de permisos, y la posibilidad de dejar sin resolver el puntero de un tablero que
 viviera fuera de las raíces de la sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina). Nada de eso existe: no hay dos mitades.
 
@@ -205,8 +205,8 @@ Solo `config list` acepta `--json`:
 | Valor de tipo o de dominio incorrecto | 3 |
 | Clave inexistente | 4 |
 | El cambio dejaría el tablero inconsistente | 6 |
-| No se puede escribir la configuración | 7 |
-| No hay tablero | 8 |
+| No se puede escribir la configuración | 8 |
+| No hay tablero | 20 |
 
 ## `biso config --help`
 
@@ -254,8 +254,8 @@ Options:
 Exit codes:
   0  done            4  no such key
   2  bad usage       6  the change would leave the board inconsistent
-  3  bad value       7  the configuration could not be written
-                     8  no board here
+  3  bad value       8  the configuration could not be written
+                     20 no board here
 
 Examples:
   biso config get active_status

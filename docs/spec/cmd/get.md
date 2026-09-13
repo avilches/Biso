@@ -203,8 +203,8 @@ coincidencias, `kind` es `task.candidates`, `data.tasks` es la lista y el códig
 | La tarea no se puede leer | 3 |
 | No existe, o existió y ya no está | 4 |
 | Texto con varias coincidencias | 5 |
-| El almacén no responde | 7 |
-| No hay tablero | 8 |
+| El almacén no responde | 8 |
+| No hay tablero | 20 |
 
 ## `biso get --help`
 
@@ -233,8 +233,8 @@ Exit codes:
   0  printed          4  not on this board
   2  bad usage        5  the text matched several tasks
   3  the task could not be read
-  7  the board could not respond
-  8  no board here
+  8  the board could not respond
+  20 no board here
 
 Examples:
   biso get MYP-11

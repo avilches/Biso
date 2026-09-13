@@ -175,13 +175,13 @@ hint: --overwrite-config rewrites its configuration and never touches its tasks
 
 **`--dry-run` vale en este comando** (sección ["Banderas globales"](flags-globales.md#banderas-globales)), y es donde más sirve: valida los argumentos y, con
 `--from`, la instantánea entera contra el vocabulario que ella misma trae, sin crear ni escribir nada,
-y sale 0 si habría funcionado y 9 si no. `--print`, en cambio, es error 2, porque ninguna tarea que
+y sale 0 si habría funcionado y 7 si no. `--print`, en cambio, es error 2, porque ninguna tarea que
 existiera antes queda afectada.
 
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
-| El directorio de destino tiene una base de datos que no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 10 nombra, y también lo que necesita un clon traído a otra máquina, que llega con la carpeta versionada y sin base de datos |
+| El directorio de destino tiene una base de datos que no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 21 nombra, y también lo que necesita un clon traído a otra máquina, que llega con la carpeta versionada y sin base de datos |
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que esa bandera significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
@@ -196,7 +196,7 @@ existiera antes queda afectada.
 | `--statuses` con menos de tres estados | Error 2, diciendo cuántos hacen falta y por qué |
 | `--prefix` con algo que no sean letras | Error 2, `code` `invalid_prefix` |
 | Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
-| `--at` a un directorio donde no se puede escribir | Error 7 |
+| `--at` a un directorio donde no se puede escribir | Error 8 |
 | `--from` junto con `<name>`, con cualquier bandera de vocabulario, o con `--overwrite-config` | Error 2 |
 | `--from` a un directorio al que le falta `snapshot.ndjson`, `board.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
 | `--from` cuyo `board.json` no se puede interpretar como JSON, o lleva una clave desconocida | Error 2, `code` `invalid_snapshot_config` |
@@ -204,7 +204,7 @@ existiera antes queda afectada.
 | `--from` cuyo `snapshot.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
 | `--from` cuyo `board.json` declara un vocabulario que ninguna tarea de `snapshot.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `board.json`, tenga tareas que lo usen entero o no |
 | `--from` cuyo `board.json` trae `me` o `default_limit`, porque se escribió a mano o con una versión anterior | No es un error, y tampoco se importan: `biso snapshot` no las escribe y `init --from` no las lee, con `note: me and default_limit are not restored, they belong to whoever uses the board`. No son claves desconocidas, así que no caen en el error 2 de la fila de arriba |
-| `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `board.json` no hace válido | Error 9, la misma regla del lote de `biso new --from` (sección ["`biso new`"](new.md)), con el detalle de qué falta línea a línea |
+| `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `board.json` no hace válido | Error 7, la misma regla del lote de `biso new --from` (sección ["`biso new`"](new.md)), con el detalle de qué falta línea a línea |
 
 **Los tres estados especiales se guardan como valores explícitos en la configuración, no como
 posiciones.** Cambiar `statuses` después no los mueve nunca. Si al cambiar `statuses` uno de los tres
@@ -330,10 +330,10 @@ No están en el bloque de arriba porque ese bloque es stdout, y las notas van po
 | Tablero creado, o restaurado con `--from` | 0 |
 | Ya existía y no hay `--overwrite-config` | 2 |
 | Argumentos inválidos, incluido un `board.json` de `--from` inválido, o `--from` junto con `--overwrite-config` | 2 |
-| `--overwrite-config` cambiaría `task_prefix` con tareas ya creadas | 6 |
-| No se puede escribir | 7 |
 | `--from` a un directorio sin `snapshot.ndjson`, sin `board.json`, o sin los dos | 4 |
-| El lote de `snapshot.ndjson` de `--from` falla su validación | 9 |
+| `--overwrite-config` cambiaría `task_prefix` con tareas ya creadas | 6 |
+| El lote de `snapshot.ndjson` de `--from` falla su validación | 7 |
+| No se puede escribir | 8 |
 
 ## `biso init --help`
 
@@ -405,8 +405,8 @@ Exit codes:
   2  bad usage, or a board is already reachable from here
   4  --from points at a directory missing snapshot.ndjson, board.json, or both
   6  --overwrite-config would change task_prefix on a board with tasks
-  7  cannot write there
-  9  --from's snapshot.ndjson failed batch validation
+  7  --from's snapshot.ndjson failed batch validation
+  8  cannot write there
 
 Examples:
   biso init

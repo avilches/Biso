@@ -86,7 +86,7 @@ relativa al directorio del tablero, sin `./` delante.
 snapshot`**, que son solo los que ese comando escribe. Los dos nombres se parecen y los dos conjuntos son
 distintos, así que conviene leerlos juntos antes de escribir una orden.
 
-Un código de salida distinto de cero es error 7 con la clave `code` `vcs_commit_failed`. Cómo se ejecutan
+Un código de salida distinto de cero es error 8 con la clave `code` `vcs_commit_failed`. Cómo se ejecutan
 las dos órdenes, qué se hace con lo que escriban y por qué no hay tiempo máximo de espera lo dice la
 sección ["`biso snapshot`"](cmd/snapshot.md), en un apartado que vale igual para `git` y para `custom`.
 

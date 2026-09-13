@@ -65,8 +65,8 @@ separado, pero ya no es la única manera de reconstruir un tablero entero.
 | Alguna tarea se ha saltado por ilegible | 6 |
 | Banderas de forma de `ls`, `--archived`, `--only-archived`, `--json`, o incompatibles | 2 |
 | Un valor de filtro no existe en el tablero | 3 |
-| No se puede escribir el fichero de salida | 7 |
-| No hay tablero | 8 |
+| No se puede escribir el fichero de salida | 8 |
+| No hay tablero | 20 |
 
 ## `biso export --help`
 
@@ -100,7 +100,7 @@ commentCount, blocks, blocked, waiting, leaseExpired.
 Exit codes:
   0  exported       3  a filter value does not exist here
   2  bad usage      6  some task was skipped, unreadable
-  7  cannot write there                8  no board here
+  8  cannot write there                20 no board here
 
 Examples:
   biso export -o backup.ndjson

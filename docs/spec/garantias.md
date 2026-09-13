@@ -35,15 +35,15 @@ consiga es cosa de quien implemente.
    de una escritura o como quedó después, nunca en un punto intermedio, y esto vale igual para una
    escritura de una tarea que para un lote de doscientas.
 2. **Una escritura que afecta a varias tareas es todo o nada.** Si falla por cualquier motivo, ni una
-   sola de las tareas implicadas queda modificada, y el código de salida lo dice: 9 si el fallo se
-   detectó al validar, 7 si se detectó al escribir. En los dos casos el mensaje afirma explícitamente
+   sola de las tareas implicadas queda modificada, y el código de salida lo dice: 7 si el fallo se
+   detectó al validar, 8 si se detectó al escribir. En los dos casos el mensaje afirma explícitamente
    que no se ha escrito nada.
 3. **Dos procesos simultáneos nunca asignan el mismo identificador**, aunque trabajen sobre el mismo
    tablero desde copias de trabajo distintas del proyecto.
 4. **Dos escrituras simultáneas sobre la misma tarea no se pierden ni se mezclan.** O se aplican una
-   después de otra, o una de las dos falla con código 7.
+   después de otra, o una de las dos falla con código 8.
 5. **Si el programa no puede obtener el acceso exclusivo que necesita para escribir**, espera hasta
-   cinco segundos y luego falla con código 7 sin escribir nada:
+   cinco segundos y luego falla con código 8 sin escribir nada:
    ```
    error: the board is busy, another process is writing to it
    hint: retry in a moment; nothing was written
@@ -99,12 +99,12 @@ hint: it did not open, or it failed its integrity check, and there is no automat
 hint: rebuild it in place with `biso init --from <snapshot dir>`, which keeps its id
 ```
 
-El código de salida es **10** (`DAMAGED`, ver ["Códigos de salida"](codigos-de-salida.md)), y no el 8 de
+El código de salida es **21** (`DAMAGED`, ver ["Códigos de salida"](codigos-de-salida.md)), y no el 20 de
 la ausencia de tablero, porque el remedio es otro: aquí el tablero está donde tiene que estar y lo que
 hay que hacer es reconstruirlo, no crearlo. La clave `code` del sobre JSON (sección
 ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)) es `database_unreadable`.
 
-**El código 10 puede salir de cualquier comando, y por eso no se repite en la tabla de códigos de
+**El código 21 puede salir de cualquier comando, y por eso no se repite en la tabla de códigos de
 salida de cada uno.** Esas tablas dicen los desenlaces propios del comando; este no lo es de ninguno, es
 el del tablero entero, igual que el 1 de un fallo del programa, que tampoco aparece en ellas.
 

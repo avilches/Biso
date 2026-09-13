@@ -47,7 +47,7 @@ es una operación atómica del sistema de ficheros, así que nadie lee nunca med
 
 **Y los dos temporales se escriben completos antes de renombrar ninguno de los dos.** De ese orden
 depende lo único que se puede prometer aquí: si falla la escritura, por disco lleno o por permisos, los
-dos ficheros anteriores quedan intactos, no se intenta guardar ninguna revisión, y el código es 7. Entre
+dos ficheros anteriores quedan intactos, no se intenta guardar ninguna revisión, y el código es 8. Entre
 el primer renombrado y el segundo queda una ventana de un instante en la que el par no es coherente, y
 esta especificación lo dice en vez de prometer una atomicidad de dos ficheros que el sistema de ficheros
 no da.
@@ -56,7 +56,7 @@ no da.
 lectura del tablero, y las lecturas nunca bloquean a nadie (["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables), punto 6): una instantánea de un
 tablero grande no puede hacer fallar a un `biso set` que llegue a la vez. Lo que sí puede pasar es que
 dos instantáneas simultáneas choquen al guardar la revisión, porque el sistema de control de versiones
-se protege con su propia marca de bloqueo; entonces una de las dos sale con código 7 y su mensaje dice
+se protege con su propia marca de bloqueo; entonces una de las dos sale con código 8 y su mensaje dice
 que basta volver a llamar. Los ficheros de las dos quedan enteros de todos modos, porque cada una
 escribió su temporal.
 
@@ -200,12 +200,12 @@ prefijo**, que existe solo para separarlas a la vista en un terminal.
 | El directorio del tablero no está en ningún repositorio, y crearlo funciona | Lo crea, mete los tres ficheros en la primera revisión, código 0 |
 | El directorio del tablero está dentro del repositorio del proyecto, que no lo ignora | Guarda la revisión ahí, con los tres ficheros nombrados por su ruta, código 0 |
 | El sistema configurado no está instalado, o crear el repositorio falla | Escribe los dos ficheros, `note: no version control here, skipping the commit`, código 0 |
-| La revisión falla por una razón de entorno, con un repositorio ya existente (sistema sin configurar, sin permiso, disco lleno, otra instantánea guardando a la vez) | Los dos ficheros ya han quedado escritos antes de intentarlo; Error 7, `code` `vcs_commit_failed`, y el mensaje dice que nada se ha perdido y que basta volver a llamar |
-| `--vcs push` y la publicación falla | Los ficheros están escritos y la revisión guardada; Error 7, `code` `vcs_push_failed` |
+| La revisión falla por una razón de entorno, con un repositorio ya existente (sistema sin configurar, sin permiso, disco lleno, otra instantánea guardando a la vez) | Los dos ficheros ya han quedado escritos antes de intentarlo; Error 8, `code` `vcs_commit_failed`, y el mensaje dice que nada se ha perdido y que basta volver a llamar |
+| `--vcs push` y la publicación falla | Los ficheros están escritos y la revisión guardada; Error 8, `code` `vcs_push_failed` |
 | `--vcs push` con `vcs` igual a `custom` y sin orden `publish` declarada | Error 2, `code` `vcs_push_unavailable`, antes de escribir nada |
 | Alguna tarea no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | Se salta, se cuenta, `warning: 1 task could not be read and was skipped`, y el código es 6 en vez de 0, igual que en `biso export` |
-| No se puede escribir alguno de los dos ficheros | Error 7, con los dos ficheros anteriores intactos y sin intentar la revisión |
-| No hay tablero | Error 8 |
+| No se puede escribir alguno de los dos ficheros | Error 8, con los dos ficheros anteriores intactos y sin intentar la revisión |
+| No hay tablero | Error 20 |
 
 ## Salida
 
@@ -286,8 +286,8 @@ modo de texto, y está vacía cuando no se ha ejecutado ninguna.
 | Escrito, y guardado si procedía | 0 |
 | Sintaxis, o `--vcs push` sin orden de publicar configurada | 2 |
 | Alguna tarea se ha saltado por ilegible | 6 |
-| No se pueden escribir los ficheros, o falla la revisión o la publicación | 7 |
-| No hay tablero | 8 |
+| No se pueden escribir los ficheros, o falla la revisión o la publicación | 8 |
+| No hay tablero | 20 |
 
 ## `biso snapshot --help`
 
@@ -331,8 +331,8 @@ Exit codes:
   0  written, and recorded if that applied
   2  bad usage, or --vcs push with no publish command configured
   6  some task was skipped, unreadable
-  7  cannot write there, or the commit or the push failed
-  8  no board here
+  8  cannot write there, or the commit or the push failed
+  20 no board here
 
 Examples:
   biso snapshot

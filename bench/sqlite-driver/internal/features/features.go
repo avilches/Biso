@@ -15,7 +15,7 @@
 //     garantia.
 //   - BEGIN IMMEDIATE: es el acceso exclusivo de escritura del que hablan
 //     "Concurrencia, atomicidad y garantias observables" y el codigo de
-//     salida 7.
+//     salida 8.
 //   - busy_timeout: sin el, dos escrituras a la vez fallan en vez de esperar.
 //   - Puntos de retorno: "Orden de aplicacion dentro de una escritura"
 //     (docs/spec/garantias.md) aplica varias banderas dentro de una escritura,

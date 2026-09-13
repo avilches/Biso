@@ -156,7 +156,7 @@ Salida de `--dry-run` cuando todo está bien, por stderr y con código 0:
 242 tasks would be created, nothing was written (--dry-run)
 ```
 
-Y cuando no, por stderr y con código 9, **con todos los fallos, no solo el primero**:
+Y cuando no, por stderr y con código 7, **con todos los fallos, no solo el primero**:
 
 ```
 error: 4 of 242 lines are invalid, nothing was written
@@ -176,9 +176,9 @@ error: 4 of 242 lines are invalid, nothing was written
 | Valor fuera de un vocabulario, clave de extensión no declarada, entrada no interpretable | 3 |
 | `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
 | `--add-deps` o `--parent` por texto con varias coincidencias | 5 |
-| Cualquier fallo de validación en un lote, o un `--dry-run` que no pasa | 9 |
-| El almacén falla, o no se obtiene el acceso exclusivo | 7 |
-| No hay tablero | 8 |
+| Cualquier fallo de validación en un lote, o un `--dry-run` que no pasa | 7 |
+| El almacén falla, o no se obtiene el acceso exclusivo | 8 |
+| No hay tablero | 20 |
 
 ## `biso new --help`
 
@@ -220,9 +220,9 @@ Any text option also takes @file to read a file, or - to read stdin.
 Exit codes:
   0  created            4  a referenced task or file does not exist
   2  bad usage          5  a text reference matched several tasks
-  3  unknown value      7  the board could not be written
-  9  batch or --dry-run validation failed, nothing was written
-                        8  no board here
+  3  unknown value      8  the board could not be written
+  7  batch or --dry-run validation failed, nothing was written
+                        20 no board here
 
 Examples:
   biso new "Normalize CRLF in the diff" --type bug --priority high

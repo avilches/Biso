@@ -12,17 +12,20 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 | 4 | `NOT_FOUND` | La entidad referida no existe | `biso get MYP-999` |
 | 5 | `AMBIGUOUS` | La referencia encaja con más de una entidad | `biso get "parser"` con tres coincidencias |
 | 6 | `PRECONDITION` | La operación es válida, pero el estado actual del tablero no la permite o no la satisface | `biso finish --strict` con criterios sin marcar, o `biso doctor` con problemas pendientes |
-| 7 | `ENVIRONMENT` | Falla el entorno, no la petición | el almacén no responde, no hay permisos, no se puede adquirir el acceso exclusivo, no hay terminal donde hace falta |
-| 8 | `NO_BOARD` | No hay tablero accesible desde donde se ha llamado | cualquier comando fuera de un tablero, salvo `init`, `help`, `--help` y `--version`, que no necesitan uno; `biso where` también devuelve 8 cuando no encuentra ninguno |
-| 9 | `VALIDATION` | Una validación previa ha fallado y **no se ha escrito nada** | `biso new --from tareas.ndjson` con la línea 47 inválida |
-| 10 | `DAMAGED` | El tablero está donde tiene que estar, y su almacén no se puede leer | `board.db` que no abre, o que falla su comprobación de integridad (["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) |
-| 11 | `AMBIGUOUS_BOARD` | El mismo identificador de tablero aparece en dos sitios, y elegir uno sería escribir en el que nadie ha nombrado | dos raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina) con una carpeta que lleva el mismo marcador (["Cómo se elige el tablero"](resolucion-del-tablero.md)) |
+| 7 | `VALIDATION` | Una validación previa ha fallado y **no se ha escrito nada** | `biso new --from tareas.ndjson` con la línea 47 inválida |
+| 8 | `ENVIRONMENT` | Falla el entorno, no la petición | el almacén no responde, no hay permisos, no se puede adquirir el acceso exclusivo, no hay terminal donde hace falta |
+| 20 | `NO_BOARD` | No hay tablero accesible desde donde se ha llamado | cualquier comando fuera de un tablero, salvo `init`, `help`, `--help` y `--version`, que no necesitan uno; `biso where` también devuelve 20 cuando no encuentra ninguno |
+| 21 | `DAMAGED` | El tablero está donde tiene que estar, y su almacén no se puede leer | `board.db` que no abre, o que falla su comprobación de integridad (["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) |
+| 22 | `AMBIGUOUS_BOARD` | El mismo identificador de tablero aparece en dos sitios, y elegir uno sería escribir en el que nadie ha nombrado | dos raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina) con una carpeta que lleva el mismo marcador (["Cómo se elige el tablero"](resolucion-del-tablero.md)) |
+
+Los códigos del 20 en adelante son los desenlaces malos de resolver el tablero, y no los desenlaces
+propios de ningún comando.
 
 Las reglas que acompañan a la tabla:
 
-- **El código 9 garantiza que no se ha escrito nada.** Si un comando termina con 9, el tablero está
-  exactamente como estaba antes. Por eso una validación fallida dentro de un lote se reporta como 9 y
-  no como 3 ni como 4, y por eso el 9 llega siempre con el detalle de **todos** los fallos
+- **El código 7 garantiza que no se ha escrito nada.** Si un comando termina con 7, el tablero está
+  exactamente como estaba antes. Por eso una validación fallida dentro de un lote se reporta como 7 y
+  no como 3 ni como 4, y por eso el 7 llega siempre con el detalle de **todos** los fallos
   encontrados, no solo del primero.
 - **Un listado vacío es siempre 0.** Un tablero donde de verdad no hay nada que cumpla un filtro
   válido no es un error.
@@ -31,13 +34,13 @@ Las reglas que acompañan a la tabla:
   siempre dice cuál de las dos ha ocurrido.
 - **El código 1 es un fallo del programa, no de quien llama.** La reacción correcta es informar, no
   reintentar con otros parámetros.
-- **Los códigos 8, 10 y 11 son los tres desenlaces malos de resolver el tablero, y son tres porque el
-  remedio de cada uno es otro.** Con el 8 no hay tablero y `biso init` lo crea; con el 10 el tablero
+- **Los códigos 20, 21 y 22 son los tres desenlaces malos de resolver el tablero, y son tres porque el
+  remedio de cada uno es otro.** Con el 20 no hay tablero y `biso init` lo crea; con el 21 el tablero
   está ahí y hay que reconstruirlo desde una instantánea con `biso init --from`, que es lo único que lo
-  arregla; con el 11 hay dos y hay que quitar o renombrar uno de los dos directorios a mano. Por eso el
+  arregla; con el 22 hay dos y hay que quitar o renombrar uno de los dos directorios a mano. Por eso el
   daño del almacén no comparte número con la ausencia de tablero, aunque para quien llama las tres
   frases empiecen igual: quien ramifica sobre el número tiene que poder elegir el remedio sin leer el
-  mensaje, que es el principio de la sección ["Los principios"](principios.md). **Ni el 10 ni el 11 aparecen en la tabla de códigos de
+  mensaje, que es el principio de la sección ["Los principios"](principios.md). **Ni el 21 ni el 22 aparecen en la tabla de códigos de
   salida de cada comando**, porque no son desenlaces propios de ninguno sino del tablero entero, igual
   que el 1. La excepción es `biso where`, que existe justamente para explicar la resolución y los lleva
   los dos en su tabla (["`biso where`"](cmd/where.md)).

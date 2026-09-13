@@ -355,13 +355,13 @@ historial.
 promete que una lectura nunca hace fallar a una escritura. Si tomara el acceso exclusivo de las
 escrituras, una copia podría hacer terminar con error a un `biso set` que llegara a la vez, que es un daño
 sobre el trabajo diario. Sin él, el único desenlace malo es que dos instantáneas simultáneas choquen al
-guardar la revisión, y ese daño cae sobre una copia que se puede repetir: sale con el código 7 y su
+guardar la revisión, y ese daño cae sobre una copia que se puede repetir: sale con el código 8 y su
 mensaje dice que basta volver a llamar. Un acceso exclusivo propio de este comando evitaría también ese
 choque, y se descartó por lo que cuesta especificar bien un fichero de bloqueo persistente y la limpieza
 de los que deja atrás un proceso que muere, para un caso que solo ocurre si dos sesiones terminan en el
 mismo segundo sobre el mismo tablero.
 
-**Por qué el daño de la base de datos estrena el código 10 en vez de compartir el 8.** El 8 promete un
+**Por qué el daño de la base de datos estrena el código 21 en vez de compartir el 20.** El 20 promete un
 remedio, `biso init` crea el tablero, y con la base de datos dañada ese remedio no arregla nada: hay que
 reconstruir desde una instantánea. Tres situaciones con tres remedios no pueden compartir número si el
 principio de ["Los principios"](../spec/principios.md) dice que quien llama ramifica sobre el número sin leer el mensaje.
@@ -369,7 +369,7 @@ Y como el remedio ahora tiene un comando que lo hace, el mensaje lo nombra en ve
 una copia": `biso init --from` reconstruye en el sitio, adoptando el `id` del marcador, y para eso hubo
 que declarar que un directorio cuya base de datos no abre no cuenta como tablero accesible.
 
-**Por qué el identificador duplicado estrena el 11 en vez de reusar el 5.** El 5 es la referencia que
+**Por qué el identificador duplicado estrena el 22 en vez de reusar el 5.** El 5 es la referencia que
 encaja con más de una entidad, y en la práctica siempre habla de una tarea: quien lo recibe afina la
 referencia. Aquí no hay ninguna referencia que afinar, hay dos directorios en el disco con la misma
 identidad, y el remedio es renombrar o quitar uno. Compartir el número habría obligado a leer el mensaje

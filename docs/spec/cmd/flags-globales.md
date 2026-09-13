@@ -12,7 +12,7 @@ comando puede redefinir ninguna de ellas ni cambiar su significado.
 | `--quiet` | `-q` | booleano | falso | Reduce la salida a lo mínimo. Ver más abajo |
 | `--print` | | booleano | falso | Después de escribir, imprime la ficha completa de cada tarea afectada |
 | `--color <when>` | | `auto`, `always`, `never` | `auto` | Control de los códigos de color |
-| `--dry-run` | | booleano | falso | Valida todo, no escribe nada. Sale 0 si habría funcionado y 9 si no |
+| `--dry-run` | | booleano | falso | Valida todo, no escribe nada. Sale 0 si habría funcionado y 7 si no |
 | `--version` | `-V` | booleano | | Imprime `biso 1.0.0` y sale con 0 |
 | `--help` | `-h` | booleano | | Imprime la ayuda del comando y sale con 0 |
 
@@ -30,7 +30,7 @@ Reglas de aplicación, que hay que implementar tal cual:
   tocan ninguna tarea.
 - **`--dry-run` sí vale en `biso init` y en `biso config set`**, que escriben sin tocar ninguna tarea
   existente y tienen los dos algo que validar antes: `init --from` valida la instantánea entera contra
-  el vocabulario que ella misma trae, y sale 0 si habría funcionado y 9 si no, que es exactamente lo
+  el vocabulario que ella misma trae, y sale 0 si habría funcionado y 7 si no, que es exactamente lo
   que la definición de la bandera promete; `config set` valida el valor contra el tablero. Validar en
   seco la restauración de un tablero de doscientas tareas sin crear nada es el caso donde más vale, así
   que dejarla fuera de `init` sería perder lo mejor que tiene.

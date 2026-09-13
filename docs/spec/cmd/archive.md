@@ -52,9 +52,9 @@ MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0  archived
 | Tarea ilegible | 3 |
 | Tarea inexistente | 4 |
 | Referencia ambigua | 5 |
-| El almacén falla | 7 |
-| `--dry-run` que no pasa | 9 |
-| No hay tablero | 8 |
+| `--dry-run` que no pasa | 7 |
+| El almacén falla | 8 |
+| No hay tablero | 20 |
 
 ## `biso archive --help`
 
@@ -75,9 +75,9 @@ Every field flag of `biso set --help` works here too.
 There is no delete command. Archiving is the way.
 
 Exit codes:
-  0  archived       3  the task could not be read    7  could not be written
-  2  bad usage      4  not found                     9  --dry-run did not pass
-                    5  ambiguous                      8  no board here
+  0  archived       3  the task could not be read    7  --dry-run did not pass
+  2  bad usage      4  not found                      8  could not be written
+                    5  ambiguous                     20  no board here
 
 Examples:
   biso archive MYP-11

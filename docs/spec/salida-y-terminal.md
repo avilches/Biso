@@ -7,7 +7,7 @@ No existe la detección de terminal como forma de decidir qué imprime un comand
 cualquier comando es idéntica byte a byte con terminal y sin él, salvo los códigos de color.
 
 La interfaz interactiva existe, pero es un comando aparte, `biso board`, que solo se ejecuta si se
-pide por su nombre y que falla con código 7 si no hay terminal.
+pide por su nombre y que falla con código 8 si no hay terminal.
 
 Lo único que mira el terminal es el color:
 

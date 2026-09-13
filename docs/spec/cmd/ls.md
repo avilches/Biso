@@ -255,8 +255,8 @@ y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado
 | `--parent` a una tarea que no existe | 4 |
 | `--parent` por texto con varias coincidencias | 5 |
 | `--mine` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | 6 |
-| El almacén no responde | 7 |
-| No hay tablero | 8 |
+| El almacén no responde | 8 |
+| No hay tablero | 20 |
 
 ## `biso ls --help`
 
@@ -312,8 +312,8 @@ Exit codes:
   0  listed, even when empty      5  --parent matched several tasks
   2  bad usage                    6  --mine with no identity configured
   3  a filter value does not exist here
-  4  --parent does not exist      7  the board could not respond
-                                  8  no board here
+  4  --parent does not exist      8  the board could not respond
+                                  20 no board here
 
 Examples:
   biso ls

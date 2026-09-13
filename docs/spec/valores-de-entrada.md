@@ -23,7 +23,7 @@ Reglas:
   un error de uso con código 2, porque el segundo leería un flujo agotado y guardaría el vacío sin
   que se note.
 - **Un fichero que no existe es código 4**, con el mensaje `error: --append-desc: file not found: docs/x.md`.
-  Un fichero que existe pero no se puede leer es código 7.
+  Un fichero que existe pero no se puede leer es código 8.
 - **Un valor vacío, venga de donde venga, no borra nada.** Ver ["El valor vacío"](#el-valor-vacío).
 
 ## El valor vacío

@@ -33,7 +33,7 @@ que este documento ya hace:
 - **Los comandos de lectura no pueden escribir.** La sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables) promete que las lecturas nunca
   fallan por una escritura en curso y nunca la bloquean, y la sección ["Qué hace, caso a caso"](prime.md#qué-hace-caso-a-caso) que `biso prime` no escribe nunca y
   es seguro en paralelo. Un `ls` o un `prime` que repararan al pasar necesitarían acceso exclusivo,
-  podrían esperar cinco segundos y fallar con código 7, y se perdería justo la garantía de los dos
+  podrían esperar cinco segundos y fallar con código 8, y se perdería justo la garantía de los dos
   comandos que un agente llama sin parar.
 - **Un comando de escritura tiene permiso para lo que se le pidió, no para más.** Y no es solo
   cuestión de sorpresa: con el todo o nada de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables), si `biso set` cambiara un título y
@@ -177,7 +177,7 @@ distingue a un aviso de un error, así que es aviso.
 **Y la primera tiene una peculiaridad que la separa de las demás filas de error: nunca aparece como
 una línea del informe.** Las demás comprobaciones de error sí producen una entrada en la lista
 de problemas cuando se disparan, pero esta no, porque cuando se dispara no hay informe de `doctor`
-que mostrarla: hay el abort completo de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), con su propio mensaje y su propio código 10,
+que mostrarla: hay el abort completo de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), con su propio mensaje y su propio código 21,
 antes de que `doctor` llegue a comprobar nada más (ver la tabla de comportamiento más abajo). La fila
 está en esta tabla para decir que existe como comprobación y cuál es su nivel, no porque vaya a
 verse alguna vez junto a las demás.
@@ -231,7 +231,7 @@ tablero, es decir, sobre sus datos, y el marcador no es un dato del tablero: es 
 el sistema de ficheros, puesta ahí para poder encontrarlo sin abrirlo (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)). Por eso el orden
 importa y hay que decirlo explícito: primero la transacción de datos, después el marcador. Si el
 marcador falla, las reparaciones de datos quedan hechas y son definitivas, el comando termina con el
-código de no poder escribir (7, el mismo de cualquier otro fallo de entorno al reparar), y la falta del
+código de no poder escribir (8, el mismo de cualquier otro fallo de entorno al reparar), y la falta del
 marcador vuelve a aparecer como error la próxima vez que se ejecute `doctor`, porque sigue siendo verdad.
 Ese desenlace es coherente consigo mismo: no hay ningún dato del tablero observado a medias, y lo único
 que queda pendiente es una reparación que ya se sabe cómo repetir.
@@ -245,8 +245,8 @@ que queda pendiente es una reparación que ya se sabe cómo repetir.
 | Solo errores reparables, con `--fix` | Se reparan y se reporta cada uno, código 0 |
 | Quedan errores sin reparar | Código 6, aunque se haya reparado algo o se hayan reportado avisos |
 | Una tarea ilegible (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | Se reporta como error y se sigue con las demás. **Nunca aborta** |
-| La base de datos no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | El comando entero aborta con el mensaje y el código 10 de ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), antes de comprobar nada más |
-| `--fix` sin poder escribir | Código 7. Si falla la escritura del marcador después de la transacción de datos, esta ya quedó aplicada (ver arriba) |
+| La base de datos no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | El comando entero aborta con el mensaje y el código 21 de ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), antes de comprobar nada más |
+| `--fix` sin poder escribir | Código 8. Si falla la escritura del marcador después de la transacción de datos, esta ya quedó aplicada (ver arriba) |
 | `--fix --dry-run` | Reporta qué se repararía, sin reparar nada, código 0 |
 
 ## Salida
@@ -314,9 +314,9 @@ texto, en vez de a uno menor.
 | Nada mal, o todo lo encontrado se ha reparado | 0 |
 | Quedan errores | 6 |
 | Sintaxis | 2 |
-| No se puede escribir al reparar | 7 |
-| No hay tablero | 8 |
-| Su base de datos no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | 10 |
+| No se puede escribir al reparar | 8 |
+| No hay tablero | 20 |
+| Su base de datos no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | 21 |
 
 ## `biso doctor --help`
 
@@ -346,16 +346,16 @@ Only remaining errors produce exit code 6.
 
 An unreadable task is reported and skipped, never a reason to stop. A database
 that cannot be opened, or that fails its integrity check, is not a finding: the
-whole command fails instead, with exit code 10.
+whole command fails instead, with exit code 21.
 Gaps in the id sequence are normal and are not reported.
 
 Exit codes:
   0  nothing wrong, or every error found was fixed
   2  bad usage
   6  errors remain
-  7  cannot write while fixing
-  8  no board here
-  10 its database could not be read
+  8  cannot write while fixing
+  20 no board here
+  21 its database could not be read
 
 Examples:
   biso doctor

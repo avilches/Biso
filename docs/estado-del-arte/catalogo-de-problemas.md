@@ -70,7 +70,7 @@ de escritura (`https://github.com/anthropics/claude-code/issues/28973`).
 ["Concurrencia, atomicidad y garantías observables"](../spec/garantias.md#concurrencia-atomicidad-y-garantías-observables) exige que ninguna
 escritura se observe a medias, que dos escrituras simultáneas sobre la misma tarea no se pierdan ni se
 mezclen, y que si no se consigue el acceso exclusivo se espere hasta cinco segundos y se falle con
-código 7 **sin escribir nada**. Una transacción de SQLite en modo WAL da exactamente eso.
+código 8 **sin escribir nada**. Una transacción de SQLite en modo WAL da exactamente eso.
 
 ## 4. Un bloqueo que no cruza máquinas, o que se queda huérfano
 

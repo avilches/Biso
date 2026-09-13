@@ -41,7 +41,7 @@ biso prime [--full] [--limit <n>] [--json]
 |---|---|
 | Hay tablero y tiene tareas | Imprime el mensaje de la sección ["La salida literal"](#la-salida-literal) por stdout, código 0 |
 | Hay tablero y está vacío | Igual, con los cuatro bloques de tareas sustituidos por las tres líneas de la sección ["Tablero vacío"](#tablero-vacío) |
-| No hay tablero | Código 8, y por stderr el mensaje de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) |
+| No hay tablero | Código 20, y por stderr el mensaje de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) |
 | Alguna tarea no se puede leer | El mensaje sale igual, con el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), código 0 |
 | `--limit` negativo | Código 2 |
 
@@ -146,7 +146,7 @@ RULES  (none of these are guessable; they are the whole learning curve)
   7. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.
   8. Long text: a real newline works, and so do -d @file.md and -d - for stdin.
   9. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
-     6 precondition not met, 7 environment, 8 no board here, 9 nothing written.
+     6 precondition not met, 7 nothing written, 8 environment, 20 no board here.
  10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
      it, writing both into the comments. Ask instead of guessing. A task
      assigned to you is one a person decided you should do.
@@ -319,7 +319,7 @@ en texto la línea `lease` de la ficha de `biso get` (["`biso get`"](get.md)).
 | Mensaje impreso | 0 |
 | Mensaje impreso con alguna tarea ilegible | 0, con aviso |
 | `--limit` negativo, o `--full` junto con `--json` | 2 |
-| No hay tablero | 8 |
+| No hay tablero | 20 |
 
 ## `biso prime --help`
 
@@ -340,7 +340,7 @@ Options:
 Exit codes:
   0  message printed
   2  bad usage
-  8  no board here
+  20 no board here
 
 Examples:
   biso prime

@@ -16,8 +16,8 @@ abrirla, ni la abre nadie por su cuenta.
 
 | Caso | Qué pasa |
 |---|---|
-| No hay terminal | Error 7: `error: biso board needs a terminal; every other command works without one` |
-| El puerto está ocupado | Error 7, diciendo el puerto |
+| No hay terminal | Error 8: `error: biso board needs a terminal; every other command works without one` |
+| El puerto está ocupado | Error 8, diciendo el puerto |
 | Puerto fuera de rango | Error 2 |
 | `--no-open` | Arranca y solo imprime la dirección |
 | El tablero cambia mientras está abierto | La interfaz recarga. Nunca muestra una versión en caché de una tarea que otro proceso ha cambiado |
@@ -76,8 +76,8 @@ abierto un navegador, y es `false` con `--no-open`.
 |---|---:|
 | El servidor se ha parado limpiamente | 0 |
 | Puerto fuera de rango, o banderas incompatibles | 2 |
-| No hay terminal, o el puerto está ocupado | 7 |
-| No hay tablero | 8 |
+| No hay terminal, o el puerto está ocupado | 8 |
+| No hay tablero | 20 |
 
 ## `biso board --help`
 
@@ -97,8 +97,8 @@ Options:
 Exit codes:
   0  stopped cleanly
   2  bad usage
-  7  no terminal, or the port is taken
-  8  no board here
+  8  no terminal, or the port is taken
+  20 no board here
 
 Examples:
   biso board

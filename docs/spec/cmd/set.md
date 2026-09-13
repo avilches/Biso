@@ -127,9 +127,9 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 | Valor fuera de un vocabulario, clave de extensión no declarada, tarea ilegible | 3 |
 | Alguna referencia no existe, o un selector de texto no encaja con ningún criterio o comentario | 4 |
 | Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios o comentarios | 5 |
-| `--dry-run` que no pasa la validación | 9 |
-| El almacén falla, o no se obtiene el acceso exclusivo | 7 |
-| No hay tablero | 8 |
+| `--dry-run` que no pasa la validación | 7 |
+| El almacén falla, o no se obtiene el acceso exclusivo | 8 |
+| No hay tablero | 20 |
 
 ## `biso set --help`
 
@@ -197,10 +197,10 @@ replaced.
 
 Exit codes:
   0  done                    5  something matched more than one thing
-  2  bad usage               7  the board could not be written
-  3  unknown value           9  --dry-run did not pass
+  2  bad usage               7  --dry-run did not pass
+  3  unknown value           8  the board could not be written
   4  a task, criterion or comment was not found
-                             8  no board here
+                             20 no board here
 
 Examples:
   biso set MYP-11 --priority high --add-labels parser

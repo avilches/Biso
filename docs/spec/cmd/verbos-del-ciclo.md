@@ -93,9 +93,9 @@ permite cambiar entre versiones menores, así que la cifra exacta puede no ser e
 | Valor fuera de un vocabulario, tarea ilegible | 3 |
 | Referencia inexistente | 4 |
 | Referencia ambigua | 5 |
-| El almacén falla | 7 |
-| `--dry-run` que no pasa | 9 |
-| No hay tablero | 8 |
+| `--dry-run` que no pasa | 7 |
+| El almacén falla | 8 |
+| No hay tablero | 20 |
 
 ### `biso start --help`
 
@@ -124,10 +124,10 @@ over a live lease held by someone else is the same: it warns, it does not
 refuse.
 
 Exit codes:
-  0  started        4  not found        7  the board could not be written
-  2  bad usage      5  ambiguous        9  --dry-run did not pass
+  0  started        4  not found        7  --dry-run did not pass
+  2  bad usage      5  ambiguous        8  the board could not be written
   3  unknown value  6  already finished, use --reopen
-                    8  no board here
+                    20 no board here
 
 Examples:
   biso start MYP-11 --append-plan "1. Read the parser. 2. Add the CRLF case."
@@ -200,9 +200,9 @@ MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
 | Tarea ilegible | 3 |
 | Tarea inexistente, o fichero de `@` inexistente | 4 |
 | Referencia ambigua | 5 |
-| El almacén falla | 7 |
-| `--dry-run` que no pasa | 9 |
-| No hay tablero | 8 |
+| `--dry-run` que no pasa | 7 |
+| El almacén falla | 8 |
+| No hay tablero | 20 |
 
 ### `biso note --help`
 
@@ -227,9 +227,9 @@ itself looks like an id.
 To note the same thing on several tasks, use `biso set A B --append-note "..."`.
 
 Exit codes:
-  0  appended       3  the task could not be read    7  could not be written
-  2  bad usage      4  not found                     9  --dry-run did not pass
-                    5  ambiguous                      8  no board here
+  0  appended       3  the task could not be read    7  --dry-run did not pass
+  2  bad usage      4  not found                      8  could not be written
+                    5  ambiguous                     20  no board here
 
 Examples:
   biso note MYP-11 "The parser already normalized LF, CRLF was missing"
@@ -305,9 +305,9 @@ can be removed with --rm-comment, and only its date corrected with
 --set-comment-date, both in `biso set --help`.
 
 Exit codes:
-  0  appended       3  the task could not be read    7  could not be written
-  2  bad usage      4  not found                     9  --dry-run did not pass
-                    5  ambiguous                      8  no board here
+  0  appended       3  the task could not be read    7  --dry-run did not pass
+  2  bad usage      4  not found                      8  could not be written
+                    5  ambiguous                     20  no board here
 
 Examples:
   biso comment MYP-11 "A user with a Windows clone reported this"
@@ -386,9 +386,9 @@ warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked
 | Valor fuera de un vocabulario, tarea ilegible | 3 |
 | Referencia o criterio inexistente | 4 |
 | Referencia o criterio ambiguo | 5 |
-| El almacén falla | 7 |
-| `--dry-run` que no pasa | 9 |
-| No hay tablero | 8 |
+| `--dry-run` que no pasa | 7 |
+| El almacén falla | 8 |
+| No hay tablero | 20 |
 
 ### `biso finish --help`
 
@@ -418,9 +418,9 @@ Every field flag of `biso set --help` works here too.
 
 Exit codes:
   0  finished       3  unknown value    6  --strict and something is missing
-  2  bad usage      4  not found        7  the board could not be written
-                    5  ambiguous        9  --dry-run did not pass
-                                        8  no board here
+  2  bad usage      4  not found        7  --dry-run did not pass
+                    5  ambiguous        8  the board could not be written
+                                        20 no board here
 
 Examples:
   biso finish MYP-11 --check-ac all --check-dod all --append-summary "Normalizes CRLF"
@@ -511,9 +511,9 @@ cierto.
 | Pregunta vacía, tarea ilegible | 3 |
 | Referencia inexistente, o fichero de `@` inexistente | 4 |
 | Referencia ambigua | 5 |
-| El almacén falla | 7 |
-| `--dry-run` que no pasa | 9 |
-| No hay tablero | 8 |
+| `--dry-run` que no pasa | 7 |
+| El almacén falla | 8 |
+| No hay tablero | 20 |
 
 ### `biso ask --help`
 
@@ -538,9 +538,9 @@ command and `biso answer` ever writes the question itself.
 A task holds one open question at a time. Answer it before asking another.
 
 Exit codes:
-  0  asked          4  not found        7  could not be written
-  2  bad usage      5  ambiguous        8  no board here
-  3  empty question, or unreadable      9  --dry-run did not pass
+  0  asked          4  not found        7  --dry-run did not pass
+  2  bad usage      5  ambiguous        8  could not be written
+  3  empty question, or unreadable      20 no board here
   6  already asking, or already finished
 
 Examples:
@@ -644,9 +644,9 @@ La urgencia recupera el término de actividad de ["La urgencia"](../modelo-de-da
 | Respuesta vacía, tarea ilegible | 3 |
 | Referencia inexistente | 4 |
 | Referencia ambigua | 5 |
-| El almacén falla | 7 |
-| `--dry-run` que no pasa | 9 |
-| No hay tablero | 8 |
+| `--dry-run` que no pasa | 7 |
+| El almacén falla | 8 |
+| No hay tablero | 20 |
 
 ### `biso answer --help`
 
@@ -672,9 +672,9 @@ Both comments are signed with your configured identity. This command does not
 take --comment-author.
 
 Exit codes:
-  0  answered       4  not found        7  could not be written
-  2  bad usage      5  ambiguous        8  no board here
-  3  empty answer, or unreadable        9  --dry-run did not pass
+  0  answered       4  not found        7  --dry-run did not pass
+  2  bad usage      5  ambiguous        8  could not be written
+  3  empty answer, or unreadable        20 no board here
   6  no open question
 
 Examples:
