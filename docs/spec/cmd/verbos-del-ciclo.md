@@ -5,14 +5,14 @@ subconjunto: lo que aportan es un nombre y unos valores por defecto, de modo que
 cabe en una llamada corta y el gesto raro sigue cabiendo en la misma llamada.
 
 Los seis son escrituras sobre la tarea, así que a los cinco que no son `start` (`note`, `comment`,
-`finish`, `ask`, `answer`) les aplica la regla general de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md): si quien llama ya es
-`leaseHolder`, renuevan `leaseExpiresAt`; si no lo es y el arrendamiento está vivo, no tocan ninguno de
-los campos y avisan; y si no lo es y está vencido, lo dejan vencido. Ninguno de los cinco fija ni
-transfiere `leaseHolder`: reclamar es de `start`, y de [`biso new --start`](new.md) al crear.
-**Y por encima de todo eso está la invariante**: la escritura que saca la tarea del estado activo o la
-deja sin ninguna persona asignada vacía los campos, sea quien sea quien la haga, así que
-`biso finish` los vacía siempre y el aviso de un arrendamiento ajeno no lo impide (séptima precisión de
-la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)).
+`finish`, `ask`, `answer`) les aplica la regla general de [`lease.md`](../lease.md#la-renovación): si
+quien llama ya es `leaseHolder`, renuevan `leaseExpiresAt`; si no lo es y el arrendamiento está vivo,
+no tocan ninguno de los campos y avisan; y si no lo es y está vencido, lo dejan vencido. Ninguno de
+los cinco fija ni transfiere `leaseHolder`: reclamar es de `start`, y de [`biso new --start`](new.md)
+al crear. **Y por encima de todo eso está la invariante**: la escritura que saca la tarea del estado
+activo o la deja sin ninguna persona asignada vacía los campos, sea quien sea quien la haga, así que
+`biso finish` los vacía siempre y el aviso de un arrendamiento ajeno no lo impide (["El
+vaciado"](../lease.md#el-vaciado) de `lease.md`).
 
 Los seis imprimen también la misma línea de estado que `set`, con la forma y las reglas que define
 [`biso set`](set.md). Los ejemplos de más abajo son esa línea con los datos de la MYP-11, que tiene dos criterios de
@@ -66,9 +66,9 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | La tarea ya está en el estado terminal | Error 6, salvo con `--reopen`, que la devuelve al estado activo |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos.md#la-pregunta-abierta) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
-| El arrendamiento de la tarea está vencido (`leaseExpired`, sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (sexta precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `DECISIONES.md` |
+| El arrendamiento de la tarea está vencido (`leaseExpired`, ["Cuándo cuenta como vencido"](../lease.md#cuándo-cuenta-como-vencido) de `lease.md`) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (["La renovación"](../lease.md#la-renovación) de `lease.md`), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `DECISIONES.md` |
 | El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
-| `-s` con un estado que no es el activo, por ejemplo `biso start MYP-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
+| `-s` con un estado que no es el activo, por ejemplo `biso start MYP-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: MYP-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
 | No hay [ninguna identidad configurada](../invocacion.md#variables-de-entorno) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
 | La tarea ya tiene plan y se pasa `--append-plan` | Se añade al final, como toda bandera de añadir |
@@ -353,7 +353,7 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos.md#la-pregunta-abierta) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
-| La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (séptima precisión de la sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)) |
+| La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 | La tarea tiene el arrendamiento y `-s` la lleva a otro estado que tampoco es el activo | Los campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
 | `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos, incluido el de la pregunta abierta |
 | Varias referencias | Todo o nada |

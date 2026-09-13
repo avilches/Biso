@@ -75,7 +75,7 @@ instrucción de renombrar uno que ya existe.
 persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
 identidad y `--mine` deja de significar nada (sección ["Riesgos conocidos y aceptados del modelo de estados"](../../DECISIONES.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) de `docs/DECISIONES.md`).
 
-**`lease_minutes` fija cuánto dura el arrendamiento de una tarea activa y asignada (sección ["El modelo de datos de una tarea"](../modelo-de-datos.md)), y se
+**`lease_minutes` fija cuánto dura el arrendamiento de una tarea activa y asignada (["El arrendamiento de una tarea"](../lease.md)), y se
 puede cambiar libremente en cualquier momento, sin caer nunca en el error 6.** A diferencia de
 `task_prefix` o de `statuses` en uso, esta clave no queda incrustada en ninguna tarea existente:
 `leaseExpiresAt` se calcula al escribir, así que cambiar `lease_minutes` solo afecta a los
