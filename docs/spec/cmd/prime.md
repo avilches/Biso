@@ -100,11 +100,11 @@ COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
   biso ls [-s STATUS] [--type T] [-l LABEL] [--mine] [--search TEXT]
   biso get <ref> [--section ac]
   biso new "TITLE" [-d TEXT] [--add-ac TEXT]... [--type T] [--priority P]
-  biso start <ref>... [--plan TEXT]
+  biso start <ref>... [--append-plan TEXT]
   biso note <ref> "TEXT"
   biso ask <ref> "QUESTION"
   biso answer <ref> "TEXT"
-  biso finish <ref>... [--summary "TEXT"] [--check-ac all] [--check-dod all]
+  biso finish <ref>... [--append-summary "TEXT"] [--check-ac all] [--check-dod all]
   biso set <ref>... [any field flag]
   biso comment <ref> "TEXT" [--comment-author @who]
 
@@ -171,8 +171,8 @@ NEXT UP  (not assigned to you, by urgency)
   MYP-44  To Do        bug   low     Wrong column width on narrow ttys                 ac 0/1  -        -
   49 more not shown: `biso ls --not-active --not-waiting`
 
-Pick one, `biso start <ref> --plan "..."`, work, `biso note <ref> "..."` as you go,
-and close with `biso finish <ref> --check-ac all --check-dod all --summary "..."`.
+Pick one, `biso start <ref> --append-plan "..."`, work, `biso note <ref> "..."` as you go,
+and close with `biso finish <ref> --check-ac all --check-dod all --append-summary "..."`.
 That is the loop. Create a task when the work needs planning or review; do small
 edits directly.
 ```

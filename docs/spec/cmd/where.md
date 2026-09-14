@@ -24,6 +24,7 @@ que remite el error de código 20, y el que hace visible una resolución que de 
 | El puntero nombra un tablero que no está en esta máquina | Imprime que hay un puntero y qué identificador nombra (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), código 20, `code` `pointer_unresolved` |
 | Hay más de un candidato | Imprime el elegido y los descartados, con el motivo, código 0 |
 | El mismo `id` aparece en dos raíces | Imprime los dos directorios y no elige ninguno, código 22, `code` `ambiguous_board_id` (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) |
+| Sin identidad configurada | La fila `me` sale como `me       (not set: run biso as BISO_ME=@you biso ...)`, sin ningún `note:` aparte (sección ["Qué pasa si no hay identidad"](../invocacion.md#variables-de-entorno)), código 0 igual |
 | La base de datos del tablero no se puede leer | El mensaje de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), código 21, `code` `database_unreadable`. `where` no lo esquiva: para decir qué tablero está en uso hay que abrirlo |
 
 ## Salida
@@ -99,6 +100,9 @@ la fila donde más confunde, porque justo al lado hay un recuento de estados.
   }
 }
 ```
+
+**`me` vale `null` sin identidad configurada**, la misma regla que sigue `board.me` en el esquema JSON
+de `biso prime` (["`biso prime`"](prime.md#la-salida-literal)).
 
 ## Códigos de salida
 

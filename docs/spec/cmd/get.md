@@ -27,7 +27,7 @@ La resolución de `<ref>` está en la sección ["Cómo se resuelve una referenci
 | Caso | Qué pasa |
 |---|---|
 | La referencia resuelve a una tarea | Se imprime, código 0 |
-| La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** en el formato de `biso ls` |
+| La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** exactamente como las imprimiría `biso ls --search "<texto>"` (["`biso ls`"](ls.md)): mismo orden, mismo límite de 30 y mismo aviso de recorte si hace falta |
 | La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched MYP-11` por stderr |
 | La tarea está archivada | Se imprime, con `note: MYP-11 is archived` por stderr |
 | La tarea no se puede leer | Error 3, según la regla de lectura dirigida de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
@@ -84,8 +84,8 @@ A user with a Windows clone reported this.
 (empty)
 ```
 
-El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el contrato de estabilidad
-permite cambiar entre versiones menores, así que la cifra exacta puede no ser esta.
+La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la sección
+["Urgencia"](../modelo-de-datos/urgencia.md).
 
 Los encabezados de esta salida son un formato de presentación, no un formato de almacenamiento.
 

@@ -66,7 +66,7 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
 
 ## Cosas que conviene tener presentes al implementar
 
-- **El mensaje de arranque tiene un tope duro de 5.120 bytes.** No es un objetivo, es una prueba de la
+- **El mensaje de arranque tiene un tope duro de 5.504 bytes.** No es un objetivo, es una prueba de la
   suite, y es el único de los números de tamaño que congela
   ["El contrato de estabilidad"](docs/spec/estabilidad.md). El reparto entre la parte fija y el resumen, y lo que mide hoy el texto, están
   en ["El presupuesto de tamaño"](docs/spec/presupuestos.md#el-presupuesto-de-tamaño).
@@ -77,9 +77,10 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
   columnas de `biso ls` y de `biso prime` está especificado como algoritmo justamente para eso.
   Cualquier cambio en él obliga a regenerar los ejemplos y a comprobar que coinciden carácter a
   carácter.
-- **Un valor que no existe es siempre un error, se esté escribiendo o leyendo.** Un filtro mal
-  escrito nunca puede devolver una lista vacía, porque quien la lee la interpreta como un hecho sobre
-  el tablero.
+- **En un campo de vocabulario cerrado, un valor que no existe es siempre un error, se esté
+  escribiendo o leyendo.** Un filtro mal escrito nunca puede devolver una lista vacía, porque quien la
+  lee la interpreta como un hecho sobre el tablero. Las etiquetas y las personas son la excepción
+  declarada: su vocabulario solo es cerrado al leer, no al escribir.
 
 ## Reglas de este repositorio
 

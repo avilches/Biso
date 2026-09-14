@@ -6,7 +6,7 @@
 biso init [<name>] [--at <dir>] [--statuses <list>]
           [--initial-status <status>] [--active-status <status>]
           [--terminal-status <status>] [--types <list>] [--priorities <list>]
-          [--projects <list>] [--extensions <list>] [--prefix <text>]
+          [--extensions <list>] [--prefix <text>]
           [--overwrite-config] [--from <location>]
 ```
 
@@ -22,11 +22,10 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 | `--terminal-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--types <list>` | | no | lista | `task, bug, docs` | sí | sí | |
 | `--priorities <list>` | | no | lista | `high, medium, low` | sí | sí | |
-| `--projects <list>` | | no | lista | vacía | sí | sí | |
 | `--extensions <list>` | | no | lista | vacía | sí | sí | |
 | `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) | no | no | |
 | `--overwrite-config` | | no | booleano | falso | no | no | |
-| `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--projects`, `--extensions`, `--prefix`, `--overwrite-config` |
+| `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--extensions`, `--prefix`, `--overwrite-config` |
 
 **`--at` es la ruta del directorio del tablero que se va a crear, no el directorio donde se crea.** Con
 `--at tablero` el tablero queda en `tablero`, no en `tablero/my-project-3f9a2b1c`. Es la misma convención que
@@ -358,7 +357,6 @@ Options:
   --terminal-status <status>  what `biso finish` sets (default: "Done")
   --types <list>              comma-separated (default: "task,bug,docs")
   --priorities <list>         comma-separated (default: "high,medium,low")
-  --projects <list>           comma-separated (default: none)
   --extensions <list>         comma-separated declared external field keys,
                               such as trello.card (default: none)
   --prefix <text>             task id prefix, letters only (default: derived

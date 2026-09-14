@@ -237,8 +237,8 @@ igual que las demás.
 }
 ```
 
-El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el contrato de estabilidad
-permite cambiar entre versiones menores, así que la cifra exacta puede no ser esta.
+La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la sección
+["Urgencia"](../modelo-de-datos/urgencia.md).
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
 comentarios. Para eso está `biso get`. Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) sí están todos,

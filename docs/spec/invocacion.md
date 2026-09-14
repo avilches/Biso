@@ -20,6 +20,7 @@ están definidas:
 | Autor de la pregunta, en `biso ask` | Error 2: `error: biso ask needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` (["`biso ask`"](cmd/verbos-del-ciclo.md#biso-ask)) |
 | Autor de la respuesta, en `biso answer` | Error 2: `error: biso answer needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` (["`biso answer`"](cmd/verbos-del-ciclo.md#biso-answer)) |
 | La línea `you are` de `biso prime` | La línea sale por stdout, dentro del bloque `BOARD`, como `you are     (not set: run biso as BISO_ME=@you biso ...)`, sin ninguna `note:` por stderr (["`biso prime`"](cmd/prime.md#la-salida-literal)) |
+| La fila `me` de `biso where` | La fila sale como `me       (not set: run biso as BISO_ME=@you biso ...)`, sin ningún `note:` por stderr, y `data.me` vale `null` en el JSON (["`biso where`"](cmd/where.md)) |
 
 ## Configuración de máquina
 
