@@ -203,7 +203,6 @@ existiera antes queda afectada.
 | `--from` cuyo `board.json` tiene el mismo problema que haría fallar con Error 2 al flag de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría ese flag |
 | `--from` cuyo `snapshot.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
 | `--from` cuyo `board.json` declara un vocabulario que ninguna tarea de `snapshot.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `board.json`, tenga tareas que lo usen entero o no |
-| `--from` cuyo `board.json` trae `me` o `default_limit`, porque se escribió a mano o con una versión anterior | No es un error, y tampoco se importan: `biso snapshot` no las escribe y `init --from` no las lee, con `note: me and default_limit are not restored, they belong to whoever uses the board`. No son claves desconocidas, así que no caen en el error 2 de la fila de arriba |
 | `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `board.json` no hace válido | Error 7, la misma regla del lote de `biso new --from` (sección ["`biso new`"](new.md)), con el detalle de qué falta línea a línea |
 
 **Los tres estados especiales se guardan como valores explícitos en la configuración, no como

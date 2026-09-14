@@ -203,3 +203,40 @@ vocabulario derivado. Usarlo para agrupar habría exigido, o bien construirle un
 derivado que hoy no tiene, que es exactamente lo que ya hacía `milestone` y por tanto no ahorra nada,
 o bien agrupar en el board por una dimensión que no se puede consultar por ningún otro sitio de la
 herramienta, una asimetría nueva entre lo que se ve y lo que se puede pedir por la línea de comandos.
+
+---
+
+## La identidad de quien llama
+
+**La decisión.** `me` y `default_limit` no son propiedades de un tablero, sino preferencias de quien lo
+usa, y viven en la configuración de máquina, `~/.biso/config.json` (sección ["Configuración de máquina"](../spec/invocacion.md#configuración-de-máquina)),
+junto a `boards_root` y `vcs`: `biso config` no las conoce, y se editan a mano en ese fichero como
+cualquier otra clave suya. Entre la variable de entorno `BISO_ME` y la clave `me` de esa configuración
+gana la variable, la misma precedencia que ya sigue el resto de la especificación (flag, luego
+variable, luego configuración) y de la que esta era la única excepción. Con eso, un tablero compartido
+entre una persona y un agente no necesita ninguna regla aparte para distinguirlos: la persona puede
+dejar su `me` puesto en la configuración de su máquina, y un agente que fija su propio `BISO_ME` en el
+entorno nunca lo hereda, tenga la máquina la clave puesta o no.
+
+**Por qué no hay un comando que escriba `me` en la configuración de máquina.** Ninguna de las claves de
+esa configuración tiene hoy un comando de escritura, `boards_root` y `vcs` incluidas, y `me` no rompe
+esa regla. La falta de un atajo de una línea es justo lo que empuja hacia `BISO_ME`: la única receta
+que cabe en un mensaje de error y se ejecuta sin abrir un editor es fijar la variable, así que todo
+mensaje que hoy pedía una identidad nombra primero `BISO_ME` y, como segunda vía, la clave `me` de
+`~/.biso/config.json` por su ruta completa, para que baste con leer el error para saber qué fichero y
+qué clave tocar sin ir a buscarlo en esta página.
+
+**Alternativas descartadas, y por qué.** Un flag `--me` se descarta porque `BISO_ME=@quien biso ...`
+ya cubre exactamente el mismo caso, fijar la identidad para una sola invocación, sin añadir un flag
+global más al contrato de estabilidad. Dejar `me` y `default_limit` en la configuración del tablero, y
+limitarse a invertir la precedencia, se descarta porque entonces seguirían haciendo falta las tres
+excepciones que hoy tienen: `biso snapshot` sin escribirlas, `biso init --from` ignorándolas con una
+nota, y la promesa de simetría de ["El contrato de estabilidad"](../spec/estabilidad.md) con una excepción declarada; sacarlas
+del tablero quita las tres a la vez, porque deja de haber nada que excluir. Un fichero hermano del
+puntero del proyecto, buscado hacia arriba sin el tope de la sección ["El tope de la búsqueda hacia arriba"](../spec/resolucion-del-tablero.md#el-tope-de-la-búsqueda-hacia-arriba),
+se descarta por dos motivos: fuera del control de versiones no resuelve nada que la configuración de
+máquina no resuelva ya, y una identidad heredada en silencio de un directorio varios niveles por
+encima es precisamente el error que esta decisión corrige, solo que en un sitio nuevo. Y un flag
+`--global` o `--machine` para que `biso config` escriba `~/.biso/config.json` se descarta por ahora,
+porque ninguna de las otras claves de esa configuración lo tiene y `me` no es un motivo suficiente
+para dárselo solo a ella.

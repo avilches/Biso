@@ -37,12 +37,10 @@ board:
       role: terminal
   types: [idea, memory, task, bug, docs]
   priorities: [high, medium, low]
-  # La clave "me" del tablero se deja SIN configurar a proposito. La seccion 10.10 de
-  # docs/SPEC.md lo exige para un tablero compartido entre una persona y un agente: "me" gana
-  # sobre BISO_ME, asi que ponerla haria que todo el mundo compartiese identidad y que --mine
-  # dejase de significar nada. Cada actor declara la suya por entorno, y de ahi sale el
-  # "you are @claude" que imprime `biso prime` en SPEC 9.7.
-  me: null
+  # La identidad no es una propiedad de este tablero: vive en la configuracion de maquina de
+  # cada actor (docs/spec/invocacion.md#configuración-de-máquina), y BISO_ME gana siempre sobre
+  # ella. Por eso no hay ninguna clave de identidad que sembrar aqui: cada actor declara la
+  # suya por entorno, y de ahi sale el "you are @claude" que imprime `biso prime` en SPEC 9.7.
   # Las identidades que aparecen en el tutorial, cada una en su propia sesion via BISO_ME.
   identidades:
     - "@claude"   # el agente, protagonista del recorrido

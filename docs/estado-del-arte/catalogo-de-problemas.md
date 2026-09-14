@@ -284,12 +284,11 @@ indicación visible de que fuera generado, ni en la interfaz ni en la interfaz d
 (`https://github.com/orgs/community/discussions/159749`).
 
 **Qué hace `biso`.** Es local y no tiene cuota. Y distingue quién escribió qué **mientras cada quien
-tenga su propia identidad**, con autor en los comentarios y en la pregunta abierta. Esa condición hay que
-decirla, porque un tablero con la clave `me` configurada la destruye: `me` gana sobre `BISO_ME`, así que
-ahí todo el mundo comparte identidad y la distinción deja de existir, lo que
-["Riesgos conocidos y aceptados del modelo de estados"](../decisiones/modelo-de-estados.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) anota como riesgo aceptado. Un tablero compartido entre una persona y un agente tiene que
-dejar `me` sin configurar, y de la vía por la que esa clave llegaba sin que nadie la eligiera, restaurar
-la instantánea de otra persona, ya se encarga `biso snapshot`, que no la escribe.
+declare su propia identidad**, con autor en los comentarios y en la pregunta abierta. Esa condición no
+depende de la configuración de ningún tablero: la identidad vive en la configuración de la máquina de
+cada quien, y la variable de entorno `BISO_ME` gana siempre sobre ella, así que un agente que fija su
+propia `BISO_ME` nunca hereda la identidad configurada en la máquina, comparta tablero con quien
+comparta (["La identidad de quien llama"](../decisiones/detalles.md#la-identidad-de-quien-llama)).
 
 ## 16. El agente deja de mirar el tablero cuando el proyecto crece
 

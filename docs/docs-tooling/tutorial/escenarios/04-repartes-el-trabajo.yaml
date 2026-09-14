@@ -12,9 +12,9 @@ teaches:
     Assigning is one person's decision about what another should do. It is not an automatic
     handout: `biso` never assigns anything on its own.
   - >-
-    A board shared between a person and an agent leaves the `me` key unset on purpose, and each
-    one declares their identity in their own session with `BISO_ME`. If the board had it set,
-    everyone would share the same identity and `--mine` would stop meaning anything.
+    Identity isn't a property of the board at all: it's a setting of the machine each person or
+    agent runs on, and the `BISO_ME` environment variable always wins over it. A person and an
+    agent sharing a board just each declare their own `BISO_ME` in their own session.
   - >-
     Assigning a task does not create a lease. Receiving work and starting it are two different
     things, and the second one has its own command.
@@ -24,7 +24,7 @@ steps:
       hasn't declared who she is in this session yet.
     command: biso ls --mine
     output: |
-      error: --mine needs an identity; set it with biso config set me <you> or BISO_ME
+      error: --mine needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json
     exit_code: 6
     source_kind: literal
     source:
@@ -37,9 +37,11 @@ steps:
       error also has its own code, 6, so a program calling `biso` can react without reading the
       message.
 
-      The message offers two ways out, and they aren't equivalent. `biso config set me` writes it
-      into the board's configuration, where everyone would see it; `BISO_ME` declares it only for
-      this session. On a shared board you have to use the second one.
+      The message offers two ways out, and they aren't equivalent. `~/.biso/config.json` is a
+      setting of this machine, so writing `me` there sets your identity for every board and every
+      session that runs here, agent sessions included unless they declare their own. `BISO_ME`
+      declares it only for this one shell. Sara uses the second, so the agent's own identity keeps
+      winning in its own sessions regardless of what her machine has saved.
   - narration: |
       Sara declares her identity for this session, which is an environment variable and not a
       `biso` command, and hands the task to the agent.
@@ -115,9 +117,9 @@ steps:
       status column no longer needs room for `In Progress`, and once the long-titled tasks
       disappear, the title column shrinks along with them.
 board_in: >
-  TASK-19 in To Do, unassigned, ac 0/2, urgency 7.0. The board's `me` key is unset and each actor
-  declares their identity with BISO_ME. Counters 55/4/190 (To Do / In Progress / Done), the 54
-  initial tasks plus the TASK-62 that scenario 2 created.
+  TASK-19 in To Do, unassigned, ac 0/2, urgency 7.0. Identity isn't part of the board's
+  configuration; each actor declares their own with BISO_ME. Counters 55/4/190 (To Do / In
+  Progress / Done), the 54 initial tasks plus the TASK-62 that scenario 2 created.
 board_out: >
   TASK-19 is still in To Do and still at ac 0/2 and urgency 7.0, but now assigned to @claude. No
   lease: none of this scenario's steps creates one, because only `biso start` and `biso new

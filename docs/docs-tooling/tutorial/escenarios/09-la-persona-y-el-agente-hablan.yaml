@@ -15,7 +15,7 @@ teaches:
     The `biso comment` command adds a comment with an author and a timestamp. It's the channel
     for anything that comes from outside, and the way to talk with a person.
   - >-
-    A comment's default author is the configured identity (`me`). `--comment-author` lets you
+    A comment's default author is the resolved identity (`me`). `--comment-author` lets you
     sign it with another one, free text and unvalidated, to relay something that came from
     another system.
 steps:
@@ -82,7 +82,7 @@ steps:
       - spec/cmd/verbos-del-ciclo.md#biso-comment "`biso comment`"
       - spec/modelo-de-datos/comentarios.md#los-comentarios "Los comentarios"
     remark: |
-      Without --comment-author, the author is `me`, this board's configured identity: @claude.
+      Without --comment-author, the author is `me`, this session's resolved identity: @claude.
       It's the same `--comment-author` that exists on every write command, not just `biso
       comment`: the name doesn't change just because it looks redundant on `biso comment`.
   - narration: |

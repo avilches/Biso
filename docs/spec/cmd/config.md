@@ -33,8 +33,6 @@ salida por stdout, así que en los dos es un error de uso con código 2.
 | `assignees` | lista | vacía |
 | `extensions` | lista | vacía |
 | `task_prefix` | texto de solo letras | se deriva de `project_name` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) |
-| `me` | texto de persona | `BISO_ME` si está definida |
-| `default_limit` | entero >= 0 | 30 |
 | `finish_strict` | booleano | falso |
 | `lease_minutes` | entero > 0 | 240 |
 | `urgency.priority`, `urgency.active`, `urgency.blocking`, `urgency.blocked`, `urgency.due`, `urgency.criteria`, `urgency.age` | decimal | ver ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia) para el término de cada uno y su valor por defecto |
@@ -70,10 +68,6 @@ haría `config set project_name`, y tampoco mueve nada. **Sin `<name>` explícit
 conserva tal cual estaba**, aunque el valor por defecto de `<name>` sea el nombre del directorio del
 proyecto: ese valor por defecto tiene sentido como punto de partida al crear un tablero nuevo, no como
 instrucción de renombrar uno que ya existe.
-
-**`me` gana sobre `BISO_ME` cuando las dos están puestas.** Por eso un tablero compartido entre una
-persona y un agente tiene que dejar `me` sin configurar: si la lleva puesta, todo el mundo comparte
-identidad y `--mine` deja de significar nada (sección ["Riesgos conocidos y aceptados del modelo de estados"](../../decisiones/modelo-de-estados.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados)).
 
 **`lease_minutes` fija cuánto dura el arrendamiento de una tarea activa y asignada (["El arrendamiento de una tarea"](../lease.md)), y se
 puede cambiar libremente en cualquier momento, sin caer nunca en el error 6.** A diferencia de
@@ -141,8 +135,6 @@ labels =
 assignees =
 extensions = trello.card
 task_prefix = TASK
-me = @claude
-default_limit = 30
 finish_strict = false
 lease_minutes = 240
 urgency.priority = 6.0
@@ -154,7 +146,7 @@ urgency.criteria = 1.0
 urgency.age = 0.5
 ```
 
-**`config list` imprime las veintidós claves, siempre, en el orden de la tabla de claves de arriba**, y
+**`config list` imprime las veinte claves, siempre, en el orden de la tabla de claves de arriba**, y
 los siete coeficientes de la urgencia con el nombre con el que `config set` los acepta, uno por línea.
 Lo que `list` enseña es exactamente el conjunto de claves que `set` admite, y por eso no puede haber
 ninguna que solo se vea con `--json`: una clave escondida es una clave que nadie sabe que puede cambiar.
@@ -185,8 +177,6 @@ Solo `config list` acepta `--json`:
       "assignees": [],
       "extensions": ["trello.card"],
       "task_prefix": "TASK",
-      "me": "@claude",
-      "default_limit": 30,
       "finish_strict": false,
       "lease_minutes": 240,
       "urgency": { "priority": 6.0, "active": 4.0, "blocking": 8.0, "blocked": -5.0,
@@ -232,8 +222,6 @@ Keys:
   extensions         declared external field keys, such as trello.card
   task_prefix        id prefix, letters only (default: derived from
                      project_name); immutable once the board has a task
-  me                 who you are, for --mine and for comment authorship
-  default_limit      how many rows `biso ls` prints (default 30)
   finish_strict      make `biso finish` refuse an incomplete task
   lease_minutes      lease duration in minutes (default 240); free to change
                      at any time, it only affects future renewals

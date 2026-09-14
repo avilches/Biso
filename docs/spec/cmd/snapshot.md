@@ -25,15 +25,10 @@ parte; para volcar a otra parte está `export`.
 una tarea por línea, con las mismas claves, incluidos los identificadores, las fechas y las claves de
 criterio. `board.json` es la configuración del tablero, en la misma forma que imprime
 `biso config list --json` (["`biso config`"](config.md)): todas las claves de vocabulario, `task_prefix` y las demás.
-
-**Con dos excepciones, `me` y `default_limit`, que no se escriben nunca.** Las dos son preferencias de
-quien usa el tablero y no propiedades suyas, y la primera hace daño de verdad al viajar: restaurar la
-instantánea de otra persona con `biso init --from` dejaría su identidad configurada como la del tablero,
-y un tablero con `me` puesto anula `--mine`, porque entonces todo el mundo comparte identidad (sección
-["Riesgos conocidos y aceptados del modelo de estados"](../../decisiones/modelo-de-estados.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados)). Un tablero restaurado nace por tanto sin identidad y con el límite por defecto,
-y quien restaura pone la suya con `biso config set me`. La garantía de simetría de ["`biso export`"](export.md) sigue cubriendo
-todo lo demás y **no cuenta estas dos claves**, que es la única cosa que exportar e importar no
-reproduce campo a campo.
+`me` y `default_limit` no están entre ellas, porque no son claves de la configuración de un tablero
+(sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)), así que restaurar la instantánea de otra persona con `biso init --from`
+nunca hereda su identidad ni su límite por defecto. La garantía de simetría de ["`biso export`"](export.md) cubre por
+tanto la configuración del tablero entera, campo a campo.
 
 Los dos ficheros son los que después lee `biso init --from` (["`biso init`"](init.md)) para reconstruir el tablero
 entero. Van en dos ficheros separados, y no en uno solo, para que los diffs queden legibles: la
