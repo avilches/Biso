@@ -24,7 +24,7 @@ Sara decides the agent should do it. What follows is how that gets said, and how
 
 !!! abstract "What this scenario teaches"
     - Assigning is one person's decision about what another should do. It is not an automatic handout: `biso` never assigns anything on its own.
-    - A board shared between a person and an agent leaves the `me` key unset on purpose, and each one declares their identity in their own session with `BISO_ME`. If the board had it set, everyone would share the same identity and `--mine` would stop meaning anything.
+    - Identity isn't a property of the board at all: it's a setting of the machine each person or agent runs on, and the `BISO_ME` environment variable always wins over it. A person and an agent sharing a board just each declare their own `BISO_ME` in their own session.
     - Assigning a task does not create a lease. Receiving work and starting it are two different things, and the second one has its own command.
 
 Sara opens a new terminal and, before anything else, wants to see what she has pending. She
@@ -32,12 +32,12 @@ hasn't declared who she is in this session yet.
 
 ```console
 $ biso ls --mine
-error: --mine needs an identity; set it with biso config set me <you> or BISO_ME
+error: --mine needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json
 ```
 
 Exit code: `6`
 
-*Note: Notice that it doesn't return an empty list. It could have, and that would have been the easy thing to implement: with no identity, no task is "mine", so zero results. But then whoever calls it couldn't tell "I have nothing assigned" apart from "you haven't said who you are", and that is exactly what the first principle of the specification forbids. The error also has its own code, 6, so a program calling `biso` can react without reading the message. The message offers two ways out, and they aren't equivalent. `biso config set me` writes it into the board's configuration, where everyone would see it; `BISO_ME` declares it only for this session. On a shared board you have to use the second one.*
+*Note: Notice that it doesn't return an empty list. It could have, and that would have been the easy thing to implement: with no identity, no task is "mine", so zero results. But then whoever calls it couldn't tell "I have nothing assigned" apart from "you haven't said who you are", and that is exactly what the first principle of the specification forbids. The error also has its own code, 6, so a program calling `biso` can react without reading the message. The message offers two ways out, and they aren't equivalent. `~/.biso/config.json` is a setting of this machine, so writing `me` there sets your identity for every board and every session that runs here, agent sessions included unless they declare their own. `BISO_ME` declares it only for this one shell. Sara uses the second, so the agent's own identity keeps winning in its own sessions regardless of what her machine has saved.*
 
 Sara declares her identity for this session, which is an environment variable and not a
 `biso` command, and hands the task to the agent.

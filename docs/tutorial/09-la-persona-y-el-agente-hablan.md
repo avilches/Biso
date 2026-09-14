@@ -25,7 +25,7 @@ timestamp per entry; a comment is a conversation, and it always carries who wrot
 !!! abstract "What this scenario teaches"
     - The `biso note` command adds a paragraph to the implementation notes. It's a block of prose with no author or timestamp per element, the technical notebook of whoever is doing the work.
     - The `biso comment` command adds a comment with an author and a timestamp. It's the channel for anything that comes from outside, and the way to talk with a person.
-    - A comment's default author is the configured identity (`me`). `--comment-author` lets you sign it with another one, free text and unvalidated, to relay something that came from another system.
+    - A comment's default author is the resolved identity (`me`). `--comment-author` lets you sign it with another one, free text and unvalidated, to relay something that came from another system.
 
 You finish fitting the retry with the same pattern the download endpoint already used, and
 leave a record of how it turned out.
@@ -84,7 +84,7 @@ Exit code: `0`
 
 *(derived output, see [`biso comment`](../spec/cmd/verbos-del-ciclo.md#biso-comment), [Los comentarios](../spec/modelo-de-datos/comentarios.md#los-comentarios); not literal spec text)*
 
-*Note: Without --comment-author, the author is `me`, this board's configured identity: @claude. It's the same `--comment-author` that exists on every write command, not just `biso comment`: the name doesn't change just because it looks redundant on `biso comment`.*
+*Note: Without --comment-author, the author is `me`, this session's resolved identity: @claude. It's the same `--comment-author` that exists on every write command, not just `biso comment`: the name doesn't change just because it looks redundant on `biso comment`.*
 
 You put the two sections side by side to see the contrast at a glance.
 
