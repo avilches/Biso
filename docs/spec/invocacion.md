@@ -5,19 +5,20 @@
 | Variable | Equivale a | Precedencia |
 |---|---|---|
 | `BISO_CWD` | `--cwd` | el flag gana |
-| `BISO_ME` | la identidad de quien llama, para `--mine` y para el autor por defecto de los comentarios | la clave `me` de la configuración gana; si no está, esta variable |
-| `BISO_LIMIT` | el límite por defecto de `biso ls` | `--limit` gana, luego esta variable, luego la clave `default_limit`, luego 30 |
+| `BISO_ME` | la identidad de quien llama, para `--mine` y para el autor por defecto de los comentarios | esta variable gana; si no está, la clave `me` de la ["Configuración de máquina"](#configuración-de-máquina) |
+| `BISO_LIMIT` | el límite por defecto de `biso ls` | `--limit` gana, luego esta variable, luego la clave `default_limit` de la ["Configuración de máquina"](#configuración-de-máquina), luego 30 |
 | `NO_COLOR` | `--color never`, si está definida con cualquier valor | `--color` gana |
 
-**Qué pasa si no hay identidad**, es decir, ni la clave `me` ni `BISO_ME` están definidas:
+**Qué pasa si no hay identidad**, es decir, ni `BISO_ME` ni la clave `me` de la configuración de máquina
+están definidas:
 
 | Dónde se usaría `me` | Qué pasa sin ella |
 |---|---|
-| `biso ls --mine` | Error 6: `error: --mine needs an identity; set it with biso config set me <you> or BISO_ME` |
+| `biso ls --mine` | Error 6: `error: --mine needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
 | `biso start`, autoasignación | No asigna a nadie. Sale `note: no identity configured, task left unassigned` en vez del `note:` de siempre |
 | Autor por defecto de un comentario | Error 2 si no se ha pasado `--comment-author`: `error: --comment-author is required, no identity is configured` |
-| Autor de la pregunta, en `biso ask` | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` (["`biso ask`"](cmd/verbos-del-ciclo.md#biso-ask)) |
-| Autor de la respuesta, en `biso answer` | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` (["`biso answer`"](cmd/verbos-del-ciclo.md#biso-answer)) |
+| Autor de la pregunta, en `biso ask` | Error 2: `error: biso ask needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` (["`biso ask`"](cmd/verbos-del-ciclo.md#biso-ask)) |
+| Autor de la respuesta, en `biso answer` | Error 2: `error: biso answer needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` (["`biso answer`"](cmd/verbos-del-ciclo.md#biso-answer)) |
 | La línea `you are` de `biso prime` | La línea sale por stdout, dentro del bloque `BOARD`, como `you are     (not set: run biso as BISO_ME=@you biso ...)`, sin ninguna `note:` por stderr (["`biso prime`"](cmd/prime.md#la-salida-literal)) |
 
 ## Configuración de máquina
@@ -33,10 +34,19 @@ un tablero concreto, y esta es de la máquina entera, independiente de cuántos 
 | `boards_extra_roots` | lista de rutas | vacía |
 | `vcs` | `git`, `none` o `custom` | `git` |
 | `vcs_custom` | objeto, y solo con `vcs` igual a `custom` | ausente |
+| `me` | texto de persona | ausente |
+| `default_limit` | entero >= 0 | 30 |
 
 `boards_root` es la raíz por defecto de la sección ["Cómo se elige el tablero"](resolucion-del-tablero.md): el directorio donde `biso init` sin `--at` crea
 los tableros nuevos. `boards_extra_roots` son raíces adicionales, para cuando algún tablero vive fuera
 de `boards_root`.
+
+**`me` y `default_limit` son preferencias de quien usa `biso` en esta máquina, no propiedades de un
+tablero**, y por eso viven aquí y no en la configuración de un tablero (sección ["`biso config`"](cmd/config.md#las-claves)):
+la primera es la identidad de la sección ["Variables de entorno"](#variables-de-entorno), y la segunda el límite por defecto de
+["`biso ls`"](cmd/ls.md). Las dos se leen igual que `boards_root` o `vcs`, directamente de este fichero y sin pasar por
+la resolución de tablero, así que valen para todos los tableros de esta máquina y no viajan en la
+instantánea de ["`biso snapshot`"](cmd/snapshot.md). El razonamiento completo está en ["La identidad de quien llama"](../decisiones/detalles.md#la-identidad-de-quien-llama).
 
 **Las dos se recorren igual, y en un orden declarado**: `boards_root` primero y después
 `boards_extra_roots` en el orden en que estén escritas. Eso vale en los dos sitios que recorren raíces,

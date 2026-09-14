@@ -311,14 +311,11 @@ Se aceptan a propósito, y conviene anotar por qué en cada uno para no tropezar
   el trabajo duplicado, solo empuja a rodear la herramienta. Lo que el arrendamiento sí garantiza es que
   una tarea no se quede cogida para siempre, que nadie renueve ni se atribuya un arrendamiento ajeno, y
   que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una (["Saber si alguien está trabajando de verdad"](#saber-si-alguien-está-trabajando-de-verdad)).
-- **Un tablero con la clave `me` configurada anula la distinción entre persona y agente.** La clave
-  `me` gana sobre `BISO_ME`, así que en un tablero que la tenga puesta todo el mundo comparte
-  identidad y `--mine` deja de significar nada. Un tablero compartido entre una persona y un agente
-  tiene que dejar `me` sin configurar. **Lo único que se ha cerrado de este riesgo es la vía por la que
-  llegaba sin que nadie lo decidiera**: la instantánea de `biso snapshot` no escribe `me` (ni
-  `default_limit`), así que restaurar el tablero de otra persona con `biso init --from` ya no hereda su
-  identidad, y el tablero restaurado nace sin ninguna. Configurarla sigue siendo posible, y sigue
-  teniendo esta consecuencia.
+- **Esto ya no es cierto.** Este riesgo describía que la clave `me` ganaba sobre `BISO_ME`, así que un
+  tablero con `me` puesta hacía que todo el mundo compartiera identidad y `--mine` dejara de
+  significar nada. La decisión ["La identidad de quien llama"](detalles.md#la-identidad-de-quien-llama) lo cierra: `me` ya no vive en el
+  tablero, sino en la configuración de la máquina, y es `BISO_ME` quien gana. Un agente que fija su
+  propio `BISO_ME` no hereda nunca la identidad que la máquina tenga configurada.
 - **La persona no tiene un canal hacia el agente que se vea en el mensaje de arranque.** El agente
   pregunta con `biso ask` y la persona responde con `biso answer`, pero si la persona quiere decirle
   algo por iniciativa propia lo escribe en un comentario, y el mensaje de arranque no muestra

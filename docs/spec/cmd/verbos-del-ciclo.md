@@ -474,7 +474,7 @@ estado de la tarea.**
 | La tarea está en el estado terminal | Error 6, igual que `biso start`, con la pista de reabrirla |
 | La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get` |
 | El texto está vacío | Error 3: `error: the question cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
-| Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso ask needs an identity; set it with biso config set me <you> or BISO_ME` |
+| Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso ask needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
 
@@ -606,7 +606,7 @@ instante de cada uno sigue diciendo la verdad.
 | La tarea no tiene pregunta abierta | Error 6, con la pista de usar `biso comment` |
 | Falta el positional del texto | Error 2. Una respuesta sin respuesta no cierra nada |
 | El texto está vacío (`biso answer MYP-11 ""`) | Error 3: `error: the answer cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
-| Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso answer needs an identity; set it with biso config set me <you> or BISO_ME` |
+| Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso answer needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
 | Se pasan además flags de campo | Se aplican igual, como en cualquier verbo del ciclo |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |

@@ -16,8 +16,7 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
 - El ["algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia), idéntico al leer y al escribir.
 - La simetría entre `biso export` y `biso new --from` sobre todos los campos no derivados, que es una
   prueba de la suite y no una intención. La de `biso snapshot` con `biso init --from` cubre además la
-  configuración del tablero, **con la excepción declarada de `me` y `default_limit`**, que no viajan en
-  la instantánea de [`biso snapshot`](cmd/snapshot.md) y por tanto tampoco están en esta promesa.
+  configuración del tablero entera, campo a campo.
 - La estabilidad de las claves de los criterios: una clave asignada no se reasigna nunca.
 - El tope de tamaño del mensaje de `biso prime`.
 
