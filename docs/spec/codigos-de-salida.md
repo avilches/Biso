@@ -8,7 +8,7 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 | 0 | `OK` | La operación terminó y se aplicó | `biso new "Algo"` |
 | 1 | `INTERNAL` | Fallo no previsto del programa | una excepción no capturada |
 | 2 | `USAGE` | La línea de comandos está mal formada | flag desconocido, falta un obligatorio, flags incompatibles, identificador mal formado, flag de escritura en un comando de lectura |
-| 3 | `BAD_VALUE` | El valor que llega es sintácticamente correcto pero el tablero no lo reconoce, o un dato guardado no se puede interpretar | `--status "Pending"` en un tablero cuyos estados son otros |
+| 3 | `BAD_VALUE` | El valor que llega es sintácticamente correcto pero el tablero no lo reconoce, o un dato guardado no se puede interpretar | `--status "Pending"` en un tablero que no tiene `Pending` entre sus estados |
 | 4 | `NOT_FOUND` | La entidad referida no existe | `biso get MYP-999` |
 | 5 | `AMBIGUOUS` | La referencia encaja con más de una entidad | `biso get "parser"` con tres coincidencias |
 | 6 | `PRECONDITION` | La operación es válida, pero el estado actual del tablero no la permite o no la satisface | `biso finish --strict` con criterios sin marcar, o `biso doctor` con problemas pendientes |

@@ -34,7 +34,7 @@ sumaron 179.369 bytes, casi la cuarta parte de toda la salida del estudio, sin d
 el agente no tenía, que es el identificador. La mediana de una creación pasa de 154 bytes sin ese
 flag a 1.333 con ella, un factor de 8,7.
 
-**Principio 5, que un gesto del flujo de trabajo es un comando.** De las 159 ediciones medidas, 112
+**Principio 5, que una operación del flujo de trabajo es un comando.** De las 159 ediciones medidas, 112
 cambian exactamente un campo, hay 82 pares de ediciones consecutivas sobre la misma tarea, y el ciclo
 de vida típico cuesta entre seis y doce llamadas. **Y no era una limitación de la herramienta**: se
 comprobó que una sola llamada aceptaba el cierre entero y funcionaba. La fragmentación venía de que

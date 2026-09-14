@@ -2,25 +2,88 @@
 
 ## Cómo nace un tablero
 
-Un tablero nace con `biso init` (sección ["`biso init`"](cmd/init.md)): crea el tablero, que vive en
-un directorio propio, normalmente fuera del proyecto salvo que se pida lo contrario con `--at`, y
-escribe en el proyecto un puntero que dice a qué tablero pertenece. Esta página explica ese puntero
-y cómo cualquier comando posterior vuelve a encontrar el tablero a partir de él; los flags de `init`,
-sus mensajes y sus casos límite están en su propia página.
+Un tablero nace con `biso init` (sección ["`biso init`"](cmd/init.md)), que se ejecuta una vez desde la
+raíz del proyecto. Hace dos cosas: crea el tablero, que vive en un directorio propio, y escribe en el
+proyecto un puntero, el fichero `.biso.json`, que dice a qué tablero pertenece ese proyecto. El puntero
+se versiona con el proyecto; la base de datos no se versiona nunca. Esta página explica ese puntero y
+cómo cualquier comando posterior vuelve a encontrar el tablero a partir de él; los flags de `init`, sus
+mensajes y sus casos límite están en su propia página.
+
+Dónde vive el tablero lo decide el flag `--at`, y hay tres formas habituales de usarlo.
+
+### El tablero en la raíz por defecto de la máquina
+
+Es lo que pasa con `biso init` a secas, y lo recomendable si no hay un motivo para otra cosa. El
+proyecto solo recibe el puntero:
 
 ```
 /Users/avilches/Hub/Projects/My project/
-└── .biso.json
-
-/Users/avilches/.biso/boards/
-└── my-project-3f9a2b1c/
-    ├── board.db
-    └── 3f9a2b1c.id
+└── .biso.json        <- {"version": 1, "id": "3f9a2b1c"}: apunta al tablero 3f9a2b1c
 ```
 
-El puntero, `.biso.json`, se queda en el proyecto y se versiona con él. El tablero, con su base de
-datos `board.db` y su marcador `3f9a2b1c.id`, vive en la raíz por defecto de la máquina porque este
-`init` no llevaba `--at`.
+Y el tablero se crea en la raíz por defecto, `~/.biso/boards` salvo que la
+["Configuración de máquina"](invocacion.md#configuración-de-máquina) diga otra cosa:
+
+```
+/Users/avilches/.biso/boards/
+└── my-project-3f9a2b1c/
+    ├── board.db      <- la base de datos
+    ├── 3f9a2b1c.id   <- el marcador con la identidad del tablero
+    └── .gitignore    <- excluye board.db, para cuando se haga biso snapshot
+```
+
+El puntero no lleva ruta, porque cualquier comando encuentra el tablero buscando su marcador en las
+raíces de la máquina. No hay nada que añadir al `.gitignore` del proyecto, porque dentro del proyecto
+no hay nada del tablero salvo el puntero.
+
+### El tablero fuera del proyecto, en una ruta propia
+
+Con `--at` y una ruta absoluta, por ejemplo `biso init --at /Volumes/Datos/tableros/my-project`, el
+tablero va donde se diga y el puntero guarda esa ruta:
+
+```
+/Users/avilches/Hub/Projects/My project/
+└── .biso.json        <- {"version": 1, "id": "3f9a2b1c", "path": "/Volumes/Datos/tableros/my-project"}
+```
+
+```
+/Volumes/Datos/tableros/my-project/
+├── board.db
+├── 3f9a2b1c.id
+└── .gitignore
+```
+
+Sirve para un tablero que tenga que vivir en un disco concreto. La ruta absoluta se encuentra desde
+cualquier copia de trabajo del proyecto, viva donde viva, mientras el tablero no se mueva.
+
+### El tablero dentro del proyecto
+
+Con `--at` y una ruta relativa que cae dentro del proyecto, por ejemplo `biso init --at .biso-board`,
+el tablero vive junto al código y el puntero guarda la ruta relativa:
+
+```
+/Users/avilches/Hub/Projects/My project/
+├── .biso.json        <- {"version": 1, "id": "3f9a2b1c", "path": ".biso-board"}
+├── .gitignore        <- lo edita quien llama, si decide ignorar .biso-board/
+└── .biso-board/
+    ├── board.db
+    ├── 3f9a2b1c.id
+    └── .gitignore    <- lo escribe init: excluye board.db
+```
+
+Aquí quien llama tiene que decidir si el proyecto versiona la carpeta del tablero o la ignora. `init`
+se lo recuerda con una nota, pero no toca el `.gitignore` del proyecto:
+
+- **Si la ignora**, añadiendo `.biso-board/` al `.gitignore` del proyecto, el tablero lleva su propio
+  historial: `biso snapshot` crea un repositorio dentro de la carpeta la primera vez.
+- **Si la versiona**, las instantáneas de `biso snapshot` se commitean en el repositorio del proyecto,
+  junto al código, y viajan con él a otras máquinas. La base de datos no entra nunca, porque la excluye
+  el `.gitignore` que `init` dejó dentro del tablero.
+
+En los dos casos, una copia de trabajo que viva dentro del proyecto, como un worktree de git en
+`.claude/worktrees/`, encuentra el tablero subiendo por sus ancestros. Una copia que viva fuera del
+proyecto no lo encuentra con la ruta relativa, y ese caso pide la ruta absoluta del apartado anterior
+(["La ruta relativa o absoluta"](#la-ruta-relativa-o-absoluta)).
 
 ## Cómo se busca el tablero
 

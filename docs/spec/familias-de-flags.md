@@ -95,6 +95,26 @@ la lista en `{a, b}`, no solo en `{b}`, exactamente como se acumula `--add-label
 escriben los valores, está en qué hacen con el resultado: uno se suma a lo que ya había, el otro lo
 sustituye entero.
 
+Por ejemplo, sobre una tarea que ya tiene la etiqueta `cli`, estas tres llamadas dejan exactamente las
+mismas etiquetas, `cli`, `parser` y `urgent`:
+
+```
+biso set MYP-11 --add-labels parser,urgent
+biso set MYP-11 --add-labels parser --add-labels urgent
+biso set MYP-11 -l parser,urgent
+```
+
+Y esta, en cambio, deja solo `parser` y `urgent`, porque sustituye la lista y `cli` desaparece:
+
+```
+biso set MYP-11 --replace-labels parser,urgent
+```
+
+Una etiqueta o una persona nunca llevan coma, pero una referencia, una documentación o un fichero
+tocado sí pueden, y entonces la coma se escapa con `\,`
+(["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
+`--add-refs 'notes/a\,b.md'` añade una sola referencia, `notes/a,b.md`.
+
 ## Campos de lista sin coma (criterios)
 
 | Campo | Añade | Quita (selector) | Vacía |
@@ -109,6 +129,16 @@ vaciando y añadiendo en la misma llamada (["Sustituir un campo que no tiene fla
 `--add-ac` y `--add-dod` son repetibles pero **no** aceptan lista por comas, porque el texto de un
 criterio puede contener comas. `--rm-ac` y `--rm-dod` toman un selector de la sección
 ["Selectores de criterios"](#selectores-de-criterios).
+
+Para añadir varios criterios en una llamada, se repite el flag, uno por criterio:
+
+```
+biso set MYP-11 --add-ac "The parser accepts CRLF" --add-ac "Dates keep their time zone" \
+                --add-dod "Reviewed by someone else"
+```
+
+Esa llamada añade dos criterios de aceptación y un elemento a la definición de hecho. Una coma dentro
+del texto no parte nada: `--add-ac "Handles CRLF, LF and CR"` es un solo criterio.
 
 **Los elementos nuevos se crean con claves nuevas, sin marcar, y las claves de los elementos
 anteriores no se reutilizan.** Es coherente con
@@ -146,6 +176,43 @@ exactamente lo que el flag hace.
 - Al añadir sobre contenido existente se intercala una línea en blanco, y cada repetición del
   flag en la misma invocación produce su propio párrafo.
 - Añadir un valor vacío no hace nada y avisa, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
+
+Por ejemplo, sobre una tarea sin notas:
+
+```
+biso set MYP-11 --append-note "Rewrote the date parser"
+biso set MYP-11 --append-note "CRLF still fails on Windows" --append-note "Asked @sara about it"
+```
+
+Después de las dos llamadas, el campo `notes` tiene tres párrafos separados por una línea en blanco:
+
+```
+Rewrote the date parser
+
+CRLF still fails on Windows
+
+Asked @sara about it
+```
+
+Un texto con varias líneas se pasa entre comillas con los saltos de línea dentro, o, más cómodo para
+textos largos, desde un fichero con `@` o desde la entrada estándar con `-`
+(["Tres formas de pasar un valor largo"](valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo)):
+
+```
+biso set MYP-11 --append-plan "1. Reproduce the CRLF failure
+2. Normalize line endings before parsing
+3. Add a test per platform"
+
+biso set MYP-11 --append-plan @plan.md
+
+cat plan.md | biso set MYP-11 --append-plan -
+```
+
+Y para sustituir el plan entero, se vacía y se añade en la misma llamada:
+
+```
+biso set MYP-11 --clear-plan --append-plan @plan.md
+```
 
 ## Selectores de criterios
 

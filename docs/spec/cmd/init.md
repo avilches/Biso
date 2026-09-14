@@ -123,8 +123,8 @@ segunda avisa de una consecuencia que solo le ocurrirá a quien trabaje desde fu
 Juntarlas en un solo mensaje haría que quien no está en ese caso tuviera que leer la condición para
 descartarla.
 
-**Y hay que decir qué pasa en la mitad que versiona la carpeta**, porque tiene una consecuencia que no
-se ve venir. El fichero de exclusión que `init` escribe dentro del tablero excluye siempre la base de
+**Si el proyecto versiona la carpeta del tablero, la base de datos no viaja con ella**, y eso tiene una
+consecuencia que no se ve venir. El fichero de exclusión que `init` escribe dentro del tablero excluye siempre la base de
 datos, así que versionar el directorio del tablero versiona su marcador y sus dos ficheros de texto,
 pero nunca `board.db`. Una copia de trabajo recibiría entonces un directorio con el marcador correcto y sin base de
 datos: **eso no es un tablero**, y la resolución de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) no lo acepta como tal, sigue buscando

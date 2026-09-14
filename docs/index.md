@@ -7,6 +7,11 @@ ejecute el programa.
 
 Esta documentación reúne los documentos del proyecto:
 
+- **[Conceptos](concepts.md)**: los cinco conceptos que conviene tener claros antes de ver un solo
+  comando (el tablero, los estados, los criterios, la urgencia y la identidad). Está en inglés, como el
+  tutorial.
+- **[Tutorial](tutorial/index.md)**: aprender `biso` desde cero siguiendo la vida de una tarea en trece
+  situaciones, desde que llegas a un proyecto que no conoces hasta que cierras la tarea. Está en inglés.
 - **[Especificación](spec/index.md)**: define todos los comandos con su firma, sus parámetros, su
   comportamiento en los casos límite, la salida literal que imprimen, su esquema JSON y sus códigos
   de salida. Es el documento del que se implementa todo.

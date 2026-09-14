@@ -2,10 +2,18 @@
 
 ## La decisión de persistencia
 
-La especificación dejaba deliberadamente abierto cómo se guardan los datos. La decisión es: un tablero
-es una base de datos SQLite en un directorio propio fuera del proyecto, localizado por un fichero
-puntero versionado con el proyecto (`.biso.json`, ["Cómo se elige el tablero"](../spec/resolucion-del-tablero.md)), con una exportación de texto
-que sí se guarda en el control de versiones para el historial (`biso snapshot`, ["`biso snapshot`"](../spec/cmd/snapshot.md)). Sin daemon, y sin fusionar nunca dos almacenes escritos por separado.
+Es la decisión más importante de `biso`, y es una combinación de dos cosas que las demás herramientas
+tratan como opuestas. **El estado es uno solo y vive fuera del repositorio**, y **el historial se
+versiona con el repositorio**, como texto. Un tablero es una base de datos SQLite en un directorio
+propio fuera del proyecto, localizado por un fichero puntero versionado con el proyecto (`.biso.json`,
+["Cómo se elige el tablero"](../spec/resolucion-del-tablero.md)). Ese estado se proyecta a texto con `biso snapshot`
+(["`biso snapshot`"](../spec/cmd/snapshot.md)), que lo commitea en el repositorio del proyecto o en uno propio del
+tablero. Sin daemon, y sin fusionar nunca dos almacenes escritos por separado.
+
+Las herramientas que guardan las tareas en ficheros del repositorio tienen historial pero no un estado
+único, porque el estado se bifurca con la rama. Las que lo sacan del repositorio, como Vibe Kanban y
+Conductor, tienen un estado único pero pierden el historial. `biso` busca quedarse con las dos mitades
+buenas (["El estado de las tareas se bifurca con la rama"](../estado-del-arte/catalogo-de-problemas.md#2-el-estado-de-las-tareas-se-bifurca-con-la-rama)).
 
 La evidencia detrás de cada pieza de esta decisión, con sus enlaces, está en
 ["Estado del arte"](../estado-del-arte/index.md), el inventario de las herramientas del espacio y el
@@ -15,8 +23,19 @@ catálogo de sus fallos. Lo que sigue aquí es el porqué de cada pieza, no la e
 ficheros del árbol de trabajo hereda su peor propiedad: el estado se bifurca con la rama, así que una
 incidencia cerrada en una rama vuelve a aparecer abierta al volver a la principal (["El estado de las tareas se bifurca con la rama"](../estado-del-arte/catalogo-de-problemas.md#2-el-estado-de-las-tareas-se-bifurca-con-la-rama)). Sacar el tablero del árbol de trabajo no resuelve ese problema, lo disuelve:
 una tarea cerrada está cerrada, no cerrada en esta rama, porque no hay una rama que la contenga. El
-precio es que el tablero no viaja al clonar el proyecto en otra máquina, y se paga a propósito a cambio
-de que el estado de una tarea sea uno solo.
+precio es que el tablero vivo no viaja al clonar el proyecto en otra máquina, y se paga a propósito a
+cambio de que el estado de una tarea sea uno solo. Lo que sí viaja, si se commitea con el proyecto, es
+la última instantánea, y con ella `biso init --from` reconstruye el tablero en la otra máquina.
+
+**Por qué el texto versionado no es Markdown.** El argumento habitual a favor de guardar las tareas como
+ficheros Markdown es que se pueden leer y editar a mano, con cualquier editor, y que un agente puede
+abrirlos sin herramientas. En la práctica, la herramienta de referencia de ese modelo lo prohíbe: las
+instrucciones que Backlog.md instala para los agentes les dicen que no editen nunca los ficheros de
+tareas directamente y que usen siempre su CLI, porque una edición a mano rompe los metadatos, los nombres
+de fichero y las relaciones. Si nadie debe tocar el Markdown, de sus ventajas solo queda una: que el
+historial de git se lea bien en un diff. Esa ventaja la da igual un texto pensado para eso, una tarea por
+línea con claves estables, que es lo que escribe `biso snapshot`, y sin pagar el precio de que el estado
+se bifurque con la rama.
 
 **Por qué no hay daemon, y por qué el motivo es aritmético y no de gusto.** El coste dominante de una
 invocación de `biso` es arrancar un proceso, no el trabajo que hace una vez arrancado: ["El coste de arranque y el coste de contexto"](../estado-del-arte/catalogo-de-problemas.md#12-el-coste-de-arranque-y-el-coste-de-contexto)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the tutorial pages from the fixtures in tutorial/escenarios/ and tutorial/conceptos.md.
+"""Generate the tutorial pages from the fixtures in tutorial/escenarios/.
 
 Reads every tutorial/escenarios/NN-name.yaml in the order fixed by its numeric prefix, validates
 that it has the shape required by
@@ -8,7 +8,6 @@ docs/superpowers/specs/2026-09-11-origen-combinado-y-tutorial-en-ingles-design.m
 
 - docs/tutorial/index.md: the tutorial's landing page, with the numbered list of scenarios.
 - docs/tutorial/NN-name.md: one page per scenario, named after its fixture.
-- docs/concepts.md: the concepts page, copied from tutorial/conceptos.md.
 
 It depends on nothing beyond the standard library and PyYAML, which MkDocs already pulls in (see
 docs-requirements.txt). Run it with:
@@ -35,9 +34,7 @@ import yaml
 TUTORIAL_DIR = Path(__file__).resolve().parent
 REPO_ROOT = TUTORIAL_DIR.parent.parent.parent
 SCENARIOS_DIR = TUTORIAL_DIR / "escenarios"
-CONCEPTS_PATH = TUTORIAL_DIR / "conceptos.md"
 TUTORIAL_OUTPUT_DIR = REPO_ROOT / "docs" / "tutorial"
-CONCEPTS_OUTPUT_PATH = REPO_ROOT / "docs" / "concepts.md"
 OBSOLETE_OUTPUT_PATH = REPO_ROOT / "docs" / "TUTORIAL.md"
 
 REGENERATE_CMD = (
@@ -112,18 +109,6 @@ GENERATED_ADMONITION = (
     f"    {REGENERATE_CMD}\n"
     "    ```"
 )
-
-CONCEPTS_ADMONITION = (
-    '!!! warning "Generated document"\n'
-    "    This page is generated automatically from `tutorial/conceptos.md`. Do not\n"
-    "    edit it by hand: any change is lost on the next generation. To regenerate\n"
-    "    it:\n"
-    "\n"
-    "    ```\n"
-    f"    {REGENERATE_CMD}\n"
-    "    ```"
-)
-
 
 # --------------------------------------------------------------------------
 # Helpers
@@ -392,11 +377,6 @@ def render_index_page(scenarios: list[dict]) -> str:
     return "\n\n".join(parts) + "\n"
 
 
-def render_concepts_page(concepts_md: str) -> str:
-    parts = [HEADER_COMMENT, CONCEPTS_ADMONITION, concepts_md.strip("\n")]
-    return "\n\n".join(parts) + "\n"
-
-
 # --------------------------------------------------------------------------
 # Entry point
 # --------------------------------------------------------------------------
@@ -404,9 +384,6 @@ def render_concepts_page(concepts_md: str) -> str:
 
 def main() -> int:
     scenarios, errors = load_scenarios()
-
-    if not CONCEPTS_PATH.is_file():
-        errors.append(f"{_rel(CONCEPTS_PATH)}: does not exist")
 
     if errors:
         for error in errors:
@@ -418,7 +395,6 @@ def main() -> int:
         return 1
 
     index_page = render_index_page(scenarios)
-    concepts_page = render_concepts_page(CONCEPTS_PATH.read_text(encoding="utf-8"))
     scenario_pages = {data["_filename"]: render_scenario_page(data) for data in scenarios}
 
     if TUTORIAL_OUTPUT_DIR.exists():
@@ -428,14 +404,11 @@ def main() -> int:
     for filename, content in scenario_pages.items():
         (TUTORIAL_OUTPUT_DIR / filename).write_text(content, encoding="utf-8")
 
-    CONCEPTS_OUTPUT_PATH.write_text(concepts_page, encoding="utf-8")
-
     if OBSOLETE_OUTPUT_PATH.exists():
         OBSOLETE_OUTPUT_PATH.unlink()
 
     print(
-        f"wrote {_rel(TUTORIAL_OUTPUT_DIR)}/ ({len(scenarios)} scenario page(s) + index.md) "
-        f"and {_rel(CONCEPTS_OUTPUT_PATH)}"
+        f"wrote {_rel(TUTORIAL_OUTPUT_DIR)}/ ({len(scenarios)} scenario page(s) + index.md)"
     )
     return 0
 

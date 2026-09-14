@@ -2,25 +2,37 @@
 
 ## Variables de entorno
 
-| Variable | Equivale a | Precedencia |
-|---|---|---|
-| `BISO_CWD` | `--cwd` | el flag gana |
-| `BISO_ME` | la identidad de quien llama, para `--mine` y para el autor por defecto de los comentarios | esta variable gana; si no está, la clave `me` de la ["Configuración de máquina"](#configuración-de-máquina) |
-| `BISO_LIMIT` | el límite por defecto de `biso ls` | `--limit` gana, luego esta variable, luego la clave `default_limit` de la ["Configuración de máquina"](#configuración-de-máquina), luego 30 |
-| `NO_COLOR` | `--color never`, si está definida con cualquier valor | `--color` gana |
-
-**Qué pasa si no hay identidad**, es decir, ni `BISO_ME` ni la clave `me` de la configuración de máquina
-están definidas:
-
-| Dónde se usaría `me` | Qué pasa sin ella |
+| Variable | Qué hace |
 |---|---|
-| `biso ls --mine` | Error 6: `error: --mine needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
-| `biso start`, autoasignación | No asigna a nadie. Sale `note: no identity configured, task left unassigned` en vez del `note:` de siempre |
-| Autor por defecto de un comentario | Error 2 si no se ha pasado `--comment-author`: `error: --comment-author is required, no identity is configured` |
-| Autor de la pregunta, en `biso ask` | Error 2: `error: biso ask needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` (["`biso ask`"](cmd/verbos-del-ciclo.md#biso-ask)) |
-| Autor de la respuesta, en `biso answer` | Error 2: `error: biso answer needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` (["`biso answer`"](cmd/verbos-del-ciclo.md#biso-answer)) |
-| La línea `you are` de `biso prime` | La línea sale por stdout, dentro del bloque `BOARD`, como `you are     (not set: run biso as BISO_ME=@you biso ...)`, sin ninguna `note:` por stderr (["`biso prime`"](cmd/prime.md#la-salida-literal)) |
-| La fila `me` de `biso where` | La fila sale como `me       (not set: run biso as BISO_ME=@you biso ...)`, sin ningún `note:` por stderr, y `data.me` vale `null` en el JSON (["`biso where`"](cmd/where.md)) |
+| `BISO_CWD` | Fija el directorio desde el que se resuelve el tablero, igual que el flag global `--cwd` |
+| `BISO_ME` | Declara la identidad de quien llama: la usan `biso ls --mine`, la autoasignación de `biso start` y el autor por defecto de los comentarios, de las preguntas y de las respuestas |
+| `BISO_LIMIT` | Fija cuántas filas imprime `biso ls` cuando no se le pasa `--limit` |
+| `NO_COLOR` | Desactiva los colores, igual que `--color never`. Basta con que esté definida, con cualquier valor |
+
+Cuando la variable y el flag dicen cosas distintas, **el flag de la línea de comandos gana siempre**,
+porque es lo más específico de la llamada:
+
+- `--cwd` prevalece sobre `BISO_CWD`.
+- `--limit` prevalece sobre `BISO_LIMIT`. Si no hay ni `--limit` ni `BISO_LIMIT`, se usa la clave
+  `default_limit` de la ["Configuración de máquina"](#configuración-de-máquina), y si tampoco está, 30.
+- `--color` prevalece sobre `NO_COLOR`. `--color` no se escribe solo, siempre lleva uno de sus tres
+  valores (`auto`, `always` o `never`, ["Flags globales"](cmd/flags-globales.md)), así que
+  `NO_COLOR=1 biso ls --color always` imprime con color.
+- `BISO_ME` no tiene flag. Si no está definida, se usa la clave `me` de la
+  ["Configuración de máquina"](#configuración-de-máquina), en `~/.biso/config.json`.
+
+**Qué pasa si no hay identidad**, es decir, si no está definida la variable de entorno `BISO_ME` ni la
+clave `me` del fichero de configuración de máquina `~/.biso/config.json`:
+
+| Comandos que necesitan identidad | Qué pasa sin ella |
+|---|---|
+| `biso ls --mine` | Error 6:<br>`error: --mine needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
+| `biso start`, que se asigna la tarea a quien llama | No falla, pero no asigna la tarea a nadie. En vez del `note:` de siempre sale:<br>`note: no identity configured, task left unassigned` |
+| `biso comment`, o el flag `--comment` de cualquier comando, cuando no se pasa `--comment-author` | Error 2:<br>`error: --comment-author is required, no identity is configured` |
+| `biso ask` (autor de la pregunta) | Error 2 (["`biso ask`"](cmd/verbos-del-ciclo.md#biso-ask)):<br>`error: biso ask needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
+| `biso answer` (autor de la respuesta) | Error 2 (["`biso answer`"](cmd/verbos-del-ciclo.md#biso-answer)):<br>`error: biso answer needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
+| `biso prime` (la línea `you are`) | No falla. La línea sale por stdout, dentro del bloque `BOARD`, sin ninguna `note:` por stderr (["`biso prime`"](cmd/prime.md#la-salida-literal)):<br>`you are     (not set: run biso as BISO_ME=@you biso ...)` |
+| `biso where` (la fila `me`) | No falla. La fila sale por stdout, sin ninguna `note:` por stderr, y `data.me` vale `null` en el JSON (["`biso where`"](cmd/where.md)):<br>`me       (not set: run biso as BISO_ME=@you biso ...)` |
 
 ## Configuración de máquina
 
