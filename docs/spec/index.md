@@ -1,11 +1,10 @@
 # `biso`: especificación del CLI de gestión de tareas
 
 Esta especificación define `biso`, una herramienta de línea de comandos para llevar las tareas de un
-proyecto. Está escrita para que alguien implemente el programa entero a partir de ella sin preguntar
-nada: cada comando trae su firma, su tabla de parámetros, su comportamiento en los casos límite, la
-salida literal que imprime, su esquema JSON, sus códigos de salida y el texto exacto de su ayuda.
-Antes estaba en un solo fichero; ahora está repartida en los documentos de abajo, y esta página es su
-portada y su guía de lectura.
+proyecto. Sirve a la vez de documentación de referencia y de base para implementar el programa desde
+cero sin preguntar nada: cada comando trae su firma, su tabla de parámetros, su comportamiento en los
+casos límite, la salida literal que imprime, su esquema JSON, sus códigos de salida y el texto exacto
+de su ayuda. Esta página es su portada y su guía de lectura.
 
 El destinatario principal de `biso` es un agente automático que trabaja dentro del proyecto. La
 salida es predecible, los errores son distinguibles por su código sin leer el mensaje, y ningún
@@ -20,34 +19,18 @@ Aquí aparece el mecanismo solo donde afecta al comportamiento observable, como 
 (por ejemplo, que dos procesos simultáneos no puedan asignar el mismo identificador) y deja el resto
 del mecanismo fuera de aquí.
 
-El modelo de tarea es compatible con el de Backlog.md, de modo que se puede importar y exportar entre
-las dos herramientas sin perder campos. **La compatibilidad es de modelo de datos y no de formato de
-fichero**: los campos se corresponden uno a uno, pero `biso` no lee ni escribe los ficheros Markdown de
-esa herramienta, y no hay ninguna intención de que lo haga, como consta en
-[Lo que se deja fuera a propósito](fuera-de-alcance.md).
+## Cómo está organizada
 
-**Convención de idioma.** La prosa de estos documentos va en español. Todo lo que es interfaz del
-programa (nombres de comando, flags, textos de ayuda, mensajes de error, claves JSON y claves de
-configuración) va en inglés, porque es lo que la persona o el agente que usa el programa lee y
-escribe. **El contenido de los ejemplos va también en inglés**, aunque la prosa que los rodea siga en
-español: el título, la descripción, los criterios de aceptación, la definición de hecho, el plan, las
-notas, el resumen final, los comentarios y la pregunta abierta de cualquier tarea de ejemplo (MYP-11
-y las demás que aparecen en los documentos de `cmd/`) se escriben en inglés, por el mismo motivo que
-el resto de la interfaz: es contenido que en un tablero real escribiría la persona o el agente que usa
-el programa, no prosa de la especificación.
-
-## Por dónde empezar y en qué orden
-
-### Los fundamentos, antes que cualquier regla concreta
+### Los fundamentos
 
 [Vocabulario de esta especificación](vocabulario.md)
-fija los nombres en español que usa el resto de los documentos y su equivalente en la interfaz.
+fija los nombres de cada elemento del programa y cómo se llaman en estos documentos.
 [Los principios](principios.md) son las reglas de las que el resto de la especificación es
-consecuencia, así que conviene tenerlas presentes antes de leer un comando. [Códigos de salida](codigos-de-salida.md)
+consecuencia, y explican por qué los comandos se comportan como se comportan. [Códigos de salida](codigos-de-salida.md)
 es la tabla global a la que apela cualquier comportamiento en un caso límite: sin haberla visto, una
 referencia a un código concreto en otra página no dice nada.
 
-### Cómo se invoca el programa, antes de tocar ningún dato
+### Cómo se invoca el programa
 
 [Flags globales](cmd/flags-globales.md), [Entorno y configuración de
 máquina](invocacion.md) y [Cómo se elige el tablero](resolucion-del-tablero.md) explican qué pasa
@@ -57,7 +40,7 @@ pasa un valor](valores-de-entrada.md) terminan ese bloque: qué imprime el progr
 de por medio o no, y de qué formas se le puede pasar el valor de cualquier flag. Ninguna de estas
 páginas depende de un comando concreto.
 
-### El modelo de datos, con las reglas que lo escriben
+### El modelo de datos
 
 [Orden de escritura, concurrencia y datos
 dañados](garantias.md) dice qué garantiza el programa antes de que aparezca ningún campo. [El modelo de
@@ -76,17 +59,16 @@ forma que tiene nombrar una tarea y la forma que tiene cada flag de escritura. E
 para todos los comandos y no se repiten en cada uno: un comando solo las menciona cuando se aparta de
 ellas, y ninguno lo hace salvo donde se diga.
 
-### Los comandos, empezando por `prime`
+### Los comandos
 
 [Los comandos](cmd/index.md) explica cómo se agrupan y cuáles
 aparecen en `biso --help` frente a `biso help all`. El primero de la lista es [`biso prime`](cmd/prime.md),
 el comando con el que arranca una sesión y que resume el estado del tablero; el resto de los comandos
 sigue después, en el orden de esa página.
 
-### Al final, los contratos y lo que falta
+### Los contratos y lo que queda fuera
 
 [El contrato JSON](contrato-json.md) y [El contrato de
 estabilidad](estabilidad.md) dicen qué forma no cambia mientras la versión mayor sea `1`.
 [Lo que se deja fuera a propósito](fuera-de-alcance.md) nombra lo que la especificación decide no
-tener, para que nadie lo dé por olvidado. Y [Por dónde empezar a implementar](por-donde-empezar.md)
-remata la especificación con el orden en que cada pieza del programa paga lo que cuesta.
+tener, para que nadie lo dé por olvidado.

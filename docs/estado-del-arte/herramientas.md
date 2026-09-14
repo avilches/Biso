@@ -2,7 +2,7 @@
 
 ## Backlog.md
 
-`https://github.com/MrLesk/Backlog.md`, 6.664 estrellas, 402 forks, 48 issues abiertos, TypeScript,
+<https://github.com/MrLesk/Backlog.md>, 6.664 estrellas, 402 forks, 48 issues abiertos, TypeScript,
 MIT. Última versión consultada, la 1.51.0. Unas 59.000 descargas mensuales en npm.
 
 Plantea el problema como uno de atención humana, no de generación: los agentes producen en una hora más
@@ -27,7 +27,7 @@ instrucciones en `AGENTS.md` o `CLAUDE.md`.
 
 ## Beads (`bd`)
 
-`https://github.com/gastownhall/beads` (antes `steveyegge/beads`), 26.963 estrellas, más de 1.000
+<https://github.com/gastownhall/beads> (antes `steveyegge/beads`), 26.963 estrellas, más de 1.000
 issues abiertos. Anunciado en octubre de 2025.
 
 Ofrece memoria persistente y estructurada para agentes, y sustituye los planes desordenados en markdown
@@ -46,20 +46,20 @@ referencia propia de git, y el JSONL pasó a ser solo exportación.
 **Su documentación avisa de dos cosas que importan.** Que el JSONL no sustituye a la sincronización
 propia, porque la importación es solo de inserción y actualización y **no puede saber si un registro
 ausente fue borrado o simplemente no se exportó**
-(`https://raw.githubusercontent.com/gastownhall/beads/main/docs/core-concepts/sync-concepts.md`). Y, en
+(<https://raw.githubusercontent.com/gastownhall/beads/main/docs/core-concepts/sync-concepts.md>). Y, en
 la época del daemon, que **el modo daemon no funcionaba correctamente con los worktrees de git** por el
 estado de base de datos compartido.
 
 **Cómo terminó.** El cambio a Dolt costó la atomicidad de commitear código y tareas juntos
-(`https://github.com/gastownhall/beads/issues/2489`), y el 2 de abril de 2026 DoltHub publicó una marcha
+(<https://github.com/gastownhall/beads/issues/2489>), y el 2 de abril de 2026 DoltHub publicó una marcha
 atrás parcial, "Restoring Beads Classic"
-(`http://www.dolthub.com/blog/2026-04-02-restoring-beads-classic/`), reconociendo que el paso a Dolt
+(<http://www.dolthub.com/blog/2026-04-02-restoring-beads-classic/>), reconociendo que el paso a Dolt
 añadió fricción a los usuarios en solitario, acostumbrados al modelo más simple de SQLite y git que no
 exigía un servidor externo. El daemon se eliminó por completo.
 
 ## Task Master (`claude-task-master`)
 
-`https://github.com/eyaltoledano/claude-task-master`, 28.056 estrellas, 2.623 forks, 212 issues
+<https://github.com/eyaltoledano/claude-task-master>, 28.056 estrellas, 2.623 forks, 212 issues
 abiertos. Detrás hay ahora una empresa. Es la más popular por estrellas y, curiosamente, la que menos
 tracción tuvo en Hacker News.
 
@@ -76,7 +76,7 @@ misma etiqueta. Hay un pull request abierto que propone migrar a SQLite con sinc
 
 ## Spec Kit (GitHub)
 
-`https://github.com/github/spec-kit`, MIT, anunciado el 2 de septiembre de 2025. Estrellas muy altas
+<https://github.com/github/spec-kit>, MIT, anunciado el 2 de septiembre de 2025. Estrellas muy altas
 pero sin verificar con precisión.
 
 Desarrollo dirigido por especificaciones, con el flujo de especificar, planificar, generar tareas e
@@ -86,8 +86,8 @@ agente anfitrión.
 
 ## Vibe Kanban
 
-`https://github.com/BloopAI/vibe-kanban`, 28.030 estrellas, 3.002 forks, 539 issues abiertos. **El
-equipo lo abandonó el 10 de abril de 2026** (`https://www.vibekanban.com/blog/shutdown`): miles de
+<https://github.com/BloopAI/vibe-kanban>, 28.030 estrellas, 3.002 forks, 539 issues abiertos. **El
+equipo lo abandonó el 10 de abril de 2026** (<https://www.vibekanban.com/blog/shutdown>): miles de
 ingenieros lo usaban a diario pero casi todos gratis, y no encontraron modelo de negocio.
 
 Tablero para orquestar varios agentes en paralelo, revisando diferencias y fusionando desde una sola
@@ -107,13 +107,13 @@ excluida de git.
 
 **No tiene tablero ni gestor de tareas.** Su unidad de trabajo es la conversación persistente,
 sincronizada entre web, aplicaciones y línea de comandos, guardada en PostgreSQL en la nube y sin
-despliegue autohospedado (`https://ampcode.com/security`). No hay exportación de una conversación a
+despliegue autohospedado (<https://ampcode.com/security>). No hay exportación de una conversación a
 markdown ni a JSON. Las quejas públicas encontradas son todas sobre precio.
 
 ## GitHub Issues como tablero
 
 La acción oficial de Anthropic se dispara con una mención en un issue o comentario
-(`https://code.claude.com/docs/en/github-actions`), y el agente de Copilot funciona asignándole el issue
+(<https://code.claude.com/docs/en/github-actions>), y el agente de Copilot funciona asignándole el issue
 como a un compañero. La ventaja que la gente destaca es que no hay que construir infraestructura de
 coordinación, porque los tickets ya sirven de memoria entre invocaciones y de bus de mensajes vía
 comentarios.
@@ -125,16 +125,16 @@ también un bucle de retroalimentación compartido.
 ## Ficheros `TODO.md` y `PLAN.md` sueltos
 
 La opción de cero herramientas, con su especificación de facto en
-`https://github.com/todomd/todo.md`. Su uso más citado es recuperar contexto al agotar la ventana. Sus
+<https://github.com/todomd/todo.md>. Su uso más citado es recuperar contexto al agotar la ventana. Sus
 dos quejas también están documentadas, y están en la parte 2.
 
 ## Servidores de protocolo genéricos
 
 El registro oficial ya no mantiene catálogo de terceros. Con tracción propia se encontraron **MCP
-Shrimp Task Manager** (`https://github.com/cjo4m06/mcp-shrimp-task-manager`, 2.153 estrellas), que
+Shrimp Task Manager** (<https://github.com/cjo4m06/mcp-shrimp-task-manager>, 2.153 estrellas), que
 guarda en `tasks.json` y hace algo poco común, inicializar un repositorio de git dentro de su propio
 directorio de datos y commitear tras cada cambio; y **taskboard**
-(`https://github.com/tcarac/taskboard`, 29 estrellas), explícitamente SQLite y binario único.
+(<https://github.com/tcarac/taskboard>, 29 estrellas), explícitamente SQLite y binario único.
 
 ## Cómo se apunta a un almacén distinto del que la herramienta encuentra sola
 
@@ -160,7 +160,7 @@ forma de nombrar un repositorio local por un nombre: solo rutas.
 
 **gh.** Un solo flag, `-R, --repo`, con una sola gramática, `[HOST/]OWNER/REPO`. No admite ni una
 URL, ni el nombre de un remoto, ni una ruta local. No tiene equivalente de `-C`, y lo piden desde 2020
-en `https://github.com/cli/cli/issues/2228`, que sigue sin resolver. Qué gana entre el flag y la
+en <https://github.com/cli/cli/issues/2228>, que sigue sin resolver. Qué gana entre el flag y la
 variable `GH_REPO` no está dicho en su documentación, así que aquí no se afirma.
 
 **Taskwarrior.** Su `data.location` es una ruta, `TASKDATA` la sobrescribe, y la línea de comandos gana
@@ -171,17 +171,17 @@ viene de ahí puede esperar que cambiar de contexto cambie de almacén, cuando l
 **Backlog.md.** No tiene ningún flag general para esto. Localiza por raíz de git más la carpeta
 `backlog/`, y su directorio se fija al inicializar y a partir de ahí es de solo lectura. Sus tropiezos
 están documentados y encajan con problemas que este documento ya cataloga:
-`https://github.com/MrLesk/Backlog.md/issues/466` pide precisamente un argumento o una variable de
-entorno para apuntar a otro sitio, `https://github.com/MrLesk/Backlog.md/issues/446` cuenta que
+<https://github.com/MrLesk/Backlog.md/issues/466> pide precisamente un argumento o una variable de
+entorno para apuntar a otro sitio, <https://github.com/MrLesk/Backlog.md/issues/446> cuenta que
 ejecutarlo en un subdirectorio creaba una carpeta nueva en vez de encontrar la de arriba, y
-`https://github.com/MrLesk/Backlog.md/issues/558` y `https://github.com/MrLesk/Backlog.md/issues/689`
+<https://github.com/MrLesk/Backlog.md/issues/558> y <https://github.com/MrLesk/Backlog.md/issues/689>
 son su servidor escribiendo en el repositorio principal en vez de en el worktree desde el que se lanzó.
 
 **Beads.** Tres vías, todas rutas, ordenadas por grano: `BEADS_DIR` fuerza el directorio del almacén y
 apaga el descubrimiento, `BD_DB` apunta al fichero de base de datos, y `--db` lo sobrescribe para una
 sola invocación. Sus fallos en esta zona son de la misma familia que los de Backlog.md:
-`https://github.com/gastownhall/beads/issues/6222` es un `GIT_DIR` heredado del entorno que envenena la
-resolución, y `https://github.com/gastownhall/beads/issues/6353` es su sincronización escribiendo en el
+<https://github.com/gastownhall/beads/issues/6222> es un `GIT_DIR` heredado del entorno que envenena la
+resolución, y <https://github.com/gastownhall/beads/issues/6353> es su sincronización escribiendo en el
 repositorio equivocado.
 
 **El contraejemplo que mide lo que cuesta la cadena polimórfica es `restic`**, que sí tiene una sola

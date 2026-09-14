@@ -23,18 +23,32 @@ coincidir(v, configurados):
      tiene dos valores que se normalizan igual y hay que desambiguarlos
 ```
 
-Con este algoritmo, y para un tablero cuyo estado es `To Do`:
+Un ejemplo con un tablero creado con los estados por defecto. La configuración de un tablero vive
+dentro de su base de datos y no en un fichero que se edite a mano, así que se consulta con
+["`biso config`"](cmd/config.md), y el trozo que importa aquí es este:
+
+```
+$ biso config list
+project_name = My project
+statuses = To Do,In Progress,Done
+initial_status = To Do
+active_status = In Progress
+terminal_status = Done
+...
+```
+
+Uno de sus tres estados es `To Do`. Con el algoritmo de arriba, estas entradas se resuelven así:
 
 | Entrada | `normalizar` | Resultado |
 |---|---|---|
-| `To Do` | `todo` | coincide exactamente, por el paso a |
-| `todo` | `todo` | coincide |
-| `TODO` | `todo` | coincide |
-| `To-Do` | `todo` | coincide |
-| `TO_DO` | `todo` | coincide |
-| `to  do` | `todo` | coincide |
-| `To Do.` | `todo.` | error 3 |
-| `To.Do` | `to.do` | error 3 |
+| `To Do` | `todo` | coincide exactamente con `To Do`, por el paso a |
+| `todo` | `todo` | coincide con `To Do`, por el paso c |
+| `TODO` | `todo` | coincide con `To Do` |
+| `To-Do` | `todo` | coincide con `To Do`, porque el guion se elimina |
+| `TO_DO` | `todo` | coincide con `To Do`, porque el guion bajo se elimina |
+| `to  do` | `todo` | coincide con `To Do`, porque los espacios se eliminan todos, sean uno o varios |
+| `To Do.` | `todo.` | error 3: el punto no está entre los caracteres que se eliminan, así que `todo.` no es igual a `todo` ni a la forma normalizada de ningún otro estado (`inprogress`, `done`) |
+| `To.Do` | `to.do` | error 3, por lo mismo: el punto se queda y `to.do` no coincide con ningún estado |
 
 **No hay coincidencia por prefijo ni por parecido.**
 

@@ -9,6 +9,12 @@ entran también herramientas de fuera del espacio. La segunda es un catálogo de
 problemas: cada uno con quién lo sufre, la evidencia con su enlace, y la respuesta de `biso`. La
 segunda mitad es la que sirve para explicar la herramienta a alguien que viene de otra.
 
+El hilo que atraviesa el catálogo es un dilema: guardar las tareas en el repositorio da historial pero
+bifurca el estado con cada rama, y sacarlas del repositorio da un estado único pero pierde el historial.
+`biso` intenta una solución combinada, con el estado único fuera del repositorio y su historial
+versionado dentro como texto, y el razonamiento está en
+["La decisión de persistencia"](../decisiones/persistencia.md#la-decisión-de-persistencia).
+
 ## Aviso de método
 
 Lo que sigue se apoya en repositorios de GitHub (código, issues, documentación), en Hacker News, y en

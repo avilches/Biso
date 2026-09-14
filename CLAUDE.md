@@ -88,9 +88,14 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
   directamente, a no ser que lo pida el usuario.
 - **La documentación va en español**: `docs/`, este fichero y los demás `CLAUDE.md` del
   repositorio. La única excepción es el contenido de las páginas del tutorial (`docs/tutorial/*.md`),
-  de la página de Conceptos (`docs/concepts.md`) y de los fixtures que las generan
-  (`tutorial/escenarios/*.yaml`, `tutorial/conceptos.md`), declarada y razonada en
-  `tutorial/CLAUDE.md`: ese tutorial nace en inglés.
+  de la página de Conceptos (`docs/concepts.md`) y de los fixtures que generan el tutorial
+  (`tutorial/escenarios/*.yaml`), declarada y razonada en `tutorial/CLAUDE.md`: ese tutorial nace en
+  inglés.
+- **El contenido de los ejemplos de la especificación va en inglés**, aunque la prosa que los rodea
+  siga en español: el título, la descripción, los criterios de aceptación, la definición de hecho, el
+  plan, las notas, el resumen final, los comentarios y la pregunta abierta de cualquier tarea de
+  ejemplo (`MYP-11` y las demás de `docs/spec/cmd/`). Es contenido que en un tablero real escribiría
+  la persona o el agente que usa el programa, no prosa de la especificación.
 - **El código fuente va entero en inglés, sea Go o Python.** No es solo cuestión de los
   identificadores: los comentarios, los docstrings y los mensajes que la propia herramienta imprime
   van también en inglés. Un fichero `.go` o `.py` no lleva ni una palabra en español.
@@ -120,16 +125,16 @@ caché propio y las descarta al terminar. El `Makefile` de la raíz envuelve los
 - `make` (sin argumentos): genera la documentación entera; es el alias de `docs-build`. El día que
   exista código Go, este objetivo también lo compilará.
 - `make docs-serve`: sirve el sitio en local con recarga automática al editar los `.md`.
-- `make docs-build`: regenera las páginas del tutorial y de Conceptos, y construye el sitio
+- `make docs-build`: regenera las páginas del tutorial, y construye el sitio
   estático en `site/` (no se versiona, ver `.gitignore`) con `mkdocs build --strict`.
 - `make docs-doctor`: lo mismo que `docs-build`, y antes ejecuta los tres comprobadores de
   `docs/docs-tooling/tools/` (enlaces, recuentos y referencias por número). Es el que conviene
   lanzar antes de dar algo por terminado.
 
-`docs/tutorial/*.md` y `docs/concepts.md` son la única excepción a "los `.md` son la fuente de
-verdad": son producto generado a partir de los fixtures de `docs/docs-tooling/tutorial/escenarios/`
-y de `docs/docs-tooling/tutorial/conceptos.md`, y no se editan a mano (llevan su propia cabecera que
-lo recuerda). `make docs-build` y `make docs-doctor` ya los regeneran; para hacerlo solo, sin
+`docs/tutorial/*.md` es la única excepción a "los `.md` son la fuente de verdad": es producto
+generado a partir de los fixtures de `docs/docs-tooling/tutorial/escenarios/`, y no se edita a mano
+(lleva su propia cabecera que lo recuerda). `docs/concepts.md`, en cambio, es un Markdown normal que
+se edita directamente. `make docs-build` y `make docs-doctor` ya regeneran el tutorial; para hacerlo solo, sin
 construir el sitio:
 `uv run --with-requirements docs/docs-tooling/mkdocs/docs-requirements.txt --no-project python docs/docs-tooling/tutorial/generate.py`
 

@@ -1,8 +1,8 @@
 # El tutorial de `biso`
 
-Esta carpeta es la fuente de las páginas del tutorial (`docs/tutorial/*.md`) y de la página de
-Conceptos (`docs/concepts.md`, publicada bajo el tab Inicio del sitio), que son **producto generado
-y no se editan a mano**. Si has llegado aquí para cambiar algo del tutorial, lo que se toca es un
+Esta carpeta es la fuente de las páginas del tutorial (`docs/tutorial/*.md`), que son **producto
+generado y no se editan a mano**. La página de Conceptos (`docs/concepts.md`, publicada bajo el tab
+Inicio del sitio) ya no se genera desde aquí: es un Markdown normal y se edita en su sitio. Si has llegado aquí para cambiar algo del tutorial, lo que se toca es un
 fichero de esta carpeta y luego se regeneran las páginas.
 
 Su diseño, con el porqué de cada decisión, está en
@@ -34,10 +34,9 @@ historia.
 | Ruta | Qué es |
 |---|---|
 | `escenarios/NN-nombre.yaml` | Un capítulo. El orden lo fija el prefijo numérico |
-| `conceptos.md` | Los conceptos desde cero, publicados como su propia página bajo Inicio |
 | `tablero.yaml` | El tablero de ejemplo: su configuración y sus nueve tareas |
 | `lagunas/*.md` | Lo que la especificación no decide y hubo que suponer |
-| `generate.py` | Escribe `docs/tutorial/*.md` y `docs/concepts.md` |
+| `generate.py` | Escribe `docs/tutorial/*.md` |
 | `urgency.py` | Calcula la urgencia de cada tarea |
 | `continuity.py` | Comprueba que los escenarios encadenan |
 
@@ -90,8 +89,7 @@ en inglés; `command` y `output` ya estaban en inglés porque son texto literal 
 `docs/spec/` que sigue en español. Es una excepción declarada para esta carpeta, para
 `docs/tutorial/*.md` y para `docs/concepts.md`, no un cambio de la regla general de `CLAUDE.md` de
 que la documentación va en español: este fichero, `lagunas/*.md` y los documentos de diseño siguen
-en español. Los nombres de los ficheros y de la carpeta (`escenarios/NN-nombre.yaml`,
-`conceptos.md`) tampoco cambian de idioma, solo su contenido. Los tres scripts son código, así que
+en español. Los nombres de los ficheros y de la carpeta (`escenarios/NN-nombre.yaml`) tampoco cambian de idioma, solo su contenido. Los tres scripts son código, así que
 van enteros en inglés, con la única excepción de las cadenas que el generador emite dentro de las
 páginas, que ahora también están en inglés y ya no son una excepción al idioma del código.
 
