@@ -27,7 +27,7 @@ propios.
 |---|---|---|---|
 | `id` | `string` (`PREFIX-<n>`) | no | no |
 | `createdAt` | `date` (instante UTC, precisión de segundo) | no | solo al importar |
-| `updatedAt` | `date` (instante UTC, precisión de segundo) | no | solo al importar |
+| `updatedAt` | `date` (instante UTC, precisión de segundo) | no | sí, en cada escritura que cambie algo, o al importar |
 | `archived` | `bool` | no, `false` por defecto | sí, solo con `biso archive` / `--unarchive`, o al importar |
 | `leaseExpiresAt` | `date` (instante UTC) | sí | sí, ver [`lease.md`](../lease.md), o al importar |
 | `leaseHolder` | `string` (texto de persona) | sí | sí, solo con esos dos, o al importar; ver [`lease.md`](../lease.md) |
@@ -37,7 +37,7 @@ Precisiones:
 - **`archived` solo lo cambia `biso archive` y `biso archive --unarchive`.** No hay un flag de
   campo de la sección ["Las familias de flags"](../familias-de-flags.md) para él: archivar es un gesto de flujo de trabajo con nombre propio,
   según el principio 5.
-- **`leaseExpiresAt` lo fija el programa a `ahora + lease_minutes`** (clave de [configuración](../cmd/config.md)); ver [La renovación](../lease.md#la-renovación) en `lease.md` para cuándo.
+- **`leaseExpiresAt` lo fija el programa**, nunca quien llama; ver [La renovación](../lease.md#la-renovación) en `lease.md` para la fórmula y para cuándo.
 - **`leaseHolder` solo lo fija el programa, con [`biso start`](../cmd/verbos-del-ciclo.md#biso-start) y con [`biso new --start`](../cmd/new.md)**; ver [La renovación](../lease.md#la-renovación) en `lease.md`.
 - **Las reglas de `leaseExpiresAt` y `leaseHolder`** (cuándo cuenta como vencido el arrendamiento,
   cuándo se renueva, cuándo se vacía y qué hace la importación con ellos) tienen su propio documento,

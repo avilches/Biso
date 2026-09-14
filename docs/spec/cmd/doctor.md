@@ -113,7 +113,7 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Identificadores duplicados | error | no, hay que decidir a mano |
 | Tareas que no se pueden leer | error | no |
 | Claves de extensión no declaradas | error | no |
-| Estados, tipos, prioridades o proyectos que ya no están configurados | error | no |
+| Estados, tipos o prioridades que ya no están configurados | error | no |
 | `initial_status`, `active_status` o `terminal_status` que no están en `statuses` | error | no |
 | `statuses` con menos de tres elementos, o dos de los tres papeles apuntando al mismo estado | error | no |
 | Dependencias que apuntan a tareas inexistentes | error | no |

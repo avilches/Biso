@@ -71,8 +71,10 @@ note: the highest id ever assigned here is MYP-90
 
 ```
 error: MYP-53 is not on this board
-note: MYP-53 was assigned at some point, so it was archived and then removed
-hint: `biso ls --archived` lists what is archived
+note: MYP-53 was assigned at some point, but this board's current data does not have it
+hint: this only happens when something outside biso touched the data, such as a
+      snapshot restored over a newer one or a database edited by hand;
+      `biso doctor` diagnoses damage to the board
 ```
 
 Los códigos de estos tres casos son distintos entre sí: el primero sale con 2, y los otros dos comparten
