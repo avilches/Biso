@@ -12,8 +12,10 @@ biso doctor [--fix]
 
 **`biso doctor` sin `--fix` es de solo lectura**, y `--print` y `--dry-run` de la sección ["Flags globales"](flags-globales.md#flags-globales) son error 2
 igual que en cualquier otro comando de lectura. **Con `--fix` es un comando de escritura**: ahí
-`--dry-run` reporta qué se repararía sin reparar nada, y `--print` no añade nada, porque `doctor` no
-imprime fichas de tareas.
+`--dry-run` es una vista previa pura de lo que haría la llamada real que le sigue, con el mismo informe
+y el mismo código de salida de la tabla de más abajo (nunca un 7 propio, que `doctor` no tiene, sección
+["Flags globales"](flags-globales.md#flags-globales)), sin reparar nada; y `--print` no añade nada,
+porque `doctor` no imprime fichas de tareas.
 
 ## Para qué sirve `biso doctor`, y para qué no
 
@@ -174,6 +176,64 @@ riesgo: en ese sistema de ficheros el modo WAL de SQLite no ofrece las garantía
 sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables) exige, pero el tablero de hoy puede estar perfectamente sano. Eso es exactamente lo que
 distingue a un aviso de un error, así que es aviso.
 
+### El sondeo del sistema de ficheros
+
+**El aviso se dispara por un sondeo funcional en el propio directorio del tablero, no por el nombre o
+el tipo del sistema de ficheros.** `doctor` comprueba en caliente los dos primitivos que el modo WAL de
+SQLite necesita, un bloqueo por rango de bytes fiable y un `mmap` compartido que de verdad sincroniza
+con una lectura corriente, en vez de adivinarlos por una tabla de sistemas de ficheros conocidos, que
+se quedaría corta ante un FUSE nuevo o un disco de red que se anuncia con un tipo normal. El controlador
+es `modernc.org/sqlite`, sin `cgo` (raíz de este repositorio), así que el sondeo usa
+`golang.org/x/sys/unix` en macOS y Linux y `golang.org/x/sys/windows` en Windows, las dos bibliotecas
+puras en Go que ya evitan el mismo problema de compilación cruzada que evita el controlador.
+
+El protocolo, en el directorio del tablero (donde vive `board.db`, no en un directorio temporal del
+sistema, porque lo que importa es el sistema de ficheros de ese directorio en concreto):
+
+1. **Crea un fichero de prueba**, `.biso-wal-probe-<pid>-<aleatorio>`, con permisos `0600`, le escribe
+   64 KiB de ceros y hace `fsync`. Si crear o escribir el fichero falla (por ejemplo `EACCES` o
+   `EROFS`), el sondeo entero se marca como fallido sin seguir a los pasos siguientes: si `biso` no
+   puede ni escribir ahí, no hay manera de comprobar nada más, y esa incapacidad ya es en sí misma un
+   sistema de ficheros donde WAL no puede funcionar.
+2. **Bloqueo por rango de bytes.** Abre una segunda vez el mismo fichero, con un descriptor
+   independiente. Con `unix.FcntlFlock` (`F_SETLK`) en Unix, o `LockFileEx` con un rango de bytes en
+   Windows, toma un bloqueo exclusivo sobre el byte `[0, 1)` desde el primer descriptor. Después, desde
+   el segundo descriptor, intenta el mismo bloqueo exclusivo sobre ese mismo byte `[0, 1)`: tiene que
+   fallar con `EAGAIN`/`EACCES` (o el equivalente de Windows), porque es justo lo que un bloqueo
+   exclusivo real impide. Si en cambio se concede, el sistema de ficheros no está haciendo cumplir el
+   bloqueo de verdad, que es el síntoma clásico de un NFS que concede bloqueos en local sin coordinarlos
+   con el otro extremo. Cualquier otro error inesperado del propio `fcntl`/`LockFileEx` (`ENOLCK`,
+   `ENOSYS`, `EINVAL`) también cuenta como fallo. Libera los dos bloqueos y cierra el segundo descriptor.
+3. **`mmap` compartido con una escritura visible fuera del mapeo.** Mapea el fichero con
+   `unix.Mmap` (`MAP_SHARED`, `PROT_READ|PROT_WRITE`) en Unix, o `CreateFileMapping` /
+   `MapViewOfFile` (`PAGE_READWRITE`, `FILE_MAP_WRITE`) en Windows. Escribe un patrón de 8 bytes al
+   principio del mapeo, lo sincroniza (`msync(MS_SYNC)` en Unix, `FlushViewOfFile` seguido de
+   `FlushFileBuffers` en Windows) y vuelve a leer esos mismos 8 bytes con una lectura corriente del
+   fichero, no a través del mapeo. Si el `mmap` en sí falla (`ENODEV`, `ENOTSUP`, `EOPNOTSUPP`), o si la
+   lectura corriente no ve el patrón que se acaba de escribir, el sondeo se marca como fallido: es la
+   forma en que un `MAP_SHARED` que en realidad no comparte memoria con el fichero se delata.
+4. **Tope de tiempo.** Los tres pasos anteriores corren dentro de un único plazo de 2 segundos. Ninguna
+   de las llamadas del sistema que usan tiene un timeout propio, así que el sondeo entero se lanza en su
+   propia goroutine y se espera con `context.WithTimeout`; si el plazo se cumple antes de que la
+   goroutine termine (un montaje de red colgado en `fcntl` es el caso real que esto cubre), el sondeo
+   se da por fallido y `doctor` sigue sin esperar a que la goroutine acabe alguna vez, porque Go no
+   puede cancelar una llamada al sistema bloqueada. La goroutine abandonada borra el fichero de prueba
+   por su cuenta si es que llega a terminar; `doctor` no depende de que lo haga.
+5. **Limpieza.** Si el sondeo termina dentro del plazo, borra el fichero de prueba antes de devolver el
+   resultado, se haya marcado como seguro o como fallido.
+
+**Cualquier fallo o comportamiento degradado de los pasos 1 a 4 dispara el aviso**: no crearse el
+fichero, no hacer cumplir el bloqueo, que el `mmap` falle o que su escritura no se vea desde una lectura
+corriente, o que el plazo se cumpla. Solo cuando los tres pasos funcionales pasan dentro del plazo se
+considera el sistema de ficheros seguro para WAL y el aviso no sale.
+
+**El sondeo puede dar un falso negativo, y esta sección no lo esconde.** Un solo proceso en un solo
+host no puede reproducir la condición de carrera entre dos hosts distintos escribiendo el mismo
+`board.db` por NFS, que es la que de verdad rompe WAL en red; el sondeo detecta la falta de soporte
+local de los dos primitivos, no la ausencia de coordinación entre extremos. Es la misma limitación que
+ya reconoce la decisión de esta tarea en `docs/decisiones/`, y el motivo por el que sigue siendo aviso
+y no error: un sondeo que pasa no es una garantía, es la ausencia de la señal más barata de comprobar.
+
 **Y la primera tiene una peculiaridad que la separa de las demás filas de error: nunca aparece como
 una línea del informe.** Las demás comprobaciones de error sí producen una entrada en la lista
 de problemas cuando se disparan, pero esta no, porque cuando se dispara no hay informe de `doctor`
@@ -212,6 +272,37 @@ Con esto, todas las filas de la tabla son un problema real salvo los huecos en l
 lo son y no se reportan nunca. Y de las que sí lo son, solo la comprobación de integridad de la base de
 datos no llega a aparecer nunca como una línea del informe, por la razón de arriba.
 
+### El `code` y el mensaje de cada comprobación
+
+**Cada fila de la tabla de arriba, salvo los huecos en la numeración, tiene un `code`** en `snake_case`
+e inglés, que describe el hallazgo y no el mecanismo que lo detecta, con el mismo estilo que los cinco
+que ya existían: `dependency_not_found`, `lease_invariant`, `highest_id_behind`, `extra_root_unreadable`
+e `ignore_file_mismatch`. El mensaje sigue la misma regla que cualquier aviso accionable de esta sección:
+dice qué hay y qué se esperaba, con los dos valores literales al lado, en inglés. `task` lleva el
+identificador de la tarea afectada, o `null` cuando el hallazgo es del tablero y no de ninguna tarea en
+concreto, el mismo criterio que ya usan `extra_root_unreadable` e `ignore_file_mismatch`.
+
+| Comprobación | `code` | `task` | Mensaje |
+|---|---|---|---|
+| Identificadores duplicados | `duplicate_id` | el id compartido | `id "MYP-40" is used by 2 tasks, ids must be unique` |
+| Tareas que no se pueden leer | `task_unreadable` | el id, si se puede recuperar, o `null` | `task "MYP-40" could not be parsed: unexpected end of JSON input` |
+| Claves de extensión no declaradas | `undeclared_extension_key` | la tarea | `ext key "trello.card" is not declared, declared keys are "jira.issue"` |
+| Estados, tipos o prioridades ya no configurados | `value_not_configured` | la tarea | `status "Blocked" is not one of the configured statuses "To Do, In Progress, Done"` (o el mismo mensaje con `type` o `priority`, según cuál sea) |
+| `initial_status`, `active_status` o `terminal_status` fuera de `statuses` | `status_role_unknown` | `null` | `active_status "Doing" is not one of the configured statuses "To Do, In Progress, Done"` |
+| `statuses` con menos de tres elementos, o dos papeles apuntando al mismo estado | `status_role_invalid` | `null` | `statuses has 2 elements, at least 3 are required`, o `active_status and terminal_status are both "Done", the three roles must be distinct` |
+| Dependencias que apuntan a tareas inexistentes | `dependency_not_found` | la tarea que declara la dependencia | `dependency MYP-99 does not exist` |
+| Ciclos de dependencias | `dependency_cycle` | una tarea del ciclo | `MYP-11 is part of a dependency cycle: MYP-11 -> MYP-12 -> MYP-11` |
+| Ciclos de tarea padre | `parent_cycle` | una tarea del ciclo | `MYP-11 is part of a parent cycle: MYP-11 -> MYP-12 -> MYP-11` |
+| Claves de criterio repetidas dentro de una tarea | `duplicate_criterion_key` | la tarea | `acceptance criterion key #3 is used by 2 criteria, keys must be unique within a task` |
+| Arrendamiento sin tarea activa y asignada | `lease_invariant` | la tarea | `has a lease but is not both active and assigned` |
+| Identificador más alto por detrás | `highest_id_behind` | `null` | `the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52` |
+| Falta el marcador `<id>.id` | `marker_missing` | `null` | `board directory has no <id>.id marker, the database says id is "3f9a2b1c"` |
+| El marcador `<id>.id` nombra un `id` distinto | `marker_id_mismatch` | `null` | `marker file names id "a1b2c3d4", the database says id is "3f9a2b1c"` |
+| Raíz de `boards_extra_roots` no legible | `extra_root_unreadable` | `null` | `extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)` |
+| **Integridad de la base de datos falla** | **sin `code`** | | **Nunca entra en `problems`, `warnings` ni `fixed`: aborta el comando entero con su propio mensaje y el código 21, antes de que `doctor` construya ningún JSON** (sección ["El sondeo del sistema de ficheros"](#el-sondeo-del-sistema-de-ficheros) de más arriba explica el porqué con más detalle) |
+| Sistema de ficheros inseguro para WAL | `unsafe_wal_filesystem` | `null` | `board directory "/Users/avilches/.biso/boards/my-project-3f9a2b1c" is on a filesystem where SQLite's WAL mode is not safe (the byte-range lock or the shared mmap probe failed)` |
+| El fichero de exclusión no corresponde al `vcs` configurado | `ignore_file_mismatch` | `null` | `.gitignore does not match the configured vcs "none" (left over from git, biso does not rewrite it automatically)` |
+
 ## Atomicidad de `--fix` con varias reparaciones
 
 Cuando `--fix` tiene que aplicar más de una reparación de tipo distinto, por ejemplo corregir el
@@ -247,7 +338,7 @@ que queda pendiente es una reparación que ya se sabe cómo repetir.
 | Una tarea ilegible (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | Se reporta como error y se sigue con las demás. **Nunca aborta** |
 | La base de datos no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | El comando entero aborta con el mensaje y el código 21 de ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), antes de comprobar nada más |
 | `--fix` sin poder escribir | Código 8. Si falla la escritura del marcador después de la transacción de datos, esta ya quedó aplicada (ver arriba) |
-| `--fix --dry-run` | Reporta qué se repararía, sin reparar nada, código 0 |
+| `--fix --dry-run` | Vista previa pura de `--fix`: el mismo informe, con `Errors:` y `Warnings:` idénticos a los de una llamada real y el bloque de reparaciones renombrado a `N error(s) would be fixed, nothing was written (--dry-run)`, sin escribir nada. El código sigue la tabla de códigos de `doctor` de más abajo aplicada a ese mismo informe: 6 si queda algún error sin reparar tras la vista previa del `--fix`, 0 si no queda ninguno |
 
 ## Salida
 
@@ -278,6 +369,46 @@ found was fixed": lo encontrado y lo reparado se cuentan sobre el mismo conjunto
 
 Los avisos no tienen esa distinción porque ninguno es reparable (ver la tabla de comprobaciones), así
 que `Warnings:` siempre los lista todos y su recuento siempre coincide con su lista.
+
+## El informe en seco de `--fix --dry-run`
+
+`--fix --dry-run` no es una excepción de formato: reusa el mismo informe de `--fix` entero, con
+`Errors:` y `Warnings:` idénticos, porque son hallazgos y ningún hallazgo cambia por no escribir nada.
+Lo único que cambia es el último bloque, que en una llamada real dice `N error(s) fixed` y en la vista
+previa dice `N error(s) would be fixed, nothing was written (--dry-run)`, con el mismo detalle línea a
+línea de lo que se habría reparado.
+
+Con el mismo tablero del ejemplo de más arriba, donde el único error reparable es el contador de
+identificador más alto y la dependencia rota de `MYP-40` no lo es:
+
+```
+$ biso doctor --fix --dry-run
+2 errors found, 1 warning found
+Errors:
+  MYP-40  dependency MYP-99 does not exist
+Warnings:
+  extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)
+1 error would be fixed, nothing was written (--dry-run)
+  the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52
+```
+
+**El código de salida de esta llamada es 6**, no 0, porque `MYP-40` sigue bajo `Errors:` después de la
+vista previa: es un error que hoy no es reparable con `--fix` (tabla ["Qué comprueba"](#qué-comprueba)), así que
+seguiría estando ahí después de la llamada real que le siga, y el `--dry-run` tiene que decirlo con el
+mismo código que diría esa llamada, no con un 0 que sugeriría que todo va a quedar bien. Solo cuando
+`Errors:` queda vacío después de la vista previa del `--fix`, la llamada sale con 0.
+
+**El `--json` de esta llamada usa el mismo `kind: "doctor"` y el mismo esquema** que una llamada real,
+con `fixed` llevando lo que se repararía en vez de lo que se reparó; no hay ninguna clave que distinga
+un informe en seco de uno real, porque las tres listas (`problems`, `warnings`, `fixed`) ya dicen todo
+lo que hace falta y el propio `--dry-run` de la llamada ya lo dice quien la hizo.
+
+Esto no es una excepción nueva al contrato genérico de `--dry-run` de la sección ["Flags globales"](flags-globales.md#flags-globales):
+ese contrato ya dice 0 si habría funcionado y 7 si no para el resto de comandos, pero `doctor` nunca
+tuvo código 7 (tabla de códigos de más abajo), así que su `--dry-run` nunca pudo devolverlo. `--fix
+--dry-run` es sencillamente el mismo caso llevado a sus últimas consecuencias: una vista previa pura del
+código que daría la llamada real que le sigue, tomado de la propia tabla de códigos de `doctor`
+(0, 6, 2, 8, 20 o 21), nunca un 7 que esta tabla no tiene.
 
 ## El esquema JSON
 
@@ -318,6 +449,10 @@ texto, en vez de a uno menor.
 | No hay tablero | 20 |
 | Su base de datos no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | 21 |
 
+**Esta misma tabla vale para `--fix --dry-run`**, sección ["El informe en seco de `--fix
+--dry-run`"](#el-informe-en-seco-de---fix---dry-run): es una vista previa del código que daría la
+llamada real que le sigue, nunca un 7 propio, porque `doctor` no tiene código 7.
+
 ## `biso doctor --help`
 
 ```
@@ -338,7 +473,9 @@ Options:
 
 Without --fix this is a read-only command: --print and --dry-run are bad usage
 here, same as in any other read-only command. With --fix, --dry-run reports
-what would be fixed without fixing it.
+what would be fixed without fixing it, same report as a real run, same exit
+code too: 6 if an error would remain unfixed, 0 otherwise. Never its own 7,
+doctor has none.
 
 Findings come in two levels: errors, which leave the board inconsistent or
 unreliable, and warnings, which are true and worth knowing but fix nothing.

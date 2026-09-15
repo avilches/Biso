@@ -83,6 +83,15 @@ MYP-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
 El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el contrato de estabilidad
 permite cambiar entre versiones menores, así que la cifra exacta puede no ser esta.
 
+Con `--dry-run`, la misma línea marcada como hipotética, con la regla y el encabezado que fija
+["`biso set`"](set.md#salida):
+
+```
+$ biso start MYP-11 --dry-run
+1 task would be affected (--dry-run)
+MYP-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
+```
+
 ### Códigos de salida
 
 | Desenlace | Código |
@@ -374,6 +383,15 @@ Por stderr, cuando toca:
 ```
 warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked
   #3 There is a test that covers it
+```
+
+Con `--dry-run`, la misma línea marcada como hipotética, con la regla y el encabezado que fija
+["`biso set`"](set.md#salida):
+
+```
+$ biso finish MYP-11 --check-ac all --check-dod all --dry-run
+1 task would be affected (--dry-run)
+MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0
 ```
 
 ### Códigos de salida

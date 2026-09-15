@@ -82,6 +82,21 @@ con su propio ejemplo, pero las reglas de su forma se dicen aquí y no se repite
    ```
 4. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
    más que una escritura puede añadirle, y quien lo añade es `biso archive` (["`biso archive`"](archive.md)).
+5. **Con `--dry-run`, la salida es la misma línea de estado que daría la escritura real, calculada sin
+   escribir nada**, con un encabezado delante que la marca como hipotética: `<N> task(s) would be
+   affected (--dry-run)`, en singular si `N` es 1 y en plural en cualquier otro caso. Debajo va una
+   línea por tarea, con exactamente la misma forma de los puntos 1 a 4 (incluido `added ac #<clave>` si
+   la llamada crearía un criterio, y `archived` si la tarea quedaría archivada). Los dos bloques van por
+   stdout, en el mismo canal que la línea real, porque siguen siendo el dato que la llamada produce, solo
+   que hipotético; ninguno de los dos implica que se haya escrito nada. La regla vale para los seis
+   verbos del ciclo (sección ["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`,
+   `answer`"](verbos-del-ciclo.md)) y para `biso archive` (sección ["`biso archive`"](archive.md)),
+   porque todos reusan esta misma línea de estado; cada uno la enseña con su propio ejemplo.
+   ```
+   biso set MYP-11 --add-labels parser --dry-run
+   1 task would be affected (--dry-run)
+   MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+   ```
 
 Los avisos van por stderr:
 
