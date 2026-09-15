@@ -81,7 +81,7 @@ ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
 | `due_in_past` | `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada | `value` |
 | `no_acceptance_criteria` | `warning: MYP-11 has no acceptance criteria` | `--check-ac all` sobre una tarea sin criterios | `task` |
 | `no_comments` | `warning: MYP-11 has no comments` | `--rm-comment all` sobre una tarea sin comentarios (["Comentarios"](familias-de-flags.md#comentarios)) | `task` |
-| `task_skipped` | `warning: 1 task could not be read and was skipped` | ver ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) | `count`, `tasks` |
+| `task_skipped` | `warning: 1 task could not be read and was skipped` | ver ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar); `biso prime` es la excepción y lo integra en su propio mensaje por stdout (["`biso prime`"](cmd/prime.md#la-salida-literal)) en vez de emitirlo aquí | `count`, `tasks` |
 | `deprecated_flag` | `warning: <x> is deprecated and will be removed in 2.0` | ver la sección ["El contrato de estabilidad"](estabilidad.md) | `flag`, `removedIn` |
 | `open_question_on_start` | `warning: MYP-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta | `task`, `author` |
 | `open_question_on_terminal` | `warning: MYP-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta | `task`, `author` |

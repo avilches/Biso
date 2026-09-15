@@ -42,7 +42,7 @@ biso prime [--full] [--limit <n>] [--json]
 | Hay tablero y tiene tareas | Imprime el mensaje de la sección ["La salida literal"](#la-salida-literal) por stdout, código 0 |
 | Hay tablero y está vacío | Igual, con los cuatro bloques de tareas sustituidos por las tres líneas de la sección ["Tablero vacío"](#tablero-vacío) |
 | No hay tablero | Código 20, y por stderr el mensaje de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) |
-| Alguna tarea no se puede leer | El mensaje sale igual, con el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), código 0 |
+| Alguna tarea no se puede leer | El mensaje sale igual, con una línea más en el bloque `BOARD` que resume el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) (por stdout, no por stderr: es la excepción declarada más abajo), código 0 |
 | `--limit` negativo | Código 2 |
 
 `biso prime` **no escribe nada, nunca**, y no necesita acceso exclusivo. Es seguro llamarlo en
@@ -211,6 +211,22 @@ Cómo se calcula el resumen, para que la implementación sea única:
   receta que cabe en una línea de arranque. La línea ocupa 59 bytes
   con su salto de línea, frente a los 22 de `you are     @claude`, y cabe en el resumen de ["El presupuesto de tamaño"](../presupuestos.md#el-presupuesto-de-tamaño). Con `--json`
   no hay pista: el campo `board.me` vale `null`.
+- **Si alguna tarea no se pudo leer, el bloque `BOARD` añade una línea más**, con el mismo aviso que
+  cualquier otra lectura de conjunto (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)), literalmente:
+
+  ```
+    unreadable  1 task could not be read and was skipped
+  ```
+
+  o, con más de una, `N tasks could not be read and were skipped`. Va por stdout, dentro del mensaje,
+  y no como un `warning:` por stderr, por la misma razón que la línea de identidad: `biso prime` no
+  imprime nunca nada por stderr, y es precisamente el caso en el que más falta hace verlo, porque
+  quien arranca `biso prime` desde un hook a menudo no ve ese canal. Es la única otra excepción,
+  junto a la de la identidad, a la regla general de esa sección, que en cualquier otra lectura de
+  conjunto (`ls`, `export`, `snapshot`) sí emite este aviso por stderr. Sin tareas ilegibles la línea
+  no aparece, igual que la línea de identidad no aparece cuando hay identidad configurada. Los
+  identificadores de las tareas saltadas no van en esta línea, que es texto de arranque y no un
+  listado: viajan en el esquema JSON, en `data.skipped` (["El esquema JSON"](#el-esquema-json)), igual que en `biso ls` (["`biso ls`"](ls.md#el-esquema-json)).
 - `IN PROGRESS` lista las tareas del estado activo sin pregunta abierta, ordenadas por la regla de
   orden de la sección ["`biso ls`"](ls.md), sin límite. Cada tarea cuyo arrendamiento está vencido (el campo derivado
   `leaseExpired` de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md)) lleva, igual que `NEEDS ANSWER` con su pregunta, una segunda línea
@@ -297,7 +313,8 @@ THE BOARD IS EMPTY
         "type": "bug", "priority": "high", "assignees": [], "due": "2026-09-08",
         "acDone": 0, "acTotal": 4, "urgency": 18.2, "leaseExpired": false }
     ],
-    "hiddenCount": 49
+    "hiddenCount": 49,
+    "skipped": []
   }
 }
 ```
@@ -324,6 +341,12 @@ indentada del texto salga solo en `inProgress`, porque no es texto largo y escon
 consume JSON a llamar a `biso get` tarea por tarea para saber algo que el mensaje de texto ya enseña.
 Sus dos detalles, `leaseExpiresAt` y `leaseHolder`, no salen aquí: para eso está `task.list` (["`biso ls`"](ls.md)), y
 en texto la línea `lease` de la ficha de `biso get` (["`biso get`"](get.md)).
+
+**`skipped` lleva los identificadores de las tareas ilegibles que se han saltado**, igual que la
+clave del mismo nombre en el esquema de `biso ls` (["`biso ls`"](ls.md#el-esquema-json)). Es la contrapartida en JSON de la línea `unreadable` del
+bloque `BOARD` de la sección ["La salida literal"](#la-salida-literal): la línea de texto dice cuántas fueron y da el aviso; esta clave dice cuáles. Vacía
+cuando no se saltó ninguna, por la misma regla de la sección ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias) que mantiene `hiddenCount` en `0` en vez de
+omitir la clave.
 
 ## Códigos de salida
 

@@ -22,7 +22,7 @@ que remite el error de código 20, y el que hace visible una resolución que de 
 | El directorio de trabajo es el propio directorio del tablero | Lo imprime igual, con la primera vía de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) en `source` y `path` apuntando al directorio de trabajo, código 0 |
 | No hay tablero configurado | Imprime lo que ha buscado y dónde, código 20, `code` `no_board` |
 | El puntero nombra un tablero que no está en esta máquina | Imprime que hay un puntero y qué identificador nombra (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), código 20, `code` `pointer_unresolved` |
-| Hay más de un candidato | Imprime el elegido y los descartados, con el motivo, código 0 |
+| Hay más de un candidato | Imprime el elegido con las filas normales, y debajo el descartado con su motivo, en el formato de la subsección ["Cuando hay más de un candidato"](#cuando-hay-más-de-un-candidato), código 0 |
 | El mismo `id` aparece en dos raíces | Imprime los dos directorios y no elige ninguno, código 22, `code` `ambiguous_board_id` (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) |
 | Sin identidad configurada | La fila `me` sale como `me       (not set: run biso as BISO_ME=@you biso ...)`, sin ningún `note:` aparte (sección ["Qué pasa si no hay identidad"](../invocacion.md#variables-de-entorno)), código 0 igual |
 | La base de datos del tablero no se puede leer | El mensaje de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), código 21, `code` `database_unreadable`. `where` no lo esquiva: para decir qué tablero está en uso hay que abrirlo |
@@ -59,13 +59,43 @@ que hace visible de un vistazo el caso de haber heredado el puntero de un proyec
 Con la otra vía no hay ningún directorio del que salir, porque el tablero es el directorio de trabajo,
 y la fila dice `the working directory is this board`.
 
-Y cuando no hay ninguno configurado, por stderr y con código 20:
+### Cuando hay más de un candidato
+
+**"Candidato" nombra el único conflicto que puede darse entre las dos vías de la sección ["El orden de búsqueda"](../resolucion-del-tablero.md#el-orden-de-búsqueda):** que el
+directorio de trabajo sea a la vez un tablero, por la primera vía, y que además el puntero de algún
+ancestro habría resuelto a un tablero distinto, por la segunda. La primera vía gana siempre, porque es
+más específica (["El orden de búsqueda"](../resolucion-del-tablero.md#el-orden-de-búsqueda)), así que el tablero del puntero queda descartado. Con solo dos vías nunca
+hay más de un descartado.
+
+Las filas normales de arriba describen el elegido, con `source` en `the working directory is this
+board`. Debajo va el descartado, en el mismo estilo de prosa libre que ya usa, más abajo en este mismo
+documento, el mensaje de "no board here" con su fila `searched`, porque el motivo de un descarte es una
+frase completa y no cabe en una sola columna:
+
+```
+id       3f9a2b1c
+board    My project
+path     /Users/avilches/.biso/boards/my-project-3f9a2b1c
+source   the working directory is this board
+me       @claude
+tasks    248 not archived, 31 archived, highest id ever assigned MYP-290
+
+chosen     3f9a2b1c at /Users/avilches/.biso/boards/my-project-3f9a2b1c
+           because the working directory is itself a board
+discarded  7a1b2c3d at /Volumes/work/boards/other-project-7a1b2c3d
+           the project pointer would have named this board instead
+```
+
+Con `--json` el elegido sigue viajando en `data.id`, `data.board`, `data.path` y `data.source`, y el
+descartado en `data.discarded` (sección ["El esquema JSON"](#el-esquema-json)).
+
+Y cuando no hay ninguno configurado, por stderr y con código 20 (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)):
 
 ```
 error: no board here, and none configured for this project
 searched  this directory: not a board
           pointer:        not found between this directory and /Users/avilches,
-                          which is where the search stops (3.2)
+                          which is where the search stops
 hint: `biso init` creates one
 ```
 
@@ -96,13 +126,18 @@ la fila donde más confunde, porque justo al lado hay un recuento de estados.
     "path": "/Users/avilches/.biso/boards/my-project-3f9a2b1c",
     "source": "project pointer at /Users/avilches/Hub/Projects/My project",
     "me": "@claude",
-    "counts": { "notArchived": 248, "archived": 31, "highestIdEverAssigned": "MYP-290" }
+    "counts": { "notArchived": 248, "archived": 31, "highestIdEverAssigned": "MYP-290" },
+    "discarded": []
   }
 }
 ```
 
 **`me` vale `null` sin identidad configurada**, la misma regla que sigue `board.me` en el esquema JSON
 de `biso prime` (["`biso prime`"](prime.md#la-salida-literal)).
+
+**`discarded` lleva un objeto `{ "id", "path", "reason" }` por cada candidato descartado**, que hoy es
+como mucho uno, por la sección ["Cuando hay más de un candidato"](#cuando-hay-más-de-un-candidato). Va vacío cuando no hubo ninguno, por la misma regla de la sección
+["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias) que mantiene siempre presentes `hiddenCount` en `biso prime` o `skipped` en `biso ls`.
 
 ## Códigos de salida
 
