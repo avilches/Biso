@@ -19,6 +19,17 @@ Aquí aparece el mecanismo solo donde afecta al comportamiento observable, como 
 (por ejemplo, que dos procesos simultáneos no puedan asignar el mismo identificador) y deja el resto
 del mecanismo fuera de aquí.
 
+**El modelo de tarea se comprobó, campo a campo, frente a Backlog.md y frente a otros seis gestores
+de tareas e incidencias, y ninguno alcanza compatibilidad completa.** El más cercano es Backlog.md,
+que cubre una parte alta de los campos sin perder información en ningún sentido, pero pierde
+precisamente la clave estable de los criterios y de los comentarios, y ninguno de los siete tiene
+nada parecido a `leaseExpiresAt`/`leaseHolder` ni a `question`. La comparación completa, con lo que
+se pierde en cada sentido para cada sistema, está en ["Compatibilidad del modelo de datos con otros
+gestores"](../estado-del-arte/compatibilidad-de-modelos.md). **La compatibilidad que sí existe es de
+modelo de datos y no de formato de fichero**: `biso` no lee ni escribe los ficheros Markdown de
+ninguna de esas herramientas, y no hay ninguna intención de que lo haga, como consta en [Lo que se
+deja fuera a propósito](fuera-de-alcance.md).
+
 ## Cómo está organizada
 
 ### Los fundamentos

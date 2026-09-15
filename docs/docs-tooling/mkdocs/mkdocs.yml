@@ -179,3 +179,5 @@ nav:
     - "Parte 1. Las herramientas": estado-del-arte/herramientas.md
     - "Parte 2. El catalogo de problemas": estado-del-arte/catalogo-de-problemas.md
     - "Parte 3. Lo que la gente quiere conservar, y lo que rechaza": estado-del-arte/lo-que-se-conserva.md
+    - "Parte 4. Compatibilidad del modelo de datos con otros gestores": estado-del-arte/compatibilidad-de-modelos.md
+    - "Anexo. Esquemas de datos externos": estado-del-arte/esquemas-de-datos-externos.md
