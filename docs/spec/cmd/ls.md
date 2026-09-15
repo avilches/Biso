@@ -58,13 +58,25 @@ Reglas de combinación de filtros:
 - **`--unchecked` apaga la comprobación de existencia de `-l`, `--label-or` y `-a`, y ninguna otra.**
   No cambia cómo se combinan ni afecta a ningún otro filtro. Los vocabularios configurados siguen
   validando, y `-p/--parent` sigue resolviendo su referencia.
-- **El estado terminal se excluye por defecto**, y `--any-status` es la única forma de incluirlo.
+- **Sin `-s` explícito, el estado terminal se excluye salvo `--any-status`; con `-s` explícito se
+  filtra por ese valor tal cual, terminal incluido.** La exclusión del terminal es el comportamiento
+  del valor por defecto de `-s`, no una regla aparte que se superponga a él: `biso ls -s Done`
+  devuelve las tareas `Done`, exactamente como pide cualquier otro valor de `-s`. `--not-status <x>`
+  sin `-s` sigue restando sobre la base por defecto (todos menos el terminal), así que por sí solo no
+  reintroduce el terminal: `biso ls --not-status "To Do"` excluye `"To Do"` y sigue sin traer `Done`.
+  `--any-status` sigue siendo la única forma de traer el terminal sin nombrarlo con `-s`.
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
 - **`--blocked` es incompatible con `--not-blocked`.** Los dos miran las dependencias sin terminar y
   no el estado, así que se combinan con cualquier filtro de estado y con los dos pares de abajo.
   `--not-blocked` por sí solo no dice que la tarea se pueda coger: descarta la que espera a otra
-  tarea, no la que espera una respuesta ni la que ya lleva alguien.
+  tarea, no la que espera una respuesta ni la que ya lleva alguien. **Una tarea archivada sin
+  terminar cuenta como terminada aquí**, igual que en la urgencia (["La
+  urgencia"](../modelo-de-datos/urgencia.md#la-urgencia)): no hace `--blocked` a quien depende de
+  ella.
+- **`--overdue` es `dias < 0`**, la misma cuenta que usa el término `proximidad` de la urgencia
+  (["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia)): una tarea que vence hoy tiene
+  `dias = 0` y no es `--overdue`.
 - **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada uno con su
   opuesto.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
   razón de ser: sin ellos, pedir la cola activa obligaría a escribir `-s "In Progress"`, el nombre

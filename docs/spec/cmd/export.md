@@ -19,6 +19,12 @@ aceptan para acotar a propósito, y los flags de forma de `ls` no, porque un vol
 que elegir. **Tampoco se aceptan `--archived` ni `--only-archived`**, porque las archivadas ya salen
 por defecto: el único flag de `export` sobre el archivo es `--no-archived`.
 
+Cuando `export` acepta `-s` como cualquier otro filtro de `biso ls`, se aplica igual que allí: un
+`-s` explícito filtra por ese valor tal cual, terminal incluido (["`biso ls`"](ls.md#comportamiento-caso-a-caso)), así que
+`biso export -s Done --no-archived -o done.ndjson` exporta exactamente las tareas `Done` vivas. La
+diferencia con `ls` es solo la base cuando no se pasa ningún `-s`: `export` parte de todos los
+estados, `ls` parte de todos menos el terminal.
+
 ## La garantía de simetría
 
 La salida es NDJSON, una tarea por línea, con **exactamente** las claves que acepta `biso new --from`,
