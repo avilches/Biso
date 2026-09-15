@@ -48,30 +48,44 @@ Hay tres clases de línea que no son errores, las tres por stderr:
 Las dos primeras dejan el código de salida en 0. La tercera acompaña igual a una operación que va bien
 que a una que falla, y ahí el código lo decide el resultado de la orden, nunca la línea.
 
-Esta es la lista completa de avisos que el programa emite. No hay ningún otro:
+**Con `--json`, si la llamada termina en 0, el texto de un `warning:` se sigue imprimiendo por stderr
+exactamente igual que sin `--json`**, aditivo al sobre de datos que sale por stdout: quien mira el
+terminal ve la frase humana, quien parsea el sobre lee el mismo aviso estructurado en `data.warnings`
+(["El esquema JSON"](cmd/set.md#el-esquema-json)). **Si la llamada termina en error, en cambio, el aviso no se imprime como
+texto suelto: se pliega dentro del mismo sobre de error que ya sale por stderr**, como la clave
+`warnings` de ["Los errores en JSON"](contrato-json.md#los-errores-en-json). Así, con `--json`, stderr nunca mezcla en la misma
+llamada texto humano de un aviso y el objeto JSON de un error: cuando hay error, todo lo que hay que
+saber, avisos incluidos, viaja dentro de ese único objeto.
 
-| Aviso | Cuándo |
-|---|---|
-| `warning: --replace-labels replaced 2 existing labels` | cualquier `--replace-*` que sustituya una lista no vacía |
-| `warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked` | al llegar a un estado terminal con criterios sin marcar |
-| `warning: MYP-11 finished without a final summary` | al llegar a un estado terminal sin resumen |
-| `warning: MYP-11 moved to Done with 1 of 3 definition-of-done items unchecked` | al llegar a un estado terminal con la definición de hecho a medias |
-| `warning: MYP-11 has unfinished subtasks: MYP-14, MYP-15` | al terminar una tarea con subtareas vivas |
-| `warning: MYP-11 is a dependency of MYP-20, which is not finished` | al archivar una tarea de la que dependen otras vivas |
-| `warning: --clear-labels has no effect on a new task` | cualquier `--clear-*` en `biso new` |
-| `warning: MYP-11 has unresolved dependencies: MYP-4 (To Do)` | al empezar una tarea bloqueada |
-| `warning: 28 more tasks match; showing 30 of 58` | en `biso ls`, al recortar |
-| `warning: --add-labels: "urgent" given twice, kept once` | valor repetido en un flag de lista |
-| `warning: --append-desc contains a literal \n and no real newline; it will be stored as text` | ver ["Codificación y texto"](#codificación-y-texto) |
-| `warning: --append-note: empty value, nothing was added` | valor vacío en un flag que añade |
-| `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada |
-| `warning: MYP-11 has no acceptance criteria` | `--check-ac all` sobre una tarea sin criterios |
-| `warning: MYP-11 has no comments` | `--rm-comment all` sobre una tarea sin comentarios (["Comentarios"](familias-de-flags.md#comentarios)) |
-| `warning: 1 task could not be read and was skipped` | ver ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
-| `warning: <x> is deprecated and will be removed in 2.0` | ver la sección ["El contrato de estabilidad"](estabilidad.md) |
-| `warning: MYP-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta |
-| `warning: MYP-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta |
-| `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al escribir sobre una tarea cuyo arrendamiento está vivo y es de otra identidad, con `biso start` o con cualquier otra escritura (["La renovación"](lease.md#la-renovación) de `lease.md`, ["Saber si alguien está trabajando de verdad"](../decisiones/modelo-de-estados.md#saber-si-alguien-está-trabajando-de-verdad), y ["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)) |
+Esta es la lista completa de avisos que el programa emite. No hay ningún otro. Cada uno lleva un
+`code` estable, en el mismo estilo que los `code` de error de la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), con los
+campos que interpola su frase; esos campos son los que trae el objeto de `data.warnings` en el JSON
+(["El esquema JSON"](cmd/set.md#el-esquema-json)). **La lista es ampliable y las entradas son permanentes**: una versión
+posterior puede añadir un `code` de aviso nuevo, pero ninguno de los de abajo cambiará de significado
+ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
+
+| `code` | Aviso | Cuándo | Campos en JSON |
+|---|---|---|---|
+| `overwrite` | `warning: --replace-labels replaced 2 existing labels` | cualquier `--replace-*` que sustituya una lista no vacía | `task`, `field`, `count` |
+| `terminal_ac_unchecked` | `warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked` | al llegar a un estado terminal con criterios sin marcar | `task`, `unchecked`, `total` |
+| `terminal_no_summary` | `warning: MYP-11 finished without a final summary` | al llegar a un estado terminal sin resumen | `task` |
+| `terminal_dod_unchecked` | `warning: MYP-11 moved to Done with 1 of 3 definition-of-done items unchecked` | al llegar a un estado terminal con la definición de hecho a medias | `task`, `unchecked`, `total` |
+| `unfinished_subtasks` | `warning: MYP-11 has unfinished subtasks: MYP-14, MYP-15` | al terminar una tarea con subtareas vivas | `task`, `subtasks` |
+| `dependency_of_unfinished` | `warning: MYP-11 is a dependency of MYP-20, which is not finished` | al archivar una tarea de la que dependen otras vivas | `task`, `dependent` |
+| `clear_on_new_task` | `warning: --clear-labels has no effect on a new task` | cualquier `--clear-*` en `biso new` | `field` |
+| `unresolved_dependencies` | `warning: MYP-11 has unresolved dependencies: MYP-4 (To Do)` | al empezar una tarea bloqueada | `task`, `dependencies` |
+| `list_truncated` | `warning: 28 more tasks match; showing 30 of 58` | en `biso ls`, al recortar | `shown`, `matched` |
+| `duplicate_flag_value` | `warning: --add-labels: "urgent" given twice, kept once` | valor repetido en un flag de lista | `flag`, `value` |
+| `literal_newline` | `warning: --append-desc contains a literal \n and no real newline; it will be stored as text` | ver ["Codificación y texto"](#codificación-y-texto) | `flag` |
+| `empty_append` | `warning: --append-note: empty value, nothing was added` | valor vacío en un flag que añade | `flag` |
+| `due_in_past` | `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada | `value` |
+| `no_acceptance_criteria` | `warning: MYP-11 has no acceptance criteria` | `--check-ac all` sobre una tarea sin criterios | `task` |
+| `no_comments` | `warning: MYP-11 has no comments` | `--rm-comment all` sobre una tarea sin comentarios (["Comentarios"](familias-de-flags.md#comentarios)) | `task` |
+| `task_skipped` | `warning: 1 task could not be read and was skipped` | ver ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) | `count`, `tasks` |
+| `deprecated_flag` | `warning: <x> is deprecated and will be removed in 2.0` | ver la sección ["El contrato de estabilidad"](estabilidad.md) | `flag`, `removedIn` |
+| `open_question_on_start` | `warning: MYP-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta | `task`, `author` |
+| `open_question_on_terminal` | `warning: MYP-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta | `task`, `author` |
+| `lease_held` | `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al escribir sobre una tarea cuyo arrendamiento está vivo y es de otra identidad, con `biso start` o con cualquier otra escritura (["La renovación"](lease.md#la-renovación) de `lease.md`, ["Saber si alguien está trabajando de verdad"](../decisiones/modelo-de-estados.md#saber-si-alguien-está-trabajando-de-verdad), y ["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)) | `task`, `holder`, `until` |
 
 ## Codificación y texto
 

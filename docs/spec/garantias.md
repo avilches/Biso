@@ -5,20 +5,29 @@
 Una sola invocación puede tocar muchos campos. El orden en que se aplican es fijo y **no depende del
 orden en que aparecen los flags en la línea de comandos**, para que el resultado sea reproducible:
 
-1. Todos los `--clear-*`.
+1. Todos los `--clear-*`, incluido `--clear-ext`.
 2. Todos los `--replace-*`.
-3. Todos los `--rm-*`, incluido `--rm-comment`.
+3. Todos los `--rm-*`, incluido `--rm-comment` y `--rm-ext`.
 4. Los añadidos: `--add-*` y `--append-*`.
-5. Los campos escalares.
-6. Los marcados de criterios y de definición de hecho (`--check-ac`, `--uncheck-ac`, `--check-dod`,
+5. Los campos de mapa: `--ext`.
+6. Los campos escalares.
+7. Los marcados de criterios y de definición de hecho (`--check-ac`, `--uncheck-ac`, `--check-dod`,
    `--uncheck-dod`).
-7. `--set-comment-date`.
-8. Los comentarios, es decir `--comment`, el que añade.
+8. `--set-comment-date`.
+9. Los comentarios, es decir `--comment`, el que añade.
 
 Con este orden, `--clear-labels --add-labels urgent` deja exactamente una etiqueta, y `--clear-acs
 --add-ac "A" --check-ac all` marca el criterio recién puesto. Dentro de un mismo paso manda el orden
 de la línea de comandos: `--add-labels b --add-labels a` deja `b` antes que `a`. Las listas nunca se
 ordenan solas.
+
+**`--ext` tiene un paso propio, entre los añadidos y los escalares, en vez de compartir uno de los
+dos que ya existían.** No es ni un añadido ni un escalar: una clave de `--ext` no se acumula sobre lo
+que había, como hacen `--add-*`/`--append-*`, ni guarda un único valor para toda la tarea, como un
+escalar, sino que fija el valor de una clave dentro de un mapa. `--clear-ext` y `--rm-ext`, en cambio,
+sí encajan por nombre en los pasos que ya existían para cualquier `--clear-*` y cualquier `--rm-*`, así
+que se quedan donde estaban: el mapa entero se vacía en el paso 1, y una clave suelta se quita en el
+paso 3, antes de que el paso 5 pueda fijar ninguna.
 
 **`--rm-comment` y `--set-comment-date` solo pueden señalar un comentario que ya existiera al empezar
 la llamada.** Como `--comment` va en el último paso, un comentario que la propia llamada añade nunca
@@ -35,9 +44,11 @@ consiga es cosa de quien implemente.
    de una escritura o como quedó después, nunca en un punto intermedio, y esto vale igual para una
    escritura de una tarea que para un lote de doscientas.
 2. **Una escritura que afecta a varias tareas es todo o nada.** Si falla por cualquier motivo, ni una
-   sola de las tareas implicadas queda modificada, y el código de salida lo dice: 7 si el fallo se
-   detectó al validar, 8 si se detectó al escribir. En los dos casos el mensaje afirma explícitamente
-   que no se ha escrito nada.
+   sola de las tareas implicadas queda modificada, y el código de salida lo dice: el código específico
+   del fallo (3, 4, 5...) si se detectó al validar y es atribuible a un elemento concreto, 7 si se
+   detectó al validar y no lo es, 8 si se detectó al escribir. En todos los casos el mensaje afirma
+   explícitamente que no se ha escrito nada. Cuál gana entre el código específico y el 7 está en
+   ["Códigos de salida"](codigos-de-salida.md).
 3. **Dos procesos simultáneos nunca asignan el mismo identificador**, aunque trabajen sobre el mismo
    tablero desde copias de trabajo distintas del proyecto.
 4. **Dos escrituras simultáneas sobre la misma tarea no se pierden ni se mezclan.** O se aplican una

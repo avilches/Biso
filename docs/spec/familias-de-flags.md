@@ -115,6 +115,31 @@ tocado sí pueden, y entonces la coma se escapa con `\,`
 (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
 `--add-refs 'notes/a\,b.md'` añade una sola referencia, `notes/a,b.md`.
 
+**Añadir un valor que la lista ya tiene, o quitar uno que no tiene, avisa pero nunca falla.** Ninguna
+de las dos operaciones exige leer la tarea primero para no fallar, que es justo lo que este diseño
+evita en cualquier otro sitio donde hay una alternativa tolerante. Las dos terminan con código 0:
+
+```
+warning: --add-labels: "urgent" already present, kept once
+warning: --rm-labels: "urgent" not present, nothing removed
+```
+
+El mismo patrón vale para cualquier fila de la tabla de arriba, `--rm-deps` incluido:
+`warning: --rm-deps: "MYP-4" not present, nothing removed`. No es la misma regla que el aviso de
+`--add-labels: "urgent" given twice, kept once` de más abajo: esa otra es un valor repetido dentro de
+la misma llamada, y esta es un valor que ya estaba en la tarea antes de la llamada; las dos pueden
+darse a la vez y cada una avisa por su cuenta.
+
+**Una etiqueta o una persona asignada distinguen mayúsculas al guardar, y las ignoran al filtrar.**
+`--add-labels Parser` y `--add-labels parser` en la misma tarea quedan como dos etiquetas distintas de
+verdad: nunca se funden en silencio, porque el vocabulario de etiquetas y personas solo es cerrado al
+leer y no al escribir, y fundirlas sería perder un dato que nadie pidió perder. Un
+filtro de lectura, en cambio, no distingue: `biso ls --label parser` encuentra las tareas etiquetadas
+`Parser` y las etiquetadas `parser` por igual. La comparación de lectura pliega mayúsculas y minúsculas
+(case-fold Unicode), pero no toca acentos, porque una etiqueta o una persona son tokens cortos y no
+prosa, y no comparten la regla de acentos de los selectores de texto de la sección
+["Selectores de criterios"](#selectores-de-criterios).
+
 ## Campos de lista sin coma (criterios)
 
 | Campo | Añade | Quita (selector) | Vacía |
@@ -236,11 +261,21 @@ claves **solo si el valor entero** encaja con `^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$`
 caso es un texto literal, comas incluidas. Así, `--check-ac "1, 2 and the last one"` es una búsqueda de
 texto que no encontrará nada y dará error 4, en vez de convertirse en algo a medias.
 
+**Un selector de texto ignora mayúsculas y acentos.** La comparación se hace en dos pasos, sobre el
+fragmento buscado y sobre el texto de cada elemento por igual: primero se pliegan mayúsculas y
+minúsculas (case-fold Unicode), y luego se aplica normalización NFKD y se descartan las marcas
+combinantes (categoría Unicode `Mn`), que es lo que quita los acentos sin tocar el resto del
+carácter. Así, `--check-ac "codigo"` encuentra un criterio guardado como `El código ignora CRLF`, y
+`--check-ac "CRLF"` encuentra uno guardado como `Handles crlf`. La regla de desambiguación de arriba se
+aplica primero, sobre el valor tal cual llega, y solo si el resultado es un texto se le aplica este
+plegado; una lista de claves nunca lo necesita.
+
 | Caso límite | Resultado |
 |---|---|
 | clave que no existe | error 4: `no acceptance criterion #7 on MYP-11 (keys: 1, 3)` |
 | texto que no encaja con ninguno | error 4, con los textos de los elementos listados |
 | texto que encaja con dos | error 5, con los dos listados |
+| texto que solo encaja ignorando mayúsculas o acentos, por ejemplo `"codigo"` contra `"El código..."` | encaja igual que si coincidiera carácter a carácter |
 | rango donde faltan claves intermedias | se aplican las que hay, sin aviso |
 | rango invertido, `4-1` | error 2 |
 | marcar un elemento ya marcado | se queda marcado, sin aviso, la operación es idempotente |
@@ -274,7 +309,10 @@ razón, con el caso medido que la motiva, está en ["Borrar o corregir la fecha 
 
 **`--rm-comment` y `--set-comment-date` toman el mismo selector que `--rm-ac` y `--check-ac`**
 (["Selectores de criterios"](#selectores-de-criterios)), con la clave de un comentario en vez de la de un criterio y el
-cuerpo del comentario en vez del texto del criterio para la forma de texto:
+cuerpo del comentario en vez del texto del criterio para la forma de texto, y **heredan la misma
+regla de plegado de mayúsculas y acentos** que esa sección fija para el fragmento de texto: un
+`--rm-comment "codigo"` encuentra un comentario cuyo cuerpo dice "El código..." igual que lo hace
+`--check-ac` con un criterio.
 
 ```
 biso set MYP-11 --rm-comment 3
@@ -327,6 +365,7 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 | clave que no existe | error 4: `no comment #7 on MYP-11 (keys: 1)` |
 | texto que no encaja con ningún comentario | error 4, con los cuerpos de los comentarios listados |
 | texto que encaja con dos o más | error 5, con los dos listados |
+| texto que solo encaja ignorando mayúsculas o acentos | encaja igual que si coincidiera carácter a carácter, misma regla que ["Selectores de criterios"](#selectores-de-criterios) |
 | rango invertido | error 2 |
 | `--set-comment-date` con un instante mal formado | error 2, señalando el formato ISO 8601 |
 | la misma clave en dos `--set-comment-date` con instantes distintos | error 2, misma regla que un escalar repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)) |
@@ -368,5 +407,42 @@ Un escalar **nunca** se borra pasándole la cadena vacía, según ["El valor vac
 flag para lo mismo solo serviría para equivocarse. Vaciar el mapa entero es `--clear-ext`, y es la
 única forma de vaciarlo. Este campo ya era explícito antes del resto del rediseño de esta sección: no
 cambia nada aquí.
+
+**Fijar la misma clave dos veces en la misma llamada, con valores distintos, no es un error.**
+`--ext k=a --ext k=b` dentro de la misma llamada deja `k` con el último valor de la línea de comandos,
+`b`, con aviso:
+
+```
+warning: --ext: key "k" given twice, kept last value
+```
+
+Es el mismo estilo que el aviso ya existente de valor repetido en una lista
+(["Campos de lista que admiten coma"](#campos-de-lista-que-admiten-coma)), y no el error 2 de un escalar
+repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)): cada clave de
+`--ext` se comporta como un token más de un mapa, no como un escalar único de toda la tarea.
+
+**Quitar con `--rm-ext` una clave que el mapa no tiene también avisa en vez de fallar,** con el mismo
+patrón tolerante que el resto de quitas de esta sección (["Campos de lista que admiten coma"](#campos-de-lista-que-admiten-coma)):
+
+```
+warning: --rm-ext: "priority_score" not present, nothing removed
+```
+
+**`--ext` tiene su propio paso en el orden de aplicación de una escritura, distinto del de
+`--clear-ext` y del de `--rm-ext`.** Los tres flags de esta sección no comparten paso:
+`--clear-ext` va en el paso 1, `--rm-ext` en el paso 3, y `--ext` en el paso nuevo entre los añadidos y
+los escalares (["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)).
+
+## Casos límite de añadir, quitar y fijar
+
+| Caso límite | Resultado | Código |
+|---|---|---|
+| `--add-labels`, o cualquier otro `--add-*`/`--append-*` de lista de tokens, con un valor que la tarea ya tiene | Se queda igual, sin duplicar, con `warning: --add-labels: "urgent" already present, kept once` | 0 |
+| `--rm-labels`, `--rm-deps` o cualquier otro `--rm-*` de lista de tokens, sobre un valor que la tarea no tiene | Sin efecto, con `warning: --rm-labels: "urgent" not present, nothing removed` | 0 |
+| `--rm-ext` sobre una clave que el mapa no tiene | Sin efecto, con `warning: --rm-ext: "priority_score" not present, nothing removed` | 0 |
+| Paso de `--ext` y `--rm-ext` en el orden de aplicación | `--clear-ext` en el paso 1, `--rm-ext` en el paso 3, `--ext` en su propio paso 5, entre los añadidos (4) y los escalares (6) | no aplica |
+| `--ext k=a --ext k=b`, la misma clave dos veces con valores distintos | Gana el último valor de la línea de comandos, con `warning: --ext: key "k" given twice, kept last value` | 0 |
+| Mayúsculas en una etiqueta o una persona asignada, por ejemplo `--add-labels Parser --add-labels parser` | Quedan como dos valores distintos al guardar; un filtro de lectura como `ls --label parser` encuentra los dos | 0 |
+| Mayúsculas y acentos en el selector de texto de un criterio, una definición de hecho o un comentario | Se pliegan las mayúsculas y se descartan los acentos antes de comparar (normalización NFKD, sin marcas combinantes); no cambia si el resultado es 0, 4 o 5, solo qué encuentra | sin cambio |
 
 ---
