@@ -20,7 +20,7 @@ con esta forma:
 | `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer`, `archive` | `tasks`, `warnings` |
 | `config` | `config list` | `config`. Ejemplo en ["`biso config`"](cmd/config.md) |
 | `doctor` | `doctor` | `problems`, `warnings`, `fixed`. Ejemplo en ["`biso doctor`"](cmd/doctor.md) |
-| `snapshot` | `snapshot` | `tasks`, `files`, `vcs`, `committed`, `commit`, `repository`, `pushed`, `vcsOutput`, `skipped`. Ejemplo en ["`biso snapshot`"](cmd/snapshot.md) |
+| `snapshot` | `snapshot` | `tasks`, `files`, `vcs`, `committed`, `commit`, `repository`, `pushed`, `vcsOutput`, `stagedOutsideBoard`, `skipped`. Ejemplo en ["`biso snapshot`"](cmd/snapshot.md) |
 | `board` | `board` | `url`, `port`, `opened`. Ejemplo en ["`biso board`"](cmd/board.md), y se imprime al arrancar el servidor |
 | `help` | `help` | `commands`, con el nombre y el resumen de cada uno. Ejemplo en ["`biso help`"](cmd/help.md#biso-help) |
 | `error` | cualquier fallo | Ver ["Los errores en JSON"](#los-errores-en-json) |

@@ -92,16 +92,35 @@ ese repositorio ignora la carpeta del tablero. Con eso:
 | La raíz está por encima y el repositorio **sí** ignora la carpeta, o no hay ningún repositorio | En un repositorio propio del tablero, que `snapshot` crea de forma perezosa la primera vez |
 
 **La receta de `git` es esta, entera**, porque es el único sistema del catálogo en la versión 1.0 y la
-especificación no puede dejar a quien implemente adivinándola. Son las dos preguntas de arriba y tres
+especificación no puede dejar a quien implemente adivinándola. Son las tres preguntas de arriba y tres
 órdenes:
 
 | Pregunta u orden | Qué se ejecuta, con el directorio del tablero como directorio de trabajo |
 |---|---|
 | ¿Hay un repositorio que lo contenga, y cuál es su raíz? | `git rev-parse --show-toplevel`, cuyo fallo significa que no hay ninguno |
 | ¿Ese repositorio ignora la carpeta del tablero? | `git check-ignore` con la ruta del directorio |
+| ¿El índice tiene algo preparado fuera de esos tres ficheros? | `git diff --cached --name-only`, cuya salida se descarta y solo se cuenta |
 | Crear el repositorio propio | `git init` |
-| Guardar la revisión | `git add` con los tres ficheros nombrados por su ruta, y después `git commit` con el mensaje de abajo |
+| Guardar la revisión | `git commit` con los tres ficheros nombrados por su ruta como argumentos de la propia orden, no de un `git add` previo, y con el mensaje de abajo |
 | Publicar | `git push` en el repositorio donde haya ido la revisión |
+
+**Nombrar los tres ficheros como argumentos de `git commit`, y no de un `git add` previo, es lo que
+acota el commit.** Con rutas explícitas en la línea de órdenes, `git commit` activa por defecto su modo
+`--only`: toma el contenido actual del árbol de trabajo de esas rutas y las comitea, sin tocar lo que
+hubiera ya preparado en el índice para cualquier otro fichero. El `git add` que llevaba la receta hasta
+ahora deja de hacer falta, precisamente porque `git commit` con rutas no necesita que estén preparadas de
+antemano.
+
+**Y antes de comitear se pregunta si el índice tiene algo más preparado**, con
+`git diff --cached --name-only`. Cuenta como ajeno cualquier ruta que aparezca en esa lista y no sea una
+de las tres del tablero, midiendo sobre el índice entero del repositorio donde va a ir la revisión, no
+solo sobre lo que hay dentro del propio directorio del tablero: cuando el tablero tiene su propio
+repositorio, o cuando `snapshot` acaba de crearlo, la raíz del repositorio y el directorio del tablero son
+el mismo sitio y las dos medidas coinciden; cuando el tablero vive dentro del repositorio del proyecto, la
+raíz está por encima, y un cambio preparado en cualquier otro fichero del proyecto cuenta igual de ajeno
+que uno preparado dentro del propio directorio del tablero. Si hay alguno, el `--only` de arriba ya
+garantiza que `git commit` no lo toca, y `snapshot` además lo dice: `note: 2 staged change(s) outside the
+board were left untouched`, por stderr y en `data.stagedOutsideBoard` del JSON.
 
 El identificador que la salida devuelve es el del commit que resulta, completo en el JSON y abreviado en
 el texto, y el caso de "no hay nada que guardar" es el que reconoce el propio `git commit` cuando no hay
@@ -124,7 +143,7 @@ Es lo que el flag promete, y quien lo escribe ya está pidiendo publicar, así q
 ni publica a medias; lo que hace es no ponerlo por defecto, que es el motivo de que el valor por defecto
 sea `commit`.
 
-**Con `custom` no hay ninguna de esas dos preguntas.** `biso` ejecuta la orden `commit` que declare la
+**Con `custom` no hay ninguna de esas tres preguntas.** `biso` ejecuta la orden `commit` que declare la
 configuración, en el directorio del tablero, y mira su código de salida; dónde acabe la revisión es cosa
 de esa orden. Por eso una instantánea con `custom` no lleva identificador de revisión en su salida.
 
@@ -173,12 +192,14 @@ repita lo que `biso` ya dice obligaría a reconocer sus mensajes uno a uno, y es
 receta de un sistema no debe hacer: la receta le pregunta cosas y mira códigos de salida, nunca lee lo
 que escribe.
 
-**La salida de las dos preguntas de la receta sí se descarta**, y es la única asimetría. Sus fallos son
-respuestas legítimas: `git rev-parse --show-toplevel` falla cuando no hay ningún repositorio, y
-`git check-ignore` termina distinto de cero cuando la carpeta no está ignorada. Reenviar eso llenaría de
-un `fatal: not a git repository` alarmante el camino normal de cualquier tablero que viva fuera de un
-repositorio. Se reenvía, por tanto, solo lo que escriben las órdenes que actúan: `init`, `add`, `commit` y
-`push` en `git`, y `commit` y `publish` en `custom`.
+**La salida de las tres preguntas de la receta sí se descarta**, y es la única asimetría. Sus fallos o su
+contenido son respuestas legítimas: `git rev-parse --show-toplevel` falla cuando no hay ningún
+repositorio, `git check-ignore` termina distinto de cero cuando la carpeta no está ignorada, y
+`git diff --cached --name-only` simplemente lista lo que haya, vacía cuando no hay nada ajeno preparado.
+Reenviar la primera pareja llenaría de un `fatal: not a git repository` alarmante el camino normal de
+cualquier tablero que viva fuera de un repositorio, y la tercera no es un mensaje para quien llama tal
+cual: `biso` la cuenta y la convierte en la nota de arriba. Se reenvía, por tanto, solo lo que escriben
+las órdenes que actúan: `init`, `commit` y `push` en `git`, y `commit` y `publish` en `custom`.
 
 **Con `--json` no van por stderr.** Ahí stderr lleva el sobre de error (["Los errores en JSON"](../contrato-json.md#los-errores-en-json)) y no puede llevar además
 texto suelto, así que esas líneas van dentro del sobre: en `data.vcsOutput` cuando la operación acaba
@@ -191,6 +212,7 @@ prefijo**, que existe solo para separarlas a la vista en un terminal.
 |---|---|
 | Hay repositorio y hay cambios desde la última instantánea | Escribe los dos ficheros, guarda la revisión, código 0 |
 | Hay repositorio y no hay ningún cambio desde la última instantánea | Escribe los dos ficheros (con el mismo contenido de antes) y no hay nada que guardar; `note: nothing to commit, snapshot.ndjson and board.json are unchanged since the last snapshot`, código 0 |
+| Hay repositorio y el índice tenía algo más preparado, fuera de los tres ficheros del tablero | Guarda la revisión igual, con los tres ficheros nombrados por su ruta; lo demás sigue preparado, sin tocar; `note: N staged change(s) outside the board were left untouched`, código 0 |
 | `--vcs none`, o la clave `vcs` en `none` | Escribe los dos ficheros y no ejecuta nada, código 0 |
 | El directorio del tablero no está en ningún repositorio, y crearlo funciona | Lo crea, mete los tres ficheros en la primera revisión, código 0 |
 | El directorio del tablero está dentro del repositorio del proyecto, que no lo ignora | Guarda la revisión ahí, con los tres ficheros nombrados por su ruta, código 0 |
@@ -228,6 +250,18 @@ Snapshot written: snapshot.ndjson, board.json (248 tasks)
 note: nothing to commit, snapshot.ndjson and board.json are unchanged since the last snapshot
 ```
 
+Si el índice tenía algo más preparado fuera de esos tres ficheros, la nota sale igual junto a la primera
+línea, se haya guardado la revisión o no:
+
+```
+Snapshot written: snapshot.ndjson, board.json (248 tasks)
+Committed a1b2c3d to the board's own repository
+```
+
+```
+note: 2 staged change(s) outside the board were left untouched
+```
+
 Con `--vcs none`, o si no hay sistema instalado, la salida por stdout es solo la primera línea; en el
 segundo caso, además, la nota `note: no version control here, skipping the commit` por stderr.
 
@@ -255,6 +289,7 @@ git:  3 files changed, 12 insertions(+), 4 deletions(-)
     "repository": "/Users/avilches/.biso/boards/my-project-3f9a2b1c",
     "pushed": false,
     "vcsOutput": ["[main a1b2c3d] biso snapshot: 248 tasks", " 3 files changed, 12 insertions(+), 4 deletions(-)"],
+    "stagedOutsideBoard": 0,
     "skipped": []
   }
 }
@@ -264,6 +299,9 @@ git:  3 files changed, 12 insertions(+), 4 deletions(-)
 `commit` y `repository` son `null` cuando `committed` es `false`, y `commit` también con `custom`, que
 no devuelve identificador. `repository` es la raíz del repositorio donde ha ido la revisión, que es lo
 que dice en qué caso de los tres se estaba. `pushed` es `false` salvo con `--vcs push` cumplido.
+`stagedOutsideBoard` es el recuento de rutas que el índice tenía preparadas fuera de los tres ficheros
+del tablero antes de comitear (["Dónde va la revisión, y cómo se decide"](#dónde-va-la-revisión-y-cómo-se-decide)): `0` salvo con `vcs` igual a `git` y algo
+ajeno preparado, y siempre `0` con `none` o `custom`, que no hacen esa pregunta.
 `skipped` lleva los identificadores de las tareas ilegibles que se han saltado, igual que en `biso ls`
 (["`biso ls`"](ls.md)): vacío salvo cuando el código de salida es 6.
 
