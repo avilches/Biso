@@ -26,6 +26,51 @@ vocabulario.
 
 ---
 
+## El algoritmo de sugerencias: Levenshtein con umbral
+
+**Decisión vigente.** Las cinco sugerencias de "lo más parecido" que promete la especificación
+(claves de `biso config`, nombres de comando de `biso help`, etiquetas y personas de `--label` /
+`--label-or` / `--assignee`) usan la distancia de Levenshtein sobre la forma que ya produce
+`normalizar()`, con un umbral de corte: solo entran las candidatas cuya distancia no supere la
+mitad de la longitud del valor normalizado de entrada, redondeada hacia arriba. De las que pasan
+se toman como máximo `N` (tres para claves y comandos, cinco para etiquetas y personas), por
+distancia ascendente y con el empate roto por orden alfabético de la forma normalizada. La
+sección ["El algoritmo de sugerencias más parecidas"](../spec/vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas) tiene el algoritmo completo.
+
+**Por qué Levenshtein y no prefijo común.** El prefijo común más largo es más simple de
+especificar y de calcular, pero falla justo en el caso que una sugerencia de "lo más parecido"
+tiene que cubrir: un error de tecleo que no está al final de la palabra. `sttaus`, con una
+transposición al principio, tiene prefijo común de longitud cero con `status`, mientras que
+Levenshtein lo pone a distancia 1, la máxima cercanía posible sin ser exacto. Encaja además con
+el espíritu que `coincidir()` ya fija para el vocabulario cerrado: cubrir la forma de escribir
+algo mal, no solo dónde empieza a escribirse.
+
+**Por qué reutilizar `normalizar()` en vez de una métrica sobre el texto tal cual.** Calcular la
+distancia sobre el valor tal cual escribiría dos veces la misma insensibilidad a mayúsculas,
+guiones y guiones bajos que `coincidir()` ya resuelve, y podría desacompasarse de ella con el
+tiempo. Con `normalizar()` compartido, un valor que ya coincide por el paso c de `coincidir()`
+nunca necesita sugerencia, y las que sí la necesitan usan exactamente la misma noción de "casi
+igual" en los dos sitios.
+
+**Por qué un umbral y no siempre las `N` más cercanas que haya.** Sin umbral, un valor que no se
+parece a nada del vocabulario recibiría igualmente `N` sugerencias, porque siempre hay *alguna*
+candidata menos lejana que las demás. Eso es peor que no sugerir nada: quien recibe el error
+puede tomar una de las `N` sin comprobarla, confiando en que "más parecida" significa "parecida
+de verdad". El umbral hace que una entrada sin nada realmente cercano devuelva una lista vacía en
+vez de rellenar el hueco con ruido, y ese es el caso de `xyz` contra un vocabulario de etiquetas
+en el ejemplo de la sección enlazada arriba.
+
+**Alternativas descartadas:**
+
+- *Prefijo común más largo (longest common prefix), sin umbral.* Más simple y más rápida, pero no
+  cubre el error de tecleo real (una transposición o una letra de más al principio colapsan el
+  prefijo común a casi nada), que es justo el caso que una sugerencia tiene que resolver.
+- *Levenshtein sin umbral.* Comparte la métrica y el desempate de la decisión vigente, pero
+  siempre rellena las `N` sugerencias con lo que haya, aunque nada se parezca de verdad a la
+  entrada; descartada por el mismo motivo que se explica arriba para el umbral.
+
+---
+
 ## El presupuesto del mensaje de arranque
 
 `biso prime` sustituye por completo a las guías de instrucciones y a cualquier inyección de texto en

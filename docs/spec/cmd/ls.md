@@ -97,7 +97,7 @@ ordenadas por identificador.
 | Caso | Qué pasa |
 |---|---|
 | Filtro con un valor fuera del vocabulario | Error 3, con la lista de válidos |
-| `-l` con una etiqueta o `-a` con una persona que el tablero no tiene | Error 3, con las cinco más parecidas |
+| `-l` con una etiqueta o `-a` con una persona que el tablero no tiene | Error 3, con hasta cinco de las más parecidas, igual que en la sección ["Qué valida cada filtro, y contra qué"](../vocabularios.md#qué-valida-cada-filtro-y-contra-qué) |
 | Lo mismo con `--unchecked` | Se acepta, y probablemente no devuelve nada |
 | Filtro válido sin resultados | Ninguna línea por stdout, `note: no tasks match` por stderr, código **0** |
 | Hay más resultados que el límite | Se imprimen los primeros y sale el aviso de recorte |

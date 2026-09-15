@@ -97,7 +97,7 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 
 | Caso | Qué pasa |
 |---|---|
-| Clave inexistente | Error 4, con las tres claves más parecidas |
+| Clave inexistente | Error 4, con hasta tres de las claves más parecidas (las que pasen el umbral de ["El algoritmo de sugerencias más parecidas"](../vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas)) |
 | Valor del tipo equivocado, por ejemplo `finish_strict maybe` | Error 3, diciendo qué tipo esperaba |
 | `initial_status` a un valor que no está en `statuses` | Error 3 |
 | `lease_minutes` a cero o negativo | Error 3, el mismo trato que cualquier valor fuera de dominio de esta tabla |
@@ -132,6 +132,15 @@ note: statuses = To Do,In Progress,Done,Blocked
 ```
 
 Ningún cambio de configuración toca ninguna tarea, nunca.
+
+**Una clave inexistente sugiere hasta tres de las más parecidas**, con el algoritmo de
+["El algoritmo de sugerencias más parecidas"](../vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas):
+
+```
+$ biso config get urgency.pryority
+error: no such key: "urgency.pryority"
+hint: did you mean: urgency.priority, urgency.criteria, urgency.active?
+```
 
 ## Salida
 
