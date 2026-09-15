@@ -44,6 +44,13 @@ Cuando se usa para resolver una referencia, y solo entonces, se aplican además 
 | 0 | error 4 |
 | más de 1 | error 5, con las candidatas por stdout en el formato de `biso ls` |
 
+El caso de más de una coincidencia lleva, por stderr y antes de esas filas, esta línea, con `code`
+igual a `ambiguous_reference` (["El contrato JSON"](contrato-json.md#los-identificadores-de-error)):
+
+```
+error: "CRLF" matches 3 tasks
+```
+
 **Una coincidencia en el título gana sobre una coincidencia en cualquier otro sitio.** Si el texto
 aparece en el título de una sola tarea, esa es la respuesta aunque aparezca en el cuerpo de otras
 diez, y no hay ambigüedad. La búsqueda para resolver una referencia mira solo las tareas **no

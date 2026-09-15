@@ -115,6 +115,22 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | `get` de una clave de lista | Los valores separados por comas, en una línea |
 | `set` correcto | Sin salida por stdout, con `note:` por stderr diciendo el valor nuevo |
 
+La nota de un `set` correcto lleva la clave y el valor nuevo, con el mismo formato `clave = valor`
+que usan `get` y `list`:
+
+```
+$ biso config set lease_minutes 45
+note: lease_minutes = 45
+```
+
+En una clave de lista sale la lista entera ya separada por comas, como la vería un `get` posterior,
+nunca solo el elemento que se acaba de añadir o quitar:
+
+```
+$ biso config set statuses "To Do,In Progress,Done,Blocked"
+note: statuses = To Do,In Progress,Done,Blocked
+```
+
 Ningún cambio de configuración toca ninguna tarea, nunca.
 
 ## Salida

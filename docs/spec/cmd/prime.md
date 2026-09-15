@@ -253,7 +253,7 @@ ninguno de sus encabezados, y el resto del mensaje no cambia:
 ```
 THE BOARD IS EMPTY
   Create the first one:
-  biso new "Title" -d "What and why" --ac "How we will know it works"
+  biso new "Title" -d "What and why" --add-ac "How we will know it works"
 ```
 
 ## El esquema JSON
