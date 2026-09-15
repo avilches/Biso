@@ -137,6 +137,19 @@ sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-puntero-n
 no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máquinas sigan hablando del
 mismo tablero. Y no reescribe el puntero, porque ya era correcto.
 
+**Hay una excepción hermana, al revés: cuando este proyecto no resuelve ya, por su cuenta, a ningún
+tablero accesible, y `--at` nombra un directorio que ya es un tablero íntegro, con `board.db` legible.**
+Es lo que pasa cuando no hay ningún puntero aquí, o cuando el que hay no resuelve a nada en esta
+máquina (los dos remedios de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-puntero-se-pierde), "El puntero se pierde" y
+["La ruta relativa o absoluta"](../resolucion-del-tablero.md#la-ruta-relativa-o-absoluta)). Ahí tampoco `init` acuña un `id` nuevo: adopta el que ya lleva el marcador del destino. Pero a
+diferencia del caso anterior, esta vez sí escribe, o reescribe, el puntero de este proyecto con ese `id`
+y con la `path` que apunta a ese destino, porque no había ningún puntero correcto que conservar. No
+toca ni la configuración ni las tareas del tablero destino: la operación es puramente local a este
+proyecto, indicarle dónde está su tablero. **Esta excepción no se aplica cuando el proyecto que llama ya
+resuelve, por su cuenta, a un tablero accesible**, aunque sea distinto del destino: ahí sigue siendo el
+Error 2 de la fila "Ya hay un tablero accesible desde aquí", solo que visto desde el lado del destino en
+vez de desde el lado de este proyecto.
+
 **Sin `--statuses`**, el tablero nace con `To Do, In Progress, Done`, con los papeles inicial, activo y
 terminal en ese orden. **Con `--statuses`**, hacen falta los tres flags de papel,
 `--initial-status`, `--active-status` y `--terminal-status`, con los mismos nombres que las claves de
@@ -186,7 +199,7 @@ existiera antes queda afectada.
 | `--at`, sin `--from`, al mismo directorio de la fila anterior: con el marcador pero sin una base de datos legible | No cuenta como tablero accesible, igual que en la fila anterior: `init` lo crea ahí mismo, adoptando el `id` del marcador, código 0. Sin `--from` no hay instantánea que restaurar, así que el tablero nace vacío; es el remedio de un clon cuyo directorio del tablero se versionó antes de la primera instantánea |
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que ese flag significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
-| `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |
+| `--at` a un directorio que ya es el directorio de un tablero, con `board.db` legible | Depende de si este proyecto ya resuelve, por su cuenta, a un tablero accesible (fila "Ya hay un tablero accesible desde aquí"). Si lo resuelve, Error 2, con el mismo motivo visto desde el otro lado: el destino también es un tablero. Si no lo resuelve, porque no hay puntero aquí o el que hay no resuelve a nada en esta máquina, no es un error: adopta el `id` del marcador del destino y escribe, o reescribe, el puntero de este proyecto con ese `id` y esa `path`, sin tocar la configuración ni las tareas del destino, código 0 |
 | `--at` con una ruta relativa | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta relativa, código 0 |
 | `--at` con una ruta absoluta | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta absoluta, código 0 |
 | `--at` con una ruta relativa que sale del proyecto, como `../tableros/my-project` | No es un error, y el puntero la guarda tal cual: resuelve mientras la posición relativa entre el puntero y el tablero se mantenga, y el marcador confirma que el directorio al que llega es el tablero que el `id` nombra |
@@ -328,7 +341,7 @@ No están en el bloque de arriba porque ese bloque es stdout, y las notas van po
 
 | Desenlace | Código |
 |---|---:|
-| Tablero creado, o restaurado con `--from` | 0 |
+| Tablero creado, restaurado con `--from`, o el puntero (re)escrito adoptando un tablero ya existente | 0 |
 | Ya existía y no hay `--overwrite-config` | 2 |
 | Argumentos inválidos, incluido un `board.json` de `--from` inválido, o `--from` junto con `--overwrite-config` | 2 |
 | `--from` a un directorio sin `snapshot.ndjson`, sin `board.json`, o sin los dos | 4 |

@@ -296,6 +296,17 @@ la subsección ["El puntero nombra un tablero que no está en esta máquina"](#e
 where` dice cuál se ha usado y por qué (sección ["`biso where`"](cmd/where.md)). No hay ningún caso en el que haya que escribirlo
 a mano.
 
+**Hay una segunda excepción, hermana de la anterior pero al revés.** Cuando este proyecto no resuelve ya,
+por su cuenta, a ningún tablero accesible (no hay puntero aquí, o el que hay no resuelve a nada en esta
+máquina), y `--at` nombra un directorio que ya es un tablero íntegro, con `board.db` legible, `init`
+tampoco acuña un `id` nuevo: adopta el que ya lleva el marcador de ese directorio. Pero aquí sí escribe,
+o reescribe, el puntero, porque esta vez no había ninguno correcto que conservar: es la única forma de
+que este proyecto vuelva a encontrar ese tablero por su cuenta. No toca ni la configuración ni las
+tareas del tablero destino. Esta excepción no se aplica cuando el proyecto ya resuelve, por su cuenta, a
+un tablero accesible, aunque sea distinto del destino: ahí `--at` a otro tablero es el Error 2 de "ya
+hay un tablero accesible desde aquí" (sección ["`biso init`"](cmd/init.md)), visto desde el lado del destino. Son los remedios de
+["El puntero se pierde"](#el-puntero-se-pierde) y de ["La ruta relativa o absoluta"](#la-ruta-relativa-o-absoluta), más abajo.
+
 ### La ruta relativa o absoluta
 
 **La forma de la `path` la elige quien llama, con la forma que le da a `--at`** (sección ["`biso init`"](cmd/init.md)), y las dos
@@ -314,8 +325,11 @@ ser del programa.
 
 **El único caso que sigue pidiendo una corrección a mano** es mover o renombrar a mano el directorio de
 un tablero que vive fuera de las raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina), porque entonces su `path` deja de resolver y
-no hay ninguna raíz que recorrer para encontrarlo. Se arregla con `biso init --at <ruta nueva>`, que
-reescribe el puntero adoptando el `id` que ya lleva (["`biso init`"](cmd/init.md)).
+no hay ninguna raíz que recorrer para encontrarlo. Se arregla con `biso init --at <ruta nueva>`,
+apuntando al directorio movido. Como la `path` vieja ya no resuelve a nada, este proyecto no resuelve ya
+a ningún tablero accesible por su cuenta, así que tampoco aquí `init` da el Error 2 de "ya hay un
+tablero": adopta el `id` que el marcador de ese directorio ya lleva y reescribe el puntero con la `path`
+nueva (secciones ["`biso init`"](cmd/init.md) y ["Cómo `biso init` genera el id y escribe el puntero"](#cómo-biso-init-genera-el-id-y-escribe-el-puntero), más arriba).
 
 ## Casos especiales y errores
 
@@ -358,8 +372,11 @@ que hace con la base de datos ilegible de la sección ["Qué pasa con un dato qu
 
 **Si el puntero se pierde** (se borra a mano, o el proyecto se clona sin haberlo commiteado antes), la
 recuperación es explícita, nunca automática, y consiste en una sola cosa: `biso init --at <ruta>` con
-la ruta del directorio del tablero que ya existe, que escribe un puntero nuevo con ese `path`,
-relativa o absoluta según la regla de la subsección ["La ruta relativa o absoluta"](#la-ruta-relativa-o-absoluta) (sección ["`biso init`"](cmd/init.md)). Es lo único que arregla el proyecto,
+la ruta del directorio del tablero que ya existe. Como ese directorio ya es un tablero íntegro y este
+proyecto, sin puntero, no resuelve ya a ningún otro tablero accesible, `init` no lo rechaza con el
+Error 2 de "ya hay un tablero": adopta el `id` que el marcador de ese directorio ya lleva y escribe un
+puntero nuevo con ese `id` y con ese `path`, relativa o absoluta según la regla de la subsección
+["La ruta relativa o absoluta"](#la-ruta-relativa-o-absoluta) (secciones ["`biso init`"](cmd/init.md) y ["Cómo `biso init` genera el id y escribe el puntero"](#cómo-biso-init-genera-el-id-y-escribe-el-puntero), más arriba). Es lo único que arregla el proyecto,
 porque es lo único que deja el puntero otra vez donde lo ven todos sus subdirectorios y todas sus
 copias de trabajo.
 
