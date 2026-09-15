@@ -23,10 +23,19 @@ propios de ningún comando.
 
 Las reglas que acompañan a la tabla:
 
-- **El código 7 garantiza que no se ha escrito nada.** Si un comando termina con 7, el tablero está
-  exactamente como estaba antes. Por eso una validación fallida dentro de un lote se reporta como 7 y
-  no como 3 ni como 4, y por eso el 7 llega siempre con el detalle de **todos** los fallos
-  encontrados, no solo del primero.
+- **El código 7 garantiza que no se ha escrito nada, y el código específico siempre gana sobre él.**
+  Si un comando termina con 7, el tablero está exactamente como estaba antes, pero el 7 no es el
+  código general de "una validación falló dentro de un lote": un fallo que ya tiene su propio código
+  (3, 4, 5...) lo conserva sea cual sea el tamaño del lote. `biso set A B C` donde `C` no existe
+  devuelve 4, tanto si `C` es la única referencia como si hay cien. El 7 queda reservado en exclusiva
+  a los fallos que no se pueden atribuir a un elemento señalable, que son los dos que ya tienen su
+  propio identificador en la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error): `batch_invalid`
+  (una validación de conjunto que no apunta a un elemento concreto, como un `--dry-run` sobre `new
+  --from` con varias líneas inválidas por motivos distintos) y `dry_run_failed` (un `--dry-run` que no
+  habría pasado la validación). En los dos casos el 7 llega con el detalle de **todos** los fallos
+  encontrados, no solo del primero. Si un programa que llama a `biso` quisiera tratar todo lote fallido
+  igual, tendría que analizar `error.details` de todas formas, que es justo lo que un código
+  específico existe para evitar.
 - **Un listado vacío es siempre 0.** Un tablero donde de verdad no hay nada que cumpla un filtro
   válido no es un error.
 - **El código 3 cubre dos direcciones.** Un valor de entrada que el tablero no reconoce, y un dato ya

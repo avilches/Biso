@@ -54,11 +54,22 @@ proceso es el de la tabla de la sección ["Códigos de salida"](codigos-de-salid
 Cuando un solo comando produce varios fallos, como un lote inválido, `error.details` es una lista de
 objetos con la misma forma, uno por fallo, y `error.code` es `batch_invalid`.
 
+**Si la llamada que falla habría emitido avisos de haber terminado bien, esos avisos viajan dentro
+del mismo sobre, en una clave `warnings` al mismo nivel que `error`**, con la misma forma que
+`data.warnings` de una salida sin error (["El esquema JSON"](cmd/set.md#el-esquema-json) y el catálogo de
+["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)). Es la única excepción a "stderr solo lleva el
+objeto de error": en vez de imprimir primero el texto de cada `warning:` y luego el objeto JSON, que
+mezclaría dos formas distintas en el mismo flujo, los dos viajan dentro del único objeto que sale por
+stderr. `warnings` solo aparece cuando la llamada fallida produjo al menos un aviso; su ausencia no se
+distingue de una lista vacía, así que un consumidor que no la encuentre puede tratarlo como "ningún
+aviso".
+
 **Un sobre de error no es una salida de datos, y se gobierna aparte de la promesa de la sección ["Números, fechas y ausencias"](#números-fechas-y-ausencias).**
 Esa promesa existe porque quien consume una salida de datos no puede prever qué habrá dentro, así que
 tiene derecho a que la forma no dependa del contenido. En un error sí puede preverlo, porque lo primero
 que hace es leer `code`, y cada `code` trae siempre las mismas claves. Estas son las tres que están en
-todos los errores y las cinco de detalle, con la regla de cuándo acompañan:
+todos los errores, las cinco de detalle dentro de `error`, y una sexta que vive fuera de él, con la
+regla de cuándo acompañan:
 
 | Clave | En qué errores aparece |
 |---|---|
@@ -67,10 +78,13 @@ todos los errores y las cinco de detalle, con la regla de cuándo acompañan:
 | `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs` |
 | `details` | Solo en `batch_invalid` y en `dry_run_failed`, y es una lista de objetos de esta misma forma, uno por fallo |
 | `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió la orden que falló (["`biso snapshot`"](cmd/snapshot.md)) |
+| `warnings` | Al mismo nivel que `error`, no dentro de él, en cualquier `code` cuya llamada haya producido al menos un aviso antes de fallar, con la misma forma que `data.warnings` (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)) |
 
 Las cinco de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
 comprobable: quien ramifica sobre `unknown_status` sabe que va a tener `field`, `given` y `valid`, y
-quien ramifica sobre `busy` sabe que no va a tener ninguna de las cinco.
+quien ramifica sobre `busy` sabe que no va a tener ninguna de las cinco. `warnings` es la excepción:
+no depende del `code`, sino de si esa llamada en concreto llegó a producir algún aviso antes de fallar,
+así que puede acompañar a cualquiera de ellos.
 
 ## Los identificadores de error
 
