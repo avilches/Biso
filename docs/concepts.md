@@ -46,6 +46,17 @@ the terminal one, whatever each board calls them. The keys that hold each role a
 and why these three roles and no others is explained in
 ["El modelo de estados"](decisiones/modelo-de-estados.md).
 
+State and assignment answer two different questions, and an agent looking for work reads both. The
+state says where a task stands in its own life, from born to done; `assignees` says who was handed
+it, and that can happen at any point along the way, a task fresh in its initial state included. A
+task created in `Inbox` and assigned to an agent is already that agent's, whether or not anyone
+moves it to `Ready` first: `--mine` finds it regardless of state, and only running `biso start`
+switches it to the active state. There is no extra "available" role for this, because assignment
+already carries the "this is yours" signal on its own; adding a state for it would only duplicate
+what `assignees` already says. The reasoning behind treating assignment and state as two independent
+signals is in
+["Distinguir el encargo de la ejecución"](decisiones/modelo-de-estados.md#distinguir-el-encargo-de-la-ejecución-resuelto-sin-estado-nuevo).
+
 ## Acceptance criteria and definition of done
 
 A task can carry two independent checklists, with the same shape: each item has text and can be

@@ -142,28 +142,28 @@ nav:
     - Los vocabularios del tablero y la regla de validacion: spec/vocabularios.md
     - Como se resuelve una referencia a una tarea: spec/referencias.md
     - Las familias de flags: spec/familias-de-flags.md
-    - Comandos:
-      - Los comandos: spec/cmd/index.md
-      - Flags globales: spec/cmd/flags-globales.md
-      - biso prime, el arranque de una sesion: spec/cmd/prime.md
-      - biso init: spec/cmd/init.md
-      - biso where: spec/cmd/where.md
-      - biso new: spec/cmd/new.md
-      - biso ls: spec/cmd/ls.md
-      - biso get: spec/cmd/get.md
-      - biso set: spec/cmd/set.md
-      - "Los verbos del ciclo: start, note, comment, finish, ask, answer": spec/cmd/verbos-del-ciclo.md
-      - biso archive: spec/cmd/archive.md
-      - biso export: spec/cmd/export.md
-      - biso config: spec/cmd/config.md
-      - biso doctor: spec/cmd/doctor.md
-      - biso board: spec/cmd/board.md
-      - "La ayuda: biso help y biso --help": spec/cmd/help.md
-      - biso snapshot: spec/cmd/snapshot.md
     - El contrato JSON: spec/contrato-json.md
     - El contrato de estabilidad: spec/estabilidad.md
     - Lo que se deja fuera a proposito: spec/fuera-de-alcance.md
     - Que hay implementado y que no: spec/estado-de-implementacion.md
+  - Comandos:
+    - Los comandos: spec/cmd/index.md
+    - Flags globales: spec/cmd/flags-globales.md
+    - biso prime, el arranque de una sesion: spec/cmd/prime.md
+    - biso init: spec/cmd/init.md
+    - biso where: spec/cmd/where.md
+    - biso new: spec/cmd/new.md
+    - biso ls: spec/cmd/ls.md
+    - biso get: spec/cmd/get.md
+    - biso set: spec/cmd/set.md
+    - "Los verbos del ciclo: start, note, comment, finish, ask, answer": spec/cmd/verbos-del-ciclo.md
+    - biso archive: spec/cmd/archive.md
+    - biso export: spec/cmd/export.md
+    - biso config: spec/cmd/config.md
+    - biso doctor: spec/cmd/doctor.md
+    - biso board: spec/cmd/board.md
+    - "La ayuda: biso help y biso --help": spec/cmd/help.md
+    - biso snapshot: spec/cmd/snapshot.md
   - Decisiones de diseno:
     - decisiones/index.md
     - Los principios, y como se mantiene la especificacion: decisiones/principios-y-mantenimiento.md
@@ -175,8 +175,8 @@ nav:
     - Decisiones de detalle: decisiones/detalles.md
   - Estado del arte:
     - estado-del-arte/index.md
-    - "Parte 1. Las herramientas": estado-del-arte/herramientas.md
-    - "Parte 2. El catalogo de problemas": estado-del-arte/catalogo-de-problemas.md
-    - "Parte 3. Lo que la gente quiere conservar, y lo que rechaza": estado-del-arte/lo-que-se-conserva.md
-    - "Parte 4. Compatibilidad del modelo de datos con otros gestores": estado-del-arte/compatibilidad-de-modelos.md
+    - "1. Las herramientas": estado-del-arte/herramientas.md
+    - "2. El catalogo de problemas": estado-del-arte/catalogo-de-problemas.md
+    - "3. Lo que la gente quiere conservar, y lo que rechaza": estado-del-arte/lo-que-se-conserva.md
+    - "4. Compatibilidad del modelo de datos con otros gestores": estado-del-arte/compatibilidad-de-modelos.md
     - "Anexo. Esquemas de datos externos": estado-del-arte/esquemas-de-datos-externos.md

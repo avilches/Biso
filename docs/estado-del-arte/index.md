@@ -37,8 +37,8 @@ Cinco cosas concretas quedaron sin verificar del todo, y se marcan también dond
 
 ## Las páginas
 
-- [Parte 1. Las herramientas](herramientas.md)
-- [Parte 2. El catálogo de problemas](catalogo-de-problemas.md)
-- [Parte 3. Lo que la gente quiere conservar, y lo que rechaza](lo-que-se-conserva.md)
-- [Parte 4. Compatibilidad del modelo de datos con otros gestores](compatibilidad-de-modelos.md), con
+- [1. Las herramientas](herramientas.md)
+- [2. El catálogo de problemas](catalogo-de-problemas.md)
+- [3. Lo que la gente quiere conservar, y lo que rechaza](lo-que-se-conserva.md)
+- [4. Compatibilidad del modelo de datos con otros gestores](compatibilidad-de-modelos.md), con
   el inventario de hechos en el que se apoya, [Esquemas de datos externos](esquemas-de-datos-externos.md)

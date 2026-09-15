@@ -1,4 +1,4 @@
-# Parte 2. El catálogo de problemas
+# 2. El catálogo de problemas
 
 ## 1. Dos copias de trabajo asignan el mismo identificador
 

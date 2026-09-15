@@ -1,4 +1,4 @@
-# Parte 3. Lo que la gente quiere conservar, y lo que rechaza
+# 3. Lo que la gente quiere conservar, y lo que rechaza
 
 De todo el ruido salen tres cosas que nadie quiere perder: **el grafo de dependencias**, **poder dejar
 fuera del listado lo que no se puede coger ahora**, y **poder fichar una tarea de forma atómica**. Las

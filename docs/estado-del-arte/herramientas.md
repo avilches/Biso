@@ -1,4 +1,4 @@
-# Parte 1. Las herramientas
+# 1. Las herramientas
 
 ## Backlog.md
 

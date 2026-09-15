@@ -25,11 +25,19 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 | `--extensions <list>` | | no | lista | vacía ¹ | sí | sí | |
 | `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) ¹ | no | no | |
 | `--overwrite-config` | | no | booleano | falso | no | no | |
-| `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--extensions`, `--prefix`, `--overwrite-config` |
+| `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`<br>`--statuses`<br>`--initial-status`<br>`--active-status`<br>`--terminal-status`<br>`--types`<br>`--priorities`<br>`--extensions`<br>`--prefix`<br>`--overwrite-config` |
 
 ¹ Solo aplica al crear un tablero nuevo. Con `--overwrite-config` sobre un tablero que ya existe,
 no pasar este flag no vuelve a este valor por defecto: conserva el valor que el tablero ya tenía
 para esa clave (tabla de casos más abajo).
+
+**Repetible** dice si el flag se puede dar más de una vez en la misma llamada, cada vez se acumula.
+**Lista** dice si, además, admite varios valores separados por coma dentro de un solo `--flag a,b`. En
+esta tabla las dos siempre coinciden porque `--statuses`, `--types`, `--priorities` y `--extensions`
+son todas listas de tokens que admiten las dos formas a la vez; no es la regla general de la
+especificación, donde hay flags repetibles que no admiten coma, como `--comment` (sección
+["`biso set`"](set.md)). El detalle exacto de cómo se acumulan las dos formas está en
+["Repetición y listas separadas por comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas).
 
 **`--at` es la ruta del directorio del tablero que se va a crear, no el directorio donde se crea.** Con
 `--at tablero` el tablero queda en `tablero`, no en `tablero/my-project-3f9a2b1c`. Es la misma convención que

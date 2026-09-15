@@ -3,7 +3,8 @@
 ## Orden de aplicación dentro de una escritura
 
 Una sola invocación puede tocar muchos campos. El orden en que se aplican es fijo y **no depende del
-orden en que aparecen los flags en la línea de comandos**, para que el resultado sea reproducible:
+orden en que aparecen los flags en la línea de comandos**, para que el resultado sea reproducible y
+determinista:
 
 1. Todos los `--clear-*`, incluido `--clear-ext`.
 2. Todos los `--replace-*`.
@@ -125,13 +126,3 @@ directorio cuya base de datos no abre no cuenta como tablero accesible para `bis
 `id` que nombra el marcador de la instantánea, de modo que el puntero commiteado del proyecto sigue
 valiendo. Es también lo que necesita un clon recién traído a otra máquina, que llega con el directorio
 del tablero versionado y sin base de datos dentro.
-
-### Lo que se pierde al pasar de un fichero por tarea a una base de datos compartida
-
-Con un almacén de un fichero por tarea, el aislamiento del daño sale gratis: una tarea corrupta es
-exactamente eso, una tarea corrupta, y las demás siguen intactas porque viven en ficheros distintos.
-Con una base de datos compartida, ese aislamiento hay que provocarlo a propósito, y cuando falta, una
-sola corrupción puede llevarse por delante más de una tarea a la vez, o el tablero entero. Esta
-especificación dice las cosas incómodas en voz alta en vez de esconderlas: ese es el coste real de
-guardar los datos en una base de datos, frente a la alternativa de un fichero por tarea.
-

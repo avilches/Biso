@@ -1,11 +1,10 @@
-# Parte 4. Compatibilidad del modelo de datos con otros gestores
+# 4. Compatibilidad del modelo de datos con otros gestores
 
-Investigado el 2026-09-15 para la tarea TASK-37 del tablero, a partir del modelo de datos de `biso`
-([El modelo de datos de una tarea](../spec/modelo-de-datos/index.md) y sus páginas hijas) y del
+Esta página cruza el modelo de datos de `biso`
+([El modelo de datos de una tarea](../spec/modelo-de-datos/index.md) y sus páginas hijas) contra el
 inventario de campos de [Esquemas de datos externos](esquemas-de-datos-externos.md), que reúne los
-hechos citados de cada sistema externo. Esta página hace la comparación que aquella no hace a
-propósito: cruza esos hechos contra el modelo de `biso`, campo a campo, y decide qué se puede
-prometer en la especificación.
+hechos citados de cada sistema externo, campo a campo, y decide qué compatibilidad se puede prometer
+en la especificación.
 
 Backlog.md se investigó aparte, directamente contra el CLI 1.52.0 instalado en esta máquina (su
 `--help`, su `Input schema`, y tareas de prueba creadas y borradas en un worktree para observar el
@@ -49,6 +48,66 @@ después, en qué sentido concreto ocurre cada pérdida.
 **El porcentaje es (directa + transformación) / 29**, sobre el total de campos guardados de `biso`,
 igual en los dos sentidos salvo que la prosa de después de la tabla diga lo contrario para un campo
 suelto.
+
+## Resumen
+
+| Sistema | Cobertura al exportar | Cobertura al importar |
+|---|---|---|
+| Backlog.md | 24/29 ≈ 83 % | 24/29 ≈ 83 % |
+| Linear | 17/29 ≈ 59 % | 17/29 ≈ 59 % |
+| Trello | 17/29 ≈ 59 % | 17/29 ≈ 59 % |
+| Beads (`bd`) | 16/29 ≈ 55 % | 16/29 ≈ 55 % |
+| GitHub Issues | 13/29 ≈ 45 % | 13/29 ≈ 45 % |
+| Taskwarrior | 12/29 ≈ 41 % | 12/29 ≈ 41 % |
+| Task Master | 9/29 ≈ 31 % | 9/29 ≈ 31 % |
+
+**La misma comparación, en una sola tabla.** "Sí" es la correspondencia directa, "Transf." es con
+transformación, y "No" agrupa tanto la ausencia de campo como los pocos casos marcados como "sin
+equivalente confirmado" en la tabla de su sistema (donde la investigación no llegó a comprobar si
+existe o no); el matiz de cada celda, y por qué, está en la tabla detallada de la sección de ese
+sistema.
+
+| Campo de `biso` | Backlog.md | Linear | Trello | Beads | GitHub Issues | Taskwarrior | Task Master |
+|---|---|---|---|---|---|---|---|
+| `id` | Sí | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
+| `createdAt` | Transf. | Sí | No | Sí | Sí | Transf. | No |
+| `updatedAt` | Transf. | Sí | Transf. | Sí | Sí | Transf. | No |
+| `archived` | Transf. | No | Sí | No | No | Transf. | No |
+| `leaseExpiresAt` | No | No | No | No | No | No | No |
+| `leaseHolder` | No | No | No | No | No | No | No |
+| `title` | Sí | Sí | Sí | Sí | Sí | Sí | Sí |
+| `status` | Sí | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
+| `type` | Sí | No | No | Transf. | Transf. | No | No |
+| `priority` | Sí | Transf. | Transf. | Transf. | No | Transf. | Transf. |
+| `parent` | Sí | Sí | No | Transf. | Sí | No | Transf. |
+| `assignees` | Sí | Transf. | Sí | No | Sí | No | No |
+| `author` | No | Sí | No | No | Sí | No | No |
+| `labels` | Sí | Sí | Sí | Sí | Sí | Sí | No |
+| `dependencies` | Sí | Sí | No | Transf. | Sí | Sí | Sí |
+| `references` | Sí | Transf. | Transf. | No | No | No | No |
+| `documentation` | Sí | Transf. | Transf. | No | No | No | No |
+| `modifiedFiles` | Sí | No | No | No | No | No | No |
+| `due` | Sí | Sí | Sí | No | No | Sí | No |
+| `ordinal` | Sí | Transf. | Transf. | No | No | No | No |
+| `ext` | No | No | Transf. | Sí | No | Sí | No |
+| `description` | Sí | Sí | Sí | Sí | Sí | No | Transf. |
+| `plan` | Sí | No | No | Transf. | No | No | Transf. |
+| `notes` | Sí | No | No | Sí | No | No | No |
+| `summary` | Sí | No | No | No | No | No | No |
+| `acceptanceCriteria` | Transf. | No | Sí | Transf. | No | No | Transf. |
+| `definitionOfDone` | Transf. | No | Sí | No | No | No | No |
+| `comments` | Transf. | Transf. | Transf. | Transf. | Transf. | Transf. | No |
+| `question` | No | No | No | No | No | No | No |
+
+**Ninguno llega a la compatibilidad campo a campo que la portada de la especificación afirmaba sin
+haberla comprobado.** Ni siquiera Backlog.md, el más cercano por diseño: pierde la clave estable de
+los criterios y de los comentarios, que es precisamente la pieza que
+["Los criterios y sus claves estables"](../spec/modelo-de-datos/criterios.md) y ["Los
+comentarios"](../spec/modelo-de-datos/comentarios.md) tratan como una garantía central del modelo de
+`biso`. Ningún sistema de los siete tiene nada parecido a `question` (una pregunta dirigida a una
+persona concreta con su propio pendiente/respondida), ni a `leaseExpiresAt`/`leaseHolder` (un
+arrendamiento con expiración), que son, junto con las claves estables, los tres rasgos que distinguen
+el modelo de `biso` de los siete investigados.
 
 ## Backlog.md
 
@@ -414,66 +473,6 @@ en origen. Se pierde lo propio de Task Master sin sitio en `biso`: el informe ap
 (`task-complexity-report.json`), y el nivel de "tags" que agrupa varios `tasks.json` en uno.
 
 **Cobertura: 9/29 ≈ 31 % en los dos sentidos.**
-
-## Resumen
-
-| Sistema | Cobertura al exportar | Cobertura al importar |
-|---|---|---|
-| Backlog.md | 24/29 ≈ 83 % | 24/29 ≈ 83 % |
-| Linear | 17/29 ≈ 59 % | 17/29 ≈ 59 % |
-| Trello | 17/29 ≈ 59 % | 17/29 ≈ 59 % |
-| Beads (`bd`) | 16/29 ≈ 55 % | 16/29 ≈ 55 % |
-| GitHub Issues | 13/29 ≈ 45 % | 13/29 ≈ 45 % |
-| Taskwarrior | 12/29 ≈ 41 % | 12/29 ≈ 41 % |
-| Task Master | 9/29 ≈ 31 % | 9/29 ≈ 31 % |
-
-**La misma comparación, en una sola tabla.** "Sí" es la correspondencia directa, "Transf." es con
-transformación, y "No" agrupa tanto la ausencia de campo como los pocos casos marcados como "sin
-equivalente confirmado" en la tabla de su sistema (donde la investigación no llegó a comprobar si
-existe o no); el matiz de cada celda, y por qué, está en la tabla detallada de la sección de ese
-sistema.
-
-| Campo de `biso` | Backlog.md | Linear | Trello | Beads | GitHub Issues | Taskwarrior | Task Master |
-|---|---|---|---|---|---|---|---|
-| `id` | Sí | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
-| `createdAt` | Transf. | Sí | No | Sí | Sí | Transf. | No |
-| `updatedAt` | Transf. | Sí | Transf. | Sí | Sí | Transf. | No |
-| `archived` | Transf. | No | Sí | No | No | Transf. | No |
-| `leaseExpiresAt` | No | No | No | No | No | No | No |
-| `leaseHolder` | No | No | No | No | No | No | No |
-| `title` | Sí | Sí | Sí | Sí | Sí | Sí | Sí |
-| `status` | Sí | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
-| `type` | Sí | No | No | Transf. | Transf. | No | No |
-| `priority` | Sí | Transf. | Transf. | Transf. | No | Transf. | Transf. |
-| `parent` | Sí | Sí | No | Transf. | Sí | No | Transf. |
-| `assignees` | Sí | Transf. | Sí | No | Sí | No | No |
-| `author` | No | Sí | No | No | Sí | No | No |
-| `labels` | Sí | Sí | Sí | Sí | Sí | Sí | No |
-| `dependencies` | Sí | Sí | No | Transf. | Sí | Sí | Sí |
-| `references` | Sí | Transf. | Transf. | No | No | No | No |
-| `documentation` | Sí | Transf. | Transf. | No | No | No | No |
-| `modifiedFiles` | Sí | No | No | No | No | No | No |
-| `due` | Sí | Sí | Sí | No | No | Sí | No |
-| `ordinal` | Sí | Transf. | Transf. | No | No | No | No |
-| `ext` | No | No | Transf. | Sí | No | Sí | No |
-| `description` | Sí | Sí | Sí | Sí | Sí | No | Transf. |
-| `plan` | Sí | No | No | Transf. | No | No | Transf. |
-| `notes` | Sí | No | No | Sí | No | No | No |
-| `summary` | Sí | No | No | No | No | No | No |
-| `acceptanceCriteria` | Transf. | No | Sí | Transf. | No | No | Transf. |
-| `definitionOfDone` | Transf. | No | Sí | No | No | No | No |
-| `comments` | Transf. | Transf. | Transf. | Transf. | Transf. | Transf. | No |
-| `question` | No | No | No | No | No | No | No |
-
-**Ninguno llega a la compatibilidad campo a campo que la portada de la especificación afirmaba sin
-haberla comprobado.** Ni siquiera Backlog.md, el más cercano por diseño: pierde la clave estable de
-los criterios y de los comentarios, que es precisamente la pieza que
-["Los criterios y sus claves estables"](../spec/modelo-de-datos/criterios.md) y ["Los
-comentarios"](../spec/modelo-de-datos/comentarios.md) tratan como una garantía central del modelo de
-`biso`. Ningún sistema de los siete tiene nada parecido a `question` (una pregunta dirigida a una
-persona concreta con su propio pendiente/respondida), ni a `leaseExpiresAt`/`leaseHolder` (un
-arrendamiento con expiración), que son, junto con las claves estables, los tres rasgos que distinguen
-el modelo de `biso` de los siete investigados.
 
 ## Qué quedó sin verificar
 
