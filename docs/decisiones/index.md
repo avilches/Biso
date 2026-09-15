@@ -19,7 +19,7 @@ gestores de tareas maduros, Backlog.md y Taskwarrior, y de los fallos documentad
 
 - [Los principios, y cómo se mantiene la especificación](principios-y-mantenimiento.md)
 - [El modelo de estados](modelo-de-estados.md)
-- [La persistencia](persistencia.md), la decisión más importante: un estado único fuera del repositorio, con su historial versionado dentro como texto
+- [La persistencia](persistencia.md)
 - [El lenguaje de implementación y el rendimiento](lenguaje-y-rendimiento.md)
 - [El vocabulario y el mensaje de arranque](vocabulario-y-mensaje-de-arranque.md)
 - [Comandos y flags](comandos-y-flags.md)
