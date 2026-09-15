@@ -16,16 +16,20 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 |---|---|---|---|---|---|---|---|
 | `<name>` | | no | texto | el nombre del proyecto | no | no | |
 | `--at <dir>` | | no | ruta de un directorio | una carpeta nueva en la raíz por defecto de la máquina (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) | no | no | |
-| `--statuses <list>` | | no | lista | `To Do, In Progress, Done` | sí | sí | |
+| `--statuses <list>` | | no | lista | `To Do, In Progress, Done` ¹ | sí | sí | |
 | `--initial-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--active-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--terminal-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
-| `--types <list>` | | no | lista | `task, bug, docs` | sí | sí | |
-| `--priorities <list>` | | no | lista | `high, medium, low` | sí | sí | |
-| `--extensions <list>` | | no | lista | vacía | sí | sí | |
-| `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) | no | no | |
+| `--types <list>` | | no | lista | `task, bug, docs` ¹ | sí | sí | |
+| `--priorities <list>` | | no | lista | `high, medium, low` ¹ | sí | sí | |
+| `--extensions <list>` | | no | lista | vacía ¹ | sí | sí | |
+| `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) ¹ | no | no | |
 | `--overwrite-config` | | no | booleano | falso | no | no | |
 | `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`, `--statuses`, `--initial-status`, `--active-status`, `--terminal-status`, `--types`, `--priorities`, `--extensions`, `--prefix`, `--overwrite-config` |
+
+¹ Solo aplica al crear un tablero nuevo. Con `--overwrite-config` sobre un tablero que ya existe,
+no pasar este flag no vuelve a este valor por defecto: conserva el valor que el tablero ya tenía
+para esa clave (tabla de casos más abajo).
 
 **`--at` es la ruta del directorio del tablero que se va a crear, no el directorio donde se crea.** Con
 `--at tablero` el tablero queda en `tablero`, no en `tablero/my-project-3f9a2b1c`. Es la misma convención que
@@ -195,6 +199,7 @@ existiera antes queda afectada.
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
+| `--overwrite-config` sin uno de los flags de vocabulario (`--statuses` y sus tres papeles, `--types`, `--priorities`, `--extensions`) | No es un error: esa clave conserva el valor que el tablero ya tenía, igual que `project_name` sin `<name>` explícito (sección ["`biso config`"](config.md)). Como consecuencia, el prefijo sin `<name>` ni `--prefix` también se conserva, porque se deriva de `project_name`, que a su vez se conserva; no hace falta ningún caso especial para él |
 | El directorio de destino no tiene una base de datos legible: le falta, o no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo, con `--at` apuntando a ese mismo directorio, adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 21 nombra, y también el que necesita un clon traído a otra máquina que llega con la carpeta del tablero versionada y sin base de datos: el mismo remedio lo repite el `hint` del error `pointer_unresolved` (código 20) cuando es la resolución normal, no `init`, quien encuentra ese directorio a medias (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-puntero-nombra-un-tablero-que-no-está-en-esta-máquina)) |
 | `--at`, sin `--from`, al mismo directorio de la fila anterior: con el marcador pero sin una base de datos legible | No cuenta como tablero accesible, igual que en la fila anterior: `init` lo crea ahí mismo, adoptando el `id` del marcador, código 0. Sin `--from` no hay instantánea que restaurar, así que el tablero nace vacío; es el remedio de un clon cuyo directorio del tablero se versionó antes de la primera instantánea |
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que ese flag significa. Un tablero no se crea nunca dentro de otro |
@@ -203,7 +208,11 @@ existiera antes queda afectada.
 | `--at` con una ruta relativa | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta relativa, código 0 |
 | `--at` con una ruta absoluta | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta absoluta, código 0 |
 | `--at` con una ruta relativa que sale del proyecto, como `../tableros/my-project` | No es un error, y el puntero la guarda tal cual: resuelve mientras la posición relativa entre el puntero y el tablero se mantenga, y el marcador confirma que el directorio al que llega es el tablero que el `id` nombra |
-| `--overwrite-config` sobre un tablero con alguna tarea, si el prefijo resultante (el de `--prefix`, o el que se derive de `<name>` cuando no se da) no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección ["`biso config`"](config.md) aplica a `task_prefix` |
+| `--overwrite-config` sobre un tablero con alguna tarea, con `--prefix` explícito que no coincide con el `task_prefix` que el tablero ya tiene | Error 6, la misma inmutabilidad que la sección ["`biso config`"](config.md) aplica a `task_prefix`. Sin `--prefix`, el prefijo se conserva (fila de arriba) y este error no puede darse |
+| `--overwrite-config` con `--statuses` explícito (y sus tres papeles) que dejaría el tablero inconsistente, sobre un tablero con tareas | Error 6, las mismas reglas de la tabla de casos de ["`biso config`"](config.md#comportamiento-caso-a-caso), aplicadas solo porque `--statuses` se pasó explícito: una clave conservada no puede quitar nada que ya estuviera en uso |
+| `--overwrite-config` con `--types` explícito que quita un tipo en uso, sobre un tablero con tareas | Error 6, la misma regla de la tabla de casos de ["`biso config`"](config.md#comportamiento-caso-a-caso) |
+| `--overwrite-config` con `--priorities` explícito que quita una prioridad en uso, sobre un tablero con tareas | Error 6, la misma regla de la tabla de casos de ["`biso config`"](config.md#comportamiento-caso-a-caso) |
+| `--overwrite-config` con `--extensions` explícito que quita una clave en uso, sobre un tablero con tareas | Error 6, la misma regla de la tabla de casos de ["`biso config`"](config.md#comportamiento-caso-a-caso) |
 | Falta alguno de los tres flags de papel, habiendo `--statuses` | Error 2, con los tres nombrados y cuáles faltan |
 | Un flag de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
 | Un flag de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
