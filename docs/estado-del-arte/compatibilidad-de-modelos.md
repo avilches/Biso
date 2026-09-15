@@ -427,6 +427,44 @@ en origen. Se pierde lo propio de Task Master sin sitio en `biso`: el informe ap
 | Taskwarrior | 12/29 ≈ 41 % | 12/29 ≈ 41 % |
 | Task Master | 9/29 ≈ 31 % | 9/29 ≈ 31 % |
 
+**La misma comparación, en una sola tabla.** "Sí" es la correspondencia directa, "Transf." es con
+transformación, y "No" agrupa tanto la ausencia de campo como los pocos casos marcados como "sin
+equivalente confirmado" en la tabla de su sistema (donde la investigación no llegó a comprobar si
+existe o no); el matiz de cada celda, y por qué, está en la tabla detallada de la sección de ese
+sistema.
+
+| Campo de `biso` | Backlog.md | Linear | Trello | Beads | GitHub Issues | Taskwarrior | Task Master |
+|---|---|---|---|---|---|---|---|
+| `id` | Sí | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
+| `createdAt` | Transf. | Sí | No | Sí | Sí | Transf. | No |
+| `updatedAt` | Transf. | Sí | Transf. | Sí | Sí | Transf. | No |
+| `archived` | Transf. | No | Sí | No | No | Transf. | No |
+| `leaseExpiresAt` | No | No | No | No | No | No | No |
+| `leaseHolder` | No | No | No | No | No | No | No |
+| `title` | Sí | Sí | Sí | Sí | Sí | Sí | Sí |
+| `status` | Sí | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
+| `type` | Sí | No | No | Transf. | Transf. | No | No |
+| `priority` | Sí | Transf. | Transf. | Transf. | No | Transf. | Transf. |
+| `parent` | Sí | Sí | No | Transf. | Sí | No | Transf. |
+| `assignees` | Sí | Transf. | Sí | No | Sí | No | No |
+| `author` | No | Sí | No | No | Sí | No | No |
+| `labels` | Sí | Sí | Sí | Sí | Sí | Sí | No |
+| `dependencies` | Sí | Sí | No | Transf. | Sí | Sí | Sí |
+| `references` | Sí | Transf. | Transf. | No | No | No | No |
+| `documentation` | Sí | Transf. | Transf. | No | No | No | No |
+| `modifiedFiles` | Sí | No | No | No | No | No | No |
+| `due` | Sí | Sí | Sí | No | No | Sí | No |
+| `ordinal` | Sí | Transf. | Transf. | No | No | No | No |
+| `ext` | No | No | Transf. | Sí | No | Sí | No |
+| `description` | Sí | Sí | Sí | Sí | Sí | No | Transf. |
+| `plan` | Sí | No | No | Transf. | No | No | Transf. |
+| `notes` | Sí | No | No | Sí | No | No | No |
+| `summary` | Sí | No | No | No | No | No | No |
+| `acceptanceCriteria` | Transf. | No | Sí | Transf. | No | No | Transf. |
+| `definitionOfDone` | Transf. | No | Sí | No | No | No | No |
+| `comments` | Transf. | Transf. | Transf. | Transf. | Transf. | Transf. | No |
+| `question` | No | No | No | No | No | No | No |
+
 **Ninguno llega a la compatibilidad campo a campo que la portada de la especificación afirmaba sin
 haberla comprobado.** Ni siquiera Backlog.md, el más cercano por diseño: pierde la clave estable de
 los criterios y de los comentarios, que es precisamente la pieza que
