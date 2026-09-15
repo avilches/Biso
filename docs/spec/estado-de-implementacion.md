@@ -20,7 +20,10 @@ avisar.
 - **fuera de alcance**: la propia especificación excluye este documento a propósito, así que nunca
   tendrá una fila "pendiente".
 
-## Los pasos de [Por dónde empezar a implementar](por-donde-empezar.md)
+## Los pasos de implementación
+
+El orden de estos nueve pasos, y el porqué de ese orden, está en la tarea `TASK-55` del tablero de
+Backlog.md, de la que cada tarea de la tabla es una subtarea.
 
 | Paso | Qué cubre | Estado | Tarea |
 |---|---|---|---|

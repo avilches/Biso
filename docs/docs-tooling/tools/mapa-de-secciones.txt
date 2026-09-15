@@ -81,4 +81,3 @@
 12.4    contrato-json.md#números-fechas-y-ausencias  "Números, fechas y ausencias"
 13      estabilidad.md  "El contrato de estabilidad"
 14      fuera-de-alcance.md  "Lo que se deja fuera a propósito"
-15      por-donde-empezar.md  "Por dónde empezar a implementar"

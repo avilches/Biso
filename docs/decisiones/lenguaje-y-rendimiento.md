@@ -22,8 +22,8 @@ de otro lenguaje: es lo que el lenguaje elegido hizo en esa máquina, con la car
 ["El origen de la cifra de 25 milisegundos"](persistencia.md#el-origen-de-la-cifra-de-25-milisegundos) dice.
 
 **Lo que decide es el ciclo de desarrollo, y en particular el ciclo de un agente.** Este documento y
-[`docs/spec/`](../spec/index.md) están escritos para que alguien implemente el programa entero sin preguntar, con la
-comprobación frecuente que ["Por dónde empezar a implementar"](../spec/por-donde-empezar.md) ordena, y ese alguien va a ser en buena parte un
+[`docs/spec/`](../spec/index.md) están escritos para que alguien implemente el programa entero sin preguntar, por pasos y
+comprobando cada uno antes de seguir, y ese alguien va a ser en buena parte un
 agente automático. En ese modo de trabajo, el coste dominante no es el tiempo de ejecución del programa
 sino **el número de vueltas entre escribir y ver el resultado**, y ahí Go gana por dos motivos
 distintos. El primero es que compila muy rápido, así que cada vuelta es corta. El segundo es más

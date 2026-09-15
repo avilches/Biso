@@ -32,10 +32,12 @@ vive, no se deja contradicha a distancia: se dice explícitamente que esa pieza 
 enlaza a la entrada que la sustituye, igual que se corrigió aquí mismo la afirmación de que los
 comentarios eran una lista que solo admitía añadir cuando dejó de serlo.
 
-["Por dónde empezar a implementar"](docs/spec/por-donde-empezar.md) dice el orden en que cada pieza paga lo que cuesta: el modelo de
-datos, el algoritmo de coincidencia (una función pura de la que dependen todos los comandos), los
-comandos del trabajo diario, los verbos del ciclo, el mensaje de arranque, el lote y la
-exportación, y el resto.
+El orden de implementación no forma parte de la especificación: vive en el tablero de Backlog.md,
+en la tarea `TASK-55` del milestone Implementación, cuyas nueve subtareas se hacen en orden y están
+encadenadas por dependencias. La descripción de `TASK-55` dice el orden en que cada pieza paga lo que
+cuesta: el almacén, el modelo de datos, el algoritmo de coincidencia (una función pura de la que
+dependen todos los comandos), `init` y `where`, los comandos del trabajo diario, los verbos del ciclo,
+el mensaje de arranque, el lote y la exportación, y el resto.
 
 ["Qué hay implementado y qué no"](docs/spec/estado-de-implementacion.md) es la contrapartida de la especificación: dice, paso
 a paso, si lo de arriba ya existe en código o sigue siendo solo texto. Antes de planificar la tarea
