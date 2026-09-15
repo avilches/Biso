@@ -82,6 +82,15 @@ la afirmación de que alguien está trabajando ahora, así que conservarlo lo gu
 ve, porque `biso prime` y `biso ls` excluyen las archivadas por defecto, y `--unarchive` la devolvería
 al tablero semanas después a nombre de una sesión que ya murió.
 
+**Y por el mismo motivo, [`biso start`](cmd/verbos-del-ciclo.md#biso-start) se niega a tomar el
+arrendamiento de una tarea archivada.** Reintroducir la afirmación "alguien trabaja en esto ahora"
+sobre una tarea que se sacó del tablero activo a propósito contradice de frente la razón de este
+vaciado, así que `start` es error 6 ahí, con la pista de `biso archive --unarchive` primero
+(["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)). Ningún otro verbo del ciclo se comporta así:
+`set`, `note`, `comment`, `finish`, `ask` y `answer` escriben sobre una tarea archivada igual que
+sobre cualquier otra, porque ninguno de ellos reclama un arrendamiento ni afirma que alguien esté
+trabajando ahora mismo.
+
 **Esta regla gana siempre sobre la de [La renovación](#la-renovación), y por eso la invariante se
 enuncia aquí y el aviso allí.** Cuando quien escribe no es `leaseHolder`, el aviso de que el
 arrendamiento es de otra identidad se emite igual, pero los dos campos se vacían: `@sara` haciendo

@@ -64,6 +64,7 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 |---|---|
 | La tarea ya está en el estado activo | Se aplica el resto igual, con `note: MYP-11 was already In Progress` |
 | La tarea ya está en el estado terminal | Error 6, salvo con `--reopen`, que la devuelve al estado activo |
+| La tarea está archivada | Error 6, con la pista de usar `biso archive --unarchive` primero. Tomar el arrendamiento de una tarea archivada reintroduciría la afirmación de que alguien trabaja en ella ahora, justo lo que archivar contradice (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
 | El arrendamiento de la tarea está vencido (`leaseExpired`, ["Cuándo cuenta como vencido"](../lease.md#cuándo-cuenta-como-vencido) de `lease.md`) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (["La renovación"](../lease.md#la-renovación) de `lease.md`), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../decisiones/modelo-de-estados.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) |
@@ -73,6 +74,13 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | No hay [ninguna identidad configurada](../invocacion.md#variables-de-entorno) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
 | La tarea ya tiene plan y se pasa `--append-plan` | Se añade al final, como todo flag de añadir |
 | Varias referencias | Todo o nada |
+
+El error 6 de una tarea archivada lleva pista:
+
+```
+error: MYP-11 is archived
+hint: unarchive it first with `biso archive MYP-11 --unarchive`
+```
 
 ### Salida
 
@@ -88,7 +96,7 @@ permite cambiar entre versiones menores, así que la cifra exacta puede no ser e
 | Desenlace | Código |
 |---|---:|
 | Empezada | 0 |
-| Ya estaba terminada y no hay `--reopen` | 6 |
+| Ya estaba terminada y no hay `--reopen`, o la tarea está archivada | 6 |
 | Referencia mal formada, flags incompatibles | 2 |
 | Valor fuera de un vocabulario, tarea ilegible | 3 |
 | Referencia inexistente | 4 |
@@ -121,12 +129,12 @@ Every field flag of `biso set --help` works here too.
 
 Unresolved dependencies produce a warning, not an error: you decide. Taking
 over a live lease held by someone else is the same: it warns, it does not
-refuse.
+refuse. An archived task refuses instead: `biso archive --unarchive` it first.
 
 Exit codes:
   0  started        4  not found        7  --dry-run did not pass
   2  bad usage      5  ambiguous        8  the board could not be written
-  3  unknown value  6  already finished, use --reopen
+  3  unknown value  6  already finished, or archived
                     20 no board here
 
 Examples:
@@ -184,6 +192,7 @@ que las demás.
 | Texto vacío | No añade nada y avisa, según ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) |
 | La tarea no tiene notas todavía | Se crean |
 | Varios textos | Un párrafo por texto, en el orden dado |
+| La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. Solo `start` queda bloqueado sobre una tarea archivada, porque solo `start` reclama un arrendamiento (["`biso start`"](#biso-start)) |
 
 ### Salida
 
@@ -263,6 +272,10 @@ identificador. El autor es texto libre, no se valida contra nada y no interpreta
 `--comment-author` y sin [ninguna identidad configurada](../invocacion.md#variables-de-entorno), es error 2**: `error: --comment-author is
 required, no identity is configured`. Lo mismo vale para `--comment` en cualquier otro comando de
 escritura.
+
+Sobre una tarea archivada se hace igual, con `note: MYP-11 is archived` por stderr, igual que `biso
+get` y que `biso note`: escribir un comentario no reclama ningún arrendamiento, así que no hay
+ninguna invariante que archivar pueda contradecir aquí.
 
 ### Salida
 
@@ -348,11 +361,12 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | Quedan criterios sin marcar y no se pasó `--check-ac` | **Se cierra igual**, con el aviso y la lista de los que faltan |
 | Quedan elementos de la definición de hecho sin marcar | Igual, con su propio aviso |
 | Lo mismo, con `--strict` | Error 6, y no se escribe nada |
-| Sin `--append-summary` | Se cierra igual, con `warning: MYP-11 finished without a final summary` |
-| Sin `--append-summary` y con `--strict` | Error 6 |
-| La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
+| Tras esta escritura, el campo `summary` de la tarea queda vacío | Se cierra igual, con `warning: MYP-11 finished without a final summary` |
+| Lo mismo, con `--strict` | Error 6 |
+| La tarea tiene subtareas sin terminar | Aviso con la lista, marcando `(archived)` junto a cada subtarea archivada de la lista para no confundirla con una viva de verdad. Con `--strict`, error 6 |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
+| La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. Solo `start` queda bloqueado sobre una tarea archivada |
 | La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 | La tarea tiene el arrendamiento y `-s` la lleva a otro estado que tampoco es el activo | Los campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
 | `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos, incluido el de la pregunta abierta |
@@ -360,6 +374,16 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 
 Quien quiera la política dura tiene `--strict`, y puede fijarla por defecto con
 `biso config set finish_strict true`.
+
+**Las comprobaciones de la tabla, la de criterios, la de definición de hecho y la de resumen, se
+leen por el estado del campo después de esta escritura, nunca por si el flag correspondiente se
+pasó en esta llamada.** Una tarea que ya tenía todos los criterios marcados no dispara el aviso
+aunque no se pase `--check-ac` ahora, y de la misma manera una tarea que ya tenía resumen de un
+`biso finish` anterior no dispara `finished without a final summary` al volver a cerrarse sin
+`--append-summary`, porque el campo `summary` sigue con contenido. Un ejemplo completo: se cierra `MYP-11` con
+`--append-summary "Normalizes CRLF"`, se reabre con `biso start MYP-11 --reopen`, y se vuelve a
+cerrar con `biso finish MYP-11` sin pasar `--append-summary` esta vez. No sale ningún aviso de
+resumen ausente, porque el campo `summary` sigue teniendo el texto del primer cierre.
 
 ### Salida
 
@@ -374,6 +398,12 @@ Por stderr, cuando toca:
 ```
 warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked
   #3 There is a test that covers it
+```
+
+Y con subtareas archivadas de por medio:
+
+```
+warning: MYP-11 has unfinished subtasks: MYP-14, MYP-15 (archived)
 ```
 
 ### Códigos de salida
