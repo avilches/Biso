@@ -70,9 +70,9 @@ steps:
       - spec/vocabularios.md#el-algoritmo-de-coincidencia "El algoritmo de coincidencia"
     remark: |
       Same result, because it's the same filter: `To-Do` also normalizes to `todo`. The same rule
-      also collapses repeated spaces, so `to  do`, with two spaces in the middle, would have
-      worked too (it's the literal example from the matching algorithm's own table). Four
-      different ways to type it, one single value.
+      strips every space too, not just repeated ones, so `to  do`, with two spaces in the middle,
+      would have worked just as well (it's the literal example from the matching algorithm's own
+      table). Four different ways to type it, one single value.
 
   - narration: |
       You've forgotten the number of the retry task, so you type the first thing you remember
