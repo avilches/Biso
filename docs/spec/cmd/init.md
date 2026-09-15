@@ -129,7 +129,9 @@ datos, así que versionar el directorio del tablero versiona su marcador y sus d
 pero nunca `board.db`. Una copia de trabajo recibiría entonces un directorio con el marcador correcto y sin base de
 datos: **eso no es un tablero**, y la resolución de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) no lo acepta como tal, sigue buscando
 en los ancestros y en las raíces, y así encuentra el tablero de verdad. Si no lo encuentra en ninguna
-parte, el error nombra ese directorio a medias, porque es la pista de lo que ha pasado.
+parte, el error nombra ese directorio a medias, porque es la pista de lo que ha pasado. Ese error y sus
+dos remedios, según si el directorio también lleva la instantánea o solo el marcador, están en la
+sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-puntero-nombra-un-tablero-que-no-está-en-esta-máquina).
 
 **Si ya existe un puntero pero el tablero que nombra no está en esta máquina** (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), `init`
 no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máquinas sigan hablando del
@@ -180,7 +182,8 @@ existiera antes queda afectada.
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
-| El directorio de destino tiene una base de datos que no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 21 nombra, y también lo que necesita un clon traído a otra máquina, que llega con la carpeta versionada y sin base de datos |
+| El directorio de destino no tiene una base de datos legible: le falta, o no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo, con `--at` apuntando a ese mismo directorio, adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 21 nombra, y también el que necesita un clon traído a otra máquina que llega con la carpeta del tablero versionada y sin base de datos: el mismo remedio lo repite el `hint` del error `pointer_unresolved` (código 20) cuando es la resolución normal, no `init`, quien encuentra ese directorio a medias (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-puntero-nombra-un-tablero-que-no-está-en-esta-máquina)) |
+| `--at`, sin `--from`, al mismo directorio de la fila anterior: con el marcador pero sin una base de datos legible | No cuenta como tablero accesible, igual que en la fila anterior: `init` lo crea ahí mismo, adoptando el `id` del marcador, código 0. Sin `--from` no hay instantánea que restaurar, así que el tablero nace vacío; es el remedio de un clon cuyo directorio del tablero se versionó antes de la primera instantánea |
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que ese flag significa. Un tablero no se crea nunca dentro de otro |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero | Error 2, con el mismo motivo visto desde el otro lado: el destino ya es un tablero |

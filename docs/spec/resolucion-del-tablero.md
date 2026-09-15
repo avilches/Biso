@@ -245,8 +245,9 @@ Estas reglas gobiernan la lectura del puntero:
   es un caso rebuscado: es lo que recibe una copia de trabajo de un proyecto que versionó el directorio
   de su tablero, porque el fichero de exclusión que `init` escribe ahí dentro excluye siempre la base de datos y
   nunca el marcador (["`biso init`"](cmd/init.md)). Saltarlo y seguir buscando es lo que encuentra el tablero de verdad un nivel
-  más arriba. Si la búsqueda acaba sin nada, el error nombra ese directorio, porque explica el fallo
-  mejor que decir solo que no se encontró el tablero.
+  más arriba. Si la búsqueda acaba sin nada, el error es el de la subsección
+  ["El puntero nombra un tablero que no está en esta máquina"](#el-puntero-nombra-un-tablero-que-no-está-en-esta-máquina), y nombra ese directorio, porque
+  explica el fallo mejor que decir solo que no se encontró el tablero.
 - **El nombre de la carpeta del tablero es decorativo, y nadie resuelve nunca por él.** Al crearla,
   `biso init` la llama `<slug>-<id>`, por ejemplo `my-project-3f9a2b1c`, porque eso hace legible un listado de
   la raíz por defecto. Pero renombrarla no rompe nada, ni la renombra `biso` cuando cambia el nombre
@@ -371,16 +372,56 @@ escribir el puntero, el proyecto no vuelve a encontrar su tablero por su cuenta.
 
 **Si el puntero existe pero nombra un tablero que esta máquina no tiene** (lo típico al clonar el
 proyecto en otro ordenador), el mensaje es otro, porque aquí sí hay un puntero. Dice que hay uno, qué
-identificador nombra, y que `biso init` crea el tablero aquí adoptando esa misma identidad:
+identificador nombra, y cómo recuperarlo, y ese "cómo" depende de si la búsqueda, al subir por los
+ancestros probando la `path` relativa (["Cómo se lee el puntero"](#cómo-se-lee-el-puntero)), se cruzó por el camino con un directorio a
+medias: el que deja un proyecto que versiona la carpeta de su tablero, con el marcador pero sin
+`board.db` (["El tablero dentro del proyecto"](#el-tablero-dentro-del-proyecto)). Sin ese directorio no hay ninguna pista de dónde recuperar el
+tablero; con él, sí.
+
+**Sin ningún directorio a medias de por medio** (el puntero no lleva `path`, porque el tablero vivía en
+la raíz por defecto de la máquina, que no viaja con el proyecto), el mensaje es el genérico, y el
+remedio es crear el tablero adoptando la identidad que el puntero ya nombra:
 
 ```
 error: this project's pointer names board 3f9a2b1c, which is not on this machine
 hint: `biso init` creates it here, adopting id 3f9a2b1c
 ```
 
-El código de salida sigue siendo 20, porque para quien llama la situación es la misma: no hay tablero
-con el que trabajar, y el remedio también es el mismo, `biso init`. Lo que cambia es la clave `code`
-del sobre JSON (sección ["El contrato JSON"](contrato-json.md)), que aquí es `pointer_unresolved` en vez de `no_board`.
+**Con un directorio a medias** (la `path` del puntero resuelve, o resolvió contra alguno de sus
+ancestros, en un directorio que lleva el marcador `3f9a2b1c.id` pero no `board.db`), el mensaje nombra
+ese directorio y distingue si hay algo que restaurar de él, porque un `biso init` a secas lo ignoraría
+por completo y crearía un tablero vacío en la raíz por defecto, dejando huérfanas las tareas que
+pudiera haber en ese directorio.
+
+Si el directorio también lleva `snapshot.ndjson` y `board.json`, es decir, si `biso snapshot` llegó a
+correr y a comitearse al menos una vez, hay tareas que recuperar:
+
+```
+error: this project's pointer names board 3f9a2b1c, which is not on this machine
+hint: /Users/avilches/Hub/Projects/My project/.biso-board has this board's marker
+      and snapshot, versioned without its database
+hint: `biso init --from "/Users/avilches/Hub/Projects/My project/.biso-board"
+      --at "/Users/avilches/Hub/Projects/My project/.biso-board"` restores it
+      there, adopting id 3f9a2b1c
+```
+
+Si el directorio solo lleva el marcador, porque la carpeta se versionó nada más crearla y antes de la
+primera instantánea, no hay tareas que recuperar y el remedio es crear el tablero vacío ahí mismo, con
+el mismo `id`:
+
+```
+error: this project's pointer names board 3f9a2b1c, which is not on this machine
+hint: /Users/avilches/Hub/Projects/My project/.biso-board has this board's marker,
+      versioned before any snapshot was ever taken
+hint: `biso init --at "/Users/avilches/Hub/Projects/My project/.biso-board"`
+      creates it there, adopting id 3f9a2b1c
+```
+
+**En los tres casos el código de salida sigue siendo 20**, porque para quien llama la situación es la
+misma: no hay tablero con el que trabajar. Lo que cambia es qué `hint` explica mejor el remedio, y la
+clave `code` del sobre JSON (sección ["El contrato JSON"](contrato-json.md)) sigue siendo `pointer_unresolved` en los tres, no `no_board`. Ni `--from`
+ni `--at` a secas dan el Error 2 de "ya hay un tablero" sobre ese directorio a medias, porque un
+directorio sin una base de datos legible no cuenta como tablero accesible (sección ["`biso init`"](cmd/init.md)).
 
 ### Un tablero huérfano
 
