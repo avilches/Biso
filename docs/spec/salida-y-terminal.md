@@ -70,7 +70,7 @@ ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
 | `terminal_ac_unchecked` | `warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked` | al llegar a un estado terminal con criterios sin marcar | `task`, `unchecked`, `total` |
 | `terminal_no_summary` | `warning: MYP-11 finished without a final summary` | al llegar a un estado terminal sin resumen | `task` |
 | `terminal_dod_unchecked` | `warning: MYP-11 moved to Done with 1 of 3 definition-of-done items unchecked` | al llegar a un estado terminal con la definición de hecho a medias | `task`, `unchecked`, `total` |
-| `unfinished_subtasks` | `warning: MYP-11 has unfinished subtasks: MYP-14, MYP-15` | al terminar una tarea con subtareas vivas | `task`, `subtasks` |
+| `unfinished_subtasks` | `warning: MYP-11 has unfinished subtasks: MYP-14, MYP-15` | al terminar una tarea con subtareas vivas. Una subtarea archivada sin terminar se marca `MYP-15 (archived)` dentro de la misma lista, en vez de listarse igual que una viva (["`biso finish`"](cmd/verbos-del-ciclo.md#biso-finish)) | `task`, `subtasks` |
 | `dependency_of_unfinished` | `warning: MYP-11 is a dependency of MYP-20, which is not finished` | al archivar una tarea de la que dependen otras vivas | `task`, `dependent` |
 | `clear_on_new_task` | `warning: --clear-labels has no effect on a new task` | cualquier `--clear-*` en `biso new` | `field` |
 | `unresolved_dependencies` | `warning: MYP-11 has unresolved dependencies: MYP-4 (To Do)` | al empezar una tarea bloqueada | `task`, `dependencies` |

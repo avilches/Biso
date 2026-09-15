@@ -22,8 +22,21 @@ Saca la tarea del tablero activo. **La tarea sigue existiendo**, su identificado
 | Ya estaba archivada | Código 0, con un `note:`, sin escribir |
 | Otras tareas vivas dependen de ella | Aviso con la lista, se archiva igual |
 | La tarea tiene arrendamiento, vivo o vencido | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Si estaba vivo y era de otra identidad, sale además el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) |
-| `--unarchive` | La devuelve al tablero con el estado que tenía, y sin arrendamiento: si vuelve al estado activo, quien quiera trabajar en ella lo toma con `biso start` |
+| `--unarchive` sobre una tarea archivada | La devuelve al tablero con el estado que tenía, y sin arrendamiento: si vuelve al estado activo, quien quiera trabajar en ella lo toma con `biso start` |
+| `--unarchive` sobre una tarea que no está archivada | Código 0, idempotente, con `note: MYP-11 was not archived`, calcado del trato que ya recibe "Ya estaba archivada" en la fila de arriba |
 | Varias referencias | Todo o nada |
+
+**Archivar una tarea sin terminar desbloquea, en la misma lectura, a quien dependía de ella.** Para
+`blocked`, `blocks` y los términos `bloquea`/`bloqueada` de la urgencia, una tarea archivada sin
+terminar cuenta como terminada, así que archivarla quita de inmediato el bloqueo de sus
+dependientes, sin que nadie escriba nada más (["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia)). **Esto no aplica al aviso de
+"subtareas sin terminar" de [`biso finish`](verbos-del-ciclo.md#biso-finish) sobre un padre**: una
+subtarea archivada sin terminar sigue contando ahí como sin terminar, y el aviso la marca
+`(archived)` en la lista para distinguirla de una subtarea viva de verdad. La diferencia es
+deliberada: las dependencias hablan de orden de trabajo, y una vez archivada la que bloqueaba ya no
+impide avanzar a nadie; el aviso de `finish` habla del alcance del padre, y una subtarea que
+desapareció del tablero activo sin haberse marcado nunca hecha es justo lo que ese aviso existe para
+sacar a la luz.
 
 ## `biso delete` no existe, y su ausencia está especificada
 

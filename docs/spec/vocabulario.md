@@ -20,7 +20,7 @@ narrativa a los mismos conceptos, con menos detalle, está la página [Concepts]
 | `leaseExpiresAt`, `leaseHolder`, `leaseExpired` | Hasta cuándo vale la reserva de un agente sobre una tarea activa. No es un estado | **arrendamiento** |
 | `question`, `waiting` | Lo que detiene una tarea a la espera de una persona. No es un estado | **pregunta abierta**, aparcada |
 | `archived` | Fuera del tablero activo sin perder nada. No es un estado | **archivada** |
-| `blocked` | Depende de alguna tarea sin terminar. Solo dependencias, nunca personas: lo que espera a una persona es una pregunta abierta | **bloqueada** |
+| `blocked` | Depende de alguna tarea sin terminar, donde una tarea archivada sin terminar cuenta como terminada (["La urgencia"](modelo-de-datos/urgencia.md#la-urgencia)). Solo dependencias, nunca personas: lo que espera a una persona es una pregunta abierta | **bloqueada** |
 | `assignees`, `author`, y el `author` de un comentario o de la pregunta | Quien encarga y quien responde. No es un campo, sino el tipo de valor que llevan estos campos | **persona** |
 | | El programa automático que coge tareas y las hace | **agente** |
 | `acceptanceCriteria`, `definitionOfDone` | Un elemento de las dos listas de comprobación: `acceptanceCriteria` comprueba que el trabajo hace lo que se pidió, `definitionOfDone` que la tarea cumple lo necesario para poder cerrarse | **criterio** |

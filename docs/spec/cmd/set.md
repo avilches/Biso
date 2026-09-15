@@ -51,6 +51,7 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | `--comment-author` sin `--comment` | Error 2 |
 | `--comment` sin `--comment-author` y sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | Error 2 |
 | La tarea no se puede leer | Error 3, y no se escribe nada |
+| La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. `biso set` no reclama ningún arrendamiento, así que archivar no le opone ninguna restricción; la única excepción del programa es [`biso start`](verbos-del-ciclo.md#biso-start), que sí lo reclama (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 
 ## Salida
 
