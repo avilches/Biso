@@ -142,6 +142,22 @@ error: no such key: "urgency.pryority"
 hint: did you mean: urgency.priority, urgency.criteria, urgency.active?
 ```
 
+**Con `--dry-run`, la misma nota pero en condicional**, porque `config set` no tiene una línea de
+estado que marcar como hipotética (sección ["`biso set`"](set.md#salida)): no hay ninguna tarea
+afectada, solo un valor que se habría escrito.
+
+```
+$ biso config set lease_minutes 45 --dry-run
+note: lease_minutes would be set to 45 (--dry-run)
+```
+
+Y con una clave de lista, la lista entera que quedaría, con la misma forma que la nota real:
+
+```
+$ biso config set statuses "To Do,In Progress,Done,Blocked" --dry-run
+note: statuses would be set to To Do,In Progress,Done,Blocked (--dry-run)
+```
+
 ## Salida
 
 ```

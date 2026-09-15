@@ -196,6 +196,20 @@ hint: --overwrite-config rewrites its configuration and never touches its tasks
 y sale 0 si habría funcionado y 7 si no. `--print`, en cambio, es error 2, porque ninguna tarea que
 existiera antes queda afectada.
 
+**Sin `--from`, la frase de `--dry-run` es una sola nota por stderr**, porque no hay ninguna tarea que
+enseñar en una línea de estado y lo único que hay que confirmar es que el tablero se habría creado:
+
+```
+$ biso init "My project" --dry-run
+note: board would be created at /Users/avilches/.biso/boards/my-project-3f9a2b1c (--dry-run)
+```
+
+Con `--at`, la ruta que nombra la nota es la que `--at` da, con la misma forma (relativa o absoluta)
+que llevaría el puntero si la llamada fuera real. **Con `--from`, en cambio, la frase es la del lote de
+importación** (sección ["`biso new`"](new.md#el-modo-lote)), `<N> tasks would be created, nothing was
+written (--dry-run)`, porque ahí sí hay tareas que contar; `init --from` no repite la nota del tablero
+además de esa frase, para no decir dos veces que no se ha escrito nada.
+
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
