@@ -18,7 +18,7 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
   prueba de la suite y no una intención. La de `biso snapshot` con `biso init --from` cubre además la
   configuración del tablero entera, campo a campo.
 - La estabilidad de las claves de los criterios: una clave asignada no se reasigna nunca.
-- El tope de tamaño del mensaje de `biso prime`.
+- El tope de tamaño del mensaje de `biso prime` (sección ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño)).
 
 **Puede cambiar entre versiones menores, y por eso no hay que analizarlo:**
 
