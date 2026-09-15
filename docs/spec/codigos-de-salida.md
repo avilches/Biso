@@ -21,45 +21,54 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 Los códigos del 20 en adelante son los desenlaces malos de resolver el tablero, y no los desenlaces
 propios de ningún comando.
 
-Las reglas que acompañan a la tabla:
+Las reglas que acompañan a la tabla, cada una en su propia sección para poder enlazarla:
 
-- **El código 7 garantiza que no se ha escrito nada, y el código específico siempre gana sobre él.**
-  Si un comando termina con 7, el tablero está exactamente como estaba antes, pero el 7 no es el
-  código general de "una validación falló dentro de un lote": un fallo que ya tiene su propio código
-  (3, 4, 5...) lo conserva sea cual sea el tamaño del lote. `biso set A B C` donde `C` no existe
-  devuelve 4, tanto si `C` es la única referencia como si hay cien. El 7 queda reservado en exclusiva
-  a los fallos que no se pueden atribuir a un elemento señalable, que son los dos que ya tienen su
-  propio identificador en la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error): `batch_invalid`
-  (una validación de conjunto que no apunta a un elemento concreto, como un `--dry-run` sobre `new
-  --from` con varias líneas inválidas por motivos distintos) y `dry_run_failed` (un `--dry-run` que no
-  habría pasado la validación). En los dos casos el 7 llega con el detalle de **todos** los fallos
-  encontrados, no solo del primero. Si un programa que llama a `biso` quisiera tratar todo lote fallido
-  igual, tendría que analizar `error.details` de todas formas, que es justo lo que un código
-  específico existe para evitar.
-- **Un listado vacío es siempre 0.** Un tablero donde de verdad no hay nada que cumpla un filtro
-  válido no es un error.
-- **El código 3 cubre dos direcciones.** Un valor de entrada que el tablero no reconoce, y un dato ya
-  guardado que el programa no sabe interpretar. Las dos son "el vocabulario no cuadra", y el mensaje
-  siempre dice cuál de las dos ha ocurrido.
-- **El código 1 es un fallo del programa, no de quien llama.** La reacción correcta es informar, no
-  reintentar con otros parámetros.
-- **Los códigos 20, 21 y 22 son los tres desenlaces malos de resolver el tablero, y cada uno tiene un
-  remedio distinto**:
-    - **20.** No hay ningún tablero accesible. El remedio es `biso init`, que crea uno.
-    - **21.** El tablero está donde tiene que estar, pero su almacén no se puede leer. El único remedio
-      es reconstruirlo desde una instantánea con `biso init --from`.
-    - **22.** El mismo identificador de tablero aparece en dos sitios. El remedio es a mano: quitar o
-      renombrar uno de los dos directorios.
+## El código 7 garantiza que no se ha escrito nada, y el código específico siempre gana sobre él
 
-  Cada desenlace tiene su propio código, en vez de compartir uno, porque quien ramifica sobre el número tiene que poder elegir el remedio
-  sin leer el mensaje, que es el principio de la sección ["Los principios"](principios.md). **Ni el 21
-  ni el 22 aparecen en la tabla de códigos de salida de cada comando**, porque no son desenlaces propios
-  de ninguno sino del tablero entero, igual que el 1. Hay dos excepciones: `biso where`, que existe
-  justamente para explicar la resolución y los lleva los dos en su tabla
-  (["`biso where`"](cmd/where.md)); y `biso doctor`, que lleva solo el 21 en la suya porque su base de
-  datos ilegible es justo uno de los daños que existe para diagnosticar (["`biso doctor`"](cmd/doctor.md)).
-  `biso doctor` no lleva el 22, porque un tablero ambiguo aborta al resolverse, antes de que `doctor`
-  llegue a abrir ninguna base de datos.
+Si un comando termina con 7, el tablero está exactamente como estaba antes, pero el 7 no es el
+código general de "una validación falló dentro de un lote": un fallo que ya tiene su propio código
+(3, 4, 5...) lo conserva sea cual sea el tamaño del lote. `biso set A B C` donde `C` no existe
+devuelve 4, tanto si `C` es la única referencia como si hay cien. El 7 queda reservado en exclusiva
+a los fallos que no se pueden atribuir a un elemento señalable, que son los dos que ya tienen su
+propio identificador en la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error): `batch_invalid`
+(una validación de conjunto que no apunta a un elemento concreto, como un `--dry-run` sobre `new
+--from` con varias líneas inválidas por motivos distintos) y `dry_run_failed` (un `--dry-run` que no
+habría pasado la validación). En los dos casos el 7 llega con el detalle de **todos** los fallos
+encontrados, no solo del primero. Si un programa que llama a `biso` quisiera tratar todo lote fallido
+igual, tendría que analizar `error.details` de todas formas, que es justo lo que un código
+específico existe para evitar.
+
+## Un listado vacío es siempre 0
+
+Un tablero donde de verdad no hay nada que cumpla un filtro válido no es un error.
+
+## El código 3 cubre dos direcciones
+
+Un valor de entrada que el tablero no reconoce, y un dato ya guardado que el programa no sabe
+interpretar. Las dos son "el vocabulario no cuadra", y el mensaje siempre dice cuál de las dos ha
+ocurrido.
+
+## El código 1 es un fallo del programa, no de quien llama
+
+La reacción correcta es informar, no reintentar con otros parámetros.
+
+## Los códigos 20, 21 y 22 son los tres desenlaces malos de resolver el tablero, y cada uno tiene un remedio distinto
+
+- **20.** No hay ningún tablero accesible. El remedio es `biso init`, que crea uno.
+- **21.** El tablero está donde tiene que estar, pero su almacén no se puede leer. El único remedio
+  es reconstruirlo desde una instantánea con `biso init --from`.
+- **22.** El mismo identificador de tablero aparece en dos sitios. El remedio es a mano: quitar o
+  renombrar uno de los dos directorios.
+
+Cada desenlace tiene su propio código, en vez de compartir uno, porque quien ramifica sobre el número tiene que poder elegir el remedio
+sin leer el mensaje, que es el principio de la sección ["Los principios"](principios.md). **Ni el 21
+ni el 22 aparecen en la tabla de códigos de salida de cada comando**, porque no son desenlaces propios
+de ninguno sino del tablero entero, igual que el 1. Hay dos excepciones: `biso where`, que existe
+justamente para explicar la resolución y los lleva los dos en su tabla
+(["`biso where`"](cmd/where.md)); y `biso doctor`, que lleva solo el 21 en la suya porque su base de
+datos ilegible es justo uno de los daños que existe para diagnosticar (["`biso doctor`"](cmd/doctor.md)).
+`biso doctor` no lleva el 22, porque un tablero ambiguo aborta al resolverse, antes de que `doctor`
+llegue a abrir ninguna base de datos.
 
 ---
 

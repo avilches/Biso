@@ -88,8 +88,8 @@ hint: unarchive it first with `biso archive MYP-11 --unarchive`
 MYP-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
 ```
 
-El valor de urgencia del ejemplo sale de los coeficientes por defecto, que el contrato de estabilidad
-permite cambiar entre versiones menores, así que la cifra exacta puede no ser esta.
+El valor de urgencia del ejemplo puede no ser este; el motivo está en la sección
+["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia).
 
 Con `--dry-run`, la misma línea marcada como hipotética, con la regla y el encabezado que fija
 ["`biso set`"](set.md#salida):

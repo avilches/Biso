@@ -73,7 +73,7 @@ no puede admitir `=`, porque `--ext <clave>=<valor>` ya usa ese carácter para s
 valor: permitirlo dentro de la clave haría ambiguo dónde termina una y empieza el otro en
 `--ext a=b=c`.
 
-**Por qué el código de salida es 2 y no 3.** El código 3 (["Códigos de salida"](../spec/codigos-de-salida.md)) es para un valor
+**Por qué el código de salida es 2 y no 3.** El código 3 (["El código 3 cubre dos direcciones"](../spec/codigos-de-salida.md#el-código-3-cubre-dos-direcciones)) es para un valor
 sintácticamente correcto que el tablero no reconoce, y `labels` y `assignees` no tienen vocabulario
 cerrado al escribir (["Qué valida cada filtro, y contra qué"](../spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué)): cualquier texto que cumpla el alfabeto es válido sin que el
 tablero lo declare antes. Un carácter fuera del alfabeto no es un problema de reconocimiento sino de
