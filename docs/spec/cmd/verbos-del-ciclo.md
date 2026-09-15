@@ -348,8 +348,8 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 | Quedan criterios sin marcar y no se pasó `--check-ac` | **Se cierra igual**, con el aviso y la lista de los que faltan |
 | Quedan elementos de la definición de hecho sin marcar | Igual, con su propio aviso |
 | Lo mismo, con `--strict` | Error 6, y no se escribe nada |
-| Sin `--summary` | Se cierra igual, con `warning: MYP-11 finished without a final summary` |
-| Sin `--summary` y con `--strict` | Error 6 |
+| Sin `--append-summary` | Se cierra igual, con `warning: MYP-11 finished without a final summary` |
+| Sin `--append-summary` y con `--strict` | Error 6 |
 | La tarea tiene subtareas sin terminar | Aviso con la lista. Con `--strict`, error 6 |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
