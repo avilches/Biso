@@ -18,7 +18,7 @@ biso help [<command>... | all]
 | Con uno o varios nombres de comando, todos existentes | Imprime la ayuda completa de cada uno, en el orden pedido, en la misma llamada |
 | Con `all`, y ningún nombre de comando además | Imprime la ayuda de primer nivel más la lista de los comandos de administración, cada uno con su línea |
 | Con `all` junto a uno o más nombres de comando | Error 2: `all` no se combina con nombres de comando |
-| Con uno o varios nombres, y alguno no existe | Error 4, con los tres nombres más parecidos al primero que no existe en el orden pedido; no imprime la ayuda de ningún comando de la llamada, ni siquiera de los que sí existen |
+| Con uno o varios nombres, y alguno no existe | Error 4, con hasta tres de los nombres más parecidos al primero que no existe en el orden pedido (los que pasen el umbral de ["El algoritmo de sugerencias más parecidas"](../vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas)); no imprime la ayuda de ningún comando de la llamada, ni siquiera de los que sí existen |
 
 `biso help` funciona **sin tablero**.
 
@@ -31,11 +31,20 @@ blanco.
 
 **La validación es todo o nada, y ocurre antes de imprimir nada.** Los nombres pedidos se resuelven
 en el orden en que aparecen, y en cuanto uno no existe, la llamada entera falla con el error de
-siempre (los tres nombres más parecidos a ese, no a los demás) y no se imprime la ayuda de ningún
+siempre (hasta tres nombres más parecidos a ese, no a los demás) y no se imprime la ayuda de ningún
 comando de la llamada, ni la de los que existen antes de él en la lista ni la de los que vienen
 después. Es el mismo criterio de todo o nada de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables),
 aplicado aquí a una lectura en vez de a una escritura: una llamada que pide varias cosas a la vez no
 entrega la mitad y calla el resto.
+
+```
+$ biso help fnish
+error: no such command: "fnish"
+hint: did you mean: finish, init?
+```
+
+Solo salen dos nombres aunque el tope sea tres: ningún otro comando pasa el umbral de
+["El algoritmo de sugerencias más parecidas"](../vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas), y la lista se queda corta en vez de rellenarse con algo que no se parece.
 
 **`all` es un valor especial, no un nombre de comando, y no se combina con ninguno en la misma
 llamada.** Pide una lista de comandos, no la ayuda completa de uno, y las dos formas de salida no
