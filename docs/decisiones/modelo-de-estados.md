@@ -78,13 +78,9 @@ estado activo guardado por muy vencido que esté su arrendamiento.
 Lo que se guarda es el instante de caducidad (`leaseExpiresAt`) y quién tiene el arrendamiento
 (`leaseHolder`), los dos sin valor salvo en una tarea activa y asignada (["El vaciado"](../spec/lease.md#el-vaciado) de `lease.md`). Lo
 que caduca sigue siendo, como decía la redacción original, "estoy en ello" y no "esto es tuyo": el
-campo derivado `leaseExpired` dice que el arrendamiento venció, pero el estado guardado no cambia
-solo, nunca. Liberarlo es una escritura explícita, y sigue sin hacer falta un comando nuevo para eso:
-es la misma que ya hace `biso start`, que reclama el arrendamiento vencido a favor de quien llama
-comprobando quién lo tenía dentro de la misma transacción, para que el tenedor viejo no lo recupere con
-su siguiente escritura al despertar (["`biso start`"](../spec/cmd/verbos-del-ciclo.md#biso-start)). Con un arrendamiento vivo de otra
-identidad, `biso start` avisa y la coge igual: el mismo "avisa, no impide" que ya aplicaba a las
-dependencias sin terminar y a la pregunta abierta.
+estado guardado no cambia solo, nunca (["Cuándo cuenta como vencido"](../spec/lease.md#cuándo-cuenta-como-vencido) de `lease.md`). Liberarlo es una escritura explícita, y sigue sin hacer falta un
+comando nuevo para eso: es la misma que ya hace [`biso start`](../spec/cmd/verbos-del-ciclo.md#biso-start), con la comprobación de
+tenedor que se explica más abajo.
 
 **Por qué se enmienda en vez de reescribirse sin más.** La redacción aplazada no decía cómo se
 liberaba una caducidad, y la lectura más directa de "saca la tarea del estado activo" es una
@@ -147,31 +143,23 @@ versión, y sin esa comprobación la única invariante que este apartado dice qu
 la única que `doctor` no mira.
 
 **La invariante gana siempre sobre el aviso de un arrendamiento ajeno, y esa precedencia hay que
-escribirla.** Estas reglas se enfrentan en un caso corriente: `@claude` tiene el arrendamiento vivo de
-una tarea y `@sara` ejecuta `biso finish` sobre ella. Una regla dice que la escritura de otra identidad
-no toca ninguno de los campos, y solo avisa; la otra dice que la escritura que saca la tarea del
-estado activo los vacía. Manda la segunda, y el aviso se emite igual. El argumento no es de gusto: la
-primera regla es una cortesía hacia el tenedor y la segunda es la invariante de la que dependen la
-validación del lote y `doctor`, así que con la precedencia al revés quedaría una tarea terminada con un
-arrendamiento vivo, y `biso export` de ese tablero produciría un fichero que su propio
-`biso init --from` rechazaría, rompiendo la prueba de simetría del ["contrato de estabilidad"](../spec/estabilidad.md). Por el
-mismo argumento, `biso archive` vacía también los campos, aunque `archived` no sea un estado y
-archivar no saque la tarea del estado activo: un arrendamiento afirma que alguien está trabajando ahora,
-y archivar es dejar de trabajar, así que conservarlo lo esconde donde nadie lo ve (`biso prime` y
-`biso ls` excluyen las archivadas) hasta que `--unarchive` lo devuelve semanas después a nombre de una
-sesión muerta.
+escribirla.** Estas reglas se enfrentan en un caso corriente: una escritura de una identidad que no es
+`leaseHolder` sobre una tarea con arrendamiento vivo, cuando esa misma escritura además saca la tarea
+del estado activo o la deja sin nadie asignado. El argumento no es de gusto: la regla del aviso es una
+cortesía hacia el tenedor y la del vaciado es la invariante de la que dependen la validación del lote y
+`doctor`, así que con la precedencia al revés quedaría una tarea terminada con un arrendamiento vivo,
+rompiendo la prueba de simetría del ["contrato de estabilidad"](../spec/estabilidad.md) (["El vaciado"](../spec/lease.md#el-vaciado) de `lease.md`,
+con el ejemplo completo). Por el mismo argumento, `biso archive` vacía también los campos, aunque
+`archived` no sea un estado y archivar no saque la tarea del estado activo (["El vaciado"](../spec/lease.md#el-vaciado) de `lease.md`).
 
 **Una escritura que no cambia ningún campo también late, y esto es lo que un implementador desharía
-creyendo que optimiza.** `biso set` con todos sus flags dando el valor que la tarea ya tiene sale con
-código 0 y con `note: MYP-11 unchanged`, y aun así renueva `leaseExpiresAt` si quien llama es el
-tenedor. Salta a la vista el atajo contrario, no escribir nada cuando no hay nada que escribir, y es un
-error: el latido de este arrendamiento no es un comando propio, es cualquier escritura que el agente ya
-hace, y si la renovación dependiera de que algún valor hubiera cambiado de verdad, un agente que repite
-una escritura idempotente creería estar latiendo sin latir, y perdería la tarea al vencer el plazo por
-haber hecho justo lo que la especificación le dice que basta. Lo que no cambia en ese caso es
-`updatedAt`, porque ningún campo de la tarea cambió, y la lista `changed` del JSON sale vacía: la
-renovación es un hecho del arrendamiento, no una modificación de la tarea, y la nota sigue siendo cierta
-porque habla de la tarea.
+creyendo que optimiza.** `biso set` con todos sus flags dando el valor que la tarea ya tiene renueva
+`leaseExpiresAt` igual si quien llama es el tenedor (["La renovación"](../spec/lease.md#la-renovación) de `lease.md`). Salta a la vista el atajo
+contrario, no escribir nada cuando no hay nada que escribir, y es un error: el latido de este
+arrendamiento no es un comando propio, es cualquier escritura que el agente ya hace, y si la renovación
+dependiera de que algún valor hubiera cambiado de verdad, un agente que repite una escritura idempotente
+creería estar latiendo sin latir, y perdería la tarea al vencer el plazo por haber hecho justo lo que la
+especificación le dice que basta.
 
 **Y `biso new --start` reclama el arrendamiento, porque es el atajo de dos llamadas y la equivalencia
 tiene que ser real.** ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas) justifica ese flag como el ahorro de `biso new` más `biso start`;
@@ -188,8 +176,8 @@ una línea `lease` con los dos, y solo cuando la tarea tiene arrendamiento, porq
 guiones aparecería en la ficha de casi todas las tareas del tablero (["`biso get`"](../spec/cmd/get.md)). El
 segundo: la validación rechazaba los campos sobre una tarea que no estuviera activa y asignada, pero
 no rechazaba que llegara uno solo de los dos, y con `leaseExpiresAt` vacío el derivado `leaseExpired`
-comparaba un instante que no existe contra el reloj. Los campos van juntos o no viene ninguno, y
-`leaseExpired` es falso cuando no hay `leaseExpiresAt`: un derivado tiene que valer algo en todos los
+comparaba un instante que no existe contra el reloj. Se cierra exigiendo que los dos campos vayan
+siempre juntos (["La importación"](../spec/lease.md#la-importación) de `lease.md`): un derivado tiene que valer algo en todos los
 tableros posibles, no solo en los que se importaron bien.
 
 ### Señalar lo que espera a una persona
