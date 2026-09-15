@@ -46,7 +46,7 @@ Estas reglas protegen ese presupuesto, y ningún comando se aparta de ellas:
    sección ["Cómo se elige el tablero"](resolucion-del-tablero.md) no mira el control de versiones en absoluto, ni siquiera leyendo ficheros: frenar la
    búsqueda del puntero donde un repositorio empieza obligaría a respetar sus reglas de exclusión para
    que el freno significara algo, y eso no se puede reimplementar de forma fiable ni preguntar sin
-   invocar el programa. Que `biso snapshot` sí haga esas dos preguntas (["`biso snapshot`"](cmd/snapshot.md)) no contradice nada:
+   invocar el programa. Que `biso snapshot` sí haga esas preguntas (["`biso snapshot`"](cmd/snapshot.md)) no contradice nada:
    ese comando ya está fuera del camino caliente por definición.
 3. **La palanca mayor no es que cada llamada sea más rápida: es que haga falta hacer menos llamadas.**
    Para eso existe `biso prime` (sección ["`biso prime`, el arranque de una sesión"](cmd/prime.md)), que sustituye el ciclo entero de leer guías sueltas y
