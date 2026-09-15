@@ -48,7 +48,8 @@ consiga es cosa de quien implemente.
    del fallo (3, 4, 5...) si se detectó al validar y es atribuible a un elemento concreto, 7 si se
    detectó al validar y no lo es, 8 si se detectó al escribir. En todos los casos el mensaje afirma
    explícitamente que no se ha escrito nada. Cuál gana entre el código específico y el 7 está en
-   ["Códigos de salida"](codigos-de-salida.md).
+   ["El código 7 garantiza que no se ha escrito nada, y el código específico siempre gana sobre
+   él"](codigos-de-salida.md#el-código-7-garantiza-que-no-se-ha-escrito-nada-y-el-código-específico-siempre-gana-sobre-él).
 3. **Dos procesos simultáneos nunca asignan el mismo identificador**, aunque trabajen sobre el mismo
    tablero desde copias de trabajo distintas del proyecto.
 4. **Dos escrituras simultáneas sobre la misma tarea no se pierden ni se mezclan.** O se aplican una
@@ -115,9 +116,8 @@ la ausencia de tablero, porque el remedio es otro: aquí el tablero está donde 
 hay que hacer es reconstruirlo, no crearlo. La clave `code` del sobre JSON (sección
 ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)) es `database_unreadable`.
 
-**El código 21 puede salir de cualquier comando, y por eso no se repite en la tabla de códigos de
-salida de cada uno.** Esas tablas dicen los desenlaces propios del comando; este no lo es de ninguno, es
-el del tablero entero, igual que el 1 de un fallo del programa, que tampoco aparece en ellas.
+**El código 21 puede salir de cualquier comando**, así que no aparece en la tabla de códigos de salida
+de ninguno, salvo las dos excepciones de la sección ["Códigos de salida"](codigos-de-salida.md#los-códigos-20-21-y-22-son-los-tres-desenlaces-malos-de-resolver-el-tablero-y-cada-uno-tiene-un-remedio-distinto).
 
 **Y el remedio se puede teclear tal cual, porque el segundo `hint` nombra el comando que lo hace.** Un
 directorio cuya base de datos no abre no cuenta como tablero accesible para `biso init`, así que

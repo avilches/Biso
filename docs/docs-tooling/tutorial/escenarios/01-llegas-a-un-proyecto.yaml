@@ -69,7 +69,7 @@ steps:
         8. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.
         9. Long text: a real newline works, and so do -d @file.md and -d - for stdin.
        10. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
-           6 precondition not met, 7 environment, 8 no board here, 9 nothing written.
+           6 precondition not met, 7 nothing written, 8 environment, 20 no board here.
        11. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
            it, writing both into the comments. Ask instead of guessing. A task
            assigned to you is one a person decided you should do.
