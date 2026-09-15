@@ -63,8 +63,9 @@ en dos partes que suman exactamente ese tope:
 - **La parte fija no pasa de 3.840 bytes.** Es la línea de título, `COMMANDS`, `FIELD FLAGS`, `RULES` y
   el párrafo final ("Pick one, ..."): nada de esto depende del contenido del tablero.
 - **El resumen del tablero no pasa de 1.664 bytes.** Es el bloque `BOARD` (nombre, recuento por
-  estado, vocabularios, identidad), `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU`, `NEXT UP`
-  y las líneas de recuento: todo lo que cambia según qué haya en el tablero.
+  estado, vocabularios, identidad, el aviso de una tarea ilegible), `IN PROGRESS`, `NEEDS ANSWER`,
+  `ASSIGNED TO YOU`, `NEXT UP` y las líneas de recuento: todo lo que cambia según qué haya en el
+  tablero.
 
 Los bloques no son contiguos entre sí, así que hay líneas en blanco de separación entre ellos: **cada
 línea en blanco se cuenta en la parte a la que pertenece el bloque que la precede.** Con esta regla,

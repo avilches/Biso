@@ -577,9 +577,11 @@ error: "MYP-2" looks like a task id, and `biso answer` takes only one task
 hint: to write that text literally, use @file or - for stdin
 ```
 
-**`biso answer` no acepta `--comment-author`**: los dos comentarios que
-escribe van siempre firmados por [la identidad configurada](../invocacion.md#variables-de-entorno). Quien necesite firmar un comentario
-con otro autor tiene `biso comment --comment-author`, que sigue funcionando como siempre.
+**`biso answer` no acepta `--comment-author`**: de los dos comentarios que escribe, solo el
+segundo, el de la respuesta, va firmado por [la identidad configurada](../invocacion.md#variables-de-entorno); el primero, el de la pregunta,
+conserva el autor y el instante originales, tal como describe el paso 1 de "Qué hace". Quien
+necesite firmar un comentario con otro autor tiene `biso comment --comment-author`, que sigue
+funcionando como siempre.
 
 ### Qué hace
 
@@ -668,8 +670,9 @@ Options:
 Every field flag of `biso set --help` works here too, so you can answer and
 refine in one call.
 
-Both comments are signed with your configured identity. This command does not
-take --comment-author.
+Only the answer comment is signed with your configured identity; the question
+comment keeps its original author and time. This command does not take
+--comment-author.
 
 Exit codes:
   0  answered       4  not found        7  --dry-run did not pass
