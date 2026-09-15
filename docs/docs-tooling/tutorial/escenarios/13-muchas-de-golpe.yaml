@@ -27,7 +27,7 @@ steps:
     command: biso set TASK-44 TASK-61 --priority low
     output: |
       TASK-44  To Do  ac 0/1  urgency 1.6
-      TASK-61  To Do  ac 0/1  urgency 1.4
+      TASK-61  To Do  ac 0/1  urgency 1.5
     exit_code: 0
     source_kind: derived
     source:
@@ -39,10 +39,11 @@ steps:
       you learned with one applies to two just the same.
 
       `TASK-44` was already low priority, so its urgency doesn't move. `TASK-61` drops from 4.5
-      to 1.4, and there's a hidden lesson in there about reading these numbers: the real drop is
+      to 1.5, and there's a hidden lesson in there about reading these numbers: the real drop is
       exactly 3.0, what medium priority was contributing, but the two figures you see are rounded
-      to one decimal from 4.45 and 1.45, and those two roundings don't go the same direction.
-      Urgency is for ordering a list, not for doing arithmetic on it.
+      to one decimal from 4.45 and 1.45, both exact ties. The specification fixes the direction of
+      a tie (round half away from zero), so both round up the same way: 4.5 and 1.5. Urgency is
+      for ordering a list, not for doing arithmetic on it.
   - narration: |
       Now a longer list, with a typo hidden inside: one of the references doesn't exist.
     command: biso set TASK-7 TASK-33 TASK-99 --priority medium
@@ -87,7 +88,7 @@ steps:
       With validation green, it runs it for real.
     command: biso set TASK-7 TASK-33 --priority medium
     output: |
-      TASK-7   To Do  ac 0/4  urgency 15.3
+      TASK-7   To Do  ac 0/4  urgency 15.4
       TASK-33  To Do  ac 1/3  urgency 4.3
     exit_code: 0
     source_kind: derived
@@ -95,7 +96,7 @@ steps:
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
-      `TASK-7` drops from 18.3 to 15.3, the 3.0 it loses going from high to medium priority, and
+      `TASK-7` drops from 18.4 to 15.4, the 3.0 it loses going from high to medium priority, and
       it's still the most urgent task on the board by a wide margin: it still has the deadline
       term, contributing 11.2 because it's due in two days. `TASK-33` doesn't move, since it was
       already medium priority, and it still shows up in the output anyway: it tells you where
@@ -131,11 +132,11 @@ board_in: >
   The board as scenario 12 leaves it: TASK-52 archived with no lease, TASK-19 finished since
   scenario 10, TASK-62 created in scenario 2. TASK-44 in To Do with low priority and urgency 1.6,
   TASK-61 in To Do with medium priority and urgency 4.5 (4.45 before rounding), TASK-7 in To Do
-  with high priority, deadline 2026-09-08 and urgency 18.3, TASK-33 in To Do with medium priority
-  and urgency 4.3. Counters 54/3/191.
+  with high priority, deadline 2026-09-08 and urgency 18.4 (18.35 before rounding), TASK-33 in To
+  Do with medium priority and urgency 4.3. Counters 54/3/191.
 board_out: >
   TASK-44 with no real change, it was already low priority. TASK-61 now low priority with urgency
-  1.4. TASK-7 now medium priority with urgency 15.3. TASK-33 unchanged, it was already medium. No
+  1.5. TASK-7 now medium priority with urgency 15.4. TASK-33 unchanged, it was already medium. No
   task created: the three from the incident file are never written, because the only step that
   touches them is a --dry-run. Counters unchanged, 54/3/191, because no step moves a task between
   states or creates one.
