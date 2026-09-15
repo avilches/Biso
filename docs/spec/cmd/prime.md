@@ -319,8 +319,8 @@ THE BOARD IS EMPTY
 }
 ```
 
-Los valores de urgencia del ejemplo salen de los coeficientes por defecto, que el contrato de
-estabilidad permite cambiar entre versiones menores, así que las cifras exactas pueden no ser estas.
+Los valores de urgencia del ejemplo pueden no ser estos; el motivo está en la sección
+["Urgencia"](../modelo-de-datos/urgencia.md).
 
 Las reglas y los nombres de los flags no viajan en el JSON: quien pide JSON es un programa, y un
 programa no necesita que le expliquen en prosa cómo se nombran los flags de escritura.
