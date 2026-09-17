@@ -1,7 +1,6 @@
 # Estado del arte: gestores de tareas para agentes, y por qué fallan
 
-Investigado el 2026-09-07 para tomar la decisión de persistencia de `biso`
-([diseño](../superpowers/specs/2026-09-07-persistencia-design.md)).
+Investigado el 2026-09-07 para tomar ["la decisión de persistencia"](../decisiones/persistencia.md#la-decisión-de-persistencia) de `biso`.
 
 La primera mitad es un inventario de las herramientas del espacio, y se cierra con una comparación
 aparte: cómo se le dice a cada una que trabaje con un almacén distinto del que encuentra sola, donde

@@ -3,16 +3,12 @@ site_description: Especificacion y decisiones de diseno de biso, el CLI de gesti
 docs_dir: ../..
 site_dir: ../../../site
 
-# docs/superpowers/ guarda los documentos de diseno y los planes de las sesiones de
-# brainstorming. Se publican, porque estado-del-arte/index.md enlaza a uno de ellos, pero no
-# entran en el menu lateral para no mezclarlos con los documentos principales.
-not_in_nav: |
-  superpowers/
-
-# docs-tooling/ guarda los scripts, los fixtures del tutorial y la configuracion de MkDocs:
-# nada de eso es contenido a publicar.
+# docs-tooling/ guarda los scripts, los fixtures del tutorial y la configuracion de MkDocs, y
+# docs/superpowers/ las actas y planes de las sesiones de diseno internas: nada de eso es
+# contenido a publicar, aunque los dos vivan versionados dentro de docs/.
 exclude_docs: |
   docs-tooling/
+  superpowers/
 
 theme:
   name: material
@@ -57,11 +53,7 @@ plugins:
       locale: es
       fallback_to_build_date: true
 
-# El plugin de busqueda de esta version no admite excluir un directorio entero desde aqui
-# (solo lee `search.exclude` del frontmatter de cada pagina), asi que ese comportamiento lo
-# fija este hook: saca docs/superpowers/ del indice de busqueda sin tocar cada fichero.
 hooks:
-  - excluir_superpowers_del_buscador.py
   - notas_lectura.py
 
 # Un enlace a un fichero que no existe, a un ancla que no existe, o escrito de una forma que
