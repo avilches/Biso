@@ -1,5 +1,7 @@
 # Biso
 
+@.memory/MEMORY.md
+
 `biso` es un CLI para gestionar las tareas de un proyecto. Pensada tanto para personas como para
 de agentes de LLM que trabajan dentro de ese proyecto normas que hacen que los agentes lo usen
 de manera eficiente sin tener que ejecutar multiples pasos innecesarios hasta conseguir una operación:
