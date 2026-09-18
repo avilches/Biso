@@ -159,7 +159,7 @@ es normal, y partir por ella convertiría una descripción en varias.
 
 **["Las fechas"](../spec/modelo-de-datos/fechas.md#las-fechas), por qué las fechas se pueden fijar al importar y no en el uso normal.** Sin esa excepción no se
 puede importar el histórico de otro sistema conservando cuándo pasó cada cosa, que es el tercer
-requisito de ["Cuatro requisitos aprendidos de otras herramientas"](principios-y-mantenimiento.md#cuatro-requisitos-aprendidos-de-otras-herramientas), en este mismo documento.
+requisito de ["Cuatro requisitos aprendidos de otras herramientas"](requisitos-de-otras-herramientas.md).
 
 ---
 
