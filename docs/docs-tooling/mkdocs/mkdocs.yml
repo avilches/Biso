@@ -159,6 +159,8 @@ nav:
   - Decisiones de diseno:
     - decisiones/index.md
     - Los principios, y como se mantiene la especificacion: decisiones/principios-y-mantenimiento.md
+    - Lo que se deja fuera, y por que: decisiones/lo-que-se-deja-fuera.md
+    - Cuatro requisitos aprendidos de otras herramientas: decisiones/requisitos-de-otras-herramientas.md
     - El modelo de estados: decisiones/modelo-de-estados.md
     - La persistencia: decisiones/persistencia.md
     - El lenguaje de implementacion y el rendimiento: decisiones/lenguaje-y-rendimiento.md

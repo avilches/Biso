@@ -128,7 +128,7 @@ comentarios como texto en un fichero, se detectaron agentes editando ese fichero
 fechas de varios comentarios coincidieran entre sí, precisamente porque la herramienta no ofrecía
 ninguna vía legítima para corregir la fecha de un comentario ya escrito fuera de una importación
 inicial. `biso` ya resuelve la mitad del problema: cualquier fecha se puede fijar al crear una tarea
-por lote (["Cuatro requisitos aprendidos de otras herramientas"](principios-y-mantenimiento.md#cuatro-requisitos-aprendidos-de-otras-herramientas), en este documento). Pero esa vía sirve para
+por lote (["Cuatro requisitos aprendidos de otras herramientas"](requisitos-de-otras-herramientas.md)). Pero esa vía sirve para
 poblar un tablero vacío, no para corregir una tarea que ya existe: un `id` ya ocupado falla al
 importar (["`biso new`"](../spec/cmd/new.md)), así que hoy no hay ninguna forma de arreglar una fecha equivocada en una tarea
 existente sin destruirla y recrearla entera. Ese hueco es el que empuja a la misma clase de atajo que
@@ -184,7 +184,7 @@ valor más de su `type` y agrupa enteramente por el grafo de padres; TaskMaster 
 con subtareas anidadas de identificador estable, también sin campo dedicado.
 
 **Por qué se retira también `milestone`, después de haberlo defendido como campo.** Corrige
-["Los hitos como entidad"](principios-y-mantenimiento.md#lo-que-se-deja-fuera-y-por-qué), más arriba en este documento. `milestone`
+["Los hitos como entidad"](lo-que-se-deja-fuera.md), en la página de lo que se deja fuera. `milestone`
 cubría un caso real y distinto del de `parent`: un cajón para agrupar tareas sueltas sin crear una
 tarea nueva, sin exigirles ciclo de vida y sin configuración previa. Ese caso sigue siendo real, pero
 `milestone` no era la única manera de resolverlo y arrastraba una palabra con connotación de fecha

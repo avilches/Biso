@@ -18,6 +18,8 @@ gestores de tareas maduros, Backlog.md y Taskwarrior, y de los fallos documentad
 ## Las páginas
 
 - [Los principios, y cómo se mantiene la especificación](principios-y-mantenimiento.md)
+- [Lo que se deja fuera, y por qué](lo-que-se-deja-fuera.md)
+- [Cuatro requisitos aprendidos de otras herramientas](requisitos-de-otras-herramientas.md)
 - [El modelo de estados](modelo-de-estados.md)
 - [La persistencia](persistencia.md)
 - [El lenguaje de implementación y el rendimiento](lenguaje-y-rendimiento.md)
