@@ -27,7 +27,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 
 | Paso | Qué cubre | Estado | Tarea |
 |---|---|---|---|
-| 1 | El almacén SQLite, sus migraciones y `WithTx` | pendiente | TASK-4 |
+| 1 | El almacén SQLite, sus migraciones y `WithTx` | hecho | TASK-4 |
 | 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | pendiente | TASK-10 |
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) | pendiente | TASK-11 |
 | 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | pendiente | TASK-12 |
@@ -53,14 +53,41 @@ cerradas.
 | [Cómo se elige el tablero](resolucion-del-tablero.md) | paso 4 | pendiente |
 | [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 5 y 7 | pendiente |
 | [Cómo se pasa un valor](valores-de-entrada.md) | pasos 4 a 9 | pendiente |
-| [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2 y 4 | pendiente |
+| [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2 y 4 | en curso |
 | [El arrendamiento de una tarea](lease.md) | pasos 2 y 6 | pendiente |
-| [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | pendiente |
+| [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | en curso |
 | [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | pendiente |
 | [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | pendiente |
 | [El contrato JSON](contrato-json.md) | pasos 4 a 9 | pendiente |
 | [El contrato de estabilidad](estabilidad.md) | paso 7 | pendiente |
 | [Lo que se deja fuera a propósito](fuera-de-alcance.md) | ninguno | fuera de alcance |
+
+### Qué queda probado ya de los dos transversales que empezó el paso 1
+
+**De [`garantias.md`](garantias.md)**, el paso 1 dejó probadas en `internal/store` las garantías 1
+(ninguna escritura se observa a medias: un lector concurrente no ve la fila sin confirmar), 2 (todo
+o nada, incluido cuando la función entra en pánico), 4 y 5 (el bloqueo de escritura se espera el
+tiempo configurado y luego falla con código 8 y el texto literal, desde cualquier camino: abrir,
+migrar o escribir) y 6 (una lectura no se bloquea ni falla por una escritura en curso). También
+quedó implementado el segundo caso de ["Qué pasa con un dato que no se puede
+interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar): una base de datos que
+no se puede leer falla con código 21, la clave `database_unreadable` y sus dos `hint`, y la
+comprobación de integridad que nombra ese texto existe como un método propio del almacén, que es lo
+que ejecutará [`biso doctor`](cmd/doctor.md) en el paso 9.
+
+**La garantía 3 (dos procesos simultáneos nunca asignan el mismo identificador) no está probada**, y
+no puede estarlo todavía: depende de cómo se asignan los identificadores de tarea, que llega con el
+modelo de datos del paso 2 (TASK-10). Lo que sí queda probado es el mecanismo del que dependerá, la
+serialización de escritores. El primer caso de esa misma sección, la tarea suelta ilegible, es
+también del paso 2 en adelante, porque necesita que haya tareas.
+
+**De [`presupuestos.md`](presupuestos.md)**, el paso 1 mide solo el trozo de
+["El presupuesto de arranque"](presupuestos.md#el-presupuesto-de-arranque) que el almacén controla:
+abrir la base de datos y leer un tablero sintético del tamaño que fija ese presupuesto, que con el
+detector de carreras (que es como se ejecuta la suite) tarda entre 4,2 y 4,7 ms frente al tope de
+25. No es la medida del presupuesto:
+esa es sobre `biso ls` y `biso prime` en un tablero real de 300 tareas y es del paso 7 (TASK-15).
+["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño) es entero del paso 7.
 
 ## Antes de empezar un paso
 
