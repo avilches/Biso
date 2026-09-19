@@ -35,7 +35,7 @@ func TestUrgencyOfTheWorkedExampleOfTheSpecification(t *testing.T) {
 
 	// docs/spec/modelo-de-datos/urgencia.md: 6.0 + 4.0 + 8.0 + 0.0 + 0.0 +
 	// 1.0 + 0.0 = 19.0.
-	if got := task.Urgency(ctx); got != 19.0 {
+	if got := urgencyOf(t, task, ctx); got != 19.0 {
 		t.Fatalf("Urgency() = %v, want 19.0", got)
 	}
 }
@@ -53,7 +53,7 @@ func TestUrgencyOfATerminalTaskIsZeroAndNothingElseIsComputed(t *testing.T) {
 
 	ctx := defaultContext(today)
 	ctx.Blocking = true
-	if got := task.Urgency(ctx); got != 0.0 {
+	if got := urgencyOf(t, task, ctx); got != 0.0 {
 		t.Fatalf("Urgency() of a terminal task = %v, want 0.0", got)
 	}
 }
@@ -76,10 +76,17 @@ func TestUrgencyPriorityWeightComesFromThePositionInTheVocabulary(t *testing.T) 
 		{[]string{"only"}, "", 0.3},
 	}
 	for _, c := range cases {
-		got := priorityWeight(c.priority, c.priorities)
+		got, ok := priorityWeight(c.priority, c.priorities)
+		if !ok {
+			t.Fatalf("priorityWeight(%q, %v) rejected a priority of the vocabulary", c.priority, c.priorities)
+		}
 		if math.Abs(got-c.want) > 1e-9 {
 			t.Fatalf("priorityWeight(%q, %v) = %v, want %v", c.priority, c.priorities, got, c.want)
 		}
+	}
+
+	if _, ok := priorityWeight("urgent", []string{"high", "medium", "low"}); ok {
+		t.Fatalf("priorityWeight accepted a priority the vocabulary does not have")
 	}
 }
 
@@ -118,7 +125,7 @@ func TestUrgencyAgeIsAWholeNumberOfCalendarDaysCappedAtFour(t *testing.T) {
 	ctx := defaultContext(today)
 	// Only the age term and the default priority contribute:
 	// 6.0*0.3 + 0.5*4.0 = 1.8 + 2.0 = 3.8.
-	if got := task.Urgency(ctx); got != 3.8 {
+	if got := urgencyOf(t, task, ctx); got != 3.8 {
 		t.Fatalf("Urgency() = %v, want 3.8", got)
 	}
 }
@@ -129,13 +136,13 @@ func TestUrgencyActiveNeedsTheActiveStatusAndNoOpenQuestion(t *testing.T) {
 
 	active := &Task{Status: "In Progress", CreatedAt: today}
 	// 6.0*0.3 + 4.0 = 5.8.
-	if got := active.Urgency(ctx); got != 5.8 {
+	if got := urgencyOf(t, active, ctx); got != 5.8 {
 		t.Fatalf("Urgency() of an active task = %v, want 5.8", got)
 	}
 
 	active.Question = &Question{Author: "@sara", AskedAt: today, Body: "Which encoding?"}
 	// 6.0*0.3 = 1.8.
-	if got := active.Urgency(ctx); got != 1.8 {
+	if got := urgencyOf(t, active, ctx); got != 1.8 {
 		t.Fatalf("Urgency() of an active task with an open question = %v, want 1.8", got)
 	}
 }
@@ -146,15 +153,17 @@ func TestUrgencyBlockedSubtracts(t *testing.T) {
 	ctx := defaultContext(today)
 	ctx.Blocked = true
 	// 6.0*0.0 - 5.0 = -5.0.
-	if got := task.Urgency(ctx); got != -5.0 {
+	if got := urgencyOf(t, task, ctx); got != -5.0 {
 		t.Fatalf("Urgency() of a blocked task = %v, want -5.0", got)
 	}
 }
 
 func TestUrgencyRoundsHalfAwayFromZero(t *testing.T) {
-	// docs/spec/modelo-de-datos/urgencia.md gives both of these examples,
-	// and both of them are the cases the binary representation gets wrong
-	// when the rounding is done by multiplying by ten.
+	// docs/spec/modelo-de-datos/urgencia.md gives the first two of these
+	// examples. Neither is a case where multiplying by ten would go wrong:
+	// they pin the rule of the specification, half away from zero, and not
+	// a defect of any particular way of computing it (see the comment on
+	// roundToOneDecimal).
 	cases := []struct {
 		in, want float64
 	}{
@@ -179,5 +188,54 @@ func TestUrgencyCoefficientsAreTheSevenOfTheSpecification(t *testing.T) {
 	if c.Priority != 6.0 || c.Active != 4.0 || c.Blocking != 8.0 || c.Blocked != -5.0 ||
 		c.Due != 12.0 || c.Criteria != 1.0 || c.Age != 0.5 {
 		t.Fatalf("DefaultUrgencyCoefficients = %+v", c)
+	}
+}
+
+// urgencyOf is Urgency for the tasks these tests build, all of which carry
+// a priority the context configures. The error it hides has its own test
+// below.
+func urgencyOf(t *testing.T, task *Task, ctx UrgencyContext) float64 {
+	t.Helper()
+
+	urgency, err := task.Urgency(ctx)
+	if err != nil {
+		t.Fatalf("Urgency: %+v", err)
+	}
+	return urgency
+}
+
+// TestUrgencyOfAPriorityTheBoardDoesNotConfigureIsAnError is the rule of
+// the project's CLAUDE.md applied to `priority`: in a closed vocabulary a
+// value that does not exist is an error whether it is written or read.
+// Answering the 0.3 of a task with no priority would turn a task the board
+// cannot interpret into an ordinary one, silently.
+func TestUrgencyOfAPriorityTheBoardDoesNotConfigureIsAnError(t *testing.T) {
+	today := time.Date(2026, 9, 6, 0, 0, 0, 0, time.UTC)
+	ctx := defaultContext(today)
+
+	renamed := &Task{ID: "MYP-11", Status: "To Do", Priority: "urgent", CreatedAt: today}
+	urgency, err := renamed.Urgency(ctx)
+	if err == nil {
+		t.Fatalf("Urgency() = %v for a priority outside the vocabulary, want an error", urgency)
+	}
+	if err.ExitCode != 3 || err.Code != "undecodable_task" {
+		t.Fatalf("error = exit %d, code %q; want exit 3, code undecodable_task", err.ExitCode, err.Code)
+	}
+	if err.Given != "urgent" {
+		t.Fatalf("given = %q, want the priority the task carries", err.Given)
+	}
+
+	// A task with no priority at all is the case the 0.3 belongs to, and it
+	// keeps working.
+	none := &Task{ID: "MYP-12", Status: "To Do", CreatedAt: today}
+	if got := urgencyOf(t, none, ctx); got != 6.0*0.3 {
+		t.Fatalf("Urgency() of a task with no priority = %v, want %v", got, 6.0*0.3)
+	}
+
+	// And so does a terminal one, which is the shortcut the check now comes
+	// before: unreadable is unreadable whatever the status.
+	done := &Task{ID: "MYP-13", Status: "Done", Priority: "urgent", CreatedAt: today}
+	if _, err := done.Urgency(ctx); err == nil {
+		t.Fatalf("Urgency() of a terminal task hid the priority the board does not have")
 	}
 }

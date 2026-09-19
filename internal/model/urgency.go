@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -64,9 +65,29 @@ type UrgencyContext struct {
 // Urgency computes the derived field of the same name, exactly as
 // docs/spec/modelo-de-datos/urgencia.md writes it. It is never stored: the
 // result is recomputed on every read.
-func (t *Task) Urgency(ctx UrgencyContext) float64 {
+//
+// It answers an error, and not a number alone, for a task whose priority
+// is not one of the ones the board configures. `priority` is a closed
+// vocabulary, and the rule of the project is that a value that is not in
+// one is an error whether it is being written or read, so there is no
+// number to give: such a task is the undecodable task of
+// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar,
+// exactly like one carrying an extension key the configuration has
+// dropped. Which of the two things happens next, failing with exit code 3
+// on a targeted read or skipping the task with a warning on a set read, is
+// the caller's decision and not this function's.
+//
+// That check comes before the shortcut for a terminal task, whose urgency
+// is 0.0 with no term computed: a task the board cannot interpret is
+// unreadable whatever its status, and hiding it behind a zero would be the
+// silence the rule is there to prevent.
+func (t *Task) Urgency(ctx UrgencyContext) (float64, *Error) {
+	weight, ok := priorityWeight(t.Priority, ctx.Priorities)
+	if !ok {
+		return 0.0, t.unknownPriority(ctx.Priorities)
+	}
 	if t.Status == ctx.TerminalStatus {
-		return 0.0
+		return 0.0, nil
 	}
 
 	c := ctx.Coefficients
@@ -93,7 +114,7 @@ func (t *Task) Urgency(ctx UrgencyContext) float64 {
 		age = 4.0
 	}
 
-	sum := c.Priority*priorityWeight(t.Priority, ctx.Priorities) +
+	sum := c.Priority*weight +
 		c.Active*active +
 		c.Blocking*blocking +
 		c.Blocked*blocked +
@@ -101,19 +122,25 @@ func (t *Task) Urgency(ctx UrgencyContext) float64 {
 		c.Criteria*criteria +
 		c.Age*age
 
-	return roundToOneDecimal(sum)
+	return roundToOneDecimal(sum), nil
 }
 
 // priorityWeight is the priority rule of
 // docs/spec/modelo-de-datos/urgencia.md: the weight falls linearly from 1
 // at the most urgent level to 0 at the least urgent one, whatever the
 // names are and however many there are. A task with no priority weighs
-// 0.3 always, whatever the vocabulary and its size, and so does a priority
-// the vocabulary does not contain, which can only reach here on a task the
-// board could not otherwise read.
-func priorityWeight(priority string, priorities []string) float64 {
+// 0.3, whatever the vocabulary and its size.
+//
+// It answers false for a priority the vocabulary does not contain, which
+// is not the same case as having none: the specification gives that 0.3
+// to the task that was never given a priority, and giving it as well to a
+// priority the board no longer has would turn a task nobody can interpret
+// into an ordinary one without a word. The one way to reach it is a
+// vocabulary that changed under stored data, which is precisely the
+// undecodable task of docs/spec/garantias.md.
+func priorityWeight(priority string, priorities []string) (float64, bool) {
 	if priority == "" {
-		return 0.3
+		return 0.3, true
 	}
 	index := -1
 	for i, p := range priorities {
@@ -123,12 +150,36 @@ func priorityWeight(priority string, priorities []string) float64 {
 		}
 	}
 	if index < 0 {
-		return 0.3
+		return 0.0, false
 	}
 	if len(priorities) == 1 {
-		return 1.0
+		return 1.0, true
 	}
-	return 1.0 - float64(index)/float64(len(priorities)-1)
+	return 1.0 - float64(index)/float64(len(priorities)-1), true
+}
+
+// unknownPriority builds the error of the first case of
+// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar,
+// exit code 3 with the code undecodable_task of
+// docs/spec/contrato-json.md#los-identificadores-de-error. The
+// specification fixes no literal text for it, so the message names the
+// reason and the value, which is what that section asks for ("con el
+// motivo exacto"); the layer that prints it is free to word it otherwise
+// the day the specification says how.
+func (t *Task) unknownPriority(priorities []string) *Error {
+	valid := make([]string, len(priorities))
+	copy(valid, priorities)
+	return &Error{
+		ExitCode: 3,
+		Code:     "undecodable_task",
+		Message: fmt.Sprintf(
+			"%s cannot be read: its priority is %q, which this board does not configure",
+			t.ID, t.Priority,
+		),
+		Field: "priority",
+		Given: t.Priority,
+		Valid: valid,
+	}
 }
 
 // proximity is the due-date rule of
@@ -177,12 +228,20 @@ func calendarDaysBetween(from, to time.Time) int {
 // docs/spec/modelo-de-datos/urgencia.md fixes it: 1.45 gives 1.5 and 15.35
 // gives 15.4.
 //
-// It rounds the decimal expansion and not the binary one, because the
-// obvious math.Round(x*10)/10 gets both of the specification's own
-// examples wrong: the float nearest 15.35 times ten is 153.49999999999997,
-// which rounds down to 15.3. Formatting with 'f' and -1 gives the shortest
-// decimal that reads back as the same float, that is "15.35", and rounding
-// that string is what the specification's examples describe.
+// It rounds the decimal expansion and not the binary one, because that is
+// exactly the operation the specification describes and it needs no
+// argument about which floats land where: formatting with 'f' and -1 gives
+// the shortest decimal that reads back as the same float, "15.35", and the
+// digit after the tenths decides, with no multiplication in between that
+// could move the value across the half.
+//
+// The obvious math.Round(x*10)/10 is not known to be wrong here. It gets
+// both of the specification's examples right (15.35*10 is exactly 153.5 in
+// float64, and 1.45*10 is exactly 14.5), and comparing the two over every
+// hundredth from -1000 to 4000 and over every multiple of 1/3000 up to
+// 1333, which covers the values the formula can reach, gives no
+// discrepancy at all. So this is a choice of the safer construction and
+// not the fix of a measured bug.
 func roundToOneDecimal(x float64) float64 {
 	s := strconv.FormatFloat(x, 'f', -1, 64)
 	negative := strings.HasPrefix(s, "-")
