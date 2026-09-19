@@ -5,7 +5,7 @@ Cada elemento de `comments` es del tipo `Comment`, con clave, autor, instante y 
 | Parte | Tipo | Quién la fija |
 |---|---|---|
 | `key` | `int` positivo | el programa al crear el comentario |
-| `author` | `string` libre | quien llama, y por defecto la identidad `me` |
+| `author` | `string` libre (["El salto de línea en un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)) | quien llama, y por defecto la identidad `me` |
 | `createdAt` | `date` (instante UTC) | el programa, salvo al importar o con `--set-comment-date` (["Comentarios"](../familias-de-flags.md#comentarios)) |
 | `body` | `text` | quien llama |
 
@@ -14,9 +14,10 @@ tarea, y no se reasigna nunca**, exactamente igual que la de un `Criterion`
 (["Los criterios y sus claves estables"](criterios.md#los-criterios-y-sus-claves-estables)). Borrar un comentario no mueve las claves de los
 demás, y un `Comment` se direcciona siempre por su `key`, nunca por su posición.
 
-**El autor es texto libre y no se valida contra nada.** Un comentario puede venir de alguien que no
-existe en este tablero, y un sistema externo puede usar su propia convención, por ejemplo
-`@trello:juan`.
+**El autor es texto libre y no se valida contra ningún vocabulario.** Un comentario puede venir de
+alguien que no existe en este tablero, y un sistema externo puede usar su propia convención, por
+ejemplo `@trello:juan`. Sí sigue la regla general de un campo `string`: no admite un salto de línea
+literal (["El salto de línea en un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)).
 
 **Los comentarios se guardan y se muestran en el orden en que se crean, no en el de `createdAt`.**
 Cada comentario nuevo se añade al final de la lista, y ese es el orden en que se listan siempre.

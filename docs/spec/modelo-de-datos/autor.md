@@ -12,7 +12,8 @@
 
 `--author ""` no es una forma de crear la tarea con autor vacío: sigue la regla general de
 ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío), que la trata como cualquier otro escalar
-sin vocabulario.
+sin vocabulario. `author` es del tipo `string` y por tanto no admite un salto de línea literal
+(["El salto de línea en un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)).
 
 El caso sin identidad no es un error y no imprime nada: a diferencia de `--mine`, de la
 autoasignación de `biso start`, del autor de un comentario, de `biso ask` y de `biso answer`, que sí

@@ -244,7 +244,27 @@ igual que las demás.
     "truncated": true,
     "skipped": [],
     "sort": "default",
-    "filters": { "status": ["To Do", "In Progress"], "type": [], "label": [] },
+    "filters": {
+      "status": ["To Do", "In Progress"],
+      "notStatus": [],
+      "anyStatus": false,
+      "archived": false,
+      "onlyArchived": false,
+      "type": [],
+      "priority": [],
+      "label": [],
+      "labelOr": [],
+      "assignee": [],
+      "unassigned": false,
+      "parent": null,
+      "blocked": null,
+      "waiting": null,
+      "active": null,
+      "overdue": false,
+      "dueBefore": null,
+      "search": null,
+      "unchecked": false
+    },
     "warnings": [ { "code": "list_truncated", "shown": 30, "matched": 58 } ]
   }
 }
@@ -254,6 +274,9 @@ igual que las demás.
 cuando `truncated` es `true`, `data.warnings` lleva el mismo `list_truncated` de la lista general de
 avisos (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)), con la misma regla que cualquier
 otro comando: el texto humano sale por stderr y el objeto estructurado va en el sobre.
+
+**La forma completa de `data.filters`, con una clave por cada filtro de esta página y el porqué de
+cada una, está en ["Los filtros de `biso ls`"](../contrato-json.md#los-filtros-de-biso-ls).**
 
 La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la sección
 ["Urgencia"](../modelo-de-datos/urgencia.md).

@@ -4,7 +4,9 @@ Este es el modelo **lógico**. Describe qué campos tiene una tarea, de qué tip
 escribe. No dice nada de cómo se guardan.
 
 **Todo campo tiene un tipo concreto, y las tablas de abajo lo dicen para cada uno, sin excepción.**
-Los tipos son `string` (texto de una línea), `text` (bloque de prosa, con saltos de línea),
+Los tipos son `string` (texto de una línea; ningún `string` admite un salto de línea literal, ver
+["El salto de línea en un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)),
+`text` (bloque de prosa, con saltos de línea),
 `enum(...)` (un vocabulario cerrado, entre paréntesis; dice "configurable" cuando el tablero puede
 ampliarlo), `date` (una fecha o un instante; el formato exacto se dice en la fila del campo), `int`,
 `float`, `bool`, `list<string>` (varios valores simples separados por coma al escribir,

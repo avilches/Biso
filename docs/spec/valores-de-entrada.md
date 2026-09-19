@@ -133,3 +133,33 @@ configuración ha dejado de declarar.
 Los `code` correspondientes, `malformed_label`, `malformed_assignee` y `malformed_extension_key`,
 están en la tabla de ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error).
 
+## El salto de línea en un campo `string`
+
+`title`, `author` de tarea/comentario/pregunta, `Criterion.text` de `acceptanceCriteria`/`definitionOfDone`,
+y los valores (no las claves) de `ext` son del tipo `string` de ["El modelo de datos de una
+tarea"](modelo-de-datos/index.md#el-modelo-de-datos-de-una-tarea), es decir, texto de **una línea**.
+Ninguno de ellos admite un `\r` o un `\n` literal: si lo llevara, dejaría de ser una línea, y `title`
+en particular rompería la promesa de ["`biso ls`"](cmd/ls.md#salida) de que cada tarea ocupa
+exactamente una línea de la tabla.
+
+**Un `\r` o un `\n` en cualquiera de estos campos es error 2 (`USAGE`)**, con el mismo tratamiento que
+un carácter fuera del alfabeto de la sección anterior:
+
+```
+error: malformed title: "first line\nsecond line"
+hint: a string field cannot contain a newline or a carriage return
+```
+
+El `code` es `malformed_string_value`, con `field` igual a `title`, `author`, `criterion_text` o
+`ext`, según cuál sea el campo. Está en la tabla de ["Los identificadores de
+error"](contrato-json.md#los-identificadores-de-error).
+
+**Esto rige al escribir**, con la misma excepción que la sección anterior: un valor ya guardado con un
+salto de línea, porque se escribió antes de que existiera esta regla o llegó por una vía que no pasa
+por esta validación, se trata como un dato que no se puede interpretar (["Qué pasa con un dato que no
+se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)).
+
+`Comment.body` y `Question.body` son del tipo `text`, no `string`, y admiten salto de línea sin
+ninguna restricción: la pregunta y su respuesta pueden ser tan largas y estructuradas como haga
+falta.
+

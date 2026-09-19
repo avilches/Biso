@@ -2,7 +2,10 @@
 
 `ext` es un `map<string,string>` de clave a texto para guardar cualquier valor que el usuario quiera
 asociar a la tarea, bajo una clave elegida por él. Guardar la identidad de la tarea en otro sistema,
-como una tarjeta de Trello, es un ejemplo de uso, no la definición del campo. La regla es la
+como una tarjeta de Trello, es un ejemplo de uso, no la definición del campo. La clave tiene su propio
+alfabeto cerrado (["El juego de caracteres de un token"](../valores-de-entrada.md#el-juego-de-caracteres-de-un-token));
+el valor es un `string` libre y por tanto no admite un salto de línea literal (["El salto de línea en
+un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)). La regla es la
 siguiente:
 
 - El tablero **declara** en su configuración qué claves admite, en la lista `extensions`.
