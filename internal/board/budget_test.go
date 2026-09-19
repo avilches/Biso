@@ -80,7 +80,7 @@ func TestReadBudgetOnThreeHundredTasks(t *testing.T) {
 	}
 	defer s.Close()
 
-	all, err := NewTasks(s, testPrefix, testExtensions).All()
+	all, _, err := NewTasks(s, testPrefix, testExtensions).All()
 	if err != nil {
 		t.Fatalf("All: %v", err)
 	}

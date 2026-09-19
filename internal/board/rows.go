@@ -3,6 +3,7 @@ package board
 import (
 	"database/sql"
 	"fmt"
+	"sort"
 	"time"
 
 	"biso/internal/model"
@@ -98,33 +99,101 @@ func writeTask(tx *sql.Tx, task *model.Task, num int) error {
 }
 
 // read answers the tasks of the board, or the single one with that id when
-// id is not empty, in ascending identifier order.
+// id is not empty, in ascending identifier order, together with the ones it
+// could not decode.
 //
 // It runs five queries and never one per task: the whole point of the
 // startup budget of docs/spec/presupuestos.md#el-presupuesto-de-arranque
 // is that reading a board of 300 tasks is a handful of scans, not fifteen
 // hundred round trips.
-func (r *Tasks) read(id string) ([]*model.Task, error) {
-	tasks, byID, err := r.readTasks(id)
+//
+// A row it cannot turn into a task does not end the read: the task is left
+// out of the first list and named in the second, which is the first case of
+// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar.
+// The error it returns is for the other case, the one where there is no
+// readable board at all, and that one does end the read.
+func (r *Tasks) read(id string) ([]*model.Task, []Skipped, error) {
+	tasks, byID, bad, err := r.readTasks(id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(tasks) == 0 {
-		return nil, nil
+		return nil, r.skippedList(bad), nil
 	}
-	if err := r.readListItems(id, byID); err != nil {
-		return nil, err
+	for _, readChildren := range []func(string, map[string]*model.Task, map[string]*model.Error) error{
+		r.readListItems,
+		r.readExt,
+		r.readCriteria,
+		r.readComments,
+	} {
+		if err := readChildren(id, byID, bad); err != nil {
+			return nil, nil, err
+		}
 	}
-	if err := r.readExt(id, byID); err != nil {
-		return nil, err
+	return withoutTheSkipped(tasks, bad), r.skippedList(bad), nil
+}
+
+// withoutTheSkipped answers the tasks that decoded whole, keeping the
+// order. A task is dropped when any of its parts failed, and never
+// half-filled: half a task read as a whole one is the silence that
+// docs/spec/garantias.md forbids as much as aborting.
+func withoutTheSkipped(tasks []*model.Task, bad map[string]*model.Error) []*model.Task {
+	if len(bad) == 0 {
+		return tasks
 	}
-	if err := r.readCriteria(id, byID); err != nil {
-		return nil, err
+	kept := make([]*model.Task, 0, len(tasks)-len(bad))
+	for _, task := range tasks {
+		if bad[task.ID] == nil {
+			kept = append(kept, task)
+		}
 	}
-	if err := r.readComments(id, byID); err != nil {
-		return nil, err
+	return kept
+}
+
+// skippedList turns the map the five reads fill into the list the caller
+// sees, in ascending identifier order like everything else, which is the
+// order the warning of docs/spec/garantias.md names them in.
+func (r *Tasks) skippedList(bad map[string]*model.Error) []Skipped {
+	if len(bad) == 0 {
+		return nil
 	}
-	return tasks, nil
+	ids := make([]string, 0, len(bad))
+	for id := range bad {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool {
+		// By number and not by text, so MYP-9 comes before MYP-10. An
+		// identifier this board cannot parse falls back to the text, which
+		// keeps the order total whatever ends up stored.
+		a, aerr := r.number(ids[i])
+		b, berr := r.number(ids[j])
+		if aerr == nil && berr == nil {
+			return a < b
+		}
+		return ids[i] < ids[j]
+	})
+
+	skipped := make([]Skipped, 0, len(ids))
+	for _, id := range ids {
+		skipped = append(skipped, Skipped{ID: id, Reason: bad[id]})
+	}
+	return skipped
+}
+
+// undecodable builds the error of a task that cannot be turned into a
+// task: exit code 3 and the code undecodable_task of
+// docs/spec/contrato-json.md#los-identificadores-de-error.
+//
+// The specification does not fix its text, only that a targeted read gives
+// "el motivo exacto", so the message names the field that could not be
+// read and carries the reason underneath.
+func undecodable(id, field string, reason error) *model.Error {
+	return &model.Error{
+		ExitCode: 3,
+		Code:     "undecodable_task",
+		Message:  fmt.Sprintf("%s cannot be read: %s: %v", id, field, reason),
+		Field:    field,
+	}
 }
 
 // query runs one of the five reads, adding the single task filter when
@@ -136,15 +205,16 @@ func (r *Tasks) query(base, column, id, order string) (*sql.Rows, error) {
 	return r.store.Query(base+" WHERE "+column+" = ? ORDER BY "+order, id)
 }
 
-func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, error) {
+func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, map[string]*model.Error, error) {
 	rows, err := r.query("SELECT "+taskColumns+" FROM task", "id", id, "num")
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	defer rows.Close()
 
 	var tasks []*model.Task
 	byID := map[string]*model.Task{}
+	bad := map[string]*model.Error{}
 	for rows.Next() {
 		var (
 			task                                      model.Task
@@ -163,20 +233,29 @@ func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, err
 			&questionAuthor, &questionAskedAt, &questionBody,
 			&task.NextCriterionKey, &task.NextCommentKey,
 		); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
-		if task.Due, err = parseDate(due); err != nil {
-			return nil, nil, fmt.Errorf("%s: due: %w", task.ID, err)
-		}
-		if task.CreatedAt, err = parseInstant(createdAt); err != nil {
-			return nil, nil, fmt.Errorf("%s: createdAt: %w", task.ID, err)
-		}
-		if task.UpdatedAt, err = parseInstant(updatedAt); err != nil {
-			return nil, nil, fmt.Errorf("%s: updatedAt: %w", task.ID, err)
-		}
-		if task.LeaseExpiresAt, err = parseInstant(leaseExpiresAt); err != nil {
-			return nil, nil, fmt.Errorf("%s: leaseExpiresAt: %w", task.ID, err)
+		// Every date of the row is decoded before the task counts as read.
+		// A single one that is not an instant this program wrote makes the
+		// task undecodable, and that is a fact about that task alone: the
+		// board around it is perfectly readable, so the read goes on.
+		for _, date := range []struct {
+			field string
+			text  string
+			into  *time.Time
+		}{
+			{"due", due, &task.Due},
+			{"createdAt", createdAt, &task.CreatedAt},
+			{"updatedAt", updatedAt, &task.UpdatedAt},
+			{"leaseExpiresAt", leaseExpiresAt, &task.LeaseExpiresAt},
+		} {
+			parsed, err := parseAnyDate(date.field, date.text)
+			if err != nil {
+				bad[task.ID] = undecodable(task.ID, date.field, err)
+				break
+			}
+			*date.into = parsed
 		}
 		if ordinal.Valid {
 			value := int(ordinal.Int64)
@@ -185,7 +264,7 @@ func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, err
 		if questionAskedAt != "" || questionAuthor != "" || questionBody != "" {
 			askedAt, err := parseInstant(questionAskedAt)
 			if err != nil {
-				return nil, nil, fmt.Errorf("%s: question.askedAt: %w", task.ID, err)
+				bad[task.ID] = undecodable(task.ID, "question.askedAt", err)
 			}
 			task.Question = &model.Question{
 				Author:  questionAuthor,
@@ -197,10 +276,19 @@ func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, err
 		tasks = append(tasks, &task)
 		byID[task.ID] = &task
 	}
-	return tasks, byID, rows.Err()
+	return tasks, byID, bad, rows.Err()
 }
 
-func (r *Tasks) readListItems(id string, byID map[string]*model.Task) error {
+// parseAnyDate reads either shape of date a task row carries: `due` is a
+// calendar day and the three instants are instants.
+func parseAnyDate(field, text string) (time.Time, error) {
+	if field == "due" {
+		return parseDate(text)
+	}
+	return parseInstant(text)
+}
+
+func (r *Tasks) readListItems(id string, byID map[string]*model.Task, bad map[string]*model.Error) error {
 	rows, err := r.query(
 		"SELECT task_id, field, value FROM task_list_item", "task_id", id,
 		"task_id, field, position",
@@ -219,21 +307,22 @@ func (r *Tasks) readListItems(id string, byID map[string]*model.Task) error {
 		if task == nil {
 			continue
 		}
-		// A field name the model does not know is an error and never a
-		// silently dropped value, which is the same rule on the way in and
-		// on the way out.
+		// A field name the model does not know is never a silently dropped
+		// value: it makes that task undecodable, the same rule on the way
+		// in and on the way out.
 		current, err := task.ListField(model.ListField(field))
 		if err != nil {
-			return fmt.Errorf("%s: %w", taskID, err)
+			bad[taskID] = undecodable(taskID, field, err)
+			continue
 		}
 		if err := task.SetListField(model.ListField(field), append(current, value)); err != nil {
-			return fmt.Errorf("%s: %w", taskID, err)
+			bad[taskID] = undecodable(taskID, field, err)
 		}
 	}
 	return rows.Err()
 }
 
-func (r *Tasks) readExt(id string, byID map[string]*model.Task) error {
+func (r *Tasks) readExt(id string, byID map[string]*model.Task, bad map[string]*model.Error) error {
 	rows, err := r.query("SELECT task_id, key, value FROM task_ext", "task_id", id, "task_id, key")
 	if err != nil {
 		return err
@@ -257,7 +346,7 @@ func (r *Tasks) readExt(id string, byID map[string]*model.Task) error {
 	return rows.Err()
 }
 
-func (r *Tasks) readCriteria(id string, byID map[string]*model.Task) error {
+func (r *Tasks) readCriteria(id string, byID map[string]*model.Task, bad map[string]*model.Error) error {
 	rows, err := r.query(
 		"SELECT task_id, key, text, checked FROM task_criterion", "task_id", id,
 		"task_id, position",
@@ -280,7 +369,7 @@ func (r *Tasks) readCriteria(id string, byID map[string]*model.Task) error {
 	return rows.Err()
 }
 
-func (r *Tasks) readComments(id string, byID map[string]*model.Task) error {
+func (r *Tasks) readComments(id string, byID map[string]*model.Task, bad map[string]*model.Error) error {
 	rows, err := r.query(
 		"SELECT task_id, key, author, created_at, body FROM task_comment", "task_id", id,
 		"task_id, position",
@@ -298,7 +387,8 @@ func (r *Tasks) readComments(id string, byID map[string]*model.Task) error {
 		}
 		at, err := parseInstant(createdAt)
 		if err != nil {
-			return fmt.Errorf("%s: comment #%d: %w", taskID, c.Key, err)
+			bad[taskID] = undecodable(taskID, fmt.Sprintf("comment #%d createdAt", c.Key), err)
+			continue
 		}
 		c.CreatedAt = at
 		if task := byID[taskID]; task != nil {

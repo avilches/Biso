@@ -2,9 +2,11 @@ package board
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -207,9 +209,12 @@ func TestAllReadsEveryTaskInIdentifierOrder(t *testing.T) {
 		}
 	}
 
-	all, err := tasks.All()
+	all, skipped, err := tasks.All()
 	if err != nil {
 		t.Fatalf("All: %v", err)
+	}
+	if len(skipped) != 0 {
+		t.Fatalf("All() skipped %d tasks on a board it wrote itself", len(skipped))
 	}
 	if len(all) != 12 {
 		t.Fatalf("All() returned %d tasks, want 12", len(all))
@@ -614,7 +619,7 @@ func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
 			if last != 0 {
 				t.Fatalf("LastAllocated() = %d after a refused Create, want 0", last)
 			}
-			all, err := tasks.All()
+			all, _, err := tasks.All()
 			if err != nil {
 				t.Fatalf("All: %v", err)
 			}
@@ -654,5 +659,174 @@ func TestSaveRefusesAnInvalidTaskAndLeavesTheStoredOneAlone(t *testing.T) {
 	}
 	if back.Title != "A title of one line" {
 		t.Fatalf("title = %q, want the one that was there before the refused Save", back.Title)
+	}
+}
+
+// TestASetReadSkipsTheTaskItCannotDecodeAndNamesIt is the first case of
+// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar
+// on a set read: the task is skipped, it is counted, and the rest of the
+// result is valid. Never aborting is the substance of that guarantee; a
+// listing that failed whole because of one bad row would leave the caller
+// with nothing, and one that dropped it in silence would read as a fact
+// about the board.
+func TestASetReadSkipsTheTaskItCannotDecodeAndNamesIt(t *testing.T) {
+	cases := []struct {
+		name    string
+		damage  string
+		wantIDs []string
+	}{
+		{
+			name:    "a date no version of this program wrote",
+			damage:  "UPDATE task SET created_at = 'the day before yesterday' WHERE id = 'MYP-2'",
+			wantIDs: []string{"MYP-2"},
+		},
+		{
+			name:    "a comment whose date cannot be read",
+			damage:  "UPDATE task_comment SET created_at = 'yesterday' WHERE task_id = 'MYP-2'",
+			wantIDs: []string{"MYP-2"},
+		},
+		{
+			name:    "two tasks at once, named in identifier order",
+			damage:  "UPDATE task SET due = 'next tuesday' WHERE id IN ('MYP-3', 'MYP-1')",
+			wantIDs: []string{"MYP-1", "MYP-3"},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// Each case damages a board of its own, built the same way, so
+			// that one case cannot explain another's result.
+			path := filepath.Join(t.TempDir(), "board.sqlite")
+			s, err := store.Open(testBoardID, path)
+			if err != nil {
+				t.Fatalf("open the board: %v", err)
+			}
+			defer s.Close()
+			tasks := NewTasks(s, testPrefix, testExtensions)
+			for i := 1; i <= 3; i++ {
+				task := &model.Task{Title: fmt.Sprintf("Task %d", i), Status: "To Do"}
+				task.AddComment("@avilches", time.Date(2026, 9, 6, 10, 0, 0, 0, time.UTC), "A comment.")
+				if err := tasks.Create(task); err != nil {
+					t.Fatalf("Create: %v", err)
+				}
+			}
+			// Written straight into the table, because nothing biso does can
+			// put this there: that is exactly the situation the guarantee
+			// describes, data touched from outside.
+			if _, err := s.Exec(c.damage); err != nil {
+				t.Fatalf("damage the board: %v", err)
+			}
+
+			all, skipped, err := tasks.All()
+			if err != nil {
+				t.Fatalf("All aborted because of a task it could not decode: %v", err)
+			}
+			if len(all) != 3-len(c.wantIDs) {
+				t.Fatalf("All() returned %d tasks, want %d", len(all), 3-len(c.wantIDs))
+			}
+			var gotIDs []string
+			for _, s := range skipped {
+				gotIDs = append(gotIDs, s.ID)
+				if s.Reason == nil || s.Reason.ExitCode != 3 || s.Reason.Code != "undecodable_task" {
+					t.Fatalf("skipped %s with reason %+v, want exit 3 and code undecodable_task", s.ID, s.Reason)
+				}
+			}
+			if !reflect.DeepEqual(gotIDs, c.wantIDs) {
+				t.Fatalf("skipped = %v, want %v", gotIDs, c.wantIDs)
+			}
+			for _, task := range all {
+				for _, bad := range c.wantIDs {
+					if task.ID == bad {
+						t.Fatalf("%s came back in the listing although it could not be decoded", bad)
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestATargetedReadOfAnUndecodableTaskIsAnError is the other half of the
+// same table: asking for that one task has nothing valid to answer, so it
+// is exit code 3 with the reason.
+func TestATargetedReadOfAnUndecodableTaskIsAnError(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "board.sqlite")
+	s, err := store.Open(testBoardID, path)
+	if err != nil {
+		t.Fatalf("open the board: %v", err)
+	}
+	defer s.Close()
+	tasks := NewTasks(s, testPrefix, testExtensions)
+
+	task := &model.Task{Title: "A task", Status: "To Do"}
+	if err := tasks.Create(task); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if _, err := s.Exec("UPDATE task SET updated_at = 'a while ago' WHERE id = ?", task.ID); err != nil {
+		t.Fatalf("damage the board: %v", err)
+	}
+
+	got, err := tasks.Load(task.ID)
+	if err == nil {
+		t.Fatalf("Load returned %+v for a task that cannot be decoded", got)
+	}
+	var specErr *model.Error
+	if !errors.As(err, &specErr) {
+		t.Fatalf("error = %v, want a *model.Error", err)
+	}
+	if specErr.ExitCode != 3 || specErr.Code != "undecodable_task" {
+		t.Fatalf("error = exit %d, code %q; want exit 3, code undecodable_task", specErr.ExitCode, specErr.Code)
+	}
+	if !strings.Contains(specErr.Message, task.ID) {
+		t.Fatalf("message = %q, and it does not name the task", specErr.Message)
+	}
+}
+
+// TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow covers the other
+// way a row stops being a task: a name in task_list_item that is not one
+// of the six list fields. The schema's CHECK keeps biso itself from
+// writing one, so it can only arrive from outside, like the dates above.
+func TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "board.sqlite")
+	s, err := store.Open(testBoardID, path)
+	if err != nil {
+		t.Fatalf("open the board: %v", err)
+	}
+	defer s.Close()
+	tasks := NewTasks(s, testPrefix, testExtensions)
+
+	for i := 1; i <= 2; i++ {
+		task := &model.Task{
+			Title:  fmt.Sprintf("Task %d", i),
+			Status: "To Do",
+			Labels: []string{"parser"},
+		}
+		if err := tasks.Create(task); err != nil {
+			t.Fatalf("Create: %v", err)
+		}
+	}
+	// The schema's CHECK refuses this name, which is the point of having
+	// it, so the test turns the constraints off for the one statement that
+	// puts the damage there.
+	if _, err := s.Exec("PRAGMA ignore_check_constraints = 1"); err != nil {
+		t.Fatalf("turn the check constraints off: %v", err)
+	}
+	if _, err := s.Exec(
+		"UPDATE task_list_item SET field = 'tags' WHERE task_id = 'MYP-2'",
+	); err != nil {
+		t.Fatalf("damage the board: %v", err)
+	}
+	if _, err := s.Exec("PRAGMA ignore_check_constraints = 0"); err != nil {
+		t.Fatalf("turn the check constraints back on: %v", err)
+	}
+
+	all, skipped, err := tasks.All()
+	if err != nil {
+		t.Fatalf("All aborted because of a list field it does not know: %v", err)
+	}
+	if len(all) != 1 || all[0].ID != "MYP-1" {
+		t.Fatalf("All() = %v, want only MYP-1", all)
+	}
+	if len(skipped) != 1 || skipped[0].ID != "MYP-2" {
+		t.Fatalf("skipped = %+v, want MYP-2", skipped)
 	}
 }

@@ -158,15 +158,24 @@ func (r *Tasks) LastAllocated() (int, error) {
 // highest one ever assigned never existed, and one below it was assigned
 // at some point and is gone, which only happens when something outside
 // biso touched the data.
+//
+// It is a targeted read, so the other half of
+// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar
+// applies: a task that is there and cannot be decoded is exit code 3 with
+// the reason, and not the skip of a set read. There is nothing else to
+// answer with when the caller asked for that one task.
 func (r *Tasks) Load(id string) (*model.Task, error) {
 	num, err := r.number(id)
 	if err != nil {
 		return nil, err
 	}
 
-	tasks, err := r.read(id)
+	tasks, skipped, err := r.read(id)
 	if err != nil {
 		return nil, err
+	}
+	if len(skipped) == 1 {
+		return nil, skipped[0].Reason
 	}
 	if len(tasks) == 1 {
 		return tasks[0], nil
@@ -209,11 +218,30 @@ func (r *Tasks) missing(id string, num, last int) *model.Error {
 	}
 }
 
+// Skipped is one task a set read could not decode, with the reason.
+//
+// It exists because docs/spec/garantias.md asks a set read for two things
+// at once: never to abort because of one bad task, and never to hide it.
+// Answering only the tasks that could be read would meet the first and
+// break the second, and a listing missing a task would be read as a fact
+// about the board.
+type Skipped struct {
+	ID     string
+	Reason *model.Error
+}
+
 // All answers every task of the board, archived ones included, in
 // ascending identifier order: the same tie-break every listing of
 // docs/spec/cmd/ls.md uses, and the order of the number and not of the
 // text, so MYP-9 comes before MYP-10.
-func (r *Tasks) All() ([]*model.Task, error) {
+//
+// It is a set read in the sense of
+// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar,
+// so a task it cannot decode is left out of the first list and named in
+// the second, never a reason to fail: the warning that names them, and the
+// exit code 6 that `biso export` and `biso snapshot` answer when the
+// second list is not empty, belong to the commands that call this.
+func (r *Tasks) All() ([]*model.Task, []Skipped, error) {
 	return r.read("")
 }
 
