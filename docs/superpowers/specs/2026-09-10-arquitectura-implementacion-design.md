@@ -141,15 +141,22 @@ especificación, porque son del controlador y no del comportamiento observable:
   ejecuta es `biso doctor` (`docs/spec/cmd/doctor.md`); devuelve el mismo error que un fichero que
   no abre, que es lo que pide `docs/spec/garantias.md`.
 
-**Una limitación medida, de crear el fichero y no de escribir en él.** Varias conexiones que crean
-el mismo fichero desde cero en el mismo instante no se serializan: la primera que llega lo pasa a
-modo WAL, y SQLite rechaza ese cambio de modo de diario mientras haya otra conexión activa
-devolviendo `SQLITE_BUSY` de inmediato, sin pasar por el tiempo de espera. El almacén lo traduce a
-la garantía 5, así que el síntoma es un código 8 instantáneo al abrir. Solo pasa con un fichero que
-todavía no existe: sobre un fichero ya en modo WAL, aunque esté vacío de esquema, cuatro conexiones
-simultáneas migran y escriben sin problema, y eso está probado. No afecta a ninguna garantía, porque
-quien crea el tablero es `biso init` y lo hace una sola vez; se anota aquí para que el paso que
-implemente `init` no lo redescubra como si fuera un fallo de la asignación de identificadores.
+**El único sitio donde la espera de la garantía 5 se hace a mano: crear el fichero.** Varias
+conexiones que crean el mismo fichero desde cero en el mismo instante no se serializan solas: la
+primera que llega lo pasa a modo WAL, y SQLite rechaza ese cambio de modo de diario mientras haya
+otra conexión activa devolviendo `SQLITE_BUSY` de inmediato, sin consultar el manejador de ocupado
+y por tanto sin pasar por el tiempo de espera. Medido: cuatro conexiones creando el mismo fichero a
+la vez fallan en varios intentos de veinte, mientras que sobre un fichero ya en modo WAL, aunque
+esté vacío de esquema, fallan cero de veinte.
+
+Eso **sí afectaba a la garantía 5**, que promete esperar hasta cinco segundos antes de salir con
+código 8 y no exime al comando que crea el tablero, así que el almacén no se rinde ahí: la primera
+lectura de `PRAGMA user_version`, que es la sentencia que de verdad conecta, se reintenta con
+espera creciente hasta agotar el tiempo configurado, y solo entonces devuelve el error de ocupado.
+Cualquier fallo que no sea el bloqueo de escritura no se reintenta, porque significa que no se pudo
+leer ni la cabecera de la base de datos, que es el otro caso de `docs/spec/garantias.md`. Lo cubre
+`TestConcurrentCreationOfTheSameFileWaitsInsteadOfFailingAtOnce`, veinte intentos de cuatro
+conexiones simultáneas sobre un fichero que no existe.
 
 **Los dos errores de la especificación que nacen aquí.** El almacén es la capa más profunda que
 distingue estos dos casos, así que construye el `model.Error` completo de cada uno y lo deja subir

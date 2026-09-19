@@ -28,7 +28,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | Paso | Qué cubre | Estado | Tarea |
 |---|---|---|---|
 | 1 | El almacén SQLite, sus migraciones y `WithTx` | hecho | TASK-4 |
-| 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | en curso | TASK-10 |
+| 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | hecho | TASK-10 |
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) | pendiente | TASK-11 |
 | 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | pendiente | TASK-12 |
 | 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | pendiente | TASK-13 |
@@ -52,7 +52,7 @@ cerradas.
 | [Entorno y configuración de máquina](invocacion.md) | pasos 4 a 9 | pendiente |
 | [Cómo se elige el tablero](resolucion-del-tablero.md) | paso 4 | pendiente |
 | [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 5 y 7 | pendiente |
-| [Cómo se pasa un valor](valores-de-entrada.md) | pasos 4 a 9 | pendiente |
+| [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
 | [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2 y 4 | en curso |
 | [El arrendamiento de una tarea](lease.md) | pasos 2 y 6 | pendiente |
 | [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | en curso |
@@ -62,7 +62,7 @@ cerradas.
 | [El contrato de estabilidad](estabilidad.md) | paso 7 | pendiente |
 | [Lo que se deja fuera a propósito](fuera-de-alcance.md) | ninguno | fuera de alcance |
 
-### Qué queda probado ya de los dos transversales que empezó el paso 1
+### Qué queda probado ya de los transversales que empezaron los pasos 1 y 2
 
 **De [`garantias.md`](garantias.md)**, el paso 1 dejó probadas en `internal/store` las garantías 1
 (ninguna escritura se observa a medias: un lector concurrente no ve la fila sin confirmar), 2 (todo
@@ -82,21 +82,42 @@ abre cuatro almacenes independientes sobre el mismo fichero, cada uno con su con
 crear cien tareas a la vez: ninguna repite identificador y no falta ninguno. De ahí sale también que
 un identificador no se reutilice nunca, ni tras archivar la tarea ni tras desaparecer su fila.
 
-El primer caso de esa misma sección, la tarea suelta ilegible, sigue pendiente: el paso 2 rechaza al
-escribir una clave de extensión que el tablero no declara (código 3, `unknown_extension_key`) y una
-clave fuera del alfabeto (código 2, `malformed_extension_key`), pero el texto exacto del error de una
-tarea que no se puede decodificar al leerla, y el aviso que la salta en una lectura de conjunto, son
-de los pasos que implementan `get` y `ls`.
+El primer caso de esa misma sección, la tarea suelta ilegible, lo cierra el paso 2 en su sustancia:
+una lectura de conjunto (`Tasks.All`) nunca aborta por una tarea mala, la deja fuera del listado y la
+devuelve aparte con su motivo, y una lectura dirigida (`Tasks.Load`) de esa misma tarea falla con
+código 3 y la clave `undecodable_task`. Una fecha que el programa no escribió, un nombre de campo de
+lista que el modelo no conoce y una prioridad que la configuración ya no declara son las tres formas
+de llegar ahí que hay hoy, y las tres están probadas. El paso 2 rechaza además al escribir una clave
+de extensión que el tablero no declara (código 3, `unknown_extension_key`) y una clave fuera del
+alfabeto (código 2, `malformed_extension_key`).
+
+Lo que queda de ese caso para los pasos que implementan `ls`, `get`, `export` y `snapshot` es lo que
+se ve desde fuera: el texto literal del aviso `warning: 1 task could not be read and was skipped` con
+sus identificadores, el código 6 de `biso export` y `biso snapshot` cuando han saltado alguna, y el
+texto exacto del error de la lectura dirigida, que la especificación todavía no fija.
+
+**La garantía 5 la completó también el paso 2 en el único camino que se la saltaba**: crear el
+fichero del tablero desde varias conexiones a la vez daba un código 8 instantáneo, porque SQLite
+rechaza el paso a modo WAL sin consultar el tiempo de espera. Ahora ese camino espera el tiempo
+configurado antes de rendirse, y lo prueban veinte intentos de cuatro conexiones simultáneas.
+
+**Del modelo de datos**, el paso 2 hace cumplir al escribir el título obligatorio (código 2,
+`missing_title`), la distinción entre un campo `string` de una línea y un campo `text` (código 2,
+`malformed_string_value`, sobre `title`, `author`, el texto de un criterio y los valores de `ext`),
+el alfabeto de las etiquetas y las personas (`malformed_label` y `malformed_assignee`), el
+`ordinal` no negativo (`invalid_number`) y las claves de los criterios. Todo eso se comprueba antes
+de abrir la transacción, así que una tarea rechazada no gasta identificador.
 
 **De [`presupuestos.md`](presupuestos.md)**, la medida vive desde el paso 2 en `internal/board` y ya
 es sobre el esquema real: abrir el tablero y leer sus 300 tareas enteras, con sus listas, sus
-criterios y sus comentarios, tarda unos 2,5 ms frente al tope de 25 que fija
+criterios y sus comentarios, tarda unos 2,7 ms frente al tope de 25 que fija
 ["El presupuesto de arranque"](presupuestos.md#el-presupuesto-de-arranque). Bajo el detector de
-carreras la misma lectura tarda unos 75 ms, así que esa ejecución se compara contra un límite propio
-de 150 ms que no es un presupuesto de la especificación sino un aviso de regresión: el detector
-multiplica por más de un orden de magnitud cada lectura de un controlador de SQLite escrito en Go
-puro, y medirlo contra los 25 ms mediría el detector y no el programa. Sigue sin ser la medida del
-presupuesto: esa es sobre `biso ls` y `biso prime` en el binario compilado y es del paso 7 (TASK-15).
+carreras la misma lectura tarda unos 80 ms, y esa ejecución **no compara contra ningún otro número**:
+la prueba se salta declarándolo, porque el detector multiplica por más de un orden de magnitud cada
+lectura de un controlador de SQLite escrito en Go puro y medir contra él mediría el detector. La cifra
+de la especificación la afirma la ejecución sin detector, que es la única que puede. Sigue sin ser la
+medida del presupuesto: esa es sobre `biso ls` y `biso prime` en el binario compilado y es del paso 7
+(TASK-15).
 ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño) es entero del paso 7.
 
 ## Antes de empezar un paso
