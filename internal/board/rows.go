@@ -68,7 +68,7 @@ func writeTask(tx *sql.Tx, task *model.Task, num int) error {
 		}
 	}
 
-	for _, key := range sortedKeys(task.Ext) {
+	for _, key := range model.SortedExtKeys(task.Ext) {
 		if _, err := tx.Exec(
 			"INSERT INTO task_ext (task_id, key, value) VALUES (?, ?, ?)",
 			task.ID, key, task.Ext[key],

@@ -14,7 +14,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -237,36 +236,17 @@ func (r *Tasks) number(id string) (int, error) {
 	return num, nil
 }
 
-// validate rejects what the board cannot store, before anything is
+// validate rejects what the board must not store, before anything is
 // written and therefore before an identifier is spent.
 //
-// Today that is the `ext` keys, the one closed vocabulary the model owns
-// on its own: a key outside the token alphabet is a problem of form (exit
-// code 2) and a well formed key the board does not declare is an unknown
-// value (exit code 3). The vocabularies that a board configures, statuses,
-// types and priorities, are matched by internal/match and checked by the
-// layer above this one.
+// The rules themselves are the model's, in Task.Validate: they are rules
+// about a task and not about rows, so they hold whether the task came from
+// a flag or from an import. The board only supplies the one thing the
+// model cannot know, the `extensions` list this board declares. The
+// vocabularies that a board configures, statuses, types and priorities,
+// are matched by internal/match and checked by the layer above this one.
 func (r *Tasks) validate(task *model.Task) error {
-	for _, key := range sortedKeys(task.Ext) {
-		if err := model.ValidateExtensionKeySyntax(key); err != nil {
-			return err
-		}
-		if err := model.ValidateExtensionKey(key, r.extensions); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// sortedKeys answers a map's keys in a fixed order, so that a task with
-// two bad extension keys always fails on the same one.
-func sortedKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
+	return task.Validate(r.extensions)
 }
 
 // allocate moves the board's counter one forward and answers the number it

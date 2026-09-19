@@ -239,10 +239,11 @@ func TestTwoProcessesNeverAllocateTheSameIdentifier(t *testing.T) {
 
 	// The board exists before the writers arrive, which is the situation
 	// the guarantee describes: `biso init` created it once, and everything
-	// after that opens it. Several connections creating the file from
-	// nothing at the same instant race on switching it to WAL, which SQLite
-	// refuses outright instead of waiting, and that is a different thing
-	// from allocating an identifier.
+	// after that opens it. Creating the file from several connections at
+	// the same instant is a race of its own, on switching it to WAL, and
+	// internal/store answers it by waiting out the configured time (see
+	// TestConcurrentCreationOfTheSameFileWaitsInsteadOfFailingAtOnce);
+	// mixing it in here would measure that wait and not the counter.
 	seed, err := store.Open(testBoardID, path)
 	if err != nil {
 		t.Fatalf("create the board: %v", err)
@@ -537,5 +538,121 @@ func TestSaveKeepsTheStoredCreatedAtAndRefusesAMissingTask(t *testing.T) {
 	}
 	if modelErr.ExitCode != 4 || modelErr.Code != "never_allocated" {
 		t.Fatalf("error = %d/%s, want 4/never_allocated", modelErr.ExitCode, modelErr.Code)
+	}
+}
+
+// TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier is why
+// validation happens before the transaction and not inside it: an
+// identifier is never reused (docs/spec/modelo-de-datos/identificadores.md),
+// so one spent on a task that is then refused would be gone forever.
+func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
+	cases := []struct {
+		name string
+		task *model.Task
+	}{
+		{
+			name: "an empty title",
+			task: &model.Task{Title: "   ", Status: "To Do"},
+		},
+		{
+			name: "a newline in the title",
+			task: &model.Task{Title: "first line\nsecond line", Status: "To Do"},
+		},
+		{
+			name: "a label outside its alphabet",
+			task: &model.Task{Title: "A task", Status: "To Do", Labels: []string{"urgent!"}},
+		},
+		{
+			name: "an assignee outside its alphabet",
+			task: &model.Task{Title: "A task", Status: "To Do", Assignees: []string{"sara smith"}},
+		},
+		{
+			name: "a newline in the value of an extension field",
+			task: &model.Task{
+				Title:  "A task",
+				Status: "To Do",
+				Ext:    map[string]string{"trello.card": "5f2a8c1e\n5f2a8c1f"},
+			},
+		},
+		{
+			name: "a negative ordinal",
+			task: &model.Task{Title: "A task", Status: "To Do", Ordinal: negative()},
+		},
+		{
+			name: "a criterion with a key the program never assigns",
+			task: &model.Task{
+				Title:              "A task",
+				Status:             "To Do",
+				AcceptanceCriteria: []model.Criterion{{Key: 0, Text: "No key"}},
+			},
+		},
+		{
+			name: "two criteria sharing a key",
+			task: &model.Task{
+				Title:  "A task",
+				Status: "To Do",
+				AcceptanceCriteria: []model.Criterion{
+					{Key: 1, Text: "The first one"},
+					{Key: 1, Text: "The same key again"},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
+			defer done()
+
+			if err := tasks.Create(c.task); err == nil {
+				t.Fatalf("Create stored %+v", c.task)
+			}
+			last, err := tasks.LastAllocated()
+			if err != nil {
+				t.Fatalf("LastAllocated: %v", err)
+			}
+			if last != 0 {
+				t.Fatalf("LastAllocated() = %d after a refused Create, want 0", last)
+			}
+			all, err := tasks.All()
+			if err != nil {
+				t.Fatalf("All: %v", err)
+			}
+			if len(all) != 0 {
+				t.Fatalf("the board has %d tasks after a refused Create, want 0", len(all))
+			}
+		})
+	}
+}
+
+// negative is the one ordinal the field table of
+// docs/spec/modelo-de-datos/index.md does not admit.
+func negative() *int {
+	value := -1
+	return &value
+}
+
+// TestSaveRefusesAnInvalidTaskAndLeavesTheStoredOneAlone is the same rule
+// on the other write path: a task already on the board keeps what it had.
+func TestSaveRefusesAnInvalidTaskAndLeavesTheStoredOneAlone(t *testing.T) {
+	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
+	defer done()
+
+	task := &model.Task{Title: "A title of one line", Status: "To Do"}
+	if err := tasks.Create(task); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	task.Title = "first line\nsecond line"
+	if err := tasks.Save(task); err == nil {
+		t.Fatalf("Save stored a title with a line break")
+	}
+
+	back, err := tasks.Load(task.ID)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if back.Title != "A title of one line" {
+		t.Fatalf("title = %q, want the one that was there before the refused Save", back.Title)
 	}
 }
