@@ -113,4 +113,4 @@ Exit code: `0`
 
 *(derived output, see [`biso get`](../spec/cmd/get.md), [Los comentarios](../spec/modelo-de-datos/comentarios.md#los-comentarios); not literal spec text)*
 
-*Note: Notes are a single block; comments are four signed entries, in the order they were written. `## Implementation Notes` comes before `## Comments` even though the flag asked for them in the opposite order (`notes,comments`): the print order of sections is the fixed order of the full record, not the order they're listed in `--section`. The specification doesn't say this explicitly for the case of several sections at once; noted as an open gap in tutorial/lagunas/07-10.md.*
+*Note: Notes are a single block; comments are four signed entries, in the order they were written. `## Implementation Notes` comes before `## Comments`, and it would come first even if the flag had asked for them the other way round (`comments,notes`): the print order of sections is the fixed order of the full record, never the order they're listed in `--section`. The specification says so for the case of several sections at once, and adds that asking for the same section twice keeps it once.*

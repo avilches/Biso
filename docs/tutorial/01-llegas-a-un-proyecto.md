@@ -136,11 +136,11 @@ board    Kex
 path     /Users/avilches/.biso/boards/kex-3f9a2b1c
 source   project pointer at /Users/avilches/Hub/Projects/Kex
 me       @claude
-tasks    248 not archived, 31 archived, highest id ever assigned TASK-290
+tasks    248 not archived, 31 archived, highest id ever assigned TASK-61
 ```
 
 Exit code: `0`
 
 *(derived output, see [`biso where`](../spec/cmd/where.md); not literal spec text)*
 
-*Note: Four pieces of data, each changing on its own: the id never changes, the name changes with `biso config set project_name`, the path changes if someone moves the folder by hand, and `source` says where that answer came from, which here is the project pointer (how the board gets resolved in the first place). If there were no board at all, both `prime` and `where` would fail with exit code 20, and `where`'s own error message points to `biso init` as the fix: it creates a new board and leaves it pointed at from this project. All you need right now is to know it exists; its flags matter only when you actually need to create one.*
+*Note: Each line changes on its own: the id never changes, the name changes with `biso config set project_name`, the path changes if someone moves the folder by hand, `source` says where that answer came from (here, the project pointer, which is how the board gets resolved in the first place), `me` is who you are on this machine, and the last line counts the tasks and gives the highest id ever handed out, which is one more than the id the next `biso new` will take. If there were no board at all, both `prime` and `where` would fail with exit code 20, and `where`'s own error message points to `biso init` as the fix: it creates a new board and leaves it pointed at from this project. All you need right now is to know it exists; its flags matter only when you actually need to create one.*

@@ -45,6 +45,12 @@ Reglas de aplicación, que hay que implementar tal cual:
   que la definición del flag promete; `config set` valida el valor contra el tablero. Validar en
   seco la restauración de un tablero de doscientas tareas sin crear nada es el caso donde más vale, así
   que dejarla fuera de `init` sería perder lo mejor que tiene.
+- **`--dry-run` emite los mismos avisos que emitiría la escritura real**, por stderr y con el mismo
+  `code` en `data.warnings` (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)), porque un
+  aviso dice algo que quien llama necesita saber **antes** de escribir y callarlo en seco dejaría a la
+  vista previa diciendo menos que la llamada que simula. Los avisos que dependen de datos que solo
+  existen tras escribir, como el identificador que recibe una tarea nueva, se emiten igualmente
+  nombrando lo que sí existe en ese momento, que es la línea del fichero de entrada.
 - **`biso doctor --fix --dry-run` es la única excepción al código 7 de `--dry-run` en un comando de
   escritura.** `doctor` nunca tuvo código 7 en su propia tabla de códigos, así que su vista previa
   devuelve el código que daría la llamada real que le sigue (0 o 6), nunca un 7 que esa tabla no tiene;

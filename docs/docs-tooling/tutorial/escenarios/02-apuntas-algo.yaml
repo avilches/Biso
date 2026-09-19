@@ -27,7 +27,7 @@ steps:
     remark: |
       No "created TASK-62", no repeating the title: the only line is the id, because that's
       exactly what you couldn't have known beforehand, and you already knew everything else
-      (rule 7 of the startup message, and one of the core principles: the default output of
+      (rule 6 of the startup message, and one of the core principles: the default output of
       a write is whatever the caller didn't already know, never an echo of what it just
       wrote). The two `--add-ac` flags haven't replaced anything, they've added two separate
       criteria to a list that started out empty, because that is exactly what `--add-ac`
