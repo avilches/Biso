@@ -120,8 +120,8 @@ Exit code: `0`
 
 A coworker reviews the wording and finds all three too vague to tell whether they're met:
 "retried automatically" doesn't say up to when, and "configurable" doesn't say where. Between
-you, you rewrite the whole list at once, folding the two about the retry into a single
-checkable one and keeping the documentation one.
+you, you rewrite the whole list at once: the two about the retry become a single checkable
+one, and the documentation one comes back with the same wording.
 
 ```console
 $ biso set TASK-19 --clear-acs --add-ac "The retry happens automatically on a 5xx, up to a configurable limit" --add-ac "The README explains when and how many times it retries"

@@ -11,7 +11,7 @@ Sin parámetros propios.
 ## Comportamiento
 
 Dice el identificador del tablero, su nombre, la ruta de su directorio, y cuál de las dos vías de la
-sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) lo ha elegido. Los tres son datos distintos, y merece la pena verlos juntos porque cada uno
+sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) lo ha elegido. Los cuatro son datos distintos, y merece la pena verlos juntos porque cada uno
 cambia por su cuenta: `biso config set project_name` cambia el nombre y no toca la ruta (["`biso config`"](config.md)), mover el
 directorio a mano cambia la ruta y no toca el nombre, y el identificador no cambia jamás. Es el comando al
 que remite el error de código 20, y el que hace visible una resolución que de otro modo sería invisible.

@@ -113,11 +113,11 @@ steps:
       - spec/modelo-de-datos/comentarios.md#los-comentarios "Los comentarios"
     remark: |
       Notes are a single block; comments are four signed entries, in the order they were written.
-      `## Implementation Notes` comes before `## Comments` even though the flag asked for them in
-      the opposite order (`notes,comments`): the print order of sections is the fixed order of
-      the full record, not the order they're listed in `--section`. The specification doesn't say
-      this explicitly for the case of several sections at once; noted as an open gap in
-      tutorial/lagunas/07-10.md.
+      `## Implementation Notes` comes before `## Comments`, and it would come first even if the
+      flag had asked for them the other way round (`comments,notes`): the print order of sections
+      is the fixed order of the full record, never the order they're listed in `--section`. The
+      specification says so for the case of several sections at once, and adds that asking for
+      the same section twice keeps it once.
 board_in: >
   TASK-19 in In Progress, ac 0/2 (keys #7 and #8), with 2 comments (the question and answer from scenario
   8) and no notes yet. Urgency 11.0. Board counters: 54/5/190, unchanged since scenario 8.

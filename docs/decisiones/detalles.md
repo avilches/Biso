@@ -264,9 +264,9 @@ que sigue la herramienta: cada lista necesitaría nombre, un selector que la nom
 de marcado, y un sitio propio en la línea de estado, que hoy cabe entera en una línea justamente
 porque solo hay una lista que contar.
 
-**Qué cuesta, y por qué ahora.** La retirada toca unos quince ficheros de la especificación, ocho de
-los trece escenarios del tutorial (el séptimo reescrito entero y los otros siete retocados), la tabla
-de correspondencia con otros modelos y unos 125 bytes de la parte fija del mensaje de arranque, que
+**Qué cuesta, y por qué ahora.** La retirada toca diecinueve ficheros de la especificación, nueve de
+los trece escenarios del tutorial (el séptimo reescrito entero y los demás retocados), la tabla de
+correspondencia con otros modelos y unos 125 bytes de la parte fija del mensaje de arranque, que
 tiene tope duro (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)).
 Se hace ahora porque no hay ni una línea de código Go escrita, así que el cambio es enteramente de
 documentación; cada día que el campo siguiera en la especificación sería un día más de superficie que
