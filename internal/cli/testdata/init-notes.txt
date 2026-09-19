@@ -1,0 +1,6 @@
+note: the board lives inside this project. Ignore my-project-board/ and the board keeps
+      its own history; version it and the snapshot travels with your code.
+      Either way the database stays out, my-project-board/.gitignore excludes it
+note: the location is stored as the relative path "my-project-board". A working copy
+      outside this project will not have that folder while git ignores it, so
+      it will not find the board: use an absolute --at if you work that way

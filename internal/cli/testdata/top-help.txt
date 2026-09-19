@@ -1,0 +1,31 @@
+biso 1.0.0 - the task board of this project.
+
+Usage: biso [global options] <command> [options]
+
+Start here:
+  prime              everything you need to work on this board, in one message
+
+Daily work:
+  ls                 list tasks, most urgent first
+  get <ref>          show one task
+  new "TITLE"        create a task and print its id
+  set <ref>...       change any field
+  start <ref>...     take a task
+  note <ref> TEXT    append an implementation note
+  comment <ref> TEXT append a discussion comment
+  finish <ref>...    close a task
+  ask <ref> TEXT     park on a question
+  answer <ref> TEXT  answer it and unpark
+
+Global options:
+  -C, --cwd <path>   resolve the board from there, instead of cd-ing
+      --json         machine-readable output
+  -q, --quiet        print only ids
+      --print        print the whole record after writing
+      --color <when> auto (default), always, never
+      --dry-run      validate, write nothing (writing commands only)
+  -V, --version      print the version
+  -h, --help         this, or the help of a command
+
+More: `biso <command> --help`, and `biso help all` for the administrative
+commands (init, where, archive, export, config, doctor, board, help, snapshot).

@@ -1,0 +1,76 @@
+Usage: biso init [name] [options]
+
+Create a task board for this project. It writes the board and a pointer
+inside the project so every copy of the project finds the same board. It
+never writes outside the board otherwise.
+
+Arguments:
+  name                   board name (default: the project directory name)
+
+Options:
+  --at <dir>                  the board's own directory, not where to put it
+                              (default: a new folder in the machine's default
+                              boards root). A relative path is stored relative
+                              to the pointer; an absolute one is stored as is
+  --statuses <list>           comma-separated, at least three
+                              (default: "To Do,In Progress,Done")
+  --initial-status <status>   status of a new task (default: "To Do")
+  --active-status <status>    what `biso start` sets (default: "In Progress")
+  --terminal-status <status>  what `biso finish` sets (default: "Done")
+  --types <list>              comma-separated (default: "task,bug,docs")
+  --priorities <list>         comma-separated (default: "high,medium,low")
+  --extensions <list>         comma-separated declared external field keys,
+                              such as trello.card (default: none)
+  --prefix <text>             task id prefix, letters only (default: derived
+                              from the board name, uppercased)
+  --overwrite-config          replace the configuration of an existing board,
+                              keeping every task
+  --from <location>           restore a snapshot: the directory where `biso
+                              snapshot` wrote snapshot.ndjson and board.json.
+                              Incompatible with name and with every vocabulary
+                              option (which all come from board.json
+                              instead), and with --overwrite-config: restoring
+                              always creates a new board
+  -h, --help                  show this help
+
+`--initial-status`, `--active-status` and `--terminal-status` each name one of
+`--statuses`, all three distinct. Giving `--statuses` requires the three
+together; giving any of them without `--statuses` is bad usage. They are then
+stored as explicit values and never move again.
+
+With --at the board can live inside the project itself, which is fine. Two
+things follow, and `init` says both when it applies. Decide whether the
+project ignores that folder or versions it: ignore it and the board keeps a
+history of its own, version it and its snapshot travels with your code. The
+database stays out either way. And mind the form of the path: a relative --at
+is stored relative to the pointer and resolves from any working copy that has
+the folder inside it or above it, which is the case for worktrees kept under
+the project; a working copy that lives outside the project has no such
+folder, precisely because it is ignored, so pass an absolute --at if you work
+that way.
+
+The board directory can also become a repository of its own, but `init` does
+not create it: `init` only writes the ignore file of the version control
+system this machine is configured for (the vcs key, .gitignore with git),
+holding the database file and its WAL auxiliaries, so that once a repository
+exists only snapshot.ndjson, board.json and the <id>.id marker are ever
+versioned. `biso snapshot` is the one that creates that repository, lazily,
+the first time it runs against a directory that is in none (see `biso
+snapshot --help`). Missing version control never fails `init` or `snapshot`;
+the board works the same, only its history is lost.
+
+Exit codes:
+  0  board created, or restored with --from
+  2  bad usage, or a board is already reachable from here
+  4  --from points at a directory missing snapshot.ndjson, board.json, or both
+  6  --overwrite-config would change task_prefix on a board with tasks
+  7  --from's snapshot.ndjson failed batch validation
+  8  cannot write there
+
+Examples:
+  biso init
+  biso init "My project" --statuses "Ideas,To Do,In Progress,Done" \
+      --initial-status Ideas --active-status "In Progress" \
+      --terminal-status Done
+  biso init "My project" --prefix MYP --at my-project-board --extensions trello.card
+  biso init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c

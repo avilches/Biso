@@ -1,0 +1,5 @@
+error: no board here, and none configured for this project
+searched  this directory: not a board
+          pointer:        not found between this directory and /Users/avilches,
+                          which is where the search stops
+hint: `biso init` creates one
