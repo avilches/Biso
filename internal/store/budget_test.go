@@ -19,6 +19,13 @@ const budgetMillis = 25
 // for the row count.
 const budgetRows = 300
 
+// The figures this test measures on the development machine, so that a
+// change that makes it slower is recognizable: around 0.5 to 0.7ms with the
+// process already warm, and around 4 to 5ms for the first run of the suite
+// under -race, which is how the plan asks for it to be run. The 25ms limit
+// below is the one the specification fixes, and the race detector's figure
+// is the honest one to compare it against.
+//
 // TestReadBudgetOnThreeHundredRows is the first real (non-synthetic) step
 // of the startup budget test from
 // docs/spec/presupuestos.md#el-presupuesto-de-arranque. It does not yet
@@ -31,7 +38,7 @@ func TestReadBudgetOnThreeHundredRows(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
 
-	seed, err := Open(path)
+	seed, err := Open(testBoardID, path)
 	if err != nil {
 		t.Fatalf("open for seeding: %v", err)
 	}
@@ -49,13 +56,13 @@ func TestReadBudgetOnThreeHundredRows(t *testing.T) {
 
 	start := time.Now()
 
-	s, err := Open(path)
+	s, err := Open(testBoardID, path)
 	if err != nil {
 		t.Fatalf("open for reading: %v", err)
 	}
 	defer s.Close()
 
-	rows, err := s.db.Query("SELECT id, payload FROM bench_row")
+	rows, err := s.Query("SELECT id, payload FROM bench_row")
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}

@@ -12,7 +12,7 @@ import (
 
 func TestWithTxCommitsAllWritesOnSuccess(t *testing.T) {
 	dir := t.TempDir()
-	s, err := Open(filepath.Join(dir, "board.sqlite"))
+	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -31,7 +31,7 @@ func TestWithTxCommitsAllWritesOnSuccess(t *testing.T) {
 	}
 
 	var count int
-	if err := s.db.QueryRow("SELECT COUNT(*) FROM bench_row").Scan(&count); err != nil {
+	if err := s.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
 		t.Fatalf("count: %v", err)
 	}
 	if count != 3 {
@@ -41,7 +41,7 @@ func TestWithTxCommitsAllWritesOnSuccess(t *testing.T) {
 
 func TestWithTxRollsBackAllWritesWhenFnFails(t *testing.T) {
 	dir := t.TempDir()
-	s, err := Open(filepath.Join(dir, "board.sqlite"))
+	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestWithTxRollsBackAllWritesWhenFnFails(t *testing.T) {
 	}
 
 	var count int
-	if err := s.db.QueryRow("SELECT COUNT(*) FROM bench_row").Scan(&count); err != nil {
+	if err := s.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
 		t.Fatalf("count: %v", err)
 	}
 	if count != 0 {
@@ -72,7 +72,7 @@ func TestWithTxRollsBackAllWritesWhenFnFails(t *testing.T) {
 
 func TestWithTxRollsBackWhenTheCallbackPanics(t *testing.T) {
 	dir := t.TempDir()
-	s, err := Open(filepath.Join(dir, "board.sqlite"))
+	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -93,11 +93,79 @@ func TestWithTxRollsBackWhenTheCallbackPanics(t *testing.T) {
 	}()
 
 	var count int
-	if err := s.db.QueryRow("SELECT COUNT(*) FROM bench_row").Scan(&count); err != nil {
+	if err := s.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
 		t.Fatalf("count: %v", err)
 	}
 	if count != 0 {
 		t.Fatalf("count = %d, want 0 (a panic must leave nothing written and no connection held)", count)
+	}
+
+	// The panic must also leave the store usable: if the guard against
+	// using the handle inside a transaction stayed armed, everything after
+	// this would fail.
+	if err := s.WithTx(func(tx *sql.Tx) error { return nil }); err != nil {
+		t.Fatalf("WithTx after a panic: %v", err)
+	}
+}
+
+// TestUsingTheStoreHandleInsideWithTxFailsInsteadOfHanging covers the
+// consequence of the single connection of Open: the handle is held by the
+// live transaction, so a query through it would wait for a connection that
+// only the transaction can release, forever and with no error. Guarantee 5
+// of docs/spec/garantias.md promises a failure with exit code 8 within five
+// seconds, so hanging is not an option: the store refuses the call.
+func TestUsingTheStoreHandleInsideWithTxFailsInsteadOfHanging(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer s.Close()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- s.WithTx(func(tx *sql.Tx) error {
+			var count int
+			return s.scanOne(&count, "SELECT COUNT(*) FROM bench_row")
+		})
+	}()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, ErrTxInProgress) {
+			t.Fatalf("error = %v, want ErrTxInProgress", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatalf("using the store handle inside WithTx hung instead of failing")
+	}
+
+	if _, err := s.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'a')"); err != nil {
+		t.Fatalf("the store stayed unusable after the refused call: %v", err)
+	}
+}
+
+func TestNestedWithTxFailsInsteadOfHanging(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer s.Close()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- s.WithTx(func(outer *sql.Tx) error {
+			return s.WithTx(func(inner *sql.Tx) error { return nil })
+		})
+	}()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, ErrTxInProgress) {
+			t.Fatalf("error = %v, want ErrTxInProgress", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatalf("a nested WithTx hung instead of failing")
 	}
 }
 
@@ -105,22 +173,11 @@ func TestWithTxFailsWithBusyWhenLockNotAvailable(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
 
-	holder, err := open(path, 200)
-	if err != nil {
-		t.Fatalf("open holder: %v", err)
-	}
-	defer holder.Close()
+	holder, release := holdTheWriteLock(t, path)
+	defer release()
+	_ = holder
 
-	holderTx, err := holder.db.Begin()
-	if err != nil {
-		t.Fatalf("begin holder tx: %v", err)
-	}
-	defer holderTx.Rollback()
-	if _, err := holderTx.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'held')"); err != nil {
-		t.Fatalf("insert into the holder's transaction: %v", err)
-	}
-
-	writer, err := open(path, 200)
+	writer, err := openAt(testBoardID, path, 200, migrations)
 	if err != nil {
 		t.Fatalf("open writer: %v", err)
 	}
@@ -131,41 +188,17 @@ func TestWithTxFailsWithBusyWhenLockNotAvailable(t *testing.T) {
 		return err
 	})
 
-	var busyErr *model.Error
-	if !errors.As(err, &busyErr) {
-		t.Fatalf("WithTx error = %v, want a *model.Error", err)
-	}
-	if busyErr.ExitCode != 8 || busyErr.Code != "busy" {
-		t.Fatalf("busy error = %+v, want ExitCode 8 and Code busy", busyErr)
-	}
-	if busyErr.Message != "the board is busy, another process is writing to it" {
-		t.Fatalf("busy error message = %q, not the exact text of the concurrency guarantee", busyErr.Message)
-	}
-	if busyErr.Hint != "retry in a moment; nothing was written" {
-		t.Fatalf("busy error hint = %q, not the exact text of the concurrency guarantee", busyErr.Hint)
-	}
+	assertBusy(t, err)
 }
 
 func TestWithTxWaitsForTheConfiguredTimeBeforeGivingUp(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
 
-	holder, err := open(path, 200)
-	if err != nil {
-		t.Fatalf("open holder: %v", err)
-	}
-	defer holder.Close()
+	_, release := holdTheWriteLock(t, path)
+	defer release()
 
-	holderTx, err := holder.db.Begin()
-	if err != nil {
-		t.Fatalf("begin holder tx: %v", err)
-	}
-	defer holderTx.Rollback()
-	if _, err := holderTx.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'held')"); err != nil {
-		t.Fatalf("insert into the holder's transaction: %v", err)
-	}
-
-	writer, err := open(path, 200)
+	writer, err := openAt(testBoardID, path, 200, migrations)
 	if err != nil {
 		t.Fatalf("open writer: %v", err)
 	}
@@ -178,10 +211,7 @@ func TestWithTxWaitsForTheConfiguredTimeBeforeGivingUp(t *testing.T) {
 	})
 	elapsed := time.Since(start)
 
-	var busyErr *model.Error
-	if !errors.As(err, &busyErr) {
-		t.Fatalf("WithTx error = %v, want a *model.Error", err)
-	}
+	assertBusy(t, err)
 	if elapsed < 150*time.Millisecond {
 		t.Fatalf("WithTx gave up after %s, without waiting out the configured 200ms", elapsed)
 	}
@@ -191,12 +221,14 @@ func TestWithTxAppliesAfterConcurrentWriterCommits(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
 
-	holder, err := open(path, 2000)
+	holder, err := openAt(testBoardID, path, 2000, migrations)
 	if err != nil {
 		t.Fatalf("open holder: %v", err)
 	}
 	defer holder.Close()
 
+	// The holder stands in for another process, so it takes the write lock
+	// through the handle directly and keeps it open across the call below.
 	holderTx, err := holder.db.Begin()
 	if err != nil {
 		t.Fatalf("begin holder tx: %v", err)
@@ -209,7 +241,7 @@ func TestWithTxAppliesAfterConcurrentWriterCommits(t *testing.T) {
 		holderTx.Commit()
 	}()
 
-	writer, err := open(path, 2000)
+	writer, err := openAt(testBoardID, path, 2000, migrations)
 	if err != nil {
 		t.Fatalf("open writer: %v", err)
 	}
@@ -224,7 +256,7 @@ func TestWithTxAppliesAfterConcurrentWriterCommits(t *testing.T) {
 	}
 
 	var count int
-	if err := writer.db.QueryRow("SELECT COUNT(*) FROM bench_row").Scan(&count); err != nil {
+	if err := writer.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
 		t.Fatalf("count: %v", err)
 	}
 	if count != 2 {
@@ -232,43 +264,126 @@ func TestWithTxAppliesAfterConcurrentWriterCommits(t *testing.T) {
 	}
 }
 
+// TestReadsDoNotBlockOnConcurrentWrite is guarantee 6 and, with the count
+// it checks, also guarantee 1: the reader neither waits for the write in
+// progress nor sees the row it has not committed yet.
 func TestReadsDoNotBlockOnConcurrentWrite(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
 
-	writer, err := open(path, 2000)
-	if err != nil {
-		t.Fatalf("open writer: %v", err)
-	}
-	defer writer.Close()
+	_, release := holdTheWriteLock(t, path)
+	defer release()
 
-	tx, err := writer.db.Begin()
-	if err != nil {
-		t.Fatalf("begin writer tx: %v", err)
-	}
-	defer tx.Rollback()
-	if _, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'in-progress')"); err != nil {
-		t.Fatalf("insert into the uncommitted transaction: %v", err)
-	}
-
-	reader, err := open(path, 2000)
+	reader, err := openAt(testBoardID, path, 2000, migrations)
 	if err != nil {
 		t.Fatalf("open reader: %v", err)
 	}
 	defer reader.Close()
 
-	done := make(chan error, 1)
+	type read struct {
+		count int
+		err   error
+	}
+	done := make(chan read, 1)
 	go func() {
-		var count int
-		done <- reader.db.QueryRow("SELECT COUNT(*) FROM bench_row").Scan(&count)
+		var r read
+		r.err = reader.scanOne(&r.count, "SELECT COUNT(*) FROM bench_row")
+		done <- r
 	}()
 
 	select {
-	case err := <-done:
-		if err != nil {
-			t.Fatalf("the read failed with a write in progress: %v", err)
+	case r := <-done:
+		if r.err != nil {
+			t.Fatalf("the read failed with a write in progress: %v", r.err)
+		}
+		if r.count != 0 {
+			t.Fatalf("count = %d, want 0 (docs/spec/garantias.md, guarantee 1: no write is observed halfway)", r.count)
 		}
 	case <-time.After(100 * time.Millisecond):
 		t.Fatalf("the read did not return in 100ms with an uncommitted write (docs/spec/garantias.md, guarantee 6)")
 	}
+}
+
+// holdTheWriteLock opens the board at path, writes one row inside a
+// transaction and leaves it open, the way another process holding the write
+// lock would. It returns the store and the call that lets the lock go.
+func holdTheWriteLock(t *testing.T, path string) (*Store, func()) {
+	t.Helper()
+
+	holder, err := openAt(testBoardID, path, 200, migrations)
+	if err != nil {
+		t.Fatalf("open the holder: %v", err)
+	}
+	// Directly on the handle, because WithTx cannot keep a transaction open
+	// after it returns: this is the one place that needs that.
+	tx, err := holder.db.Begin()
+	if err != nil {
+		holder.Close()
+		t.Fatalf("begin the holder's transaction: %v", err)
+	}
+	if _, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'held')"); err != nil {
+		tx.Rollback()
+		holder.Close()
+		t.Fatalf("insert into the holder's transaction: %v", err)
+	}
+	return holder, func() {
+		tx.Rollback()
+		holder.Close()
+	}
+}
+
+func assertBusy(t *testing.T, err error) {
+	t.Helper()
+
+	var busyErr *model.Error
+	if !errors.As(err, &busyErr) {
+		t.Fatalf("error = %v, want a *model.Error", err)
+	}
+	if busyErr.ExitCode != 8 || busyErr.Code != "busy" {
+		t.Fatalf("busy error = %+v, want ExitCode 8 and Code busy", busyErr)
+	}
+	if busyErr.Message != "the board is busy, another process is writing to it" {
+		t.Fatalf("busy error message = %q, not the exact text of the concurrency guarantee", busyErr.Message)
+	}
+	wantHints := []string{"retry in a moment; nothing was written"}
+	if len(busyErr.Hints) != 1 || busyErr.Hints[0] != wantHints[0] {
+		t.Fatalf("busy error hints = %q, not the exact text of the concurrency guarantee", busyErr.Hints)
+	}
+}
+
+// TestOpenReportsBusyWhenTheSchemaMustBeMigrated covers the other path that
+// can meet the write lock: a file whose schema is behind is migrated when it
+// is opened, and that migration needs the lock like any other write.
+func TestOpenReportsBusyWhenTheSchemaMustBeMigrated(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "board.sqlite")
+
+	// A file at version 0: opening it with the real list has migrations to
+	// apply, so it needs the write lock.
+	empty, err := openAt(testBoardID, path, 200, nil)
+	if err != nil {
+		t.Fatalf("create the empty file: %v", err)
+	}
+	if _, err := empty.Exec("CREATE TABLE lock_me (id INTEGER PRIMARY KEY)"); err != nil {
+		t.Fatalf("create the table the holder writes to: %v", err)
+	}
+
+	tx, err := empty.db.Begin()
+	if err != nil {
+		t.Fatalf("begin the holder's transaction: %v", err)
+	}
+	if _, err := tx.Exec("INSERT INTO lock_me (id) VALUES (1)"); err != nil {
+		t.Fatalf("take the write lock: %v", err)
+	}
+	defer func() {
+		tx.Rollback()
+		empty.Close()
+	}()
+
+	s, err := openAt(testBoardID, path, 200, migrations)
+	if err == nil {
+		s.Close()
+		t.Fatalf("opening a stale file against a held write lock returned no error")
+	}
+	assertBusy(t, err)
 }
