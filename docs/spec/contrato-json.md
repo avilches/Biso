@@ -16,7 +16,7 @@ no. Un sobre nunca lleva las dos claves a la vez.
 | `prime` | `prime` | Sección ["El esquema JSON"](cmd/prime.md#el-esquema-json) |
 | `where` | `where` | `id`, `board`, `path`, `source`, `me`, `counts`, `discarded`. Ejemplo en ["`biso where`"](cmd/where.md) |
 | `init` | `init` | `board`, `pointerCreated`. Ejemplo en ["`biso init`"](cmd/init.md) |
-| `task.list` | `ls` | `tasks`, `shown`, `matched`, `hidden`, `truncated`, `skipped`, `sort`, `filters`, `warnings` |
+| `task.list` | `ls` | `tasks`, `shown`, `matched`, `hidden`, `truncated`, `skipped`, `sort`, `filters`, `warnings`. `filters` tiene su propio esquema en ["Los filtros de `biso ls`"](#los-filtros-de-biso-ls) |
 | `task.get` | `get` | `task` |
 | `task.candidates` | `get` con varias coincidencias | `tasks` |
 | `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer`, `archive` | `tasks`, `warnings` |
@@ -31,6 +31,52 @@ Un lote de doscientas cuarenta y dos tareas es **un solo sobre** con doscientas 
 entradas en `data.tasks`, nunca doscientos cuarenta y dos objetos sueltos. La única salida del
 programa que es una secuencia de objetos, uno por línea, es `biso export`, que no lleva sobre porque
 su formato es NDJSON por definición.
+
+## Los filtros de `biso ls`
+
+`data.filters`, dentro del sobre de `task.list` (["`biso ls`"](cmd/ls.md#el-esquema-json)), no es un
+eco de los flags que se escribieron: es el filtro **efectivo, ya resuelto**, que produjo `data.tasks`,
+incluidos los valores que se resuelven por defecto (el estado terminal excluido sin `-s`, o `--mine`
+resuelto a la identidad concreta que se usó). Como cualquier otra clave documentada de este contrato,
+**está siempre presente**, con la forma de esta tabla:
+
+| Clave | Flag(s) de `biso ls` | Forma | Valor cuando no se filtra por él |
+|---|---|---|---|
+| `status` | `-s/--status` | `list<string>` | el valor por defecto ya resuelto: todo menos el estado terminal |
+| `notStatus` | `--not-status` | `list<string>` | `[]` |
+| `anyStatus` | `--any-status` | `bool` | `false` |
+| `archived` | `--archived` | `bool` | `false` |
+| `onlyArchived` | `--only-archived` | `bool` | `false` |
+| `type` | `--type` | `list<string>` | `[]` |
+| `priority` | `--priority` | `list<string>` | `[]` |
+| `label` | `-l/--label` | `list<string>` | `[]` |
+| `labelOr` | `--label-or` | `list<string>` | `[]` |
+| `assignee` | `-a/--assignee`, `--mine` | `list<string>` | `[]` |
+| `unassigned` | `--unassigned` | `bool` | `false` |
+| `parent` | `-p/--parent` | `string \| null` | `null` |
+| `blocked` | `--blocked` / `--not-blocked` | `bool \| null` | `null` |
+| `waiting` | `--waiting` / `--not-waiting` | `bool \| null` | `null` |
+| `active` | `--active` / `--not-active` | `bool \| null` | `null` |
+| `overdue` | `--overdue` | `bool` | `false` |
+| `dueBefore` | `--due-before` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `search` | `--search` | `string \| null` | `null` |
+| `unchecked` | `--unchecked` | `bool` | `false` |
+
+Precisiones:
+
+- **Una lista con más de un valor es siempre un "o"**, salvo `label`, la única que se combina con "y"
+  (["Reglas de combinación de filtros"](cmd/ls.md#parámetros)). El JSON no lo distingue por forma, las
+  dos son `list<string>`; lo distingue la clave.
+- **`assignee` ya trae `--mine` resuelto** a la identidad concreta que se usó, igual que `status`
+  resuelve su valor por defecto. `unassigned` es una clave aparte porque "nadie asignado" no es una
+  persona que se pueda meter en esa lista.
+- **`parent` es el identificador ya resuelto** (`MYP-11`), nunca el texto de búsqueda que se haya
+  tecleado tras `-p` (["Cómo se resuelve una referencia a una tarea"](referencias.md)).
+- **`blocked`, `waiting` y `active` son los tres únicos filtros con un opuesto explícito que compite
+  por el mismo bit.** `null` es "no se pidió ninguno de los dos", la misma convención que usa el resto
+  de este contrato para "sin valor" (["Números, fechas y ausencias"](#números-fechas-y-ausencias)), y
+  no `false`, que ya significa "se pidió la variante negativa". Los demás booleanos de la tabla son
+  unarios, sin opuesto, así que `false` ya significa por sí solo "no se filtró por esto".
 
 ## Los errores en JSON
 
@@ -103,7 +149,7 @@ agrupada por el código de salida con el que sale cada uno:
 | Código de salida | `code` |
 |---:|---|
 | 1 | `internal` |
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `vcs_push_unavailable` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `malformed_string_value`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `vcs_push_unavailable` |
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `comment_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous`, `comment_ambiguous` |

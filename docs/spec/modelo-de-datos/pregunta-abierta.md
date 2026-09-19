@@ -6,7 +6,7 @@ un valor único no es un elemento de una lista que haga falta direccionar.
 
 | Parte | Tipo | Quién la fija |
 |---|---|---|
-| `author` | `string` libre | el programa, con la identidad `me`, salvo al importar |
+| `author` | `string` libre (["El salto de línea en un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)) | el programa, con la identidad `me`, salvo al importar |
 | `askedAt` | `date` (instante UTC) | el programa, salvo al importar |
 | `body` | `text` | quien llama |
 

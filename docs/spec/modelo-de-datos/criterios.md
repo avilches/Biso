@@ -6,7 +6,7 @@ tiene tres partes, sin fecha ni autor propios:
 | Parte | Tipo | Quién la fija |
 |---|---|---|
 | `key` | `int` positivo | el programa al crear el elemento |
-| `text` | `string` | quien llama |
+| `text` | `string` (["El salto de línea en un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)) | quien llama |
 | `checked` | `bool` | quien llama |
 
 **La clave se asigna al crear el elemento, con un contador propio de esa lista dentro de esa tarea, y
