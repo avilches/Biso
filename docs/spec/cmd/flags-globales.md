@@ -30,7 +30,10 @@ Reglas de aplicación, que hay que implementar tal cual:
   dos son error de uso con código 2.** Lo que cambia entre ellos es dónde es eso, porque cada uno está
   definido sobre una cosa distinta: `--print` sobre las tareas que una escritura afecta, y `--dry-run`
   sobre la validación que precede a una escritura.
-- **`--dry-run` es error 2 en los comandos de lectura.** En `prime`, `where`, `ls`, `get`, `export`,
+- **`--dry-run` es error 2 en los comandos de lectura.** "De lectura" quiere decir que ninguna tarea
+  del tablero cambia, no que el comando no toque el sistema de ficheros: `export`, `snapshot` y el
+  sondeo de `biso doctor` sin `--fix` (["El sondeo del sistema de ficheros"](doctor.md#el-sondeo-del-sistema-de-ficheros)) escriben
+  ficheros propios sin que eso los saque de esta lista. En `prime`, `where`, `ls`, `get`, `export`,
   `snapshot`, `config get`, `config list`, `board`, `help` y `biso doctor` sin `--fix`, con el mensaje
   `error: --dry-run does not apply to a read-only command`. `biso doctor --fix` es la excepción: con
   `--fix` es un comando de escritura y el flag se comporta como en cualquier otro (["`biso doctor`"](doctor.md)).
@@ -42,6 +45,10 @@ Reglas de aplicación, que hay que implementar tal cual:
   que la definición del flag promete; `config set` valida el valor contra el tablero. Validar en
   seco la restauración de un tablero de doscientas tareas sin crear nada es el caso donde más vale, así
   que dejarla fuera de `init` sería perder lo mejor que tiene.
+- **`biso doctor --fix --dry-run` es la única excepción al código 7 de `--dry-run` en un comando de
+  escritura.** `doctor` nunca tuvo código 7 en su propia tabla de códigos, así que su vista previa
+  devuelve el código que daría la llamada real que le sigue (0 o 6), nunca un 7 que esa tabla no tiene;
+  el razonamiento completo está en ["El informe en seco de `--fix --dry-run`"](doctor.md#el-informe-en-seco-de---fix---dry-run).
 - **`--print` es error 2 en todos esos comandos y también en `biso init` y `biso config set`**, con el
   mensaje `error: --print does not apply to a command that affects no task`. Ninguno de los dos afecta
   a ninguna tarea que existiera antes: `config set` no toca ninguna nunca, e `init --from` las crea de

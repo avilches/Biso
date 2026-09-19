@@ -1,14 +1,18 @@
 # El autor de una tarea
 
 `author` se fija una sola vez, al crear la tarea, y después solo cambia si alguien pasa
-`--author` de forma explícita.
+`--author` de forma explícita (nuevo valor) o `--clear-author`
+(["Campos escalares"](../familias-de-flags.md#campos-escalares), lo vacía).
 
 | Al crear la tarea | Valor de `author` |
 |---|---|
 | Se pasa `--author <persona>` | esa persona, tal cual |
 | No se pasa, y hay identidad configurada | la identidad de quien llama, según la precedencia de ["Variables de entorno"](../invocacion.md#variables-de-entorno) |
 | No se pasa, y no hay identidad configurada | vacío, sin aviso |
-| Se pasa `--author ""` | vacío |
+
+`--author ""` no es una forma de crear la tarea con autor vacío: sigue la regla general de
+["El valor vacío"](../valores-de-entrada.md#el-valor-vacío), que la trata como cualquier otro escalar
+sin vocabulario.
 
 El caso sin identidad no es un error y no imprime nada: a diferencia de `--mine`, de la
 autoasignación de `biso start`, del autor de un comentario, de `biso ask` y de `biso answer`, que sí

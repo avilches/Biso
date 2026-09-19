@@ -168,13 +168,14 @@ terminal en ese orden. **Con `--statuses`**, hacen falta los tres flags de papel
 configuración a las que corresponden.
 
 **`--from <location>` restaura una instantánea, en vez de crear un tablero en blanco.** `<location>`
-es el directorio de un tablero que ha escrito ["`biso snapshot`"](snapshot.md), es decir, el que
-contiene `snapshot.ndjson` y `board.json`. En una sola invocación, `init --from` hace lo que sería
+es el directorio de un tablero que ha escrito ["`biso snapshot`"](snapshot.md), con los tres ficheros
+de ["Qué entra en la revisión"](snapshot.md#qué-entra-en-la-revisión): `snapshot.ndjson`, `board.json`
+y el marcador `<id>.id`. En una sola invocación, `init --from` hace lo que sería
 crear el tablero con la configuración de `board.json` e importar `snapshot.ndjson` con las mismas
 reglas del lote de `biso new --from` (sección ["`biso new`"](new.md)): valida el fichero de tareas entero contra el
 vocabulario de `board.json` antes de escribir nada y, solo si todo es válido, escribe primero la
 configuración y después las tareas. Como `board.json` ya trae el nombre del tablero, los estados,
-los tipos, las prioridades, los proyectos, las extensiones y el prefijo del tablero de origen,
+los tipos, las prioridades, las extensiones y el prefijo del tablero de origen,
 **`--from` es incompatible con `<name>` y con cualquier flag de vocabulario**: no hay nada que
 decidir, todo viene del fichero. `--at` sigue valiendo igual que en un `init` normal, porque gobierna
 dónde queda el tablero nuevo, no su vocabulario. **`--overwrite-config` en cambio es incompatible con
@@ -244,8 +245,10 @@ además de esa frase, para no decir dos veces que no se ha escrito nada.
 | Sin `--prefix`, el nombre del tablero no deja ninguna letra al derivar el prefijo (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) | Error 2, `code` `invalid_prefix`, pidiendo `--prefix` explícito |
 | `--at` a un directorio donde no se puede escribir | Error 8 |
 | `--from` junto con `<name>`, con cualquier flag de vocabulario, o con `--overwrite-config` | Error 2 |
-| `--from` a un directorio al que le falta `snapshot.ndjson`, `board.json`, o los dos (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
+| `--from` a un directorio al que le falta `snapshot.ndjson`, `board.json`, el marcador `<id>.id`, o varios de los tres (una instantánea a medias) | Error 4, `code` `file_not_found`, nombrando qué fichero falta |
 | `--from` cuyo `board.json` no se puede interpretar como JSON, o lleva una clave desconocida | Error 2, `code` `invalid_snapshot_config` |
+| `--from` cuyo `<id>.id` no tiene el contenido `{ "storeVersion": 1 }` que esta misma página describe más arriba | Error 2, `code` `invalid_snapshot_id` |
+| `--from` cuyo `<id>.id` nombra un identificador que ya existe en esta máquina | El error de identidad duplicada de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), no una adopción silenciosa |
 | `--from` cuyo `board.json` tiene el mismo problema que haría fallar con Error 2 al flag de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría ese flag |
 | `--from` cuyo `snapshot.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
 | `--from` cuyo `board.json` declara un vocabulario que ninguna tarea de `snapshot.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `board.json`, tenga tareas que lo usen entero o no |

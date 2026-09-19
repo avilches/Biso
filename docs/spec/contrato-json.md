@@ -2,8 +2,10 @@
 
 ## El sobre
 
-Toda salida con `--json` es **un solo objeto JSON**, con o sin sangrado, indistintamente, y siempre
-con esta forma:
+Toda salida con `--json` es **un solo objeto JSON**, con o sin sangrado, indistintamente, y tiene una
+de dos formas disjuntas según haya salido bien o mal: la que sigue, con `data`, cuando la llamada
+termina bien, o la de ["Los errores en JSON"](#los-errores-en-json), con `error` en su lugar, cuando
+no. Un sobre nunca lleva las dos claves a la vez.
 
 ```json
 { "schemaVersion": 1, "kind": "<tipo>", "generatedAt": "<ISO 8601 UTC>", "data": { } }
@@ -12,9 +14,9 @@ con esta forma:
 | `kind` | Lo produce | `data` contiene |
 |---|---|---|
 | `prime` | `prime` | Sección ["El esquema JSON"](cmd/prime.md#el-esquema-json) |
-| `where` | `where` | `id`, `board`, `path`, `source`, `me`, `counts`. Ejemplo en ["`biso where`"](cmd/where.md) |
+| `where` | `where` | `id`, `board`, `path`, `source`, `me`, `counts`, `discarded`. Ejemplo en ["`biso where`"](cmd/where.md) |
 | `init` | `init` | `board`, `pointerCreated`. Ejemplo en ["`biso init`"](cmd/init.md) |
-| `task.list` | `ls` | `tasks`, `shown`, `matched`, `hidden`, `truncated`, `skipped`, `sort`, `filters` |
+| `task.list` | `ls` | `tasks`, `shown`, `matched`, `hidden`, `truncated`, `skipped`, `sort`, `filters`, `warnings` |
 | `task.get` | `get` | `task` |
 | `task.candidates` | `get` con varias coincidencias | `tasks` |
 | `task.write` | `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer`, `archive` | `tasks`, `warnings` |
@@ -50,6 +52,13 @@ proceso es el de la tabla de la sección ["Códigos de salida"](codigos-de-salid
   }
 }
 ```
+
+**Cuando el propio `--json` es la parte inválida de la llamada, el error es texto plano por stderr,
+no este sobre.** Pasa cuando `--json` no se combina con otro flag de la misma llamada (`export
+--json`, `prime --full --json`) o cuando el comando o subcomando no lo acepta en absoluto (`config
+get --json`, `config set --json`): el análisis de flags rechaza la combinación antes de que `--json`
+llegue a establecer un modo de salida válido, así que no hay sobre que envolver el error. Cada uno de
+esos comandos documenta su propio mensaje.
 
 Cuando un solo comando produce varios fallos, como un lote inválido, `error.details` es una lista de
 objetos con la misma forma, uno por fallo, y `error.code` es `batch_invalid`.

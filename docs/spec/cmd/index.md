@@ -38,7 +38,9 @@ en su propia lista, según la regla de la sección ["Flags globales"](flags-glob
 
 El caso de `export` merece una línea, porque es el único comando cuya salida ya es JSON sin pedirlo:
 son objetos JSON, uno por línea, y `--json` pide el sobre único de la sección ["El contrato JSON"](../contrato-json.md), que es otra forma
-distinta. Pasarlo es error 2:
+distinta. Pasarlo es error 2. El rechazo es texto plano por stderr, no el sobre de error de
+["El contrato JSON"](../contrato-json.md#los-errores-en-json), porque es `--json` mismo la parte
+inválida de la llamada:
 
 ```
 error: --json does not apply to export

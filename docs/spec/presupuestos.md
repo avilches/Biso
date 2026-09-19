@@ -3,9 +3,13 @@
 ## El presupuesto de arranque
 
 **`biso ls` y `biso prime` sobre un tablero de 300 tareas terminan en menos de 25 milisegundos de
-reloj.** Es una regla transversal y no solo de esos comandos: ninguno de los demás tiene un motivo
-para tardar más que ellos. Es una prueba de la suite, no una aspiración, y se mide en la máquina de
-referencia.
+reloj.** Es una regla transversal a todo el camino caliente, el de los comandos que un agente ejecuta
+muchas veces a lo largo de una sesión: ninguno de ellos tiene un motivo para tardar más que estos dos.
+`biso snapshot` (regla 2 de más abajo) y el sondeo de `biso doctor`
+(["El sondeo del sistema de ficheros"](cmd/doctor.md#el-sondeo-del-sistema-de-ficheros), hasta 2
+segundos) quedan fuera de esta cifra porque no están en ese camino: son comandos que se llaman a
+propósito y de forma esporádica, no en cada consulta. Es una prueba de la suite, no una aspiración, y
+se mide en la máquina de referencia.
 
 **La máquina de referencia es la que ejecuta la suite de integración continua del proyecto.** Una
 cifra de tiempo sin una máquina no se puede comprobar, porque la misma llamada tarda lo que tarde el
