@@ -112,7 +112,7 @@ steps:
     output: |
       3 tasks would be created, nothing was written (--dry-run)
     exit_code: 0
-    source_kind: literal
+    source_kind: derived
     source:
       - spec/cmd/new.md "`biso new`"
     remark: |

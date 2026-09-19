@@ -42,7 +42,7 @@ Exit code: `0`
 You check off the documentation one, which you finished days ago.
 
 ```console
-$ biso set TASK-19 --check-ac 7
+$ biso set TASK-19 --check-ac 8
 TASK-19  In Progress  ac 1/6  urgency 11.0
 ```
 
@@ -64,7 +64,7 @@ Exit code: `0`
 And the two that aren't consecutive, with a comma-separated list.
 
 ```console
-$ biso set TASK-19 --check-ac 8,12
+$ biso set TASK-19 --check-ac 7,12
 TASK-19  In Progress  ac 6/6  urgency 11.0
 ```
 
@@ -72,12 +72,12 @@ Exit code: `0`
 
 *(derived output, see [Selectores de criterios](../spec/familias-de-flags.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
-Almost right away you realize you marked those last two too soon: the test suite still
-doesn't cover the 5xx case end to end, and the number of attempts doesn't show up in the
-log, only the final result. You uncheck both.
+Almost right away you realize you marked those last two too soon: the retry still gives up
+one attempt earlier than the configured limit, and the number of attempts doesn't show up in
+the log, only the final result. You uncheck both.
 
 ```console
-$ biso set TASK-19 --uncheck-ac 8,12
+$ biso set TASK-19 --uncheck-ac 7,12
 TASK-19  In Progress  ac 4/6  urgency 11.0
 ```
 
@@ -87,10 +87,11 @@ Exit code: `0`
 
 *Note: `--uncheck-ac` takes the same selector as `--check-ac`, with the same effect inverted, here the comma-separated list, just like the call right before it.*
 
-You finish the test, and check that one off by searching for its text instead of by number.
+You fix the off-by-one in the limit, and check that criterion off by searching for its text
+instead of by number.
 
 ```console
-$ biso set TASK-19 --check-ac "test suite"
+$ biso set TASK-19 --check-ac "retry happens"
 TASK-19  In Progress  ac 5/6  urgency 11.0
 ```
 
@@ -98,7 +99,7 @@ Exit code: `0`
 
 *(derived output, see [Selectores de criterios](../spec/familias-de-flags.md#selectores-de-criterios), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
-*Note: "test suite" doesn't match the key grammar (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), so it's treated as literal text and matches the element whose text contains it. Only #8 ("The test suite covers the 5xx case") matches, so there's no ambiguity.*
+*Note: "retry happens" doesn't match the key grammar (^(all|\d+(-\d+)?)(,\d+(-\d+)?)*$), so it's treated as literal text and matches the element whose text contains it. Only #7 ("The retry happens automatically on a 5xx, up to a configurable limit") matches: #11 mentions the retry limit and #10 mentions retrying, but neither contains that exact text.*
 
 You add the attempt count to the log, check that it now shows up, and close the task. You
 check off anything left, just in case you missed something, and write the summary.

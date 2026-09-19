@@ -118,11 +118,13 @@ Exit code: `0`
 
 *Note: This is the central point of the scenario. The surviving element is still `#4`, it hasn't become `#3`. The program fixes a key when the element is created and never moves it: that's why checking or removing by number is safe even when the list has lost elements along the way, and why a task can perfectly well have criteria `#2` and `#7` without that being anyone's mistake.*
 
-A coworker reviews the wording and finds all three too vague to tell whether they're met.
-Between you, you rewrite the whole list at once.
+A coworker reviews the wording and finds all three too vague to tell whether they're met:
+"retried automatically" doesn't say up to when, and "configurable" doesn't say where. Between
+you, you rewrite the whole list at once, folding the two about the retry into a single
+checkable one and keeping the documentation one.
 
 ```console
-$ biso set TASK-19 --clear-acs --add-ac "The README explains when and how many times it retries" --add-ac "The test suite covers the 5xx case"
+$ biso set TASK-19 --clear-acs --add-ac "The retry happens automatically on a 5xx, up to a configurable limit" --add-ac "The README explains when and how many times it retries"
 TASK-19  In Progress  ac 0/2  urgency 11.0  added ac #5, #6
 ```
 
@@ -130,7 +132,7 @@ Exit code: `0`
 
 *(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [Sustituir un campo que no tiene flag de \"sustituir entera\"](../spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera), [`biso set`](../spec/cmd/set.md); not literal spec text)*
 
-*Note: There's no flag that replaces the whole list of criteria in one shot, so this clears it and adds the two new ones in the same call. The three old elements disappear, and the two that come in are brand new. No warning shows up here, unlike a `--replace-*` on a comma-separated list field that overwrites non-empty content: clearing was explicit, you typed it yourself, so nothing gets overwritten silently and there's nothing to warn about.*
+*Note: There's no flag that replaces the whole list of criteria in one shot, so this clears it and adds the two new ones in the same call. The three old elements disappear, and the two that come in are brand new, even the one that says almost the same as `#1` and `#2` together: rewriting the text of a criterion means creating another one, never editing it in place. No warning shows up here, unlike a `--replace-*` on a comma-separated list field that overwrites non-empty content: clearing was explicit, you typed it yourself, so nothing gets overwritten silently and there's nothing to warn about.*
 
 You check the keys of the two new ones.
 
@@ -139,8 +141,8 @@ $ biso get TASK-19 --section ac
 TASK-19  Retry the upload on 5xx
 
 ## Acceptance Criteria
-- [ ] #5 The README explains when and how many times it retries
-- [ ] #6 The test suite covers the 5xx case
+- [ ] #5 The retry happens automatically on a 5xx, up to a configurable limit
+- [ ] #6 The README explains when and how many times it retries
 ```
 
 Exit code: `0`
@@ -179,7 +181,7 @@ A while later, with the retry already working, you go back to the list. It's the
 wording you and your coworker had agreed on.
 
 ```console
-$ biso set TASK-19 --add-ac "The README explains when and how many times it retries" --add-ac "The test suite covers the 5xx case"
+$ biso set TASK-19 --add-ac "The retry happens automatically on a 5xx, up to a configurable limit" --add-ac "The README explains when and how many times it retries"
 TASK-19  In Progress  ac 0/2  urgency 11.0  added ac #7, #8
 ```
 
