@@ -33,7 +33,14 @@ biso prime [--full] [--limit <n>] [--json]
 - `--full` añade al final la lista completa de flags de `biso new` y `biso set`. Es para una
   persona que está aprendiendo la herramienta, no para el arranque de un agente.
 - `--json` es el flag global de la sección ["Flags globales"](flags-globales.md#flags-globales), y aquí es lo único que la restringe: no se puede
-  combinar con `--full`, porque el JSON no lleva texto de ayuda.
+  combinar con `--full`, porque el JSON no lleva texto de ayuda. El rechazo es texto plano por stderr,
+  no el sobre de error de ["El contrato JSON"](../contrato-json.md#los-errores-en-json), porque es
+  `--json` mismo la parte inválida de la llamada:
+
+  ```
+  error: --full does not combine with --json
+         --full's output is help text, and --json has no room for it
+  ```
 
 ## Qué hace, caso a caso
 

@@ -1,7 +1,8 @@
 # La pregunta abierta
 
-`question` es del tipo `Question`, un único valor y nunca una lista, con la misma forma que un
-[`Comment`](comentarios.md#los-comentarios):
+`question` es del tipo `Question`, un único valor y nunca una lista. Comparte con
+[`Comment`](comentarios.md#los-comentarios) el autor, el instante y el cuerpo, pero no lleva `key`:
+un valor único no es un elemento de una lista que haga falta direccionar.
 
 | Parte | Tipo | Quién la fija |
 |---|---|---|

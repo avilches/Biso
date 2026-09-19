@@ -214,7 +214,7 @@ claves:
 |---|---|---|---|
 | `version` | entero | sí | versión del formato del puntero |
 | `id` | 8 caracteres hexadecimales en minúscula | sí | la identidad del tablero, y es inmutable. En mayúsculas el puntero es inválido: no se normaliza |
-| `path` | ruta del directorio del tablero, absoluta o relativa | no | solo cuando el tablero no vive en una de las raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina) |
+| `path` | ruta del directorio del tablero, absoluta o relativa | no | solo cuando el tablero se creó con `--at` (["`biso init`"](cmd/init.md)), nunca en la ubicación predeterminada dentro de las raíces de la sección ["Configuración de máquina"](invocacion.md#configuración-de-máquina) |
 
 Al estar versionado, todas las copias de trabajo del proyecto lo ven igual y comparten el mismo
 tablero sin ningún paso adicional.

@@ -27,7 +27,7 @@ propios.
 |---|---|---|---|
 | `id` | `string` (`PREFIX-<n>`) | no | no |
 | `createdAt` | `date` (instante UTC, precisión de segundo) | no | solo al importar |
-| `updatedAt` | `date` (instante UTC, precisión de segundo) | no | sí, en cada escritura que cambie algo, o al importar |
+| `updatedAt` | `date` (instante UTC, precisión de segundo) | no | sí, en cada escritura que cambie algo, o al importar; no cuenta un cambio en `leaseExpiresAt` o `leaseHolder` por sí solo |
 | `archived` | `bool` | no, `false` por defecto | sí, solo con `biso archive` / `--unarchive`, o al importar |
 | `leaseExpiresAt` | `date` (instante UTC) | sí | sí, ver [`lease.md`](../lease.md), o al importar |
 | `leaseHolder` | `string` (texto de persona) | sí | sí, solo con esos dos, o al importar; ver [`lease.md`](../lease.md) |
@@ -102,6 +102,12 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 clave desconocida: `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`, `blocks`,
 `blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos derivados del documento; las
 demás páginas remiten a ella.
+
+**`blocks` se ordena por identificador ascendente**, el mismo criterio de desempate que usa
+["`biso ls`"](../cmd/ls.md#comportamiento-caso-a-caso) para cualquier listado de tareas, para no tener
+un segundo criterio de orden en el programa. Una tarea dependiente que no se puede decodificar al leer
+se excluye de `blocks`, igual que una archivada sin terminar (["La urgencia"](urgencia.md)): no se
+puede afirmar que bloquea nada de un dato que no se puede interpretar.
 
 ## Precisiones generales sobre la mutabilidad
 

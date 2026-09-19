@@ -134,6 +134,12 @@ Las reglas del lote, todas obligatorias:
 - **`archived` se acepta como booleano.** Por defecto, si la clave no aparece, la tarea se crea sin
   archivar. Ningún otro comando tiene un flag de campo para él: fuera de la importación,
   archivar se hace con `biso archive`.
+- **`null` explícito en un escalar opcional (`due`, `ordinal`, `parent`) equivale a que la clave no
+  viniera.** En una lista o un mapa (`labels`, `references`, `dependencies`, `documentation`,
+  `modifiedFiles`, `ext`, `acceptanceCriteria`, `definitionOfDone`, `comments`), en cambio, `null` es
+  un fallo de validación: su forma de estar vacío es `[]` o `{}`, nunca `null`, la misma regla que
+  ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
+  órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta.
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
   escriben, y el mensaje dice la línea y la clave.
 - **Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) no se aceptan.** En la entrada son claves desconocidas y

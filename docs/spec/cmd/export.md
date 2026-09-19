@@ -27,6 +27,13 @@ estados, `ls` parte de todos menos el terminal.
 
 ## La garantía de simetría
 
+**Esta garantía asume un tablero destino con vocabulario compatible**: el mismo `task_prefix`, los
+mismos estados, tipos, prioridades y claves de extensión que el tablero de origen. Si no lo es, la
+importación falla con los errores que ya define ["El modo lote"](new.md#el-modo-lote) de `biso new`
+(un `id` sin el prefijo correcto, una clave de extensión desconocida, un valor sin vocabulario), no es
+un fallo de esta garantía. Reconstruir también el vocabulario, para un tablero destino que no lo
+declara de antemano, es lo que hace `snapshot` con `init --from`, más abajo.
+
 La salida es NDJSON, una tarea por línea, con **exactamente** las claves que acepta `biso new --from`,
 en la forma de objeto que esa sección define para los criterios, la definición de hecho, los
 comentarios y la pregunta abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
@@ -34,6 +41,10 @@ y las claves estables de cada criterio **y de cada comentario** (["Los criterios
 
 **Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md).** `question` sale en `export` y
 entra de vuelta con `new --from`, con sus tres partes completas.
+
+**Un escalar opcional sin valor sale como `null`; una lista o un mapa sin elementos sale como `[]` o
+`{}`, nunca como `null`.** Es la misma regla de coerción de ["El modo lote"](new.md#el-modo-lote) de
+`biso new`, en el sentido contrario, la que hace que reimportar la salida reproduzca la tarea exacta.
 
 `export` solo lleva las tareas: reconstruir un tablero entero, con su vocabulario y no solo con sus
 datos, es lo que hace [`biso snapshot`](snapshot.md), cuyo `snapshot.ndjson` tiene exactamente esta misma forma

@@ -20,6 +20,12 @@ biso get <ref> [--id] [--match] [--section <name>]... [--explain-urgency]
 sus claves y cuesta unas decenas de bytes en vez de la ficha entera, que es lo que hace falta antes de
 marcar uno.
 
+**Varias secciones salen siempre en el orden fijo de la ficha completa** (`meta`, `desc`, `ac`, `dod`,
+`plan`, `notes`, `summary`, `comments`, `question`), nunca en el orden en que se pidieron: `--section
+dod,ac` y `--section ac,dod` imprimen lo mismo. Una sección repetida se guarda una vez, con la misma
+regla y el mismo aviso que cualquier flag repetible (["Repetición y listas separadas por
+comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)).
+
 ## Comportamiento, caso a caso
 
 La resolución de `<ref>` está en la sección ["Cómo se resuelve una referencia a una tarea"](../referencias.md) y no se repite. Lo propio de este comando:
@@ -154,7 +160,10 @@ urgency 0.0
 
 ## El esquema JSON
 
-Es el objeto de `task.list` más los campos del cuerpo:
+`data.task` lleva todas las claves de un objeto de ["`task.list`"](ls.md#el-esquema-json) más las del
+cuerpo (`description`, `acceptanceCriteria`, `definitionOfDone`, `plan`, `notes`, `summary`,
+`comments`, `question`). La lista completa de las primeras vive solo en `ls.md`; el ejemplo de abajo
+las repite todas para que sirva de esquema completo, verificable clave a clave:
 
 ```json
 {
@@ -164,6 +173,36 @@ Es el objeto de `task.list` más los campos del cuerpo:
   "data": {
     "task": {
       "id": "MYP-11",
+      "title": "Normalize CRLF in the diff",
+      "status": "In Progress",
+      "type": "bug",
+      "priority": "high",
+      "assignees": ["@claude"],
+      "author": "@avilches",
+      "labels": ["parser"],
+      "parent": null,
+      "dependencies": [],
+      "references": ["docs/bugs/BUG-02.md"],
+      "documentation": [],
+      "modifiedFiles": [],
+      "due": null,
+      "ordinal": null,
+      "createdAt": "2026-09-06T09:12:04Z",
+      "updatedAt": "2026-09-06T11:40:18Z",
+      "leaseExpiresAt": "2026-09-06T15:40:18Z",
+      "leaseHolder": "@claude",
+      "acDone": 1,
+      "acTotal": 2,
+      "dodDone": 0,
+      "dodTotal": 1,
+      "commentCount": 1,
+      "urgency": 19.0,
+      "blocks": ["MYP-40"],
+      "blocked": false,
+      "waiting": false,
+      "leaseExpired": false,
+      "archived": false,
+      "ext": { "trello.card": "5f2a8c1e3b9d4a7f6e0c2b81" },
       "description": "The diff compares byte by byte...",
       "acceptanceCriteria": [ { "key": 1, "text": "The diff ignores CRLF", "checked": true },
                               { "key": 3, "text": "There is a test that covers it", "checked": false } ],
@@ -173,7 +212,6 @@ Es el objeto de `task.list` más los campos del cuerpo:
       "summary": null,
       "comments": [ { "key": 1, "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "A user with a Windows clone..." } ],
       "question": null,
-      "blocks": ["MYP-40"],
       "urgencyBreakdown": { "priority": 6.0, "active": { "value": 4.0, "reason": null }, "blocking": 8.0,
                             "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 }
     }

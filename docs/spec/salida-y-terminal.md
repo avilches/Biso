@@ -9,12 +9,15 @@ cualquier comando es idéntica byte a byte con terminal y sin él, salvo los có
 La interfaz interactiva existe, pero es un comando aparte, `biso board`, que solo se ejecuta si se
 pide por su nombre y que falla con código 8 si no hay terminal.
 
-Lo único que mira el terminal es el color:
+Lo único que mira el terminal es el color. Las filas se leen en orden: la primera que aplica decide,
+y por eso `--color` siempre prevalece sobre `NO_COLOR`, como fija la precedencia de
+["Variables de entorno"](invocacion.md#variables-de-entorno):
 
 | Situación | Color |
 |---|---|
 | `--color always` | sí |
-| `--color never`, o `NO_COLOR` definida | no |
+| `--color never` | no |
+| `NO_COLOR` definida, sin `--color` explícito | no |
 | `--color auto` y stdout es un terminal | sí |
 | `--color auto` y stdout está redirigido | no |
 

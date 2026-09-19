@@ -16,7 +16,13 @@ biso config list
 | `<value>` | | sí en `set` | según la clave | | no | sí en las claves de lista | |
 
 `--json` solo se acepta en `config list`. En `get` la salida ya es un solo valor y en `set` no hay
-salida por stdout, así que en los dos es un error de uso con código 2.
+salida por stdout, así que en los dos es un error de uso con código 2. El rechazo es texto plano por
+stderr, no el sobre de error de ["El contrato JSON"](../contrato-json.md#los-errores-en-json), porque
+es `--json` mismo la parte inválida de la llamada:
+
+```
+error: --json only applies to config list
+```
 
 ## Las claves
 

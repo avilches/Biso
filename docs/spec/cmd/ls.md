@@ -244,10 +244,16 @@ igual que las demás.
     "truncated": true,
     "skipped": [],
     "sort": "default",
-    "filters": { "status": ["To Do", "In Progress"], "type": [], "label": [] }
+    "filters": { "status": ["To Do", "In Progress"], "type": [], "label": [] },
+    "warnings": [ { "code": "list_truncated", "shown": 30, "matched": 58 } ]
   }
 }
 ```
+
+**`truncated` sigue siendo la forma de saber que se recortó sin tener que mirar `warnings`**, pero
+cuando `truncated` es `true`, `data.warnings` lleva el mismo `list_truncated` de la lista general de
+avisos (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)), con la misma regla que cualquier
+otro comando: el texto humano sale por stderr y el objeto estructurado va en el sobre.
 
 La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la sección
 ["Urgencia"](../modelo-de-datos/urgencia.md).

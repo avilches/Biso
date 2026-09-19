@@ -11,10 +11,16 @@ Todos los comandos que reciben `<ref>` usan exactamente esta rutina. No hay vari
 | `#<n>` | `#11` | igual que el anterior |
 | cualquier otra cosa | `"CRLF"` | consulta de texto |
 
-Estos flags fuerzan la interpretación, y valen en todos los comandos que aceptan una referencia:
+Estos flags fuerzan la interpretación, y valen sobre el `<ref>` posicional de todos los comandos que
+lo llevan así (`biso get <ref>`, `biso set <ref>...` y los demás verbos del ciclo):
 
 - `--id` obliga a interpretar como identificador. Con un valor que no encaje en la gramática, error 2.
 - `--match` obliga a interpretar como texto, y sirve para buscar una tarea que se llame "42".
+
+**No hay forma de forzar la interpretación cuando la referencia es el valor de un flag**, como
+`--parent <ref>` en `biso ls`: ahí decide solo la gramática de arriba, sin `--id` ni `--match` propios.
+Es una limitación conocida, sin consecuencia práctica salvo para una tarea cuyo título sea puramente
+numérico y se quiera referenciar como padre por ese título en vez de por su identificador.
 
 ## La búsqueda por texto
 
