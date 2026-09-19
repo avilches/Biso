@@ -9,19 +9,49 @@ Dado un valor de entrada `v` y la lista de valores configurados, el programa cal
 
 ```
 normalizar(x):
-  1. pasar x a minusculas segun Unicode
+  1. plegar mayusculas y minusculas segun Unicode (case folding), no pasar a minusculas
   2. descomponer y quitar los diacriticos (acentos, dieresis, cedillas)
   3. eliminar TODOS los caracteres que sean espacio, tabulador, guion (-) o guion bajo (_)
   4. devolver lo que queda
 
 coincidir(v, configurados):
   a. si existe un configurado c con c == v exactamente, devolver c
-  b. si no, calcular normalizar(v) y compararlo con normalizar(c) de cada configurado
+  b. si no, calcular normalizar(v) y compararlo con normalizar(c) de cada
+     configurado, contando una sola vez los configurados repetidos letra por letra
   c. si exactamente un configurado coincide, devolverlo
   d. si ninguno coincide, error 3
-  e. si coinciden dos o mas, error 3 con los dos listados, porque el tablero
-     tiene dos valores que se normalizan igual y hay que desambiguarlos
+  e. si coinciden dos o mas configurados distintos, error 3 con los dos listados,
+     porque el tablero tiene dos valores que se normalizan igual y hay que
+     desambiguarlos
 ```
+
+**Qué es el paso 1, y por qué no es pasar a minúsculas.** El paso 1 es el **plegado de mayúsculas
+y minúsculas de Unicode** (el *case folding*), la misma regla que ["Selectores de
+criterios"](familias-de-flags.md#selectores-de-criterios) fija para el fragmento de un selector de
+texto. Pasar a minúsculas no vale, y la diferencia no es teórica: el griego escribe la sigma final
+de una palabra con un carácter distinto (`ς`) del de la sigma de en medio (`σ`), y pasar a
+minúsculas la forma en mayúsculas de un estado que acabe en sigma da una cadena que no es igual a
+la de ese mismo estado tecleado en minúsculas. Un tablero con el estado `Δοκιμές` rechazaría
+`ΔΟΚΙΜΕΣ`, que es su propio estado escrito en mayúsculas. El plegado lleva las dos escrituras al
+mismo representante y las dos coinciden. Lo mismo hace con el signo de micro y la `μ`, con el
+signo de kelvin y la `k`, y con la ese larga `ſ` y la `s`.
+
+**Qué cuenta como separador en el paso 3.** Exactamente cuatro caracteres, y ningún otro: el
+espacio (U+0020), el tabulador (U+0009), el guion (U+002D) y el guion bajo (U+005F). Ningún otro
+espacio en blanco es un separador: un espacio duro (U+00A0) o un salto de línea sobreviven a la
+normalización, así que un valor que lleve uno dentro no coincide con nada, que es lo que le
+corresponde a un valor que casi siempre llegó ahí por accidente.
+
+**Qué cuenta como diacrítico en el paso 2.** La descomposición es la canónica de Unicode (la forma
+NFD), y lo que se elimina de ella son las marcas combinantes (la categoría Mn). Quitar el
+diacrítico nunca sustituye una letra por otra que no sea su base: `ñ` da `n` y `ü` da `u`, pero
+`ß`, `ø` y `æ` se quedan como están, porque ninguna de las tres es una letra con un acento encima.
+Una marca combinante suelta se elimina siempre, esté donde esté; un carácter precompuesto se
+descompone si pertenece a los bloques latinos, griego o cirílico (U+00C0 a U+024F, U+0370 a U+04FF
+y U+1E00 a U+1FFF), y fuera de ellos conserva su diacrítico. La regla se aplica a todo carácter de
+esos bloques y no solo a las letras: catorce de ellos son signos y no letras (U+037E, U+0385,
+U+0387, U+1FC1, U+1FCD a U+1FCF, U+1FDD a U+1FDF, U+1FED, U+1FEE, U+1FEF y U+1FFD), y también se
+descomponen, aunque ninguno aparezca nunca dentro de un estado de un tablero real.
 
 Un ejemplo con un tablero creado con los estados por defecto. La configuración de un tablero vive
 dentro de su base de datos y no en un fichero que se edite a mano, así que se consulta con
@@ -54,6 +84,40 @@ Uno de sus tres estados es `To Do`. Con el algoritmo de arriba, estas entradas s
 encuentra una coincidencia exacta o normalizada, o es error 3. Lo que sí sugiere candidatos
 parecidos es un algoritmo aparte, para el mensaje de error de las demás reglas de la
 especificación que lo prometen.
+
+**Un valor de solo espacios no llega hasta aquí.** Una cadena que solo lleva espacios es el valor
+vacío, y quien la convierte en la cadena vacía es la capa que la lee (un flag, un fichero o la
+entrada estándar), según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío). `coincidir()`
+recibe el valor ya resuelto y no vuelve a aplicar esa regla: cita en su mensaje exactamente lo que
+le dan.
+
+### Cuando el tablero tiene dos valores que se normalizan igual
+
+El paso e es el único de los cinco que no culpa a quien escribe, sino al tablero: si sus estados
+son `To Do` y `To-Do`, `todo` se parece igual a los dos y elegir uno sería inventarse cuál quiso
+decir. El mensaje lo dice así, y lista solo los que empatan:
+
+```
+error: ambiguous status: "todo" matches 2 configured values: To Do, To-Do
+hint: type one of them exactly, or rename one so the two no longer normalize the same
+```
+
+Su `code` es [`ambiguous_vocabulary`](contrato-json.md#los-identificadores-de-error), el mismo sea
+cual sea el campo, porque quien ramifica sobre él no tiene que reaccionar distinto según cuál sea:
+el remedio es el mismo. Su `field` es el campo, su `given` es lo que se
+tecleó, y su `valid` lleva **solo los valores que empatan**, no el vocabulario entero, porque los
+que no empatan no son la salida del problema. Si empatan más de dos, el mensaje dice cuántos son y
+los lista todos.
+
+**El paso a manda por encima de este**, que es lo que deja una salida sin tocar la configuración:
+en ese mismo tablero, `To Do` y `To-Do` escritos exactamente resuelven cada uno al suyo, sin error.
+
+**Dos valores configurados idénticos letra por letra son el mismo valor, no una ambigüedad.** Si la
+configuración lista `To Do` dos veces, `todo` resuelve a `To Do` por el paso c, como si estuviera
+una sola vez: el paso b descarta los duplicados exactos antes de contar, así que la ambigüedad del
+paso e solo existe cuando los que se normalizan igual son valores **distintos**. Inventar un empate
+entre un valor y su propia copia le pediría a quien escribe que desambiguara algo que no tiene dos
+respuestas.
 
 ## El algoritmo de sugerencias más parecidas
 
@@ -105,7 +169,11 @@ urgent`:
 | `xyz` | `xyz` (3) | 2 | ninguna: la más cercana, `api`, está a distancia 3 | ninguna, lista vacía |
 
 **El orden de salida es siempre por cercanía, nunca alfabético puro**, salvo para romper un
-empate entre dos candidatos a la misma distancia.
+empate entre dos candidatos a la misma distancia. Si dos candidatos empatan en distancia **y además se
+normalizan igual** (un tablero con las etiquetas `bar-code` y `Bar Code`), el desempate alfabético
+de la forma normalizada tampoco los separa, así que decide su forma original. Es un tercer criterio
+que no aporta ningún significado, solo existe para que la lista no dependa del orden en que quien
+llama montó la suya.
 
 ## El mismo texto vale lo mismo en los dos sentidos
 
@@ -127,6 +195,13 @@ El mensaje es el mismo en los dos sentidos:
 error: unknown status: "Pending"
        valid statuses on this board: To Do, In Progress, Done
 ```
+
+En `type` y en `priority` es el mismo mensaje cambiando la palabra, en singular en la primera línea
+y en plural en la segunda: `unknown type: "epic"` con `valid types on this board: ...`, y
+`unknown priority: "urgent"` con `valid priorities on this board: ...`. La primera línea es el
+`message` del objeto de error (["Los errores en JSON"](contrato-json.md#los-errores-en-json)); la
+segunda no viaja en él, porque la lista que la compone ya está en `valid` y quien lee el JSON no
+necesita la frase que la envuelve.
 
 ## Qué valida cada filtro, y contra qué
 
