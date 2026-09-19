@@ -91,6 +91,24 @@ ahí salen las seis garantías de `docs/spec/garantias.md#concurrencia-atomicida
 No sabe qué es una `Task`, solo filas
 y columnas; traducir entre unas y otras es trabajo de `internal/board`.
 
+Tres decisiones de este paquete que se tomaron al implementarlo (TASK-4) y que no se deducen de la
+especificación, porque son del controlador y no del comportamiento observable:
+
+- **La ruta del fichero se escapa antes de meterla en el DSN.** El controlador abre la base de datos
+  con `SQLITE_OPEN_URI` y con el prefijo `file:`, así que SQLite lee la ruta como un URI: un `#` en
+  el nombre de un directorio corta ahí el nombre del fichero y abre otro distinto sin avisar, y un
+  `?` empieza la lista de parámetros. Por eso `store.go` sustituye `%`, `?` y `#` por su forma
+  porcentual antes de componer el DSN. Está probado con un tablero dentro de un directorio llamado
+  `board #1`.
+- **Una sola conexión por proceso** (`SetMaxOpenConns(1)`). En modo WAL solo hay un escritor a la
+  vez, así que una segunda conexión del mismo proceso únicamente podría esperar a la primera y
+  agotar su tiempo contra sí misma. La contrapartida es que el código que corre dentro de `WithTx`
+  usa siempre la transacción que recibe y nunca el manejador del `Store`, que esa transacción tiene
+  tomado.
+- **`WithTx` deshace la transacción también si la función que recibe entra en pánico**, y deja que
+  el pánico siga su camino. Sin eso, un fallo así dejaría tomada la única conexión del punto
+  anterior y cualquier operación posterior del proceso se quedaría esperando para siempre.
+
 ### 3.4. `internal/board`
 
 Junta tres cosas en un único tipo `Board`: dónde está el tablero (la resolución de
