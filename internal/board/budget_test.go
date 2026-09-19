@@ -13,19 +13,8 @@ import (
 // budgetMillis is the startup budget of
 // docs/spec/presupuestos.md#el-presupuesto-de-arranque: 25ms of wall clock
 // on the reference machine, which is the one that runs the project's
-// continuous integration suite.
+// continuous integration suite. It is the only limit this test knows.
 const budgetMillis = 25
-
-// raceBudgetMillis is the limit that applies when the suite runs under the
-// race detector, which is how the implementation plan asks for it to be
-// run. It is not a second budget of the specification: the 25ms above are
-// wall clock of the real program, and the detector multiplies every read
-// of this pure-Go SQLite driver by an order of magnitude, so comparing its
-// figure against the specification's number would measure the detector and
-// not the program. This one is a regression guard, set at roughly twice
-// what the same board measures today, so that a change that makes reading
-// several times slower still fails in both modes.
-const raceBudgetMillis = 150
 
 // budgetTasks is the 300-task board that budget talks about.
 const budgetTasks = 300
@@ -43,9 +32,16 @@ const budgetTasks = 300
 // costing, they cannot cost less than this.
 //
 // The figures on the development machine, so that a change that makes it
-// slower is recognizable: around 2.5ms without the race detector, against
-// the 25ms of the specification, and around 75ms with it, which is why the
-// two builds compare against different limits (see raceBudgetMillis).
+// slower is recognizable: around 2.7ms without the race detector and
+// around 80ms with it. The detector multiplies every read of this pure-Go
+// SQLite driver by more than an order of magnitude, so a run under it
+// cannot say anything about the 25ms of the specification: it would
+// measure the detector. It does not get a looser limit either, because a
+// limit nobody checks is not a limit and the implementation plan runs the
+// suite under the detector, which would mean the number of the
+// specification was never checked at all. The build under the detector
+// skips this test and says so, and the build without it asserts the
+// figure.
 func TestReadBudgetOnThreeHundredTasks(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "board.sqlite")
 
@@ -96,15 +92,18 @@ func TestReadBudgetOnThreeHundredTasks(t *testing.T) {
 		t.Fatalf("the last task came back incomplete: %+v", all[budgetTasks-1])
 	}
 
-	limit := budgetMillis
+	t.Logf("opening and reading %d tasks took %s (budget %dms)", budgetTasks, elapsed, budgetMillis)
 	if raceDetector {
-		limit = raceBudgetMillis
+		t.Skipf(
+			"took %s under the race detector, which measures the detector and not the program; "+
+				"the %dms of docs/spec/presupuestos.md#el-presupuesto-de-arranque are checked by the build without it",
+			elapsed, budgetMillis,
+		)
 	}
-	t.Logf("opening and reading %d tasks took %s (limit %dms)", budgetTasks, elapsed, limit)
-	if elapsed > time.Duration(limit)*time.Millisecond {
+	if elapsed > budgetMillis*time.Millisecond {
 		t.Fatalf(
-			"opening and reading %d tasks took %s, want less than %dms (docs/spec/presupuestos.md#el-presupuesto-de-arranque)",
-			budgetTasks, elapsed, limit,
+			"opening and reading %d tasks took %s, want less than %s (docs/spec/presupuestos.md#el-presupuesto-de-arranque)",
+			budgetTasks, elapsed, budgetMillis*time.Millisecond,
 		)
 	}
 }
