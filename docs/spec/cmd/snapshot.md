@@ -98,8 +98,8 @@ importa la respuesta, y cuatro órdenes, que son las que actúan:
 | Pregunta u orden | Qué se ejecuta, con el directorio del tablero como directorio de trabajo |
 |---|---|
 | ¿Hay un repositorio que lo contenga, y cuál es su raíz? | `git rev-parse --show-toplevel`, cuyo fallo significa que no hay ninguno |
-| ¿Ese repositorio ignora la carpeta del tablero? | `git check-ignore` con la ruta del directorio |
-| ¿El índice tiene algo preparado fuera de esos tres ficheros? | `git diff --cached --no-relative --name-only`, cuya salida se descarta y solo se cuenta |
+| ¿Ese repositorio ignora la carpeta del tablero? | `git check-ignore` con la ruta del directorio detrás del separador `--`, como el resto de la receta, para que el nombre de la carpeta no pueda leerse como ninguna otra cosa |
+| ¿El índice tiene algo preparado fuera de esos tres ficheros? | `git diff --cached --no-relative --name-only -z`, cuya salida se descarta y solo se cuenta |
 | ¿Los tres ficheros difieren de lo que ya está guardado? | `git diff --cached --quiet` con los tres nombrados por su ruta, ya preparados, y su código de salida cero significa que no hay nada que guardar |
 | ¿Cuál es el identificador de la revisión que ha resultado? | `git rev-parse HEAD`, ya guardada |
 | Crear el repositorio propio | `git init` |
@@ -127,8 +127,15 @@ y no otro, con código 0 y su nota; si termina distinto de cero sí lo había, y
 que falla es el error 8 de la tabla de abajo.
 
 **Y antes de comitear se pregunta si el índice tiene algo más preparado**, con
-`git diff --cached --no-relative --name-only`, que da las rutas relativas a la raíz del repositorio
-sea cual sea el directorio de trabajo y diga lo que diga la configuración de la máquina.
+`git diff --cached --no-relative --name-only -z`, cuyas dos banderas finales no son adorno y sin ellas
+el recuento sale mal en una máquina corriente. `--no-relative` da las rutas relativas a la raíz del
+repositorio sea cual sea el directorio de trabajo: sin ella, una máquina con `diff.relative` activado
+listaría solo lo que cuelga del directorio del tablero, que es el directorio de trabajo de la
+pregunta, y lo preparado en el resto del proyecto sería invisible y se contaría como cero. `-z`
+separa las rutas con un byte cero y las escribe tal cual: sin ella, `core.quotePath`, que viene
+activado de serie, devuelve entrecomillada y con escapes octales cualquier ruta con un carácter no
+ASCII, así que los tres ficheros de un tablero que viva en una carpeta con un acento no se
+reconocerían como suyos y se contarían como cambios ajenos.
 Cuenta como ajeno cualquier ruta que aparezca en esa lista y no sea una
 de las tres del tablero, midiendo sobre el índice entero del repositorio donde va a ir la revisión, no
 solo sobre lo que hay dentro del propio directorio del tablero: cuando el tablero tiene su propio
@@ -212,7 +219,7 @@ que escribe.
 **La salida de las preguntas de la receta sí se descarta**, y es la única asimetría. Sus fallos o su
 contenido son respuestas legítimas: `git rev-parse --show-toplevel` falla cuando no hay ningún
 repositorio, `git check-ignore` termina distinto de cero cuando la carpeta no está ignorada,
-`git diff --cached --name-only` simplemente lista lo que haya, vacía cuando no hay nada ajeno preparado,
+`git diff --cached --no-relative --name-only -z` simplemente lista lo que haya, vacía cuando no hay nada ajeno preparado,
 y las otras dos preguntas se hacen para que `biso` pueda decir en qué caso está, no para que nadie las
 lea. Reenviar la primera pareja llenaría de un `fatal: not a git repository` alarmante el camino normal
 de cualquier tablero que viva fuera de un repositorio, y la tercera no es un mensaje para quien llama
@@ -224,6 +231,17 @@ escriben las órdenes que actúan: `init`, `add`, `commit` y `push` en `git`, y 
 texto suelto, así que esas líneas van dentro del sobre: en `data.vcsOutput` cuando la operación acaba
 bien, y en `error.vcsOutput` cuando falla. Es una lista de cadenas, una por línea, y **ahí van sin el
 prefijo**, que existe solo para separarlas a la vista en un terminal.
+
+**Las dos claves se llaman igual y no llevan lo mismo.** `data.vcsOutput` lleva las líneas de todas
+las órdenes que se ejecutaron, en el orden en que se ejecutaron, porque ahí no hay ninguna que
+señalar. `error.vcsOutput` lleva **solo las de la orden que falló** (["Los errores en JSON"](../contrato-json.md#los-errores-en-json)): quien recibe un
+`vcs_push_failed` está leyendo por qué falló la publicación, y las líneas del `commit` que sí
+funcionó antes solo le harían buscar la causa donde no está.
+
+**Una orden que no se puede ni lanzar no escribe nada, y aun así deja una línea.** El texto que
+explica por qué no se pudo lanzar, que es el que nombra el programa que falta, viaja como una línea
+más de esa salida, en las dos claves. Sin él, una orden `publish` de `custom` que apunta a un
+programa inexistente daría un error 8 sin una sola pista de qué instalar.
 
 ## Comportamiento, caso a caso
 
@@ -240,6 +258,7 @@ prefijo**, que existe solo para separarlas a la vista en un terminal.
 | La revisión falla por una razón de entorno, con un repositorio ya existente (sistema sin configurar, sin permiso, disco lleno, otra instantánea guardando a la vez) | Los dos ficheros ya han quedado escritos antes de intentarlo; Error 8, `code` `vcs_commit_failed`, y el mensaje dice que nada se ha perdido y que basta volver a llamar |
 | `--vcs push` y la publicación falla | Los ficheros están escritos y la revisión guardada; Error 8, `code` `vcs_push_failed`. Con `custom`, una orden `publish` que no se puede ni lanzar cuenta también como publicación fallida y no como sistema sin instalar, porque la orden `commit` sí se lanzó: lo que falta no es el sistema, es esa orden |
 | `--vcs push` con `vcs` igual a `custom` y sin orden `publish` declarada | Error 2, `code` `vcs_push_unavailable`, antes de escribir nada |
+| `vcs` igual a `custom` y sin orden `commit` declarada, con `--vcs commit` o `--vcs push` | Error 2, `code` `vcs_commit_unavailable`, antes de escribir nada. `commit` es obligatoria (["Configuración de máquina"](../invocacion.md#configuración-de-máquina)), así que su ausencia es una configuración que no puede funcionar y no una revisión que se haya intentado: nunca es el error 8 de una revisión que falla. Con `--vcs none` no hay nada que declarar y no es error |
 | Alguna tarea no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | Se salta, se cuenta, `warning: 1 task could not be read and was skipped`, y el código es 6 en vez de 0, igual que en `biso export` |
 | No se puede escribir alguno de los dos ficheros | Error 8, con los dos ficheros anteriores intactos y sin intentar la revisión |
 | No hay tablero | Error 20 |
@@ -334,15 +353,17 @@ ajeno preparado, y siempre `0` con `none` o `custom`, que no hacen esa pregunta.
 marcador `<id>.id` ya estaba ahí y lo escribió `biso init`. El `{files}` de la configuración de `custom`
 (["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) sí son los tres, y son dos conjuntos distintos con nombres parecidos.
 
-`vcsOutput` son las líneas que escribieron las órdenes que se ejecutaron, sin el prefijo que llevan en el
-modo de texto, y está vacía cuando no se ha ejecutado ninguna.
+`vcsOutput` son las líneas que escribieron todas las órdenes que se ejecutaron, en el orden en que se
+ejecutaron y sin el prefijo que llevan en el modo de texto, y está vacía cuando no se ha ejecutado
+ninguna. El `vcsOutput` de un sobre de error es otra cosa y lleva solo las líneas de la orden que
+falló (["Cómo se ejecutan las órdenes"](#cómo-se-ejecutan-las-órdenes)).
 
 ## Códigos de salida
 
 | Desenlace | Código |
 |---|---:|
 | Escrito, y guardado si procedía | 0 |
-| Sintaxis, o `--vcs push` sin orden de publicar configurada | 2 |
+| Sintaxis, o una orden de `custom` que hace falta y no está configurada | 2 |
 | Alguna tarea se ha saltado por ilegible | 6 |
 | No se pueden escribir los ficheros, o falla la revisión o la publicación | 8 |
 | No hay tablero | 20 |

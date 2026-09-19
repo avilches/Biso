@@ -24,14 +24,16 @@ const (
 // case of having nothing to record.
 func (r *Runner) runCustom(req Request) (*Result, *model.Error) {
 	result := &Result{VCS: string(KindCustom)}
-	var lines collector
 
 	args := expand(r.config.Custom.Commit, req)
 	if len(args) == 0 {
-		return result, commitFailed(nil)
+		// New already rejected a custom system with no commit order declared,
+		// so getting here means the declared order expanded to nothing, which
+		// is the same broken configuration and never a revision that failed.
+		result.Outcome = OutcomeUnavailable
+		return result, missingCommitOrder()
 	}
-	committed := order(&lines, req.BoardDir, args[0], args[1:]...)
-	result.Output = lines.take()
+	committed, commitLines := result.record(req.BoardDir, args[0], args[1:]...)
 	switch {
 	case !committed.started:
 		// The configured system is not installed, which is never a failure of
@@ -39,7 +41,7 @@ func (r *Runner) runCustom(req Request) (*Result, *model.Error) {
 		result.Outcome = OutcomeUnavailable
 		return result, nil
 	case committed.exit != 0:
-		return result, commitFailed(result.Output)
+		return result, commitFailed(commitLines)
 	}
 	result.Outcome = OutcomeCommitted
 
@@ -49,10 +51,15 @@ func (r *Runner) runCustom(req Request) (*Result, *model.Error) {
 		// work: a program that cannot even be launched is a failed push, not a
 		// system that is not installed, because the commit order did run.
 		publish := expand(r.config.Custom.Publish, req)
-		published := order(&lines, req.BoardDir, publish[0], publish[1:]...)
-		result.Output = lines.take()
+		if len(publish) == 0 {
+			// Same defense as the commit order above: New rejected a push with
+			// no publish order declared, so an empty expansion here is a
+			// configuration that cannot work.
+			return result, missingPublishOrder()
+		}
+		published, publishLines := result.record(req.BoardDir, publish[0], publish[1:]...)
 		if !published.ok() {
-			return result, pushFailed(result.Output)
+			return result, pushFailed(publishLines)
 		}
 		result.Pushed = true
 	}

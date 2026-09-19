@@ -368,3 +368,145 @@ func TestGitPushPublishesEvenWhenThereWasNothingToCommit(t *testing.T) {
 		t.Fatalf("Pushed = false: what --vcs push promises does not depend on this call having recorded a revision")
 	}
 }
+
+func TestGitPushErrorCarriesOnlyTheLinesOfTheOrderThatFailed(t *testing.T) {
+	root := tempRoot(t)
+	board := newBoardDir(t, root, "board")
+
+	runner, err := New(gitConfig(), ModePush)
+	if err != nil {
+		t.Fatalf("New: unexpected error %+v", err)
+	}
+	result, failure := runner.Run(request(board))
+
+	if failure == nil {
+		t.Fatalf("a push with no destination configured has to fail")
+	}
+	// The commit did work and wrote its own summary line, which the result
+	// carries and the error must not: the error is about git push alone.
+	commitLine := "biso snapshot: 3 tasks"
+	if !strings.Contains(strings.Join(result.Output, "\n"), commitLine) {
+		t.Fatalf("Output = %v, want every line of every order that ran, the commit included", result.Output)
+	}
+	for _, line := range failure.VCSOutput {
+		if strings.Contains(line, commitLine) {
+			t.Fatalf("VCSOutput = %v, it carries the lines of the order that failed and of no other one", failure.VCSOutput)
+		}
+	}
+	if len(failure.VCSOutput) == 0 {
+		t.Fatalf("VCSOutput is empty, it carries what git push wrote")
+	}
+	if len(failure.VCSOutput) >= len(result.Output) {
+		t.Fatalf("VCSOutput = %v is not shorter than Output = %v, so it is the accumulated output", failure.VCSOutput, result.Output)
+	}
+}
+
+func TestGitCommitErrorCarriesOnlyTheLinesOfTheOrderThatFailed(t *testing.T) {
+	root := tempRoot(t)
+	board := newBoardDir(t, root, "board")
+	hooks := filepath.Join(root, "hooks")
+	if err := os.MkdirAll(hooks, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	script(t, hooks, "pre-commit", "echo 'the hook says no' >&2\nexit 1\n")
+	// The hooks belong to a repository that does not exist yet: git init is
+	// the first order of this run, and the one whose line must not end up in
+	// the error of the commit that fails afterwards.
+	t.Setenv("GIT_CONFIG_COUNT", "1")
+	t.Setenv("GIT_CONFIG_KEY_0", "core.hooksPath")
+	t.Setenv("GIT_CONFIG_VALUE_0", hooks)
+
+	runner, err := New(gitConfig(), ModeCommit)
+	if err != nil {
+		t.Fatalf("New: unexpected error %+v", err)
+	}
+	result, failure := runner.Run(request(board))
+
+	if failure == nil {
+		t.Fatalf("a commit rejected by a hook has to be an error, got %+v", result)
+	}
+	joined := strings.Join(failure.VCSOutput, "\n")
+	if !strings.Contains(joined, "the hook says no") {
+		t.Fatalf("VCSOutput does not carry what the order that failed wrote: %v", failure.VCSOutput)
+	}
+	if strings.Contains(joined, "Initialized empty") {
+		t.Fatalf("VCSOutput = %v carries a line of git init, an earlier order", failure.VCSOutput)
+	}
+	if !strings.Contains(strings.Join(result.Output, "\n"), "Initialized empty") {
+		t.Fatalf("Output = %v, want every line of every order that ran, git init included", result.Output)
+	}
+}
+
+func TestGitDoesNotCountTheBoardFilesAsStagedOutsideWithANonAsciiPath(t *testing.T) {
+	root := tempRoot(t)
+	project := filepath.Join(root, "project")
+	// A board directory with an accent in its name: git quotes it and escapes
+	// it in octal unless the question asks for the raw bytes.
+	board := newBoardDir(t, project, ".tablero-cañón")
+	git(t, project, "init")
+	if err := os.WriteFile(filepath.Join(project, "año.txt"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// The three files of the board have to be in the index before the count,
+	// which is the question this test is about: with the paths quoted they
+	// would not match the board's own three and would be counted as outside.
+	git(t, project, "add", "año.txt", ".tablero-cañón")
+
+	result := run(t, gitConfig(), ModeCommit, board)
+
+	if result.StagedOutsideBoard != 1 {
+		t.Fatalf("StagedOutsideBoard = %d, want 1: only the file outside the board counts, and its own three never do", result.StagedOutsideBoard)
+	}
+	if result.Outcome != OutcomeCommitted {
+		t.Fatalf("Outcome = %q, want %q", result.Outcome, OutcomeCommitted)
+	}
+	committed := git(t, project, "show", "--name-only", "--format=", "HEAD")
+	if !strings.Contains(committed, "snapshot.ndjson") {
+		t.Fatalf("the revision does not carry the board files: %q", committed)
+	}
+}
+
+func TestGitCountsWhatIsStagedOutsideTheBoardWithDiffRelativeOn(t *testing.T) {
+	root := tempRoot(t)
+	project := filepath.Join(root, "project")
+	board := newBoardDir(t, project, ".biso-board")
+	git(t, project, "init")
+	// diff.relative makes git list only what hangs below the working
+	// directory, and the working directory of every question is the board:
+	// without --no-relative the file outside would be invisible and the count
+	// would be a silent zero.
+	git(t, project, "config", "diff.relative", "true")
+	if err := os.WriteFile(filepath.Join(project, "one.txt"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	git(t, project, "add", "one.txt")
+
+	result := run(t, gitConfig(), ModeCommit, board)
+
+	if result.StagedOutsideBoard != 1 {
+		t.Fatalf("StagedOutsideBoard = %d, want 1 with diff.relative on", result.StagedOutsideBoard)
+	}
+}
+
+func TestGitAsksAboutABoardDirectoryWhoseNameLooksLikeAPattern(t *testing.T) {
+	root := tempRoot(t)
+	project := filepath.Join(root, "project")
+	// Glob characters in the name of the board directory: the question about
+	// whether the project ignores it hands git a path, never a pattern.
+	board := newBoardDir(t, project, "bo[a]rd*")
+	git(t, project, "init")
+	if err := os.WriteFile(filepath.Join(project, ".gitignore"), []byte("bo\\[a\\]rd\\*/\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	git(t, project, "add", ".gitignore")
+	git(t, project, "commit", "-m", "first")
+
+	result := run(t, gitConfig(), ModeCommit, board)
+
+	if result.Outcome != OutcomeCommitted || !result.OwnRepository {
+		t.Fatalf("Outcome = %q, OwnRepository = %v, want the board's own repository: the project ignores it", result.Outcome, result.OwnRepository)
+	}
+	if _, err := os.Stat(filepath.Join(board, ".git")); err != nil {
+		t.Fatalf("the board's own repository was not created: %v", err)
+	}
+}

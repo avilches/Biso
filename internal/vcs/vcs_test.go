@@ -293,3 +293,149 @@ func TestOutputAccumulatesEveryOrderInTheOrderTheyRan(t *testing.T) {
 		t.Fatalf("Output = %v, want one line per order in the order they ran", result.Output)
 	}
 }
+
+func TestCustomPublishThatCannotBeLaunchedIsAPushErrorThatSaysWhichProgramIsMissing(t *testing.T) {
+	root := tempRoot(t)
+	board := newBoardDir(t, root, "board")
+	commit := script(t, root, "commit.sh", "echo from-commit\n")
+	missing := filepath.Join(root, "there-is-no-such-program")
+	cfg := Config{Kind: KindCustom, Custom: Custom{
+		Commit:  []string{commit},
+		Publish: []string{missing},
+	}}
+
+	runner, err := New(cfg, ModePush)
+	if err != nil {
+		t.Fatalf("New: unexpected error %+v", err)
+	}
+	result, failure := runner.Run(request(board))
+
+	// The commit order did run, so the missing program is that one order and
+	// not the system: it is a failed publication and never "not installed".
+	if failure == nil {
+		t.Fatalf("a publish command that cannot be launched has to be a failed push, got %+v", result)
+	}
+	if failure.ExitCode != 8 || failure.Code != "vcs_push_failed" {
+		t.Fatalf("ExitCode = %d, Code = %q, want 8 and vcs_push_failed", failure.ExitCode, failure.Code)
+	}
+	if result.Outcome != OutcomeCommitted {
+		t.Fatalf("Outcome = %q, want %q: the commit order did run", result.Outcome, OutcomeCommitted)
+	}
+	if result.Pushed {
+		t.Fatalf("Pushed = true after a publish command that never ran")
+	}
+	joined := strings.Join(failure.VCSOutput, "\n")
+	if !strings.Contains(joined, missing) {
+		t.Fatalf("VCSOutput = %v, it has to name the program that could not be launched", failure.VCSOutput)
+	}
+	if strings.Contains(joined, "from-commit") {
+		t.Fatalf("VCSOutput = %v carries a line of the commit order, which did not fail", failure.VCSOutput)
+	}
+	if !strings.Contains(strings.Join(result.Output, "\n"), "from-commit") {
+		t.Fatalf("Output = %v, want every line of every order that ran", result.Output)
+	}
+}
+
+func TestCustomWithoutACommitOrderIsAConfigurationError(t *testing.T) {
+	cfg := Config{Kind: KindCustom}
+
+	for _, mode := range []Mode{ModeCommit, ModePush} {
+		runner, err := New(cfg, mode)
+
+		if err == nil {
+			t.Fatalf("with --vcs %s, New accepted a custom vcs with no commit command, got %+v", mode, runner)
+		}
+		// commit is a required key of vcs_custom, so its absence is a broken
+		// configuration and not a revision that was attempted and failed: it
+		// never gets the code 8 of a failed commit.
+		if err.ExitCode != 2 || err.Code != "vcs_commit_unavailable" {
+			t.Fatalf("with --vcs %s, ExitCode = %d, Code = %q, want 2 and vcs_commit_unavailable", mode, err.ExitCode, err.Code)
+		}
+		if err.Field != "vcs" || err.Given != "custom" {
+			t.Fatalf("Field = %q, Given = %q, want vcs and custom", err.Field, err.Given)
+		}
+		if len(err.VCSOutput) != 0 {
+			t.Fatalf("VCSOutput = %v, no order was executed", err.VCSOutput)
+		}
+	}
+
+	// With --vcs none nothing is going to run, so there is nothing to declare.
+	if _, err := New(cfg, ModeNone); err != nil {
+		t.Fatalf("New(custom, none): unexpected error %+v", err)
+	}
+}
+
+func TestCustomOrdersThatExpandToNothingAreAConfigurationErrorAndNotAPanic(t *testing.T) {
+	root := tempRoot(t)
+	board := newBoardDir(t, root, "board")
+	// A declared order that is only the files marker expands to nothing when
+	// the request carries no files, which is the one way past the guard of
+	// New. Neither branch may reach for its first argument.
+	empty := Request{BoardDir: board, Message: "biso snapshot: 0 tasks"}
+
+	cfg := Config{Kind: KindCustom, Custom: Custom{Commit: []string{placeholderFiles}}}
+	runner, err := New(cfg, ModeCommit)
+	if err != nil {
+		t.Fatalf("New: unexpected error %+v", err)
+	}
+	result, failure := runner.Run(empty)
+	if failure == nil {
+		t.Fatalf("a commit order that expands to nothing has to be an error, got %+v", result)
+	}
+	if failure.ExitCode != 2 || failure.Code != "vcs_commit_unavailable" {
+		t.Fatalf("ExitCode = %d, Code = %q, want 2 and vcs_commit_unavailable", failure.ExitCode, failure.Code)
+	}
+	if result.Outcome != OutcomeUnavailable {
+		t.Fatalf("Outcome = %q, want one of the five declared endings", result.Outcome)
+	}
+
+	cfg = Config{Kind: KindCustom, Custom: Custom{
+		Commit:  []string{script(t, root, "commit.sh", "exit 0\n")},
+		Publish: []string{placeholderFiles},
+	}}
+	runner, err = New(cfg, ModePush)
+	if err != nil {
+		t.Fatalf("New: unexpected error %+v", err)
+	}
+	result, failure = runner.Run(empty)
+	if failure == nil {
+		t.Fatalf("a publish order that expands to nothing has to be an error, got %+v", result)
+	}
+	if failure.ExitCode != 2 || failure.Code != "vcs_push_unavailable" {
+		t.Fatalf("ExitCode = %d, Code = %q, want 2 and vcs_push_unavailable", failure.ExitCode, failure.Code)
+	}
+	if result.Pushed {
+		t.Fatalf("Pushed = true without a publish command")
+	}
+}
+
+func TestCustomSubstitutesTheMessageInsideAnArgumentAndTheFilesOnlyAsAWholeOne(t *testing.T) {
+	root := tempRoot(t)
+	board := newBoardDir(t, root, "board")
+	log := filepath.Join(root, "args.txt")
+	commit := script(t, root, "commit.sh", `
+for arg in "$@"; do echo "$arg" >> `+log+`; done
+`)
+	cfg := Config{Kind: KindCustom, Custom: Custom{Commit: []string{
+		commit, "--message={message}", "--paths={files}", placeholderFiles,
+	}}}
+
+	run(t, cfg, ModeCommit, board)
+
+	raw, err := os.ReadFile(log)
+	if err != nil {
+		t.Fatalf("the custom command did not run: %v", err)
+	}
+	args := strings.Split(strings.TrimSuffix(string(raw), "\n"), "\n")
+	// The message is a text and is substituted wherever it appears inside an
+	// argument; the files are three arguments, so inside a longer one there is
+	// no way to put them and the marker stays as it is.
+	want := []string{
+		"--message=biso snapshot: 3 tasks",
+		"--paths={files}",
+		"snapshot.ndjson", "board.json", "my-board-3f9a2b1c.id",
+	}
+	if !reflect.DeepEqual(args, want) {
+		t.Fatalf("the arguments are %v, want %v", args, want)
+	}
+}

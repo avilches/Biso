@@ -14,7 +14,6 @@ import (
 // apart.
 func (r *Runner) runGit(req Request) (*Result, *model.Error) {
 	result := &Result{VCS: string(KindGit)}
-	var lines collector
 
 	// First question: is there a repository containing this directory, and
 	// where is its root? Failing to launch git at all is the system not being
@@ -45,8 +44,7 @@ func (r *Runner) runGit(req Request) (*Result, *model.Error) {
 	}
 
 	if repository == "" {
-		created := order(&lines, req.BoardDir, "git", "init")
-		result.Output = lines.take()
+		created, _ := result.record(req.BoardDir, "git", "init")
 		if !created.ok() {
 			result.Outcome = OutcomeUnavailable
 			return result, nil
@@ -65,10 +63,9 @@ func (r *Runner) runGit(req Request) (*Result, *model.Error) {
 	// a repository this command has just created. Adding the three files by
 	// name changes nothing else, because naming them on git commit keeps its
 	// --only mode and leaves the rest of the index alone.
-	added := order(&lines, req.BoardDir, "git", append([]string{"add", "--"}, req.Files...)...)
-	result.Output = lines.take()
+	added, addLines := result.record(req.BoardDir, "git", append([]string{"add", "--"}, req.Files...)...)
 	if !added.ok() {
-		return result, commitFailed(result.Output)
+		return result, commitFailed(addLines)
 	}
 
 	// Fourth question: do the three files differ from what is already
@@ -77,9 +74,8 @@ func (r *Runner) runGit(req Request) (*Result, *model.Error) {
 	pending := ask(req.BoardDir, "git", append([]string{"diff", "--cached", "--quiet", "--"}, req.Files...)...)
 	changes := !pending.ok()
 
-	committed := order(&lines, req.BoardDir, "git",
+	committed, commitLines := result.record(req.BoardDir, "git",
 		append([]string{"commit", "-m", req.Message, "--"}, req.Files...)...)
-	result.Output = lines.take()
 	switch {
 	case committed.ok():
 		result.Outcome = OutcomeCommitted
@@ -93,14 +89,13 @@ func (r *Runner) runGit(req Request) (*Result, *model.Error) {
 	case !changes:
 		result.Outcome = OutcomeNothingToCommit
 	default:
-		return result, commitFailed(result.Output)
+		return result, commitFailed(commitLines)
 	}
 
 	if r.mode == ModePush {
-		published := order(&lines, req.BoardDir, "git", "push")
-		result.Output = lines.take()
+		published, pushLines := result.record(req.BoardDir, "git", "push")
 		if !published.ok() {
-			return result, pushFailed(result.Output)
+			return result, pushFailed(pushLines)
 		}
 		result.Pushed = true
 	}
@@ -109,17 +104,25 @@ func (r *Runner) runGit(req Request) (*Result, *model.Error) {
 
 // ignoresBoard asks git whether the repository above ignores the board's
 // directory. A non-zero exit code means it does not, which is a legitimate
-// answer and not a failure.
+// answer and not a failure. The path goes after the -- separator, like every
+// other path this package hands to git, so that nothing in the name of the
+// board directory can be read as anything but a path.
 func ignoresBoard(boardDir string) bool {
-	return ask(boardDir, "git", "check-ignore", boardDir).ok()
+	return ask(boardDir, "git", "check-ignore", "--", boardDir).ok()
 }
 
 // stagedOutsideBoard counts the paths the index has staged that are not one of
-// the three files of the board. --no-relative forces the paths to be relative
-// to the root of the repository whatever the working directory and whatever
-// diff.relative says in the configuration of the machine.
+// the three files of the board. The question carries two guards that are not
+// decoration: --no-relative forces the paths to be relative to the root of the
+// repository whatever the working directory and whatever diff.relative says in
+// the configuration of the machine, and -z makes git write them raw, separated
+// by a zero byte. Without -z, core.quotePath, which is on by default, returns
+// a path with a non-ASCII character quoted and escaped in octal, and a path
+// with a newline quoted too: neither would ever match the board's own files,
+// and a board inside a directory with an accent would be counted as a staged
+// change outside the board.
 func stagedOutsideBoard(req Request, repository, board string) int {
-	staged := ask(req.BoardDir, "git", "diff", "--cached", "--no-relative", "--name-only")
+	staged := ask(req.BoardDir, "git", "diff", "--cached", "--no-relative", "--name-only", "-z")
 	if !staged.ok() {
 		return 0
 	}
@@ -133,8 +136,10 @@ func stagedOutsideBoard(req Request, repository, board string) int {
 	}
 
 	count := 0
-	for _, line := range strings.Split(staged.stdout, "\n") {
-		path := strings.TrimSpace(line)
+	for _, path := range strings.Split(staged.stdout, "\x00") {
+		// The separator terminates every path, so the last piece is empty. A
+		// path is never trimmed: leading and trailing blanks are part of a
+		// file name and git writes them as they are.
 		if path == "" || own[path] {
 			continue
 		}

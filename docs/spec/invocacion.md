@@ -81,7 +81,7 @@ instalada en esta máquina, no cómo es un tablero: así no viaja en la instant�
 del ordenador de origen. Vale para todos los tableros de la máquina.
 
 - **`git`** es el valor por defecto y el único sistema que `biso` trae aprendido en la versión 1.0. Su
-  receta completa, con las dos preguntas que le hace al repositorio y las tres órdenes que le da, está
+  receta completa, con las cinco preguntas que le hace al repositorio y las cuatro órdenes que le da, está
   en la sección ["`biso snapshot`"](cmd/snapshot.md), que es la única que lo ejecuta.
 - **`none`** deja a `biso snapshot` escribiendo sus dos ficheros y nada más: no busca repositorio, no
   crea ninguno y no ejecuta ningún programa. Es lo que hay que poner en una máquina sin git, o cuando
@@ -96,7 +96,7 @@ del ordenador de origen. Vale para todos los tableros de la máquina.
 
 | Clave | Tipo | Obligatoria | Qué es |
 |---|---|---|---|
-| `commit` | lista de argumentos | sí | la orden que guarda una revisión |
+| `commit` | lista de argumentos | sí | la orden que guarda una revisión, y sin ella toda instantánea que pida guardar es error 2, `code` `vcs_commit_unavailable` (["`biso snapshot`"](cmd/snapshot.md)) |
 | `publish` | lista de argumentos | no | la orden que la publica, y sin ella `--vcs push` es error 2 |
 | `ignore_file` | nombre de fichero | no | el fichero de exclusión que `biso init` escribe dentro del tablero (["`biso init`"](cmd/init.md)) |
 

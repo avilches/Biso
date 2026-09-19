@@ -147,12 +147,25 @@ type Result struct {
 	OwnRepository bool
 	// Pushed is true only after a publication that worked.
 	Pushed bool
-	// Output are the lines the orders that act wrote, both streams, in the
-	// order they ran and without the prefix they carry on a terminal.
+	// Output are the lines every order that acted wrote, both streams, in the
+	// order they ran and without the prefix they carry on a terminal. It is
+	// data.vcsOutput, which covers every order; the vcsOutput of an error
+	// carries only the lines of the order that failed.
 	Output []string
 	// StagedOutsideBoard counts the paths the index had staged outside the
 	// three files of the board. It is always 0 with none and with custom.
 	StagedOutsideBoard int
+}
+
+// record runs one order of a recipe, adds what it wrote to the output the
+// result carries, and returns the lines of that one order apart. The two are
+// different things and the specification asks for both: data.vcsOutput is
+// every line of every order that ran, and the vcsOutput of an error is only
+// the lines of the order that failed.
+func (r *Result) record(dir string, name string, args ...string) (execResult, []string) {
+	status, lines := order(dir, name, args...)
+	r.Output = append(r.Output, lines...)
+	return status, lines
 }
 
 // Runner records snapshots with one configured system in one mode. Build it
@@ -164,20 +177,46 @@ type Runner struct {
 }
 
 // New validates the pair of configuration and mode, and returns the runner
-// that executes it. Its only error is asking to publish with a custom system
-// that declares no publish order: it has to surface before biso snapshot
-// writes anything, which is why it lives here and not in Run.
+// that executes it. Its two errors are both a custom system that does not
+// declare the order this call needs, and both have to surface before biso
+// snapshot writes anything, which is why they live here and not in Run.
 func New(cfg Config, mode Mode) (*Runner, *model.Error) {
-	if mode == ModePush && cfg.Kind == KindCustom && len(cfg.Custom.Publish) == 0 {
-		return nil, &model.Error{
-			ExitCode: 2,
-			Code:     "vcs_push_unavailable",
-			Message:  "--vcs push needs a publish command, and the custom vcs of this machine declares none",
-			Field:    "--vcs",
-			Given:    "push",
+	if mode != ModeNone && cfg.Kind == KindCustom {
+		if len(cfg.Custom.Commit) == 0 {
+			return nil, missingCommitOrder()
+		}
+		if mode == ModePush && len(cfg.Custom.Publish) == 0 {
+			return nil, missingPublishOrder()
 		}
 	}
 	return &Runner{config: cfg, mode: mode}, nil
+}
+
+// missingCommitOrder is the error of a custom system with no commit order
+// declared. The commit key of vcs_custom is required
+// (docs/spec/invocacion.md#configuracion-de-maquina), so its absence is a
+// configuration that cannot work and not a revision that was attempted and
+// failed: it is a usage error of code 2 and never the code 8 of a commit.
+func missingCommitOrder() *model.Error {
+	return &model.Error{
+		ExitCode: 2,
+		Code:     "vcs_commit_unavailable",
+		Message:  "the vcs of this machine is custom and vcs_custom.commit declares no command, which is required to record a revision",
+		Field:    "vcs",
+		Given:    "custom",
+	}
+}
+
+// missingPublishOrder is the error of asking to publish with a custom system
+// that declares no publish order.
+func missingPublishOrder() *model.Error {
+	return &model.Error{
+		ExitCode: 2,
+		Code:     "vcs_push_unavailable",
+		Message:  "--vcs push needs a publish command, and the custom vcs of this machine declares none",
+		Field:    "--vcs",
+		Given:    "push",
+	}
 }
 
 // Run executes the recipe of the configured system over an already written

@@ -132,7 +132,7 @@ regla de cuándo acompañan:
 | `field` y `given` | En los que nombran un flag, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran un flag |
 | `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs` |
 | `details` | Solo en `batch_invalid` y en `dry_run_failed`, y es una lista de objetos de esta misma forma, uno por fallo |
-| `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió la orden que falló (["`biso snapshot`"](cmd/snapshot.md)) |
+| `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió **la orden que falló**, no las de las que fueron bien antes, que sí están todas en `data.vcsOutput` cuando la llamada acaba bien (["`biso snapshot`"](cmd/snapshot.md)) |
 | `warnings` | Al mismo nivel que `error`, no dentro de él, en cualquier `code` cuya llamada haya producido al menos un aviso antes de fallar, con la misma forma que `data.warnings` (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)) |
 
 Las cinco de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
@@ -149,7 +149,7 @@ agrupada por el código de salida con el que sale cada uno:
 | Código de salida | `code` |
 |---:|---|
 | 1 | `internal` |
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `malformed_string_value`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `vcs_push_unavailable` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `malformed_string_value`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `comment_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous`, `comment_ambiguous` |

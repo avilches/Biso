@@ -17,15 +17,20 @@ type execResult struct {
 	exit int
 	// stdout is the standard output, captured only for questions.
 	stdout string
+	// launchFailure explains why the program could not be launched, and is
+	// empty in every other case.
+	launchFailure string
 }
 
 // ok reports whether the program ran and ended well.
 func (e execResult) ok() bool { return e.started && e.exit == 0 }
 
-// collector gathers the lines that the orders write, from both streams, in the
+// collector gathers the lines that one order writes, from both streams, in the
 // order each stream produced them. The two streams interleave at line
 // granularity and their relative order is not guaranteed, which is exactly
-// what docs/spec/cmd/snapshot.md promises.
+// what docs/spec/cmd/snapshot.md promises. There is one collector per order,
+// because the error of a failure carries the lines of the order that failed
+// and of no other one (docs/spec/contrato-json.md#los-errores-en-json).
 type collector struct {
 	mu    sync.Mutex
 	lines []string
@@ -36,6 +41,13 @@ func (c *collector) take() []string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return append([]string(nil), c.lines...)
+}
+
+// add appends a line that no stream wrote.
+func (c *collector) add(line string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.lines = append(c.lines, line)
 }
 
 // stream returns a writer that splits what it receives into lines and adds
@@ -91,17 +103,24 @@ func ask(dir string, name string, args ...string) execResult {
 	return result
 }
 
-// order runs one of the orders of a recipe: what it writes on either stream is
-// forwarded, line by line, to the collector.
-func order(c *collector, dir string, name string, args ...string) execResult {
-	out, errs := c.stream(), c.stream()
+// order runs one of the orders of a recipe and returns what it wrote on either
+// stream, line by line. A program that could not be launched at all writes
+// nothing, so the reason it could not be launched travels as one more line:
+// without it, a failed order would reach whoever called biso with no clue
+// about which program is missing.
+func order(dir string, name string, args ...string) (execResult, []string) {
+	var lines collector
+	out, errs := lines.stream(), lines.stream()
 	cmd := command(dir, name, args)
 	cmd.Stdout = out
 	cmd.Stderr = errs
 	result := wait(cmd)
 	out.flush()
 	errs.flush()
-	return result
+	if result.launchFailure != "" {
+		lines.add(result.launchFailure)
+	}
+	return result, lines.take()
 }
 
 // command builds the process. Every question and every order runs with the
@@ -124,5 +143,5 @@ func wait(cmd *exec.Cmd) execResult {
 	if errors.As(err, &exit) {
 		return execResult{started: true, exit: exit.ExitCode()}
 	}
-	return execResult{}
+	return execResult{launchFailure: err.Error()}
 }
