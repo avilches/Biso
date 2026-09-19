@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -69,19 +70,69 @@ func openAt(id, path string, busyTimeoutMs int, scripts []string) (*Store, error
 
 	s := &Store{db: db, id: id}
 
-	// sql.Open connects to nothing: this first read is what proves the file
-	// is a database at all, and it is also the version the migration starts
-	// from.
-	var version int
-	if err := s.scanOne(&version, "PRAGMA user_version"); err != nil {
+	version, err := s.initialVersion(busyTimeoutMs)
+	if err != nil {
 		db.Close()
-		return nil, s.openFailure(err)
+		return nil, err
 	}
 	if err := s.migrateFrom(version, scripts); err != nil {
 		db.Close()
 		return nil, err
 	}
 	return s, nil
+}
+
+// retryFloor and retryCeiling bound the wait between two attempts of
+// initialVersion. It starts at the floor and doubles up to the ceiling, so
+// a collision that clears at once costs about a millisecond and a long one
+// does not spin.
+const (
+	retryFloor   = 1 * time.Millisecond
+	retryCeiling = 50 * time.Millisecond
+)
+
+// initialVersion reads the schema version of the file, which is also the
+// statement that first connects: sql.Open connects to nothing, so this is
+// what proves the file is a database at all, and it is the version the
+// migration starts from.
+//
+// It is the one place that waits for the write lock by hand instead of
+// letting SQLite's busy timeout do it, because there is one lock SQLite
+// refuses without ever consulting the busy handler: turning a brand new
+// file into WAL mode (PRAGMA journal_mode = WAL, which the driver runs when
+// it opens the connection) needs the file to itself, and a second
+// connection creating the same file at the same instant gets SQLITE_BUSY
+// back immediately. Measured: four connections creating the same file at
+// once fail on several attempts out of twenty, and zero out of twenty over
+// a file that already exists.
+//
+// Guarantee 5 of docs/spec/garantias.md promises a wait of the configured
+// time before exit code 8, and it does not exempt the command that creates
+// the board, so this retries until that time is up and only then answers
+// the busy error. Anything that is not the write lock is not retried: it
+// means the process could not read the database's header, which is the
+// second case of
+// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar.
+func (s *Store) initialVersion(busyTimeoutMs int) (int, error) {
+	deadline := time.Now().Add(time.Duration(busyTimeoutMs) * time.Millisecond)
+	wait := retryFloor
+	for {
+		var version int
+		err := s.scanOne(&version, "PRAGMA user_version")
+		if err == nil {
+			return version, nil
+		}
+		if code := primaryResultCode(err); code != sqliteBusy && code != sqliteLocked {
+			return 0, s.newUnreadableError()
+		}
+		if !time.Now().Add(wait).Before(deadline) {
+			return 0, newBusyError()
+		}
+		time.Sleep(wait)
+		if wait < retryCeiling {
+			wait *= 2
+		}
+	}
 }
 
 // uriPath turns a filesystem path into the path of a file: URI, which is how

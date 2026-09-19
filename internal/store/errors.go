@@ -44,16 +44,9 @@ func (s *Store) classify(err error, action string) error {
 	return fmt.Errorf("%s: %w", action, err)
 }
 
-// openFailure classifies what went wrong while opening the file. Anything
-// that is not the write lock means there is no readable board: the process
-// could not even read the database's header, which is exactly the second
-// case of docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar.
-func (s *Store) openFailure(err error) error {
-	if code := primaryResultCode(err); code == sqliteBusy || code == sqliteLocked {
-		return newBusyError()
-	}
-	return s.newUnreadableError()
-}
+// Opening the file has no classifier of its own: initialVersion does that
+// classification inline, because there it is inseparable from deciding
+// whether to wait and try again.
 
 // primaryResultCode answers SQLite's primary result code carried by err, or
 // zero when err does not come from the driver.

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"biso/internal/model"
@@ -91,6 +92,52 @@ func TestOpenOnExistingFileSucceeds(t *testing.T) {
 		t.Fatalf("second Open: %v", err)
 	}
 	defer s2.Close()
+}
+
+// TestConcurrentCreationOfTheSameFileWaitsInsteadOfFailingAtOnce is
+// guarantee 5 of docs/spec/garantias.md on the one path that used to skip
+// it: creating the file.
+//
+// Turning a brand new file into WAL mode needs the file to itself and
+// SQLite answers SQLITE_BUSY for it without consulting the busy handler,
+// so four connections creating the same file at the same instant used to
+// give an instant exit code 8 on several attempts out of twenty. Waiting
+// is not optional there: the guarantee says five seconds and then code 8,
+// and it does not exempt the command that creates the board.
+//
+// Twenty attempts, because the collision is a race and one attempt proves
+// nothing: reverting initialVersion's retry makes this test fail.
+func TestConcurrentCreationOfTheSameFileWaitsInsteadOfFailingAtOnce(t *testing.T) {
+	const attempts = 20
+	const connections = 4
+
+	for attempt := 1; attempt <= attempts; attempt++ {
+		path := filepath.Join(t.TempDir(), "board.sqlite")
+
+		start := make(chan struct{})
+		failures := make([]error, connections)
+		var wg sync.WaitGroup
+		for i := range failures {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				s, err := openAt(testBoardID, path, busyTimeoutMillis, testMigrations)
+				failures[i] = err
+				if s != nil {
+					s.Close()
+				}
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		for i, err := range failures {
+			if err != nil {
+				t.Fatalf("attempt %d, connection %d: %v", attempt, i, err)
+			}
+		}
+	}
 }
 
 func TestOpenOnAPathWithURICharactersUsesThatFile(t *testing.T) {
