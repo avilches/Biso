@@ -91,23 +91,69 @@ ahí salen las seis garantías de `docs/spec/garantias.md#concurrencia-atomicida
 No sabe qué es una `Task`, solo filas
 y columnas; traducir entre unas y otras es trabajo de `internal/board`.
 
-Tres decisiones de este paquete que se tomaron al implementarlo (TASK-4) y que no se deducen de la
+`Open` recibe dos cosas, `Open(id, path string)`. El `id` es el del tablero
+(`docs/spec/resolucion-del-tablero.md`), que quien abre el almacén ya ha leído del puntero, y el
+almacén no lo usa para nada más que nombrar el tablero en el mensaje del error de base de datos
+ilegible, que `docs/spec/garantias.md` fija palabra por palabra. Sigue sin saber qué es una `Task`:
+un identificador de tablero es una cadena para un mensaje, no el modelo de datos.
+
+Las decisiones de este paquete que se tomaron al implementarlo (TASK-4) y que no se deducen de la
 especificación, porque son del controlador y no del comportamiento observable:
 
-- **La ruta del fichero se escapa antes de meterla en el DSN.** El controlador abre la base de datos
-  con `SQLITE_OPEN_URI` y con el prefijo `file:`, así que SQLite lee la ruta como un URI: un `#` en
-  el nombre de un directorio corta ahí el nombre del fichero y abre otro distinto sin avisar, y un
-  `?` empieza la lista de parámetros. Por eso `store.go` sustituye `%`, `?` y `#` por su forma
-  porcentual antes de componer el DSN. Está probado con un tablero dentro de un directorio llamado
-  `board #1`.
+- **La ruta del fichero se escapa antes de meterla en el DSN, y se escribe como la espera el
+  analizador de URIs de SQLite.** El controlador abre la base de datos con `SQLITE_OPEN_URI` y con
+  el prefijo `file:`, así que SQLite lee la ruta como un URI: un `#` en el nombre de un directorio
+  corta ahí el nombre del fichero y abre otro distinto sin avisar, y un `?` empieza la lista de
+  parámetros. Por eso `uriPath` sustituye `%`, `?` y `#` por su forma porcentual. Y como el
+  controlador se eligió precisamente porque compila cruzado a Windows
+  (`docs/decisiones/lenguaje-y-rendimiento.md`), esa misma función escribe las rutas de esa
+  plataforma: las barras invertidas pasan a barras normales, una letra de unidad recibe delante la
+  barra que la capa Windows de SQLite vuelve a descartar (`/C:/...`), y una ruta UNC recibe las
+  cinco barras iniciales que SQLite documenta para ellas, para que el nombre del servidor no se lea
+  como la autoridad del URI. Está probado con un tablero dentro de un directorio llamado `board #1`
+  y con una tabla de casos sobre `uriPath`, que no necesita una máquina Windows.
 - **Una sola conexión por proceso** (`SetMaxOpenConns(1)`). En modo WAL solo hay un escritor a la
   vez, así que una segunda conexión del mismo proceso únicamente podría esperar a la primera y
   agotar su tiempo contra sí misma. La contrapartida es que el código que corre dentro de `WithTx`
   usa siempre la transacción que recibe y nunca el manejador del `Store`, que esa transacción tiene
   tomado.
+- **Esa contrapartida es un error y no una espera sin fin.** Usar el manejador del `Store` mientras
+  una transacción está viva esperaría a una conexión que solo esa transacción puede devolver: para
+  siempre, sin error y sin tiempo de espera, justo lo contrario de lo que promete la garantía 5
+  (fallar en cinco segundos con código 8). El `Store` lleva un indicador atómico que dice si hay
+  transacción viva, y `WithTx`, `Query`, `Exec` y la lectura de pragmas lo miran antes de tocar el
+  manejador: devuelven `ErrTxInProgress`. Vale igual para un `WithTx` anidado.
 - **`WithTx` deshace la transacción también si la función que recibe entra en pánico**, y deja que
   el pánico siga su camino. Sin eso, un fallo así dejaría tomada la única conexión del punto
-  anterior y cualquier operación posterior del proceso se quedaría esperando para siempre.
+  anterior y el indicador del punto anterior armado para siempre.
+- **La migración comprueba y actúa dentro de una única transacción inmediata.** Leer
+  `PRAGMA user_version` por fuera y decidir a partir de ahí no es atómico: dos procesos que abren a
+  la vez el mismo fichero rancio verían los dos la versión vieja y aplicarían los dos el mismo
+  script, y el segundo fallaría con "table already exists". Por eso la transacción vuelve a leer la
+  versión ya con el bloqueo de escritura tomado, aplica lo que falte y la actualiza en el mismo
+  commit. La lectura de antes de la transacción no desaparece, pero solo decide si hay algo que
+  hacer: abrir un tablero ya migrado, que es el caso de cada invocación, no puede tomar el bloqueo
+  de escritura, porque entonces una lectura fallaría mientras otro proceso escribe, contra la
+  garantía 6.
+- **La comprobación de integridad es un método aparte, `CheckIntegrity`, y no parte de abrir.**
+  `PRAGMA integrity_check` recorre el fichero entero, y el presupuesto de arranque de
+  `docs/spec/presupuestos.md#el-presupuesto-de-arranque` no lo paga en cada invocación. Quien la
+  ejecuta es `biso doctor` (`docs/spec/cmd/doctor.md`); devuelve el mismo error que un fichero que
+  no abre, que es lo que pide `docs/spec/garantias.md`.
+
+**Los dos errores de la especificación que nacen aquí.** El almacén es la capa más profunda que
+distingue estos dos casos, así que construye el `model.Error` completo de cada uno y lo deja subir
+sin que nadie lo reinterprete:
+
+| Caso | Código | Clave | Dónde se detecta |
+|---|---|---|---|
+| El bloqueo de escritura no se consiguió en el tiempo configurado | 8 | `busy` | al abrir, al migrar y en `WithTx` |
+| La base de datos no se puede leer, o falla su comprobación de integridad | 21 | `database_unreadable` | al abrir y en `CheckIntegrity` |
+
+Los dos llevan el texto literal de `docs/spec/garantias.md`, mensaje y líneas de `hint` incluidas.
+Cualquier camino que se tope con el bloqueo devuelve el primero: no vale que abrir o migrar
+devuelvan un error del controlador en crudo, porque entonces el mismo estorbo daría códigos de
+salida distintos según en qué momento apareciera.
 
 ### 3.4. `internal/board`
 
@@ -174,7 +220,7 @@ type Error struct {
     ExitCode int      // the exit code, see docs/spec/codigos-de-salida.md
     Code     string   // the identifier, see docs/spec/contrato-json.md#los-identificadores-de-error
     Message  string   // the text that follows "error: " on stderr
-    Hint     string   // the text that follows "hint: " on stderr, empty when the case has none
+    Hints    []string // the "hint: " lines that follow the message on stderr, in order
 
     // The five detail fields from docs/spec/contrato-json.md#los-errores-en-json, each present
     // only on the subset of codes it corresponds to per that same table; on the rest they stay
@@ -187,15 +233,22 @@ type Error struct {
 }
 ```
 
-**`Hint` decidido el 2026-09-19.** Buena parte de los casos de `docs/spec/` llevan una segunda línea
-`hint: ...` por stderr, con texto que casi siempre depende de datos concretos del caso (los dos
-directorios de un `id` duplicado, cuántas tareas usan un estado, el `id` que hay que adoptar). Vive en
-`model.Error`, en el mismo sitio y con la misma disciplina que `Message`, en vez de en una tabla
-`code -> hint` aparte en `internal/cli`, porque la mayoría de los hints no son fijos: solo quien
-detecta el error, en la capa que sea, tiene los datos concretos para construirlo. `cmd/biso/main.go`
-imprime la segunda línea solo cuando `Hint` no está vacío. **No entra en el sobre JSON**:
+**Los hints son una lista, `Hints []string`.** Buena parte de los casos de `docs/spec/` llevan una
+línea `hint: ...` por stderr detrás del mensaje, con texto que casi siempre depende de datos
+concretos del caso (los dos directorios de un `id` duplicado, cuántas tareas usan un estado, el `id`
+que hay que adoptar), y dos casos llevan dos de esas líneas: la base de datos ilegible de
+`docs/spec/garantias.md` y el tablero ya existente de `docs/spec/cmd/init.md`. `Hints` guarda una
+entrada por línea, en el orden en que la especificación las imprime, y queda vacía cuando el caso no
+tiene ninguna. Vive en `model.Error`, en el mismo sitio y con la misma disciplina que `Message`, en
+vez de en una tabla `code -> hint` aparte en `internal/cli`, porque la mayoría de los hints no son
+fijos: solo quien detecta el error, en la capa que sea, tiene los datos concretos para construirlo.
+`cmd/biso/main.go` imprime una línea `hint: ` por entrada. **No entra en el sobre JSON**:
 `docs/spec/contrato-json.md#los-errores-en-json` no tiene una clave `hint` en el objeto de error, así
 que este campo es exclusivo de la salida de texto.
+
+(Descartado: un único `Hint string` con las dos líneas separadas por un salto de línea. Obligaría a
+quien imprime a partir la cadena para poner el prefijo `hint: ` en cada línea, es decir, a
+reinterpretar el contenido del error, que es justo lo que este tipo evita.)
 
 (El código Go va siempre en inglés, según el `CLAUDE.md` del proyecto; la prosa de este documento
 sigue en español.)
