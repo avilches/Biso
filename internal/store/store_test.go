@@ -15,6 +15,32 @@ import (
 // to build the message of the unreadable-database error.
 const testBoardID = "3f9a2b1c"
 
+// scratchMigration is a table that exists only for this package's tests.
+// They are about the mechanism (opening, migrating, transactions and the
+// write lock) and not about the model, so they write to a table of their
+// own instead of leaning on the real schema, which would make them fail
+// every time a field of docs/spec/modelo-de-datos/ moves.
+const scratchMigration = `CREATE TABLE scratch (
+	id      INTEGER PRIMARY KEY,
+	payload TEXT NOT NULL
+);`
+
+// testMigrations is the real list with that table appended, so a store
+// opened by openScratch has the whole real schema plus the scratch table.
+var testMigrations = append(append([]string{}, migrations...), scratchMigration)
+
+// openScratch opens the board at path with testMigrations, failing the
+// test if it cannot.
+func openScratch(t *testing.T, path string) *Store {
+	t.Helper()
+
+	s, err := openAt(testBoardID, path, busyTimeoutMillis, testMigrations)
+	if err != nil {
+		t.Fatalf("open %s: %v", path, err)
+	}
+	return s
+}
+
 func TestOpenCreatesFileInWALModeWithForeignKeys(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
@@ -179,11 +205,8 @@ func TestCheckIntegrityFailsOnACorruptedDatabase(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
 
-	seed, err := Open(testBoardID, path)
-	if err != nil {
-		t.Fatalf("Open for seeding: %v", err)
-	}
-	if _, err := seed.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'a'), (2, 'b'), (3, 'c')"); err != nil {
+	seed := openScratch(t, path)
+	if _, err := seed.Exec("INSERT INTO scratch (id, payload) VALUES (1, 'a'), (2, 'b'), (3, 'c')"); err != nil {
 		t.Fatalf("seed rows: %v", err)
 	}
 	seed.Close()
