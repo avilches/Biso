@@ -145,8 +145,8 @@ func TestMatchUnknownError(t *testing.T) {
 	if e.Message != `unknown status: "Pending"` {
 		t.Errorf("Message = %q, want %q", e.Message, `unknown status: "Pending"`)
 	}
-	if e.Hint != "" {
-		t.Errorf("Hint = %q, want it empty", e.Hint)
+	if len(e.Hints) != 0 {
+		t.Errorf("Hints = %q, want none", e.Hints)
 	}
 	if e.Field != "status" {
 		t.Errorf("Field = %q, want status", e.Field)
@@ -227,8 +227,8 @@ func TestMatchAmbiguous(t *testing.T) {
 		t.Errorf("Message = %q, want %q", e.Message, want)
 	}
 	wantHint := "type one of them exactly, or rename one so the two no longer normalize the same"
-	if e.Hint != wantHint {
-		t.Errorf("Hint = %q, want %q", e.Hint, wantHint)
+	if len(e.Hints) != 1 || e.Hints[0] != wantHint {
+		t.Errorf("Hints = %q, want exactly [%q]", e.Hints, wantHint)
 	}
 	if e.Field != "status" || e.Given != "todo" {
 		t.Errorf("Field = %q and Given = %q, want status and todo", e.Field, e.Given)

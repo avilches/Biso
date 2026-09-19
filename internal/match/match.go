@@ -88,7 +88,7 @@ func Match(field Field, value string, configured []string) (string, error) {
 			Code:     "ambiguous_vocabulary",
 			Message: fmt.Sprintf("ambiguous %s: %q matches %d configured values: %s",
 				field, value, len(matches), strings.Join(matches, ", ")),
-			Hint:  "type one of them exactly, or rename one so the two no longer normalize the same",
+			Hints: []string{"type one of them exactly, or rename one so the two no longer normalize the same"},
 			Field: string(field),
 			Given: value,
 			Valid: matches,
