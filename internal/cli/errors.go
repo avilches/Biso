@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 
 	"biso/internal/model"
 )
@@ -68,6 +69,28 @@ func errMalformedPair(f *FlagSpec, given string) *model.Error {
 		"%s: expected %s, got %q", f.long(), f.PairSyntax, given))
 }
 
+// errDuplicateKey is the rule of docs/spec/familias-de-flags.md#comentarios
+// for the same key written twice with two different values, which is the same
+// error as a repeated scalar because the key names one single thing and the
+// call says two contradictory things about it.
+func errDuplicateKey(f *FlagSpec, key, first, second string) *model.Error {
+	return flagUsage("duplicate_scalar_flag", f, second, fmt.Sprintf(
+		"%s: key %q given twice with different values: %q and %q",
+		f.long(), key, first, second))
+}
+
+// errEmptyValue is the empty value written where the specification documents
+// none. It is exit code 2 and not the 3 of errEmptyScalar because the board's
+// vocabulary has nothing to say here: what is malformed is the command line
+// (docs/spec/valores-de-entrada.md#cómo-se-lee-la-línea-de-comandos).
+func errEmptyValue(f *FlagSpec, key, given string) *model.Error {
+	message := f.long() + " cannot be empty"
+	if key != "" {
+		message = fmt.Sprintf("%s: the value of key %q cannot be empty", f.long(), key)
+	}
+	return flagUsage("unexpected_argument", f, given, message)
+}
+
 // errMalformedToken is the error of
 // docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token: a
 // character outside the alphabet a field closes is a matter of form, not of a
@@ -114,6 +137,14 @@ func errTwoStdin(first, second *FlagSpec) *model.Error {
 		first.long(), second.long()))
 }
 
+// errStdinTwiceInOneFlag is the same rule when it is one repeatable flag
+// asking for standard input twice, which needs its own text because naming the
+// same flag on both sides of "and" reads like a bug in the message.
+func errStdinTwiceInOneFlag(f *FlagSpec) *model.Error {
+	return flagUsage("two_stdin", f, "-", fmt.Sprintf(
+		"- can be given only once per invocation; %s reads stdin twice", f.long()))
+}
+
 func errFileNotFound(f *FlagSpec, path string) *model.Error {
 	return &model.Error{
 		ExitCode: 4,
@@ -148,23 +179,37 @@ func errStdinUnreadable(f *FlagSpec, err error) *model.Error {
 }
 
 // errInvalidEncoding is the rule of
-// docs/spec/salida-y-terminal.md#codificación-y-texto: an invalid byte
-// sequence in an argument or in an input file is exit code 3, and the message
-// points at the byte.
-func errInvalidEncoding(f *FlagSpec, offset int) *model.Error {
-	prefix := ""
-	if f != nil {
-		prefix = f.long() + ": "
-	}
-	e := &model.Error{
+// docs/spec/salida-y-terminal.md#codificación-y-texto for what a flag read
+// from a file or from standard input: exit code 3, and the message points at
+// the byte. given is what was typed behind the flag, which is already known to
+// be valid UTF-8 because argv is judged whole before anything else is read, so
+// naming the file or the "-" of standard input carries no undecodable byte
+// into the message.
+func errInvalidEncoding(f *FlagSpec, given string, offset int) *model.Error {
+	return &model.Error{
 		ExitCode: 3,
 		Code:     "invalid_encoding",
-		Message:  fmt.Sprintf("%sinvalid UTF-8 at byte %d", prefix, offset),
+		Message:  fmt.Sprintf("%s: invalid UTF-8 at byte %d", f.long(), offset),
+		Field:    f.field(),
+		Given:    given,
 	}
-	if f != nil {
-		e.Field = f.field()
+}
+
+// errInvalidEncodingArgument is the same rule for an argument of the command
+// line, which is checked before the line is read at all. The argument travels
+// into the message and into given with its bytes escaped, so that an
+// undecodable byte never reaches the terminal or the JSON envelope, where it
+// would silently turn into the replacement character.
+func errInvalidEncodingArgument(n, offset int, arg string) *model.Error {
+	quoted := strconv.Quote(arg)
+	return &model.Error{
+		ExitCode: 3,
+		Code:     "invalid_encoding",
+		Message: fmt.Sprintf("invalid UTF-8 in argument %d at byte %d: %s",
+			n, offset, quoted),
+		Field: "argument",
+		Given: quoted[1 : len(quoted)-1],
 	}
-	return e
 }
 
 func errOutsideDomain(f *FlagSpec, given string) *model.Error {
@@ -187,6 +232,6 @@ func errRequires(f *FlagSpec, required string) *model.Error {
 // errReadOnlyFlag carries the two literal messages of
 // docs/spec/cmd/flags-globales.md for a global flag written where it has
 // nothing to do.
-func errReadOnlyFlag(message string) *model.Error {
-	return usage("read_only_flag", message)
+func errReadOnlyFlag(f *FlagSpec, message string) *model.Error {
+	return flagUsage("read_only_flag", f, "", message)
 }

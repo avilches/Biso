@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"biso/internal/model"
 )
@@ -50,6 +51,7 @@ func testCommands() []CommandSpec {
 			Name: "ext", Value: PlainValue, Repeatable: true, Category: ExtKey,
 			Pair: PairAtFirstEquals, PairSyntax: "<key>=<value>",
 			Alphabet: ExtKeyAlphabet, Noun: "extension key",
+			SingleLine: true, LastKeyWins: true,
 		},
 		{
 			Name: "rm-ext", Value: PlainValue, Repeatable: true, Category: Remove,
@@ -66,12 +68,18 @@ func testCommands() []CommandSpec {
 	return []CommandSpec{
 		{Name: "set", Flags: fieldFlags},
 		{Name: "ls", ReadOnly: true, Flags: []FlagSpec{
-			{Name: "limit", Value: PlainValue},
+			{Name: "limit", Value: PlainValue, Conflicts: []string{"all"}},
 			{Name: "mine"},
+			{Name: "all", Conflicts: []string{"limit"}},
 		}},
 		{Name: "init", AffectsNoTask: true, Flags: []FlagSpec{
 			{Name: "at", Value: PlainValue},
 		}},
+		// doctor is the command of docs/spec/cmd/flags-globales.md that is
+		// read-only until --fix turns it into a writing one.
+		{Name: "doctor", ReadOnly: true, AffectsNoTask: true,
+			WriteFlags: []string{"fix"},
+			Flags:      []FlagSpec{{Name: "fix"}}},
 	}
 }
 
@@ -249,13 +257,66 @@ func TestDoubleHyphenEndsOptionParsing(t *testing.T) {
 	}
 }
 
-func TestPositionalsAreOneContiguousBlock(t *testing.T) {
-	// One block, before or after the flags, is fine.
-	mustParse(t, "set", "MYP-1", "MYP-2", "--add-labels", "a")
-	mustParse(t, "set", "--add-labels", "a", "MYP-1", "MYP-2")
-	// A second block is not.
-	_, err := parse(t, "set", "MYP-1", "--add-labels", "a", "MYP-2")
-	wantError(t, err, 2, "unexpected_argument")
+// TestPositionalsComeBeforeTheFlags holds the rule of
+// docs/spec/valores-de-entrada.md#cómo-se-lee-la-línea-de-comandos: the
+// positional arguments of a call all come between the command name and the
+// first flag of that command. Every signature and every example of
+// docs/spec/cmd/ is written that way, and the rule is what turns a forgotten
+// value into an error instead of into a stored flag name.
+func TestPositionalsComeBeforeTheFlags(t *testing.T) {
+	p := mustParse(t, "set", "MYP-1", "MYP-2", "--add-labels", "a")
+	if got := strings.Join(p.Positionals, ","); got != "MYP-1,MYP-2" {
+		t.Errorf("positionals are %q", got)
+	}
+
+	// A global flag in front of the command name does not close anything,
+	// because nothing can be positional there: biso -C dir set MYP-1 works.
+	p = mustParse(t, "-C", "/tmp", "set", "MYP-1")
+	if got := strings.Join(p.Positionals, ","); got != "MYP-1" {
+		t.Errorf("positionals are %q, want MYP-1", got)
+	}
+
+	// Behind the flags, a loose argument is an error, whether it is the only
+	// one or a second block.
+	for _, argv := range [][]string{
+		{"set", "--add-labels", "a", "MYP-1"},
+		{"set", "MYP-1", "--add-labels", "a", "MYP-2"},
+	} {
+		_, err := parse(t, argv...)
+		e := wantError(t, err, 2, "unexpected_argument")
+		if !strings.HasPrefix(e.Message, "unexpected argument: MYP-") {
+			t.Errorf("parse(%q) said %q", argv, e.Message)
+		}
+	}
+
+	// And "--" is still the escape that always works.
+	p = mustParse(t, "set", "--add-labels", "a", "--", "MYP-1")
+	if got := strings.Join(p.Positionals, ","); got != "MYP-1" {
+		t.Errorf("positionals are %q, want MYP-1", got)
+	}
+}
+
+// TestShortFlagsAreNeitherGroupedNorGlued covers the rule of the same section:
+// a line that can be read in more than one way stops being predictable, so -qV
+// and -lparser are one unknown flag and not two flags or a flag with its value.
+func TestShortFlagsAreNeitherGroupedNorGlued(t *testing.T) {
+	for _, argv := range [][]string{
+		{"ls", "-qV"},
+		{"set", "MYP-1", "-lparser"},
+	} {
+		_, err := parse(t, argv...)
+		wantError(t, err, 2, "unknown_flag")
+	}
+}
+
+// TestAMessageNamesTheLongForm covers the rule that the text of an error does
+// not depend on how the call was typed.
+func TestAMessageNamesTheLongForm(t *testing.T) {
+	_, err := parse(t, "set", "MYP-1", "-l", "urgent!")
+	e := wantError(t, err, 2, "malformed_label")
+	if e.Message != `malformed label: "urgent!"` || e.Field != "labels" {
+		t.Errorf("message/field are %q/%q", e.Message, e.Field)
+	}
 }
 
 func TestListFlagAccumulates(t *testing.T) {
@@ -277,6 +338,59 @@ func TestEscapedComma(t *testing.T) {
 	p := mustParse(t, "set", "MYP-1", "--add-refs", `notes/a\,b.md`)
 	if got := p.Values("add-refs"); len(got) != 1 || got[0] != "notes/a,b.md" {
 		t.Errorf("refs are %q, want one notes/a,b.md", got)
+	}
+}
+
+// TestEscapedBackslash covers the second escape of
+// docs/spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas: a
+// double backslash is one literal backslash, which is the only way a value can
+// end in a backslash right before a separating comma. A backslash in front of
+// anything else stays in the value, so a path or a URL keeps what it carries.
+func TestEscapedBackslash(t *testing.T) {
+	for _, c := range []struct {
+		given string
+		want  []string
+	}{
+		{`C:\\dir\\,notes.md`, []string{`C:\dir\`, "notes.md"}},
+		{`a\\\,b`, []string{`a\,b`}},
+		{`notes\x.md`, []string{`notes\x.md`}},
+		{`ends-in\\`, []string{`ends-in\`}},
+		{`lonely\`, []string{`lonely\`}},
+	} {
+		p := mustParse(t, "set", "MYP-1", "--add-refs", c.given)
+		if got := p.Values("add-refs"); strings.Join(got, "|") != strings.Join(c.want, "|") {
+			t.Errorf("--add-refs %s gave %q, want %q", c.given, got, c.want)
+		}
+	}
+}
+
+// TestTheSameValueThreeTimesWarnsOnce covers
+// docs/spec/salida-y-terminal.md#notas-y-avisos: one warning per repeated
+// value, counting the appearances, instead of one warning per repetition all
+// saying "twice".
+func TestTheSameValueThreeTimesWarnsOnce(t *testing.T) {
+	p := mustParse(t, "set", "MYP-1", "--add-labels", "urgent,urgent,urgent")
+	if got := strings.Join(p.Values("add-labels"), ","); got != "urgent" {
+		t.Errorf("labels are %q, want urgent", got)
+	}
+	w := onlyWarning(t, p)
+	if w.Message != `--add-labels: "urgent" given 3 times, kept once` {
+		t.Errorf("warning is %q", w.Message)
+	}
+
+	// Two values that each repeat get one warning each, in the order they
+	// were found.
+	p = mustParse(t, "set", "MYP-1", "--add-labels", "a,b,a,b")
+	if len(p.Warnings) != 2 {
+		t.Fatalf("got %d warnings, want two: %v", len(p.Warnings), p.Warnings)
+	}
+	for i, want := range []string{
+		`--add-labels: "a" given twice, kept once`,
+		`--add-labels: "b" given twice, kept once`,
+	} {
+		if p.Warnings[i].Message != want {
+			t.Errorf("warning %d is %q, want %q", i, p.Warnings[i].Message, want)
+		}
 	}
 }
 
@@ -354,6 +468,53 @@ func TestEmptyValue(t *testing.T) {
 	p = mustParse(t, "set", "MYP-1", "--status", "")
 	if got := p.Values("status"); len(got) != 1 || got[0] != "" {
 		t.Errorf("status is %q, want one empty value left for the vocabulary", got)
+	}
+}
+
+// TestEmptyValueOutsideATaskScalar is the rule of
+// docs/spec/valores-de-entrada.md#cómo-se-lee-la-línea-de-comandos: an empty
+// value in a flag that neither adds nor replaces nor is a scalar of a task is
+// a malformed command line, exit code 2, and not the exit code 3 of a value
+// the board's vocabulary does not recognize. --rm-labels removes nothing from
+// a name that is not there, and --cwd names no directory.
+func TestEmptyValueOutsideATaskScalar(t *testing.T) {
+	for _, argv := range [][]string{
+		{"set", "MYP-1", "--rm-labels", ""},
+		{"set", "MYP-1", "--rm-ext", "   "},
+		{"ls", "--cwd", ""},
+		{"ls", "--limit", ""},
+	} {
+		_, err := parse(t, argv...)
+		e := wantError(t, err, 2, "unexpected_argument")
+		if !strings.HasSuffix(e.Message, " cannot be empty") {
+			t.Errorf("parse(%q) said %q", argv, e.Message)
+		}
+	}
+}
+
+// TestPairWithAnEmptyValue is the same rule for a flag whose value is a pair:
+// --ext k= says nothing the specification documents, and --clear-ext and
+// --rm-ext are what empty a map or one of its keys.
+func TestPairWithAnEmptyValue(t *testing.T) {
+	_, err := parse(t, "set", "MYP-1", "--ext", "k=")
+	e := wantError(t, err, 2, "unexpected_argument")
+	if e.Message != `--ext: the value of key "k" cannot be empty` {
+		t.Errorf("message is %q", e.Message)
+	}
+	if e.Field != "ext" || e.Given != "k=" {
+		t.Errorf("field/given are %q/%q", e.Field, e.Given)
+	}
+}
+
+// TestPairWithANewlineInItsValue covers
+// docs/spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string, which
+// names the values of ext among the fields of one line. The rules of a value
+// apply to the right half of a pair like they apply to any other value.
+func TestPairWithANewlineInItsValue(t *testing.T) {
+	_, err := parse(t, "set", "MYP-1", "--ext", "k=first\nsecond")
+	e := wantError(t, err, 2, "malformed_string_value")
+	if e.Field != "ext" {
+		t.Errorf("field is %q, want ext", e.Field)
 	}
 }
 
@@ -474,16 +635,90 @@ func TestOnlyOneStdinPerInvocation(t *testing.T) {
 		Env{Stdin: strings.NewReader("only once")},
 	)
 	e := wantError(t, err, 2, "two_stdin")
-	if !strings.Contains(e.Message, "--append-desc") || !strings.Contains(e.Message, "--append-plan") {
-		t.Errorf("message names neither flag: %q", e.Message)
+	if e.Message != "- can be given only once per invocation; --append-desc and --append-plan both read stdin" {
+		t.Errorf("message is %q", e.Message)
+	}
+
+	// One repeatable flag asking twice has its own text: naming the same
+	// flag on both sides of "and" would read like a bug in the message.
+	_, err = Parse(
+		[]string{"set", "MYP-1", "--append-desc", "-", "--append-desc", "-"},
+		testCommands(),
+		Env{Stdin: strings.NewReader("only once")},
+	)
+	e = wantError(t, err, 2, "two_stdin")
+	if e.Message != "- can be given only once per invocation; --append-desc reads stdin twice" {
+		t.Errorf("message is %q", e.Message)
 	}
 }
 
-func TestInvalidUTF8(t *testing.T) {
+// failingReader is standard input that breaks while it is being read, which is
+// the environment failing and not the request.
+type failingReader struct{}
+
+func (failingReader) Read([]byte) (int, error) { return 0, errors.New("broken pipe") }
+
+func TestStdinThatCannotBeRead(t *testing.T) {
+	_, err := Parse(
+		[]string{"set", "MYP-1", "--append-desc", "-"},
+		testCommands(),
+		Env{Stdin: failingReader{}},
+	)
+	e := wantError(t, err, 8, "io_error")
+	if e.Message != "--append-desc: stdin cannot be read: broken pipe" {
+		t.Errorf("message is %q", e.Message)
+	}
+	if e.Field != "append-desc" || e.Given != "-" {
+		t.Errorf("field/given are %q/%q", e.Field, e.Given)
+	}
+}
+
+// TestInvalidUTF8InAnArgument covers the first half of
+// docs/spec/salida-y-terminal.md#codificación-y-texto: the encoding of every
+// argument is judged before the line is read at all, so the undecodable byte
+// never reaches a message, a field or the JSON envelope. It travels escaped
+// instead, and it is the argument that is named, because at that point nobody
+// knows yet which flag it belonged to.
+func TestInvalidUTF8InAnArgument(t *testing.T) {
 	_, err := parse(t, "set", "MYP-1", "--append-note", "ok\xffbad")
 	e := wantError(t, err, 3, "invalid_encoding")
-	if !strings.Contains(e.Message, "byte 2") {
-		t.Errorf("message does not point at the byte: %q", e.Message)
+	if e.Message != `invalid UTF-8 in argument 4 at byte 2: "ok\xffbad"` {
+		t.Errorf("message is %q", e.Message)
+	}
+	if e.Field != "argument" || e.Given != `ok\xffbad` {
+		t.Errorf("field/given are %q/%q", e.Field, e.Given)
+	}
+	if strings.ContainsRune(e.Message+e.Given, utf8.RuneError) ||
+		!utf8.ValidString(e.Message) || !utf8.ValidString(e.Given) {
+		t.Errorf("the invalid byte reached the error: %q / %q", e.Message, e.Given)
+	}
+	// The command name and the spelling of a flag are judged too, and not
+	// only the values.
+	for _, argv := range [][]string{
+		{"se\xfft", "MYP-1"},
+		{"set", "MYP-1", "--append-\xffnote", "x"},
+	} {
+		_, err := parse(t, argv...)
+		wantError(t, err, 3, "invalid_encoding")
+	}
+}
+
+// TestInvalidUTF8InAFile is the other half: what arrives from a file or from
+// standard input is judged once it is read, and there the error does name the
+// flag, with what was typed behind it in given.
+func TestInvalidUTF8InAFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "desc.md")
+	if err := os.WriteFile(path, []byte("ok\xffbad"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, err := parse(t, "set", "MYP-1", "--append-desc", "@"+path)
+	e := wantError(t, err, 3, "invalid_encoding")
+	if e.Message != "--append-desc: invalid UTF-8 at byte 2" {
+		t.Errorf("message is %q", e.Message)
+	}
+	if e.Field != "append-desc" || e.Given != "@"+path {
+		t.Errorf("field/given are %q/%q", e.Field, e.Given)
 	}
 }
 
@@ -554,6 +789,55 @@ func TestSameExtKeyTwiceKeepsTheLastValue(t *testing.T) {
 	w := onlyWarning(t, p)
 	if w.Code != "duplicate_ext_key" || w.Message != `--ext: key "k" given twice, kept last value` {
 		t.Errorf("warning is %q/%q", w.Code, w.Message)
+	}
+
+	// Three appearances are one warning that counts them, not two warnings
+	// that both say "twice".
+	p = mustParse(t, "set", "MYP-1", "--ext", "k=a", "--ext", "k=b", "--ext", "k=c")
+	c = onlyChange(t, p, "ext")
+	if c.Value != "c" {
+		t.Errorf("value is %q, want c", c.Value)
+	}
+	w = onlyWarning(t, p)
+	if w.Message != `--ext: key "k" given 3 times, kept last value` {
+		t.Errorf("warning is %q", w.Message)
+	}
+}
+
+// TestSameCommentDateKeyTwice is the rule of
+// docs/spec/familias-de-flags.md#comentarios, which is deliberately not the
+// rule of --ext: the same comment with two different instants is the error of
+// a repeated scalar, and with the same instant it applies once and says
+// nothing.
+func TestSameCommentDateKeyTwice(t *testing.T) {
+	_, err := parse(t, "set", "MYP-1",
+		"--set-comment-date", "3=2026-08-14T10:22:00Z",
+		"--set-comment-date", "3=2026-08-15T10:22:00Z")
+	e := wantError(t, err, 2, "duplicate_scalar_flag")
+	want := `--set-comment-date: key "3" given twice with different values: ` +
+		`"2026-08-14T10:22:00Z" and "2026-08-15T10:22:00Z"`
+	if e.Message != want {
+		t.Errorf("message is %q", e.Message)
+	}
+
+	p := mustParse(t, "set", "MYP-1",
+		"--set-comment-date", "3=2026-08-14T10:22:00Z",
+		"--set-comment-date", "3=2026-08-14T10:22:00Z")
+	c := onlyChange(t, p, "set-comment-date")
+	if c.Key != "3" || c.Value != "2026-08-14T10:22:00Z" {
+		t.Errorf("got %q=%q", c.Key, c.Value)
+	}
+	if len(p.Warnings) != 0 {
+		t.Errorf("the same instant twice says nothing: %v", p.Warnings)
+	}
+
+	// Two different comments in the same call are two changes, not a
+	// repetition.
+	p = mustParse(t, "set", "MYP-1",
+		"--set-comment-date", "3=2026-08-14T10:22:00Z",
+		"--set-comment-date", "4=2026-08-15T10:22:00Z")
+	if len(p.Changes()) != 2 {
+		t.Errorf("got %d changes, want two", len(p.Changes()))
 	}
 }
 
@@ -630,6 +914,70 @@ func TestIncompatibleGlobalFlags(t *testing.T) {
 	}
 }
 
+// TestIncompatibleFlagsAreNamedInTableOrder holds the rule that the text of an
+// error does not depend on how the call was written: the pair is named in the
+// order of the specification table, whichever of the two was typed first. The
+// order is the global table first and then the command's own, each in the
+// order of its own table of parameters.
+func TestIncompatibleFlagsAreNamedInTableOrder(t *testing.T) {
+	for _, c := range []struct {
+		argv []string
+		want string
+	}{
+		{[]string{"ls", "--json", "--quiet"}, "--json and --quiet cannot be used together"},
+		{[]string{"ls", "--quiet", "--json"}, "--json and --quiet cannot be used together"},
+		{[]string{"ls", "--limit", "10", "--all"}, "--limit and --all cannot be used together"},
+		{[]string{"ls", "--all", "--limit", "10"}, "--limit and --all cannot be used together"},
+	} {
+		_, err := Parse(c.argv, testCommands(), Env{})
+		e := wantError(t, err, 2, "incompatible_flags")
+		if e.Message != c.want {
+			t.Errorf("parse(%q) said %q, want %q", c.argv, e.Message, c.want)
+		}
+	}
+}
+
+// TestIncompatibleFlagsCarryNoField is the exception of
+// docs/spec/contrato-json.md#los-errores-en-json: an error that names a pair of
+// flags, neither of them more to blame than the other, has no field to name.
+func TestIncompatibleFlagsCarryNoField(t *testing.T) {
+	_, err := Parse([]string{"ls", "--json", "--quiet"}, testCommands(), Env{})
+	e := wantError(t, err, 2, "incompatible_flags")
+	if e.Field != "" || e.Given != "" {
+		t.Errorf("field/given are %q/%q, want neither", e.Field, e.Given)
+	}
+}
+
+// TestGlobalFlagsIsACopy covers the promise of GlobalFlags: a caller that
+// walks the global table cannot change what the parser reads.
+func TestGlobalFlagsIsACopy(t *testing.T) {
+	table := GlobalFlags()
+	if len(table) == 0 {
+		t.Fatal("the global table is empty")
+	}
+	// Every conflict declared in the table is declared on both sides, which
+	// is what makes the message independent of the order of the call.
+	byName := map[string]FlagSpec{}
+	for _, f := range table {
+		byName[f.Name] = f
+	}
+	for _, f := range table {
+		for _, name := range f.Conflicts {
+			other, ok := byName[name]
+			if !ok {
+				t.Fatalf("--%s conflicts with an unknown --%s", f.Name, name)
+			}
+			if !contains(other.Conflicts, f.Name) {
+				t.Errorf("--%s conflicts with --%s, but not the other way around", f.Name, name)
+			}
+		}
+	}
+	table[0].Name = "changed"
+	if GlobalFlags()[0].Name == "changed" {
+		t.Error("GlobalFlags handed out the table itself")
+	}
+}
+
 func TestRequires(t *testing.T) {
 	_, err := parse(t, "set", "MYP-1", "--comment-author", "@sara")
 	e := wantError(t, err, 2, "incompatible_flags")
@@ -653,6 +1001,12 @@ func TestDryRunAndPrintWhereTheyDoNotApply(t *testing.T) {
 		t.Errorf("message is %q", e.Message)
 	}
 
+	// The error names the flag, so it carries its field like every other
+	// error of exit code 2 that names one.
+	if e.Field != "print" {
+		t.Errorf("field is %q, want print", e.Field)
+	}
+
 	// init writes, so --dry-run is valid there, and --print is not.
 	mustParse(t, "init", "--dry-run")
 	_, err = parse(t, "init", "--print")
@@ -660,6 +1014,25 @@ func TestDryRunAndPrintWhereTheyDoNotApply(t *testing.T) {
 
 	// A write flag in a read-only command is the same family of error.
 	mustParse(t, "set", "MYP-1", "--dry-run")
+}
+
+// TestAFlagCanTurnAReadOnlyCommandIntoAWritingOne is what
+// docs/spec/cmd/flags-globales.md declares about biso doctor: without --fix it
+// is read-only and --dry-run is a usage error there, and with --fix it writes
+// and the flag behaves as it does anywhere else.
+func TestAFlagCanTurnAReadOnlyCommandIntoAWritingOne(t *testing.T) {
+	_, err := parse(t, "doctor", "--dry-run")
+	e := wantError(t, err, 2, "read_only_flag")
+	if e.Message != "--dry-run does not apply to a read-only command" || e.Field != "dry-run" {
+		t.Errorf("message/field are %q/%q", e.Message, e.Field)
+	}
+	mustParse(t, "doctor", "--fix", "--dry-run")
+	// The order of the two does not matter: the answer comes once the whole
+	// line has been read.
+	mustParse(t, "doctor", "--dry-run", "--fix")
+	// --fix does not make it affect a task, so --print is still an error.
+	_, err = parse(t, "doctor", "--fix", "--print")
+	wantError(t, err, 2, "read_only_flag")
 }
 
 func TestClosedDomain(t *testing.T) {

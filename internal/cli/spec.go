@@ -12,6 +12,7 @@
 package cli
 
 import (
+	"math"
 	"sort"
 	"strings"
 )
@@ -132,6 +133,17 @@ type FlagSpec struct {
 	Pair       PairKind
 	PairSyntax string
 
+	// LastKeyWins says what the same key twice in one call means, and the
+	// two flags that take a pair answer differently on purpose. --ext keeps
+	// the last value with a warning, because a key of a map behaves like one
+	// more token
+	// (docs/spec/familias-de-flags.md#campos-externos).
+	// --set-comment-date does not: the same key with two different instants
+	// is the error of a repeated scalar, and with the same instant it
+	// applies once and says nothing
+	// (docs/spec/familias-de-flags.md#comentarios).
+	LastKeyWins bool
+
 	// Alphabet and Noun close the character set of a token field. Noun is
 	// the singular word its message uses ("label", "assignee",
 	// "extension key"); the error code is "malformed_" plus that noun with
@@ -207,6 +219,14 @@ type CommandSpec struct {
 	// are read-only all the same.
 	ReadOnly bool
 
+	// WriteFlags are the long names that turn this read-only command into a
+	// writing one, so that the table can say what
+	// docs/spec/cmd/flags-globales.md declares: biso doctor is read-only,
+	// and biso doctor --fix is not, so --dry-run is a usage error in the
+	// first and valid in the second. A command that is never read-only
+	// leaves it empty.
+	WriteFlags []string
+
 	// AffectsNoTask means the command affects no task that existed before,
 	// which is what makes --print a usage error. init and config set are
 	// the two that write without touching any existing task.
@@ -233,6 +253,29 @@ func lookupLong(cmd *CommandSpec, name string) *FlagSpec {
 		}
 	}
 	return nil
+}
+
+// tableOrder is the position of a flag in the specification table: the global
+// ones first, in the order of docs/spec/cmd/flags-globales.md, and then the
+// command's own, in the order of its table of parameters. A message that names
+// two flags names them in this order, so that its text does not depend on
+// which of the two the call happened to write first.
+func tableOrder(cmd *CommandSpec, f *FlagSpec) int {
+	for i := range globalFlags {
+		if &globalFlags[i] == f {
+			return i
+		}
+	}
+	if cmd != nil {
+		for i := range cmd.Flags {
+			if &cmd.Flags[i] == f {
+				return len(globalFlags) + i
+			}
+		}
+	}
+	// A flag that belongs to neither table cannot be named by a message the
+	// parser builds, but ordering it last keeps the comparison total.
+	return math.MaxInt
 }
 
 // lookupShort is lookupLong for a one-letter name.

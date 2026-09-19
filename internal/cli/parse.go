@@ -27,6 +27,8 @@ func Parse(argv []string, commands []CommandSpec, env Env) (*Parsed, error) {
 		p:        &Parsed{emptied: map[string]bool{}},
 		commands: commands,
 		env:      env.withDefaults(),
+		dupes:    map[string]int{},
+		times:    map[string]int{},
 	}
 	if err := st.run(argv); err != nil {
 		return nil, err
@@ -109,16 +111,31 @@ type parser struct {
 	stdinTakenBy *FlagSpec
 	order        int
 
-	// posStarted and posClosed hold the rule that the positional arguments
-	// of a call are one single block: they may come before the flags or
-	// after them, but not on both sides, because what is left over after a
-	// flag that ate its value is precisely how a forgotten value is found
+	// dupes remembers which warning already reports a repeated value or a
+	// repeated key, and times how many appearances that warning is counting,
+	// so that the third appearance corrects that one warning instead of
+	// adding a second one that says "twice" again.
+	dupes map[string]int
+	times map[string]int
+
+	// posClosed holds the rule that the positional arguments of a call all
+	// come in front of the flags of their command: the first flag written
+	// after the command name closes them, and what is left over after that
+	// is precisely how a forgotten value is found
 	// (docs/spec/valores-de-entrada.md#valores-que-empiezan-por-guion).
-	posStarted bool
-	posClosed  bool
+	posClosed bool
 }
 
 func (st *parser) run(argv []string) error {
+	// The encoding is judged before anything else is read, over the whole
+	// argv, so that an invalid byte can never reach a message or the given
+	// key of an error envelope
+	// (docs/spec/salida-y-terminal.md#codificación-y-texto).
+	for i, arg := range argv {
+		if at := invalidUTF8At(arg); at >= 0 {
+			return errInvalidEncodingArgument(i+1, at, arg)
+		}
+	}
 	afterDashDash := false
 	for i := 0; i < len(argv); i++ {
 		tok := argv[i]
@@ -191,10 +208,6 @@ func (st *parser) positional(tok string) error {
 	if st.posClosed {
 		return errUnexpectedArgument(tok)
 	}
-	if at := invalidUTF8At(tok); at >= 0 {
-		return errInvalidEncoding(nil, at)
-	}
-	st.posStarted = true
 	st.p.Positionals = append(st.p.Positionals, tok)
 	return nil
 }
@@ -203,8 +216,11 @@ func (st *parser) positional(tok string) error {
 // of argv it consumed, which is one when the value came as the next argument
 // and none when it came attached with "=" or when the flag takes no value.
 func (st *parser) flag(f *FlagSpec, inline string, hasInline bool, argv []string, i int) (int, error) {
-	if st.posStarted {
-		// A flag after the block of positional arguments closes it.
+	if st.cmd != nil {
+		// A flag of the command closes the block of positional arguments.
+		// A global flag in front of the command name does not, because
+		// nothing can be positional there: the first argument that is not
+		// a flag is the command.
 		st.posClosed = true
 	}
 	if err := st.conflicts(f); err != nil {
@@ -252,7 +268,9 @@ func (st *parser) value(f *FlagSpec, raw string) error {
 		return err
 	}
 	if at := invalidUTF8At(resolved); at >= 0 {
-		return errInvalidEncoding(f, at)
+		// argv was already judged whole, so what can still arrive
+		// undecodable here is a file or the standard input.
+		return errInvalidEncoding(f, raw, at)
 	}
 	resolved = normalizeNewlines(resolved)
 
@@ -274,27 +292,43 @@ func (st *parser) value(f *FlagSpec, raw string) error {
 
 // element applies to one value everything the specification says about a
 // value: the empty one, the closed alphabet of a token field, the one line of
-// a string field, a domain of fixed values, and the rules of repetition.
+// a string field, a domain of fixed values, and the rules of repetition. A
+// value of the form "<left>=<right>" is cut first and then the same rules
+// apply to each half, the alphabet to the key and the rest to the value, so
+// that none of them is unreachable for the flags that take a pair.
 func (st *parser) element(f *FlagSpec, v string) error {
+	key, value := "", v
 	if f.Pair != NotAPair {
-		return st.pair(f, v)
+		var err error
+		if key, value, err = splitPair(f, v); err != nil {
+			return err
+		}
+		if !f.Alphabet.allowed(key) {
+			return errMalformedToken(f, key)
+		}
 	}
-	if isEmpty(v) {
-		return st.empty(f, v)
+	if isEmpty(value) {
+		if key != "" {
+			// A pair with nothing on its right is the same kind of
+			// mistake as any other value the specification does not
+			// document as empty.
+			return errEmptyValue(f, key, v)
+		}
+		return st.empty(f, value)
 	}
-	if !f.Alphabet.allowed(v) {
-		return errMalformedToken(f, v)
+	if key == "" && !f.Alphabet.allowed(value) {
+		return errMalformedToken(f, value)
 	}
-	if f.SingleLine && strings.ContainsAny(v, "\n\r") {
-		return errMalformedString(f, v)
+	if f.SingleLine && strings.ContainsAny(value, "\n\r") {
+		return errMalformedString(f, value)
 	}
-	if len(f.Domain) > 0 && !contains(f.Domain, v) {
-		return errOutsideDomain(f, v)
+	if len(f.Domain) > 0 && !contains(f.Domain, value) {
+		return errOutsideDomain(f, value)
 	}
-	if err := st.repetition(f, v); err != nil {
-		return err
+	if key != "" {
+		return st.pair(f, key, value)
 	}
-	return nil
+	return st.repetition(f, value)
 }
 
 // empty resolves the table of docs/spec/valores-de-entrada.md#el-valor-vacío.
@@ -318,15 +352,19 @@ func (st *parser) empty(f *FlagSpec, v string) error {
 		// down untouched and internal/match answers with the code of an
 		// unknown value.
 		return st.repetition(f, v)
+	case f.Category == Scalar:
+		return errEmptyScalar(f)
 	}
-	return errEmptyScalar(f)
+	// Anywhere else, the empty value is nothing the specification
+	// documents, and the board's vocabulary has nothing to say about it, so
+	// it is a malformed command line and not an unknown value.
+	return errEmptyValue(f, "", v)
 }
 
-// pair splits a value of the form "<left>=<right>". Where it cuts is the
+// splitPair cuts a value of the form "<left>=<right>". Where it cuts is the
 // difference docs/spec/familias-de-flags.md#comentarios spells out, and the
 // table says which of the two rules each flag follows.
-func (st *parser) pair(f *FlagSpec, v string) error {
-	var key, value string
+func splitPair(f *FlagSpec, v string) (key, value string, err error) {
 	var ok bool
 	if f.Pair == PairAtLastEquals {
 		if idx := strings.LastIndex(v, "="); idx >= 0 {
@@ -336,23 +374,40 @@ func (st *parser) pair(f *FlagSpec, v string) error {
 		key, value, ok = strings.Cut(v, "=")
 	}
 	if !ok || key == "" {
-		return errMalformedPair(f, v)
+		return "", "", errMalformedPair(f, v)
 	}
-	if !f.Alphabet.allowed(key) {
-		return errMalformedToken(f, key)
-	}
-	// The same key twice in one call is not an error: the last value of the
-	// command line wins, with a warning, because a key of a map behaves like
-	// one more token and not like a scalar of the whole task.
+	return key, value, nil
+}
+
+// pair records one key of a flag whose value is a pair, and answers what the
+// same key twice in one call means. The two flags that take a pair answer
+// differently, and LastKeyWins is which of the two rules this one follows.
+func (st *parser) pair(f *FlagSpec, key, value string) error {
 	for _, o := range st.p.occs {
-		if o.flag == f && !o.dropped && o.key == key {
-			o.dropped = true
-			st.warn(Warning{
-				Code:    "duplicate_ext_key",
-				Message: fmt.Sprintf("%s: key %q given twice, kept last value", f.long(), key),
-				Fields:  map[string]any{"flag": f.long(), "key": key},
-			})
+		if o.flag != f || o.dropped || o.key != key {
+			continue
 		}
+		if !f.LastKeyWins {
+			// docs/spec/familias-de-flags.md#comentarios: the same key
+			// with two different values is the error of a repeated
+			// scalar, and with the same value it applies once and says
+			// nothing.
+			if o.value != value {
+				return errDuplicateKey(f, key, o.value, value)
+			}
+			return nil
+		}
+		// The last value of the command line wins, with a warning,
+		// because a key of a map behaves like one more token and not like
+		// a scalar of the whole task.
+		o.dropped = true
+		st.warnAgain("key\x00"+f.Name+"\x00"+key, func(times int) Warning {
+			return Warning{
+				Code:    "duplicate_ext_key",
+				Message: fmt.Sprintf("%s: key %q given %s, kept last value", f.long(), key, timesWritten(times)),
+				Fields:  map[string]any{"flag": f.long(), "key": key},
+			}
+		})
 	}
 	st.record(f, key, value)
 	return nil
@@ -369,10 +424,12 @@ func (st *parser) repetition(f *FlagSpec, v string) error {
 		}
 		if f.Repeatable {
 			if o.value == v {
-				st.warn(Warning{
-					Code:    "duplicate_flag_value",
-					Message: fmt.Sprintf("%s: %q given twice, kept once", f.long(), v),
-					Fields:  map[string]any{"flag": f.long(), "value": v},
+				st.warnAgain("value\x00"+f.Name+"\x00"+v, func(times int) Warning {
+					return Warning{
+						Code:    "duplicate_flag_value",
+						Message: fmt.Sprintf("%s: %q given %s, kept once", f.long(), v, timesWritten(times)),
+						Fields:  map[string]any{"flag": f.long(), "value": v},
+					}
 				})
 				return nil
 			}
@@ -409,12 +466,20 @@ func (st *parser) warnLiteralNewline(f *FlagSpec, v string) {
 
 // conflicts rejects a pair of flags that cannot share a call, such as any two
 // of --json, --quiet and --print, which ask for three different shapes of the
-// same output.
+// same output. The message names them in the order of the specification table
+// and not in the order they were typed, so that --json --quiet and --quiet
+// --json fail with the same text.
 func (st *parser) conflicts(f *FlagSpec) error {
 	for _, name := range f.Conflicts {
-		if other := st.given(name); other != nil {
-			return errIncompatible(other, f)
+		other := st.given(name)
+		if other == nil {
+			continue
 		}
+		first, second := other, f
+		if tableOrder(st.cmd, second) < tableOrder(st.cmd, first) {
+			first, second = second, first
+		}
+		return errIncompatible(first, second)
 	}
 	return nil
 }
@@ -426,6 +491,31 @@ func (st *parser) record(f *FlagSpec, key, value string) {
 
 func (st *parser) warn(w Warning) {
 	st.p.Warnings = append(st.p.Warnings, w)
+}
+
+// warnAgain reports something that repeats. The second appearance emits the
+// warning; the third and every one after it correct that same warning in place
+// instead of adding another one that would say "twice" again. id is what two
+// appearances of the same thing share, and build writes the text for a given
+// number of appearances.
+func (st *parser) warnAgain(id string, build func(times int) Warning) {
+	if at, ok := st.dupes[id]; ok {
+		st.times[id]++
+		st.p.Warnings[at] = build(st.times[id])
+		return
+	}
+	st.dupes[id] = len(st.p.Warnings)
+	st.times[id] = 2
+	st.warn(build(2))
+}
+
+// given writes how many times something was written, the way the warnings of
+// docs/spec/salida-y-terminal.md#notas-y-avisos say it.
+func timesWritten(times int) string {
+	if times == 2 {
+		return "twice"
+	}
+	return fmt.Sprintf("%d times", times)
 }
 
 // given returns the specification of a flag the call has already written, or
@@ -455,11 +545,20 @@ func (st *parser) finish() error {
 	// The two rules of docs/spec/cmd/flags-globales.md: neither flag is ever
 	// ignored in silence where it has nothing to do, and each one is
 	// defined over a different thing, so each has its own list.
-	if st.given("dry-run") != nil && st.cmd.ReadOnly {
-		return errReadOnlyFlag("--dry-run does not apply to a read-only command")
+	readOnly := st.cmd.ReadOnly
+	for _, name := range st.cmd.WriteFlags {
+		if st.given(name) != nil {
+			// biso doctor --fix is the case this exists for: the same
+			// command is read-only or not depending on one flag.
+			readOnly = false
+			break
+		}
 	}
-	if st.given("print") != nil && (st.cmd.ReadOnly || st.cmd.AffectsNoTask) {
-		return errReadOnlyFlag("--print does not apply to a command that affects no task")
+	if f := st.given("dry-run"); f != nil && readOnly {
+		return errReadOnlyFlag(f, "--dry-run does not apply to a read-only command")
+	}
+	if f := st.given("print"); f != nil && (readOnly || st.cmd.AffectsNoTask) {
+		return errReadOnlyFlag(f, "--print does not apply to a command that affects no task")
 	}
 	return nil
 }

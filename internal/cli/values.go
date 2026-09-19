@@ -60,6 +60,12 @@ func (st *parser) readValue(f *FlagSpec, raw string) (string, error) {
 // would store the empty value without anyone noticing.
 func (st *parser) readStdin(f *FlagSpec) (string, error) {
 	if st.stdinTakenBy != nil {
+		if st.stdinTakenBy == f {
+			// One flag repeated is not two flags fighting over the
+			// stream, and saying its name twice would read as a typo of
+			// the message itself.
+			return "", errStdinTwiceInOneFlag(f)
+		}
 		return "", errTwoStdin(st.stdinTakenBy, f)
 	}
 	st.stdinTakenBy = f
@@ -105,29 +111,43 @@ func invalidUTF8At(s string) int {
 	return -1
 }
 
-// splitList splits a value on its commas, where "\," is a literal comma, per
+// splitList splits a value on its commas, per
 // docs/spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas. A
-// backslash escapes a comma and nothing else, so any other backslash is part
-// of the value: a path or a URL keeps whatever it carries.
+// backslash escapes a comma and another backslash, and nothing else: "\," is a
+// literal comma, "\\" is a literal backslash, and a backslash in front of any
+// other character is part of the value, so a path or a URL keeps whatever it
+// carries. The second escape is what lets a value end in a backslash right
+// before a separating comma, which "\," alone made impossible.
 func splitList(s string) []string {
 	var (
-		out  []string
-		cur  []rune
-		prev rune
+		out     []string
+		cur     []rune
+		escaped bool
 	)
 	for _, r := range s {
-		switch {
-		case r == ',' && prev == '\\':
-			// The backslash was written to escape this comma, so it is
-			// not part of the value.
-			cur = append(cur[:len(cur)-1], ',')
-		case r == ',':
+		if escaped {
+			if r != ',' && r != '\\' {
+				// The backslash was not escaping anything, so it is
+				// part of the value.
+				cur = append(cur, '\\')
+			}
+			cur = append(cur, r)
+			escaped = false
+			continue
+		}
+		switch r {
+		case '\\':
+			escaped = true
+		case ',':
 			out = append(out, string(cur))
 			cur = nil
 		default:
 			cur = append(cur, r)
 		}
-		prev = r
+	}
+	if escaped {
+		// A value that ends in a lone backslash keeps it.
+		cur = append(cur, '\\')
 	}
 	return append(out, string(cur))
 }
