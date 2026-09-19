@@ -105,6 +105,12 @@ En `commit` y en `publish`, `{message}` se sustituye por el mensaje que `biso` c
 propio: `snapshot.ndjson`, `board.json` y el marcador `<id>.id`, siempre en ese orden y siempre como ruta
 relativa al directorio del tablero, sin `./` delante.
 
+**Los dos se sustituyen de forma distinta, y es por lo que cada uno produce.** `{message}` es un texto y
+se sustituye allí donde aparezca dentro de un argumento, así que valen igual `["-m", "{message}"]` y
+`["--message={message}"]`. `{files}` son tres argumentos, así que solo se sustituye cuando es el argumento
+entero; dentro de uno más largo se queda tal cual, porque no hay ninguna forma de meter tres argumentos
+dentro de uno y cualquier elección de separador sería inventada.
+
 **Son los tres que nombra la sección ["`biso snapshot`"](cmd/snapshot.md), y no los dos de la clave `files` del JSON de `biso
 snapshot`**, que son solo los que ese comando escribe. Los dos nombres se parecen y los dos conjuntos son
 distintos, así que conviene leerlos juntos antes de escribir una orden.
