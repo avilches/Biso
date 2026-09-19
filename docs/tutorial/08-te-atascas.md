@@ -51,6 +51,8 @@ Should the retry budget be shared with the download endpoint or kept separate?
 
 Exit code: `0`
 
+*(derived output, see [`biso get`](../spec/cmd/get.md); not literal spec text)*
+
 Now yours. Instead of picking a number out of thin air, you leave it written down as a
 question.
 

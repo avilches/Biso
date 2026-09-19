@@ -68,7 +68,10 @@ Las reglas que no se negocian:
   generador lo usa literal como texto del enlace, y `docs/spec/` se queda en español aunque el
   tutorial nazca en inglés. El generador **enlaza cada cita de un paso `derived`** en la página, y esa
   marca es el aparato de validación: lo literal ya está validado por estar en la especificación, lo
-  derivado es lo que hay que revisar. De 60 pasos, 7 son literales.
+  derivado es lo que hay que revisar. De 60 pasos, 3 son literales. **Un texto que lleve datos del tablero de ejemplo, como su
+  nombre, una ruta, un identificador o un recuento, nunca es `literal`**, aunque su forma salga de la
+  especificación: lo que hay ahí es la plantilla rellenada, y rellenarla es justo lo que hay que
+  revisar.
 - **`exit_code` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial
   que solo declara el código cuando falla enseña que el código solo importa al fallar, y en `biso` es
   al revés.

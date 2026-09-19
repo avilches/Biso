@@ -41,7 +41,7 @@ steps:
       @claude, 2026-09-06 09:30
       Should the retry budget be shared with the download endpoint or kept separate?
     exit_code: 0
-    source_kind: literal
+    source_kind: derived
     source:
       - spec/cmd/get.md "`biso get`"
   - narration: |

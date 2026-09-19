@@ -98,4 +98,6 @@ $ biso new --from incidencias.ndjson --dry-run
 
 Exit code: `0`
 
+*(derived output, see [`biso new`](../spec/cmd/new.md); not literal spec text)*
+
 *Note: This sentence really is literal from the specification, just with a different number. And this is where `--dry-run` earns its keep most, because an import file can bring in a type, a status or a key this board doesn't know, and a value the board doesn't know is always an error. With an import batch that means a single misspelled field on line 200 stops the 199 before it from being created at all. That sounds harsh and it's exactly what you want: the alternative would be a half-imported board and no reliable way to tell where it stopped. If validation failed, the code would be 7, not 4 or 3: seven means exactly "nothing was written because validation didn't pass," and it's distinct from the error for one specific bad value precisely because what it's reporting on is the whole batch.*
