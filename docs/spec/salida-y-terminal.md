@@ -77,7 +77,8 @@ ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
 | `clear_on_new_task` | `warning: --clear-labels has no effect on a new task` | cualquier `--clear-*` en `biso new` | `field` |
 | `unresolved_dependencies` | `warning: MYP-11 has unresolved dependencies: MYP-4 (To Do)` | al empezar una tarea bloqueada | `task`, `dependencies` |
 | `list_truncated` | `warning: 28 more tasks match; showing 30 of 58` | en `biso ls`, al recortar | `shown`, `matched` |
-| `duplicate_flag_value` | `warning: --add-labels: "urgent" given twice, kept once` | valor repetido en un flag de lista | `flag`, `value` |
+| `duplicate_flag_value` | `warning: --add-labels: "urgent" given twice, kept once` | valor repetido en un flag de lista; con tres apariciones o más es un solo aviso por valor y las cuenta: `given 3 times, kept once` | `flag`, `value` |
+| `duplicate_ext_key` | `warning: --ext: key "k" given twice, kept last value` | la misma clave de `--ext` escrita dos veces en la misma llamada (["Campos externos"](familias-de-flags.md#campos-externos)); con tres o más es un solo aviso por clave y las cuenta: `given 3 times, kept last value` | `flag`, `key` |
 | `literal_newline` | `warning: --append-desc contains a literal \n and no real newline; it will be stored as text` | ver ["Codificación y texto"](#codificación-y-texto) | `flag` |
 | `empty_append` | `warning: --append-note: empty value, nothing was added` | valor vacío en un flag que añade | `flag` |
 | `due_in_past` | `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada | `value` |
@@ -95,6 +96,14 @@ ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
 - La entrada y la salida son **UTF-8**, siempre, sea cual sea la configuración regional del sistema.
   Una secuencia de bytes inválida en un argumento o en un fichero de entrada es un error con código 3
   que señala la posición del byte.
+- **Los argumentos se comprueban todos, y antes de leer la línea de comandos**, incluidos el nombre
+  del comando y la grafía de un flag. El argumento inválido se nombra por su posición y viaja al
+  mensaje y a `given` con sus bytes escapados
+  (`error: invalid UTF-8 in argument 4 at byte 2: "ok\xffbad"`), porque un byte que no se puede
+  descodificar, puesto tal cual en la salida, se convierte en el carácter de reemplazo sin que nadie
+  lo note, y entonces el mensaje deja de decir qué llegó. Lo que se lee de un fichero o de la entrada
+  estándar se comprueba al leerlo, y ahí el mensaje sí nombra el flag
+  (["Cómo se lee la línea de comandos"](valores-de-entrada.md#cómo-se-lee-la-línea-de-comandos)).
 - Los saltos de línea de salida son `\n`. Al leer una entrada, `\r\n` y `\n` se aceptan por igual y
   se normalizan a `\n`.
 - El texto se guarda tal cual llega. **Ninguna secuencia de escape se interpreta.** Un `\n` literal

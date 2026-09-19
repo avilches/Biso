@@ -350,7 +350,7 @@ haber más de un `=` en la cadena.
 
 **El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguno de los
 dos, no durante el orden de escritura.** Caen en pasos distintos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)
-(`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada uno resolviera
+(`--rm-comment` en el 3, `--set-comment-date` en el 8), así que si se dejara que cada uno resolviera
 su selector en su propio paso, `--rm-comment` ya habría borrado el comentario para cuando
 `--set-comment-date` intentara corregirle la fecha, y el resultado sería un error 4 de "no existe" en
 vez de un conflicto. Para que la regla no dependa de ese orden, cada selector se resuelve contra la
@@ -418,7 +418,21 @@ warning: --ext: key "k" given twice, kept last value
 Es el mismo estilo que el aviso ya existente de valor repetido en una lista
 (["Campos de lista que admiten coma"](#campos-de-lista-que-admiten-coma)), y no el error 2 de un escalar
 repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)): cada clave de
-`--ext` se comporta como un token más de un mapa, no como un escalar único de toda la tarea.
+`--ext` se comporta como un token más de un mapa, no como un escalar único de toda la tarea. Con tres
+apariciones de la misma clave o más, el aviso sigue siendo uno solo y las cuenta
+(`warning: --ext: key "k" given 3 times, kept last value`).
+
+**Es justo la regla contraria a la de `--set-comment-date`** (["Comentarios"](#comentarios)), y la
+diferencia es deliberada: la fecha de un comentario es un dato único de ese comentario, así que
+fijarla dos veces con instantes distintos es la contradicción de un escalar repetido y es error 2,
+mientras que una clave de `ext` es una entrada más de un mapa y la última gana.
+
+**El valor de una clave de `--ext` es texto de una línea y no puede estar vacío.** Un `\r` o un `\n`
+es error 2 con el `code` `malformed_string_value` y `field` igual a `ext`
+(["El salto de línea en un campo `string`"](valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)),
+y `--ext k=` también es error 2, porque vaciar no se dice así: una clave se quita con `--rm-ext` y el
+mapa entero se vacía con `--clear-ext`
+(["Cómo se lee la línea de comandos"](valores-de-entrada.md#cómo-se-lee-la-línea-de-comandos)).
 
 **Quitar con `--rm-ext` una clave que el mapa no tiene también avisa en vez de fallar,** con el mismo
 patrón tolerante que el resto de quitas de esta sección (["Campos de lista que admiten coma"](#campos-de-lista-que-admiten-coma)):
