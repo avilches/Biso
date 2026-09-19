@@ -136,7 +136,7 @@ mandaba no era ese, sino el de la parte fija, que con los flags nuevos `--check-
 `--uncheck-dod` en la rejilla de `FIELD FLAGS` había bajado a 129 bytes de los 3.456: cualquier texto
 nuevo en el bloque fijo tenía que caber ahí, no en los 302 del total. Esos flags, y los demás
 de la definición de hecho, se retiraron después (["Se retira la definición de hecho"](detalles.md#se-retira-la-definición-de-hecho)),
-lo que devolvió a la parte fija unos 107 bytes; la cifra de 129 es la de aquel momento, no la de hoy.
+lo que devolvió a la parte fija unos 125 bytes; la cifra de 129 es la de aquel momento, no la de hoy.
 
 **Ese punto llegó, y las cifras de este apartado son historia.** El rediseño de los flags de campo
 de TASK-24 dejó pendiente cómo enseñarlos dentro de este presupuesto, y el experimento con un agente

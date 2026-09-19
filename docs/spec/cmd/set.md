@@ -123,8 +123,8 @@ warning: --replace-labels replaced 2 existing labels
 dice qué campos han cambiado de verdad, que no es lo mismo que qué flags se han pasado. En el lote
 de `new --from`, las 242 tareas van en `data.tasks` de **un solo sobre**, no en 242 objetos sueltos.
 
-**`acAdded` son las claves que la llamada acaba de crear**, en el mismo orden en que se
-crearon, vacía (`[]`) cuando no se creó ninguna. Están presentes en las mismas condiciones que el
+**`acAdded` es la lista de claves que la llamada acaba de crear**, en el mismo orden en que se
+crearon, vacía (`[]`) cuando no se creó ninguna. Está presente en las mismas condiciones que el
 resto de claves de `data.tasks` (["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias)): siempre, en todos los comandos que
 comparten este `kind`, incluido `new`, aunque su equivalente en texto plano solo aparezca en la línea
 de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)).

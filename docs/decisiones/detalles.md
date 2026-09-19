@@ -97,7 +97,7 @@ quien llama no sabía, nunca el eco de lo que acaba de escribir. Sobre una tarea
 contador de claves de sus criterios viene de antes, y quien llama no puede saberlo sin leer la tarea
 primero: es justo el dato que ese principio manda enseñar, y por eso va en la misma línea de estado
 que ya enseña el resto de derivados (`ac X/Y`, `urgency`), no en un sitio aparte. Sobre una
-tarea recién creada con `biso new`, en cambio, el contador de cada lista siempre empieza en 1, así que
+tarea recién creada con `biso new`, en cambio, el contador siempre empieza en 1, así que
 la clave de cada `--add-ac` es el mismo orden en que se escribieron los flags
 (["Los criterios y sus claves estables"](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)): quien llama ya lo sabe, y anunciarlo sería el eco que el principio 4
 prohíbe.
@@ -225,8 +225,12 @@ del 2026-09-15, y fue para inspeccionar qué forma tenía el Markdown resultante
 campo no se usaba poco: no se había usado nunca.
 
 **Por qué no se usaba, que no es lo mismo que por qué sobra.** En Backlog.md la definición de hecho
-está pensada como plantilla de proyecto, una lista reutilizable que se aplica sola a cada tarea nueva,
-y su guía para agentes desaconseja escribirla tarea por tarea. Esa plantilla nunca se configuró en
+está pensada como plantilla de proyecto, una lista reutilizable que se aplica sola a cada tarea nueva.
+Consta en la propia herramienta, versión 1.52.0 instalada en esta máquina: `backlog task create`
+ofrece `--no-dod-defaults` para desactivar esos valores por defecto del proyecto, y la guía que el
+CLI da a los agentes, `backlog instructions task-creation`, dice literalmente que esos valores se
+aplican solos y que solo hay que añadir elementos propios de una tarea cuando esa tarea necesite
+higiene de cierre extra. Esa plantilla nunca se configuró en
 ninguno de los cinco tableros, así que la sección no llegó a aparecer jamás. `biso` había copiado la
 mitad equivocada de ese diseño: se trajo la lista de la tarea y dejó fuera el nivel de proyecto, que
 era de donde venía el sentido. Una definición de hecho que hay que teclear tarea por tarea no es una
@@ -260,9 +264,10 @@ que sigue la herramienta: cada lista necesitaría nombre, un selector que la nom
 de marcado, y un sitio propio en la línea de estado, que hoy cabe entera en una línea justamente
 porque solo hay una lista que contar.
 
-**Qué cuesta, y por qué ahora.** La retirada toca unos quince ficheros de la especificación, el
-escenario 07 del tutorial, la tabla de correspondencia con otros modelos y unos 107 bytes de la parte
-fija del mensaje de arranque, que tiene tope duro (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)).
+**Qué cuesta, y por qué ahora.** La retirada toca unos quince ficheros de la especificación, ocho de
+los trece escenarios del tutorial (el séptimo reescrito entero y los otros siete retocados), la tabla
+de correspondencia con otros modelos y unos 125 bytes de la parte fija del mensaje de arranque, que
+tiene tope duro (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)).
 Se hace ahora porque no hay ni una línea de código Go escrita, así que el cambio es enteramente de
 documentación; cada día que el campo siguiera en la especificación sería un día más de superficie que
 después habría que implementar, probar y mantener para algo que nadie rellena.

@@ -109,4 +109,4 @@ Exit code: `0`
 
 *(derived output, see [`biso get`](../spec/cmd/get.md); not literal spec text)*
 
-*Note: There's no `lease` line: that only shows up when the task has a lease, and a task in To Do can't have one (per the task data model). The nine sections always appear, even when empty and marked `(empty)`, because leaving out one that wasn't requested would be confused with one that was requested and came back empty. Notice the `#1`, `#2` and `#3` keys in front of each criterion: they're stable, not a position in the list, so if `#2` ever gets removed the other two stay `#1` and `#3`, they never get renumbered.*
+*Note: There's no `lease` line: that only shows up when the task has a lease, and a task in To Do can't have one (per the task data model). The eight sections always appear, even when empty and marked `(empty)`, because leaving out one that wasn't requested would be confused with one that was requested and came back empty. Notice the `#1`, `#2` and `#3` keys in front of each criterion: they're stable, not a position in the list, so if `#2` ever gets removed the other two stay `#1` and `#3`, they never get renumbered.*

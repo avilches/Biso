@@ -34,10 +34,16 @@ importación falla con los errores que ya define ["El modo lote"](new.md#el-modo
 un fallo de esta garantía. Reconstruir también el vocabulario, para un tablero destino que no lo
 declara de antemano, es lo que hace `snapshot` con `init --from`, más abajo.
 
-La salida es NDJSON, una tarea por línea, con **exactamente** las claves que acepta `biso new --from`,
+La salida es NDJSON, una tarea por línea, con las claves que acepta `biso new --from`,
 en la forma de objeto que esa sección define para los criterios, los comentarios y la pregunta
 abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
 y las claves estables de cada criterio **y de cada comentario** (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), ["Los comentarios"](../modelo-de-datos/comentarios.md#los-comentarios)).
+
+**El formato de entrada de `biso new --from` es un superconjunto del de salida, y la diferencia es
+una sola clave.** `new --from` acepta además `definitionOfDone`, que `export` no escribe nunca porque
+no es un campo del modelo, y la convierte en criterios de aceptación (["`biso new`"](new.md)). La
+garantía de la ida y vuelta no se resiente: lo que `export` escribe, `new --from` lo lee campo a
+campo, y esa clave solo aparece en lotes que vengan de fuera.
 
 **Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md).** `question` sale en `export` y
 entra de vuelta con `new --from`, con sus tres partes completas.

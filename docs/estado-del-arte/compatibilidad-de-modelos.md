@@ -52,7 +52,7 @@ estados no es lo mismo que no perder nada al importar esos mismos estados de vue
 casos el campo sigue siendo "con transformación". Cada tabla dice explícitamente, en su prosa de
 después, en qué sentido concreto ocurre cada pérdida.
 
-**El porcentaje es (directa + transformación) / 29**, sobre el total de campos guardados de `biso`,
+**El porcentaje es (directa + transformación) / 28**, sobre el total de campos guardados de `biso`,
 igual en los dos sentidos salvo que la prosa de después de la tabla diga lo contrario para un campo
 suelto.
 
@@ -60,13 +60,13 @@ suelto.
 
 | Sistema | Cobertura al exportar | Cobertura al importar |
 |---|---|---|
-| Backlog.md | 24/29 ≈ 83 % | 24/29 ≈ 83 % |
-| Linear | 17/29 ≈ 59 % | 17/29 ≈ 59 % |
-| Trello | 17/29 ≈ 59 % | 17/29 ≈ 59 % |
-| Beads (`bd`) | 16/29 ≈ 55 % | 16/29 ≈ 55 % |
-| GitHub Issues | 13/29 ≈ 45 % | 13/29 ≈ 45 % |
-| Taskwarrior | 12/29 ≈ 41 % | 12/29 ≈ 41 % |
-| Task Master | 9/29 ≈ 31 % | 9/29 ≈ 31 % |
+| Backlog.md | 23/28 ≈ 82 % | 23/28 ≈ 82 % |
+| Linear | 17/28 ≈ 61 % | 17/28 ≈ 61 % |
+| Trello | 16/28 ≈ 57 % | 16/28 ≈ 57 % |
+| Beads (`bd`) | 16/28 ≈ 57 % | 16/28 ≈ 57 % |
+| GitHub Issues | 13/28 ≈ 46 % | 13/28 ≈ 46 % |
+| Taskwarrior | 12/28 ≈ 43 % | 12/28 ≈ 43 % |
+| Task Master | 9/28 ≈ 32 % | 9/28 ≈ 32 % |
 
 **La misma comparación, en una sola tabla.** "Sí" es la correspondencia directa, "Transf." es con
 transformación, y "No" agrupa tanto la ausencia de campo como los pocos casos marcados como "sin
@@ -174,7 +174,7 @@ huecos en sus claves ni un campo de autor de tarea, `biso` simplemente asigna cl
 consecutivas y deja `author` vacío, que son exactamente sus valores por defecto. La única pérdida
 real en este sentido es la de precisión de fecha, que ya venía perdida del lado de Backlog.md.
 
-**Cobertura: 24/29 ≈ 83 % en los dos sentidos.**
+**Cobertura: 23/28 ≈ 82 % en los dos sentidos.**
 
 ## Linear
 
@@ -224,7 +224,7 @@ modela tampoco llega para perderse. Sí se pierde la información propia de Line
 en `biso`: los hilos de comentarios, el estado resuelto/no resuelto, el `cycle` y el `project` a los
 que pertenece el issue.
 
-**Cobertura: 17/29 ≈ 59 % en los dos sentidos.**
+**Cobertura: 17/28 ≈ 61 % en los dos sentidos.**
 
 ## Trello
 
@@ -273,7 +273,7 @@ propio de Trello sin sitio en `biso`: `pos` como orden fino entre tarjetas de un
 Custom Fields no declarados de antemano en un tablero de `biso` (que no tiene ese concepto), y el
 board/list como jerarquía de agrupación.
 
-**Cobertura: 17/29 ≈ 59 % en los dos sentidos.**
+**Cobertura: 16/28 ≈ 57 % en los dos sentidos.**
 
 ## Beads (`bd`)
 
@@ -321,7 +321,7 @@ el `payload` JSON asociado al issue, la lista `waiters`, y los tipos de relació
 bloqueo ni de jerarquía (`related`, `tracks`, `discovered-from`, `caused-by`, `validates`,
 `supersedes`).
 
-**Cobertura: 16/29 ≈ 55 % en los dos sentidos.**
+**Cobertura: 16/28 ≈ 57 % en los dos sentidos.**
 
 ## GitHub Issues
 
@@ -371,7 +371,7 @@ activos se ven todos como `open`). Todo lo que no tiene equivalente: `priority`,
 se mapea sin pérdida a dos valores del vocabulario de `biso`. Se pierde lo propio de GitHub sin sitio
 en `biso`: `milestone`, `locked`/`active_lock_reason`, y el resumen `issue_dependencies_summary`.
 
-**Cobertura: 13/29 ≈ 45 % en los dos sentidos.**
+**Cobertura: 13/28 ≈ 46 % en los dos sentidos.**
 
 ## Taskwarrior
 
@@ -424,7 +424,7 @@ campos. Se pierde lo propio de Taskwarrior sin sitio en `biso`: `wait` (ocultar 
 fecha), `recur`/`mask` (la recurrencia entera, que `biso` no modela), y cualquier UDA que el usuario
 haya declarado con su propio significado.
 
-**Cobertura: 12/29 ≈ 41 % en los dos sentidos.**
+**Cobertura: 12/28 ≈ 43 % en los dos sentidos.**
 
 ## Task Master (`claude-task-master`)
 
@@ -470,7 +470,7 @@ todo lo relativo a personas (`assignees`, `author`), `labels`, `references`, `do
 en origen. Se pierde lo propio de Task Master sin sitio en `biso`: el informe aparte de complejidad
 (`task-complexity-report.json`), y el nivel de "tags" que agrupa varios `tasks.json` en uno.
 
-**Cobertura: 9/29 ≈ 31 % en los dos sentidos.**
+**Cobertura: 9/28 ≈ 32 % en los dos sentidos.**
 
 ## Qué quedó sin verificar
 

@@ -17,9 +17,9 @@
 
 The retry works, it's documented, and someone has given it a quick look over in the comments.
 Before closing TASK-19 you go back over the acceptance criteria, and realize that several
-things you've already done were never written down as a criterion: the backoff, the tests, the
-endpoint documentation and the log. You add them before checking anything off, so the final
-record tells the whole story.
+things you've already done were never written down as a criterion: the backoff, the test for the
+success case, the endpoint documentation and the log. You add them before checking anything off,
+so the final record tells the whole story.
 
 !!! abstract "What this scenario teaches"
     - The `--check-ac` and `--uncheck-ac` flags accept five selector forms, all repeatable and all combinable in the same call: a single key, a range, a comma-separated list, `all`, or the criterion's text.

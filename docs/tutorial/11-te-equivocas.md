@@ -84,7 +84,7 @@ Exit code: `5`
 
 *(derived output, see [La búsqueda por texto](../spec/referencias.md#la-búsqueda-por-texto); not literal spec text)*
 
-*Note: All three tasks have «retry» in the title, so none of them wins by having it in the title while the others only have it in the body (the text search rule): all three are candidates equally. The program doesn't choose for you. Exit code 5 (AMBIGUOUS), and the three rows go to stdout, in the same column format as `biso ls`, sorted by urgency because none of them carries an `ordinal`: TASK-60 has an open question, so it doesn't add the active-task term, but it's high priority; TASK-33 is medium priority; TASK-19 is already done, so its urgency is 0.0 (a task in a terminal state always has urgency 0.0) and it comes last. TASK-19's `ac 6/6` carries straight over from how chapter 10 closes it: the two original criteria plus the four it adds there, all checked.*
+*Note: All three tasks have «retry» in the title, so none of them wins by having it in the title while the others only have it in the body (the text search rule): all three are candidates equally. The program doesn't choose for you. Exit code 5 (AMBIGUOUS), and the three rows go to stdout, in the same column format as `biso ls`, sorted by urgency because none of them carries an `ordinal`: TASK-60 has an open question, so it doesn't add the active-task term, but it's high priority; TASK-33 is medium priority; TASK-19 is already done, so its urgency is 0.0 (a task in a terminal state always has urgency 0.0) and it comes last. TASK-19's `ac 6/6` carries straight over from how chapter 10 closes it: the two criteria it arrived with plus the four it adds there, all checked.*
 
 You type the number by hand, but an extra digit sneaks in.
 

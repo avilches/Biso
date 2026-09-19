@@ -57,7 +57,7 @@ Exit code: `0`
 
 *(derived output, see [Campos de lista sin coma (criterios)](../spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios), [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
-*Note: Note what just happened: "someone else reviews it" is not about whether the retry works, and another tool would file it under a separate definition of done. In `biso` there is no second list, so it goes here, as one more criterion. The line ends in `added ac #3` because the call created an element and you couldn't have known its key without reading the task first.*
+*Note: Look at what just happened: "someone else reviews it" is not about whether the retry works, and another tool would file it under a separate definition of done. In `biso` there is no second list, so it goes here, as one more criterion. The line ends in `added ac #3` because the call created an element and you couldn't have known its key without reading the task first.*
 
 And a second thing that needs to be clear before closing: that the retry behavior gets
 documented somewhere, for whoever reads this later.

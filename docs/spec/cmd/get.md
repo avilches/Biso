@@ -37,10 +37,10 @@ La resolución de `<ref>` está en la sección ["Cómo se resuelve una referenci
 | La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched MYP-11` por stderr |
 | La tarea está archivada | Se imprime, con `note: MYP-11 is archived` por stderr |
 | La tarea no se puede leer | Error 3, según la regla de lectura dirigida de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
-| `--section` con un nombre inventado | Error 2, con los nueve nombres válidos |
+| `--section` con un nombre inventado | Error 2, con los ocho nombres válidos |
 | `--section` de una sección vacía | No imprime esa sección, y si no queda ninguna sección que imprimir, la salida está vacía y el código sigue siendo 0 |
 
-**Sin `--section`, la ficha completa imprime siempre las nueve secciones fijas, vacías incluidas,
+**Sin `--section`, la ficha completa imprime siempre las ocho secciones fijas, vacías incluidas,
 marcadas con `(empty)`.** Es solo con `--section` que una sección vacía se omite en vez de imprimirse
 vacía; sin el flag, omitir una sección la confundiría con una que no se ha pedido.
 
@@ -98,7 +98,7 @@ Los encabezados de esta salida son un formato de presentación, no un formato de
 el otro. Pertenece al bloque de metadatos, así que la trae `--section meta` y no ninguna otra sección.
 Es la única línea condicional de ese bloque, y por eso va al final de las líneas de dos campos: así
 ninguna de las de arriba cambia de sitio según la tarea. Eso no choca con la regla de que la ficha
-completa imprime las nueve secciones aunque estén vacías, porque lo condicional es una línea del bloque
+completa imprime las ocho secciones aunque estén vacías, porque lo condicional es una línea del bloque
 y no el bloque. Una tarea sin arrendamiento **no imprime la línea**, en vez de imprimirla con dos
 guiones, porque eso pondría dos guiones en la ficha de casi todas las tareas del tablero y la ausencia
 de la línea dice lo mismo. Esta es la única forma de ver los campos sin `--json`: `biso prime` no

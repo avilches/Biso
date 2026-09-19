@@ -96,25 +96,44 @@ Las reglas del lote, todas obligatorias:
 - **`acceptanceCriteria` acepta dos formas.** Una cadena, que crea un elemento sin marcar con la
   siguiente clave libre, o un objeto con `key`, `text` y `checked`. Las dos formas se pueden mezclar
   dentro de la misma lista. Una `key` repetida dentro de la misma tarea es un fallo de validación.
-- **El contador de claves se sitúa por encima de la clave mayor importada**, contando también las que
-  reciben los elementos convertidos de `definitionOfDone`, de modo que un criterio añadido después
-  nunca choca con uno importado. El contador no es una clave del formato: se deduce.
+- **El contador de claves se sitúa por encima de la clave mayor que tenga la tarea al acabar de
+  importarla**, de modo que un criterio añadido después nunca choca con uno importado. El contador no
+  es una clave del formato: se deduce.
 - **`definitionOfDone` se acepta, se convierte en criterios de aceptación y avisa.** Es la única clave
   ajena al modelo que no es un fallo de validación, y existe por una razón concreta: la definición de
   hecho estuvo en `biso` y sigue estando en Backlog.md, de donde viene la mayoría de los lotes de
   importación (["Se retira la definición de hecho"](../../decisiones/detalles.md#se-retira-la-definición-de-hecho)).
-  Cada elemento entra al final de `acceptanceCriteria` conservando su `text` y su `checked`, en el
-  orden en que venían y después de los criterios que traiga la misma línea. **Su `key` original se
-  descarta y recibe la siguiente clave libre del contador**, porque las dos listas tenían contadores
-  independientes y un elemento de cada una puede traer perfectamente la misma. Acepta las mismas dos
-  formas que `acceptanceCriteria`, la cadena y el objeto. Por cada tarea del lote que traiga la clave,
-  la llamada emite el aviso `imported_dod_merged` (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)), y el lote
-  no falla por ello. Estas dos líneas importan la misma tarea:
+  Acepta las mismas dos formas que `acceptanceCriteria`, la cadena y el objeto. La conversión es un
+  procedimiento en tres pasos, en este orden:
+
+    1. Se importa `acceptanceCriteria` con sus propias reglas, y el contador de la tarea queda por
+       encima de la clave mayor que haya entrado por ahí.
+    2. Cada elemento de `definitionOfDone` se añade al final de la lista, en el orden en que venía,
+       conservando su `text` y su `checked` y **tomando la siguiente clave libre del contador**. Su
+       `key` original, si la trae, se descarta sin mirarla: las dos listas tenían contadores
+       independientes, así que un elemento de cada una puede traer perfectamente la misma, y una
+       `key` repetida dentro de `definitionOfDone` tampoco es un fallo de validación por el mismo
+       motivo. Es la única diferencia con `acceptanceCriteria`, donde la `key` sí se respeta y
+       repetirla sí es un fallo.
+    3. Si se convirtió **al menos un** elemento, la tarea emite el aviso `imported_dod_merged`
+       (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Una lista vacía no avisa de
+       nada, porque no se ha convertido nada, y el lote no falla en ninguno de los dos casos.
+
+    `definitionOfDone: null` equivale a que la clave no viniera, y no es un fallo de validación: la
+    regla de que `null` en una lista es un fallo vale para las listas del modelo, y esta no lo es.
+    Estas dos líneas importan la misma tarea:
   ```json
   {"title":"Normalize CRLF","acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":false}]}
   {"title":"Normalize CRLF","acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":2,"text":"Reviewed","checked":false}]}
   ```
   La primera avisa y la segunda no, y las dos dejan la misma tarea.
+- **Las claves que la conversión crea son lo único que `biso new` sí anuncia.** La salida de `new` no
+  dice nunca qué clave recibió un criterio, porque quien llama puede deducirla (["Dónde se anuncia la
+  clave de un criterio recién creado"](../../decisiones/detalles.md#dónde-se-anuncia-la-clave-de-un-criterio-recién-creado)),
+  y en un lote con `definitionOfDone` eso deja de ser cierto: las claves salen de un contador que
+  depende de lo que trajera `acceptanceCriteria` en esa misma línea. Por eso `acAdded` lleva, para esa
+  tarea, las claves de los elementos convertidos, en el orden en que se crearon, y el aviso dice
+  cuántos fueron.
 - **`comments` es una lista de objetos** con `author`, `createdAt`, `body` y, opcionalmente, `key`.
   `createdAt` es opcional y, si falta, se pone el instante de la importación. `key` sigue la misma
   regla que la de `acceptanceCriteria`
@@ -156,8 +175,8 @@ Las reglas del lote, todas obligatorias:
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
   órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta.
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
-  escriben, y el mensaje dice la línea y la clave. La única excepción es `definitionOfDone`, que se
-  convierte con la regla de más arriba en vez de fallar.
+  escriben, y el mensaje dice la línea y la clave. La única excepción es `definitionOfDone`, con
+  cualquiera de sus valores admitidos, que se convierte con la regla de más arriba en vez de fallar.
 - **Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) no se aceptan.** En la entrada son claves desconocidas y
   por tanto un fallo de validación.
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de

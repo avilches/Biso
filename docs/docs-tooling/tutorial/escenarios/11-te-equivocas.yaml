@@ -94,7 +94,7 @@ steps:
       carries an `ordinal`: TASK-60 has an open question, so it doesn't add the active-task term,
       but it's high priority; TASK-33 is medium priority; TASK-19 is already done, so its urgency
       is 0.0 (a task in a terminal state always has urgency 0.0) and it comes last. TASK-19's
-      `ac 6/6` carries straight over from how chapter 10 closes it: the two original criteria plus
+      `ac 6/6` carries straight over from how chapter 10 closes it: the two criteria it arrived with plus
       the four it adds there, all checked.
 
   - narration: |

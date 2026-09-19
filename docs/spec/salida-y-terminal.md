@@ -88,7 +88,7 @@ ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
 | `open_question_on_start` | `warning: MYP-11 has an open question, asked by @sara` | al empezar una tarea con una pregunta abierta | `task`, `author` |
 | `open_question_on_terminal` | `warning: MYP-11 moved to Done with an open question, asked by @sara` | al llegar a un estado terminal con una pregunta abierta | `task`, `author` |
 | `lease_held` | `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z` | al escribir sobre una tarea cuyo arrendamiento está vivo y es de otra identidad, con `biso start` o con cualquier otra escritura (["La renovación"](lease.md#la-renovación) de `lease.md`, ["Saber si alguien está trabajando de verdad"](../decisiones/modelo-de-estados.md#saber-si-alguien-está-trabajando-de-verdad), y ["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)) | `task`, `holder`, `until` |
-| `imported_dod_merged` | `warning: MYP-101: 2 definition-of-done items imported as acceptance criteria` | en `biso new --from`, por cada tarea del lote que traiga `definitionOfDone` (["`biso new`"](cmd/new.md)) | `task`, `count` |
+| `imported_dod_merged` | `warning: line 14: 2 definition-of-done items imported as acceptance criteria` | en `biso new --from`, por cada línea del lote que convierta al menos un elemento de `definitionOfDone` (["`biso new`"](cmd/new.md)). Nombra la línea y no la tarea porque el identificador puede no existir todavía, y así el aviso es el mismo con `--dry-run` que sin él | `line`, `count` |
 
 ## Codificación y texto
 

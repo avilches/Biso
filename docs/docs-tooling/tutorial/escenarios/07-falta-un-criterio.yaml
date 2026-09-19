@@ -51,7 +51,7 @@ steps:
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
-      Note what just happened: "someone else reviews it" is not about whether the retry works,
+      Look at what just happened: "someone else reviews it" is not about whether the retry works,
       and another tool would file it under a separate definition of done. In `biso` there is no
       second list, so it goes here, as one more criterion. The line ends in `added ac #3` because
       the call created an element and you couldn't have known its key without reading the task
@@ -209,8 +209,7 @@ board_in: >
   TASK-19 in In Progress, assigned to @claude, with a live lease held by @claude (renewed in
   scenario 6). ac 0/2 unchecked (the two criteria it carries from the initial inventory, keys #1
   and #2). Urgency 11.0 (priority high 6.0, active 4.0, has criteria 1.0, no due date or declared
-  dependencies; the age term is taken as 0 for lack of a documented creation date for this task,
-  see tutorial/lagunas/07-10.md). Board counters: To Do 54 | In Progress 5 | Done 190, as they
+  dependencies; the age term is 0 because the task was created on the board's reference date). Board counters: To Do 54 | In Progress 5 | Done 190, as they
   stand after scenario 5 (which moves TASK-19 from To Do to In Progress) without scenario 6
   touching them.
 board_out: >
