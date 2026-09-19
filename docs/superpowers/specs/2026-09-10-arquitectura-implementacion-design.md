@@ -156,6 +156,7 @@ type Error struct {
     ExitCode int      // the exit code, see docs/spec/codigos-de-salida.md
     Code     string   // the identifier, see docs/spec/contrato-json.md#los-identificadores-de-error
     Message  string   // the text that follows "error: " on stderr
+    Hint     string   // the text that follows "hint: " on stderr, empty when the case has none
 
     // The five detail fields from docs/spec/contrato-json.md#los-errores-en-json, each present
     // only on the subset of codes it corresponds to per that same table; on the rest they stay
@@ -167,6 +168,16 @@ type Error struct {
     VCSOutput []string // only on vcs_commit_failed and vcs_push_failed
 }
 ```
+
+**`Hint` decidido el 2026-09-19.** Buena parte de los casos de `docs/spec/` llevan una segunda línea
+`hint: ...` por stderr, con texto que casi siempre depende de datos concretos del caso (los dos
+directorios de un `id` duplicado, cuántas tareas usan un estado, el `id` que hay que adoptar). Vive en
+`model.Error`, en el mismo sitio y con la misma disciplina que `Message`, en vez de en una tabla
+`code -> hint` aparte en `internal/cli`, porque la mayoría de los hints no son fijos: solo quien
+detecta el error, en la capa que sea, tiene los datos concretos para construirlo. `cmd/biso/main.go`
+imprime la segunda línea solo cuando `Hint` no está vacío. **No entra en el sobre JSON**:
+`docs/spec/contrato-json.md#los-errores-en-json` no tiene una clave `hint` en el objeto de error, así
+que este campo es exclusivo de la salida de texto.
 
 (El código Go va siempre en inglés, según el `CLAUDE.md` del proyecto; la prosa de este documento
 sigue en español.)
