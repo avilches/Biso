@@ -9,19 +9,32 @@ Dado un valor de entrada `v` y la lista de valores configurados, el programa cal
 
 ```
 normalizar(x):
-  1. pasar x a minusculas segun Unicode
+  1. plegar mayusculas y minusculas segun Unicode (case folding), no pasar a minusculas
   2. descomponer y quitar los diacriticos (acentos, dieresis, cedillas)
   3. eliminar TODOS los caracteres que sean espacio, tabulador, guion (-) o guion bajo (_)
   4. devolver lo que queda
 
 coincidir(v, configurados):
   a. si existe un configurado c con c == v exactamente, devolver c
-  b. si no, calcular normalizar(v) y compararlo con normalizar(c) de cada configurado
+  b. si no, calcular normalizar(v) y compararlo con normalizar(c) de cada
+     configurado, contando una sola vez los configurados repetidos letra por letra
   c. si exactamente un configurado coincide, devolverlo
   d. si ninguno coincide, error 3
-  e. si coinciden dos o mas, error 3 con los dos listados, porque el tablero
-     tiene dos valores que se normalizan igual y hay que desambiguarlos
+  e. si coinciden dos o mas configurados distintos, error 3 con los dos listados,
+     porque el tablero tiene dos valores que se normalizan igual y hay que
+     desambiguarlos
 ```
+
+**Qué es el paso 1, y por qué no es pasar a minúsculas.** El paso 1 es el **plegado de mayúsculas
+y minúsculas de Unicode** (el *case folding*), la misma regla que ["Selectores de
+criterios"](familias-de-flags.md#selectores-de-criterios) fija para el fragmento de un selector de
+texto. Pasar a minúsculas no vale, y la diferencia no es teórica: el griego escribe la sigma final
+de una palabra con un carácter distinto (`ς`) del de la sigma de en medio (`σ`), y pasar a
+minúsculas la forma en mayúsculas de un estado que acabe en sigma da una cadena que no es igual a
+la de ese mismo estado tecleado en minúsculas. Un tablero con el estado `Δοκιμές` rechazaría
+`ΔΟΚΙΜΕΣ`, que es su propio estado escrito en mayúsculas. El plegado lleva las dos escrituras al
+mismo representante y las dos coinciden. Lo mismo hace con el signo de micro y la `μ`, con el
+signo de kelvin y la `k`, y con la ese larga `ſ` y la `s`.
 
 **Qué cuenta como separador en el paso 3.** Exactamente cuatro caracteres, y ningún otro: el
 espacio (U+0020), el tabulador (U+0009), el guion (U+002D) y el guion bajo (U+005F). Ningún otro
@@ -33,9 +46,12 @@ corresponde a un valor que casi siempre llegó ahí por accidente.
 NFD), y lo que se elimina de ella son las marcas combinantes (la categoría Mn). Quitar el
 diacrítico nunca sustituye una letra por otra que no sea su base: `ñ` da `n` y `ü` da `u`, pero
 `ß`, `ø` y `æ` se quedan como están, porque ninguna de las tres es una letra con un acento encima.
-Una marca combinante suelta se elimina siempre, esté donde esté; una letra precompuesta se
+Una marca combinante suelta se elimina siempre, esté donde esté; un carácter precompuesto se
 descompone si pertenece a los bloques latinos, griego o cirílico (U+00C0 a U+024F, U+0370 a U+04FF
-y U+1E00 a U+1FFF), y fuera de ellos conserva su diacrítico.
+y U+1E00 a U+1FFF), y fuera de ellos conserva su diacrítico. La regla se aplica a todo carácter de
+esos bloques y no solo a las letras: catorce de ellos son signos y no letras (U+037E, U+0385,
+U+0387, U+1FC1, U+1FCD a U+1FCF, U+1FDD a U+1FDF, U+1FED, U+1FEE, U+1FEF y U+1FFD), y también se
+descomponen, aunque ninguno aparezca nunca dentro de un estado de un tablero real.
 
 Un ejemplo con un tablero creado con los estados por defecto. La configuración de un tablero vive
 dentro de su base de datos y no en un fichero que se edite a mano, así que se consulta con
@@ -64,6 +80,17 @@ Uno de sus tres estados es `To Do`. Con el algoritmo de arriba, estas entradas s
 | `To Do.` | `todo.` | error 3: el punto no está entre los caracteres que se eliminan, así que `todo.` no es igual a `todo` ni a la forma normalizada de ningún otro estado (`inprogress`, `done`) |
 | `To.Do` | `to.do` | error 3, por lo mismo: el punto se queda y `to.do` no coincide con ningún estado |
 
+**No hay coincidencia por prefijo ni por parecido.** `coincidir()` nunca sugiere nada: o
+encuentra una coincidencia exacta o normalizada, o es error 3. Lo que sí sugiere candidatos
+parecidos es un algoritmo aparte, para el mensaje de error de las demás reglas de la
+especificación que lo prometen.
+
+**Un valor de solo espacios no llega hasta aquí.** Una cadena que solo lleva espacios es el valor
+vacío, y quien la convierte en la cadena vacía es la capa que la lee (un flag, un fichero o la
+entrada estándar), según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío). `coincidir()`
+recibe el valor ya resuelto y no vuelve a aplicar esa regla: cita en su mensaje exactamente lo que
+le dan.
+
 ### Cuando el tablero tiene dos valores que se normalizan igual
 
 El paso e es el único de los cinco que no culpa a quien escribe, sino al tablero: si sus estados
@@ -85,10 +112,12 @@ los lista todos.
 **El paso a manda por encima de este**, que es lo que deja una salida sin tocar la configuración:
 en ese mismo tablero, `To Do` y `To-Do` escritos exactamente resuelven cada uno al suyo, sin error.
 
-**No hay coincidencia por prefijo ni por parecido.** `coincidir()` nunca sugiere nada: o
-encuentra una coincidencia exacta o normalizada, o es error 3. Lo que sí sugiere candidatos
-parecidos es un algoritmo aparte, para el mensaje de error de las demás reglas de la
-especificación que lo prometen.
+**Dos valores configurados idénticos letra por letra son el mismo valor, no una ambigüedad.** Si la
+configuración lista `To Do` dos veces, `todo` resuelve a `To Do` por el paso c, como si estuviera
+una sola vez: el paso b descarta los duplicados exactos antes de contar, así que la ambigüedad del
+paso e solo existe cuando los que se normalizan igual son valores **distintos**. Inventar un empate
+entre un valor y su propia copia le pediría a quien escribe que desambiguara algo que no tiene dos
+respuestas.
 
 ## El algoritmo de sugerencias más parecidas
 

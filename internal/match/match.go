@@ -27,6 +27,8 @@ const (
 //   - an exactly equal configured value wins, even when the board has two
 //     values that normalize the same;
 //   - otherwise the normalized forms are compared, and exactly one match wins;
+//     a configured value repeated letter for letter counts once, because it is
+//     the same value listed twice and not two values to disambiguate;
 //   - no match is exit code 3 with the code "unknown_<field>";
 //   - two or more matches is exit code 3 with the code "ambiguous_vocabulary",
 //     because the board itself is what has to be disambiguated.
@@ -35,6 +37,14 @@ const (
 // stores or filters by it always sees the board's own vocabulary. The error,
 // when there is one, is always a *model.Error and already carries the values
 // the layer that prints it needs: the caller neither reinterprets nor wraps it.
+//
+// The value arrives already resolved by the layer that read it, and Match
+// does not second-guess it. In particular, a value of nothing but spaces is
+// the empty value by docs/spec/valores-de-entrada.md#el-valor-vacío, and it is
+// that layer, the one that reads a flag, a file or standard input, that turns
+// it into the empty string. Match quotes in its message whatever it was
+// given, so a board that ever printed unknown status: "   " would be
+// reporting a caller that skipped that conversion, not a rule of its own.
 //
 // The same call serves writing and filtering. That is not a convention that
 // each command follows on its own, it is the only implementation there is,
@@ -51,9 +61,13 @@ func Match(field Field, value string, configured []string) (string, error) {
 	normalized := Normalize(value)
 	var matches []string
 	for _, c := range configured {
-		if Normalize(c) == normalized {
-			matches = append(matches, c)
+		if Normalize(c) != normalized {
+			continue
 		}
+		if contains(matches, c) {
+			continue
+		}
+		matches = append(matches, c)
 	}
 
 	switch len(matches) {
@@ -80,6 +94,18 @@ func Match(field Field, value string, configured []string) (string, error) {
 			Valid: matches,
 		}
 	}
+}
+
+// contains says whether values already holds this exact spelling. It is the
+// deduplication of step b: a board that lists the same value twice has one
+// value, so it can never be the ambiguity of step e.
+func contains(values []string, value string) bool {
+	for _, v := range values {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 // copyOf returns a copy of the given values, so that an error travelling up

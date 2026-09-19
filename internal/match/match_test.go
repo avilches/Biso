@@ -24,36 +24,49 @@ func asBisoError(t *testing.T, err error) *model.Error {
 // docs/spec/vocabularios.md#el-algoritmo-de-coincidencia row by row.
 func TestMatchTable(t *testing.T) {
 	cases := []struct {
-		name    string
-		in      string
-		want    string
-		wantErr bool
+		name string
+		in   string
+		// want is the configured value the row resolves to, and wantCode the
+		// error code of the row that fails. Exactly one of the two is set: a
+		// row that fails says which error it is, not just that there was one.
+		want     string
+		wantCode string
 	}{
-		{"exact match wins by step a", "To Do", "To Do", false},
-		{"lowercase", "todo", "To Do", false},
-		{"uppercase", "TODO", "To Do", false},
-		{"hyphen is removed", "To-Do", "To Do", false},
-		{"underscore is removed", "TO_DO", "To Do", false},
-		{"every space is removed", "to  do", "To Do", false},
-		{"an embedded tab is removed", "To\tDo", "To Do", false},
-		{"a trailing dot is not removed", "To Do.", "", true},
-		{"a dot in the middle is not removed", "To.Do", "", true},
-		{"another status, spelled loosely", "in progress", "In Progress", false},
-		{"another status, with a hyphen", "In-Progress", "In Progress", false},
-		{"the terminal status", "DONE", "Done", false},
-		{"a status the board does not have", "Pending", "", true},
-		{"the empty value", "", "", true},
-		{"only separators", "-_", "", true},
-		{"no prefix matching", "To", "", true},
-		{"no substring matching", "oD", "", true},
+		{name: "exact match wins by step a", in: "To Do", want: "To Do"},
+		{name: "lowercase", in: "todo", want: "To Do"},
+		{name: "uppercase", in: "TODO", want: "To Do"},
+		{name: "hyphen is removed", in: "To-Do", want: "To Do"},
+		{name: "underscore is removed", in: "TO_DO", want: "To Do"},
+		{name: "every space is removed", in: "to  do", want: "To Do"},
+		{name: "an embedded tab is removed", in: "To\tDo", want: "To Do"},
+		{name: "a trailing dot is not removed", in: "To Do.", wantCode: "unknown_status"},
+		{name: "a dot in the middle is not removed", in: "To.Do", wantCode: "unknown_status"},
+		{name: "another status, spelled loosely", in: "in progress", want: "In Progress"},
+		{name: "another status, with a hyphen", in: "In-Progress", want: "In Progress"},
+		{name: "the terminal status", in: "DONE", want: "Done"},
+		{name: "a status the board does not have", in: "Pending", wantCode: "unknown_status"},
+		{name: "the empty value", in: "", wantCode: "unknown_status"},
+		{name: "only separators", in: "-_", wantCode: "unknown_status"},
+		{name: "no prefix matching", in: "To", wantCode: "unknown_status"},
+		{name: "no substring matching", in: "oD", wantCode: "unknown_status"},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			got, err := Match(Status, c.in, defaultStatuses)
-			if c.wantErr {
+			if c.wantCode != "" {
 				if err == nil {
-					t.Fatalf("Match(Status, %q) = %q, want an error", c.in, got)
+					t.Fatalf("Match(Status, %q) = %q, want the error %s", c.in, got, c.wantCode)
+				}
+				e := asBisoError(t, err)
+				if e.Code != c.wantCode {
+					t.Fatalf("Match(Status, %q) failed with %q, want %q", c.in, e.Code, c.wantCode)
+				}
+				if e.ExitCode != 3 {
+					t.Fatalf("Match(Status, %q) has exit code %d, want 3", c.in, e.ExitCode)
+				}
+				if got != "" {
+					t.Fatalf("Match(Status, %q) = %q with an error, want the empty string", c.in, got)
 				}
 				return
 			}
@@ -64,6 +77,56 @@ func TestMatchTable(t *testing.T) {
 				t.Fatalf("Match(Status, %q) = %q, want %q", c.in, got, c.want)
 			}
 		})
+	}
+}
+
+// TestMatchFoldsCaseAndNotOnlyLowercases is the Greek board of
+// docs/spec/vocabularios.md#el-algoritmo-de-coincidencia: a status that ends
+// in a final sigma, typed in uppercase. Lowercasing leaves the two spellings
+// of sigma apart and the board would reject its own status.
+func TestMatchFoldsCaseAndNotOnlyLowercases(t *testing.T) {
+	configured := []string{"Δοκιμές", "Σε εξέλιξη", "Έτοιμο"}
+	for _, in := range []string{"ΔΟΚΙΜΕΣ", "δοκιμες", "Δοκιμές"} {
+		got, err := Match(Status, in, configured)
+		if err != nil {
+			t.Fatalf("Match(Status, %q) failed: %v", in, err)
+		}
+		if got != "Δοκιμές" {
+			t.Fatalf("Match(Status, %q) = %q, want Δοκιμές", in, got)
+		}
+	}
+}
+
+// TestMatchOnAConfiguredValueListedTwice is the board that repeats a value:
+// two copies of the same spelling are one value, so they resolve instead of
+// colliding.
+func TestMatchOnAConfiguredValueListedTwice(t *testing.T) {
+	configured := []string{"To Do", "In Progress", "To Do", "Done"}
+	got, err := Match(Status, "todo", configured)
+	if err != nil {
+		t.Fatalf("Match(Status, %q) failed: %v", "todo", err)
+	}
+	if got != "To Do" {
+		t.Fatalf("Match(Status, %q) = %q, want To Do", "todo", got)
+	}
+}
+
+// TestMatchQuotesWhatItWasGiven pins the boundary of this package: a value of
+// nothing but spaces is the empty value, and turning it into one belongs to
+// the layer that reads it (docs/spec/valores-de-entrada.md#el-valor-vacío).
+// Match never receives one, and if it did it would report it as it arrived
+// rather than pretend it had been converted.
+func TestMatchQuotesWhatItWasGiven(t *testing.T) {
+	_, err := Match(Status, "   ", defaultStatuses)
+	e := asBisoError(t, err)
+	if e.Code != "unknown_status" {
+		t.Errorf("Code = %q, want unknown_status", e.Code)
+	}
+	if e.Message != `unknown status: "   "` {
+		t.Errorf("Message = %q, want it to quote the value as received", e.Message)
+	}
+	if e.Given != "   " {
+		t.Errorf("Given = %q, want the value as received", e.Given)
 	}
 }
 
@@ -215,57 +278,88 @@ func TestMatchOnAnEmptyVocabulary(t *testing.T) {
 	}
 }
 
-// TestTheSameTextIsWorthTheSameInBothDirections is the contract table of
-// docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos.
-// Writing (biso set -s <v>) and filtering (biso ls -s <v>) call the very same
-// function, so the test asserts it twice per row and compares the two
-// outcomes to each other as well as to the expected one.
+// outcome is one cell of the contract table of
+// docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos,
+// transcribed from the document: either the configured value that cell
+// resolves to, or the error code it fails with.
+type outcome struct {
+	resolves string
+	code     string
+	message  string
+}
+
+// TestTheSameTextIsWorthTheSameInBothDirections walks the contract table of
+// docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos
+// row by row. Each row transcribes its two columns separately, the one for
+// writing (biso set -s <v>) and the one for filtering (biso ls -s <v>), and
+// the test checks the implementation against each column on its own. The two
+// columns are data copied from the document, not one computed from the other,
+// so a row whose two halves stopped agreeing, or that stopped agreeing with
+// the document, fails here.
+//
+// What this test cannot yet prove is the other half of the promise: that the
+// command that writes and the command that filters both reach this function
+// instead of validating on their own. Today there is only one implementation
+// and no command at all, so the equivalence is true by construction; the day
+// biso set and biso ls exist it stops being so, and a test that calls the two
+// commands with the same text has to assert it end to end. That belongs to
+// TASK-13, which is where those two commands are built.
 func TestTheSameTextIsWorthTheSameInBothDirections(t *testing.T) {
+	const unknownPending = `unknown status: "Pending"`
+	const unknownEmpty = `unknown status: ""`
+
 	cases := []struct {
-		in       string
-		resolves string
-		fails    bool
+		in     string
+		write  outcome
+		filter outcome
 	}{
-		{in: "To Do", resolves: "To Do"},
-		{in: "todo", resolves: "To Do"},
-		{in: "TO_DO", resolves: "To Do"},
-		{in: "In-Progress", resolves: "In Progress"},
-		{in: "Pending", fails: true},
-		{in: "", fails: true},
+		{in: "To Do", write: outcome{resolves: "To Do"}, filter: outcome{resolves: "To Do"}},
+		{in: "todo", write: outcome{resolves: "To Do"}, filter: outcome{resolves: "To Do"}},
+		{in: "TO_DO", write: outcome{resolves: "To Do"}, filter: outcome{resolves: "To Do"}},
+		{in: "In-Progress", write: outcome{resolves: "In Progress"}, filter: outcome{resolves: "In Progress"}},
+		{
+			in:     "Pending",
+			write:  outcome{code: "unknown_status", message: unknownPending},
+			filter: outcome{code: "unknown_status", message: unknownPending},
+		},
+		{
+			in:     "",
+			write:  outcome{code: "unknown_status", message: unknownEmpty},
+			filter: outcome{code: "unknown_status", message: unknownEmpty},
+		},
+	}
+
+	check := func(t *testing.T, direction, in string, want outcome) {
+		t.Helper()
+		got, err := Match(Status, in, defaultStatuses)
+		if want.code == "" {
+			if err != nil {
+				t.Fatalf("%s: Match(Status, %q) failed: %v", direction, in, err)
+			}
+			if got != want.resolves {
+				t.Fatalf("%s: Match(Status, %q) = %q, want %q", direction, in, got, want.resolves)
+			}
+			return
+		}
+		if err == nil {
+			t.Fatalf("%s: Match(Status, %q) = %q, want the error %s", direction, in, got, want.code)
+		}
+		e := asBisoError(t, err)
+		if e.ExitCode != 3 {
+			t.Errorf("%s: exit code %d, want 3", direction, e.ExitCode)
+		}
+		if e.Code != want.code {
+			t.Errorf("%s: Code = %q, want %q", direction, e.Code, want.code)
+		}
+		if e.Message != want.message {
+			t.Errorf("%s: Message = %q, want %q", direction, e.Message, want.message)
+		}
 	}
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			writeValue, writeErr := Match(Status, c.in, defaultStatuses)
-			filterValue, filterErr := Match(Status, c.in, defaultStatuses)
-
-			if writeValue != filterValue {
-				t.Fatalf("writing gave %q and filtering gave %q", writeValue, filterValue)
-			}
-			if (writeErr == nil) != (filterErr == nil) {
-				t.Fatalf("writing gave %v and filtering gave %v", writeErr, filterErr)
-			}
-
-			if c.fails {
-				if writeErr == nil {
-					t.Fatalf("Match(Status, %q) succeeded, want exit code 3 in both directions", c.in)
-				}
-				w := asBisoError(t, writeErr)
-				f := asBisoError(t, filterErr)
-				if w.ExitCode != 3 || f.ExitCode != 3 {
-					t.Fatalf("exit codes %d and %d, want 3 in both directions", w.ExitCode, f.ExitCode)
-				}
-				if w.Message != f.Message {
-					t.Fatalf("messages differ: %q and %q", w.Message, f.Message)
-				}
-				return
-			}
-			if writeErr != nil {
-				t.Fatalf("Match(Status, %q) failed: %v", c.in, writeErr)
-			}
-			if writeValue != c.resolves {
-				t.Fatalf("Match(Status, %q) = %q, want %q", c.in, writeValue, c.resolves)
-			}
+			check(t, "writing", c.in, c.write)
+			check(t, "filtering", c.in, c.filter)
 		})
 	}
 }

@@ -6,7 +6,7 @@ import (
 )
 
 // exampleLabels is the label set of the example in
-// docs/spec/vocabularios.md#el-algoritmo-de-sugerencias-mas-parecidas.
+// docs/spec/vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas.
 var exampleLabels = []string{
 	"api", "backend", "bug", "docs", "frontend",
 	"infra", "parser", "security", "ui", "urgent",
@@ -49,7 +49,7 @@ func TestLevenshteinCountsCharactersNotBytes(t *testing.T) {
 }
 
 // TestSuggestTable walks the table of the example in
-// docs/spec/vocabularios.md#el-algoritmo-de-sugerencias-mas-parecidas.
+// docs/spec/vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas.
 func TestSuggestTable(t *testing.T) {
 	cases := []struct {
 		name string

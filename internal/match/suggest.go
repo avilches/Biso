@@ -4,7 +4,7 @@ import "sort"
 
 // Suggest returns the candidates closest to value, at most n of them, for the
 // "did you mean" line of the five error messages that
-// docs/spec/vocabularios.md#el-algoritmo-de-sugerencias-mas-parecidas lists.
+// docs/spec/vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas lists.
 // Those five differ only in n.
 //
 // The metric is the Levenshtein distance between normalized forms, the same
@@ -69,7 +69,7 @@ func Suggest(value string, candidates []string, n int) []string {
 // levenshtein is the minimum number of single-character insertions, deletions
 // and substitutions that turn a into b, computed with the usual dynamic
 // programming table of
-// docs/spec/vocabularios.md#el-algoritmo-de-sugerencias-mas-parecidas. It
+// docs/spec/vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas. It
 // takes runes and not strings because the unit the specification counts is the
 // character, and in UTF-8 a character is not a byte.
 //
