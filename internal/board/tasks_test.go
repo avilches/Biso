@@ -494,3 +494,48 @@ func TestOrdinalZeroIsAValueAndNotAnAbsence(t *testing.T) {
 		t.Fatalf("ordinal = %d, want 0", *got.Ordinal)
 	}
 }
+
+func TestSaveKeepsTheStoredCreatedAtAndRefusesAMissingTask(t *testing.T) {
+	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
+	defer done()
+
+	task := &model.Task{
+		Title:     "First",
+		Status:    "To Do",
+		CreatedAt: time.Date(2026, 9, 6, 9, 12, 4, 0, time.UTC),
+		UpdatedAt: time.Date(2026, 9, 6, 9, 12, 4, 0, time.UTC),
+	}
+	if err := tasks.Create(task); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// createdAt is not mutable: no flag of the program changes it, so a
+	// save that carries another one writes the stored value anyway.
+	task.CreatedAt = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	task.Notes = "Changed"
+	if err := tasks.Save(task); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	got, err := tasks.Load(task.ID)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	want := time.Date(2026, 9, 6, 9, 12, 4, 0, time.UTC)
+	if !got.CreatedAt.Equal(want) {
+		t.Fatalf("createdAt = %v, want %v: the field is not mutable", got.CreatedAt, want)
+	}
+	if got.Notes != "Changed" {
+		t.Fatalf("notes = %q, want the saved one", got.Notes)
+	}
+
+	// And saving never brings back an identifier the board does not have.
+	ghost := &model.Task{ID: "MYP-9", Title: "Ghost", Status: "To Do"}
+	err = tasks.Save(ghost)
+	modelErr, ok := err.(*model.Error)
+	if !ok {
+		t.Fatalf("Save of a missing task = %v, want a *model.Error", err)
+	}
+	if modelErr.ExitCode != 4 || modelErr.Code != "never_allocated" {
+		t.Fatalf("error = %d/%s, want 4/never_allocated", modelErr.ExitCode, modelErr.Code)
+	}
+}

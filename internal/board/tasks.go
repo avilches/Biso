@@ -12,6 +12,7 @@ package board
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -79,9 +80,17 @@ func (r *Tasks) Create(task *model.Task) error {
 	})
 }
 
-// Save writes an existing task over itself. It does not touch updatedAt:
-// whether a call changed anything is what decides that
-// (docs/spec/modelo-de-datos/index.md), and only the caller knows.
+// Save writes an existing task over itself.
+//
+// It enforces the two immutabilities of
+// docs/spec/modelo-de-datos/index.md that it is in a position to enforce.
+// The task has to be there, so saving never brings back an identifier
+// whose row is gone; and createdAt keeps the value the board already has,
+// whatever the task in memory carries, because no flag of the program
+// changes it and only an import can set it, which goes through Create.
+//
+// It does not touch updatedAt, in contrast: whether a call changed
+// anything is what decides that, and only the caller knows.
 func (r *Tasks) Save(task *model.Task) error {
 	if err := r.validate(task); err != nil {
 		return err
@@ -92,6 +101,25 @@ func (r *Tasks) Save(task *model.Task) error {
 	}
 
 	return r.store.WithTx(func(tx *sql.Tx) error {
+		var createdAt string
+		err := tx.QueryRow("SELECT created_at FROM task WHERE id = ?", task.ID).Scan(&createdAt)
+		if errors.Is(err, sql.ErrNoRows) {
+			var last int
+			if err := tx.QueryRow("SELECT last_task_num FROM board_counter WHERE id = 1").Scan(&last); err != nil {
+				return err
+			}
+			return r.missing(task.ID, num, last)
+		}
+		if err != nil {
+			return err
+		}
+		if task.CreatedAt, err = parseInstant(createdAt); err != nil {
+			return fmt.Errorf("%s: createdAt: %w", task.ID, err)
+		}
+
+		// The children go with it: every one of their tables declares the
+		// task as a foreign key with ON DELETE CASCADE, and the connection
+		// runs with foreign keys on.
 		if _, err := tx.Exec("DELETE FROM task WHERE id = ?", task.ID); err != nil {
 			return err
 		}
@@ -149,8 +177,16 @@ func (r *Tasks) Load(id string) (*model.Task, error) {
 	if err != nil {
 		return nil, err
 	}
+	return nil, r.missing(id, num, last)
+}
+
+// missing builds the error for an identifier the board does not have,
+// choosing between the two of
+// docs/spec/referencias.md#los-tres-mensajes-de-no-la-encuentro by
+// comparing it with the highest one ever assigned.
+func (r *Tasks) missing(id string, num, last int) *model.Error {
 	if num > last {
-		return nil, &model.Error{
+		return &model.Error{
 			ExitCode: 4,
 			Code:     "never_allocated",
 			Message:  fmt.Sprintf("%s has never existed on this board", id),
@@ -159,7 +195,7 @@ func (r *Tasks) Load(id string) (*model.Task, error) {
 			)},
 		}
 	}
-	return nil, &model.Error{
+	return &model.Error{
 		ExitCode: 4,
 		Code:     "not_found",
 		Message:  fmt.Sprintf("%s is not on this board", id),
