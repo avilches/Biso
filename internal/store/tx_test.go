@@ -12,15 +12,12 @@ import (
 
 func TestWithTxCommitsAllWritesOnSuccess(t *testing.T) {
 	dir := t.TempDir()
-	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
-	if err != nil {
-		t.Fatalf("Open: %v", err)
-	}
+	s := openScratch(t, filepath.Join(dir, "board.sqlite"))
 	defer s.Close()
 
-	err = s.WithTx(func(tx *sql.Tx) error {
+	err := s.WithTx(func(tx *sql.Tx) error {
 		for i := 1; i <= 3; i++ {
-			if _, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (?, ?)", i, "ok"); err != nil {
+			if _, err := tx.Exec("INSERT INTO scratch (id, payload) VALUES (?, ?)", i, "ok"); err != nil {
 				return err
 			}
 		}
@@ -31,7 +28,7 @@ func TestWithTxCommitsAllWritesOnSuccess(t *testing.T) {
 	}
 
 	var count int
-	if err := s.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
+	if err := s.scanOne(&count, "SELECT COUNT(*) FROM scratch"); err != nil {
 		t.Fatalf("count: %v", err)
 	}
 	if count != 3 {
@@ -41,18 +38,15 @@ func TestWithTxCommitsAllWritesOnSuccess(t *testing.T) {
 
 func TestWithTxRollsBackAllWritesWhenFnFails(t *testing.T) {
 	dir := t.TempDir()
-	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
-	if err != nil {
-		t.Fatalf("Open: %v", err)
-	}
+	s := openScratch(t, filepath.Join(dir, "board.sqlite"))
 	defer s.Close()
 
 	wantErr := errors.New("boom")
-	err = s.WithTx(func(tx *sql.Tx) error {
-		if _, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'a')"); err != nil {
+	err := s.WithTx(func(tx *sql.Tx) error {
+		if _, err := tx.Exec("INSERT INTO scratch (id, payload) VALUES (1, 'a')"); err != nil {
 			return err
 		}
-		if _, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (2, 'b')"); err != nil {
+		if _, err := tx.Exec("INSERT INTO scratch (id, payload) VALUES (2, 'b')"); err != nil {
 			return err
 		}
 		return wantErr
@@ -62,7 +56,7 @@ func TestWithTxRollsBackAllWritesWhenFnFails(t *testing.T) {
 	}
 
 	var count int
-	if err := s.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
+	if err := s.scanOne(&count, "SELECT COUNT(*) FROM scratch"); err != nil {
 		t.Fatalf("count: %v", err)
 	}
 	if count != 0 {
@@ -72,10 +66,7 @@ func TestWithTxRollsBackAllWritesWhenFnFails(t *testing.T) {
 
 func TestWithTxRollsBackWhenTheCallbackPanics(t *testing.T) {
 	dir := t.TempDir()
-	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
-	if err != nil {
-		t.Fatalf("Open: %v", err)
-	}
+	s := openScratch(t, filepath.Join(dir, "board.sqlite"))
 	defer s.Close()
 
 	func() {
@@ -85,7 +76,7 @@ func TestWithTxRollsBackWhenTheCallbackPanics(t *testing.T) {
 			}
 		}()
 		_ = s.WithTx(func(tx *sql.Tx) error {
-			if _, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'a')"); err != nil {
+			if _, err := tx.Exec("INSERT INTO scratch (id, payload) VALUES (1, 'a')"); err != nil {
 				return err
 			}
 			panic("boom")
@@ -93,7 +84,7 @@ func TestWithTxRollsBackWhenTheCallbackPanics(t *testing.T) {
 	}()
 
 	var count int
-	if err := s.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
+	if err := s.scanOne(&count, "SELECT COUNT(*) FROM scratch"); err != nil {
 		t.Fatalf("count: %v", err)
 	}
 	if count != 0 {
@@ -116,17 +107,14 @@ func TestWithTxRollsBackWhenTheCallbackPanics(t *testing.T) {
 // seconds, so hanging is not an option: the store refuses the call.
 func TestUsingTheStoreHandleInsideWithTxFailsInsteadOfHanging(t *testing.T) {
 	dir := t.TempDir()
-	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
-	if err != nil {
-		t.Fatalf("Open: %v", err)
-	}
+	s := openScratch(t, filepath.Join(dir, "board.sqlite"))
 	defer s.Close()
 
 	done := make(chan error, 1)
 	go func() {
 		done <- s.WithTx(func(tx *sql.Tx) error {
 			var count int
-			return s.scanOne(&count, "SELECT COUNT(*) FROM bench_row")
+			return s.scanOne(&count, "SELECT COUNT(*) FROM scratch")
 		})
 	}()
 
@@ -139,17 +127,14 @@ func TestUsingTheStoreHandleInsideWithTxFailsInsteadOfHanging(t *testing.T) {
 		t.Fatalf("using the store handle inside WithTx hung instead of failing")
 	}
 
-	if _, err := s.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'a')"); err != nil {
+	if _, err := s.Exec("INSERT INTO scratch (id, payload) VALUES (1, 'a')"); err != nil {
 		t.Fatalf("the store stayed unusable after the refused call: %v", err)
 	}
 }
 
 func TestNestedWithTxFailsInsteadOfHanging(t *testing.T) {
 	dir := t.TempDir()
-	s, err := Open(testBoardID, filepath.Join(dir, "board.sqlite"))
-	if err != nil {
-		t.Fatalf("Open: %v", err)
-	}
+	s := openScratch(t, filepath.Join(dir, "board.sqlite"))
 	defer s.Close()
 
 	done := make(chan error, 1)
@@ -177,14 +162,14 @@ func TestWithTxFailsWithBusyWhenLockNotAvailable(t *testing.T) {
 	defer release()
 	_ = holder
 
-	writer, err := openAt(testBoardID, path, 200, migrations)
+	writer, err := openAt(testBoardID, path, 200, testMigrations)
 	if err != nil {
 		t.Fatalf("open writer: %v", err)
 	}
 	defer writer.Close()
 
 	err = writer.WithTx(func(tx *sql.Tx) error {
-		_, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (2, 'blocked')")
+		_, err := tx.Exec("INSERT INTO scratch (id, payload) VALUES (2, 'blocked')")
 		return err
 	})
 
@@ -198,7 +183,7 @@ func TestWithTxWaitsForTheConfiguredTimeBeforeGivingUp(t *testing.T) {
 	_, release := holdTheWriteLock(t, path)
 	defer release()
 
-	writer, err := openAt(testBoardID, path, 200, migrations)
+	writer, err := openAt(testBoardID, path, 200, testMigrations)
 	if err != nil {
 		t.Fatalf("open writer: %v", err)
 	}
@@ -206,7 +191,7 @@ func TestWithTxWaitsForTheConfiguredTimeBeforeGivingUp(t *testing.T) {
 
 	start := time.Now()
 	err = writer.WithTx(func(tx *sql.Tx) error {
-		_, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (2, 'blocked')")
+		_, err := tx.Exec("INSERT INTO scratch (id, payload) VALUES (2, 'blocked')")
 		return err
 	})
 	elapsed := time.Since(start)
@@ -221,7 +206,7 @@ func TestWithTxAppliesAfterConcurrentWriterCommits(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
 
-	holder, err := openAt(testBoardID, path, 2000, migrations)
+	holder, err := openAt(testBoardID, path, 2000, testMigrations)
 	if err != nil {
 		t.Fatalf("open holder: %v", err)
 	}
@@ -233,7 +218,7 @@ func TestWithTxAppliesAfterConcurrentWriterCommits(t *testing.T) {
 	if err != nil {
 		t.Fatalf("begin holder tx: %v", err)
 	}
-	if _, err := holderTx.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'held')"); err != nil {
+	if _, err := holderTx.Exec("INSERT INTO scratch (id, payload) VALUES (1, 'held')"); err != nil {
 		t.Fatalf("insert into the holder's transaction: %v", err)
 	}
 	go func() {
@@ -241,14 +226,14 @@ func TestWithTxAppliesAfterConcurrentWriterCommits(t *testing.T) {
 		holderTx.Commit()
 	}()
 
-	writer, err := openAt(testBoardID, path, 2000, migrations)
+	writer, err := openAt(testBoardID, path, 2000, testMigrations)
 	if err != nil {
 		t.Fatalf("open writer: %v", err)
 	}
 	defer writer.Close()
 
 	err = writer.WithTx(func(tx *sql.Tx) error {
-		_, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (2, 'after')")
+		_, err := tx.Exec("INSERT INTO scratch (id, payload) VALUES (2, 'after')")
 		return err
 	})
 	if err != nil {
@@ -256,7 +241,7 @@ func TestWithTxAppliesAfterConcurrentWriterCommits(t *testing.T) {
 	}
 
 	var count int
-	if err := writer.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
+	if err := writer.scanOne(&count, "SELECT COUNT(*) FROM scratch"); err != nil {
 		t.Fatalf("count: %v", err)
 	}
 	if count != 2 {
@@ -274,7 +259,7 @@ func TestReadsDoNotBlockOnConcurrentWrite(t *testing.T) {
 	_, release := holdTheWriteLock(t, path)
 	defer release()
 
-	reader, err := openAt(testBoardID, path, 2000, migrations)
+	reader, err := openAt(testBoardID, path, 2000, testMigrations)
 	if err != nil {
 		t.Fatalf("open reader: %v", err)
 	}
@@ -287,7 +272,7 @@ func TestReadsDoNotBlockOnConcurrentWrite(t *testing.T) {
 	done := make(chan read, 1)
 	go func() {
 		var r read
-		r.err = reader.scanOne(&r.count, "SELECT COUNT(*) FROM bench_row")
+		r.err = reader.scanOne(&r.count, "SELECT COUNT(*) FROM scratch")
 		done <- r
 	}()
 
@@ -310,7 +295,7 @@ func TestReadsDoNotBlockOnConcurrentWrite(t *testing.T) {
 func holdTheWriteLock(t *testing.T, path string) (*Store, func()) {
 	t.Helper()
 
-	holder, err := openAt(testBoardID, path, 200, migrations)
+	holder, err := openAt(testBoardID, path, 200, testMigrations)
 	if err != nil {
 		t.Fatalf("open the holder: %v", err)
 	}
@@ -321,7 +306,7 @@ func holdTheWriteLock(t *testing.T, path string) (*Store, func()) {
 		holder.Close()
 		t.Fatalf("begin the holder's transaction: %v", err)
 	}
-	if _, err := tx.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'held')"); err != nil {
+	if _, err := tx.Exec("INSERT INTO scratch (id, payload) VALUES (1, 'held')"); err != nil {
 		tx.Rollback()
 		holder.Close()
 		t.Fatalf("insert into the holder's transaction: %v", err)
@@ -380,7 +365,7 @@ func TestOpenReportsBusyWhenTheSchemaMustBeMigrated(t *testing.T) {
 		empty.Close()
 	}()
 
-	s, err := openAt(testBoardID, path, 200, migrations)
+	s, err := openAt(testBoardID, path, 200, testMigrations)
 	if err == nil {
 		s.Close()
 		t.Fatalf("opening a stale file against a held write lock returned no error")

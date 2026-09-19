@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"biso/internal/model"
@@ -14,6 +15,32 @@ import (
 // characters of docs/spec/resolucion-del-tablero.md. The store only uses it
 // to build the message of the unreadable-database error.
 const testBoardID = "3f9a2b1c"
+
+// scratchMigration is a table that exists only for this package's tests.
+// They are about the mechanism (opening, migrating, transactions and the
+// write lock) and not about the model, so they write to a table of their
+// own instead of leaning on the real schema, which would make them fail
+// every time a field of docs/spec/modelo-de-datos/ moves.
+const scratchMigration = `CREATE TABLE scratch (
+	id      INTEGER PRIMARY KEY,
+	payload TEXT NOT NULL
+);`
+
+// testMigrations is the real list with that table appended, so a store
+// opened by openScratch has the whole real schema plus the scratch table.
+var testMigrations = append(append([]string{}, migrations...), scratchMigration)
+
+// openScratch opens the board at path with testMigrations, failing the
+// test if it cannot.
+func openScratch(t *testing.T, path string) *Store {
+	t.Helper()
+
+	s, err := openAt(testBoardID, path, busyTimeoutMillis, testMigrations)
+	if err != nil {
+		t.Fatalf("open %s: %v", path, err)
+	}
+	return s
+}
 
 func TestOpenCreatesFileInWALModeWithForeignKeys(t *testing.T) {
 	dir := t.TempDir()
@@ -65,6 +92,52 @@ func TestOpenOnExistingFileSucceeds(t *testing.T) {
 		t.Fatalf("second Open: %v", err)
 	}
 	defer s2.Close()
+}
+
+// TestConcurrentCreationOfTheSameFileWaitsInsteadOfFailingAtOnce is
+// guarantee 5 of docs/spec/garantias.md on the one path that used to skip
+// it: creating the file.
+//
+// Turning a brand new file into WAL mode needs the file to itself and
+// SQLite answers SQLITE_BUSY for it without consulting the busy handler,
+// so four connections creating the same file at the same instant used to
+// give an instant exit code 8 on several attempts out of twenty. Waiting
+// is not optional there: the guarantee says five seconds and then code 8,
+// and it does not exempt the command that creates the board.
+//
+// Twenty attempts, because the collision is a race and one attempt proves
+// nothing: reverting initialVersion's retry makes this test fail.
+func TestConcurrentCreationOfTheSameFileWaitsInsteadOfFailingAtOnce(t *testing.T) {
+	const attempts = 20
+	const connections = 4
+
+	for attempt := 1; attempt <= attempts; attempt++ {
+		path := filepath.Join(t.TempDir(), "board.sqlite")
+
+		start := make(chan struct{})
+		failures := make([]error, connections)
+		var wg sync.WaitGroup
+		for i := range failures {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				s, err := openAt(testBoardID, path, busyTimeoutMillis, testMigrations)
+				failures[i] = err
+				if s != nil {
+					s.Close()
+				}
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		for i, err := range failures {
+			if err != nil {
+				t.Fatalf("attempt %d, connection %d: %v", attempt, i, err)
+			}
+		}
+	}
 }
 
 func TestOpenOnAPathWithURICharactersUsesThatFile(t *testing.T) {
@@ -179,11 +252,8 @@ func TestCheckIntegrityFailsOnACorruptedDatabase(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "board.sqlite")
 
-	seed, err := Open(testBoardID, path)
-	if err != nil {
-		t.Fatalf("Open for seeding: %v", err)
-	}
-	if _, err := seed.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'a'), (2, 'b'), (3, 'c')"); err != nil {
+	seed := openScratch(t, path)
+	if _, err := seed.Exec("INSERT INTO scratch (id, payload) VALUES (1, 'a'), (2, 'b'), (3, 'c')"); err != nil {
 		t.Fatalf("seed rows: %v", err)
 	}
 	seed.Close()

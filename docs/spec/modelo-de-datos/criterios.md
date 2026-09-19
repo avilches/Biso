@@ -26,3 +26,7 @@ Consecuencias que hay que respetar en toda la implementación:
   Una tarea con los criterios `#1` y `#3` tiene `acTotal` igual a 2.
 - Los elementos se muestran y se exportan en el orden en que están en la lista, que es el orden en
   que se crearon salvo que se haya sustituido la lista entera.
+- Una lista con un elemento cuya clave no sea un entero positivo, o con dos elementos que compartan
+  clave, **no se guarda**. Las claves las pone el programa, así que eso no es un error de quien llama
+  sino un fallo de quien construyó la tarea, y se para antes de tocar el almacén: nunca sale como un
+  error de la base de datos nombrando una tabla.

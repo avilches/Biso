@@ -24,8 +24,39 @@ func TestOpenAppliesMigrationsAndTracksVersion(t *testing.T) {
 		t.Fatalf("user_version = %d, want %d", version, len(migrations))
 	}
 
-	if _, err := s.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'x')"); err != nil {
-		t.Fatalf("insert into bench_row: %v", err)
+	// The real schema is there: board_counter is the table the migration
+	// creates and seeds, and it is what allocates task ids.
+	var last int
+	if err := s.scanOne(&last, "SELECT last_task_num FROM board_counter"); err != nil {
+		t.Fatalf("read the task counter: %v", err)
+	}
+	if last != 0 {
+		t.Fatalf("last_task_num on a fresh board = %d, want 0", last)
+	}
+}
+
+// TestSchemaHasEveryTableOfTheModel checks that the whole first migration
+// ran and not only its first statement: the script creates six tables in
+// one Exec, so this is also what proves the driver applies a multi
+// statement script whole.
+func TestSchemaHasEveryTableOfTheModel(t *testing.T) {
+	s, err := Open(testBoardID, filepath.Join(t.TempDir(), "board.sqlite"))
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer s.Close()
+
+	for _, table := range []string{
+		"board_counter", "task", "task_list_item",
+		"task_ext", "task_criterion", "task_comment",
+	} {
+		var n int
+		if err := s.scanOne(&n, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?", table); err != nil {
+			t.Fatalf("look for %s: %v", table, err)
+		}
+		if n != 1 {
+			t.Fatalf("table %s is missing from the schema", table)
+		}
 	}
 }
 
@@ -37,8 +68,8 @@ func TestReopenDoesNotReapplyMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first Open: %v", err)
 	}
-	if _, err := s1.Exec("INSERT INTO bench_row (id, payload) VALUES (1, 'x')"); err != nil {
-		t.Fatalf("insert: %v", err)
+	if _, err := s1.Exec("UPDATE board_counter SET last_task_num = 7"); err != nil {
+		t.Fatalf("write the task counter: %v", err)
 	}
 	s1.Close()
 
@@ -48,12 +79,12 @@ func TestReopenDoesNotReapplyMigrations(t *testing.T) {
 	}
 	defer s2.Close()
 
-	var count int
-	if err := s2.scanOne(&count, "SELECT COUNT(*) FROM bench_row"); err != nil {
-		t.Fatalf("count: %v", err)
+	var last int
+	if err := s2.scanOne(&last, "SELECT last_task_num FROM board_counter"); err != nil {
+		t.Fatalf("read the task counter: %v", err)
 	}
-	if count != 1 {
-		t.Fatalf("count = %d, want 1 (reopening must not recreate or empty the table)", count)
+	if last != 7 {
+		t.Fatalf("last_task_num = %d, want 7 (reopening must not recreate or reseed the table)", last)
 	}
 }
 

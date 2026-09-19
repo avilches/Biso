@@ -86,6 +86,9 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
   ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).
 - **`question` se llena con `biso ask` (autor e instante los fija el programa, el cuerpo lo da quien
   llama) y se vacía con `biso answer`.** Los tres detalles están en ["La pregunta abierta"](pregunta-abierta.md).
+- **Un `ordinal` negativo es error 2 (`USAGE`)**, con el `code` `invalid_number` y el mensaje
+  `error: ordinal cannot be negative: -1`. El tipo de la tabla es `int (>= 0)`, y el cero es un valor
+  legítimo y no una ausencia: la forma de dejar el campo sin valor es `--clear-ordinal`.
 
 ## Los campos derivados
 
