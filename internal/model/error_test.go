@@ -7,7 +7,7 @@ import (
 
 func TestErrorSatisfiesErrorInterface(t *testing.T) {
 	e := &Error{
-		ExitCode: 7,
+		ExitCode: 8,
 		Code:     "busy",
 		Message:  "the board is busy, another process is writing to it",
 	}
@@ -21,7 +21,7 @@ func TestErrorSatisfiesErrorInterface(t *testing.T) {
 	if !errors.As(target, &asErr) {
 		t.Fatalf("errors.As did not recover the concrete *Error")
 	}
-	if asErr.ExitCode != 7 || asErr.Code != "busy" {
+	if asErr.ExitCode != 8 || asErr.Code != "busy" {
 		t.Fatalf("the recovered error lost its fields: %+v", asErr)
 	}
 }
