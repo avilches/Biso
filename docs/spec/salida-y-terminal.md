@@ -78,6 +78,7 @@ ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
 | `unresolved_dependencies` | `warning: MYP-11 has unresolved dependencies: MYP-4 (To Do)` | al empezar una tarea bloqueada | `task`, `dependencies` |
 | `list_truncated` | `warning: 28 more tasks match; showing 30 of 58` | en `biso ls`, al recortar | `shown`, `matched` |
 | `duplicate_flag_value` | `warning: --add-labels: "urgent" given twice, kept once` | valor repetido en un flag de lista | `flag`, `value` |
+| `duplicate_ext_key` | `warning: --ext: key "k" given twice, kept last value` | la misma clave de `--ext` escrita dos veces en la misma llamada (["Campos externos"](familias-de-flags.md#campos-externos)) | `flag`, `key` |
 | `literal_newline` | `warning: --append-desc contains a literal \n and no real newline; it will be stored as text` | ver ["Codificación y texto"](#codificación-y-texto) | `flag` |
 | `empty_append` | `warning: --append-note: empty value, nothing was added` | valor vacío en un flag que añade | `flag` |
 | `due_in_past` | `warning: --due 2026-01-01 is in the past` | fecha límite ya pasada | `value` |
