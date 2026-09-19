@@ -92,27 +92,51 @@ ese repositorio ignora la carpeta del tablero. Con eso:
 | La raíz está por encima y el repositorio **sí** ignora la carpeta, o no hay ningún repositorio | En un repositorio propio del tablero, que `snapshot` crea de forma perezosa la primera vez |
 
 **La receta de `git` es esta, entera**, porque es el único sistema del catálogo en la versión 1.0 y la
-especificación no puede dejar a quien implemente adivinándola. Son las tres preguntas de arriba y tres
-órdenes:
+especificación no puede dejar a quien implemente adivinándola. Son cinco preguntas, de las que solo
+importa la respuesta, y cuatro órdenes, que son las que actúan:
 
 | Pregunta u orden | Qué se ejecuta, con el directorio del tablero como directorio de trabajo |
 |---|---|
 | ¿Hay un repositorio que lo contenga, y cuál es su raíz? | `git rev-parse --show-toplevel`, cuyo fallo significa que no hay ninguno |
-| ¿Ese repositorio ignora la carpeta del tablero? | `git check-ignore` con la ruta del directorio |
-| ¿El índice tiene algo preparado fuera de esos tres ficheros? | `git diff --cached --name-only`, cuya salida se descarta y solo se cuenta |
+| ¿Ese repositorio ignora la carpeta del tablero? | `git check-ignore` con la ruta del directorio detrás del separador `--`, como el resto de la receta, para que el nombre de la carpeta no pueda leerse como ninguna otra cosa |
+| ¿El índice tiene algo preparado fuera de esos tres ficheros? | `git diff --cached --no-relative --name-only -z`, cuya salida se descarta y solo se cuenta |
+| ¿Los tres ficheros difieren de lo que ya está guardado? | `git diff --cached --quiet` con los tres nombrados por su ruta, ya preparados, y su código de salida cero significa que no hay nada que guardar |
+| ¿Cuál es el identificador de la revisión que ha resultado? | `git rev-parse HEAD`, ya guardada |
 | Crear el repositorio propio | `git init` |
-| Guardar la revisión | `git commit` con los tres ficheros nombrados por su ruta como argumentos de la propia orden, no de un `git add` previo, y con el mensaje de abajo |
+| Preparar los tres ficheros | `git add` con los tres nombrados por su ruta |
+| Guardar la revisión | `git commit` con los tres ficheros nombrados por su ruta como argumentos de la propia orden, y con el mensaje de abajo |
 | Publicar | `git push` en el repositorio donde haya ido la revisión |
 
-**Nombrar los tres ficheros como argumentos de `git commit`, y no de un `git add` previo, es lo que
-acota el commit.** Con rutas explícitas en la línea de órdenes, `git commit` activa por defecto su modo
-`--only`: toma el contenido actual del árbol de trabajo de esas rutas y las comitea, sin tocar lo que
-hubiera ya preparado en el índice para cualquier otro fichero. El `git add` que llevaba la receta hasta
-ahora deja de hacer falta, precisamente porque `git commit` con rutas no necesita que estén preparadas de
-antemano.
+**Nombrar los tres ficheros como argumentos de `git commit` es lo que acota el commit, y el `git add`
+previo es lo que hace que exista el primero.** Con rutas explícitas en la línea de órdenes, `git commit`
+activa por defecto su modo `--only`: toma el contenido actual del árbol de trabajo de esas rutas y las
+comitea, sin tocar lo que hubiera ya preparado en el índice para cualquier otro fichero, y eso vale
+igual con el `git add` delante, porque preparar los tres ficheros del tablero no prepara ninguno más.
+El `git add` no se puede quitar: `git commit` con rutas solo acepta rutas que el repositorio ya conoce,
+y responde `pathspec did not match any file(s) known to git` a un fichero sin seguir, que es
+exactamente lo que son los tres la primera vez que `snapshot` corre sobre un repositorio recién
+creado. Sin él, esa primera instantánea no guardaría nada y diría además que no había nada que
+guardar.
+
+**El caso de no haber nada que guardar se reconoce preguntando, no leyendo lo que `git commit`
+escribe.** `git commit` termina distinto de cero tanto cuando no hay ningún cambio que registrar como
+cuando la revisión falla de verdad, y distinguir los dos por su mensaje es justo lo que la receta de
+un sistema no debe hacer. Por eso se pregunta antes, con `git diff --cached --quiet` sobre los tres
+ficheros ya preparados: si termina en cero no había nada que guardar y el fallo de `git commit` es ese
+y no otro, con código 0 y su nota; si termina distinto de cero sí lo había, y entonces un `git commit`
+que falla es el error 8 de la tabla de abajo.
 
 **Y antes de comitear se pregunta si el índice tiene algo más preparado**, con
-`git diff --cached --name-only`. Cuenta como ajeno cualquier ruta que aparezca en esa lista y no sea una
+`git diff --cached --no-relative --name-only -z`, cuyas dos banderas finales no son adorno y sin ellas
+el recuento sale mal en una máquina corriente. `--no-relative` da las rutas relativas a la raíz del
+repositorio sea cual sea el directorio de trabajo: sin ella, una máquina con `diff.relative` activado
+listaría solo lo que cuelga del directorio del tablero, que es el directorio de trabajo de la
+pregunta, y lo preparado en el resto del proyecto sería invisible y se contaría como cero. `-z`
+separa las rutas con un byte cero y las escribe tal cual: sin ella, `core.quotePath`, que viene
+activado de serie, devuelve entrecomillada y con escapes octales cualquier ruta con un carácter no
+ASCII, así que los tres ficheros de un tablero que viva en una carpeta con un acento no se
+reconocerían como suyos y se contarían como cambios ajenos.
+Cuenta como ajeno cualquier ruta que aparezca en esa lista y no sea una
 de las tres del tablero, midiendo sobre el índice entero del repositorio donde va a ir la revisión, no
 solo sobre lo que hay dentro del propio directorio del tablero: cuando el tablero tiene su propio
 repositorio, o cuando `snapshot` acaba de crearlo, la raíz del repositorio y el directorio del tablero son
@@ -123,8 +147,8 @@ garantiza que `git commit` no lo toca, y `snapshot` además lo dice: `note: 2 st
 board were left untouched`, por stderr y en `data.stagedOutsideBoard` del JSON.
 
 El identificador que la salida devuelve es el del commit que resulta, completo en el JSON y abreviado en
-el texto, y el caso de "no hay nada que guardar" es el que reconoce el propio `git commit` cuando no hay
-cambios que registrar.
+el texto. `git commit` no escribe el identificador entero, así que se pregunta después con
+`git rev-parse HEAD`, que es la quinta pregunta de la receta.
 
 **Preguntar por la exclusión es lo que separa los dos casos de un tablero que vive dentro del
 proyecto**, y no se puede deducir mirando el sistema de ficheros: las dos situaciones tienen los mismos
@@ -192,19 +216,32 @@ repita lo que `biso` ya dice obligaría a reconocer sus mensajes uno a uno, y es
 receta de un sistema no debe hacer: la receta le pregunta cosas y mira códigos de salida, nunca lee lo
 que escribe.
 
-**La salida de las tres preguntas de la receta sí se descarta**, y es la única asimetría. Sus fallos o su
+**La salida de las preguntas de la receta sí se descarta**, y es la única asimetría. Sus fallos o su
 contenido son respuestas legítimas: `git rev-parse --show-toplevel` falla cuando no hay ningún
-repositorio, `git check-ignore` termina distinto de cero cuando la carpeta no está ignorada, y
-`git diff --cached --name-only` simplemente lista lo que haya, vacía cuando no hay nada ajeno preparado.
-Reenviar la primera pareja llenaría de un `fatal: not a git repository` alarmante el camino normal de
-cualquier tablero que viva fuera de un repositorio, y la tercera no es un mensaje para quien llama tal
-cual: `biso` la cuenta y la convierte en la nota de arriba. Se reenvía, por tanto, solo lo que escriben
-las órdenes que actúan: `init`, `commit` y `push` en `git`, y `commit` y `publish` en `custom`.
+repositorio, `git check-ignore` termina distinto de cero cuando la carpeta no está ignorada,
+`git diff --cached --no-relative --name-only -z` simplemente lista lo que haya, vacía cuando no hay nada ajeno preparado,
+y las otras dos preguntas se hacen para que `biso` pueda decir en qué caso está, no para que nadie las
+lea. Reenviar la primera pareja llenaría de un `fatal: not a git repository` alarmante el camino normal
+de cualquier tablero que viva fuera de un repositorio, y la tercera no es un mensaje para quien llama
+tal cual: `biso` la cuenta y la convierte en la nota de arriba. Se reenvía, por tanto, solo lo que
+escriben las órdenes que actúan: `init`, `add`, `commit` y `push` en `git`, y `commit` y `publish` en
+`custom`.
 
 **Con `--json` no van por stderr.** Ahí stderr lleva el sobre de error (["Los errores en JSON"](../contrato-json.md#los-errores-en-json)) y no puede llevar además
 texto suelto, así que esas líneas van dentro del sobre: en `data.vcsOutput` cuando la operación acaba
 bien, y en `error.vcsOutput` cuando falla. Es una lista de cadenas, una por línea, y **ahí van sin el
 prefijo**, que existe solo para separarlas a la vista en un terminal.
+
+**Las dos claves se llaman igual y no llevan lo mismo.** `data.vcsOutput` lleva las líneas de todas
+las órdenes que se ejecutaron, en el orden en que se ejecutaron, porque ahí no hay ninguna que
+señalar. `error.vcsOutput` lleva **solo las de la orden que falló** (["Los errores en JSON"](../contrato-json.md#los-errores-en-json)): quien recibe un
+`vcs_push_failed` está leyendo por qué falló la publicación, y las líneas del `commit` que sí
+funcionó antes solo le harían buscar la causa donde no está.
+
+**Una orden que no se puede ni lanzar no escribe nada, y aun así deja una línea.** El texto que
+explica por qué no se pudo lanzar, que es el que nombra el programa que falta, viaja como una línea
+más de esa salida, en las dos claves. Sin él, una orden `publish` de `custom` que apunta a un
+programa inexistente daría un error 8 sin una sola pista de qué instalar.
 
 ## Comportamiento, caso a caso
 
@@ -216,10 +253,12 @@ prefijo**, que existe solo para separarlas a la vista en un terminal.
 | `--vcs none`, o la clave `vcs` en `none` | Escribe los dos ficheros y no ejecuta nada, código 0 |
 | El directorio del tablero no está en ningún repositorio, y crearlo funciona | Lo crea, mete los tres ficheros en la primera revisión, código 0 |
 | El directorio del tablero está dentro del repositorio del proyecto, que no lo ignora | Guarda la revisión ahí, con los tres ficheros nombrados por su ruta, código 0 |
-| El sistema configurado no está instalado, o crear el repositorio falla | Escribe los dos ficheros, `note: no version control here, skipping the commit`, código 0 |
+| El sistema configurado no está instalado, o crear el repositorio falla | Escribe los dos ficheros, `note: no version control here, skipping the commit`, código 0. Con `custom`, "no está instalado" es que la orden `commit` no se pueda ni lanzar; una que sí se lanza y termina distinto de cero es el error de la fila de abajo |
+| `--vcs push` y no había nada que guardar | Publica igual, y la nota de que no había nada que guardar sale como siempre. Lo que `--vcs push` promete no depende de que esta llamada haya guardado una revisión: puede haber revisiones anteriores sin publicar |
 | La revisión falla por una razón de entorno, con un repositorio ya existente (sistema sin configurar, sin permiso, disco lleno, otra instantánea guardando a la vez) | Los dos ficheros ya han quedado escritos antes de intentarlo; Error 8, `code` `vcs_commit_failed`, y el mensaje dice que nada se ha perdido y que basta volver a llamar |
-| `--vcs push` y la publicación falla | Los ficheros están escritos y la revisión guardada; Error 8, `code` `vcs_push_failed` |
+| `--vcs push` y la publicación falla | Los ficheros están escritos y la revisión guardada; Error 8, `code` `vcs_push_failed`. Con `custom`, una orden `publish` que no se puede ni lanzar cuenta también como publicación fallida y no como sistema sin instalar, porque la orden `commit` sí se lanzó: lo que falta no es el sistema, es esa orden |
 | `--vcs push` con `vcs` igual a `custom` y sin orden `publish` declarada | Error 2, `code` `vcs_push_unavailable`, antes de escribir nada |
+| `vcs` igual a `custom` y sin orden `commit` declarada, con `--vcs commit` o `--vcs push` | Error 2, `code` `vcs_commit_unavailable`, antes de escribir nada. `commit` es obligatoria (["Configuración de máquina"](../invocacion.md#configuración-de-máquina)), así que su ausencia es una configuración que no puede funcionar y no una revisión que se haya intentado: nunca es el error 8 de una revisión que falla. Con `--vcs none` no hay nada que declarar y no es error |
 | Alguna tarea no se puede leer (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | Se salta, se cuenta, `warning: 1 task could not be read and was skipped`, y el código es 6 en vez de 0, igual que en `biso export` |
 | No se puede escribir alguno de los dos ficheros | Error 8, con los dos ficheros anteriores intactos y sin intentar la revisión |
 | No hay tablero | Error 20 |
@@ -295,7 +334,12 @@ git:  3 files changed, 12 insertions(+), 4 deletions(-)
 }
 ```
 
-`vcs` es el sistema que se ha usado en esta llamada, y vale `none` cuando no se ha ejecutado nada.
+`vcs` es el sistema que se ha usado en esta llamada. Vale `none` exactamente cuando no se ha llegado a
+intentar ninguna orden, que son los dos casos declarados: `--vcs none`, y la clave `vcs` de la máquina
+en `none`. Con la clave en `git` o en `custom` vale eso, aunque el sistema resulte no estar instalado:
+la alternativa sería que la misma nota `no version control here` saliera unas veces con `none` y otras
+con `git`, según si lo que falló fue encontrar el programa o crear el repositorio, que es una
+diferencia sobre la que nadie puede actuar.
 `commit` y `repository` son `null` cuando `committed` es `false`, y `commit` también con `custom`, que
 no devuelve identificador. `repository` es la raíz del repositorio donde ha ido la revisión, que es lo
 que dice en qué caso de los tres se estaba. `pushed` es `false` salvo con `--vcs push` cumplido.
@@ -309,15 +353,17 @@ ajeno preparado, y siempre `0` con `none` o `custom`, que no hacen esa pregunta.
 marcador `<id>.id` ya estaba ahí y lo escribió `biso init`. El `{files}` de la configuración de `custom`
 (["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) sí son los tres, y son dos conjuntos distintos con nombres parecidos.
 
-`vcsOutput` son las líneas que escribieron las órdenes que se ejecutaron, sin el prefijo que llevan en el
-modo de texto, y está vacía cuando no se ha ejecutado ninguna.
+`vcsOutput` son las líneas que escribieron todas las órdenes que se ejecutaron, en el orden en que se
+ejecutaron y sin el prefijo que llevan en el modo de texto, y está vacía cuando no se ha ejecutado
+ninguna. El `vcsOutput` de un sobre de error es otra cosa y lleva solo las líneas de la orden que
+falló (["Cómo se ejecutan las órdenes"](#cómo-se-ejecutan-las-órdenes)).
 
 ## Códigos de salida
 
 | Desenlace | Código |
 |---|---:|
 | Escrito, y guardado si procedía | 0 |
-| Sintaxis, o `--vcs push` sin orden de publicar configurada | 2 |
+| Sintaxis, o una orden de `custom` que hace falta y no está configurada | 2 |
 | Alguna tarea se ha saltado por ilegible | 6 |
 | No se pueden escribir los ficheros, o falla la revisión o la publicación | 8 |
 | No hay tablero | 20 |

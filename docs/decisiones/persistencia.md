@@ -438,7 +438,7 @@ datos precisamente para poder crecer.
 escribió un programa ajeno no puede saberlo. Quien quiera silencio tiene el `2>/dev/null` que esa misma
 sección ya nombra.
 
-**La salida de las dos preguntas de la receta sí se descarta, y es la única asimetría.** Apareció al
+**La salida de las preguntas de la receta sí se descarta, y es la única asimetría.** Apareció al
 escribir la regla: `git rev-parse --show-toplevel` falla cuando no hay ningún repositorio y
 `git check-ignore` termina distinto de cero cuando la carpeta no está ignorada, y las dos cosas son
 respuestas normales, no fallos. Reenviarlas habría puesto un `fatal: not a git repository` alarmante en el
@@ -468,6 +468,45 @@ el marcador `<id>.id`) mientras que la clave `files` del JSON de `biso snapshot`
 ese comando escribe. Eran dos conjuntos distintos con nombres casi iguales, y no había manera de saber si
 `{files}` eran dos o tres. Son los tres, los mismos que entran en la revisión, y ahora esas secciones
 lo dicen y se nombran la una a la otra.
+
+---
+
+### La receta de `git` pregunta cinco veces y actúa cuatro
+
+**La receta de `git` de ["`biso snapshot`"](../spec/cmd/snapshot.md#dónde-va-la-revisión-y-cómo-se-decide) tiene hoy cinco preguntas y cuatro órdenes: a las dos
+preguntas de dónde va la revisión y a la del índice se suman una que compara los tres ficheros con lo
+que ya está guardado y otra que pide el identificador completo de la revisión, y antes de `git commit`
+va un `git add` con esos mismos tres ficheros.** Salió de implementar el paquete que ejecuta el sistema
+de control de versiones y de probarlo contra repositorios de verdad, no de razonarlo sobre el papel.
+
+**El `git add` no es opcional, y la versión anterior de esta receta, que lo había quitado, estaba
+equivocada.** Decía que `git commit` con rutas no necesita que estén preparadas de antemano, lo cual es
+cierto solo para ficheros que el repositorio ya sigue: a uno sin seguir responde `pathspec did not match
+any file(s) known to git` y termina distinto de cero. Los tres ficheros del tablero están sin seguir
+justo en el caso más importante, la primera instantánea sobre un repositorio que `snapshot` acaba de
+crear, así que sin el `git add` esa primera instantánea no guardaba nada. Lo que sigue siendo cierto, y
+es lo que aquella nota quería proteger, es que nombrar los tres ficheros en el propio `git commit` activa
+su modo `--only` y deja intacto lo que hubiera preparado en el índice para cualquier otro fichero;
+preparar tres ficheros concretos no prepara ninguno más, así que el `git add` no se lleva por delante esa
+garantía.
+
+**La pregunta que compara los tres ficheros con lo guardado existe porque `git commit` termina distinto
+de cero en dos casos que no se parecen en nada**: cuando no hay ningún cambio que registrar, que es un
+desenlace de código 0 con su nota, y cuando la revisión falla de verdad, que es el error 8. Separarlos
+por el texto que `git commit` escribe habría obligado a reconocer sus mensajes uno a uno, que es justo
+lo que la receta de un sistema no debe hacer. Preguntando antes con `git diff --cached --quiet` sobre los
+tres ficheros, el código de salida de la pregunta decide cuál de los dos es, y la receta sigue sin leer
+ni una línea de lo que el programa ajeno escribe. Se descartó comparar el `HEAD` de antes y el de después
+del commit: no distingue tampoco, porque en los dos casos se queda donde estaba.
+
+**La quinta pregunta es `git rev-parse HEAD` y existe porque `git commit` no escribe el identificador
+entero**, solo la forma abreviada dentro de su resumen, y el esquema JSON de ["`biso snapshot`"](../spec/cmd/snapshot.md#el-esquema-json) lo lleva completo.
+Leerlo del resumen de `git commit` sería, otra vez, interpretar el texto de un programa ajeno.
+
+**Y `git diff --cached --name-only` lleva ahora `--no-relative`**, que fuerza las rutas relativas a la
+raíz del repositorio. Es el comportamiento por defecto, pero una máquina con `diff.relative` activado en
+su configuración de git lo cambia, y entonces el recuento de lo preparado fuera del tablero saldría mal
+sin que nada lo avisara.
 
 ## El origen de la cifra de 25 milisegundos
 

@@ -204,8 +204,8 @@ comando (ver sección 6 de este documento).
 ### 3.7. `internal/vcs`
 
 Ejecuta el sistema de control de versiones configurado (`git` en la versión 1.0, según
-`docs/spec/cmd/snapshot.md#el-sistema-de-control-de-versiones`) para `biso snapshot`: las dos
-preguntas que le hace al repositorio y las tres órdenes que le da, según
+`docs/spec/cmd/snapshot.md#el-sistema-de-control-de-versiones`) para `biso snapshot`: las cinco
+preguntas que le hace al repositorio y las cuatro órdenes que le da, según
 `docs/spec/cmd/snapshot.md#cómo-se-ejecutan-las-órdenes`. Es el único paquete que lanza procesos
 externos, y solo
 lo usa `internal/ops` al implementar `Snapshot`; ningún otro comando lo toca.
