@@ -16,7 +16,7 @@
 # Done) no hacen falta para ningún escenario, y por eso no están aquí; el contador de
 # "board.counts" sí las incluye, porque esos números son los que "biso prime" imprime.
 #
-# El texto de los criterios de aceptación y de la definición de hecho que la SPEC no da
+# El texto de los criterios de aceptación que la SPEC no da
 # literalmente (solo da su recuento, columna "ac" de la tabla 9.7) está inventado para que la
 # semilla sea utilizable; no es texto literal de docs/SPEC.md salvo donde se indica en un
 # comentario junto al campo.
@@ -78,10 +78,6 @@ tasks:
       - key: 3
         text: Hay un test que lo cubre
         checked: false
-    definition_of_done:
-      - key: 1
-        text: Revisado por otra persona
-        checked: false
     # Arrendamiento literal de SPEC 10.5: leaseExpiresAt y leaseHolder de la ficha de TASK-11.
     lease:
       expires_at: "2026-09-06T15:40:18Z"
@@ -100,7 +96,6 @@ tasks:
       - key: 1
         text: The README explains how to cut a release
         checked: false
-    definition_of_done: []
     # Arrendamiento vencido, literal de SPEC 9.7: "lease expired 2026-09-05T09:00:00Z, was held by @bob".
     lease:
       expires_at: "2026-09-05T09:00:00Z"
@@ -129,7 +124,6 @@ tasks:
       - key: 2
         text: The existing tests still pass
         checked: false
-    definition_of_done: []
     # Activa y asignada sin haber pasado por "biso start": llegar a activa por otra vía no crea
     # arrendamiento (SPEC 5, sexta precision).
     lease: null
@@ -150,7 +144,6 @@ tasks:
       - key: 2
         text: The same budget applies to the upload endpoint
         checked: false
-    definition_of_done: []
     lease: null
     # Pregunta abierta literal de SPEC 10.5 (sección "Open Question" de TASK-60).
     question:
@@ -171,7 +164,6 @@ tasks:
       - key: 1
         text: The install section no longer mentions the retired --board flag
         checked: false
-    definition_of_done: []
     lease: null
 
   - id: TASK-33
@@ -193,7 +185,6 @@ tasks:
       - key: 3
         text: A test covers three retries in a row
         checked: false
-    definition_of_done: []
     lease: null
 
   - id: TASK-7
@@ -219,7 +210,6 @@ tasks:
       - key: 4
         text: The exit code is a normal error code, not a crash
         checked: false
-    definition_of_done: []
     lease: null
 
   - id: TASK-19
@@ -238,7 +228,6 @@ tasks:
       - key: 2
         text: The number of retries is configurable
         checked: false
-    definition_of_done: []
     lease: null
 
   - id: TASK-44
@@ -254,5 +243,4 @@ tasks:
       - key: 1
         text: The status column no longer wraps on an 80-column terminal
         checked: false
-    definition_of_done: []
     lease: null

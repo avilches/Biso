@@ -226,8 +226,6 @@ igual que las demás.
         "leaseHolder": "@claude",
         "acDone": 1,
         "acTotal": 2,
-        "dodDone": 0,
-        "dodTotal": 1,
         "commentCount": 1,
         "urgency": 19.0,
         "blocks": ["MYP-40"],

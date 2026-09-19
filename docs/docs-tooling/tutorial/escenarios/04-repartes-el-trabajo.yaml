@@ -63,8 +63,6 @@ steps:
       acceptance criteria. It doesn't add the active-task term, worth 4.0, because the task is
       still `To Do`: assigning a task doesn't put it in motion.
 
-      The `dod` chunk doesn't show up because `TASK-19` has no definition of done, and that chunk
-      only appears when there is one.
   - narration: |
       In his own session, the agent asks what's his to do. Here `--mine` does work, because his
       identity is declared.

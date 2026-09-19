@@ -1,28 +1,181 @@
 id: 07-falta-un-criterio
 title: Halfway through, a criterion is missing
 situation: |
-  You've been at `TASK-19` for a while. You're noting down what you check, but you still haven't
-  written a definition of done: not a word about what has to happen, beyond the acceptance
-  criteria, for this task to really count as finished. You stop to write it down before going on.
+  You've been at `TASK-19` for a while. You're noting down what you check, and you realize the
+  task never said anything about the change being reviewed, or about the new retry behavior
+  ending up in the documentation. You stop to write that down before going on.
 
-  You check first whether there's already something there.
+  You check first what the task already carries.
 teaches:
   - >-
+    A task has one checklist, not two. Whatever has to be true before closing, including what
+    another tool would keep in a separate definition of done, is one more acceptance criterion.
+  - >-
     Each field flag says what it does in its own name: `--add-` adds, `--rm-` removes, `--clear-`
-    empties. For criteria and definition-of-done items there's no whole-list replace; doing that
-    means clearing and adding in the same call.
+    empties. For criteria there's no whole-list replace; doing that means clearing and adding in
+    the same call.
   - >-
-    The `#N` keys of a criterion, whether an acceptance criterion or a definition-of-done item,
-    get assigned when the element is created and are never reassigned. Removing one from the
-    middle doesn't renumber the ones that are left.
+    The `#N` keys of a criterion get assigned when the element is created and are never
+    reassigned. Removing one from the middle doesn't renumber the ones that are left.
   - >-
-    A list's key counter only ever grows, even after `--clear-`. Elements added after emptying
-    the list don't get back the keys of the ones that were removed.
+    The key counter only ever grows, even after `--clear-acs`. Elements added after emptying the
+    list don't get back the keys of the ones that were removed.
 steps:
   - narration: |
-      You ask for just that section, so you don't pull the whole record for something you already
-      know is going to be empty.
-    command: biso get TASK-19 --section dod
+      You ask for just that section, so you don't pull the whole record for something you only
+      want to read one part of.
+    command: biso get TASK-19 --section ac
+    output: |
+      TASK-19  Retry the upload on 5xx
+
+      ## Acceptance Criteria
+      - [ ] #1 A request that gets a 5xx is retried automatically
+      - [ ] #2 The number of retries is configurable
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/get.md "`biso get`"
+    remark: |
+      These are the two criteria the task was born with, in the initial inventory. Neither says
+      anything about review or documentation.
+  - narration: |
+      You write down the first thing that comes to mind: that the change should be reviewed by
+      someone else before it counts as done.
+    command: biso set TASK-19 --add-ac "Someone else reviews the change before the task counts as done"
+    output: |
+      TASK-19  In Progress  ac 0/3  urgency 11.0  added ac #3
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/cmd/set.md "`biso set`"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
+    remark: |
+      Look at what just happened: "someone else reviews it" is not about whether the retry works,
+      and another tool would file it under a separate definition of done. In `biso` there is no
+      second list, so it goes here, as one more criterion. The line ends in `added ac #3` because
+      the call created an element and you couldn't have known its key without reading the task
+      first.
+  - narration: |
+      And a second thing that needs to be clear before closing: that the retry behavior gets
+      documented somewhere, for whoever reads this later.
+    command: biso set TASK-19 --add-ac "The retry behavior is documented in the README"
+    output: |
+      TASK-19  In Progress  ac 0/4  urgency 11.0  added ac #4
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/cmd/set.md "`biso set`"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
+  - narration: |
+      You check how they turned out, with their keys.
+    command: biso get TASK-19 --section ac
+    output: |
+      TASK-19  Retry the upload on 5xx
+
+      ## Acceptance Criteria
+      - [ ] #1 A request that gets a 5xx is retried automatically
+      - [ ] #2 The number of retries is configurable
+      - [ ] #3 Someone else reviews the change before the task counts as done
+      - [ ] #4 The retry behavior is documented in the README
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/cmd/get.md "`biso get`"
+  - narration: |
+      On second thought, `#3` is redundant: having someone else review the change is already team
+      policy for any PR, not something specific to this task. You remove it.
+    command: biso set TASK-19 --rm-ac 3
+    output: |
+      TASK-19  In Progress  ac 0/3  urgency 11.0
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#selectores-de-criterios "Selectores de criterios"
+      - spec/cmd/set.md "`biso set`"
+  - narration: |
+      You check the list again to make sure what's left hasn't changed number.
+    command: biso get TASK-19 --section ac
+    output: |
+      TASK-19  Retry the upload on 5xx
+
+      ## Acceptance Criteria
+      - [ ] #1 A request that gets a 5xx is retried automatically
+      - [ ] #2 The number of retries is configurable
+      - [ ] #4 The retry behavior is documented in the README
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
+      - spec/cmd/get.md "`biso get`"
+    remark: |
+      This is the central point of the scenario. The surviving element is still `#4`, it hasn't
+      become `#3`. The program fixes a key when the element is created and never moves it: that's
+      why checking or removing by number is safe even when the list has lost elements along the
+      way, and why a task can perfectly well have criteria `#2` and `#7` without that being
+      anyone's mistake.
+  - narration: |
+      A coworker reviews the wording and finds all three too vague to tell whether they're met.
+      Between you, you rewrite the whole list at once.
+    command: biso set TASK-19 --clear-acs --add-ac "The README explains when and how many times it retries" --add-ac "The test suite covers the 5xx case"
+    output: |
+      TASK-19  In Progress  ac 0/2  urgency 11.0  added ac #5, #6
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera "Sustituir un campo que no tiene flag de \"sustituir entera\""
+      - spec/cmd/set.md "`biso set`"
+    remark: |
+      There's no flag that replaces the whole list of criteria in one shot, so this clears it and
+      adds the two new ones in the same call. The three old elements disappear, and the two that
+      come in are brand new.
+
+      No warning shows up here, unlike a `--replace-*` on a comma-separated list field that
+      overwrites non-empty content: clearing was explicit, you typed it yourself, so nothing gets
+      overwritten silently and there's nothing to warn about.
+  - narration: |
+      You check the keys of the two new ones.
+    command: biso get TASK-19 --section ac
+    output: |
+      TASK-19  Retry the upload on 5xx
+
+      ## Acceptance Criteria
+      - [ ] #5 The README explains when and how many times it retries
+      - [ ] #6 The test suite covers the 5xx case
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/cmd/get.md "`biso get`"
+    remark: |
+      The keys are `#5` and `#6`, not `#1` and `#2`. This task's counter was already at 4 before
+      anything got cleared, and clearing doesn't reset it: "the keys of earlier elements are never
+      reused" holds even when the clear-and-add comes after an `--rm-ac`, not just right after
+      creating the task.
+  - narration: |
+      Almost right away you realize you're polishing the wording before the code is properly
+      settled. You'd rather leave the list blank until the work is more mature.
+    command: biso set TASK-19 --clear-acs
+    output: |
+      TASK-19  In Progress  urgency 10.0
+    exit_code: 0
+    source_kind: derived
+    source:
+      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
+      - spec/cmd/set.md "`biso set`"
+      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
+    remark: |
+      Two things change in that line. The `ac` chunk disappears, because it only shows up when the
+      task has criteria and an empty list doesn't count as having any. And the urgency drops from
+      11.0 to 10.0, because having at least one acceptance criterion is worth 1.0 in the formula:
+      a task nobody can tell is finished is, by that much, less ready to be picked up.
+  - narration: |
+      You ask for the section again, to see what an empty list looks like.
+    command: biso get TASK-19 --section ac
     output: ""
     exit_code: 0
     source_kind: derived
@@ -36,11 +189,11 @@ steps:
       section out would blur "empty" with "not requested"; with it, you asked for exactly that
       section, so "empty" no longer needs saying.
   - narration: |
-      You write down the first thing that comes to mind: that the change should be reviewed by
-      someone else before it counts as done.
-    command: biso set TASK-19 --add-dod "Someone else reviews the change before the task counts as done"
+      A while later, with the retry already working, you go back to the list. It's the same
+      wording you and your coworker had agreed on.
+    command: biso set TASK-19 --add-ac "The README explains when and how many times it retries" --add-ac "The test suite covers the 5xx case"
     output: |
-      TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
+      TASK-19  In Progress  ac 0/2  urgency 11.0  added ac #7, #8
     exit_code: 0
     source_kind: derived
     source:
@@ -48,147 +201,21 @@ steps:
       - spec/cmd/set.md "`biso set`"
       - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
     remark: |
-      `--add-dod` adds. It's the same verb you already know from `--add-ac`: it behaves the same
-      way for any list field.
-  - narration: |
-      And a second thing that needs to be clear before closing: that the retry behavior gets
-      documented somewhere, for whoever reads this later.
-    command: biso set TASK-19 --add-dod "The retry behavior is documented in the README"
-    output: |
-      TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit_code: 0
-    source_kind: derived
-    source:
-      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
-  - narration: |
-      You check how they turned out, with their keys.
-    command: biso get TASK-19 --section dod
-    output: |
-      TASK-19  Retry the upload on 5xx
-
-      ## Definition of Done
-      - [ ] #1 Someone else reviews the change before the task counts as done
-      - [ ] #2 The retry behavior is documented in the README
-    exit_code: 0
-    source_kind: derived
-    source:
-      - spec/cmd/get.md "`biso get`"
-  - narration: |
-      On second thought, the first one is redundant: having someone else review the change is
-      already team policy for any PR, not something specific to this task. You remove it.
-    command: biso set TASK-19 --rm-dod 1
-    output: |
-      TASK-19  In Progress  ac 0/2  dod 0/1  urgency 11.0
-    exit_code: 0
-    source_kind: derived
-    source:
-      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/familias-de-flags.md#selectores-de-criterios "Selectores de criterios"
-      - spec/cmd/set.md "`biso set`"
-  - narration: |
-      You check the list again to make sure what's left hasn't changed number.
-    command: biso get TASK-19 --section dod
-    output: |
-      TASK-19  Retry the upload on 5xx
-
-      ## Definition of Done
-      - [ ] #2 The retry behavior is documented in the README
-    exit_code: 0
-    source_kind: derived
-    source:
-      - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
-      - spec/cmd/get.md "`biso get`"
-    remark: |
-      This is the central point of the scenario. The surviving element is still `#2`, it hasn't
-      become `#1`. The program fixes a key when the element is created and never moves it: that's
-      why checking or removing by number is safe even when the list has lost elements along the
-      way, and why a task can perfectly well have criteria `#2` and `#7` without that being
-      anyone's mistake.
-  - narration: |
-      A coworker reviews the wording and suggests rewriting the whole list at once, adding a
-      second entry about the tests that are needed.
-    command: biso set TASK-19 --clear-dods --add-dod "The README explains when and how many times it retries" --add-dod "The test suite covers the 5xx case"
-    output: |
-      TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit_code: 0
-    source_kind: derived
-    source:
-      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/familias-de-flags.md#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera "Sustituir un campo que no tiene flag de \"sustituir entera\""
-      - spec/cmd/set.md "`biso set`"
-    remark: |
-      There's no flag that replaces the whole list of definition-of-done items in one shot, so
-      this clears it and adds the two new items in the same call. Element `#2` disappears along
-      with the rest of the old list, and the two that come in are brand new elements.
-
-      No warning shows up here, unlike a `--replace-*` on a comma-separated list field that
-      overwrites non-empty content: clearing was explicit, you typed it yourself, so nothing gets
-      overwritten silently and there's nothing to warn about.
-  - narration: |
-      You check the keys of the two new ones.
-    command: biso get TASK-19 --section dod
-    output: |
-      TASK-19  Retry the upload on 5xx
-
-      ## Definition of Done
-      - [ ] #3 The README explains when and how many times it retries
-      - [ ] #4 The test suite covers the 5xx case
-    exit_code: 0
-    source_kind: derived
-    source:
-      - spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables "Los criterios y sus claves estables"
-      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/cmd/get.md "`biso get`"
-    remark: |
-      The keys are `#3` and `#4`, not `#1` and `#2`. This list's counter, inside this task, was
-      already at 2 before anything got cleared, and clearing doesn't reset it: "the keys of
-      earlier elements are never reused" holds even when the clear-and-add comes after an `--rm-`,
-      not just right after creating the task.
-  - narration: |
-      Almost right away you realize you're polishing the wording before the code is properly
-      settled. You'd rather leave it blank until the work is more mature.
-    command: biso set TASK-19 --clear-dods
-    output: |
-      TASK-19  In Progress  ac 0/2  urgency 11.0
-    exit_code: 0
-    source_kind: derived
-    source:
-      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/cmd/set.md "`biso set`"
-    remark: |
-      The list ends up empty, and that's why the `dod` chunk disappears from the status line: it
-      only shows up "whenever the task has a definition of done," and an empty list doesn't count
-      as having one. `ac` keeps showing because those two criteria haven't been touched.
-  - narration: |
-      A while later, with the retry already working, you go back to the final list. It's the
-      same wording as before.
-    command: biso set TASK-19 --add-dod "The README explains when and how many times it retries" --add-dod "The test suite covers the 5xx case"
-    output: |
-      TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
-    exit_code: 0
-    source_kind: derived
-    source:
-      - spec/familias-de-flags.md#campos-de-lista-sin-coma-criterios "Campos de lista sin coma (criterios)"
-      - spec/cmd/set.md "`biso set`"
-      - spec/modelo-de-datos/urgencia.md#la-urgencia "La urgencia"
-    remark: |
-      `--add-dod` again. The keys of these two elements are `#5` and `#6`: the list's counter
-      hasn't been reset either by the earlier `--rm-dod` or by the later `--clear-dods`, it "only
-      ever grows," no matter what happens to the list's content.
+      The keys of these two elements are `#7` and `#8`: the counter hasn't been reset either by
+      the earlier `--rm-ac` or by the two `--clear-acs`, it "only ever grows," no matter what
+      happens to the list's content. The urgency goes back up to 11.0 for the same reason it went
+      down: the task has criteria again.
 board_in: >
   TASK-19 in In Progress, assigned to @claude, with a live lease held by @claude (renewed in
-  scenario 6). ac 0/2 unchecked (the two criteria it carries from the initial inventory). No
-  definition of done. Urgency 11.0 (priority high 6.0, active 4.0, has criteria 1.0, no due date
-  or declared dependencies; the age term is taken as 0 for lack of a documented creation date for
-  this task, see tutorial/lagunas/07-10.md). Board counters: To Do 54 | In Progress 5 | Done 190,
-  as they stand after scenario 5 (which moves TASK-19 from To Do to In Progress) without scenario
-  6 touching them.
+  scenario 6). ac 0/2 unchecked (the two criteria it carries from the initial inventory, keys #1
+  and #2). Urgency 11.0 (priority high 6.0, active 4.0, has criteria 1.0, no due date or declared
+  dependencies; the age term is 0 because the task was created on the board's reference date). Board counters: To Do 54 | In Progress 5 | Done 190, as they
+  stand after scenario 5 (which moves TASK-19 from To Do to In Progress) without scenario 6
+  touching them.
 board_out: >
   TASK-19 is still In Progress, with no change in assignment, state or lease. ac 0/2 unchecked,
-  untouched in this scenario. dod 0/2, with keys #5 and #6: keys #1 through #4 were used and
-  discarded during the scenario (#1 was removed with --rm-dod, #2 was cleared with --clear-dods
-  while adding #3 and #4 in the same call, and #3 and #4 were then emptied with a second
-  --clear-dods). Urgency unchanged, 11.0. Board counters unchanged: 54/5/190, because no step in
-  this scenario moves a task between states.
+  with keys #7 and #8: keys #1 through #6 were used and discarded during the scenario (#1 and #2
+  came from the inventory, #3 was removed with --rm-ac, #4 was cleared along with them while
+  adding #5 and #6 in the same call, and #5 and #6 were then emptied with a second --clear-acs).
+  Urgency back at 11.0, after dropping to 10.0 while the list was empty. Board counters unchanged:
+  54/5/190, because no step in this scenario moves a task between states.

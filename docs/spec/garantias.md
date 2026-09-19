@@ -12,8 +12,7 @@ determinista:
 4. Los añadidos: `--add-*` y `--append-*`.
 5. Los campos de mapa: `--ext`.
 6. Los campos escalares.
-7. Los marcados de criterios y de definición de hecho (`--check-ac`, `--uncheck-ac`, `--check-dod`,
-   `--uncheck-dod`).
+7. Los marcados de criterios (`--check-ac`, `--uncheck-ac`).
 8. `--set-comment-date`.
 9. Los comentarios, es decir `--comment`, el que añade.
 

@@ -7,7 +7,7 @@ más palabras.
 
 ```
 biso set <ref>... [cualquier flag de campo de las familias de flags]
-         [--check-ac <sel>]... [--uncheck-ac <sel>]... [--check-dod <sel>]... [--uncheck-dod <sel>]...
+         [--check-ac <sel>]... [--uncheck-ac <sel>]...
          [--comment <text>]... [--comment-author <@who>]
          [--rm-comment <sel>]... [--set-comment-date <sel>=<instante>]... [--id] [--match]
 ```
@@ -22,8 +22,6 @@ significado que en cualquier otro comando. Lo propio de `set`:
 | `<ref>` | | sí, una o más | referencia | | sí | no | |
 | `--check-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--uncheck-ac` |
 | `--uncheck-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--check-ac` |
-| `--check-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--uncheck-dod` |
-| `--uncheck-dod <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--check-dod` |
 | `--comment <text>` | | no | texto largo | | sí | no | |
 | `--comment-author <@who>` | | no | texto libre | `me` | no | no | requiere `--comment` |
 | `--rm-comment <sel>` | | no | selector ["Comentarios"](../familias-de-flags.md#comentarios) | | sí | ver ["Comentarios"](../familias-de-flags.md#comentarios) | solape con `--set-comment-date` sobre la misma clave |
@@ -57,36 +55,33 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 
 Por defecto, **una línea por tarea afectada** con lo que quien llama no sabía: el estado resultante,
 el avance de criterios y la urgencia recalculada. Los tres datos son derivados, y ninguno se puede
-conocer sin leer la tarea. La MYP-11 de los ejemplos tiene además una definición de hecho de un
-elemento, así que su línea trae también el avance de esa segunda lista:
+conocer sin leer la tarea:
 
 ```
-MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 1/2  urgency 19.0
 ```
 
 **Esta es la línea de estado, y la imprimen también los seis verbos del ciclo de la sección ["Los verbos del ciclo: `start`, `note`, `comment`, `finish`, `ask`, `answer`"](verbos-del-ciclo.md) y
 `biso archive`.** La única excepción es `biso new`, por el motivo que da la sección ["`biso new`"](new.md). Cada comando la enseña
 con su propio ejemplo, pero las reglas de su forma se dicen aquí y no se repiten:
 
-1. El trozo `ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación.
-2. El trozo `dod <marcados>/<total>` sale siempre que tenga definición de hecho. Una tarea sin ninguna
-   de las dos listas imprime solo el identificador, el estado y la urgencia.
-3. **Si la llamada crea uno o más criterios de aceptación, la línea añade `added ac #<clave>`,** con
-   las claves nuevas separadas por comas si son varias. Lo mismo con `added dod #<clave>` si crea
-   definición de hecho, y las dos piezas pueden ir juntas en la misma línea si la llamada crea de las
-   dos clases a la vez. **Si la llamada no crea ningún criterio, esta pieza no aparece**, y la línea es
-   exactamente la de antes. La razón de que vaya aquí y no en `biso new` está en
+1. El trozo `ac <marcados>/<total>` sale siempre que la tarea tenga criterios de aceptación. Una
+   tarea sin ninguno imprime solo el identificador, el estado y la urgencia.
+2. **Si la llamada crea uno o más criterios de aceptación, la línea añade `added ac #<clave>`,** con
+   las claves nuevas separadas por comas si son varias. **Si la llamada no crea ningún criterio, esta
+   pieza no aparece**, y la línea es exactamente la de antes. La razón de que vaya aquí y no en
+   `biso new` está en
    ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios):
    ```
    biso set MYP-11 --add-ac "There is a test" --add-ac "Docs updated"
-   MYP-11  In Progress  ac 1/4  dod 0/1  urgency 19.0  added ac #4, #5
+   MYP-11  In Progress  ac 1/4  urgency 19.0  added ac #4, #5
    ```
-4. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
+3. La palabra `archived` cierra la línea cuando la tarea queda archivada, y solo entonces. Es lo único
    más que una escritura puede añadirle, y quien lo añade es `biso archive` (["`biso archive`"](archive.md)).
-5. **Con `--dry-run`, la salida es la misma línea de estado que daría la escritura real, calculada sin
+4. **Con `--dry-run`, la salida es la misma línea de estado que daría la escritura real, calculada sin
    escribir nada**, con un encabezado delante que la marca como hipotética: `<N> task(s) would be
    affected (--dry-run)`, en singular si `N` es 1 y en plural en cualquier otro caso. Debajo va una
-   línea por tarea, con exactamente la misma forma de los puntos 1 a 4 (incluido `added ac #<clave>` si
+   línea por tarea, con exactamente la misma forma de los puntos 1 a 3 (incluido `added ac #<clave>` si
    la llamada crearía un criterio, y `archived` si la tarea quedaría archivada). Los dos bloques van por
    stdout, en el mismo canal que la línea real, porque siguen siendo el dato que la llamada produce, solo
    que hipotético; ninguno de los dos implica que se haya escrito nada. La regla vale para los seis
@@ -96,7 +91,7 @@ con su propio ejemplo, pero las reglas de su forma se dicen aquí y no se repite
    ```
    biso set MYP-11 --add-labels parser --dry-run
    1 task would be affected (--dry-run)
-   MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+   MYP-11  In Progress  ac 1/2  urgency 19.0
    ```
 
 Los avisos van por stderr:
@@ -115,8 +110,8 @@ warning: --replace-labels replaced 2 existing labels
   "data": {
     "tasks": [
       { "id": "MYP-11", "status": "In Progress", "acDone": 1, "acTotal": 2,
-        "dodDone": 0, "dodTotal": 1, "urgency": 19.0,
-        "changed": ["labels", "status"], "acAdded": [], "dodAdded": [] }
+        "urgency": 19.0,
+        "changed": ["labels", "status"], "acAdded": [] }
     ],
     "warnings": [ { "code": "overwrite", "field": "labels", "count": 2, "task": "MYP-11" } ]
   }
@@ -128,8 +123,8 @@ warning: --replace-labels replaced 2 existing labels
 dice qué campos han cambiado de verdad, que no es lo mismo que qué flags se han pasado. En el lote
 de `new --from`, las 242 tareas van en `data.tasks` de **un solo sobre**, no en 242 objetos sueltos.
 
-**`acAdded` y `dodAdded` son las claves que la llamada acaba de crear**, en el mismo orden en que se
-crearon, vacías (`[]`) cuando no se creó ninguna. Están presentes en las mismas condiciones que el
+**`acAdded` es la lista de claves que la llamada acaba de crear**, en el mismo orden en que se
+crearon, vacía (`[]`) cuando no se creó ninguna. Está presente en las mismas condiciones que el
 resto de claves de `data.tasks` (["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias)): siempre, en todos los comandos que
 comparten este `kind`, incluido `new`, aunque su equivalente en texto plano solo aparezca en la línea
 de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)).
@@ -163,19 +158,16 @@ field that breaks them:
   --rm-labels X       remove one or more    --clear-labels       empty the list
 The same works for --assignees, --refs, --docs, --deps and --files.
 
-Criteria and definition of done have three, because a criterion's text can
-contain a comma and so is never split on one. There is no whole-list replace;
-do it by clearing and adding in the same call.
+Criteria have three, because a criterion's text can contain a comma and so is
+never split on one. There is no whole-list replace; do it by clearing and
+adding in the same call.
       --add-ac <text>        add a criterion; repeatable
       --rm-ac <sel>          remove by selector; sel is all, 3, 1-4, 1,3,7 or
                              the criterion text. The numbers are stable #N
                              keys. With several tasks, sel has to be all
       --clear-acs            empty the list
-      --add-dod / --rm-dod / --clear-dods    the same, for definition of done
       --check-ac <sel>       check criteria, by the same kind of selector
       --uncheck-ac <sel>     the opposite
-      --check-dod <sel>      the same for definition-of-done items
-      --uncheck-dod <sel>    the opposite
 
 Prose fields have two, because a block of text has no single item to remove.
 Replace by clearing and appending in the same call.

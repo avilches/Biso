@@ -89,9 +89,6 @@ so debugging one means reconstructing it by hand from scattered timestamps.
 - [ ] #2 The counter shows up in the final summary
 - [ ] #3 A test covers three retries in a row
 
-## Definition of Done
-(empty)
-
 ## Implementation Plan
 (empty)
 
@@ -112,4 +109,4 @@ Exit code: `0`
 
 *(derived output, see [`biso get`](../spec/cmd/get.md); not literal spec text)*
 
-*Note: There's no `lease` line: that only shows up when the task has a lease, and a task in To Do can't have one (per the task data model). The nine sections always appear, even when empty and marked `(empty)`, because leaving out one that wasn't requested would be confused with one that was requested and came back empty. Notice the `#1`, `#2` and `#3` keys in front of each criterion: they're stable, not a position in the list, so if `#2` ever gets removed the other two stay `#1` and `#3`, they never get renumbered.*
+*Note: There's no `lease` line: that only shows up when the task has a lease, and a task in To Do can't have one (per the task data model). The eight sections always appear, even when empty and marked `(empty)`, because leaving out one that wasn't requested would be confused with one that was requested and came back empty. Notice the `#1`, `#2` and `#3` keys in front of each criterion: they're stable, not a position in the list, so if `#2` ever gets removed the other two stay `#1` and `#3`, they never get renumbered.*

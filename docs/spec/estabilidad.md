@@ -43,7 +43,7 @@ versiones.
 
 **Migración.** Si cambiara la forma en que los datos se guardan, la herramienta migra sola al
 detectarlo, y en cualquier caso el volcado de una versión se puede importar en la siguiente, porque
-el formato de `export` es el de `new --from` y los dos están en este contrato.
+el formato de `export` lo lee `new --from` entero y los dos están en este contrato.
 
 ---
 

@@ -19,10 +19,10 @@ efectos de qué flag tiene sentido ofrecer, da igual si un valor único es `stri
 `date`, `int`, `float` o `bool`, porque a todos les basta con fijar y vaciar, así que esos tipos
 comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa";
 `map<string,string>` es "mapa de claves"; y `list<Criterion>` / `list<Comment>` son "lista de
-objetos". **Dos formas se reparten en más de una fila** cuando, dentro de la misma forma, hay más de
-un conjunto de operaciones posible: `acceptanceCriteria`, `definitionOfDone` y `comments` son los tres
-"lista de objetos", pero los criterios y los comentarios no comparten los mismos flags, así que la
-forma aparece dos veces, una por cada conjunto de operaciones.
+objetos". **Una forma se reparte en más de una fila** cuando, dentro de la misma forma, hay más de
+un conjunto de operaciones posible: `acceptanceCriteria` y `comments` son los dos "lista de
+objetos", pero los criterios y los comentarios no comparten los mismos flags, así que la forma
+aparece dos veces, una por cada conjunto de operaciones.
 
 | Forma | Clase de campo | Variantes |
 |---|---|---|
@@ -30,7 +30,7 @@ forma aparece dos veces, una por cada conjunto de operaciones.
 | lista de tokens | Lista de tokens | añadir, quitar, vaciar, sustituir entera |
 | bloque de prosa | Bloque de prosa | añadir al final, vaciar |
 | mapa de claves | Mapa de claves | fijar una clave, quitar una clave, vaciar |
-| lista de objetos | Criterios (`acceptanceCriteria`, `definitionOfDone`) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
+| lista de objetos | Criterios (`acceptanceCriteria`) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
 | lista de objetos | Comentarios (`comments`) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
 
 **`question` no entra en esta tabla.** Es de tipo `Question`, un valor único y no una lista, y esa
@@ -54,7 +54,7 @@ arranque, está en ["El grid completo de flags de campo en el mensaje de arranqu
 
 ## Sustituir un campo que no tiene flag de "sustituir entera"
 
-Los criterios (`ac`, `dod`) y la prosa no tienen un flag de "sustituir entera" propia
+Los criterios (`ac`) y la prosa no tienen un flag de "sustituir entera" propia
 (["Campos de lista sin coma"](#campos-de-lista-sin-coma-criterios) y ["Campos de prosa"](#campos-de-prosa)). Sustituirlos se hace vaciando y añadiendo en la misma
 llamada:
 
@@ -145,32 +145,31 @@ prosa, y no comparten la regla de acentos de los selectores de texto de la secci
 | Campo | Añade | Quita (selector) | Vacía |
 |---|---|---|---|
 | criterios de aceptación | `--add-ac` | `--rm-ac` | `--clear-acs` |
-| definición de hecho | `--add-dod` | `--rm-dod` | `--clear-dods` |
 
-**No existe `--replace-ac` ni `--replace-dod`.** Sustituir la lista entera de criterios se hace
+**No existe `--replace-ac`.** Sustituir la lista entera de criterios se hace
 vaciando y añadiendo en la misma llamada (["Sustituir un campo que no tiene flag de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera)):
 `biso set MYP-11 --clear-acs --add-ac "First" --add-ac "Second"`.
 
-`--add-ac` y `--add-dod` son repetibles pero **no** aceptan lista por comas, porque el texto de un
-criterio puede contener comas. `--rm-ac` y `--rm-dod` toman un selector de la sección
+`--add-ac` es repetible pero **no** acepta lista por comas, porque el texto de un criterio puede
+contener comas. `--rm-ac` toma un selector de la sección
 ["Selectores de criterios"](#selectores-de-criterios).
 
 Para añadir varios criterios en una llamada, se repite el flag, uno por criterio:
 
 ```
 biso set MYP-11 --add-ac "The parser accepts CRLF" --add-ac "Dates keep their time zone" \
-                --add-dod "Reviewed by someone else"
+                --add-ac "Reviewed by someone else"
 ```
 
-Esa llamada añade dos criterios de aceptación y un elemento a la definición de hecho. Una coma dentro
-del texto no parte nada: `--add-ac "Handles CRLF, LF and CR"` es un solo criterio.
+Cada `--add-ac` de esa llamada añade un criterio de aceptación. Una coma dentro del texto no parte
+nada: `--add-ac "Handles CRLF, LF and CR"` es un solo criterio.
 
 **Los elementos nuevos se crean con claves nuevas, sin marcar, y las claves de los elementos
 anteriores no se reutilizan.** Es coherente con
 ["Los criterios y sus claves estables"](modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables): la
 clave se asigna al crear el elemento.
 
-**Qué clave le toca a un elemento creado con `--add-ac` o `--add-dod` es algo que quien llama no
+**Qué clave le toca a un elemento creado con `--add-ac` es algo que quien llama no
 puede saber de antemano**, salvo en `biso new`: en cualquier otro comando de escritura, el contador de
 esa lista ya venía de antes, y consultarlo exigiría leer la tarea primero. Por el principio 4
 (["Los principios"](principios.md), "la salida por defecto de una escritura es lo que quien llama no sabía"), esa clave es
@@ -241,7 +240,7 @@ biso set MYP-11 --clear-plan --append-plan @plan.md
 
 ## Selectores de criterios
 
-`--check-ac`, `--uncheck-ac`, `--rm-ac`, `--check-dod`, `--uncheck-dod` y `--rm-dod` toman un selector.
+`--check-ac`, `--uncheck-ac` y `--rm-ac` toman un selector.
 Todos son repetibles.
 
 **Las claves de un selector son las mismas que enseña `biso get`, y no hay otro sitio donde
@@ -443,6 +442,6 @@ los escalares (["Orden de aplicación dentro de una escritura"](garantias.md#ord
 | Paso de `--ext` y `--rm-ext` en el orden de aplicación | `--clear-ext` en el paso 1, `--rm-ext` en el paso 3, `--ext` en su propio paso 5, entre los añadidos (4) y los escalares (6) | no aplica |
 | `--ext k=a --ext k=b`, la misma clave dos veces con valores distintos | Gana el último valor de la línea de comandos, con `warning: --ext: key "k" given twice, kept last value` | 0 |
 | Mayúsculas en una etiqueta o una persona asignada, por ejemplo `--add-labels Parser --add-labels parser` | Quedan como dos valores distintos al guardar; un filtro de lectura como `ls --label parser` encuentra los dos | 0 |
-| Mayúsculas y acentos en el selector de texto de un criterio, una definición de hecho o un comentario | Se pliegan las mayúsculas y se descartan los acentos antes de comparar (normalización NFKD, sin marcas combinantes); no cambia si el resultado es 0, 4 o 5, solo qué encuentra | sin cambio |
+| Mayúsculas y acentos en el selector de texto de un criterio o de un comentario | Se pliegan las mayúsculas y se descartan los acentos antes de comparar (normalización NFKD, sin marcas combinantes); no cambia si el resultado es 0, 4 o 5, solo qué encuentra | sin cambio |
 
 ---

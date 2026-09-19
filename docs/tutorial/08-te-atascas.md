@@ -56,7 +56,7 @@ question.
 
 ```console
 $ biso ask TASK-19 "What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?"
-TASK-19  In Progress  ac 0/2  dod 0/2  urgency 7.0
+TASK-19  In Progress  ac 0/2  urgency 7.0
 ```
 
 Exit code: `0`
@@ -85,7 +85,7 @@ a value fixed somewhere else in the code. You answer, and the task gets unparked
 
 ```console
 $ biso answer TASK-19 "There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here."
-TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+TASK-19  In Progress  ac 0/2  urgency 11.0
 ```
 
 Exit code: `0`

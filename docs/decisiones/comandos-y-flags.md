@@ -47,19 +47,22 @@ haberlo leído en algún sitio. Se sustituyó por dar a cada operación su propi
 `--rm-labels`, `--clear-labels`, `--replace-labels`, y así con cada campo), de modo que cualquier
 flag se entiende por su nombre sin haber leído esta sección. Dos consecuencias de ese cambio:
 
-- **Los campos de lista sin coma (`ac`, `dod`) pierden la variante de "sustituir entera".**
-  `--replace-ac`/`--replace-dod` habría sido repetible igual que `--add-ac`, y repetir un flag de
+- **El campo de lista sin coma (`ac`) pierde la variante de "sustituir entera".**
+  `--replace-ac` habría sido repetible igual que `--add-ac`, y repetir un flag de
   sustituir no la sustituye dos veces: acumula sus valores y sustituye una sola vez con el conjunto
   acumulado (["Repetición y listas separadas por comas"](../spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas)), que es una segunda pieza de comportamiento no obvio
-  encima del nombre. Sustituir esas dos listas se hace vaciando y añadiendo en la misma llamada
+  encima del nombre. Sustituir esa lista se hace vaciando y añadiendo en la misma llamada
   (["Orden de aplicación dentro de una escritura"](../spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura)), que ya hacía falta declarar para todo lo demás y cubre el mismo caso sin un
   flag más que aprender.
-- **`--check` y `--uncheck` pasan a `--check-ac` y `--uncheck-ac`, simétricos con `--check-dod` y
-  `--uncheck-dod`.** La forma anterior reservaba el nombre desnudo para los criterios de aceptación y
-  obligaba a la definición de hecho a llevar el sufijo, una asimetría que la propia especificación
-  declaraba como excepción sin más justificación que la de ser la primera lista de las dos. Bajo la
-  regla nueva no hay sitio para reservar un nombre desnudo a nada, así que la asimetría desaparece
-  sola en vez de quedar documentada como caso especial.
+- **`--check` y `--uncheck` pasan a `--check-ac` y `--uncheck-ac`.** La forma anterior reservaba el
+  nombre desnudo para los criterios de aceptación y obligaba a la definición de hecho, que entonces
+  existía, a llevar el sufijo, una asimetría que la propia especificación declaraba como excepción sin
+  más justificación que la de ser la primera lista de las dos. Bajo la regla nueva no hay sitio para
+  reservar un nombre desnudo a nada, así que la asimetría desaparecía sola en vez de quedar
+  documentada como caso especial. **La segunda lista se retiró después** (["Se retira la definición de
+  hecho"](detalles.md#se-retira-la-definición-de-hecho)), de modo que `--check-dod` y `--uncheck-dod`
+  ya no existen; el sufijo `-ac` se queda igualmente, porque lo que lo sostiene es la regla de que
+  ningún flag tiene nombre desnudo, no la existencia de una segunda lista.
 
 **Esto había dejado pendiente el mensaje de arranque, y ya no lo está.** El bloque `FIELD FLAGS` de
 ["La salida literal"](../spec/cmd/prime.md#la-salida-literal) enseñaba antes un solo flag por campo (la que añadía) y una regla en `RULES`
