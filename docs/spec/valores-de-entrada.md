@@ -69,9 +69,15 @@ Para todo flag marcado como repetible:
   referencia, en una documentación o en un fichero tocado. Una etiqueta, una persona asignada o una
   clave de `ext` nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
   (["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token)).
+- **Una barra invertida doble, `\\`, es una barra invertida literal**, y es la única forma de que un
+  valor termine en barra invertida justo antes de una coma que separa:
+  `--add-refs 'C:\\dir\\,notes/b.md'` añade dos referencias, `C:\dir\` y `notes/b.md`. Una barra
+  invertida delante de cualquier otro carácter no escapa nada y se guarda tal cual, así que una ruta
+  de Windows o una expresión regular conservan lo que traen.
 - Los campos de texto largo y los criterios **nunca** se parten por comas.
 - Un valor repetido dentro del mismo flag se guarda una vez y produce
-  `warning: --add-labels: "urgent" given twice, kept once`.
+  `warning: --add-labels: "urgent" given twice, kept once`. Con tres apariciones o más el aviso sigue
+  siendo **uno solo** por valor, y las cuenta: `warning: --add-labels: "urgent" given 3 times, kept once`.
 
 Para todo flag **no** repetible, es decir, los campos escalares, pasarlo dos veces con valores
 distintos es un error de uso con código 2:
@@ -180,12 +186,16 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 - **`--help` y `--version` terminan el programa en cuanto se leen**, así que lo que venga detrás no
   se analiza: `biso ls --help --loquesea` imprime la ayuda y sale con 0, mientras que
   `biso ls --loquesea --help` falla por el flag desconocido, que se lee antes.
-- **Los argumentos sueltos de una llamada forman un único bloque contiguo.** Pueden ir todos delante
-  de los flags o todos detrás, pero no a los lados de ellos: en cuanto aparece un flag después de
-  uno de ellos, el bloque se cierra, y cualquier argumento suelto posterior es error 2. Es lo que
-  hace que olvidar un valor se detecte por lo que sobra después
-  (["Valores que empiezan por guion"](#valores-que-empiezan-por-guion)): en
+- **Los argumentos sueltos de una llamada van todos delante de los flags de su comando.** El bloque
+  empieza justo detrás del nombre del comando y lo cierra el primer flag que venga después; a partir
+  de ahí, cualquier argumento suelto es error 2. Es la forma en que están escritas todas las firmas y
+  todos los ejemplos de ["Los comandos"](cmd/index.md), donde `<ref>`, `<title>`, `<key>` y `<value>`
+  preceden siempre a los flags, y es lo que hace que olvidar un valor se detecte por lo que sobra
+  después (["Valores que empiezan por guion"](#valores-que-empiezan-por-guion)): en
   `biso set MYP-1 --append-note --priority high`, el `high` que sobra llega con el bloque ya cerrado.
+  Un flag global escrito **antes** del nombre del comando no cierra nada, porque ahí no puede haber
+  ningún argumento suelto: el primero que no es un flag es el nombre del comando, así que
+  `biso -C ~/work/my-project set MYP-1` es correcto.
 - **Detrás de `--`, todo es un argumento suelto**, esté donde esté en la línea y sin que le afecte la
   regla anterior. Es la forma que siempre funciona.
 - **`-` significa la entrada estándar venga como venga.** `--append-desc -` y `--append-desc=-` son
@@ -194,10 +204,20 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 - **Un mensaje nombra siempre el flag por su forma larga**, aunque se haya escrito la corta, para que
   el texto de un error no dependa de cómo se tecleó la llamada: `-l 'urgent!'` falla nombrando
   `--add-labels`.
-- **Un valor vacío en un flag que no añade, no sustituye y no es un escalar de
-  ["El valor vacío"](#el-valor-vacío)**, por ejemplo `--rm-labels ""` o `--cwd ""`, es error 3 con el
-  `code` `empty_scalar_value`, igual que un escalar: donde la especificación no documenta un valor
-  vacío, escribirlo es un error y no algo que se ignore en silencio.
+- **Un valor vacío en un flag que no añade, no sustituye y no es un escalar de tarea de
+  ["El valor vacío"](#el-valor-vacío)**, por ejemplo `--rm-labels ""`, `--cwd ""` o `--ext k=`, es
+  **error 2** con el `code` `unexpected_argument`: donde la especificación no documenta un valor
+  vacío, escribirlo es un error y no algo que se ignore en silencio. Es el 2 y no el 3 porque el 3 es
+  "el valor llega bien formado pero el tablero no lo reconoce"
+  (["Códigos de salida"](codigos-de-salida.md)), y el vocabulario del tablero no tiene nada que decir
+  sobre el directorio de trabajo o sobre una etiqueta que se quería quitar. El escalar de una tarea
+  sigue siendo la excepción, con su `empty_scalar_value` de código 3, porque ahí sí es el vocabulario
+  quien juzga.
+- **La codificación se comprueba sobre la línea de comandos entera antes de leer nada más.** Cada
+  argumento, incluidos el nombre del comando y la grafía de un flag, tiene que ser UTF-8 válido
+  (["Codificación y texto"](salida-y-terminal.md#codificación-y-texto)), y el argumento que no lo sea
+  viaja al mensaje y a `given` con sus bytes escapados, nunca tal cual, para que un byte inválido no
+  termine convertido en el carácter de reemplazo dentro de la salida.
 
 ### Los mensajes del análisis
 
@@ -209,19 +229,28 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | Un flag sin valor con un valor pegado | 2 | `unexpected_argument` | `error: --json takes no value` |
 | Un argumento suelto con el bloque ya cerrado | 2 | `unexpected_argument` | `error: unexpected argument: high` |
 | Un escalar repetido con valores distintos | 2 | `duplicate_scalar_flag` | `error: --status given twice with different values: "In Progress" and "Done"` |
+| La misma clave de `--set-comment-date` con dos instantes (["Comentarios"](familias-de-flags.md#comentarios)) | 2 | `duplicate_scalar_flag` | `error: --set-comment-date: key "3" given twice with different values: "2026-08-14T10:22:00Z" and "2026-08-15T10:22:00Z"` |
 | Un valor de pareja al que le falta su `=` | 2 | `unexpected_argument` | `error: --ext: expected <key>=<value>, got "trello"` |
 | Más de un flag pidiendo la entrada estándar | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc and --append-plan both read stdin` |
+| El mismo flag repetible pidiéndola dos veces | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc reads stdin twice` |
 | Un valor fuera del dominio de `--color` | 2 | `invalid_color_mode` | `error: --color: unknown value: "sometimes"` |
 | Una pareja de `--json`, `--quiet` y `--print` | 2 | `incompatible_flags` | `error: --json and --quiet cannot be used together` |
 | Un flag que exige otro, sin ese otro | 2 | `incompatible_flags` | `error: --comment-author requires --comment` |
 | `--dry-run` en un comando de lectura | 2 | `read_only_flag` | `error: --dry-run does not apply to a read-only command` |
 | `--print` donde no afecta a ninguna tarea | 2 | `read_only_flag` | `error: --print does not apply to a command that affects no task` |
-| Un escalar vacío sin vocabulario cerrado | 3 | `empty_scalar_value` | `error: --author cannot be empty`, con `hint: to clear it, use --clear-author` cuando el campo tiene un flag que lo vacía |
-| Una secuencia de bytes que no es UTF-8 | 3 | `invalid_encoding` | `error: --append-desc: invalid UTF-8 at byte 12` |
+| Un valor vacío donde no se documenta ninguno | 2 | `unexpected_argument` | `error: --rm-labels cannot be empty` |
+| El valor vacío de una pareja | 2 | `unexpected_argument` | `error: --ext: the value of key "k" cannot be empty` |
+| Un salto de línea en un campo de una línea, la mitad derecha de una pareja incluida (["El salto de línea en un campo `string`"](#el-salto-de-línea-en-un-campo-string)) | 2 | `malformed_string_value` | `error: malformed ext: "first line\nsecond line"` |
+| Un escalar de tarea vacío sin vocabulario cerrado | 3 | `empty_scalar_value` | `error: --author cannot be empty`, con `hint: to clear it, use --clear-author` cuando el campo tiene un flag que lo vacía |
+| Un argumento que no es UTF-8 | 3 | `invalid_encoding` | `error: invalid UTF-8 in argument 4 at byte 2: "ok\xffbad"`, con `field` igual a `argument` |
+| Un fichero o una entrada estándar que no es UTF-8 | 3 | `invalid_encoding` | `error: --append-desc: invalid UTF-8 at byte 12`, con `given` igual a lo que se escribió detrás del flag |
 | El fichero de un `@` que no existe | 4 | `file_not_found` | `error: --append-desc: file not found: docs/x.md` |
 | El fichero de un `@` que no se puede leer | 8 | `file_unreadable` | `error: --append-desc: file cannot be read: docs/x.md` |
 | La entrada estándar que falla al leerse | 8 | `io_error` | `error: --append-desc: stdin cannot be read: <lo que dijo el sistema>` |
 
-**`incompatible_flags` no lleva `field` ni `given`**, a diferencia de los demás errores de esta tabla
-que nombran un flag. Nombra un par de ellos, y ninguno es más culpable que el otro, así que elegir
-uno para `field` sería inventarse una atribución que la llamada no tiene.
+**Un mensaje que nombra un par de flags los nombra en el orden de la tabla de especificación**, primero los
+globales de ["Los flags globales"](cmd/flags-globales.md) y después los propios del comando, cada
+grupo en el orden de su propia tabla de parámetros. `--json --quiet` y `--quiet --json` fallan con el
+mismo texto, que es lo que exige la regla de que el texto de un error no dependa de cómo se tecleó la
+llamada. La excepción de `incompatible_flags`, que no lleva `field` ni `given`, vive junto a la tabla
+que enuncia esa obligación, en ["Los errores en JSON"](contrato-json.md#los-errores-en-json).

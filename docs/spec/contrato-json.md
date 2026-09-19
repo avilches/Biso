@@ -135,6 +135,12 @@ regla de cuándo acompañan:
 | `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió la orden que falló (["`biso snapshot`"](cmd/snapshot.md)) |
 | `warnings` | Al mismo nivel que `error`, no dentro de él, en cualquier `code` cuya llamada haya producido al menos un aviso antes de fallar, con la misma forma que `data.warnings` (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)) |
 
+**La única excepción a la fila de `field` y `given` es `incompatible_flags`, que no lleva ninguna de
+las dos.** Nombra un par de flags, y ninguno de los dos es más culpable que el otro, así que elegir
+uno para `field` sería inventarse una atribución que la llamada no tiene. Los demás errores del
+código 2 que nombran un flag sí las llevan, `read_only_flag` incluido, que nombra uno solo
+(["Los flags globales"](cmd/flags-globales.md)).
+
 Las cinco de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
 comprobable: quien ramifica sobre `unknown_status` sabe que va a tener `field`, `given` y `valid`, y
 quien ramifica sobre `busy` sabe que no va a tener ninguna de las cinco. `warnings` es la excepción:
