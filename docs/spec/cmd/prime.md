@@ -64,7 +64,7 @@ Entra:
 
 - Las diez órdenes del ciclo de trabajo con su forma de uso. Quien no sabe que existe `biso finish`
   no va a escribir `biso finish --help`.
-- **Los nombres de todos los flags de campo**, en una rejilla de cinco líneas.
+- **Los nombres de todos los flags de campo**, en una rejilla de trece líneas.
 - El vocabulario real de este tablero, con **el recuento por estado** y con la marca de cuál es el
   estado de las tareas nuevas, cuál el activo y cuál el terminal.
 - Las reglas que no son adivinables.
@@ -111,7 +111,7 @@ COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
   biso note <ref> "TEXT"
   biso ask <ref> "QUESTION"
   biso answer <ref> "TEXT"
-  biso finish <ref>... [--append-summary "TEXT"] [--check-ac all] [--check-dod all]
+  biso finish <ref>... [--append-summary "TEXT"] [--check-ac all]
   biso set <ref>... [any field flag]
   biso comment <ref> "TEXT" [--comment-author @who]
 
@@ -124,8 +124,7 @@ FIELD FLAGS  (same names, same meaning, in every command above that writes)
   --add-docs --rm-docs --clear-docs --replace-docs
   --add-deps --rm-deps --clear-deps --replace-deps
   --add-files --rm-files --clear-files --replace-files
-  --add-ac --rm-ac --clear-acs   --add-dod --rm-dod --clear-dods
-  --check-ac --uncheck-ac --check-dod --uncheck-dod
+  --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac
   -d --append-desc --clear-desc  --append-plan --clear-plan
   --append-note --clear-notes  --append-summary --clear-summary
   --comment --rm-comment --set-comment-date
@@ -144,9 +143,9 @@ RULES  (none of these are guessable; they are the whole learning curve)
   4. `biso ls` prints 30 tasks by urgency and leaves out the Done ones. It says
      on stderr what it left out. --all lifts the limit, --any-status includes
      Done, --archived reaches the archive.
-  5. --check-ac, --uncheck-ac, --check-dod and --uncheck-dod take all, 3, 1-4, 1,3,7 or the
-     criterion text. The numbers are the stable #N keys that `biso get` shows, and they never
-     shift when one criterion is removed.
+  5. --check-ac and --uncheck-ac take all, 3, 1-4, 1,3,7 or the criterion text. The
+     numbers are the stable #N keys that `biso get` shows, and they never shift
+     when one criterion is removed.
   6. `biso new` prints the new id and nothing else. Every other write prints one
      line per task: id, status, criteria, urgency. Add --print for the whole
      record, or --json for a versioned envelope.
@@ -179,7 +178,7 @@ NEXT UP  (not assigned to you, by urgency)
   49 more not shown: `biso ls --not-active --not-waiting`
 
 Pick one, `biso start <ref> --append-plan "..."`, work, `biso note <ref> "..."` as you go,
-and close with `biso finish <ref> --check-ac all --check-dod all --append-summary "..."`.
+and close with `biso finish <ref> --check-ac all --append-summary "..."`.
 That is the loop. Create a task when the work needs planning or review; do small
 edits directly.
 ```

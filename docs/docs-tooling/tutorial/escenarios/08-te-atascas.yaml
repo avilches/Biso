@@ -3,7 +3,7 @@ title: You get stuck and someone has to decide
 situation: |
   You're still on `TASK-19`, and you reach a point where you can't go on without someone deciding
   something: how many retries at most should be allowed before treating the 5xx as a definitive
-  failure. You could just make up a number, but that's exactly what rule 11 of `biso`'s startup
+  failure. You could just make up a number, but that's exactly what rule 10 of `biso`'s startup
   message asks you not to do: "Ask instead of guessing." Before parking your question, take a
   look at what one looks like from the outside: `TASK-60` already has one open, and this is how it
   shows up in the `NEEDS ANSWER` block of the startup message, exactly as `biso prime` prints it:
@@ -25,7 +25,7 @@ teaches:
     A parked task shows up from the outside in the `NEEDS ANSWER` block of the startup message
     and not in `IN PROGRESS`, even though its state is still the active one.
   - >-
-    Asking is better than guessing. It's rule 11 of the `biso prime` message, and it's the whole
+    Asking is better than guessing. It's rule 10 of the `biso prime` message, and it's the whole
     reason `biso ask` exists.
   - >-
     The `biso answer` command turns the question into two comments in the same write: one with
@@ -41,7 +41,7 @@ steps:
       @claude, 2026-09-06 09:30
       Should the retry budget be shared with the download endpoint or kept separate?
     exit_code: 0
-    source_kind: literal
+    source_kind: derived
     source:
       - spec/cmd/get.md "`biso get`"
   - narration: |
@@ -49,7 +49,7 @@ steps:
       question.
     command: 'biso ask TASK-19 "What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?"'
     output: |
-      TASK-19  In Progress  ac 0/2  dod 0/2  urgency 7.0
+      TASK-19  In Progress  ac 0/2  urgency 7.0
     exit_code: 0
     source_kind: derived
     source:
@@ -80,7 +80,7 @@ steps:
       a value fixed somewhere else in the code. You answer, and the task gets unparked.
     command: 'biso answer TASK-19 "There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here."'
     output: |
-      TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+      TASK-19  In Progress  ac 0/2  urgency 11.0
     exit_code: 0
     source_kind: derived
     source:
@@ -115,10 +115,10 @@ steps:
       `biso answer` wrote them, which is also their insertion order, and that's the order that
       gets stored and shown, not the order their timestamps would suggest.
 board_in: >
-  TASK-19 in In Progress, ac 0/2, dod 0/2 (keys #5 and #6), with no comments or open question.
+  TASK-19 in In Progress, ac 0/2 (keys #7 and #8), with no comments or open question.
   Urgency 11.0. Board counters: 54/5/190, unchanged since scenario 7.
 board_out: >
-  TASK-19 is still In Progress, ac 0/2 and dod 0/2 untouched. It now has 2 comments, in this
+  TASK-19 is still In Progress, ac 0/2 untouched. It now has 2 comments, in this
   order: the question that got it parked (with its original moment) and the answer that unparked
   it. It's back to having no open question (waiting is false). Urgency back to 11.0, after
   dropping to 7.0 while it waited for an answer. Board counters unchanged: 54/5/190. TASK-60 isn't

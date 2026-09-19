@@ -11,6 +11,12 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   cualquier `type`) y con `type` (una partición plana), sin ningún campo dedicado solo a agrupar. El
   porqué, con las alternativas descartadas, está en
   ["Se retiran `project` y `milestone`"](../decisiones/detalles.md#se-retiran-project-y-milestone).
+- **No hay definición de hecho.** Una tarea tiene una sola lista de comprobación, la de criterios de
+  aceptación; lo que otra herramienta guardaría en una segunda lista es un criterio más. La
+  importación de `biso new --from` sí acepta la clave `definitionOfDone` de un lote ajeno y convierte
+  sus elementos en criterios, avisando de ello (["`biso new`"](cmd/new.md)). El porqué, con la medida
+  que lo decide, está en
+  ["Se retira la definición de hecho"](../decisiones/detalles.md#se-retira-la-definición-de-hecho).
 - **No hay contextos de sesión**, es decir, filtros por defecto guardados que cambien lo que devuelve
   una consulta sin que se vea en la línea de comandos.
 - **No hay recurrencia, ni seguimiento de tiempo, ni subtareas con numeración propia.** Una subtarea

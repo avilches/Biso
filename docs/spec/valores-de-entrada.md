@@ -3,8 +3,7 @@
 ## Tres formas de pasar un valor largo
 
 Todo parámetro de tipo texto largo (`--append-desc`, `--append-plan`, `--append-note`,
-`--append-summary`, `--comment` y el texto de un criterio o de un elemento de la definición de hecho)
-acepta las tres:
+`--append-summary`, `--comment` y el texto de un criterio) acepta las tres:
 
 | Forma | Significado |
 |---|---|
@@ -135,7 +134,7 @@ están en la tabla de ["Los identificadores de error"](contrato-json.md#los-iden
 
 ## El salto de línea en un campo `string`
 
-`title`, `author` de tarea/comentario/pregunta, `Criterion.text` de `acceptanceCriteria`/`definitionOfDone`,
+`title`, `author` de tarea/comentario/pregunta, `Criterion.text` de `acceptanceCriteria`,
 y los valores (no las claves) de `ext` son del tipo `string` de ["El modelo de datos de una
 tarea"](modelo-de-datos/index.md#el-modelo-de-datos-de-una-tarea), es decir, texto de **una línea**.
 Ninguno de ellos admite un `\r` o un `\n` literal: si lo llevara, dejaría de ser una línea, y `title`

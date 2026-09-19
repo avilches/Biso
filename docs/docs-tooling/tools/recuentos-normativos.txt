@@ -11,6 +11,6 @@ cuatro decisiones
 tres mensajes
 tres estados
 tres flags
-nueve secciones
+ocho secciones
 dos secciones
 ocho columnas

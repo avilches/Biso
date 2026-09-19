@@ -57,18 +57,19 @@ what `assignees` already says. The reasoning behind treating assignment and stat
 signals is in
 ["Distinguir el encargo de la ejecución"](decisiones/modelo-de-estados.md#distinguir-el-encargo-de-la-ejecución-resuelto-sin-estado-nuevo).
 
-## Acceptance criteria and definition of done
+## Acceptance criteria
 
-A task can carry two independent checklists, with the same shape: each item has text and can be
-checked or not, and each item is born with its own numeric key that does not change even if other
-items are removed from the list. They are two lists, not one, and each is counted separately.
+A task can carry one checklist: each item has text and can be checked or not, and each item is born
+with its own numeric key that does not change even if other items are removed from the list.
 
-The first are the **acceptance criteria**: how you know that particular task's work actually works.
-The second is the **definition of done**: what has to be true before calling the task closed, beyond
-whether the result works, such as someone else having reviewed it. Neither is mandatory, and a task
-can reach its terminal state with unchecked items in either of the two, because `biso` warns about
-that but does not block it by default. Both lists, and the stable keys of their items, are defined
-in ["Los criterios y sus claves estables"](spec/modelo-de-datos/criterios.md).
+These are the **acceptance criteria**: how you know that particular task's work actually works.
+Anything that has to be true before calling the task closed goes here too, including what another
+tool would keep in a separate definition of done, such as someone else having reviewed it. There is
+no second list, and the reasoning is in
+["Se retira la definición de hecho"](decisiones/detalles.md#se-retira-la-definición-de-hecho).
+Criteria are not mandatory, and a task can reach its terminal state with unchecked items, because
+`biso` warns about that but does not block it by default. The list, and the stable keys of its
+items, are defined in ["Los criterios y sus claves estables"](spec/modelo-de-datos/criterios.md).
 
 ## Urgency
 

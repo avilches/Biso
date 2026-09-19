@@ -16,14 +16,14 @@ vaciado"](../lease.md#el-vaciado) de `lease.md`).
 
 Los seis imprimen también la misma línea de estado que `set`, con la forma y las reglas que define
 [`biso set`](set.md). Los ejemplos de más abajo son esa línea con los datos de la MYP-11, que tiene dos criterios de
-aceptación y un elemento de definición de hecho.
+aceptación.
 
 El ciclo entero de una tarea es esto:
 
 ```
 biso start  MYP-11 --append-plan "1. Read the parser. 2. Add the CRLF case."
 biso note   MYP-11 "The parser already normalized LF, CRLF was missing"
-biso finish MYP-11 --check-ac all --check-dod all --append-summary "Normalize CRLF in the diff, verified with the tests."
+biso finish MYP-11 --check-ac all --append-summary "Normalize CRLF in the diff, verified with the tests."
 ```
 
 ## `biso start`
@@ -85,7 +85,7 @@ hint: unarchive it first with `biso archive MYP-11 --unarchive`
 ### Salida
 
 ```
-MYP-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 0/2  urgency 19.0
 ```
 
 El valor de urgencia del ejemplo puede no ser este; el motivo está en la sección
@@ -97,7 +97,7 @@ Con `--dry-run`, la misma línea marcada como hipotética, con la regla y el enc
 ```
 $ biso start MYP-11 --dry-run
 1 task would be affected (--dry-run)
-MYP-11  In Progress  ac 0/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 0/2  urgency 19.0
 ```
 
 ### Códigos de salida
@@ -206,7 +206,7 @@ que las demás.
 ### Salida
 
 ```
-MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 1/2  urgency 19.0
 ```
 
 ### Códigos de salida
@@ -289,7 +289,7 @@ ninguna invariante que archivar pueda contradecir aquí.
 ### Salida
 
 ```
-MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 1/2  urgency 19.0
 ```
 
 Y por stderr, `note: comment #2 by @trello:juan`. Ese `#2` es la `key` que acaba de recibir el
@@ -341,7 +341,7 @@ Examples:
 ### Firma
 
 ```
-biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]... [--check-dod <sel>]...
+biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]...
             [--append-note <text>]... [--add-files <path>]... [-s <v>] [--strict] [--no-checks]
             [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
@@ -357,18 +357,17 @@ biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]... [--check-do
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
-`--append-summary`, `--check-ac`, `--check-dod`, `--append-note` y `--add-files` son los flags de
+`--append-summary`, `--check-ac`, `--append-note` y `--add-files` son los flags de
 campo de siempre.
 
 ### Qué hace
 
-Marca criterios y elementos de la definición de hecho, escribe la última nota y el resumen, apunta los
-ficheros tocados y mueve al estado terminal, todo en una escritura.
+Marca criterios, escribe la última nota y el resumen, apunta los ficheros tocados y mueve al estado
+terminal, todo en una escritura.
 
 | Caso | Qué pasa |
 |---|---|
 | Quedan criterios sin marcar y no se pasó `--check-ac` | **Se cierra igual**, con el aviso y la lista de los que faltan |
-| Quedan elementos de la definición de hecho sin marcar | Igual, con su propio aviso |
 | Lo mismo, con `--strict` | Error 6, y no se escribe nada |
 | Tras esta escritura, el campo `summary` de la tarea queda vacío | Se cierra igual, con `warning: MYP-11 finished without a final summary` |
 | Lo mismo, con `--strict` | Error 6 |
@@ -384,7 +383,7 @@ ficheros tocados y mueve al estado terminal, todo en una escritura.
 Quien quiera la política dura tiene `--strict`, y puede fijarla por defecto con
 `biso config set finish_strict true`.
 
-**Las comprobaciones de la tabla, la de criterios, la de definición de hecho y la de resumen, se
+**Las comprobaciones de la tabla, la de criterios y la de resumen, se
 leen por el estado del campo después de esta escritura, nunca por si el flag correspondiente se
 pasó en esta llamada.** Una tarea que ya tenía todos los criterios marcados no dispara el aviso
 aunque no se pase `--check-ac` ahora, y de la misma manera una tarea que ya tenía resumen de un
@@ -397,7 +396,7 @@ resumen ausente, porque el campo `summary` sigue teniendo el texto del primer ci
 ### Salida
 
 ```
-MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0
+MYP-11  Done  ac 2/2  urgency 0.0
 ```
 
 La urgencia de una tarea en el estado terminal es cero por definición, según la sección ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia).
@@ -419,9 +418,9 @@ Con `--dry-run`, la misma línea marcada como hipotética, con la regla y el enc
 ["`biso set`"](set.md#salida):
 
 ```
-$ biso finish MYP-11 --check-ac all --check-dod all --dry-run
+$ biso finish MYP-11 --check-ac all --dry-run
 1 task would be affected (--dry-run)
-MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0
+MYP-11  Done  ac 2/2  urgency 0.0
 ```
 
 ### Códigos de salida
@@ -451,12 +450,11 @@ Options:
                                @file and -
       --check-ac <sel>         check criteria: all, 3, 1-4, 1,3,7 or the text.
                                With several tasks the selector has to be `all`
-      --check-dod <sel>        the same for the definition of done
       --append-note <text>     one last implementation note; repeatable
       --add-files <path>       record a modified file; repeatable
   -s, --status <value>         use another status instead of the terminal one
-      --strict           refuse to finish with unchecked criteria, unchecked
-                         definition of done, unfinished subtasks or no summary
+      --strict           refuse to finish with unchecked criteria, unfinished
+                         subtasks or no summary
                          (default: warn and go on; see finish_strict)
       --no-checks        skip every check and every warning
       --id / --match     force <ref> to be an id, or free text
@@ -471,7 +469,7 @@ Exit codes:
                                         20 no board here
 
 Examples:
-  biso finish MYP-11 --check-ac all --check-dod all --append-summary "Normalizes CRLF"
+  biso finish MYP-11 --check-ac all --append-summary "Normalizes CRLF"
   biso finish MYP-11 --check-ac "covers CRLF" --append-note "313 tests green"
   biso finish MYP-11 MYP-12 --check-ac all --append-summary "Both closed by PR 42"
 ```
@@ -541,7 +539,7 @@ hint: reopen it first with `biso start MYP-11 --reopen`
 ### Salida
 
 ```
-MYP-11  In Progress  ac 1/2  dod 0/1  urgency 15.0
+MYP-11  In Progress  ac 1/2  urgency 15.0
 ```
 
 La urgencia queda por debajo de los 19.0 del ejemplo de ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia) porque el término de actividad exige
@@ -678,7 +676,7 @@ hint: use `biso comment` to add a comment
 ### Salida
 
 ```
-MYP-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+MYP-11  In Progress  ac 1/2  urgency 19.0
 ```
 
 La urgencia recupera el término de actividad de ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia), porque `waiting` vuelve a ser falso.

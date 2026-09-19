@@ -28,7 +28,7 @@ through the batch, what ends up written?
 !!! abstract "What this scenario teaches"
     - Anything you can do once you can do a hundred times, with the same flag names. There's no separate syntax for batches.
     - Validation happens upfront and in full: the whole batch gets checked before anything is written. A batch never ends up half-done, so you never have to figure out where it broke.
-    - `--dry-run` validates without writing and answers with the exit code: 0 if it would have worked, 9 if not. It's how you look before you leap.
+    - `--dry-run` validates without writing and answers with the exit code: 0 if it would have worked, 7 if not. It's how you look before you leap.
 
 The agent starts with the easy part: two tasks that need their priority lowered, in a
 single call.
@@ -64,14 +64,16 @@ touching anything.
 
 ```console
 $ biso set TASK-7 TASK-33 --priority medium --dry-run
-2 tasks would be updated, nothing was written (--dry-run)
+2 tasks would be affected (--dry-run)
+TASK-7   To Do  ac 0/4  urgency 15.4
+TASK-33  To Do  ac 1/3  urgency 4.3
 ```
 
 Exit code: `0`
 
-*(derived output, see [Flags globales](../spec/cmd/flags-globales.md#flags-globales), [`biso set`](../spec/cmd/set.md); not literal spec text)*
+*(derived output, see [Flags globales](../spec/cmd/flags-globales.md#flags-globales), [`biso set`](../spec/cmd/set.md#salida); not literal spec text)*
 
-*Note: Exit code 0, so it would have worked. That code is the real answer, more than the text: a program calling `biso` doesn't need to read anything to know whether the batch is valid. The exact text of this line is a derivation. The specification gives the literal phrase for `biso new --from`'s batch ("242 tasks would be created, nothing was written (--dry-run)") and says `--dry-run` works on every command that writes, but it doesn't spell out the phrase for `biso set`. Here the same form was used with the verb swapped, which is the most likely choice, and it's noted in tutorial/lagunas/11-13.md.*
+*Note: Exit code 0, so it would have worked. That code is the real answer, more than the text: a program calling `biso` doesn't need to read anything to know whether the batch is valid. What comes after the heading is the whole point of running it dry: the same status line the real write would print, one per task, worked out without touching anything. Compare it with the next step and you'll see they match line for line. `biso set` doesn't invent a verb of its own for this, and neither do the cycle verbs or `biso archive`: they all reuse the status line they already print, with a heading that marks it as hypothetical.*
 
 With validation green, it runs it for real.
 
@@ -97,5 +99,7 @@ $ biso new --from incidencias.ndjson --dry-run
 ```
 
 Exit code: `0`
+
+*(derived output, see [`biso new`](../spec/cmd/new.md); not literal spec text)*
 
 *Note: This sentence really is literal from the specification, just with a different number. And this is where `--dry-run` earns its keep most, because an import file can bring in a type, a status or a key this board doesn't know, and a value the board doesn't know is always an error. With an import batch that means a single misspelled field on line 200 stops the 199 before it from being created at all. That sounds harsh and it's exactly what you want: the alternative would be a half-imported board and no reliable way to tell where it stopped. If validation failed, the code would be 7, not 4 or 3: seven means exactly "nothing was written because validation didn't pass," and it's distinct from the error for one specific bad value precisely because what it's reporting on is the whole batch.*

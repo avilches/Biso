@@ -96,8 +96,8 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
   (`tutorial/escenarios/*.yaml`), declarada y razonada en `tutorial/CLAUDE.md`: ese tutorial nace en
   inglés.
 - **El contenido de los ejemplos de la especificación va en inglés**, aunque la prosa que los rodea
-  siga en español: el título, la descripción, los criterios de aceptación, la definición de hecho, el
-  plan, las notas, el resumen final, los comentarios y la pregunta abierta de cualquier tarea de
+  siga en español: el título, la descripción, los criterios de aceptación, el plan, las notas, el
+  resumen final, los comentarios y la pregunta abierta de cualquier tarea de
   ejemplo (`MYP-11` y las demás de `docs/spec/cmd/`). Es contenido que en un tablero real escribiría
   la persona o el agente que usa el programa, no prosa de la especificación.
 - **El código fuente va entero en inglés, sea Go o Python.** No es solo cuestión de los

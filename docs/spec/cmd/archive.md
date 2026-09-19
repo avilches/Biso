@@ -53,7 +53,7 @@ hint: `biso archive <ref>` takes it off the board and keeps the history
 ## Salida
 
 ```
-MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0  archived
+MYP-11  Done  ac 2/2  urgency 0.0  archived
 ```
 
 Con `--dry-run`, la misma línea marcada como hipotética, con la regla y el encabezado que fija
@@ -62,7 +62,7 @@ Con `--dry-run`, la misma línea marcada como hipotética, con la regla y el enc
 ```
 $ biso archive MYP-11 --dry-run
 1 task would be affected (--dry-run)
-MYP-11  Done  ac 2/2  dod 1/1  urgency 0.0  archived
+MYP-11  Done  ac 2/2  urgency 0.0  archived
 ```
 
 ## Códigos de salida

@@ -70,7 +70,6 @@ Precisiones:
 | `notes` | `text` | |
 | `summary` | `text` | |
 | `acceptanceCriteria` | `list<Criterion>`; ver ["Los criterios y sus claves estables"](criterios.md) | |
-| `definitionOfDone` | `list<Criterion>`; ver ["Los criterios y sus claves estables"](criterios.md) | |
 | `comments` | `list<Comment>`; ver ["Los comentarios"](comentarios.md) | se añade, se borra entero, o se corrige solo la fecha; nunca se edita el cuerpo ni el autor |
 | `question` | `Question`; ver ["La pregunta abierta"](pregunta-abierta.md) | solo se cambia con `biso ask`, `biso answer`, o al importar |
 
@@ -93,7 +92,7 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 | Campo | Tipo |
 |---|---|
 | `urgency` | `float`; ver ["La urgencia"](urgencia.md) |
-| `acDone`, `acTotal`, `dodDone`, `dodTotal` | `int` |
+| `acDone`, `acTotal` | `int` |
 | `commentCount` | `int` |
 | `blocks` | `list<string>` |
 | `blocked`, `waiting` | `bool` |
@@ -101,7 +100,7 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 
 **Ninguno de estos campos se guarda.** Se calculan al leer, y son exactamente los campos que
 [`biso export`](../cmd/export.md) no escribe y que [`biso new --from`](../cmd/new.md) rechaza como
-clave desconocida: `urgency`, `acDone`, `acTotal`, `dodDone`, `dodTotal`, `commentCount`, `blocks`,
+clave desconocida: `urgency`, `acDone`, `acTotal`, `commentCount`, `blocks`,
 `blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos derivados del documento; las
 demás páginas remiten a ella.
 

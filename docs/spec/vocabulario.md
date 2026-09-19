@@ -25,7 +25,7 @@ narrativa a los mismos conceptos, con menos detalle, está la página [Concepts]
 | `blocked` | Depende de alguna tarea sin terminar, donde una tarea archivada sin terminar cuenta como terminada (["La urgencia"](modelo-de-datos/urgencia.md#la-urgencia)). Solo dependencias, nunca personas: lo que espera a una persona es una pregunta abierta | **bloqueada** |
 | `assignees`, `author`, y el `author` de un comentario o de la pregunta | Quien encarga y quien responde. No es un campo, sino el tipo de valor que llevan estos campos | **persona** |
 | `agent` | El programa automático que coge tareas y las hace | **agente** |
-| `acceptanceCriteria`, `definitionOfDone` | Un elemento de las dos listas de comprobación: `acceptanceCriteria` comprueba que el trabajo hace lo que se pidió, `definitionOfDone` que la tarea cumple lo necesario para poder cerrarse | **criterio** |
+| `acceptanceCriteria` | Un elemento de la lista de comprobación que dice cómo se sabe que el trabajo de esa tarea hace lo que se pidió | **criterio** |
 | `comments` | Una entrada del histórico cuyo cuerpo y autor no se editan nunca, aunque su fecha se pueda corregir o el comentario entero se pueda borrar | **comentario** |
 
 **Un estado no se llama nunca columna.** En muchas herramientas de tareas cada estado se dibuja como

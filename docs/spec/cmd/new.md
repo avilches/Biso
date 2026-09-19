@@ -18,7 +18,7 @@ Todos los flags de campo de la sección ["Las familias de flags"](../familias-de
 ni que quitar: `--replace-*` se acepta y deja la lista igual que `--add-*`, porque no hay nada previo
 que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que actuar. `--clear-*` no
 hace nada y avisa. Las que se usan de verdad al crear son
-`-d/--append-desc`, `--add-ac`, `--add-dod`, `--type`, `--priority`, `-l/--add-labels`,
+`-d/--append-desc`, `--add-ac`, `--type`, `--priority`, `-l/--add-labels`,
 `-a/--add-assignees`, `--add-refs`, `--add-docs`, `--add-deps`, `-p/--parent`,
 `--due`, `--ordinal`, `--author`, `--ext`, `--append-plan`, `--append-note`,
 `--append-summary` y `--comment`.
@@ -66,7 +66,7 @@ de la sección ["`biso set`"](set.md), y así está dicho en el mensaje de arran
 Con `--print`, después de la línea del identificador viene la ficha completa en el formato de
 `biso get`. Con `--quiet`, solo el identificador y ninguna nota.
 
-**`biso new` no anuncia la clave de un `--add-ac` o `--add-dod` creado al mismo tiempo que la
+**`biso new` no anuncia la clave de un `--add-ac` creado al mismo tiempo que la
 tarea, a diferencia de la línea de estado de `biso set` (["`biso set`"](set.md#salida)).** Una tarea nace sin ningún
 criterio, así que su contador de claves empieza siempre en 1: el primer `--add-ac` de la llamada es
 la `#1`, el segundo la `#2`, y así en el mismo orden en que se escribieron los flags
@@ -88,21 +88,55 @@ ignoran. Las claves son las del modelo de datos de la sección ["El modelo de da
 Ejemplo de una línea, con todos los tipos compuestos:
 
 ```json
-{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":true}],"comments":[{"key":1,"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
+{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"comments":[{"key":1,"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 ```
 
 Las reglas del lote, todas obligatorias:
 
-- **`acceptanceCriteria` y `definitionOfDone` aceptan dos formas.** Una cadena, que crea un elemento
-  sin marcar con la siguiente clave libre, o un objeto con `key`, `text` y `checked`. Las dos formas
-  se pueden mezclar dentro de la misma lista. Una `key` repetida dentro de la misma tarea es un fallo
-  de validación.
-- **El contador de claves de cada lista se sitúa por encima de la clave mayor importada**, de modo que
-  un criterio añadido después nunca choca con uno importado. El contador no es una clave del formato:
-  se deduce.
+- **`acceptanceCriteria` acepta dos formas.** Una cadena, que crea un elemento sin marcar con la
+  siguiente clave libre, o un objeto con `key`, `text` y `checked`. Las dos formas se pueden mezclar
+  dentro de la misma lista. Una `key` repetida dentro de la misma tarea es un fallo de validación.
+- **El contador de claves se sitúa por encima de la clave mayor que tenga la tarea al acabar de
+  importarla**, de modo que un criterio añadido después nunca choca con uno importado. El contador no
+  es una clave del formato: se deduce.
+- **`definitionOfDone` se acepta, se convierte en criterios de aceptación y avisa.** Es la única clave
+  ajena al modelo que no es un fallo de validación, y existe por una razón concreta: la definición de
+  hecho estuvo en `biso` y sigue estando en Backlog.md, de donde viene la mayoría de los lotes de
+  importación (["Se retira la definición de hecho"](../../decisiones/detalles.md#se-retira-la-definición-de-hecho)).
+  Acepta las mismas dos formas que `acceptanceCriteria`, la cadena y el objeto. La conversión es un
+  procedimiento en tres pasos, en este orden:
+
+    1. Se importa `acceptanceCriteria` con sus propias reglas, y el contador de la tarea queda por
+       encima de la clave mayor que haya entrado por ahí.
+    2. Cada elemento de `definitionOfDone` se añade al final de la lista, en el orden en que venía,
+       conservando su `text` y su `checked` y **tomando la siguiente clave libre del contador**. Su
+       `key` original, si la trae, se descarta sin mirarla: las dos listas tenían contadores
+       independientes, así que un elemento de cada una puede traer perfectamente la misma, y una
+       `key` repetida dentro de `definitionOfDone` tampoco es un fallo de validación por el mismo
+       motivo. Es la única diferencia con `acceptanceCriteria`, donde la `key` sí se respeta y
+       repetirla sí es un fallo.
+    3. Si se convirtió **al menos un** elemento, la tarea emite el aviso `imported_dod_merged`
+       (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Una lista vacía no avisa de
+       nada, porque no se ha convertido nada, y el lote no falla en ninguno de los dos casos.
+
+    `definitionOfDone: null` equivale a que la clave no viniera, y no es un fallo de validación: la
+    regla de que `null` en una lista es un fallo vale para las listas del modelo, y esta no lo es.
+    Estas dos líneas importan la misma tarea:
+  ```json
+  {"title":"Normalize CRLF","acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":false}]}
+  {"title":"Normalize CRLF","acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":2,"text":"Reviewed","checked":false}]}
+  ```
+  La primera avisa y la segunda no, y las dos dejan la misma tarea.
+- **Las claves que la conversión crea son lo único que `biso new` sí anuncia.** La salida de `new` no
+  dice nunca qué clave recibió un criterio, porque quien llama puede deducirla (["Dónde se anuncia la
+  clave de un criterio recién creado"](../../decisiones/detalles.md#dónde-se-anuncia-la-clave-de-un-criterio-recién-creado)),
+  y en un lote con `definitionOfDone` eso deja de ser cierto: las claves salen de un contador que
+  depende de lo que trajera `acceptanceCriteria` en esa misma línea. Por eso `acAdded` lleva, para esa
+  tarea, las claves de los elementos convertidos, en el orden en que se crearon, y el aviso dice
+  cuántos fueron.
 - **`comments` es una lista de objetos** con `author`, `createdAt`, `body` y, opcionalmente, `key`.
   `createdAt` es opcional y, si falta, se pone el instante de la importación. `key` sigue la misma
-  regla que la de `acceptanceCriteria` y `definitionOfDone`
+  regla que la de `acceptanceCriteria`
   (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)): si falta, se asigna con la siguiente clave libre del
   contador de comentarios de esa tarea, y una `key` repetida dentro de los comentarios de la misma
   tarea es un fallo de validación. Es lo que hace cierta la simetría de `biso export` para la clave de
@@ -136,12 +170,13 @@ Las reglas del lote, todas obligatorias:
   archivar se hace con `biso archive`.
 - **`null` explícito en un escalar opcional (`due`, `ordinal`, `parent`) equivale a que la clave no
   viniera.** En una lista o un mapa (`labels`, `references`, `dependencies`, `documentation`,
-  `modifiedFiles`, `ext`, `acceptanceCriteria`, `definitionOfDone`, `comments`), en cambio, `null` es
+  `modifiedFiles`, `ext`, `acceptanceCriteria`, `comments`), en cambio, `null` es
   un fallo de validación: su forma de estar vacío es `[]` o `{}`, nunca `null`, la misma regla que
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
   órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta.
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
-  escriben, y el mensaje dice la línea y la clave.
+  escriben, y el mensaje dice la línea y la clave. La única excepción es `definitionOfDone`, con
+  cualquiera de sus valores admitidos, que se convierte con la regla de más arriba en vez de fallar.
 - **Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) no se aceptan.** En la entrada son claves desconocidas y
   por tanto un fallo de validación.
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de
@@ -200,7 +235,6 @@ Arguments:
 Most used:
   -d, --append-desc <text>    description; repeat to append paragraphs
       --add-ac <text>         add an acceptance criterion; repeatable
-      --add-dod <text>        add a definition-of-done item; repeatable
       --type <value>          configured type
       --priority <value>      configured priority
   -s, --status <value>        configured status (default: the initial one)

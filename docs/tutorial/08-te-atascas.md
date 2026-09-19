@@ -17,7 +17,7 @@
 
 You're still on `TASK-19`, and you reach a point where you can't go on without someone deciding
 something: how many retries at most should be allowed before treating the 5xx as a definitive
-failure. You could just make up a number, but that's exactly what rule 11 of `biso`'s startup
+failure. You could just make up a number, but that's exactly what rule 10 of `biso`'s startup
 message asks you not to do: "Ask instead of guessing." Before parking your question, take a
 look at what one looks like from the outside: `TASK-60` already has one open, and this is how it
 shows up in the `NEEDS ANSWER` block of the startup message, exactly as `biso prime` prints it:
@@ -35,7 +35,7 @@ instead, so nobody mistakes it for forgotten, or for active at the same time.
 !!! abstract "What this scenario teaches"
     - Parking and unparking are their own commands, `biso ask` and `biso answer`, and neither one changes the task's state.
     - A parked task shows up from the outside in the `NEEDS ANSWER` block of the startup message and not in `IN PROGRESS`, even though its state is still the active one.
-    - Asking is better than guessing. It's rule 11 of the `biso prime` message, and it's the whole reason `biso ask` exists.
+    - Asking is better than guessing. It's rule 10 of the `biso prime` message, and it's the whole reason `biso ask` exists.
     - The `biso answer` command turns the question into two comments in the same write: one with the original author and moment of the question, and another with the answer, signed now.
 
 You look closely at TASK-60's question, not just the trimmed line from the startup message.
@@ -51,12 +51,14 @@ Should the retry budget be shared with the download endpoint or kept separate?
 
 Exit code: `0`
 
+*(derived output, see [`biso get`](../spec/cmd/get.md); not literal spec text)*
+
 Now yours. Instead of picking a number out of thin air, you leave it written down as a
 question.
 
 ```console
 $ biso ask TASK-19 "What is the maximum number of retries before treating the 5xx as a definitive failure? Is there already a reference value somewhere else in the code, or does a new one need to be set?"
-TASK-19  In Progress  ac 0/2  dod 0/2  urgency 7.0
+TASK-19  In Progress  ac 0/2  urgency 7.0
 ```
 
 Exit code: `0`
@@ -85,7 +87,7 @@ a value fixed somewhere else in the code. You answer, and the task gets unparked
 
 ```console
 $ biso answer TASK-19 "There is already a reference value: the download endpoint uses 3 retries with exponential backoff in retry.go. Use the same value and the same logic here."
-TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+TASK-19  In Progress  ac 0/2  urgency 11.0
 ```
 
 Exit code: `0`

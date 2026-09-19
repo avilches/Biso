@@ -19,7 +19,10 @@ está expuesta ni por su CLI, ni por su servidor, ni como librería.
 **La exportación es literalmente el formato de importación.** Ninguna de las dos lo cumple: la
 exportación de Backlog.md es un informe de solo lectura, y la de Taskwarrior mezcla datos reales con
 derivados como el identificador de sesión y la urgencia sin separarlos. En `biso`, `export` escribe
-todos los campos no derivados y ninguno derivado, y la ida y vuelta es una prueba de la suite.
+todos los campos no derivados y ninguno derivado, y la ida y vuelta es una prueba de la suite. La
+importación acepta una clave más que la exportación nunca escribe, `definitionOfDone`, para no
+rechazar los lotes que vengan de una herramienta que sí la tenga (["`biso new`"](../spec/cmd/new.md));
+eso hace el formato de entrada un poco más ancho que el de salida, y no rompe la ida y vuelta.
 
 Hay una trampa concreta en esto, y cuesta verla: **si el formato de lote admite los criterios de
 aceptación como simples cadenas de texto, la simetría es falsa por construcción**, porque un criterio
