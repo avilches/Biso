@@ -46,7 +46,12 @@ func open(path string, busyTimeoutMs int) (*Store, error) {
 	// and never the Store's database handle, which that transaction holds.
 	db.SetMaxOpenConns(1)
 
-	return &Store{db: db}, nil
+	s := &Store{db: db}
+	if err := s.migrate(); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return s, nil
 }
 
 // uriPath escapes the three characters SQLite reads as URI syntax when the
