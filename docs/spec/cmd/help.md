@@ -193,5 +193,10 @@ commands (init, where, archive, export, config, doctor, board, help, snapshot).
 
 Son treinta y una líneas, y no incluyen los comandos de administración.
 
+**`biso` a secas, sin ningún comando y sin ningún flag, imprime eso mismo y sale con 0.** No es un
+error de uso: una llamada que no nombra ningún comando no ha pedido nada mal, no ha pedido nada, y lo
+que le hace falta a quien la escribe es justo la lista de lo que puede pedir. Sale por stdout, como
+cualquier otra ayuda.
+
 ---
 

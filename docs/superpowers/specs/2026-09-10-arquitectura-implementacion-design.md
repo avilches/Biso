@@ -175,14 +175,22 @@ salida distintos según en qué momento apareciera.
 ### 3.4. `internal/board`
 
 Junta tres cosas en un único tipo `Board`: dónde está el tablero (la resolución de
-`docs/spec/resolucion-del-tablero.md`), su `config.json` propio ya cargado, y el `Store` ya abierto
+`docs/spec/resolucion-del-tablero.md`), su configuración propia ya cargada, y el `Store` ya abierto
 sobre él. Es
 deliberadamente delgado, solo resuelve y abre; no contiene lógica de negocio de ningún comando. Es
 el primer argumento que recibe cada función de `internal/ops`.
 
-Aquí vive además la traducción entre una tarea y sus filas, en el tipo `Tasks`, que es lo único de
-este paquete que existe hoy (TASK-10; el `Board` con la resolución y la configuración llega con el
-paso 4). Sus decisiones de implementación, que no se deducen de la especificación:
+**La configuración de un tablero vive dentro de su base de datos, no en un `config.json` propio**,
+que es lo que decía este documento antes del paso 4 y ya no es cierto. Lo manda
+`docs/spec/resolucion-del-tablero.md#el-orden-de-búsqueda`, que se apoya en que un directorio con
+`board.db` es ese tablero y no le falta ningún dato, y `docs/spec/cmd/config.md`, donde renombrar un
+tablero es una escritura en su base de datos con las mismas garantías que cualquier otra. La escribe
+la segunda migración de `internal/store`, en una tabla de una fila por clave, con la identidad del
+tablero en una tabla aparte porque no es configuración: `biso config list` no la lista y nada puede
+cambiarla.
+
+Aquí vive además la traducción entre una tarea y sus filas, en el tipo `Tasks`, que existe desde
+TASK-10. Sus decisiones de implementación, que no se deducen de la especificación:
 
 - **La cadena vacía es la ausencia de valor en todo campo `string` y `text`, y el instante cero lo
   es en todo campo de fecha.** `docs/spec/valores-de-entrada.md#el-valor-vacío` hace que la cadena
@@ -216,7 +224,16 @@ Una función por comando: `New`, `Ls`, `Get`, `Set`, `Start`, `Note`, `Comment`,
 `Answer`, `Archive`, `Export`, `Snapshot`, `Config`, `Doctor`, `Where`, `Init`, `Prime`, `BoardInfo`
 (el comando `biso board`, con nombre distinto del tipo `board.Board` para no leer `board.Board`
 como argumento de una función llamada `Board`), `Help`. La firma de cada una es
-`func(b *board.Board, p XParams) (XResult, error)`. Aquí vive toda
+`func(b *board.Board, p XParams) (XResult, error)`.
+
+**`Init` y `Where` son la excepción, y son la razón de que exista el entorno que reciben en su
+lugar**, un tipo `Env` con el directorio de trabajo, la configuración de máquina, la identidad de
+quien llama y las dos fuentes que una prueba necesita poder sustituir, el reloj y el generador de
+identificadores. A ninguno de los dos se le puede entregar un tablero ya abierto: uno lo crea y el
+otro existe para explicar cómo se encontró, incluso cuando no se encuentra ninguno. Cada una de las
+dos abre el suyo por dentro y lo cierra antes de devolver.
+
+Aquí vive toda
 la lógica de negocio de `docs/spec/`: qué combinación de campos es válida, qué garantías hay que
 respetar dentro de la transacción, qué mensaje de error corresponde a qué caso. Nada de esta capa
 imprime texto ni construye JSON.
@@ -267,7 +284,8 @@ type Error struct {
     ExitCode int      // the exit code, see docs/spec/codigos-de-salida.md
     Code     string   // the identifier, see docs/spec/contrato-json.md#los-identificadores-de-error
     Message  string   // the text that follows "error: " on stderr
-    Notes    []string // the "note: " lines that follow the message on stderr, in order
+    Detail   []string // verbatim display lines printed right after the message
+    Notes    []string // the "note: " lines that follow those, in order
     Hints    []string // the "hint: " lines that follow those, in order
 
     // The five detail fields from docs/spec/contrato-json.md#los-errores-en-json, each present
@@ -307,6 +325,24 @@ Tampoco entra en el sobre JSON, por la misma razón que `Hints`.
 quien imprime a partir la cadena para poner el prefijo `hint: ` en cada línea, es decir, a
 reinterpretar el contenido del error, que es justo lo que este tipo evita.)
 
+**Una entrada de `Hints` o de `Notes` sí puede llevar saltos de línea dentro, y eso no contradice lo
+anterior.** Lo descartado era meter dos hints distintos en una cadena; esto es un solo hint que la
+especificación imprime repartido en varias líneas de pantalla, y **dónde parte es texto fijo y no un
+ancho**: las dos notas de `docs/spec/cmd/init.md` cortan entre las mismas palabras tanto con
+`--at tablero` como con `--at my-project-board`, así que no hay ningún ajuste de línea que reproduzca
+la especificación, y calcularlo daría un texto distinto del que esa página fija. Quien imprime pone el
+prefijo en la primera línea y alinea las demás debajo, que son seis espacios para `note: ` y para
+`hint: `. Sigue sin reinterpretar nada: solo sangra.
+
+**`Detail []string` es una tercera clase de línea, y es literal.** Son las líneas de pantalla que dos
+casos de la especificación imprimen entre el mensaje y los hints, con su propia sangría y sus propias
+columnas internas: los dos directorios de un `id` duplicado
+(`docs/spec/resolucion-del-tablero.md#el-mismo-id-en-dos-sitios`) y el bloque `searched` de
+`biso where` (`docs/spec/cmd/where.md`). No caben en `Notes`, que les pondría el prefijo `note: `
+delante, ni en `Message`, que es una línea y además viaja al sobre JSON. Quien imprime las escribe tal
+cual, sin tocarlas. El campo lo añadió TASK-12, la primera tarea que construye esos dos errores, y
+tampoco entra en el sobre JSON.
+
 (El código Go va siempre en inglés, según el `CLAUDE.md` del proyecto; la prosa de este documento
 sigue en español.)
 
@@ -314,7 +350,9 @@ Nace en la capa más profunda que detecta el caso (normalmente `internal/ops`, a
 `internal/store` si el fallo es de disco) ya con los campos de detalle que le correspondan, por
 ejemplo `internal/match` es quien conoce la lista `Valid` cuando un valor no coincide con ningún
 vocabulario, así que es quien la rellena antes de devolver el error hacia arriba. Desde que se crea
-viaja sin cambios hasta `cmd/biso/main.go`, que es el único sitio que lo traduce a texto en
+viaja sin cambios hasta la capa de salida de `internal/cli`, a la que `cmd/biso/main.go` entrega la
+llamada entera y de la que recibe el código de salida del proceso: es el único sitio que lo traduce a
+texto en
 `stderr`, a la envoltura JSON de error de `docs/spec/contrato-json.md#los-errores-en-json`, y al
 código de salida del proceso.
 Ningún paquete intermedio reinterpreta ni envuelve este error; solo lo propaga.

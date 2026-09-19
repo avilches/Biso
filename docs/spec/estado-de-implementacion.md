@@ -30,7 +30,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 1 | El almacén SQLite, sus migraciones y `WithTx` | hecho | TASK-4 |
 | 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | hecho | TASK-10 |
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) y el de sugerencias ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas)), en `internal/match` | hecho | TASK-11 |
-| 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | pendiente | TASK-12 |
+| 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | en curso | TASK-12 |
 | 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | pendiente | TASK-13 |
 | 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | pendiente | TASK-14 |
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | pendiente | TASK-15 |
@@ -47,18 +47,18 @@ cerradas.
 |---|---|---|
 | [Vocabulario de esta especificación](vocabulario.md) | ninguno; fija nombres, no comportamiento | guía, no verificable |
 | [Los principios](principios.md) | todos | guía, no verificable |
-| [Códigos de salida](codigos-de-salida.md) | todos los que devuelven un código de error | pendiente |
-| [Flags globales](cmd/flags-globales.md) | pasos 4 a 9 | pendiente |
-| [Entorno y configuración de máquina](invocacion.md) | pasos 4 a 9 | pendiente |
-| [Cómo se elige el tablero](resolucion-del-tablero.md) | paso 4 | pendiente |
-| [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 5 y 7 | pendiente |
+| [Códigos de salida](codigos-de-salida.md) | todos los que devuelven un código de error | en curso |
+| [Flags globales](cmd/flags-globales.md) | pasos 4 a 9 | en curso |
+| [Entorno y configuración de máquina](invocacion.md) | pasos 4 a 9 | en curso |
+| [Cómo se elige el tablero](resolucion-del-tablero.md) | paso 4 | en curso |
+| [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 4, 5 y 7 | en curso |
 | [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
 | [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2 y 4 | en curso |
 | [El arrendamiento de una tarea](lease.md) | pasos 2 y 6 | pendiente |
 | [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | en curso |
 | [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | pendiente |
 | [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | pendiente |
-| [El contrato JSON](contrato-json.md) | pasos 4 a 9 | pendiente |
+| [El contrato JSON](contrato-json.md) | pasos 4 a 9 | en curso |
 | [El contrato de estabilidad](estabilidad.md) | paso 7 | pendiente |
 | [Lo que se deja fuera a propósito](fuera-de-alcance.md) | ninguno | fuera de alcance |
 
@@ -119,6 +119,26 @@ de la especificación la afirma la ejecución sin detector, que es la única que
 medida del presupuesto: esa es sobre `biso ls` y `biso prime` en el binario compilado y es del paso 7
 (TASK-15).
 ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño) es entero del paso 7.
+
+### Qué falta del paso 4, que está en curso
+
+El paso 4 dejó el programa ejecutable: `cmd/biso/main.go`, el reparto de `internal/cli` en analizador
+y capa de salida, `internal/ops` con la lógica de cada comando, y el tipo `Board` de `internal/board`
+con la resolución entera de ["Cómo se elige el tablero"](resolucion-del-tablero.md). De
+["`biso init`"](cmd/init.md) queda una sola cosa fuera: **`--from` no está implementado**, porque
+restaurar una instantánea necesita el formato de intercambio que trae el paso 8 (TASK-16). El flag se
+analiza, sus incompatibilidades se comprueban, y la llamada termina con código 1 diciendo que todavía
+no existe. Todo lo demás de esa página está: las dos adopciones de identidad, `--overwrite-config`
+con sus errores de código 6, `--dry-run`, las dos notas de `--at`, el fichero de exclusión y el
+marcador.
+
+De los transversales, el paso 4 no ejerce todavía **el color** de
+["Terminal, flujos de salida y codificación"](salida-y-terminal.md): la decisión está implementada y
+probada contra su tabla, pero ninguna salida de `init` ni de `where` lleva color, así que nada la usa
+hasta que lleguen `ls` y `prime`. De ["El contrato JSON"](contrato-json.md) están el sobre, los dos
+esquemas de estos comandos y el sobre de error con sus claves de detalle; falta el resto de los
+`kind`. Y de ["Flags globales"](cmd/flags-globales.md) están todos salvo `--print` en un comando que
+sí afecta a alguna tarea, que no existe todavía.
 
 ## Antes de empezar un paso
 

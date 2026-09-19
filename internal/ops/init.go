@@ -160,7 +160,7 @@ func Init(env Env, p InitParams) (*InitResult, error) {
 	}
 
 	if loc != nil {
-		return rewrite(env, p, cfgFlags, loc, facts, target)
+		return rewrite(env, p, cfgFlags, loc, target)
 	}
 	return create(env, p, cfgFlags, facts, target)
 }
@@ -397,7 +397,7 @@ func create(env Env, p InitParams, v vocabularyFlags, facts board.Searched, targ
 // rewrite is `biso init` where a board is already reachable: the most likely
 // ending of this command, and an error unless --overwrite-config says to
 // replace its configuration, which never touches a task.
-func rewrite(env Env, p InitParams, v vocabularyFlags, loc *board.Location, facts board.Searched, target string) (*InitResult, error) {
+func rewrite(env Env, p InitParams, v vocabularyFlags, loc *board.Location, target string) (*InitResult, error) {
 	if !p.OverwriteConfig {
 		return nil, &model.Error{
 			ExitCode: 2,
@@ -462,7 +462,6 @@ func rewrite(env Env, p InitParams, v vocabularyFlags, loc *board.Location, fact
 	if err := b.Rewrite(cfg); err != nil {
 		return nil, err
 	}
-	_ = facts
 	return result, nil
 }
 

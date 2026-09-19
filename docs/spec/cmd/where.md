@@ -107,6 +107,15 @@ error: this project's pointer names board 3f9a2b1c, which is not on this machine
 hint: `biso init` creates it here, adopting id 3f9a2b1c
 ```
 
+**En un tablero que nunca ha asignado ningún identificador, esa tercera parte de la fila dice `no id
+assigned yet`**, y la clave `highestIdEverAssigned` del JSON vale `null`. Es el estado de un tablero
+recién creado, así que es lo primero que ve quien acaba de hacer `biso init`, y escribir ahí un
+identificador inventado como `MYP-0` sería nombrar una tarea que no existe ni existió:
+
+```
+tasks    0 not archived, 0 archived, no id assigned yet
+```
+
 **La fila de recuentos dice "not archived" y no "active", y la clave JSON se llama `notArchived` por lo
 mismo.** La tabla de vocabulario de este documento reserva "active" para el papel del estado, el que
 `biso start` usa, y una tarea sin archivar puede estar en cualquiera de los estados, incluido el

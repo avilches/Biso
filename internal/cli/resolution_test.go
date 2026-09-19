@@ -292,3 +292,76 @@ func assertContains(t *testing.T, got, want string) {
 		t.Errorf("the output does not carry the line %q.\n--- got ---\n%s", want, got)
 	}
 }
+
+func TestABoardIsNeverCreatedInsideAnother(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	m.run("init", "My project").assertCode(t, 0)
+	dir := filepath.Join(m.boardsRoot(), "my-project-3f9a2b1c")
+
+	// Called from inside the board itself, which is the first way of
+	// choosing one: the board is that one, and creating another there is
+	// the same error as anywhere else.
+	inside := m.at(dir)
+	got := inside.run("init", "Another").assertCode(t, 2)
+	assertContains(t, got.stderr, "error: this project already has board 3f9a2b1c, at "+dir)
+
+	// And --overwrite-config over it rewrites that board's configuration,
+	// which is exactly what the flag means.
+	got = inside.run("init", "--overwrite-config", "--types", "task").assertCode(t, 0)
+	assertContains(t, got.stdout, "Rewrote the configuration of board \"My project\"")
+}
+
+func TestAtADirectoryWithTheMarkerAndNoDatabaseCreatesItThereAdoptingTheId(t *testing.T) {
+	m := newMachine(t).withIDs("ffffffff")
+	half := filepath.Join(m.dir, "board")
+	m.writeFile(filepath.Join(half, "3f9a2b1c.id"), "{ \"storeVersion\": 1 }\n")
+
+	got := m.run("init", "My project", "--at", "board").assertCode(t, 0)
+
+	assertContains(t, got.stdout, "Created board \"My project\"")
+	if !m.exists(filepath.Join(half, "board.db")) {
+		t.Fatal("the board was not created where --at named")
+	}
+	assertEqual(t, m.read(filepath.Join(m.dir, ".biso.json")),
+		"{ \"version\": 1, \"id\": \"3f9a2b1c\", \"path\": \"board\" }\n",
+		"the pointer of a board that adopted the id of a marker")
+}
+
+func TestARelativeAtThatLeavesTheProjectIsStoredAsItWasWritten(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+
+	got := m.run("init", "My project", "--at", "../boards/my-project").assertCode(t, 0)
+
+	assertEqual(t, m.read(filepath.Join(m.dir, ".biso.json")),
+		"{ \"version\": 1, \"id\": \"3f9a2b1c\", \"path\": \"../boards/my-project\" }\n",
+		"the pointer of a relative --at that leaves the project")
+	if !m.exists(filepath.Join(m.home, "boards", "my-project", "board.db")) {
+		t.Fatal("the board is not where --at named")
+	}
+	// It is outside the project, so only the note about the relative path
+	// comes out, and not the one about living inside it.
+	if strings.Contains(got.stderr, "the board lives inside this project") {
+		t.Errorf("stderr = %q", got.stderr)
+	}
+	assertContains(t, got.stderr, "note: the location is stored as the relative path \"../boards/my-project\".")
+
+	// And it resolves, because the relative position between the pointer
+	// and the board is what it was.
+	assertContains(t, m.run("where").assertCode(t, 0).stdout,
+		"path     "+filepath.Join(m.home, "boards", "my-project"))
+}
+
+func TestMovingABoardByHandIsFixedByInitAtItsNewPath(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	m.run("init", "My project", "--at", filepath.Join(m.home, "old")).assertCode(t, 0)
+
+	moved := filepath.Join(m.home, "new")
+	if err := os.Rename(filepath.Join(m.home, "old"), moved); err != nil {
+		t.Fatal(err)
+	}
+	m.run("where").assertCode(t, 20)
+
+	got := m.run("init", "--at", moved).assertCode(t, 0)
+	assertContains(t, got.stdout, "Adopted board \"My project\"")
+	assertContains(t, m.run("where").assertCode(t, 0).stdout, "path     "+moved)
+}
