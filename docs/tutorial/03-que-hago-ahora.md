@@ -89,9 +89,6 @@ so debugging one means reconstructing it by hand from scattered timestamps.
 - [ ] #2 The counter shows up in the final summary
 - [ ] #3 A test covers three retries in a row
 
-## Definition of Done
-(empty)
-
 ## Implementation Plan
 (empty)
 

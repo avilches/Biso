@@ -51,7 +51,7 @@ Exit code: `0`
 
 *(derived output, see [`biso set`](../spec/cmd/set.md), [La urgencia](../spec/modelo-de-datos/urgencia.md#la-urgencia); not literal spec text)*
 
-*Note: The output doesn't repeat what Sara just wrote: it doesn't say "assignee: @claude". It says the state the task is left in, its acceptance criteria progress, and its urgency, which is what she didn't know. That's the fourth principle of the specification, and it holds for every write. The urgency is 7.0, which comes from adding 6.0 for being high priority and 1.0 for having acceptance criteria. It doesn't add the active-task term, worth 4.0, because the task is still `To Do`: assigning a task doesn't put it in motion. The `dod` chunk doesn't show up because `TASK-19` has no definition of done, and that chunk only appears when there is one.*
+*Note: The output doesn't repeat what Sara just wrote: it doesn't say "assignee: @claude". It says the state the task is left in, its acceptance criteria progress, and its urgency, which is what she didn't know. That's the fourth principle of the specification, and it holds for every write. The urgency is 7.0, which comes from adding 6.0 for being high priority and 1.0 for having acceptance criteria. It doesn't add the active-task term, worth 4.0, because the task is still `To Do`: assigning a task doesn't put it in motion.*
 
 In his own session, the agent asks what's his to do. Here `--mine` does work, because his
 identity is declared.

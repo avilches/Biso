@@ -36,7 +36,7 @@ stopping to think about whose lease it was.
 ```console
 $ biso note TASK-11 "The CRLF also shows up in the test files, not just in the diff"
 warning: TASK-11's lease is held by @claude until 2026-09-06T15:40:18Z
-TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+TASK-11  In Progress  ac 1/2  urgency 19.0
 ```
 
 Exit code: `0`
@@ -50,7 +50,7 @@ same task.
 
 ```console
 $ biso note TASK-11 "The normalizer now handles the test files case"
-TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+TASK-11  In Progress  ac 1/2  urgency 19.0
 ```
 
 Exit code: `0`
@@ -65,7 +65,7 @@ writes it again with the same value it already had.
 ```console
 $ biso set TASK-11 --priority high
 note: TASK-11 unchanged
-TASK-11  In Progress  ac 1/2  dod 0/1  urgency 19.0
+TASK-11  In Progress  ac 1/2  urgency 19.0
 ```
 
 Exit code: `0`

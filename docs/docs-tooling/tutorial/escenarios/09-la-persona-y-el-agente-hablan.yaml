@@ -24,7 +24,7 @@ steps:
       leave a record of how it turned out.
     command: biso note TASK-19 "The exponential backoff in retry.go can be reused as-is; the limit just needs to be set to 3."
     output: |
-      TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+      TASK-19  In Progress  ac 0/2  urgency 11.0
     exit_code: 0
     source_kind: derived
     source:
@@ -54,7 +54,7 @@ steps:
     command: 'biso comment TASK-19 "A user on a mobile connection sees failures even after the 3 retries, should we raise the limit in that case?" --comment-author @trello:juan'
     output: |
       note: comment #3 by @trello:juan
-      TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+      TASK-19  In Progress  ac 0/2  urgency 11.0
     exit_code: 0
     source_kind: derived
     source:
@@ -75,7 +75,7 @@ steps:
     command: biso comment TASK-19 "Not for now, 3 retries is the policy for the rest of the system; if it happens again we'll revisit it."
     output: |
       note: comment #4 by @claude
-      TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+      TASK-19  In Progress  ac 0/2  urgency 11.0
     exit_code: 0
     source_kind: derived
     source:
@@ -119,10 +119,10 @@ steps:
       this explicitly for the case of several sections at once; noted as an open gap in
       tutorial/lagunas/07-10.md.
 board_in: >
-  TASK-19 in In Progress, ac 0/2, dod 0/2, with 2 comments (the question and answer from scenario
+  TASK-19 in In Progress, ac 0/2 (keys #7 and #8), with 2 comments (the question and answer from scenario
   8) and no notes yet. Urgency 11.0. Board counters: 54/5/190, unchanged since scenario 8.
 board_out: >
-  TASK-19 is still In Progress, ac 0/2 and dod 0/2 untouched. It now has 1 implementation note
+  TASK-19 is still In Progress, ac 0/2 untouched. It now has 1 implementation note
   paragraph and 4 comments in total: the 2 from the question and answer in scenario 8, plus the
   one from @trello:juan and @claude's answer in this scenario. Urgency unchanged, 11.0. Board
   counters unchanged: 54/5/190.

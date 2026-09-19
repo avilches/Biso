@@ -35,8 +35,8 @@ un fallo de esta garantía. Reconstruir también el vocabulario, para un tablero
 declara de antemano, es lo que hace `snapshot` con `init --from`, más abajo.
 
 La salida es NDJSON, una tarea por línea, con **exactamente** las claves que acepta `biso new --from`,
-en la forma de objeto que esa sección define para los criterios, la definición de hecho, los
-comentarios y la pregunta abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
+en la forma de objeto que esa sección define para los criterios, los comentarios y la pregunta
+abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
 y las claves estables de cada criterio **y de cada comentario** (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), ["Los comentarios"](../modelo-de-datos/comentarios.md#los-comentarios)).
 
 **Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md).** `question` sale en `export` y
@@ -111,8 +111,8 @@ Its shaping flags (--sort, --limit, --all, --ids, --count) do not apply either.
 --json is rejected with code 2: this output is already one JSON object per
 line, while --json means the single envelope every other command prints.
 
-Derived fields are never written: urgency, acDone, acTotal, dodDone, dodTotal,
-commentCount, blocks, blocked, waiting, leaseExpired.
+Derived fields are never written: urgency, acDone, acTotal, commentCount,
+blocks, blocked, waiting, leaseExpired.
 
 Exit codes:
   0  exported       3  a filter value does not exist here

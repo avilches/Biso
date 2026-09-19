@@ -29,8 +29,7 @@ de una referencia como el filtro `--search` de `biso ls` y `biso export`. Busca,
 mayúsculas ni acentos, en:
 
 el título, la descripción, el plan, las notas, el resumen final, el texto de los criterios de
-aceptación, el texto de la definición de hecho, el cuerpo de los comentarios, el cuerpo de la
-pregunta abierta y las etiquetas.
+aceptación, el cuerpo de los comentarios, el cuerpo de la pregunta abierta y las etiquetas.
 
 No busca en los identificadores, ni en las referencias, ni en la documentación, ni en los campos de
 extensión.

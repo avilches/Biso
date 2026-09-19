@@ -85,18 +85,18 @@ código 3 habría mezclado dos preguntas distintas bajo el mismo número: "¿es 
 
 ## Dónde se anuncia la clave de un criterio recién creado
 
-**La decisión.** Cuando `--add-ac` o `--add-dod` crea un elemento en un comando distinto de
+**La decisión.** Cuando `--add-ac` crea un elemento en un comando distinto de
 `biso new`, la línea de estado por defecto (["`biso set`"](../spec/cmd/set.md#salida) y los verbos del ciclo) añade `added ac #<clave>`
-o `added dod #<clave>` al final, y solo cuando la llamada crea de verdad algo. `biso new` no lo
-anuncia nunca, ni siquiera cuando crea criterios a la vez que la tarea. En `--json`, `acAdded` y
-`dodAdded` se añaden a `data.tasks` del esquema `task.write`, presentes siempre (vacíos si no se creó
+al final, y solo cuando la llamada crea de verdad algo. `biso new` no lo
+anuncia nunca, ni siquiera cuando crea criterios a la vez que la tarea. En `--json`, `acAdded`
+se añade a `data.tasks` del esquema `task.write`, presente siempre (vacío si no se creó
 nada) en todos los comandos que comparten ese `kind`, incluido `new`.
 
 **Por qué.** El principio 4 (["Los principios"](../spec/principios.md)) dice que la salida por defecto de una escritura es lo que
 quien llama no sabía, nunca el eco de lo que acaba de escribir. Sobre una tarea que ya existía, el
 contador de claves de sus criterios viene de antes, y quien llama no puede saberlo sin leer la tarea
 primero: es justo el dato que ese principio manda enseñar, y por eso va en la misma línea de estado
-que ya enseña el resto de derivados (`ac X/Y`, `dod X/Y`, `urgency`), no en un sitio aparte. Sobre una
+que ya enseña el resto de derivados (`ac X/Y`, `urgency`), no en un sitio aparte. Sobre una
 tarea recién creada con `biso new`, en cambio, el contador de cada lista siempre empieza en 1, así que
 la clave de cada `--add-ac` es el mismo orden en que se escribieron los flags
 (["Los criterios y sus claves estables"](../spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)): quien llama ya lo sabe, y anunciarlo sería el eco que el principio 4
@@ -203,6 +203,69 @@ vocabulario derivado. Usarlo para agrupar habría exigido, o bien construirle un
 derivado que hoy no tiene, que es exactamente lo que ya hacía `milestone` y por tanto no ahorra nada,
 o bien agrupar en el board por una dimensión que no se puede consultar por ningún otro sitio de la
 herramienta, una asimetría nueva entre lo que se ve y lo que se puede pedir por la línea de comandos.
+
+---
+
+## Se retira la definición de hecho
+
+**La decisión.** Una tarea tiene una sola lista de comprobación, `acceptanceCriteria`. El campo
+`definitionOfDone` no existe, ni sus flags (`--add-dod`, `--rm-dod`, `--clear-dods`, `--check-dod`,
+`--uncheck-dod`), ni sus derivados (`dodDone`, `dodTotal`, `dodAdded`), ni el trozo `dod X/Y` de la
+línea de estado, ni el aviso de cerrar con la definición de hecho a medias. Lo que otra herramienta
+guardaría en una segunda lista, del tipo "alguien más lo ha revisado", es un criterio de aceptación
+más. La única huella que queda es de entrada: un lote de `biso new --from` que traiga
+`definitionOfDone` no falla, sino que convierte cada elemento en un criterio de aceptación y avisa
+(sección [`biso new`](../spec/cmd/new.md)).
+
+**La medida que lo decide.** El 2026-09-19 se contaron las tareas de los cinco tableros de Backlog.md
+de esta máquina, la herramienta de la que `biso` hereda el campo: 420 tareas entre los cinco, con
+criterios de aceptación en las de los tableros que los usan y **cero** con una sección de definición
+de hecho. En 2,1 GB de transcripciones de sesiones de agente hay una sola ejecución real de `--dod`,
+del 2026-09-15, y fue para inspeccionar qué forma tenía el Markdown resultante, no para trabajar. El
+campo no se usaba poco: no se había usado nunca.
+
+**Por qué no se usaba, que no es lo mismo que por qué sobra.** En Backlog.md la definición de hecho
+está pensada como plantilla de proyecto, una lista reutilizable que se aplica sola a cada tarea nueva,
+y su guía para agentes desaconseja escribirla tarea por tarea. Esa plantilla nunca se configuró en
+ninguno de los cinco tableros, así que la sección no llegó a aparecer jamás. `biso` había copiado la
+mitad equivocada de ese diseño: se trajo la lista de la tarea y dejó fuera el nivel de proyecto, que
+era de donde venía el sentido. Una definición de hecho que hay que teclear tarea por tarea no es una
+definición de hecho, es una segunda lista de criterios de aceptación con otro nombre, y el principio 2
+de la especificación (["Los principios"](../spec/principios.md)) prohíbe exactamente eso, dos nombres
+para el mismo concepto.
+
+**El estado del arte confirma que el campo es una rareza.** De los seis gestores investigados en
+["Esquemas de datos externos"](../estado-del-arte/esquemas-de-datos-externos.md), ninguno tiene dos
+listas de comprobación fijas. Taskwarrior no tiene ninguna; Beads tiene `acceptance_criteria` como un
+único bloque de texto libre, no una lista de elementos marcables; Task Master resuelve con subtareas
+anidadas y un campo `testStrategy`; GitHub Issues y Linear no tienen campo de checklist y descomponen
+con sub-issues; y Trello tiene `Checklist` con `CheckItem`, que es la forma exacta de un criterio,
+pero en un array de cuantas listas nombradas quiera quien las cree, que es la generalización a N
+listas y no un modelo de dos niveles. Fuera de esos seis, Jira, la herramienta donde nació el
+vocabulario de Scrum del que salen los dos términos, no tiene ninguno de los dos como campo nativo, y
+la documentación de Atlassian dice por qué: los criterios de aceptación pertenecen a un elemento
+concreto, mientras que la definición de hecho aplica a todos los elementos del sprint o del proyecto.
+Es un acuerdo de equipo, no un campo de la tarea.
+
+**Alternativa descartada: darle a `biso` una definición de hecho por tablero.** Habría sido la forma
+fiel al concepto original, una lista declarada en la configuración que se copia en cada tarea nueva.
+Se descarta porque añade una clave de configuración, un momento de aplicación que hay que especificar
+(qué pasa con las tareas ya creadas cuando la plantilla cambia) y una lista que crece sola en cada
+tarea, todo ello para un caso de uso que en 420 tareas reales no apareció ni una vez. Si algún día
+aparece, el sitio por donde entrar está escrito aquí.
+
+**Alternativa descartada: N listas nombradas, al estilo de Trello.** Es la generalización correcta y
+resuelve de paso cualquier separación futura, pero multiplica la superficie por la vía contraria a la
+que sigue la herramienta: cada lista necesitaría nombre, un selector que la nombre en todos los flags
+de marcado, y un sitio propio en la línea de estado, que hoy cabe entera en una línea justamente
+porque solo hay una lista que contar.
+
+**Qué cuesta, y por qué ahora.** La retirada toca unos quince ficheros de la especificación, el
+escenario 07 del tutorial, la tabla de correspondencia con otros modelos y unos 107 bytes de la parte
+fija del mensaje de arranque, que tiene tope duro (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)).
+Se hace ahora porque no hay ni una línea de código Go escrita, así que el cambio es enteramente de
+documentación; cada día que el campo siguiera en la especificación sería un día más de superficie que
+después habría que implementar, probar y mantener para algo que nadie rellena.
 
 ---
 

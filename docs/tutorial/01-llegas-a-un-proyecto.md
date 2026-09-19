@@ -46,16 +46,16 @@ COMMANDS  (`biso <cmd> --help` for the detail of any flag)
   biso note <ref> "TEXT"
   biso ask <ref> "QUESTION"
   biso answer <ref> "TEXT"
-  biso finish <ref>... [--summary "TEXT"] [--check all] [--check-dod all]
+  biso finish <ref>... [--summary "TEXT"] [--check all]
   biso set <ref>... [any field flag]
   biso comment <ref> "TEXT" [--comment-author @who]
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
   -t --title  -s --status  --type   --priority  -a --assignee  -l --label
-  -d --desc   --ac         --dod    --plan      --note         --summary
+  -d --desc   --ac         --plan   --note      --summary
   --dep       --ref        --doc    --file      -p --parent    --due
   --ordinal   --ext K=V    --author              --comment
-  --check     --uncheck             --check-dod --uncheck-dod
+  --check     --uncheck
 
 RULES  (none of these are guessable; they are the whole learning curve)
   1. Every write goes through biso. Nothing else touches the board.
@@ -108,7 +108,7 @@ NEXT UP  (not assigned to you, by urgency)
   49 more not shown: `biso ls --not-active --not-waiting`
 
 Pick one, `biso start <ref> --plan "..."`, work, `biso note <ref> "..."` as you go,
-and close with `biso finish <ref> --check all --check-dod all --summary "..."`.
+and close with `biso finish <ref> --check all --summary "..."`.
 That is the loop. Create a task when the work needs planning or review; do small
 edits directly.
 ```

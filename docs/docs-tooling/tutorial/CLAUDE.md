@@ -50,7 +50,7 @@ Cada paso declara el comando, su salida, su código de salida y **de dónde sale
     command: biso note TASK-11 "Rewrote the date parser"
     output: |
       warning: TASK-11's lease is held by @sara until 2026-09-08T14:00:00Z
-      TASK-11  In Progress  ac 1/2  dod 0/2  urgency 41.0
+      TASK-11  In Progress  ac 1/2  urgency 41.0
     exit_code: 0
     source_kind: literal
     source:
@@ -68,7 +68,7 @@ Las reglas que no se negocian:
   generador lo usa literal como texto del enlace, y `docs/spec/` se queda en español aunque el
   tutorial nazca en inglés. El generador **enlaza cada cita de un paso `derived`** en la página, y esa
   marca es el aparato de validación: lo literal ya está validado por estar en la especificación, lo
-  derivado es lo que hay que revisar. De 59 pasos, 7 son literales.
+  derivado es lo que hay que revisar. De 60 pasos, 7 son literales.
 - **`exit_code` es obligatorio en todos los pasos**, también en los que valen cero. Un tutorial
   que solo declara el código cuando falla enseña que el código solo importa al fallar, y en `biso` es
   al revés.

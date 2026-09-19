@@ -13,16 +13,16 @@ biso get <ref> [--id] [--match] [--section <name>]... [--explain-urgency]
 | `<ref>` | | sí | referencia | | no | no | |
 | `--id` | | no | booleano | falso | no | no | `--match` |
 | `--match` | | no | booleano | falso | no | no | `--id` |
-| `--section <name>` | | no | `meta`, `desc`, `ac`, `dod`, `plan`, `notes`, `summary`, `comments`, `question` | todas | sí | sí | |
+| `--section <name>` | | no | `meta`, `desc`, `ac`, `plan`, `notes`, `summary`, `comments`, `question` | todas | sí | sí | |
 | `--explain-urgency` | | no | booleano | falso | no | no | |
 
 `--section` sirve para pedir solo una parte. `biso get MYP-11 --section ac` imprime los criterios con
 sus claves y cuesta unas decenas de bytes en vez de la ficha entera, que es lo que hace falta antes de
 marcar uno.
 
-**Varias secciones salen siempre en el orden fijo de la ficha completa** (`meta`, `desc`, `ac`, `dod`,
+**Varias secciones salen siempre en el orden fijo de la ficha completa** (`meta`, `desc`, `ac`,
 `plan`, `notes`, `summary`, `comments`, `question`), nunca en el orden en que se pidieron: `--section
-dod,ac` y `--section ac,dod` imprimen lo mismo. Una sección repetida se guarda una vez, con la misma
+plan,ac` y `--section ac,plan` imprimen lo mismo. Una sección repetida se guarda una vez, con la misma
 regla y el mismo aviso que cualquier flag repetible (["Repetición y listas separadas por
 comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)).
 
@@ -68,9 +68,6 @@ differ in the line ending.
 ## Acceptance Criteria
 - [x] #1 The diff ignores CRLF
 - [ ] #3 There is a test that covers it
-
-## Definition of Done
-- [ ] #1 Reviewed by someone else
 
 ## Implementation Plan
 1. Read the parser.
@@ -161,7 +158,7 @@ urgency 0.0
 ## El esquema JSON
 
 `data.task` lleva todas las claves de un objeto de ["`task.list`"](ls.md#el-esquema-json) más las del
-cuerpo (`description`, `acceptanceCriteria`, `definitionOfDone`, `plan`, `notes`, `summary`,
+cuerpo (`description`, `acceptanceCriteria`, `plan`, `notes`, `summary`,
 `comments`, `question`). La lista completa de las primeras vive solo en `ls.md`; el ejemplo de abajo
 las repite todas para que sirva de esquema completo, verificable clave a clave:
 
@@ -193,8 +190,6 @@ las repite todas para que sirva de esquema completo, verificable clave a clave:
       "leaseHolder": "@claude",
       "acDone": 1,
       "acTotal": 2,
-      "dodDone": 0,
-      "dodTotal": 1,
       "commentCount": 1,
       "urgency": 19.0,
       "blocks": ["MYP-40"],
@@ -206,7 +201,6 @@ las repite todas para que sirva de esquema completo, verificable clave a clave:
       "description": "The diff compares byte by byte...",
       "acceptanceCriteria": [ { "key": 1, "text": "The diff ignores CRLF", "checked": true },
                               { "key": 3, "text": "There is a test that covers it", "checked": false } ],
-      "definitionOfDone": [ { "key": 1, "text": "Reviewed by someone else", "checked": false } ],
       "plan": "1. Read the parser.\n2. Add the CRLF case.",
       "notes": "The parser already normalized LF, CRLF was missing.",
       "summary": null,
@@ -254,16 +248,16 @@ Show one task. <ref> is an id (MYP-11), a bare number (11) or free text
 never picks one for you.
 
 Free text searches the title, description, plan, notes, final summary, the
-text of the criteria and of the definition of done, the body of the comments,
-the body of the open question and the labels. A match in the title always
+text of the criteria, the body of the comments, the body of the open question
+and the labels. A match in the title always
 wins over a match anywhere else. `biso ls --search` uses this same scope.
 
 Options:
       --id                   force <ref> to be read as an id
       --match                force <ref> to be read as free text
       --section <name>       print only these sections; repeatable or comma
-                             separated. One of: meta, desc, ac, dod, plan,
-                             notes, summary, comments, question
+                             separated. One of: meta, desc, ac, plan, notes,
+                             summary, comments, question
       --explain-urgency      show how the urgency number is built
   -h, --help                 show this help
 

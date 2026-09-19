@@ -32,7 +32,7 @@ leave a record of how it turned out.
 
 ```console
 $ biso note TASK-19 "The exponential backoff in retry.go can be reused as-is; the limit just needs to be set to 3."
-TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+TASK-19  In Progress  ac 0/2  urgency 11.0
 ```
 
 Exit code: `0`
@@ -62,7 +62,7 @@ whoever reported it.
 ```console
 $ biso comment TASK-19 "A user on a mobile connection sees failures even after the 3 retries, should we raise the limit in that case?" --comment-author @trello:juan
 note: comment #3 by @trello:juan
-TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+TASK-19  In Progress  ac 0/2  urgency 11.0
 ```
 
 Exit code: `0`
@@ -77,7 +77,7 @@ default.
 ```console
 $ biso comment TASK-19 "Not for now, 3 retries is the policy for the rest of the system; if it happens again we'll revisit it."
 note: comment #4 by @claude
-TASK-19  In Progress  ac 0/2  dod 0/2  urgency 11.0
+TASK-19  In Progress  ac 0/2  urgency 11.0
 ```
 
 Exit code: `0`
