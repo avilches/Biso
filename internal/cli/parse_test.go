@@ -165,6 +165,18 @@ func TestGlobalFlagsOnEitherSideOfTheCommand(t *testing.T) {
 	}
 }
 
+// TestNoCommandRedefinesAGlobalFlag holds the rule of
+// docs/spec/cmd/flags-globales.md that no command may redefine a global flag
+// or change what it means: a table that names one anyway is not what the
+// parser reads.
+func TestNoCommandRedefinesAGlobalFlag(t *testing.T) {
+	commands := []CommandSpec{{Name: "ls", Flags: []FlagSpec{
+		{Name: "json", Value: PlainValue, Category: Scalar},
+	}}}
+	_, err := Parse([]string{"ls", "--json=yes"}, commands, Env{})
+	wantError(t, err, 2, "unexpected_argument")
+}
+
 // TestHelpAndVersionStopAtOnce covers the rule of
 // docs/spec/cmd/flags-globales.md that --version and --help are not a mode:
 // they are an action that ends the program as soon as it is read.
@@ -384,6 +396,34 @@ func TestTheThreeForms(t *testing.T) {
 	}
 	if got := p.Values("append-plan"); got[0] != "from stdin" {
 		t.Errorf("plan is %q", got)
+	}
+}
+
+// TestStdinIsTheValueAndNotTheSpelling holds the decision that "-" means
+// standard input wherever it arrives from: the three forms describe the value,
+// not how it was attached to its flag, so --append-plan=- reads stdin exactly
+// like --append-plan - does.
+func TestStdinIsTheValueAndNotTheSpelling(t *testing.T) {
+	p, err := Parse(
+		[]string{"set", "MYP-1", "--append-plan=-"},
+		testCommands(),
+		Env{Stdin: strings.NewReader("from stdin")},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := p.Values("append-plan"); got[0] != "from stdin" {
+		t.Errorf("plan is %q", got)
+	}
+}
+
+// TestDashDashAfterFlagsStillOpensPositionals is why "--" stays the escape
+// that always works: the block of positional arguments has to be one, but what
+// comes behind "--" is a positional whatever the rest of the line did.
+func TestDashDashAfterFlagsStillOpensPositionals(t *testing.T) {
+	p := mustParse(t, "set", "MYP-1", "--add-labels", "a", "--", "-x")
+	if got := strings.Join(p.Positionals, "|"); got != "MYP-1|-x" {
+		t.Errorf("positionals are %q", got)
 	}
 }
 
