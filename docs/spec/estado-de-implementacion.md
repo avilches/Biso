@@ -28,7 +28,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | Paso | Qué cubre | Estado | Tarea |
 |---|---|---|---|
 | 1 | El almacén SQLite, sus migraciones y `WithTx` | hecho | TASK-4 |
-| 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | pendiente | TASK-10 |
+| 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | en curso | TASK-10 |
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) | pendiente | TASK-11 |
 | 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | pendiente | TASK-12 |
 | 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | pendiente | TASK-13 |
@@ -75,18 +75,28 @@ no se puede leer falla con código 21, la clave `database_unreadable` y sus dos 
 comprobación de integridad que nombra ese texto existe como un método propio del almacén, que es lo
 que ejecutará [`biso doctor`](cmd/doctor.md) en el paso 9.
 
-**La garantía 3 (dos procesos simultáneos nunca asignan el mismo identificador) no está probada**, y
-no puede estarlo todavía: depende de cómo se asignan los identificadores de tarea, que llega con el
-modelo de datos del paso 2 (TASK-10). Lo que sí queda probado es el mecanismo del que dependerá, la
-serialización de escritores. El primer caso de esa misma sección, la tarea suelta ilegible, es
-también del paso 2 en adelante, porque necesita que haya tareas.
+**La garantía 3 (dos procesos simultáneos nunca asignan el mismo identificador) la cierra el paso 2**,
+que es cuando existen identificadores que asignar. Se asignan con un contador propio del tablero que
+solo crece, dentro de la misma transacción de escritura del paso 1, y la prueba que lo comprueba
+abre cuatro almacenes independientes sobre el mismo fichero, cada uno con su conexión, y les hace
+crear cien tareas a la vez: ninguna repite identificador y no falta ninguno. De ahí sale también que
+un identificador no se reutilice nunca, ni tras archivar la tarea ni tras desaparecer su fila.
 
-**De [`presupuestos.md`](presupuestos.md)**, el paso 1 mide solo el trozo de
-["El presupuesto de arranque"](presupuestos.md#el-presupuesto-de-arranque) que el almacén controla:
-abrir la base de datos y leer un tablero sintético del tamaño que fija ese presupuesto, que con el
-detector de carreras (que es como se ejecuta la suite) tarda entre 4,2 y 4,7 ms frente al tope de
-25. No es la medida del presupuesto:
-esa es sobre `biso ls` y `biso prime` en un tablero real de 300 tareas y es del paso 7 (TASK-15).
+El primer caso de esa misma sección, la tarea suelta ilegible, sigue pendiente: el paso 2 rechaza al
+escribir una clave de extensión que el tablero no declara (código 3, `unknown_extension_key`) y una
+clave fuera del alfabeto (código 2, `malformed_extension_key`), pero el texto exacto del error de una
+tarea que no se puede decodificar al leerla, y el aviso que la salta en una lectura de conjunto, son
+de los pasos que implementan `get` y `ls`.
+
+**De [`presupuestos.md`](presupuestos.md)**, la medida vive desde el paso 2 en `internal/board` y ya
+es sobre el esquema real: abrir el tablero y leer sus 300 tareas enteras, con sus listas, sus
+criterios y sus comentarios, tarda unos 2,5 ms frente al tope de 25 que fija
+["El presupuesto de arranque"](presupuestos.md#el-presupuesto-de-arranque). Bajo el detector de
+carreras la misma lectura tarda unos 75 ms, así que esa ejecución se compara contra un límite propio
+de 150 ms que no es un presupuesto de la especificación sino un aviso de regresión: el detector
+multiplica por más de un orden de magnitud cada lectura de un controlador de SQLite escrito en Go
+puro, y medirlo contra los 25 ms mediría el detector y no el programa. Sigue sin ser la medida del
+presupuesto: esa es sobre `biso ls` y `biso prime` en el binario compilado y es del paso 7 (TASK-15).
 ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño) es entero del paso 7.
 
 ## Antes de empezar un paso

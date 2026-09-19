@@ -141,6 +141,16 @@ especificación, porque son del controlador y no del comportamiento observable:
   ejecuta es `biso doctor` (`docs/spec/cmd/doctor.md`); devuelve el mismo error que un fichero que
   no abre, que es lo que pide `docs/spec/garantias.md`.
 
+**Una limitación medida, de crear el fichero y no de escribir en él.** Varias conexiones que crean
+el mismo fichero desde cero en el mismo instante no se serializan: la primera que llega lo pasa a
+modo WAL, y SQLite rechaza ese cambio de modo de diario mientras haya otra conexión activa
+devolviendo `SQLITE_BUSY` de inmediato, sin pasar por el tiempo de espera. El almacén lo traduce a
+la garantía 5, así que el síntoma es un código 8 instantáneo al abrir. Solo pasa con un fichero que
+todavía no existe: sobre un fichero ya en modo WAL, aunque esté vacío de esquema, cuatro conexiones
+simultáneas migran y escriben sin problema, y eso está probado. No afecta a ninguna garantía, porque
+quien crea el tablero es `biso init` y lo hace una sola vez; se anota aquí para que el paso que
+implemente `init` no lo redescubra como si fuera un fallo de la asignación de identificadores.
+
 **Los dos errores de la especificación que nacen aquí.** El almacén es la capa más profunda que
 distingue estos dos casos, así que construye el `model.Error` completo de cada uno y lo deja subir
 sin que nadie lo reinterprete:
@@ -162,6 +172,36 @@ Junta tres cosas en un único tipo `Board`: dónde está el tablero (la resoluci
 sobre él. Es
 deliberadamente delgado, solo resuelve y abre; no contiene lógica de negocio de ningún comando. Es
 el primer argumento que recibe cada función de `internal/ops`.
+
+Aquí vive además la traducción entre una tarea y sus filas, en el tipo `Tasks`, que es lo único de
+este paquete que existe hoy (TASK-10; el `Board` con la resolución y la configuración llega con el
+paso 4). Sus decisiones de implementación, que no se deducen de la especificación:
+
+- **La cadena vacía es la ausencia de valor en todo campo `string` y `text`, y el instante cero lo
+  es en todo campo de fecha.** `docs/spec/valores-de-entrada.md#el-valor-vacío` hace que la cadena
+  vacía no sea nunca un valor que quien llama pueda guardar: en un escalar es un error, y vaciar un
+  campo es un flag propio. Así que "" y "sin valor" no se pueden distinguir por nada observable, y
+  ni el modelo ni el esquema cargan con la diferencia; el contrato JSON los escribe como `null`. La
+  excepción es `ordinal`, donde 0 sí es un valor que se puede pedir, y por eso es la única columna
+  que admite `NULL` y el único campo del tipo `Task` que es un puntero.
+- **Los seis campos `list<string>` comparten una tabla**, `task_list_item`, con el nombre del campo
+  como columna y un `CHECK` que la deja cerrada, en vez de una tabla por campo. Tienen la misma
+  forma, el vocabulario cerrado se comprueba igual en SQL que en `internal/model`, y una sola tabla
+  significa que una consulta trae todas las listas de todas las tareas. Cada elemento guarda su
+  posición, porque `docs/spec/garantias.md` dice que las listas no se ordenan solas: el orden en que
+  se escribieron es un dato.
+- **Los dos contadores de claves de una tarea se guardan con ella**, `next_criterion_key` y
+  `next_comment_key`, en vez de deducirse de la clave más alta presente. Son la razón de que quitar
+  el criterio de en medio no libere su clave: deducirla del máximo la reasignaría en cuanto se
+  borrara el último.
+- **Leer el tablero son cinco consultas y nunca una por tarea**: la de las tareas y una por cada
+  tabla hija, ordenadas por tarea y por posición, que se juntan en memoria. Es lo que hace que el
+  presupuesto de arranque de `docs/spec/presupuestos.md` sea un puñado de recorridos y no mil
+  quinientas idas y venidas.
+- **`Create` asigna el identificador dentro de la misma transacción en la que escribe la tarea**, con
+  un contador propio del tablero (`board_counter`) que solo crece. Es lo que hace cierta la garantía
+  3, y de paso que un identificador no se reutilice nunca. `Create` rellena con el reloj las fechas
+  que la tarea no trae y respeta las que sí, que es justo lo que necesita importar un lote.
 
 ### 3.5. `internal/ops`
 
@@ -220,7 +260,8 @@ type Error struct {
     ExitCode int      // the exit code, see docs/spec/codigos-de-salida.md
     Code     string   // the identifier, see docs/spec/contrato-json.md#los-identificadores-de-error
     Message  string   // the text that follows "error: " on stderr
-    Hints    []string // the "hint: " lines that follow the message on stderr, in order
+    Notes    []string // the "note: " lines that follow the message on stderr, in order
+    Hints    []string // the "hint: " lines that follow those, in order
 
     // The five detail fields from docs/spec/contrato-json.md#los-errores-en-json, each present
     // only on the subset of codes it corresponds to per that same table; on the rest they stay
@@ -245,6 +286,15 @@ fijos: solo quien detecta el error, en la capa que sea, tiene los datos concreto
 `cmd/biso/main.go` imprime una línea `hint: ` por entrada. **No entra en el sobre JSON**:
 `docs/spec/contrato-json.md#los-errores-en-json` no tiene una clave `hint` en el objeto de error, así
 que este campo es exclusivo de la salida de texto.
+
+**Y las notas son otra lista igual, `Notes []string`,** por el mismo motivo y con la misma
+disciplina. Hay una tercera clase de línea por stderr detrás del mensaje, la que empieza por
+`note: `, y dos errores de la especificación la llevan: los dos de
+`docs/spec/referencias.md#los-tres-mensajes-de-no-la-encuentro` que dicen que una tarea no está,
+donde la nota da el dato que distingue un caso del otro (el identificador más alto que el tablero
+ha llegado a asignar, o que ese en concreto se asignó alguna vez). El campo lo añadió TASK-10, que
+es la primera tarea que construye esos dos errores; antes el tipo no podía llevar esas líneas.
+Tampoco entra en el sobre JSON, por la misma razón que `Hints`.
 
 (Descartado: un único `Hint string` con las dos líneas separadas por un salto de línea. Obligaría a
 quien imprime a partir la cadena para poner el prefijo `hint: ` en cada línea, es decir, a
