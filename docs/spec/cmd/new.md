@@ -287,6 +287,14 @@ error: 5 of 242 lines are invalid, nothing was written
   line 201: title cannot be empty
 ```
 
+**El verbo concuerda con el número de fallos, no con el total.** Un solo fallo en un fichero de una
+sola línea es:
+
+```
+error: 1 of 1 line is invalid, nothing was written
+  line 1: unknown key: "nosuch"
+```
+
 **Los fallos salen siempre en orden ascendente de línea**, sea cual sea el momento en que se
 descubren. No es una consecuencia gratuita de leer el fichero de arriba abajo: el `parent` y las
 `dependencies` de una línea no se pueden juzgar hasta haber leído el fichero entero, porque pueden

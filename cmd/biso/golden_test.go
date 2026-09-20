@@ -309,6 +309,7 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"new-batch-ids.txt", "cmd/new.md", "", "El modo lote", 5},
 		{"new-batch-dry-run.txt", "cmd/new.md", "", "El modo lote", 6},
 		{"new-batch-invalid.txt", "cmd/new.md", "", "El modo lote", 7},
+		{"new-batch-invalid-one-line.txt", "cmd/new.md", "", "El modo lote", 8},
 		{"ref-malformed-id.txt", "referencias.md", "",
 			`Los tres mensajes de "no la encuentro"`, 0},
 		{"ref-never-allocated.txt", "referencias.md", "",

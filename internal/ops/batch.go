@@ -504,8 +504,11 @@ func batchInvalid(failures []*batchFailure, counted int) *model.Error {
 	return &model.Error{
 		ExitCode: 7,
 		Code:     "batch_invalid",
-		Message: fmt.Sprintf("%d of %s are invalid, nothing was written",
-			len(failures), plural(counted, "line")),
+		// The verb agrees with the number of failures, which is the
+		// subject of the sentence, and not with the total: one bad line
+		// out of one reads "1 of 1 line is invalid".
+		Message: fmt.Sprintf("%d of %s %s invalid, nothing was written",
+			len(failures), plural(counted, "line"), isAre(len(failures))),
 		Detail:  detail,
 		Details: details,
 	}
