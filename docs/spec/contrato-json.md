@@ -42,7 +42,7 @@ resuelto a la identidad concreta que se usó). Como cualquier otra clave documen
 
 | Clave | Flag(s) de `biso ls` | Forma | Valor cuando no se filtra por él |
 |---|---|---|---|
-| `status` | `-s/--status` | `list<string>` | el valor por defecto ya resuelto: todo menos el estado terminal |
+| `status` | `-s/--status` | `list<string>` | el valor por defecto ya resuelto: todo menos el estado terminal, o **todos** cuando se escribió `--any-status`, porque ese es el filtro que de verdad se aplicó |
 | `notStatus` | `--not-status` | `list<string>` | `[]` |
 | `anyStatus` | `--any-status` | `bool` | `false` |
 | `archived` | `--archived` | `bool` | `false` |
@@ -155,8 +155,8 @@ agrupada por el código de salida con el que sale cada uno:
 | Código de salida | `code` |
 |---:|---|
 | 1 | `internal` |
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `malformed_string_value`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
-| 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `unknown_section`, `unknown_sort_field`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `malformed_string_value`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
+| 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `comment_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous`, `comment_ambiguous` |
 | 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity` |
@@ -165,6 +165,16 @@ agrupada por el código de salida con el que sale cada uno:
 | 20 | `no_board`, `pointer_unresolved` |
 | 21 | `database_unreadable` |
 | 22 | `ambiguous_board_id` |
+
+**`unknown_section` y `unknown_sort_field` salen con código 2 y no con 3**, aunque los dos empiecen
+por `unknown_` como los del vocabulario. La diferencia es contra qué se comprueba el valor: el
+vocabulario de `status`, `type` o `priority` lo configura cada tablero, así que un valor que no está
+en él es un hecho sobre ese tablero y sale con 3; el juego de secciones de ["`biso get`"](cmd/get.md) y el de campos de
+`--sort` de ["`biso ls`"](cmd/ls.md) son del programa, iguales en todas partes, así que escribir uno que no existe es
+una línea de comandos mal escrita, exactamente igual que `--color rosa` (`invalid_color_mode`) o
+`--vcs fossil` (`invalid_vcs_mode`), que ya salen con 2. Las dos tablas de códigos de esas dos
+páginas lo dicen así desde siempre; lo que se corrigió, al implementarlas, fue la fila de esta lista,
+que los tenía agrupados con los del 3.
 
 **La lista es ampliable y las entradas son permanentes.** Una versión posterior puede añadir un `code`
 nuevo, pero ninguno de los de arriba cambiará de significado, cambiará de código de salida ni

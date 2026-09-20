@@ -31,7 +31,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | hecho | TASK-10 |
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) y el de sugerencias ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas)), en `internal/match` | hecho | TASK-11 |
 | 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | hecho con matices | TASK-12 |
-| 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | en curso: `new` y `set` hechos, `ls` y `get` pendientes | TASK-13 |
+| 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | en curso: los cuatro implementados, pendiente la revisión de la tarea | TASK-13 |
 | 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | pendiente | TASK-14 |
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | pendiente | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | pendiente | TASK-16 |
@@ -179,8 +179,6 @@ De estos comandos falta lo siguiente, y nada de ello es un descuido:
 - **El lote de `biso new --from`** es alcance declarado del paso 8 (TASK-16), porque necesita el
   formato de intercambio que trae ese paso. El flag **no se analiza todavía**, así que escribirlo hoy
   responde `unknown flag: --from`.
-- **`--print`** imprime de momento la misma salida que sin él. La ficha completa que ese flag promete
-  es la de [`biso get`](cmd/get.md), y llega con la segunda mitad de este mismo paso.
 
 Al implementarlos se cerraron varias lagunas de la especificación, todas escritas en su página antes
 de escribir el código: el desenlace de `--dry-run` sobre una sola tarea y por qué ahí nunca sale el
@@ -192,6 +190,38 @@ avisos de añadir un valor que ya estaba y de quitar uno que no estaba, que la l
 mensajes literales de los selectores de texto, del rango invertido, del solape de comentarios, de
 `--due` y de `--ordinal` (["Las familias de flags"](familias-de-flags.md)); y cómo se calcula
 `changed` (["`biso set`"](cmd/set.md#el-esquema-json)).
+
+### Qué dejó hecha la segunda mitad del paso 5
+
+La segunda mitad son los comandos que leen, [`biso ls`](cmd/ls.md) y [`biso get`](cmd/get.md), y con
+ellos las piezas que faltaban de estos transversales:
+
+- **El algoritmo de columnas** de ["`biso ls`"](cmd/ls.md#salida) entero, medido en celdas de terminal y no en
+  caracteres, con el recorte del título que nunca parte un grafema. La tabla de anchura de Asia
+  oriental vive escrita en `internal/cli/width.go`, por la misma razón que la de acentos de
+  `internal/match`: las únicas dependencias externas permitidas son el controlador de SQLite y
+  `golang.org/x/term`.
+- **Las candidatas de una referencia ambigua**, que es lo que le faltaba a ["Cómo se resuelve una referencia a una tarea"](referencias.md): salen por
+  stdout en el formato del listado, con su orden y su límite, y lo hacen en todo comando que resuelva
+  una referencia, que hoy son `get`, `set` y el `-p` de `ls`.
+- **`--print`**, que ya imprime la ficha completa de cada tarea afectada, porque esa ficha es la de
+  `biso get`.
+
+De ["El contrato JSON"](contrato-json.md) quedan hechos los `kind` `task.list`, `task.get` y `task.candidates`, con
+`data.filters` serializado desde los propios parámetros del comando y no desde una traducción escrita
+a mano. Y la tabla de ["El mismo texto vale lo mismo en los dos sentidos"](vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos) queda probada de punta a punta en
+los dos sentidos, que era el hueco que el paso 3 no podía cerrar desde dentro de `internal/match`.
+
+Lagunas que se cerraron en la especificación al implementarlos, todas escritas en su página antes de
+escribir el código: qué hace `--count` con el límite y qué imprime `--ids`, cómo ordena `--sort
+title` y cuánto mide un carácter de formato (["`biso ls`"](cmd/ls.md)); cómo se escribe cada valor del bloque de
+metadatos, qué dice el desglose de una tarea sin prioridad y qué trae el sobre de una sección vacía
+que se pidió (["`biso get`"](cmd/get.md)); que la ficha de `--print` sustituye a la salida por defecto
+(["Flags globales"](cmd/flags-globales.md)); y que las candidatas de una referencia ambigua salen en todos los comandos
+(["Cómo se resuelve una referencia a una tarea"](referencias.md)). Además se corrigió una contradicción de
+["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), que agrupaba `unknown_section` y `unknown_sort_field` con los códigos 3
+mientras las páginas de `ls` y de `get` los daban por errores de uso: se han movido a la fila del
+código 2, que es la que dicen esas páginas y la que corresponde a un dominio cerrado del programa.
 
 ## Antes de empezar un paso
 

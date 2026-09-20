@@ -104,6 +104,13 @@ agrupa por estado.
 Un `--sort due` o `--sort ordinal` sobre tareas que no tienen ese campo las pone al final, en bloque,
 ordenadas por identificador.
 
+`--sort title` compara los títulos por sus puntos de código Unicode, de menor a mayor, y no por las
+reglas de intercalación de ningún idioma: una `Z` va antes que una `a`, y `ñ` va después de `z`. Es
+la única comparación de texto del orden, y se fija así porque una intercalación local haría que el
+mismo tablero se ordenara distinto según la configuración regional de la máquina, que es justo lo
+que ["Los principios"](../principios.md) no admite. Para un título mal ordenado a ojo está
+`--sort ordinal`, que es lo que existe para decidir un orden a mano.
+
 ## Comportamiento, caso a caso
 
 | Caso | Qué pasa |
@@ -114,8 +121,8 @@ ordenadas por identificador.
 | Filtro válido sin resultados | Ninguna línea por stdout, `note: no tasks match` por stderr, código **0** |
 | Hay más resultados que el límite | Se imprimen los primeros y sale el aviso de recorte |
 | `--limit 0` | No imprime ninguna fila, solo el aviso de recorte con el total. Es la forma de contar sin `--count` |
-| `--count` | Un número por stdout y nada más |
-| `--ids` | Identificadores, uno por línea, sin cabeceras ni columnas |
+| `--count` | Un número por stdout y nada más: ni filas, ni aviso de recorte, ni la nota de "sin resultados" |
+| `--ids` | Identificadores, uno por línea, sin cabeceras ni columnas. Es un listado, así que el límite y su aviso de recorte se aplican igual que con las columnas |
 | Alguna tarea ilegible | Se salta, con el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), y el resto del listado es válido |
 
 ## Salida
@@ -149,7 +156,10 @@ cosas ocupan en pantalla algo distinto de lo que suman sus puntos de código: un
 cero celdas porque se pinta sobre la letra anterior, un ideograma de Asia oriental o un emoji miden dos,
 y todo lo demás mide una. La tabla que lo dice es la de Unicode, la de anchura de Asia oriental más la
 categoría de las marcas combinantes, y contar en cualquier otra unidad desalinea la tabla en cuanto un
-título deja de ser ASCII.
+título deja de ser ASCII. **Los caracteres de formato (categoría Cf) miden también cero**, por el
+mismo motivo que una marca combinante: no se dibujan. El caso que importa es el juntador de ancho
+cero (U+200D) que une las piezas de un emoji compuesto, que no ocupa ninguna celda y que contarlo
+como una desalinearía la fila.
 
 **Medir en celdas no es mirar el terminal, así que no contradice la sección ["Interactividad, terminal y color"](../salida-y-terminal.md#interactividad-terminal-y-color).** La anchura de un
 carácter es una propiedad de Unicode, la misma en cualquier máquina y con cualquier ventana, y por eso
@@ -191,6 +201,13 @@ Con `--count`:
 ```
 58
 ```
+
+**`--count` no recorta nada, porque no imprime ninguna fila.** El número que da es el de las tareas
+que encajan, no el de las que se habrían impreso, así que `--limit` no tiene nada que cortar y no hay
+aviso de recorte que emitir: la llamada contesta `matched` y ya está. En el sobre JSON eso se ve
+igual, con `data.tasks` vacío, `shown` y `hidden` a cero y `truncated` en `false`. `--ids`, en
+cambio, sí es un listado: imprime las mismas filas que las columnas, con el mismo límite y el mismo
+aviso, solo que con una columna en vez de ocho.
 
 **No hay agrupación por estado.** El estado es una columna más, para que cada línea se pueda tratar
 igual que las demás.
@@ -290,9 +307,9 @@ y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado
 |---|---:|
 | Listado, incluso vacío o con tareas saltadas | 0 |
 | Un valor de filtro no existe en el tablero | 3 |
-| Flags incompatibles, `--limit` negativo, `--sort` inventado, fecha mal formada | 2 |
+| Flags incompatibles, `--limit` negativo, `--sort` inventado (`code` igual a `unknown_sort_field`), fecha mal formada | 2 |
 | `--parent` a una tarea que no existe | 4 |
-| `--parent` por texto con varias coincidencias | 5 |
+| `--parent` por texto con varias coincidencias, que además imprime las candidatas por stdout como cualquier otra referencia ambigua (["La búsqueda por texto"](../referencias.md#la-búsqueda-por-texto)) | 5 |
 | `--mine` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | 6 |
 | El almacén no responde | 8 |
 | No hay tablero | 20 |

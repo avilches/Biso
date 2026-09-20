@@ -55,6 +55,14 @@ Reglas de aplicación, que hay que implementar tal cual:
   escritura.** `doctor` nunca tuvo código 7 en su propia tabla de códigos, así que su vista previa
   devuelve el código que daría la llamada real que le sigue (0 o 6), nunca un 7 que esa tabla no tiene;
   el razonamiento completo está en ["El informe en seco de `--fix --dry-run`"](doctor.md#el-informe-en-seco-de---fix---dry-run).
+- **La ficha que imprime `--print` es la de ["`biso get`"](get.md), entera y sin `--section`, y sustituye la
+  salida por defecto del comando en vez de añadirse debajo.** Los tres datos de la línea de estado de
+  ["`biso set`"](set.md) (el estado, el avance de los criterios y la urgencia) están ya dentro de esa ficha, así que
+  imprimir las dos cosas sería repetirlos. Con varias tareas afectadas va una ficha por tarea,
+  separadas por una línea en blanco. Con `--dry-run` se imprimen igual, bajo la misma cabecera de
+  vista previa, porque la ficha describe cómo quedaría la tarea. La excepción es `biso new --dry-run`,
+  que no imprime ninguna: una tarea que no se ha creado no tiene identificador, y la ficha empieza
+  por él (["`biso new`"](new.md#--dry-run-sobre-una-sola-tarea)).
 - **`--print` es error 2 en todos esos comandos y también en `biso init` y `biso config set`**, con el
   mensaje `error: --print does not apply to a command that affects no task`. Ninguno de los dos afecta
   a ninguna tarea que existiera antes: `config set` no toca ninguna nunca, e `init --from` las crea de

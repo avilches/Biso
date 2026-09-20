@@ -62,6 +62,12 @@ igual a `ambiguous_reference` (["El contrato JSON"](contrato-json.md#los-identif
 error: "CRLF" matches 3 tasks
 ```
 
+**Las candidatas se imprimen en todos los comandos que resuelven una referencia**, no solo en
+`biso get`: `biso set`, los verbos del ciclo y el `-p` de `biso ls` las sacan igual, en el mismo
+formato y con el mismo orden por defecto, porque esta rutina no tiene variantes por comando. Con
+`--json`, en cambio, solo `biso get` contesta el sobre de datos `task.candidates`; los demás
+contestan el sobre de error con el mismo código 5, según la tabla de `kind` de ["El sobre"](contrato-json.md#el-sobre).
+
 **Una coincidencia en el título gana sobre una coincidencia en cualquier otro sitio.** Si el texto
 aparece en el título de una sola tarea, esa es la respuesta aunque aparezca en el cuerpo de otras
 diez, y no hay ambigüedad. La búsqueda para resolver una referencia mira solo las tareas **no
