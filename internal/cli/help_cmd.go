@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"biso/internal/match"
 	"biso/internal/model"
 	"biso/internal/ops"
 )
@@ -108,7 +107,7 @@ func errNoSuchCommand(name string) *model.Error {
 		Field:    "command",
 		Given:    name,
 	}
-	if closest := match.Suggest(name, catalogNames(), helpSuggestions); len(closest) > 0 {
+	if closest := ops.Suggest(name, catalogNames(), helpSuggestions); len(closest) > 0 {
 		e.Hints = []string{"did you mean: " + strings.Join(closest, ", ") + "?"}
 	}
 	return e

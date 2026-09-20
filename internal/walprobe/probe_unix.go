@@ -47,20 +47,36 @@ func probe(dir string) bool {
 	return mappingIsShared(f)
 }
 
-// locksAreEnforced takes an exclusive lock on the first byte from one
-// descriptor and checks that a second, independent descriptor cannot take
-// the same one. A filesystem that grants it is not enforcing the lock,
-// which is the classic symptom of an NFS mount locking locally without
-// coordinating with the other end.
+// locksAreEnforced is step 2 of the protocol, in its two halves
+// (docs/spec/cmd/doctor.md#el-sondeo-del-sistema-de-ficheros).
+//
+// The first half asks whether this filesystem has fcntl byte-range locks at
+// all, with the very F_SETLK that SQLite takes: ENOLCK, ENOSYS or EINVAL
+// there is a filesystem where the driver cannot do its own locking.
+//
+// The second half asks whether they are really enforced between two
+// independent descriptors, and it cannot use F_SETLK to ask, because a
+// traditional record lock belongs to the process and not to the descriptor:
+// the same process asking twice is given the lock both times, by
+// definition, so a probe written that way would call every filesystem on
+// earth unsafe. The question is asked with the open file description lock
+// instead, which is the same byte-range lock bound to the descriptor, and
+// is skipped where the platform has none.
 func locksAreEnforced(path string, f *os.File) bool {
+	if !takeAndRelease(f, unix.F_SETLK) {
+		return false
+	}
+	if ofdSetLock == 0 {
+		return true
+	}
+
 	held := unix.Flock_t{Type: unix.F_WRLCK, Whence: 0, Start: 0, Len: 1}
-	if err := unix.FcntlFlock(f.Fd(), unix.F_SETLK, &held); err != nil {
-		// ENOLCK, ENOSYS or EINVAL: the lock is not there to be had.
+	if err := unix.FcntlFlock(f.Fd(), ofdSetLock, &held); err != nil {
 		return false
 	}
 	defer func() {
 		release := unix.Flock_t{Type: unix.F_UNLCK, Whence: 0, Start: 0, Len: 1}
-		_ = unix.FcntlFlock(f.Fd(), unix.F_SETLK, &release)
+		_ = unix.FcntlFlock(f.Fd(), ofdSetLock, &release)
 	}()
 
 	second, err := os.OpenFile(path, os.O_RDWR, 0o600)
@@ -70,16 +86,29 @@ func locksAreEnforced(path string, f *os.File) bool {
 	defer second.Close()
 
 	conflicting := unix.Flock_t{Type: unix.F_WRLCK, Whence: 0, Start: 0, Len: 1}
-	err = unix.FcntlFlock(second.Fd(), unix.F_SETLK, &conflicting)
+	err = unix.FcntlFlock(second.Fd(), ofdSetLock, &conflicting)
 	if err == nil {
-		// It was granted, so the first lock is not being enforced.
+		// It was granted, so the first lock is not being enforced,
+		// which is the classic symptom of a mount that locks locally
+		// without coordinating with the other end.
 		release := unix.Flock_t{Type: unix.F_UNLCK, Whence: 0, Start: 0, Len: 1}
-		_ = unix.FcntlFlock(second.Fd(), unix.F_SETLK, &release)
+		_ = unix.FcntlFlock(second.Fd(), ofdSetLock, &release)
 		return false
 	}
 	// Refused is the answer a real exclusive lock gives; any other error
 	// is fcntl failing, which counts as a failure too.
 	return err == unix.EAGAIN || err == unix.EACCES
+}
+
+// takeAndRelease answers whether that lock command can take an exclusive
+// lock on the first byte of the file and give it back.
+func takeAndRelease(f *os.File, command int) bool {
+	held := unix.Flock_t{Type: unix.F_WRLCK, Whence: 0, Start: 0, Len: 1}
+	if err := unix.FcntlFlock(f.Fd(), command, &held); err != nil {
+		return false
+	}
+	release := unix.Flock_t{Type: unix.F_UNLCK, Whence: 0, Start: 0, Len: 1}
+	return unix.FcntlFlock(f.Fd(), command, &release) == nil
 }
 
 // mappingIsShared writes a pattern through a shared mapping, syncs it, and

@@ -195,15 +195,33 @@ sistema, porque lo que importa es el sistema de ficheros de ese directorio en co
    `EROFS`), el sondeo entero se marca como fallido sin seguir a los pasos siguientes: si `biso` no
    puede ni escribir ahí, no hay manera de comprobar nada más, y esa incapacidad ya es en sí misma un
    sistema de ficheros donde WAL no puede funcionar.
-2. **Bloqueo por rango de bytes.** Abre una segunda vez el mismo fichero, con un descriptor
-   independiente. Con `unix.FcntlFlock` (`F_SETLK`) en Unix, o `LockFileEx` con un rango de bytes en
-   Windows, toma un bloqueo exclusivo sobre el byte `[0, 1)` desde el primer descriptor. Después, desde
-   el segundo descriptor, intenta el mismo bloqueo exclusivo sobre ese mismo byte `[0, 1)`: tiene que
-   fallar con `EAGAIN`/`EACCES` (o el equivalente de Windows), porque es justo lo que un bloqueo
-   exclusivo real impide. Si en cambio se concede, el sistema de ficheros no está haciendo cumplir el
-   bloqueo de verdad, que es el síntoma clásico de un NFS que concede bloqueos en local sin coordinarlos
-   con el otro extremo. Cualquier otro error inesperado del propio `fcntl`/`LockFileEx` (`ENOLCK`,
-   `ENOSYS`, `EINVAL`) también cuenta como fallo. Libera los dos bloqueos y cierra el segundo descriptor.
+2. **Bloqueo por rango de bytes**, en dos mitades, porque son dos preguntas distintas.
+
+   La primera es si este sistema de ficheros tiene bloqueos por rango de bytes: toma un bloqueo
+   exclusivo sobre el byte `[0, 1)` con `unix.FcntlFlock` (`F_SETLK`) en Unix, o con `LockFileEx` y
+   un rango de bytes en Windows, y lo libera. Es el mismo primitivo que toma SQLite, así que
+   cualquier error aquí (`ENOLCK`, `ENOSYS`, `EINVAL`, o el equivalente de Windows) es ya un
+   sistema de ficheros donde el controlador no puede hacer su propio bloqueo, y el sondeo falla sin
+   seguir.
+
+   La segunda es si ese bloqueo se hace cumplir de verdad entre dos descriptores independientes, y
+   **no se puede preguntar con `F_SETLK`**: un bloqueo de registro de POSIX pertenece al proceso y
+   no al descriptor, así que el mismo proceso que lo pide dos veces lo recibe las dos, por
+   definición y no por un fallo del sistema de ficheros. Un sondeo escrito así diría que todos los
+   sistemas de ficheros del mundo son inseguros. La pregunta se hace con el bloqueo por rango de
+   bytes ligado al descriptor abierto, `F_OFD_SETLK` en Linux y en macOS, que es el mismo bloqueo
+   con otra pertenencia: abre una segunda vez el mismo fichero con un descriptor independiente,
+   toma el bloqueo `[0, 1)` desde el primero, intenta el mismo desde el segundo y tiene que fallar
+   con `EAGAIN`/`EACCES`. Si en cambio se concede, el sistema de ficheros no está haciendo cumplir
+   el bloqueo, que es el síntoma clásico de un NFS que concede bloqueos en local sin coordinarlos
+   con el otro extremo. En Windows la pregunta se hace con `LockFileEx`, cuyos bloqueos ya son del
+   manejador y no del proceso, así que ahí no hace falta ninguna variante. Libera los dos bloqueos
+   y cierra el segundo descriptor.
+
+   **En una plataforma sin bloqueos ligados al descriptor abierto** (los BSD, que no tienen
+   `F_OFD_SETLK`) esta segunda mitad se salta y el sondeo se queda con la primera. No inventarse un
+   fallo es lo correcto: el aviso dice que el sondeo corrió y algo no funcionó, y una comprobación
+   que no se puede hacer no es una que haya salido mal.
 3. **`mmap` compartido con una escritura visible fuera del mapeo.** Mapea el fichero con
    `unix.Mmap` (`MAP_SHARED`, `PROT_READ|PROT_WRITE`) en Unix, o `CreateFileMapping` /
    `MapViewOfFile` (`PAGE_READWRITE`, `FILE_MAP_WRITE`) en Windows. Escribe un patrón de 8 bytes al
