@@ -77,19 +77,33 @@ func NewBatchOn(b *board.Board, env Env, p BatchParams) (*WriteResult, error) {
 	if err := b.Tasks.CreateAll(tasks); err != nil {
 		return result, err
 	}
+
+	// Every task of the batch is summarized the same way `biso new` and
+	// `biso set` summarize theirs, because the schema of
+	// docs/spec/cmd/set.md is one schema: `urgency` is a key that is always
+	// there and `changed` is the list of the fields that really changed,
+	// which for a task that has just been created is every field it
+	// carries. The board is read once, after the whole batch is written, so
+	// that the urgency of a line that blocks another one is the urgency of
+	// the board this very call leaves behind.
+	w := newWriter(b, env, nil)
+	byID, boardErr := w.boardAfter(nil)
+	if boardErr != nil {
+		return result, boardErr
+	}
 	for _, line := range lines {
-		result.Tasks = append(result.Tasks, TaskWrite{
-			ID:      line.task.ID,
-			Status:  line.task.Status,
-			AcDone:  line.task.AcDone(),
-			AcTotal: line.task.AcTotal(),
-			// The keys the conversion of definitionOfDone created are the
-			// one thing `biso new` announces about a key it assigned,
-			// because they depend on what acceptanceCriteria brought on
-			// that same line (docs/spec/cmd/new.md#el-modo-lote).
-			AcAdded:  line.dodKeys,
-			Archived: line.task.Archived,
-		})
+		summary, summaryErr := w.summarize(line.task, changedFields(&model.Task{}, line.task), byID)
+		if summaryErr != nil {
+			return result, summaryErr
+		}
+		// The keys the conversion of definitionOfDone created are the one
+		// thing `biso new` announces about a key it assigned, because they
+		// depend on what acceptanceCriteria brought on that same line
+		// (docs/spec/cmd/new.md#el-modo-lote).
+		if line.dodKeys != nil {
+			summary.AcAdded = line.dodKeys
+		}
+		result.Tasks = append(result.Tasks, summary)
 	}
 	return result, nil
 }

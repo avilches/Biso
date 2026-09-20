@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -167,4 +168,59 @@ func TestBatchRefusesPrintAndAFileThatIsNotUTF8(t *testing.T) {
 	broken := filepath.Join(m.dir, "broken.ndjson")
 	m.write(t, broken, "{\"title\":\"\xff\"}\n")
 	m.run(t, "new", "--from", broken).assertCode(t, 3)
+}
+
+// TestBatchEnvelopeCarriesTheUrgencyAndWhatChanged is the schema of
+// docs/spec/cmd/set.md#el-esquema-json applied to the batch: `urgency` is a
+// key that is always there and has to be the urgency of the task that was
+// just written, and `changed` is what really changed, which on a task that
+// did not exist is every field its line carried.
+//
+// The urgency is compared against the one `biso ls` prints for those same
+// tasks, because two numbers that disagree about the same task would be
+// worse than one missing key.
+func TestBatchEnvelopeCarriesTheUrgencyAndWhatChanged(t *testing.T) {
+	m := batchBoard(t)
+	path := filepath.Join(m.dir, "tasks.ndjson")
+	m.write(t, path, strings.Join([]string{
+		`{"id":"MYP-1","title":"Blocking one","priority":"high","status":"In Progress","assignees":["@sara"]}`,
+		`{"id":"MYP-2","title":"Blocked one","priority":"low","dependencies":["MYP-1"]}`,
+		`{"id":"MYP-3","title":"A plain one"}`,
+	}, "\n")+"\n")
+
+	got := m.run(t, "new", "--from", path, "--json").assertCode(t, 0)
+
+	var envelope struct {
+		Data struct {
+			Tasks []struct {
+				ID      string   `json:"id"`
+				Urgency float64  `json:"urgency"`
+				Changed []string `json:"changed"`
+			} `json:"tasks"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(got.stdout), &envelope); err != nil {
+		t.Fatalf("the envelope of a batch is not JSON: %v\n%s", err, got.stdout)
+	}
+	if len(envelope.Data.Tasks) != 3 {
+		t.Fatalf("the envelope carries %d tasks and the file had three", len(envelope.Data.Tasks))
+	}
+	for _, task := range envelope.Data.Tasks {
+		if task.Urgency == 0 {
+			t.Errorf("%s came out with urgency zero:\n%s", task.ID, got.stdout)
+		}
+		if !contains(task.Changed, "title") {
+			t.Errorf("%s says it changed %v, and a task that did not exist changed its title",
+				task.ID, task.Changed)
+		}
+	}
+	// The same numbers the board answers for those same tasks.
+	for _, task := range envelope.Data.Tasks {
+		card := m.run(t, "get", task.ID, "--json").assertCode(t, 0).stdout
+		want := fmt.Sprintf(`"urgency": %.1f`, task.Urgency)
+		if !strings.Contains(card, want) {
+			t.Errorf("the batch said %s for %s and its card says otherwise:\n%s",
+				want, task.ID, card)
+		}
+	}
 }
