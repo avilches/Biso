@@ -22,6 +22,13 @@ import (
 // stops at the first one: the order in which the specification's cases are
 // checked is the order of the command line, so a caller that writes two wrong
 // things hears about the first.
+//
+// An error comes back together with the analysis as far as it got, which is
+// never a usable invocation and does carry the warnings already found. A
+// warning is never suppressed
+// (docs/spec/salida-y-terminal.md#notas-y-avisos), and one that the call
+// had already earned before writing something wrong is no exception: it
+// travels with the error instead of disappearing with it.
 func Parse(argv []string, commands []CommandSpec, env Env) (*Parsed, error) {
 	st := &parser{
 		p:        &Parsed{emptied: map[string]bool{}},
@@ -31,7 +38,7 @@ func Parse(argv []string, commands []CommandSpec, env Env) (*Parsed, error) {
 		times:    map[string]int{},
 	}
 	if err := st.run(argv); err != nil {
-		return nil, err
+		return st.p, err
 	}
 	return st.p, nil
 }

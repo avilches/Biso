@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "init",
+  "generatedAt": "2026-09-06T09:12:04Z",
+  "data": {
+    "board": {
+      "name": "My project",
+      "statuses": ["To Do", "In Progress", "Done"],
+      "initialStatus": "To Do", "activeStatus": "In Progress", "terminalStatus": "Done",
+      "types": ["task", "bug", "docs"],
+      "priorities": ["high", "medium", "low"],
+      "taskPrefix": "MYP"
+    },
+    "pointerCreated": true
+  }
+}

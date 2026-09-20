@@ -21,6 +21,12 @@ Reglas:
 - **`-` solo puede aparecer una vez por invocación.** Dos parámetros que pidan la entrada estándar son
   un error de uso con código 2, porque el segundo leería un flujo agotado y guardaría el vacío sin
   que se note.
+- **Un guion suelto significa siempre la entrada estándar, y no hay ninguna forma de escribirlo como
+  texto literal.** El escape `@@` existe solo para el `@`, y no hay ningún `--` ni ninguna otra
+  sintaxis que convierta ese guion en un valor. Para guardar un texto que sea exactamente un guion,
+  la forma es la del fichero: escribirlo en uno y pasarlo con `@ruta`. No se inventa una sintaxis
+  nueva para un caso que ya tiene solución, porque cada escape que se añade hay que recordarlo en
+  todos los flags de texto largo, y este es el único carácter del que no se puede hablar sin él.
 - **Un fichero que no existe es código 4**, con el mensaje `error: --append-desc: file not found: docs/x.md`.
   Un fichero que existe pero no se puede leer es código 8.
 - **Un valor vacío, venga de donde venga, no borra nada.** Ver ["El valor vacío"](#el-valor-vacío).

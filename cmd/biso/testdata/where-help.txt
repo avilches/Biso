@@ -1,0 +1,18 @@
+Usage: biso where [options]
+
+Say which board is in use and which rule picked it. Run it when a command
+answers "no board here" and you expected one.
+
+Options:
+      --json     machine-readable envelope
+  -h, --help     show this help
+
+Exit codes:
+  0  a board is in use
+  20 no board here
+  21 its database could not be read
+  22 the same board id is in two places
+
+Examples:
+  biso where
+  biso -C ~/work/my-project where

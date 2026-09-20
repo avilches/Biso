@@ -1,0 +1,6 @@
+id       3f9a2b1c
+board    My project
+path     /Users/avilches/.biso/boards/my-project-3f9a2b1c
+source   project pointer at /Users/avilches/Hub/Projects/My project
+me       @claude
+tasks    248 not archived, 31 archived, highest id ever assigned MYP-290

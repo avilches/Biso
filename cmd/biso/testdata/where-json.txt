@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "where",
+  "generatedAt": "2026-09-06T09:12:04Z",
+  "data": {
+    "id": "3f9a2b1c",
+    "board": "My project",
+    "path": "/Users/avilches/.biso/boards/my-project-3f9a2b1c",
+    "source": "project pointer at /Users/avilches/Hub/Projects/My project",
+    "me": "@claude",
+    "counts": { "notArchived": 248, "archived": 31, "highestIdEverAssigned": "MYP-290" },
+    "discarded": []
+  }
+}

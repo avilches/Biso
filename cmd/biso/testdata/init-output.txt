@@ -1,0 +1,7 @@
+Created board "My project"
+  statuses    To Do (initial) | In Progress (active) | Done (terminal)
+  types       task, bug, docs
+  priorities  high, medium, low
+  prefix      MYP
+This project now points at that board.
+Run `biso prime` to see how to use it.

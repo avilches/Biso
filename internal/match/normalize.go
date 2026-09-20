@@ -43,10 +43,33 @@ import (
 func Normalize(s string) string {
 	var b strings.Builder
 	b.Grow(len(s))
-	for _, r := range s {
+	for _, r := range Simplify(s) {
 		if r == ' ' || r == '\t' || r == '-' || r == '_' {
 			continue
 		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
+// Simplify is that same step without the separators: it folds the case and
+// drops the diacritics, and leaves every other character where it was.
+//
+// It exists because two derivations of the specification ask for exactly
+// this half and would be wrong with the whole one. The board folder's slug
+// (docs/spec/resolucion-del-tablero.md#cómo-se-deriva-el-nombre-de-la-carpeta)
+// collapses each run of characters that are neither an ASCII letter nor an
+// ASCII digit into one hyphen, so "Mi Proyecto" has to still carry its space
+// when that step runs, or it would give "miproyecto" instead of
+// "mi-proyecto". The task prefix
+// (docs/spec/modelo-de-datos/identificadores.md#identificador-de-tarea)
+// keeps only the ASCII letters afterwards, which reaches the same answer
+// either way, and asking both of them for the same function is what keeps
+// "Peña" giving "pena" and "PENA" in one place.
+func Simplify(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
 		if unicode.Is(unicode.Mn, r) {
 			continue
 		}

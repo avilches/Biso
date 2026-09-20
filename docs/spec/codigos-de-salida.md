@@ -63,10 +63,13 @@ La reacción correcta es informar, no reintentar con otros parámetros.
 Cada desenlace tiene su propio código, en vez de compartir uno, porque quien ramifica sobre el número tiene que poder elegir el remedio
 sin leer el mensaje, que es el principio de la sección ["Los principios"](principios.md). **Ni el 21
 ni el 22 aparecen en la tabla de códigos de salida de cada comando**, porque no son desenlaces propios
-de ninguno sino del tablero entero, igual que el 1. Hay dos excepciones: `biso where`, que existe
+de ninguno sino del tablero entero, igual que el 1. Hay tres excepciones: `biso where`, que existe
 justamente para explicar la resolución y los lleva los dos en su tabla
-(["`biso where`"](cmd/where.md)); y `biso doctor`, que lleva solo el 21 en la suya porque su base de
-datos ilegible es justo uno de los daños que existe para diagnosticar (["`biso doctor`"](cmd/doctor.md)).
+(["`biso where`"](cmd/where.md)); `biso doctor`, que lleva solo el 21 en la suya porque su base de
+datos ilegible es justo uno de los daños que existe para diagnosticar (["`biso doctor`"](cmd/doctor.md));
+y `biso init`, que lleva solo el 22, porque recorre las raíces de la máquina por su cuenta para
+comprobar que el `id` que va a acuñar o a adoptar no exista ya, y puede darlo desde un proyecto que
+todavía no tiene tablero (["`biso init`"](cmd/init.md#códigos-de-salida)).
 `biso doctor` no lleva el 22, porque un tablero ambiguo aborta al resolverse, antes de que `doctor`
 llegue a abrir ninguna base de datos.
 

@@ -223,7 +223,14 @@ tablero sin ningún paso adicional.
 
 Estas reglas gobiernan la lectura del puntero:
 
-- Una clave desconocida en el puntero es un error.
+- Una clave desconocida en el puntero es un error, y también lo son un `version` o un `id` que falten,
+  un `id` que no sean ocho caracteres hexadecimales en minúscula, y un fichero que no se pueda
+  interpretar como JSON. Los cuatro son **código 3** con la clave `code` `bad_config_value`, que es la
+  dirección de ese código que cubre un dato ya guardado que el programa no sabe interpretar
+  (["Códigos de salida"](codigos-de-salida.md#el-código-3-cubre-dos-direcciones)), y el mensaje nombra
+  el fichero y la clave. No es el 20 de "no hay tablero", porque aquí sí hay un puntero y lo que pasa
+  es que está mal escrito, y tratarlo como si no existiera llevaría a `biso init` a crear un tablero
+  nuevo encima de un proyecto que ya tenía el suyo.
 - **`path` nombra el directorio del tablero, no el directorio que lo contiene.** Es la ruta que se
   abre, sin concatenarle nada.
 - **Una `path` relativa se resuelve respecto al directorio que contiene el fichero puntero**, nunca
@@ -359,6 +366,11 @@ error: board 3f9a2b1c is in two places, and biso will not choose between them
         /Volumes/work/boards/my-project-3f9a2b1c
 hint: rename or remove one of the two directories
 ```
+
+**Con más de dos directorios el mensaje cuenta cuántos son**, `board 3f9a2b1c is in 3 places, and
+biso will not choose between them`, los lista todos y pide quitar o renombrar todos menos uno. No es
+un caso aparte, es el mismo: lo que no puede hacer `biso` es elegir, y el número de candidatos no
+cambia eso.
 
 Tiene su propio código de salida y no el 20 porque su remedio no se parece a los otros dos: aquí no
 falta un tablero que `biso init` pueda crear, sobra uno que solo una persona puede decidir cuál es. El

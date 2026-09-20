@@ -111,6 +111,40 @@ var migrations = []string{
 		body       TEXT    NOT NULL,
 		PRIMARY KEY (task_id, key)
 	) WITHOUT ROWID;`,
+
+	// This second script is the board's own identity and its
+	// configuration, which TASK-12 (step 4) needs because `biso init`
+	// writes both and `biso where` reads them back.
+	//
+	// Two shapes of it are decisions of this layer:
+	//
+	//   - **The board's id lives in a table of its own, in the single row
+	//     the CHECK allows**, and not as one more configuration key. It is
+	//     not configuration: docs/spec/cmd/config.md lists the twenty keys
+	//     `biso config list` prints and the id is not one of them, because
+	//     nothing can ever change it. Keeping it here is what lets
+	//     `biso doctor` compare it with the name of the <id>.id marker
+	//     (docs/spec/resolucion-del-tablero.md#cómo-se-lee-el-puntero), and
+	//     what lets the first way of choosing a board, which reads no
+	//     marker at all, still answer which board the directory holds. The
+	//     row is written by `biso init` and not by this script, which runs
+	//     before anyone knows the id.
+	//   - **The configuration is one row per key, with its value as text**,
+	//     rather than one column per key. The keys are a closed list that
+	//     the specification fixes, but they are read and written as a whole
+	//     anyway, and a column each would turn every key the specification
+	//     adds later into a migration. A list value is stored as a JSON
+	//     array, so that a value carrying a comma survives the round trip
+	//     even though no flag can produce one today.
+	`CREATE TABLE board (
+		id       INTEGER PRIMARY KEY CHECK (id = 1),
+		board_id TEXT NOT NULL
+	);
+
+	CREATE TABLE board_config (
+		key   TEXT PRIMARY KEY,
+		value TEXT NOT NULL
+	) WITHOUT ROWID;`,
 }
 
 // migrateTo brings s's schema up to date against scripts, reading the

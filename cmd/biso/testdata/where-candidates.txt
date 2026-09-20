@@ -1,0 +1,11 @@
+id       3f9a2b1c
+board    My project
+path     /Users/avilches/.biso/boards/my-project-3f9a2b1c
+source   the working directory is this board
+me       @claude
+tasks    248 not archived, 31 archived, highest id ever assigned MYP-290
+
+chosen     3f9a2b1c at /Users/avilches/.biso/boards/my-project-3f9a2b1c
+           because the working directory is itself a board
+discarded  7a1b2c3d at /Volumes/work/boards/other-project-7a1b2c3d
+           the project pointer would have named this board instead

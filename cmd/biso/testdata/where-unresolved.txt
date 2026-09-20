@@ -1,0 +1,2 @@
+error: this project's pointer names board 3f9a2b1c, which is not on this machine
+hint: `biso init` creates it here, adopting id 3f9a2b1c

@@ -74,6 +74,14 @@ hace falta conocerlas antes de que exista el primer tablero de la máquina. Y, c
 sitio de `biso`, **una clave desconocida en este fichero es un error**, nunca algo que se ignore en
 silencio.
 
+**Ese error, y el de un valor que no cuadra con su tipo o con su dominio, son código 3 con la clave
+`code` `bad_config_value`**, y el mensaje nombra el fichero y la clave. Es la dirección del código 3
+que cubre un dato ya guardado que el programa no sabe interpretar
+(["Códigos de salida"](codigos-de-salida.md#el-código-3-cubre-dos-direcciones)), la misma con la que
+se lee el puntero del proyecto (["Cómo se lee el puntero"](resolucion-del-tablero.md#cómo-se-lee-el-puntero)).
+**Que el fichero no exista no es un error**: significa que todas las claves están en su valor por
+defecto, que es el estado de una máquina donde nadie ha configurado nada.
+
 **`vcs` es el sistema de control de versiones con el que `biso snapshot` guarda el historial de la
 instantánea** (la sección ["`biso snapshot`"](cmd/snapshot.md)), y lo único de esta configuración que llega a hacer que `biso` ejecute un
 programa ajeno. Vive aquí y no en la configuración de un tablero porque dice qué herramienta hay
