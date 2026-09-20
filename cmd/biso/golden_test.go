@@ -149,6 +149,8 @@ func TestHelpTextsAreTheOnesOfTheSpecification(t *testing.T) {
 		{[]string{"ls", "--help"}, fixture(t, "ls-help.txt"), "biso ls --help"},
 		{[]string{"get", "--help"}, fixture(t, "get-help.txt"), "biso get --help"},
 		{[]string{"set", "--help"}, fixture(t, "set-help.txt"), "biso set --help"},
+		{[]string{"export", "--help"}, fixture(t, "export-help.txt"), "biso export --help"},
+		{[]string{"snapshot", "--help"}, fixture(t, "snapshot-help.txt"), "biso snapshot --help"},
 	} {
 		got := m.run(t, c.argv...).assertCode(t, 0)
 		assertEqual(t, got.stdout, c.want, c.subject)
@@ -207,6 +209,12 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"get-explain.txt", "cmd/get.md", "Salida", 3},
 		{"get-terminal-urgency.txt", "cmd/get.md", "Salida", 4},
 		{"get-json.txt", "cmd/get.md", "El esquema JSON", 0},
+		{"export-help.txt", "cmd/export.md", "`biso export --help`", 0},
+		{"snapshot-help.txt", "cmd/snapshot.md", "`biso snapshot --help`", 0},
+		{"new-batch-lease.txt", "cmd/new.md", "El modo lote", 3},
+		{"new-batch-ids.txt", "cmd/new.md", "El modo lote", 4},
+		{"new-batch-dry-run.txt", "cmd/new.md", "El modo lote", 5},
+		{"new-batch-invalid.txt", "cmd/new.md", "El modo lote", 6},
 	} {
 		block := specBlock(t, c.page, c.heading, c.index)
 		assertEqual(t, fixture(t, c.fixture), block,
