@@ -30,11 +30,11 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 1 | El almacén SQLite, sus migraciones y `WithTx` | hecho | TASK-4 |
 | 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | hecho | TASK-10 |
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) y el de sugerencias ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas)), en `internal/match` | hecho | TASK-11 |
-| 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | hecho con matices | TASK-12 |
-| 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | hecho con matices | TASK-13 |
+| 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | hecho | TASK-12 |
+| 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | hecho | TASK-13 |
 | 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | pendiente | TASK-14 |
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | pendiente | TASK-15 |
-| 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | en curso | TASK-16 |
+| 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | hecho | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`board`](cmd/board.md), [`help`](cmd/help.md) | pendiente | TASK-17 |
 
 ## Los documentos transversales
@@ -53,7 +53,7 @@ cerradas.
 | [Cómo se elige el tablero](resolucion-del-tablero.md) | paso 4 | hecho |
 | [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 4, 5 y 7 | en curso |
 | [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
-| [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5 y 8 | en curso |
+| [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5 y 8 | hecho |
 | [El arrendamiento de una tarea](lease.md) | pasos 2, 5 y 6 | en curso |
 | [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | en curso |
 | [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | en curso |
@@ -91,10 +91,11 @@ de llegar ahí que hay hoy, y las tres están probadas. El paso 2 rechaza ademá
 de extensión que el tablero no declara (código 3, `unknown_extension_key`) y una clave fuera del
 alfabeto (código 2, `malformed_extension_key`).
 
-Lo que queda de ese caso para los pasos que implementan `ls`, `get`, `export` y `snapshot` es lo que
-se ve desde fuera: el texto literal del aviso `warning: 1 task could not be read and was skipped` con
-sus identificadores, el código 6 de `biso export` y `biso snapshot` cuando han saltado alguna, y el
-texto exacto del error de la lectura dirigida, que la especificación todavía no fija.
+La otra mitad, la que se ve desde fuera, la cerró el paso 8: el aviso
+`warning: 1 task could not be read and was skipped` con sus identificadores, y el código 6 de
+`biso export` y de `biso snapshot` cuando han saltado alguna, cada uno con su prueba. Del texto
+exacto del error de la lectura dirigida no queda nada pendiente de implementar, porque la
+especificación no lo fija: el código y la clave sí están.
 
 **La garantía 5 la completó también el paso 2 en el único camino que se la saltaba**: crear el
 fichero del tablero desde varias conexiones a la vez daba un código 8 instantáneo, porque SQLite
@@ -130,8 +131,8 @@ al cerrarse esta tarea porque ningún otro paso la ejerce.
 De ["`biso init`"](cmd/init.md) quedó fuera **`--from`**, y no fue un descuido sino alcance declarado
 del paso 8 (TASK-16), porque restaurar una instantánea necesita el formato de intercambio que trae ese
 paso. Mientras tanto el flag se analizaba y sus incompatibilidades se comprobaban, pero la llamada
-terminaba con código 1, que es el motivo de que la fila del paso 4 diga "hecho con matices" y no
-"hecho"; **desde el paso 8 ese hueco ya no existe**. Todo lo demás de esa página estaba desde el
+terminaba con código 1. **Desde el paso 8 ese hueco ya no existe**, y por eso la fila del paso 4
+dice "hecho". Todo lo demás de esa página estaba desde el
 principio: las
 dos adopciones de identidad, `--overwrite-config` con sus errores de código 6, `--dry-run` con sus dos
 notas, las dos notas de `--at`, el fichero de exclusión y el marcador.
@@ -224,13 +225,13 @@ código 2, que es la que dicen esas páginas y la que corresponde a un dominio c
 
 ### Qué le falta al paso 5, y qué corrigió su revisión
 
-**La fila del paso 5 dice "hecho con matices" y no "hecho" por una sola cosa: el lote de
-`biso new --from` no formaba parte de ese paso.** Es alcance declarado del paso 8 (TASK-16), porque
+**Lo único que faltaba del paso 5 era el lote de `biso new --from`, que no formaba parte de ese
+paso.** Es alcance declarado del paso 8 (TASK-16), porque
 necesita el formato de intercambio que trae ese paso, y hasta entonces el flag ni siquiera se
 analizaba: escribirlo respondía `unknown flag: --from` con código 2, que es la respuesta de un flag
 que el programa no conoce y no la de un flag documentado que todavía no hace nada. **Desde el paso 8
-existe**, con todas las reglas que documenta ["`biso new`"](cmd/new.md#el-modo-lote). Todo lo demás
-de las cuatro páginas está implementado y probado.
+existe**, con todas las reglas que documenta ["`biso new`"](cmd/new.md#el-modo-lote), así que esa
+fila dice "hecho". Todo lo demás de las cuatro páginas está implementado y probado.
 
 La revisión adversarial del paso corrigió seis cosas, y conviene saber en qué quedaron porque cuatro
 de ellas cambiaron la especificación:
@@ -270,10 +271,39 @@ desincronizarse de la primera.
 
 **La prueba de simetría son dos, porque las dos vías ejercitan código distinto.** La de
 `export` con `new --from` importa el volcado en un tablero que declara el mismo vocabulario a mano,
-y la de `snapshot` con `init --from` restaura un tablero entero sin declarar nada. Las dos comparan
-los volcados de los dos tableros byte a byte, que es la comparación más fuerte que se puede hacer
-desde fuera del programa: todos los campos no derivados de todas las tareas están ahí dentro, con sus
-identificadores, sus fechas y las claves de sus criterios y de sus comentarios.
+y la de `snapshot` con `init --from` restaura un tablero entero sin declarar nada, en una máquina con
+otras raíces, que es donde el identificador de la instantánea está libre.
+
+**Lo que las dos comparan es un volcado de las dos bases de datos, tabla por tabla y columna por
+columna, y no las dos exportaciones.** Comparar las exportaciones era comparar la salida de una
+función con la salida de esa misma función: un campo que el codificador dejara de escribir
+desaparecía igual en los dos lados y la prueba seguía en verde, cosa que se comprobó poniendo a nulo
+el instante de creación y viendo pasar la suite entera. El volcado lo escribe SQL de la propia
+prueba y no comparte nada con el programa, así que ese campo perdido sale como dos tableros
+distintos. El formato en sí lo fija aparte un fichero de referencia escrito a mano
+(`cmd/biso/testdata/export-line.txt`) con la línea exportada de una tarea con todos sus campos
+puestos: una clave que desaparezca del formato deja de coincidir con él. Las dos mutaciones con las
+que se comprobó que la prueba nueva sí falla son esa fecha de creación a nulo y la clave estable de
+un criterio renumerada al vuelo.
+
+Comparar las bases enteras descubrió además una diferencia real entre dos tableros que se comportan
+igual: una tarea creada por `biso new` guardaba sus dos contadores de claves a 0 y una importada a 1.
+Ahora la traducción a filas los normaliza a 1, que es el valor que la ida y vuelta reproduce.
+
+La revisión adversarial del paso corrigió once cosas más, y estas cambiaron la especificación: la
+regla real del contador de claves, que se pierde en cuanto se quita el criterio o el comentario de
+clave mayor y no solo al quitarlos todos
+(["`biso export`"](cmd/export.md#el-contador-de-claves-no-es-una-clave-del-formato)); que restaurar
+una instantánea cuyo identificador ya vive en una raíz de esta máquina es el error de identidad
+duplicada aunque `--at` apunte fuera de las raíces, con su mensaje literal, lo que corrigió el
+ejemplo de la garantía de simetría que hacía justo eso (["`biso init`"](cmd/init.md),
+["`biso export`"](cmd/export.md#la-garantía-de-simetría)); que los fallos de un lote salen siempre en
+orden de línea, con un fallo de grafo en el bloque de ejemplo para que se vea; y el mensaje de un
+`id` ocupado, que ahora es distinto según lo tenga el tablero o una línea anterior del mismo fichero
+(["`biso new`"](cmd/new.md#el-modo-lote)). En el código quedaron además la clave `unknown_key` con su
+código 2 y no envuelta en un `invalid_line`, la urgencia y la lista de lo que cambió en el sobre de
+cada tarea del lote, y la lista de claves cuyo vacío es `[]` o `{}` deducida por reflexión como ya lo
+estaban las claves admitidas.
 
 Lagunas que se cerraron en la especificación al implementarlos, todas escritas en su página antes de
 escribir el código: el texto literal con el que `export` rechaza `--json`
