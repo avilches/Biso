@@ -143,3 +143,46 @@ func TestATextPositionalAndAFlagCannotBothReadStdin(t *testing.T) {
 			"text and --append-plan both read stdin\n",
 		"the refusal of two arguments reading standard input")
 }
+
+// TestNoOutputCarriesColour is the promise of
+// docs/spec/salida-y-terminal.md#interactividad-terminal-y-color for the
+// 1.0: --color and NO_COLOR are accepted and validated, and neither of them
+// changes a single byte of what is printed, because no output carries an
+// escape code at all. The day one does, this test is what says which ones
+// changed.
+func TestNoOutputCarriesColour(t *testing.T) {
+	m := boardOfThirtyFive(t)
+	for _, argv := range [][]string{
+		{"ls"},
+		{"ls", "--color", "always"},
+		{"prime", "--color", "always"},
+		{"get", "MYP-1", "--color", "always"},
+		{"where", "--color", "always"},
+		{"get", "MYP-999", "--color", "always"},
+	} {
+		got := m.run(t, argv...)
+		for stream, text := range map[string]string{"stdout": got.stdout, "stderr": got.stderr} {
+			if strings.Contains(text, "\x1b") {
+				t.Errorf("biso %s wrote an escape code on %s:\n%q",
+					strings.Join(argv, " "), stream, text)
+			}
+		}
+	}
+}
+
+// TestColourIsStillValidatedAndStillChangesNothing is the other half of the
+// same promise: the flag keeps its closed domain, and the two answers that
+// do mean something are the same output.
+func TestColourIsStillValidatedAndStillChangesNothing(t *testing.T) {
+	m := boardOfThirtyFive(t)
+
+	m.run(t, "ls", "--color", "sometimes").assertCode(t, 2)
+
+	always := m.run(t, "ls", "--color", "always").assertCode(t, 0)
+	never := m.run(t, "ls", "--color", "never").assertCode(t, 0)
+	assertEqual(t, always.stdout, never.stdout, "the listing with and without --color always")
+
+	m.env["NO_COLOR"] = "1"
+	noColor := m.run(t, "ls").assertCode(t, 0)
+	assertEqual(t, noColor.stdout, never.stdout, "the listing with NO_COLOR set")
+}

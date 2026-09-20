@@ -44,9 +44,15 @@ type Streams struct {
 
 	// StdoutIsTerminal and StderrIsTerminal are the only two things biso
 	// ever asks about the terminal, and they are asked per stream because
-	// each one has its own destination. Nothing reads them yet: no output
-	// of `init` or of `where` carries color, and the commands whose output
-	// does arrive later, with the answer of UseColor.
+	// each one has its own destination.
+	//
+	// Nothing reads them, because no output of the 1.0 carries color:
+	// --color and NO_COLOR are accepted and validated, and neither changes
+	// a byte of what is printed
+	// (docs/spec/salida-y-terminal.md#interactividad-terminal-y-color).
+	// They are here, with UseColor, so that whoever does paint something
+	// one day answers the table that page already fixes instead of
+	// inventing a precedence of their own.
 	StdoutIsTerminal bool
 	StderrIsTerminal bool
 
