@@ -163,20 +163,22 @@ func TestPrimeOnABoardWhoseOnlyTaskIsArchivedIsNotAnEmptyBoard(t *testing.T) {
 // docs/spec/cmd/prime.md#la-salida-literal that says a board takes no
 // --type at all.
 //
-// The state is written straight into the configuration because the command
-// that reaches it, `biso config set types ""`
-// (docs/spec/cmd/config.md#comportamiento-caso-a-caso), is step 9 and does
-// not exist yet. `biso init` cannot produce it: --types with an empty value
-// is a usage error like any other flag given nothing
-// (docs/spec/valores-de-entrada.md#el-valor-vacío).
+// The state is reached the way a caller reaches it, with `biso config set
+// types ""` (docs/spec/cmd/config.md#comportamiento-caso-a-caso), which is
+// the only door to it: `biso init` cannot produce it, because --types with
+// an empty value is a usage error like any other flag given nothing
+// (docs/spec/valores-de-entrada.md#el-valor-vacío). Until step 9 this test
+// wrote the empty list straight into the configuration table, so the door
+// itself went untested; now it is the test.
 func TestPrimeWritesNoneForAVocabularyThatIsEmpty(t *testing.T) {
 	m := newMachine(t)
 	m.env["BISO_ME"] = "@claude"
 	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "board").assertCode(t, 0)
-	dir := filepath.Join(m.dir, "board")
 	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "board",
 		"--types", "").assertCode(t, 2)
-	m.execOnBoard(t, dir, `UPDATE board_config SET value = '[]' WHERE key = 'types'`)
+	emptied := m.run(t, "config", "set", "types", "").assertCode(t, 0)
+	assertEqual(t, emptied.stderr, "note: types =\n", "the note of an emptied vocabulary")
+	assertEqual(t, emptied.stdout, "", "the standard output of a biso config set")
 
 	got := m.run(t, "prime").assertCode(t, 0)
 

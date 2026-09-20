@@ -35,7 +35,7 @@ func runConfig(s Streams, p *Parsed, env ops.Env) int {
 			return 0
 		}
 		for _, entry := range result.Entries {
-			fmt.Fprintln(s.Stdout, configLine(entry))
+			fmt.Fprintln(s.Stdout, ops.ConfigLine(entry.Key, entry.Value))
 		}
 	case ops.ConfigGet:
 		fmt.Fprintln(s.Stdout, result.Value)
@@ -45,17 +45,6 @@ func runConfig(s Streams, p *Parsed, env ops.Env) int {
 		printNote(s, p, result.Note)
 	}
 	return 0
-}
-
-// configLine is one line of `biso config list` and of the note of a `set`:
-// the key, the equals sign, and the value behind it. A list with nothing in
-// it prints the key and the equals sign and nothing after, which is what
-// `biso config get` of that same key prints too.
-func configLine(entry ops.ConfigEntry) string {
-	if entry.Value == "" {
-		return entry.Key + " ="
-	}
-	return entry.Key + " = " + entry.Value
 }
 
 // configParams reads the subcommand and its arguments off the positional

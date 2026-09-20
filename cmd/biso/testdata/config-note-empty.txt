@@ -1,0 +1,2 @@
+$ biso config set types ""
+note: types =

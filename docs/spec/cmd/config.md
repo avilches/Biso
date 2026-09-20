@@ -138,6 +138,14 @@ $ biso config set statuses "To Do,In Progress,Done,Blocked"
 note: statuses = To Do,In Progress,Done,Blocked
 ```
 
+**Vaciar una lista deja la nota sin nada detrás del igual**, exactamente igual que la línea que esa
+clave tiene en `config list` y que la respuesta de un `get` posterior, sin espacio suelto al final:
+
+```
+$ biso config set types ""
+note: types =
+```
+
 Ningún cambio de configuración toca ninguna tarea, nunca.
 
 **Una clave inexistente sugiere hasta tres de las más parecidas**, con el algoritmo de
@@ -163,6 +171,15 @@ Y con una clave de lista, la lista entera que quedaría, con la misma forma que 
 ```
 $ biso config set statuses "To Do,In Progress,Done,Blocked" --dry-run
 note: statuses would be set to To Do,In Progress,Done,Blocked (--dry-run)
+```
+
+**La vista previa de vaciar una lista tiene su propia redacción**, porque "would be set to" sin nada
+detrás deja la frase en el aire. Lo que hace un vocabulario que se vacía a propósito es quedarse
+vacío, y eso es lo que dice:
+
+```
+$ biso config set types "" --dry-run
+note: types would be emptied (--dry-run)
 ```
 
 ## Salida

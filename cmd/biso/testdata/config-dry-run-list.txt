@@ -1,0 +1,2 @@
+$ biso config set statuses "To Do,In Progress,Done,Blocked" --dry-run
+note: statuses would be set to To Do,In Progress,Done,Blocked (--dry-run)

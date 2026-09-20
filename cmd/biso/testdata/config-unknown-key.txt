@@ -1,0 +1,3 @@
+$ biso config get urgency.pryority
+error: no such key: "urgency.pryority"
+hint: did you mean: urgency.priority, urgency.criteria, urgency.active?

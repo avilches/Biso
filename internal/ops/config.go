@@ -129,19 +129,39 @@ func setConfig(b *board.Board, p ConfigParams) (*ConfigResult, error) {
 	}
 
 	value := configValue(cfg, p.Key)
-	note := fmt.Sprintf("%s = %s", p.Key, value)
 	if p.DryRun {
 		// `config set` has no status line to mark as hypothetical, so the
 		// preview is the same note in the conditional
 		// (docs/spec/cmd/config.md).
-		return &ConfigResult{
-			Note: fmt.Sprintf("%s would be set to %s (--dry-run)", p.Key, value),
-		}, nil
+		return &ConfigResult{Note: previewNote(p.Key, value)}, nil
 	}
 	if err := b.Rewrite(cfg); err != nil {
 		return nil, err
 	}
-	return &ConfigResult{Note: note}, nil
+	return &ConfigResult{Note: ConfigLine(p.Key, value)}, nil
+}
+
+// ConfigLine is how a key and its value are written wherever the two travel
+// together: one line of `biso config list`, the answer of `biso config get`
+// and the note of a `biso config set`. A list with nothing in it is the key
+// and the equals sign and nothing after, with no space left dangling
+// (docs/spec/cmd/config.md#salida).
+func ConfigLine(key, value string) string {
+	if value == "" {
+		return key + " ="
+	}
+	return key + " = " + value
+}
+
+// previewNote is that same note in the conditional. The empty list has its
+// own wording, because "would be set to " with nothing behind it would end
+// the sentence mid air; what a vocabulary emptied on purpose does is be
+// emptied, and the note says that (docs/spec/cmd/config.md).
+func previewNote(key, value string) string {
+	if value == "" {
+		return key + " would be emptied (--dry-run)"
+	}
+	return fmt.Sprintf("%s would be set to %s (--dry-run)", key, value)
 }
 
 // knownConfigKey is the error 4 of a key that does not exist, with up to

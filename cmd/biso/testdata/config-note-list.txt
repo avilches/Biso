@@ -1,0 +1,2 @@
+$ biso config set statuses "To Do,In Progress,Done,Blocked"
+note: statuses = To Do,In Progress,Done,Blocked
