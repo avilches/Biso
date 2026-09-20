@@ -125,9 +125,9 @@ func TestSnapshotCommitsIntoTheProjectRepositoryThatDoesNotIgnoreIt(t *testing.T
 	git(t, m.dir, "add", "README.md")
 	git(t, m.dir, "commit", "-q", "-m", "the project")
 
-	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "tablero").assertCode(t, 0)
+	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "board").assertCode(t, 0)
 	m.run(t, "new", "One").assertCode(t, 0)
-	dir := filepath.Join(m.dir, "tablero")
+	dir := filepath.Join(m.dir, "board")
 
 	got := m.run(t, "snapshot").assertCode(t, 0)
 
@@ -140,11 +140,11 @@ func TestSnapshotCommitsIntoTheProjectRepositoryThatDoesNotIgnoreIt(t *testing.T
 	// The three files went in by their path, and the database did not: the
 	// exclusion file `biso init` wrote inside the board keeps it out.
 	files := committedFiles(t, m.dir)
-	if !contains(files, "tablero/"+board.SnapshotTasksFile) ||
-		!contains(files, "tablero/"+board.SnapshotConfigFile) {
+	if !contains(files, "board/"+board.SnapshotTasksFile) ||
+		!contains(files, "board/"+board.SnapshotConfigFile) {
 		t.Errorf("the revision carries %v", files)
 	}
-	if contains(files, "tablero/"+board.DatabaseFile) {
+	if contains(files, "board/"+board.DatabaseFile) {
 		t.Errorf("the database went into the revision: %v", files)
 	}
 }
@@ -156,7 +156,7 @@ func TestSnapshotLeavesWhatWasStagedOutsideTheBoardAlone(t *testing.T) {
 	m.write(t, filepath.Join(m.dir, "README.md"), "a project\n")
 	git(t, m.dir, "add", "README.md")
 	git(t, m.dir, "commit", "-q", "-m", "the project")
-	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "tablero").assertCode(t, 0)
+	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "board").assertCode(t, 0)
 	m.run(t, "new", "One").assertCode(t, 0)
 	m.write(t, filepath.Join(m.dir, "code.go"), "package main\n")
 	m.write(t, filepath.Join(m.dir, "other.go"), "package other\n")
@@ -271,4 +271,75 @@ func contains(values []string, value string) bool {
 		}
 	}
 	return false
+}
+
+// TestSnapshotAnswersSixWhenItSkippedATask is the row of the case table of
+// docs/spec/cmd/snapshot.md about a task that cannot be read: it is left
+// out, it is counted, and the exit code is 6 and not 0, exactly as in
+// `biso export` (docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar).
+func TestSnapshotAnswersSixWhenItSkippedATask(t *testing.T) {
+	m, dir := snapshotBoard(t)
+	// A date the program did not write is one of the ways a task becomes
+	// undecodable.
+	m.execOnBoard(t, dir, `UPDATE task SET created_at = 'yesterday' WHERE id = 'MYP-2'`)
+
+	got := m.run(t, "snapshot", "--vcs", "none")
+
+	if got.code != 6 {
+		t.Errorf("a snapshot that skipped a task exited %d and not 6", got.code)
+	}
+	if !strings.Contains(got.stderr, "could not be read and was skipped") {
+		t.Errorf("the skip was not named:\n%s", got.stderr)
+	}
+	// The two files are written all the same, with the tasks that could be
+	// read: this command loses nothing it can keep.
+	if lines := strings.Count(m.read(t, filepath.Join(dir, board.SnapshotTasksFile)), "\n"); lines != 2 {
+		t.Errorf("snapshot.ndjson has %d lines and two of the three tasks could be read", lines)
+	}
+	if !strings.Contains(m.read(t, filepath.Join(dir, board.SnapshotConfigFile)), `"task_prefix"`) {
+		t.Errorf("board.json was not written")
+	}
+}
+
+// TestSnapshotDoesNotCommitWhenItCannotWriteAFile is the other half of the
+// row about not being able to write one of the two files: the exit code is
+// 8 and no revision is attempted. What the two previous files are left like
+// is checked in TestSnapshotLeavesThePreviousTwoFilesWhenOneCannotBeWritten,
+// which can drive the writing step on its own.
+func TestSnapshotDoesNotCommitWhenItCannotWriteAFile(t *testing.T) {
+	m, dir := snapshotBoard(t)
+	m.run(t, "snapshot").assertCode(t, 0)
+	head := revision(t, dir)
+	config := m.read(t, filepath.Join(dir, board.SnapshotConfigFile))
+
+	// snapshot.ndjson is now a directory, so the rename over it cannot
+	// work however well the temporary file was written.
+	if err := os.Remove(filepath.Join(dir, board.SnapshotTasksFile)); err != nil {
+		t.Fatal(err)
+	}
+	m.mkdir(t, filepath.Join(dir, board.SnapshotTasksFile))
+
+	got := m.run(t, "snapshot")
+
+	if got.code != 8 {
+		t.Errorf("a snapshot that cannot write its file exited %d and not 8:\n%s",
+			got.code, got.stderr)
+	}
+	if revision(t, dir) != head {
+		t.Errorf("the revision was attempted anyway: %s became %s", head, revision(t, dir))
+	}
+	assertEqual(t, m.read(t, filepath.Join(dir, board.SnapshotConfigFile)), config,
+		"board.json after a write that could not finish")
+}
+
+// revision answers the identifier of the last revision of a repository.
+func revision(t *testing.T, dir string) string {
+	t.Helper()
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("git rev-parse in %s: %v", dir, err)
+	}
+	return strings.TrimSpace(string(out))
 }
