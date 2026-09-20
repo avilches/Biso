@@ -73,6 +73,11 @@ aparece en el título de una sola tarea, esa es la respuesta aunque aparezca en 
 diez, y no hay ambigüedad. La búsqueda para resolver una referencia mira solo las tareas **no
 archivadas**; el filtro `--search` mira las que digan los demás filtros.
 
+**La única excepción es `biso archive --unarchive`**, que mira el tablero entero, por la razón que
+explica ["La referencia de `--unarchive`"](cmd/archive.md#la-referencia-de---unarchive): lo que esa
+llamada nombra está archivado por definición, así que la regla de arriba, aplicada ahí, garantizaría
+no encontrarlo nunca.
+
 **El único filtro que se aplica al resolver una referencia es ese, el de archivada, y el estado no
 filtra nada.** Una tarea en el estado terminal se resuelve como cualquier otra y aparece entre las
 candidatas de un error 5, aunque `biso ls --search "<texto>"` no la traiga: ese listado la deja

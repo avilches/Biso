@@ -441,6 +441,13 @@ Lo que la especificación no decidía, o decidía mal, y se corrigió en el mism
 - **La nota de vaciar una lista de configuración** dejaba un espacio suelto detrás del igual, donde
   `config list` y `config get` no lo dejan; y su vista previa habría dicho "would be set to " sin
   nada detrás, así que dice "would be emptied" (["`biso config`"](cmd/config.md#comportamiento-caso-a-caso)).
+- **`biso archive --unarchive` con una referencia de texto no podía funcionar.** La búsqueda de
+  ["Cómo se resuelve una referencia a una tarea"](referencias.md#la-búsqueda-por-texto) mira solo
+  las tareas no archivadas, y lo que esa llamada nombra está archivado por definición, así que
+  contestaba siempre que el texto no encaja con ninguna tarea. Es ahora la única excepción de esa
+  regla, y mira el tablero entero para que nombrar por texto una tarea que ya está en el tablero dé
+  la misma nota idempotente que nombrarla por su identificador
+  (["La referencia de `--unarchive`"](cmd/archive.md#la-referencia-de---unarchive)).
 
 Y dos arreglos de código que la revisión del paso no habría visto desde fuera:
 

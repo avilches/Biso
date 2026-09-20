@@ -505,3 +505,32 @@ func TestArchivingATaskSomebodyElseHoldsWarnsAndClearsTheLease(t *testing.T) {
 		t.Errorf("the lease of another identity survived archiving: %v", holder)
 	}
 }
+
+// TestUnarchivingByTextReachesTheArchivedTask is the one exception of
+// docs/spec/referencias.md#la-búsqueda-por-texto: a text reference looks
+// only at the tasks on the board, and with --unarchive it looks at the
+// whole one, because what that call names is off the board by definition.
+func TestUnarchivingByTextReachesTheArchivedTask(t *testing.T) {
+	m := oneTaskBoard(t)
+	m.run(t, "archive", "MYP-1").assertCode(t, 0)
+
+	// The ordinary scope does not reach it, which is what makes the
+	// exception necessary rather than convenient.
+	m.run(t, "archive", "the parser").assertCode(t, 4)
+
+	got := m.run(t, "archive", "the parser", "--unarchive").assertCode(t, 0)
+	if !strings.Contains(got.stderr, `note: "the parser" matched MYP-1`) {
+		t.Errorf("the text reference of --unarchive said %q", got.stderr)
+	}
+	if archived := taskField(t, m, "MYP-1", "archived"); archived != false {
+		t.Errorf("the task is still archived: %v", archived)
+	}
+
+	// And naming by text a task that is already on the board is the same
+	// idempotent note it would get by identifier, which is why the scope
+	// is the whole board and not the archived half.
+	again := m.run(t, "archive", "the parser", "--unarchive").assertCode(t, 0)
+	if !strings.Contains(again.stderr, "note: MYP-1 was not archived") {
+		t.Errorf("unarchiving by text a task on the board said %q", again.stderr)
+	}
+}

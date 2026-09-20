@@ -34,6 +34,27 @@ const (
 	RefText
 )
 
+// RefScope is which half of the board a text reference looks at. The
+// grammar and an identifier never care: a reference by identifier reaches
+// any task of the board, archived or not.
+type RefScope int
+
+const (
+	// ScopeOnTheBoard is the tasks that are not archived, which is what
+	// docs/spec/referencias.md#la-búsqueda-por-texto fixes for every
+	// reference of every command but one.
+	ScopeOnTheBoard RefScope = iota
+	// ScopeWholeBoard is every task, archived or not, and it exists for
+	// `biso archive --unarchive`: that is the one call whose subject is
+	// by definition off the board, so the ordinary scope could only ever
+	// fail there. It is the whole board and not the archived half so
+	// that naming a task that is already on the board still answers the
+	// idempotent note of the case table, whether it was named by
+	// identifier or by text
+	// (docs/spec/cmd/archive.md#la-referencia-de---unarchive).
+	ScopeWholeBoard
+)
+
 // AmbiguousRef is the exit code 5 of
 // docs/spec/referencias.md#la-búsqueda-por-texto: a text that matches more
 // than one task. It carries the candidates because that ending prints them
@@ -86,12 +107,19 @@ func resolveRef(b *board.Board, ref string, mode RefMode) (*Resolved, error) {
 // list in keeps the text search from running the same five queries twice.
 // A nil list means the search reads them itself.
 func resolveRefWith(b *board.Board, all []*model.Task, ref string, mode RefMode) (*Resolved, error) {
+	return resolveRefIn(b, all, ref, mode, ScopeOnTheBoard)
+}
+
+// resolveRefIn is resolveRefWith with the scope of its text search named,
+// which only `biso archive --unarchive` passes anything but the default to.
+func resolveRefIn(b *board.Board, all []*model.Task, ref string, mode RefMode,
+	scope RefScope) (*Resolved, error) {
 	num, wellFormed := parseTaskRef(b.Config.TaskPrefix, ref)
 	switch {
 	case mode == RefID && !wellFormed:
 		return nil, malformedIDError(ref)
 	case mode == RefText:
-		return searchForRef(b, all, ref)
+		return searchForRef(b, all, ref, scope)
 	case wellFormed:
 		task, err := b.Tasks.Load(fmt.Sprintf("%s-%d", b.Config.TaskPrefix, num))
 		if err != nil {
@@ -99,7 +127,7 @@ func resolveRefWith(b *board.Board, all []*model.Task, ref string, mode RefMode)
 		}
 		return &Resolved{Task: task}, nil
 	}
-	return searchForRef(b, all, ref)
+	return searchForRef(b, all, ref, scope)
 }
 
 // parseTaskRef reads the three shapes of an identifier of
@@ -155,13 +183,16 @@ func malformedIDError(ref string) *model.Error {
 // at tasks that are not archived, a hit in the title beats a hit anywhere
 // else, and the three counts end differently.
 //
-// Being archived is the one filter it applies. The status filters nothing,
+// Being archived is the one filter it applies, and the scope is whether it
+// applies at all: everywhere but in `biso archive --unarchive` it does, and
+// there the search sees the whole board. The status filters nothing,
 // so a task in the terminal status resolves like any other and is among the
 // candidates of an exit code 5, although `biso ls --search` leaves it out by
 // the default value of its own -s. What the candidates borrow from a listing
 // is how they are printed and not what it would have selected: the order,
 // the limit of thirty and the truncation warning.
-func searchForRef(b *board.Board, all []*model.Task, query string) (*Resolved, error) {
+func searchForRef(b *board.Board, all []*model.Task, query string,
+	scope RefScope) (*Resolved, error) {
 	if all == nil {
 		var err error
 		if all, _, err = b.Tasks.All(); err != nil {
@@ -170,7 +201,7 @@ func searchForRef(b *board.Board, all []*model.Task, query string) (*Resolved, e
 	}
 	var titles, anywhere []*model.Task
 	for _, t := range all {
-		if t.Archived {
+		if t.Archived && scope != ScopeWholeBoard {
 			continue
 		}
 		if TextMatches(t.Title, query) {

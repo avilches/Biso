@@ -48,6 +48,10 @@ func ArchiveOn(b *board.Board, env Env, p ArchiveParams) (*WriteResult, error) {
 		AllowNoChanges: true,
 	}, verb{
 		name: "archive",
+		// A text reference of --unarchive names a task that is off the
+		// board, which is the one place a reference looks past it
+		// (docs/spec/cmd/archive.md#la-referencia-de---unarchive).
+		scope: archiveScope(p.Unarchive),
 		// The two notes about being archived are this verb's own: the
 		// generic ones of the loop would say "MYP-11 is archived" right
 		// after being asked to archive it, and "MYP-11 unchanged" where
@@ -106,4 +110,13 @@ func (w *writer) warnAboutDependents(t *model.Task, byID map[string]*model.Task)
 			break
 		}
 	}
+}
+
+// archiveScope is the half of the board the text reference of this call
+// looks at.
+func archiveScope(unarchive bool) RefScope {
+	if unarchive {
+		return ScopeWholeBoard
+	}
+	return ScopeOnTheBoard
 }

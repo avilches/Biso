@@ -79,6 +79,10 @@ type verb struct {
 	// because it is the command that asks for that state
 	// (docs/spec/cmd/archive.md).
 	ownStateNotes bool
+	// scope is which half of the board a text reference of this call
+	// looks at, and only `biso archive --unarchive` moves it
+	// (docs/spec/cmd/archive.md#la-referencia-de---unarchive).
+	scope RefScope
 }
 
 // SetOn is Set over a board that is already open.
@@ -122,7 +126,7 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	w.manyTasks = len(p.Refs) > 1
 	w.warnings = append(w.warnings, p.Warnings...)
 
-	tasks, err := w.resolveAll(p.Refs, p.Mode)
+	tasks, err := w.resolveAll(p.Refs, p.Mode, v.scope)
 	if err != nil {
 		return w.partial(), err
 	}
@@ -214,7 +218,7 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 // The same task named twice is one task: the second mention says nothing the
 // first did not, and applying the same changes to it twice would append the
 // same comment or the same criterion two times over.
-func (w *writer) resolveAll(refs []string, mode RefMode) ([]*model.Task, error) {
+func (w *writer) resolveAll(refs []string, mode RefMode, scope RefScope) ([]*model.Task, error) {
 	var tasks []*model.Task
 	seen := map[string]bool{}
 	for _, ref := range refs {
@@ -222,7 +226,7 @@ func (w *writer) resolveAll(refs []string, mode RefMode) ([]*model.Task, error) 
 		if readErr != nil {
 			return nil, readErr
 		}
-		resolved, err := resolveRefWith(w.b, all, ref, mode)
+		resolved, err := resolveRefIn(w.b, all, ref, mode, scope)
 		if err != nil {
 			// The candidates of an ambiguous reference are printed the
 			// way `biso ls` prints a listing, in every command that
