@@ -1,6 +1,7 @@
 package ops
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -179,8 +180,14 @@ func TestBatchRefusesAnIdentifierThatIsTakenOrOfAnotherBoard(t *testing.T) {
 	}
 	if got := h.assertBatchFails(
 		`{"id":"MYP-5","title":"a"}`, `{"id":"MYP-5","title":"b"}`,
-	); got != `line 2: id "MYP-5" is already taken on this board` {
+	); got != `line 2: id "MYP-5" is already taken by line 1 of this file` {
+		// The board has nothing to do with this collision, so the message
+		// does not name it (docs/spec/cmd/new.md#el-modo-lote).
 		t.Errorf("the same identifier twice in one file: %q", got)
+	}
+	if got := h.assertBatchFails(`{"id":"MYP-1","title":"Again"}`); got !=
+		`line 1: id "MYP-1" is already taken on this board` {
+		t.Errorf("an identifier the board already has: %q", got)
 	}
 }
 
@@ -296,5 +303,110 @@ func TestBatchPreviewWritesNothingAndCountsTheLines(t *testing.T) {
 	}
 	if len(all) != 0 {
 		t.Errorf("a preview left %d tasks behind", len(all))
+	}
+}
+
+// TestBatchRefusesNullInEveryListTheFormatWrites takes the keys to try from
+// an exported line instead of from a list written here: every key whose
+// value comes out as [] or {} is a key whose null is a failure
+// (docs/spec/cmd/new.md#el-modo-lote), so a list field added to the format
+// later is covered by this test the day it is added.
+func TestBatchRefusesNullInEveryListTheFormatWrites(t *testing.T) {
+	h := newHarness(t)
+	h.create("One of everything")
+	all, _, err := h.b.Tasks.All()
+	if err != nil {
+		t.Fatal(err)
+	}
+	line, err := encodeTask(all[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(line, &fields); err != nil {
+		t.Fatal(err)
+	}
+
+	tried := 0
+	for key, value := range fields {
+		if string(value) != "[]" && string(value) != "{}" {
+			continue
+		}
+		tried++
+		nulled, err := json.Marshal(map[string]json.RawMessage{
+			"title": json.RawMessage(`"Nulled"`), key: json.RawMessage("null"),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := h.assertBatchFails(string(nulled)); !strings.Contains(got, key+" is null") {
+			t.Errorf("%s: message = %q", key, got)
+		}
+	}
+	if tried != len(listKeys) {
+		t.Errorf("the export wrote %d empty lists and the format declares %d: %v",
+			tried, len(listKeys), listKeys)
+	}
+}
+
+// TestBatchNamesTheCodeOfEveryFailure is the other half of the messages the
+// tests above check: the stable `code` each one carries, which is what a
+// caller branches on without reading prose
+// (docs/spec/contrato-json.md#los-identificadores-de-error). Three of them
+// are exit code 2 and the fourth is 3, and the difference is the point: a
+// key the format does not have is a file written wrong, while a line that
+// cannot be read as a task is data this board cannot interpret.
+func TestBatchNamesTheCodeOfEveryFailure(t *testing.T) {
+	h := newHarness(t)
+	if _, err := h.batch(`{"id":"MYP-1","title":"Taken"}`); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		line     string
+		code     string
+		exitCode int
+	}{
+		{`{"title":"a","trelloCard":"5f2a8c1e"}`, "unknown_key", 2},
+		{`{"id":"MYP-1","title":"a"}`, "id_taken", 2},
+		{`{"title":"a","leaseHolder":"@sara"}`, "invalid_lease", 2},
+		{`{"title":"a","labels":null}`, "invalid_line", 3},
+		{`{"title":"a","createdAt":"yesterday"}`, "invalid_line", 3},
+	} {
+		_, err := h.batch(c.line)
+		e := specError(t, err)
+		if len(e.Details) != 1 {
+			t.Fatalf("%s: %d failures", c.line, len(e.Details))
+		}
+		if e.Details[0].Code != c.code || e.Details[0].ExitCode != c.exitCode {
+			t.Errorf("%s: code = %d/%s, want %d/%s (%s)", c.line,
+				e.Details[0].ExitCode, e.Details[0].Code, c.exitCode, c.code,
+				e.Details[0].Message)
+		}
+	}
+}
+
+// TestBatchReportsItsFailuresInTheOrderOfTheFile pins the order of the
+// block of docs/spec/cmd/new.md#el-modo-lote, which is the order of the
+// file. A failure of the graph is the one that can break it: it is found
+// after every line has been read, not while reading its own.
+func TestBatchReportsItsFailuresInTheOrderOfTheFile(t *testing.T) {
+	h := newHarness(t)
+	_, err := h.batch(
+		`{"title":"","status":"To Do"}`,
+		`{"title":"Fine"}`,
+		`{"title":"Nowhere","parent":"MYP-900"}`,
+		`{"title":"Also fine"}`,
+		`{"title":"Bad status","status":"Pendiente"}`,
+		`{"title":"No dependency","dependencies":["MYP-800"]}`,
+	)
+	e := specError(t, err)
+	var lines []string
+	for _, d := range e.Details {
+		lines = append(lines, strings.SplitN(d.Message, ":", 2)[0])
+	}
+	want := []string{"line 1", "line 3", "line 5", "line 6"}
+	if strings.Join(lines, ", ") != strings.Join(want, ", ") {
+		t.Errorf("the failures came in the order %v and the file's is %v:\n%s",
+			lines, want, strings.Join(e.Detail, "\n"))
 	}
 }

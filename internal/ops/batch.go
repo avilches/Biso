@@ -2,6 +2,7 @@ package ops
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -147,7 +148,15 @@ func validateBatchAgainst(cfg board.Config, existing []*model.Task, env Env, con
 	}
 
 	var lines []*batchLine
-	var failures []*model.Error
+	// failures carry the line they came from beside the error, so that the
+	// report can be put back in the order of the file however late a
+	// failure is found (docs/spec/cmd/new.md#el-modo-lote).
+	var failures []*batchFailure
+	// claimedBy remembers which line of this same file took an identifier,
+	// which is what tells the two collisions of `id_taken` apart: one is
+	// about the board and the other one is not
+	// (docs/spec/contrato-json.md#los-identificadores-de-error).
+	claimedBy := map[string]int{}
 	counted := 0
 	for number, text := range strings.Split(content, "\n") {
 		text = strings.TrimSpace(text)
@@ -160,21 +169,18 @@ func validateBatchAgainst(cfg board.Config, existing []*model.Task, env Env, con
 		counted++
 		line := &batchLine{number: number + 1}
 		if e := readBatchLine(cfg, line, text, now); e != nil {
-			failures = append(failures, lineError(line.number, e))
+			failures = append(failures, &batchFailure{line.number, e})
 			continue
 		}
 		if line.task.ID != "" {
 			if taken[line.task.ID] {
-				failures = append(failures, lineError(line.number, &model.Error{
-					ExitCode: 2,
-					Code:     "id_taken",
-					Message:  fmt.Sprintf("id %q is already taken on this board", line.task.ID),
-					Field:    "id",
-					Given:    line.task.ID,
-				}))
+				failures = append(failures, &batchFailure{
+					line.number, idTaken(line.task.ID, claimedBy),
+				})
 				continue
 			}
 			taken[line.task.ID] = true
+			claimedBy[line.task.ID] = line.number
 			byID[line.task.ID] = line.task
 		}
 		lines = append(lines, line)
@@ -185,14 +191,39 @@ func validateBatchAgainst(cfg board.Config, existing []*model.Task, env Env, con
 	// creates.
 	for _, line := range lines {
 		if e := checkBatchGraph(line.task, byID); e != nil {
-			failures = append(failures, lineError(line.number, e))
+			failures = append(failures, &batchFailure{line.number, e})
 		}
 	}
 
 	if len(failures) > 0 {
+		// The report goes in the order of the file, which the block of
+		// docs/spec/cmd/new.md#el-modo-lote shows and this second pass
+		// would otherwise break: a failure of the graph is found after
+		// every line has been read, not while reading its own.
+		sort.SliceStable(failures, func(i, j int) bool {
+			return failures[i].line < failures[j].line
+		})
 		return nil, batchInvalid(failures, counted)
 	}
 	return lines, nil
+}
+
+// idTaken is the failure of an identifier that is not free, in its two
+// shapes: the board already has it, or an earlier line of this same file
+// took it. The second one does not mention the board, because the board has
+// nothing to do with it (docs/spec/cmd/new.md#el-modo-lote).
+func idTaken(id string, claimedBy map[string]int) *model.Error {
+	message := fmt.Sprintf("id %q is already taken on this board", id)
+	if line, ok := claimedBy[id]; ok {
+		message = fmt.Sprintf("id %q is already taken by line %d of this file", id, line)
+	}
+	return &model.Error{
+		ExitCode: 2,
+		Code:     "id_taken",
+		Message:  message,
+		Field:    "id",
+		Given:    id,
+	}
 }
 
 // readBatchLine reads one line and judges everything that can be judged
@@ -414,6 +445,14 @@ func notOnThisBoard(field, id string) *model.Error {
 	}
 }
 
+// batchFailure is one failure while the file is still being judged: the
+// error and the line it belongs to, kept apart so that the report can be
+// ordered by line before the number is written into any message.
+type batchFailure struct {
+	line int
+	err  *model.Error
+}
+
 // lineError stamps a failure with the line it came from. The number lives
 // in the message and not in a key of its own, because the objects of
 // error.details have the shape of any other error
@@ -427,12 +466,15 @@ func lineError(number int, e *model.Error) *model.Error {
 
 // batchInvalid is the code 7 of docs/spec/cmd/new.md#el-modo-lote, with
 // every failure under it and never only the first.
-func batchInvalid(failures []*model.Error, counted int) *model.Error {
+func batchInvalid(failures []*batchFailure, counted int) *model.Error {
 	detail := make([]string, 0, len(failures))
+	details := make([]*model.Error, 0, len(failures))
 	for _, f := range failures {
-		line := "  " + f.Message
-		if len(f.Valid) > 0 {
-			line += " (valid: " + strings.Join(f.Valid, ", ") + ")"
+		stamped := lineError(f.line, f.err)
+		details = append(details, stamped)
+		line := "  " + stamped.Message
+		if len(stamped.Valid) > 0 {
+			line += " (valid: " + strings.Join(stamped.Valid, ", ") + ")"
 		}
 		detail = append(detail, line)
 	}
@@ -442,6 +484,6 @@ func batchInvalid(failures []*model.Error, counted int) *model.Error {
 		Message: fmt.Sprintf("%d of %s are invalid, nothing was written",
 			len(failures), plural(counted, "line")),
 		Detail:  detail,
-		Details: failures,
+		Details: details,
 	}
 }

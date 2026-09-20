@@ -169,6 +169,12 @@ func (q *wireQuestion) UnmarshalJSON(data []byte) error {
 // The keys are looked at in alphabetical order and not in the order they
 // were written, so that a line with two of them always fails on the same
 // one and the message of a batch is the same twice.
+//
+// It answers a typed error and not a bare one because `unknown_key` is a
+// `code` of exit status 2 in the table of
+// docs/spec/contrato-json.md#los-identificadores-de-error: a key the format
+// does not have is a file written wrong, not a value this board cannot
+// interpret, and wrapping it as `invalid_line` would file it under 3.
 func objectKeys(data []byte, allowed []string) error {
 	raw, err := rawObject(data)
 	if err != nil {
@@ -176,7 +182,12 @@ func objectKeys(data []byte, allowed []string) error {
 	}
 	for _, key := range sortedRawKeys(raw) {
 		if !containsString(allowed, key) {
-			return fmt.Errorf("unknown key: %q", key)
+			return &model.Error{
+				ExitCode: 2,
+				Code:     "unknown_key",
+				Message:  fmt.Sprintf("unknown key: %q", key),
+				Field:    key,
+			}
 		}
 	}
 	return nil
@@ -207,10 +218,17 @@ var interchangeKeys = keysOf(reflect.TypeOf(wireInput{}))
 // listKeys are the keys whose empty value is [] or {} and never null
 // (docs/spec/cmd/new.md#el-modo-lote), so an explicit null in one of them
 // is a failure of validation and not the absence of the key.
-var listKeys = []string{
-	"assignees", "labels", "dependencies", "references", "documentation",
-	"modifiedFiles", "ext", "acceptanceCriteria", "comments",
-}
+//
+// They are deduced from the shape itself, like interchangeKeys, and for the
+// same reason: a list written by hand here would be a second list of fields
+// that a new one could be left out of, and leaving it out would not fail
+// anything, it would start accepting null in silence.
+//
+// The shape it reads is wireTask and not wireInput, which is exactly the
+// rule: the lists of the model are the ones whose empty value is [] or {},
+// and definitionOfDone is not one of them, so null there means the key was
+// not written (docs/spec/cmd/new.md#el-modo-lote).
+var listKeys = listKeysOf(reflect.TypeOf(wireTask{}))
 
 func keysOf(t reflect.Type) []string {
 	var keys []string
@@ -218,6 +236,29 @@ func keysOf(t reflect.Type) []string {
 		f := t.Field(i)
 		if f.Anonymous {
 			keys = append(keys, keysOf(f.Type)...)
+			continue
+		}
+		tag := strings.Split(f.Tag.Get("json"), ",")[0]
+		if tag != "" && tag != "-" {
+			keys = append(keys, tag)
+		}
+	}
+	return keys
+}
+
+// listKeysOf is keysOf narrowed to the fields whose value is a list or a
+// map, which is what makes a null in them a failure.
+func listKeysOf(t reflect.Type) []string {
+	var keys []string
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if f.Anonymous {
+			keys = append(keys, listKeysOf(f.Type)...)
+			continue
+		}
+		switch f.Type.Kind() {
+		case reflect.Slice, reflect.Map:
+		default:
 			continue
 		}
 		tag := strings.Split(f.Tag.Get("json"), ",")[0]
