@@ -1,0 +1,22 @@
+Usage: biso prime [options]
+
+Print everything needed to start working on this board: the commands, the field
+flags, the rules that are not guessable, the board vocabulary and what is in
+flight. Run it once at the start of a session. It writes nothing.
+
+Options:
+  --full          also list every flag of `biso new` and `biso set` in detail
+  --limit <n>     rows shown across ASSIGNED TO YOU and NEXT UP together
+                  (default 5, 0 hides both)
+  --json          machine-readable envelope instead of the message
+  -h, --help      show this help
+
+Exit codes:
+  0  message printed
+  2  bad usage
+  20 no board here
+
+Examples:
+  biso prime
+  biso prime --limit 10
+  biso -C ~/work/my-project prime

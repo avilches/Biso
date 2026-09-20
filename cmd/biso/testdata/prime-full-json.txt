@@ -1,0 +1,2 @@
+error: --full does not combine with --json
+       --full's output is help text, and --json has no room for it

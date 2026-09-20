@@ -33,7 +33,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | hecho con matices | TASK-12 |
 | 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | hecho con matices | TASK-13 |
 | 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | hecho | TASK-14 |
-| 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | pendiente | TASK-15 |
+| 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | hecho | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | pendiente | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`board`](cmd/board.md), [`help`](cmd/help.md) | pendiente | TASK-17 |
 
@@ -55,11 +55,11 @@ cerradas.
 | [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
 | [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5 y 8 | en curso |
 | [El arrendamiento de una tarea](lease.md) | pasos 2, 5 y 6 | hecho |
-| [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | en curso |
+| [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | hecho |
 | [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | en curso |
 | [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | hecho |
 | [El contrato JSON](contrato-json.md) | pasos 4 a 9 | en curso |
-| [El contrato de estabilidad](estabilidad.md) | paso 7 | pendiente |
+| [El contrato de estabilidad](estabilidad.md) | pasos 7 y 8 | en curso |
 | [Lo que se deja fuera a propósito](fuera-de-alcance.md) | ninguno | fuera de alcance |
 
 ### Qué queda probado ya de los transversales que empezaron los pasos 1 y 2
@@ -305,6 +305,79 @@ Y una quinta que venía del paso 5 y se arregló aquí, por ser el mismo camino 
 ejecuta también la última capa de validación**, la del modelo. Una vista previa ya no puede salir con
 0 donde la escritura de verdad sale con 3, que es lo que prometen ["Flags globales"](cmd/flags-globales.md)
 y la sección de salida de ["`biso set`"](cmd/set.md#salida).
+
+### Qué dejó hecho el paso 7
+
+`biso prime` está entero, con sus dos salidas, sus cuatro bloques, su recorte en cascada y su
+esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
+["Los presupuestos de arranque y de tamaño"](presupuestos.md), que son las que este paso existía para cerrar:
+
+- **El tope de tamaño se comprueba sobre el mensaje que imprime el proceso**, no sobre lo que
+  devuelve una función, y se comprueba en siete sitios: el tablero del ejemplo, un tablero con una
+  tarea ilegible, un tablero vacío, cuatro tableros de 300 tareas que fuerzan el recorte escalón a
+  escalón, un tablero sin ninguna tarea pero con cuarenta estados, cuarenta tipos y cuarenta
+  prioridades de nombre largo, y un tablero cuyo nombre son diez mil caracteres. Los dos últimos son
+  los que hacen cierta la palabra "siempre": los cuatro primeros escalones solo recortan tareas, así
+  que un tablero sin ninguna se escapaba del tope por el bloque `BOARD` (imprimía 8.465 bytes) hasta
+  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.039 bytes** de
+  los 5.504, **3.550** de parte fija y **1.489** de resumen, que es exactamente lo que dice
+  ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño); con el de los vocabularios
+  largos, **5.175**, y con el del nombre kilométrico, **5.214**.
+- **La medida del presupuesto de arranque ya es la de verdad**, en `cmd/biso/budget_test.go`:
+  ejecuta el binario compilado, `biso ls` y `biso prime`, sobre un tablero real de 300 tareas con
+  los cuatro bloques poblados, y mide de la llamada al código de salida, arranque del proceso
+  incluido. En la máquina de desarrollo da unos **13 ms** para cada uno de los dos, entre 12 y 14
+  según la ejecución, frente al tope de 25. Se queda con la mediana de cinco ejecuciones tras una de
+  calentamiento, y **bajo el detector de carreras se salta declarándolo**, igual que la medida del
+  paso 1: el proceso que se mide no lleva el detector, porque `go build` lo compila sin él, pero sí
+  lo lleva todo lo que corre alrededor, y esa no es la máquina ociosa de la que habla la cifra. La
+  medida sintética del paso 1 sigue donde estaba, en `internal/board`, y ahora dice lo que es: el
+  suelo de esta, útil porque una regresión ahí señala el almacén y no un punto cualquiera del
+  camino.
+
+**El mensaje ofrece hoy un comando que no existe.** Su bloque `COMMANDS` empieza por
+`` `biso help <cmd>...` for the detail of any ``, y [`biso help`](cmd/help.md) es del paso 9: hoy
+contesta `unknown command: "help"` con código 2. El texto es literal por especificación y no se
+toca, pero conviene saberlo, porque `biso prime` es justo lo que lee un agente al empezar y es el
+único sitio donde la herramienta ofrece algo que todavía no puede dar. Lo que sí funciona mientras
+tanto es `biso <cmd> --help`, que es el mismo texto por otra puerta.
+
+Cuatro cosas que la especificación no decidía y hubo que decidir, todas escritas en su página antes
+de escribir el código:
+
+- **La parte fija del mensaje es literal, ejemplos incluidos** (["Lo que no depende del tablero"](cmd/prime.md#lo-que-no-depende-del-tablero)).
+  El `MYP-12` de la regla 2 y el `Done` de la regla 4 ilustran la forma de un identificador y la de
+  un estado terminal y no describen el tablero que se tiene delante, que ya está descrito dos
+  bloques más arriba. Es lo que hace exacta la aritmética del presupuesto: la parte fija mide
+  siempre lo mismo y todo el margen que queda es para el resumen.
+- **Qué se ve del recorte en cascada** (["El recorte en cascada"](cmd/prime.md#el-recorte-en-cascada)): un bloque que se queda sin filas
+  pierde también su encabezado y se queda en su línea de recuento, el recorte es del texto y no toca
+  la salida de `--json`, y el tope se mide sobre el mensaje sin `--full`. El bloque `BOARD` se
+  recorta el último y solo cuando los cuatro bloques de tareas ya no pueden dar más: sus tres listas
+  pierden elementos, primero `priorities`, luego `types` y por último la línea de recuento por
+  estado, cada una diciendo `+N more`, y si ni así cabe, el bloque se corta en seco con tres puntos.
+  Son los escalones 6 y 7 de ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño).
+- **El texto de `--full`** (["`--full`"](cmd/prime.md#--full)), que la especificación mencionaba sin escribir. Agrupa los
+  flags por el campo que escriben y en el orden en que una escritura los aplica, y se genera desde
+  la tabla única de `internal/cli/fields.go`, así que un flag nuevo aparece ahí sin que nadie tenga
+  que acordarse. La rejilla `FIELD FLAGS` del mensaje, en cambio, sí es texto literal: sus trece
+  líneas son una disposición que la tabla no lleva dentro. Lo que la ata a la tabla es una prueba de
+  `internal/cli` que compara las dos en los dos sentidos y se pone roja en cuanto un flag entra en
+  una y no en la otra.
+- **Tres casos límite pequeños**: un vocabulario vacío escribe `(none)`, la línea `unreadable` va la
+  última del bloque `BOARD`, y "tablero vacío" quiere decir sin ninguna tarea, archivadas incluidas,
+  así que un tablero cuyas tareas están todas terminadas no imprime ni los cuatro bloques ni el
+  texto que los sustituye. Un `--limit` negativo contesta el mismo error que el de `biso ls`, que es
+  el mismo flag. El `(none)` no es letra muerta: el estado se alcanza con
+  `biso config set types ""` sobre un tablero donde ningún valor de esa lista está en uso, un caso
+  que ["`biso config`"](cmd/config.md#comportamiento-caso-a-caso) recoge ahora explícitamente, y la
+  prueba lo construye escribiendo la configuración porque ese comando es del paso 9.
+
+**Por qué [el contrato de estabilidad](estabilidad.md) queda "en curso" y no "hecho".** El paso 7
+cierra lo único suyo que nombra un número, el tope de tamaño del mensaje de `biso prime`, pero ese
+documento congela además la simetría entre `biso export` y `biso new --from` y la de `biso snapshot`
+con `biso init --from`, que son del paso 8 y todavía no existen. La fila decía "paso 7, hecho" y
+afirmaba de más.
 
 ## Antes de empezar un paso
 

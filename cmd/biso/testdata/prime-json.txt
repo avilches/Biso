@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "kind": "prime",
+  "generatedAt": "2026-09-06T09:12:04Z",
+  "data": {
+    "tool": { "name": "biso", "version": "1.0.0" },
+    "board": {
+      "name": "My project",
+      "me": "@claude",
+      "statuses": ["To Do", "In Progress", "Done"],
+      "initialStatus": "To Do",
+      "activeStatus": "In Progress",
+      "terminalStatus": "Done",
+      "types": ["idea", "memory", "task", "bug", "docs"],
+      "priorities": ["high", "medium", "low"],
+      "extensions": ["trello.card"],
+      "countByStatus": { "To Do": 54, "In Progress": 4, "Done": 190 }
+    },
+    "inProgress": [
+      { "id": "MYP-11", "title": "Normalize CRLF in the diff", "status": "In Progress",
+        "type": "bug", "priority": "high", "assignees": ["@claude"], "due": null,
+        "acDone": 1, "acTotal": 2, "urgency": 19.0, "leaseExpired": false }
+    ],
+    "needsAnswer": [
+      { "id": "MYP-60", "title": "Confirm the retry budget for the upload endpoint",
+        "status": "In Progress", "type": "task", "priority": "high", "assignees": ["@claude"],
+        "due": null, "acDone": 0, "acTotal": 2, "urgency": 15.2, "leaseExpired": false }
+    ],
+    "assignedToYou": [
+      { "id": "MYP-61", "title": "Rewrite the install section", "status": "To Do",
+        "type": "docs", "priority": "medium", "assignees": ["@claude"], "due": null,
+        "acDone": 0, "acTotal": 1, "urgency": 12.4, "leaseExpired": false }
+    ],
+    "nextUp": [
+      { "id": "MYP-7", "title": "Crash on an empty repository", "status": "To Do",
+        "type": "bug", "priority": "high", "assignees": [], "due": "2026-09-08",
+        "acDone": 0, "acTotal": 4, "urgency": 18.2, "leaseExpired": false }
+    ],
+    "hiddenCount": 49,
+    "skipped": []
+  }
+}
