@@ -32,7 +32,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) y el de sugerencias ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas)), en `internal/match` | hecho | TASK-11 |
 | 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | hecho con matices | TASK-12 |
 | 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | hecho con matices | TASK-13 |
-| 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | pendiente | TASK-14 |
+| 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | hecho | TASK-14 |
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | pendiente | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | pendiente | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`board`](cmd/board.md), [`help`](cmd/help.md) | pendiente | TASK-17 |
@@ -54,10 +54,10 @@ cerradas.
 | [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 4, 5 y 7 | en curso |
 | [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
 | [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5 y 8 | en curso |
-| [El arrendamiento de una tarea](lease.md) | pasos 2, 5 y 6 | en curso |
+| [El arrendamiento de una tarea](lease.md) | pasos 2, 5 y 6 | hecho |
 | [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | en curso |
 | [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | en curso |
-| [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | en curso |
+| [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | hecho |
 | [El contrato JSON](contrato-json.md) | pasos 4 a 9 | en curso |
 | [El contrato de estabilidad](estabilidad.md) | paso 7 | pendiente |
 | [Lo que se deja fuera a propósito](fuera-de-alcance.md) | ninguno | fuera de alcance |
@@ -254,6 +254,39 @@ de ellas cambiaron la especificación:
 - Las otras dos eran huecos de prueba y no de comportamiento: el paso 2 del orden de aplicación (los
   `--replace-*`) no lo cubría ninguna prueba, y una frase de ["`biso new`"](cmd/new.md#salida) seguía diciendo que la
   ficha de `--print` venía debajo de la línea del identificador en vez de sustituirla.
+
+### Qué dejó hecho el paso 6
+
+Los seis verbos del ciclo están enteros, y la forma en que lo están es lo que más conviene saber:
+**ninguno tiene ruta de escritura propia**. `biso set` se partió en un bucle compartido que recibe
+un `verb` con tres momentos (antes de aplicar las flags de campo, después de los nueve pasos de
+["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura),
+y después de arreglar el arrendamiento), más un cuarto que `biso answer` usa para meter sus dos
+comentarios por delante de cualquier `--comment` de la misma llamada. Los seis toman la misma tabla
+de flags de campo que `biso new` y `biso set`, así que la promesa de que una flag significa lo mismo
+en todas partes no depende de que nadie la copie bien.
+
+Tres piezas del motor son nuevas y sirven a más de un verbo:
+
+- **Los avisos pueden llevar líneas de detalle.** Las usa el de criterios sin marcar, que lista
+  debajo los que faltan, en cualquier comando que llegue al estado terminal y no solo en
+  `biso finish` (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)).
+- **Una escritura puede llevar reclamaciones condicionales de arrendamiento**, que `internal/board`
+  comprueba dentro de la misma transacción que escribe las filas. Es lo que hace cierto que de dos
+  reclamaciones simultáneas de un arrendamiento vencido solo gane una; la que pierde no escribe nada
+  y sale con código 8 y la clave `lease_lost`, que es nueva en
+  ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error).
+- **Los argumentos posicionales de texto pasan por las tres formas de
+  ["Cómo se pasa un valor"](valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo)**, así que
+  `biso note MYP-11 @findings.md` vale lo mismo que `biso set MYP-11 --append-note @findings.md`. Lo
+  que la regla del posicional que parece un identificador juzga es lo que se escribió, no lo que el
+  fichero traía, que es lo que mantiene abierta esa vía de escape.
+
+La especificación se corrigió en el mismo cambio, con los textos literales que le faltaban: el error
+6 de `biso start` sobre una tarea ya terminada, el de `biso finish --strict` con todo lo que falta
+nombrado de una vez, el del posicional que parece un identificador en `biso comment`, y el de una
+llamada sin texto, que estrena la clave `missing_text`. Las tres cosas que la página no decidía y hubo
+que decidir son esas mismas: qué dice cada uno de esos errores.
 
 ## Antes de empezar un paso
 

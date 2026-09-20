@@ -241,6 +241,10 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"answer-id-like.txt", "cmd/verbos-del-ciclo.md", "`biso answer`", "Parámetros propios", 0},
 		{"answer-no-question.txt", "cmd/verbos-del-ciclo.md", "`biso answer`", "Qué hace", 0},
 		{"answer-status-line.txt", "cmd/verbos-del-ciclo.md", "`biso answer`", "Salida", 0},
+		{"start-already-finished.txt", "cmd/verbos-del-ciclo.md", "`biso start`", "Qué hace", 1},
+		{"note-missing-text.txt", "cmd/verbos-del-ciclo.md", "`biso note`", "Qué hace", 0},
+		{"comment-id-like.txt", "cmd/verbos-del-ciclo.md", "`biso comment`", "Firma", 1},
+		{"finish-strict.txt", "cmd/verbos-del-ciclo.md", "`biso finish`", "Qué hace", 0},
 	} {
 		block := specBlockIn(t, c.page, c.section, c.heading, c.index)
 		assertEqual(t, fixture(t, c.fixture), block,

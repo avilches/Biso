@@ -155,13 +155,13 @@ agrupada por el código de salida con el que sale cada uno:
 | Código de salida | `code` |
 |---:|---|
 | 1 | `internal` |
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `malformed_string_value`, `id_like_positional`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `malformed_string_value`, `id_like_positional`, `missing_text`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `unknown_config_key`, `criterion_not_found`, `comment_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous`, `comment_ambiguous` |
 | 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity` |
 | 7 | `batch_invalid`, `dry_run_failed` |
-| 8 | `busy`, `io_error`, `file_unreadable`, `no_terminal`, `port_in_use`, `vcs_commit_failed`, `vcs_push_failed` |
+| 8 | `busy`, `io_error`, `file_unreadable`, `lease_lost`, `no_terminal`, `port_in_use`, `vcs_commit_failed`, `vcs_push_failed` |
 | 20 | `no_board`, `pointer_unresolved` |
 | 21 | `database_unreadable` |
 | 22 | `ambiguous_board_id` |
@@ -175,6 +175,14 @@ una línea de comandos mal escrita, exactamente igual que `--color rosa` (`inval
 `--vcs fossil` (`invalid_vcs_mode`), que ya salen con 2. Las dos tablas de códigos de esas dos
 páginas lo dicen así desde siempre; lo que se corrigió, al implementarlas, fue la fila de esta lista,
 que los tenía agrupados con los del 3.
+
+**`missing_text` es el posicional de texto que falta** en los verbos del ciclo que llevan uno
+(["Los verbos del ciclo"](cmd/verbos-del-ciclo.md)), y no se confunde con `missing_value`, que es una
+flag escrita sin su valor: una es un argumento que no está y la otra una flag a medias.
+**`lease_lost` es la reclamación de un arrendamiento vencido que perdió la carrera** contra otra
+simultánea (["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)); sale con 8 porque lo que falló no
+fue la petición, que era correcta, sino conseguir el acceso exclusivo que hacía falta para servirla,
+que es exactamente lo que ese código cubre en la tabla de ["`biso set`"](cmd/set.md#códigos-de-salida).
 
 **La lista es ampliable y las entradas son permanentes.** Una versión posterior puede añadir un `code`
 nuevo, pero ninguno de los de arriba cambiará de significado, cambiará de código de salida ni

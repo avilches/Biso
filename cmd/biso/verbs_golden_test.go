@@ -68,6 +68,62 @@ func TestStartOverAnArchivedTaskPrintsTheErrorOfTheSpecification(t *testing.T) {
 	assertEqual(t, got.stdout, "", "the standard output of a failed biso start")
 }
 
+// The refusal of `biso start` over a task that is already closed, with the
+// pointer to the one flag that would have reopened it in the same call.
+func TestStartOverAFinishedTaskPrintsTheErrorOfTheSpecification(t *testing.T) {
+	m := exampleBoard(t)
+	withTwoCriteria(t, m)
+	m.run(t, "set", "MYP-11", "--status", "Done").assertCode(t, 0)
+
+	got := m.run(t, "start", "MYP-11").assertCode(t, 6)
+
+	assertEqual(t, got.stdout, "", "the standard output of a failed biso start")
+	if !strings.HasSuffix(got.stderr, fixture(t, "start-already-finished.txt")) {
+		t.Errorf("stderr = %q, want it to end with the refusal of the specification", got.stderr)
+	}
+}
+
+func TestNoteWithNoTextPrintsTheErrorOfTheSpecification(t *testing.T) {
+	m := exampleBoard(t)
+
+	got := m.run(t, "note", "MYP-11").assertCode(t, 2)
+
+	assertEqual(t, got.stderr, fixture(t, "note-missing-text.txt"),
+		"the refusal of a biso note with nothing to append")
+}
+
+func TestCommentRefusesASecondIdentifierWithItsOwnMessage(t *testing.T) {
+	m := exampleBoard(t)
+
+	got := m.run(t, "comment", "MYP-1", "MYP-2").assertCode(t, 2)
+
+	assertEqual(t, got.stderr, fixture(t, "comment-id-like.txt"),
+		"the refusal of a positional that looks like an id")
+}
+
+// --strict names everything that is missing at once, with the same text the
+// warnings would have carried without it.
+func TestFinishWithStrictPrintsTheErrorOfTheSpecification(t *testing.T) {
+	m := exampleBoard(t)
+	m.run(t, "set", "MYP-11",
+		"--add-ac", "The parser accepts CRLF",
+		"--add-ac", "There is a test that covers it",
+		"--check-ac", "1",
+		"--append-summary", "Normalizes CRLF").assertCode(t, 0)
+	// exampleBoard leaves the board at MYP-12, so one task in between puts
+	// the unfinished subtask of the example at MYP-14.
+	m.run(t, "new", "Not a subtask").assertCode(t, 0)
+	m.run(t, "new", "A live subtask", "--parent", "MYP-11").assertCode(t, 0)
+
+	got := m.run(t, "finish", "MYP-11", "--strict").assertCode(t, 6)
+
+	assertEqual(t, got.stderr, fixture(t, "finish-strict.txt"),
+		"the refusal of biso finish --strict")
+	if got.stdout != "" {
+		t.Errorf("stdout = %q, and --strict writes nothing", got.stdout)
+	}
+}
+
 func TestNotePrintsTheStatusLineOfTheSpecification(t *testing.T) {
 	m := exampleBoard(t)
 	withOneChecked(t, m)

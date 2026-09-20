@@ -80,7 +80,7 @@ ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
 | `code` | Aviso | Cuándo | Campos en JSON |
 |---|---|---|---|
 | `overwrite` | `warning: --replace-labels replaced 2 existing labels` | cualquier `--replace-*` que sustituya una lista no vacía | `task`, `field`, `count` |
-| `terminal_ac_unchecked` | `warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked` | al llegar a un estado terminal con criterios sin marcar | `task`, `unchecked`, `total` |
+| `terminal_ac_unchecked` | `warning: MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked` | al llegar a un estado terminal con criterios sin marcar. Debajo del mensaje, y sangrados dos espacios, van los criterios que faltan, uno por línea, con su clave y su texto (["`biso finish`"](cmd/verbos-del-ciclo.md#biso-finish)); esas líneas son texto para quien lee y no viajan en el JSON, que ya lleva cuántos son | `task`, `unchecked`, `total` |
 | `terminal_no_summary` | `warning: MYP-11 finished without a final summary` | al llegar a un estado terminal sin resumen | `task` |
 | `unfinished_subtasks` | `warning: MYP-11 has unfinished subtasks: MYP-14, MYP-15` | al terminar una tarea con subtareas vivas. Una subtarea archivada sin terminar se marca `MYP-15 (archived)` dentro de la misma lista, en vez de listarse igual que una viva (["`biso finish`"](cmd/verbos-del-ciclo.md#biso-finish)) | `task`, `subtasks` |
 | `dependency_of_unfinished` | `warning: MYP-11 is a dependency of MYP-20, which is not finished` | al archivar una tarea de la que dependen otras vivas | `task`, `dependent` |
