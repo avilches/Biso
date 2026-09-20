@@ -1,5 +1,6 @@
 # Biso
 
+<!-- Índice de la memoria del proyecto: un fichero por regla en .memory/, y este índice es lo único que entra en contexto. -->
 @.memory/MEMORY.md
 
 `biso` es un CLI para gestionar las tareas de un proyecto. Pensada tanto para personas como para
@@ -186,3 +187,6 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
 
 </CRITICAL_INSTRUCTION>
 <!-- BACKLOG.MD GUIDELINES END -->
+
+<!-- Reglas del contenedor ~/Hub. Claude Code las carga solo al subir por los directorios; opencode, omp y Codex no suben, así que se importan a mano. -->
+@~/Hub/CLAUDE.md
