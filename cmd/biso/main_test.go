@@ -55,9 +55,16 @@ type call struct {
 
 func run(t *testing.T, home, dir string, argv ...string) call {
 	t.Helper()
+	return runIn(t, dir, []string{"HOME=" + home}, argv...)
+}
+
+// runIn executes the compiled program with a working directory and the
+// environment variables a test needs on top of the ones it inherits.
+func runIn(t *testing.T, dir string, env []string, argv ...string) call {
+	t.Helper()
 	cmd := exec.Command(binary(t), argv...)
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(), "HOME="+home)
+	cmd.Env = append(os.Environ(), env...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
@@ -68,6 +75,18 @@ func run(t *testing.T, home, dir string, argv ...string) call {
 		t.Fatalf("biso could not be run: %v", err)
 	}
 	return call{code: code, stdout: stdout.String(), stderr: stderr.String()}
+}
+
+// assertCode fails the test when the call did not end the way it should
+// have, printing what it wrote, which is what a failure of this suite needs
+// to be readable.
+func (c call) assertCode(t *testing.T, want int) call {
+	t.Helper()
+	if c.code != want {
+		t.Fatalf("exit code = %d, want %d\nstdout:\n%s\nstderr:\n%s",
+			c.code, want, c.stdout, c.stderr)
+	}
+	return c
 }
 
 func TestTheRealProgramCreatesABoardAndFindsItAgain(t *testing.T) {
