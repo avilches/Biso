@@ -1,0 +1,2 @@
+error: MYP-11 has no open question
+hint: use `biso comment` to add a comment

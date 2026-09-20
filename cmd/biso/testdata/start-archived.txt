@@ -1,0 +1,2 @@
+error: MYP-11 is archived
+hint: unarchive it first with `biso archive MYP-11 --unarchive`
