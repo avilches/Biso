@@ -139,6 +139,17 @@ ya está señalado con el dedo, y un tablero al que le falte el marcador tiene q
 precisamente para que `biso doctor --fix` se lo devuelva (["`biso doctor`"](cmd/doctor.md#qué-comprueba)). Exigirlo también aquí dejaría sin
 arreglo el único estado que ese arreglo existe para arreglar.
 
+**Y la frase anterior habla de esta vía y solo de esta, no de las dos.** Un tablero sin marcador se abre
+estando dentro de él, y esa es la única puerta que tiene: la segunda vía sigue exigiendo el marcador
+aunque la `path` del puntero resuelva a un directorio que lleva la base de datos, porque ahí quien manda
+es el `id` y el marcador es lo único que dice si ese directorio es el tablero `<id>` o es otro que
+alguien dejó en esa ruta (["Cómo se lee el puntero"](#cómo-se-lee-el-puntero)). Una `path` que resuelve no es "señalar con el dedo":
+es una pista escrita hace meses en un fichero versionado que viaja a otras máquinas y a otras copias de
+trabajo, mientras que el directorio de trabajo es donde quien llama está ahora mismo. Así que un
+proyecto cuyo tablero ha perdido el marcador contesta que no hay tablero (código 20) hasta que alguien
+entre en su directorio y ejecute `biso doctor --fix`, y eso basta, porque una sola puerta ya deja
+arreglable el estado que el arreglo existe para arreglar.
+
 ### El tope de la búsqueda hacia arriba
 
 **El tope de la búsqueda hacia arriba es el directorio personal de quien llama**, el que dice la

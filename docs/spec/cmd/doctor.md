@@ -326,7 +326,7 @@ concreto, el mismo criterio que ya usan `extra_root_unreadable` e `ignore_file_m
 
 ### Las dos formas de un mensaje reparable
 
-**Las tres comprobaciones que `--fix` repara dicen dos cosas distintas, y las dos son normativas**: una
+**Las comprobaciones que `--fix` repara dicen dos cosas distintas, y las dos son normativas**: una
 bajo `Errors:`, mientras el problema sigue ahí, y otra en el grupo de lo reparado, cuando `--fix` ya lo
 ha arreglado. La tabla de arriba fija la primera, que es la que se ve en un tablero sin tocar; esta fija
 las dos, una al lado de la otra, para que no haya que deducir ninguna. El `code` es el mismo en los dos

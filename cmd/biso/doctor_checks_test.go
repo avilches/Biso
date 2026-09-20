@@ -364,3 +364,34 @@ func TestARepairOfDataSurvivesAMarkerThatCannotBeWritten(t *testing.T) {
 		t.Errorf("the missing marker did not come back as an error:\n%s", after.stdout)
 	}
 }
+
+// TestABoardWithNoMarkerIsOnlyReachableFromInsideItself is the wording of
+// docs/spec/resolucion-del-tablero.md#cómo-se-busca-el-tablero that this
+// suite had only as a comment. The argument that a board missing its marker
+// has to be openable, so that `biso doctor --fix` can give it back, is about
+// the first way of finding a board and about that one only: the pointer goes
+// on asking for the marker even when its `path` resolves to a directory that
+// does carry the database, because there the identifier is what commands and
+// the marker is the only thing that says whether that directory is the board
+// the pointer names.
+func TestABoardWithNoMarkerIsOnlyReachableFromInsideItself(t *testing.T) {
+	m := newMachine(t)
+	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "board").assertCode(t, 0)
+	dir := filepath.Join(m.dir, "board")
+	id := markerNameOf(t, dir)
+	if err := os.Remove(filepath.Join(dir, id+".id")); err != nil {
+		t.Fatal(err)
+	}
+
+	// The pointer of this project carries the relative path "board", which
+	// resolves to exactly that directory, and it still answers that there
+	// is no board: exit code 20 and not a board opened.
+	m.run(t, "doctor").assertCode(t, 20)
+	m.run(t, "ls").assertCode(t, 20)
+
+	// And the one door is open: from inside the directory the board is
+	// found, the marker is reported and --fix writes it back.
+	inside := m.at(dir)
+	inside.run(t, "doctor", "--fix").assertCode(t, 0)
+	m.run(t, "doctor").assertCode(t, 0)
+}
