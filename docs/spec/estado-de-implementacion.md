@@ -31,7 +31,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | hecho | TASK-10 |
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) y el de sugerencias ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas)), en `internal/match` | hecho | TASK-11 |
 | 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | hecho con matices | TASK-12 |
-| 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | en curso: los cuatro implementados, pendiente la revisión de la tarea | TASK-13 |
+| 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | hecho con matices | TASK-13 |
 | 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | pendiente | TASK-14 |
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | pendiente | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | pendiente | TASK-16 |
@@ -222,6 +222,38 @@ que se pidió (["`biso get`"](cmd/get.md)); que la ficha de `--print` sustituye 
 ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), que agrupaba `unknown_section` y `unknown_sort_field` con los códigos 3
 mientras las páginas de `ls` y de `get` los daban por errores de uso: se han movido a la fila del
 código 2, que es la que dicen esas páginas y la que corresponde a un dominio cerrado del programa.
+
+### Qué le falta al paso 5, y qué corrigió su revisión
+
+**La fila del paso 5 dice "hecho con matices" y no "hecho" por una sola cosa: el lote de
+`biso new --from` no existe.** Es alcance declarado del paso 8 (TASK-16), porque necesita el formato
+de intercambio que trae ese paso, y hasta entonces el flag **ni siquiera se analiza**: escribirlo hoy
+responde `unknown flag: --from` con código 2, que es la respuesta de un flag que el programa no
+conoce y no la de un flag documentado que todavía no hace nada. Quien lea ["`biso new`"](cmd/new.md#el-modo-lote), que sí lo
+documenta entero, encontrará esa diferencia mientras TASK-16 no cierre. Todo lo demás de las cuatro
+páginas está implementado y probado.
+
+La revisión adversarial del paso corrigió seis cosas, y conviene saber en qué quedaron porque cuatro
+de ellas cambiaron la especificación:
+
+- **Un filtro de etiqueta o de persona no distingue mayúsculas**, como manda ["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma).
+  Comparaba letra por letra, así que un tablero cuya única etiqueta fuera `Parser` contestaba error 3
+  a `--label parser` en vez del listado. El plegado se queda en las mayúsculas: no toca los acentos,
+  porque una etiqueta es un token corto y no prosa.
+- **Los avisos de llegar a un estado terminal nombran la tarea**, así que `biso new` los construye
+  cuando el identificador ya está asignado. Antes salían con el hueco vacío. De ahí sale la regla
+  nueva de que una vista previa de `biso new` no los emite, porque no hay identificador que gastar
+  (["`biso new`"](cmd/new.md#--dry-run-sobre-una-sola-tarea)).
+- **Los siete términos de `urgencyBreakdown` son decimales**, igual que la `urgency` de la que son
+  sumandos. La regla estaba escrita solo para la urgencia, y por eso el desglose se escapó: ahora
+  ["Números, fechas y ausencias"](contrato-json.md#números-fechas-y-ausencias) la dice de los dos.
+- **Las candidatas de una referencia ambigua salen del tablero entero**, sin filtrar por estado, así
+  que una tarea terminada aparece entre ellas aunque `biso ls --search` la deje fuera por el valor por
+  defecto de su `-s`. El código ya lo hacía; el texto se podía leer de las dos maneras y ahora lo dice
+  explícitamente (["Cómo se resuelve una referencia a una tarea"](referencias.md#la-búsqueda-por-texto)).
+- Las otras dos eran huecos de prueba y no de comportamiento: el paso 2 del orden de aplicación (los
+  `--replace-*`) no lo cubría ninguna prueba, y una frase de ["`biso new`"](cmd/new.md#salida) seguía diciendo que la
+  ficha de `--print` venía debajo de la línea del identificador en vez de sustituirla.
 
 ## Antes de empezar un paso
 
