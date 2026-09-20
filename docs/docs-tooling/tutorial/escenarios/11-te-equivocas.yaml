@@ -29,7 +29,7 @@ steps:
   - narration: |
       You want to see what's still pending and type the status name the way you'd call it in any
       other task tracker.
-    command: biso ls -s Pending
+    command: biso ls --status Pending
     output: |
       error: unknown status: "Pending"
              valid statuses on this board: To Do, In Progress, Done
@@ -47,7 +47,7 @@ steps:
   - narration: |
       You try a value that does exist, but typed however it comes out: in uppercase, with an
       underscore.
-    command: biso ls --count -s TO_DO
+    command: biso ls --count --status TO_DO
     output: "54"
     exit_code: 0
     source_kind: derived
@@ -62,7 +62,7 @@ steps:
 
   - narration: |
       You try again, now with a hyphen and mixed case.
-    command: biso ls --count -s To-Do
+    command: biso ls --count --status To-Do
     output: "54"
     exit_code: 0
     source_kind: derived

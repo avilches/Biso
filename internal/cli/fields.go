@@ -20,12 +20,11 @@ package cli
 var listFieldFlags = []struct {
 	suffix   string
 	field    string
-	addShort string
 	alphabet Alphabet
 	noun     string
 }{
-	{suffix: "labels", field: "labels", addShort: "l", alphabet: TokenAlphabet, noun: "label"},
-	{suffix: "assignees", field: "assignees", addShort: "a", alphabet: TokenAlphabet, noun: "assignee"},
+	{suffix: "labels", field: "labels", alphabet: TokenAlphabet, noun: "label"},
+	{suffix: "assignees", field: "assignees", alphabet: TokenAlphabet, noun: "assignee"},
 	{suffix: "refs", field: "references"},
 	{suffix: "docs", field: "documentation"},
 	{suffix: "deps", field: "dependencies"},
@@ -37,12 +36,11 @@ var listFieldFlags = []struct {
 // There is no flag that replaces a block of prose: replacing one is emptying
 // and appending in the same call.
 var proseFields = []struct {
-	appendName  string
-	appendShort string
-	clearName   string
-	field       string
+	appendName string
+	clearName  string
+	field      string
 }{
-	{appendName: "append-desc", appendShort: "d", clearName: "clear-desc", field: "description"},
+	{appendName: "append-desc", clearName: "clear-desc", field: "description"},
 	{appendName: "append-plan", clearName: "clear-plan", field: "plan"},
 	{appendName: "append-note", clearName: "clear-notes", field: "notes"},
 	{appendName: "append-summary", clearName: "clear-summary", field: "summary"},
@@ -54,18 +52,17 @@ var proseFields = []struct {
 // clearing flag.
 var scalarFields = []struct {
 	name       string
-	short      string
 	field      string
 	clear      string
 	vocabulary bool
 	singleLine bool
 	text       bool
 }{
-	{name: "title", short: "t", field: "title", singleLine: true, text: true},
-	{name: "status", short: "s", field: "status", vocabulary: true},
+	{name: "title", field: "title", singleLine: true, text: true},
+	{name: "status", field: "status", vocabulary: true},
 	{name: "type", field: "type", clear: "clear-type", vocabulary: true},
 	{name: "priority", field: "priority", clear: "clear-priority", vocabulary: true},
-	{name: "parent", short: "p", field: "parent", clear: "clear-parent"},
+	{name: "parent", field: "parent", clear: "clear-parent"},
 	{name: "due", field: "due", clear: "clear-due"},
 	{name: "ordinal", field: "ordinal", clear: "clear-ordinal"},
 	// A person field never interprets a leading "@", so --author takes its
@@ -79,18 +76,18 @@ var scalarFields = []struct {
 func fieldFlags() []FlagSpec {
 	var flags []FlagSpec
 	for _, f := range listFieldFlags {
-		list := func(prefix, short string, category Category) FlagSpec {
+		list := func(prefix string, category Category) FlagSpec {
 			return FlagSpec{
-				Name: prefix + f.suffix, Short: short, Value: PlainValue,
+				Name: prefix + f.suffix, Value: PlainValue,
 				Repeatable: true, Comma: true, Category: category,
 				Alphabet: f.alphabet, Noun: f.noun, Field: f.field,
 			}
 		}
 		flags = append(flags,
 			FlagSpec{Name: "clear-" + f.suffix, Category: Clear, Field: f.field},
-			list("replace-", "", Replace),
-			list("rm-", "", Remove),
-			list("add-", f.addShort, Add),
+			list("replace-", Replace),
+			list("rm-", Remove),
+			list("add-", Add),
 		)
 	}
 
@@ -115,7 +112,7 @@ func fieldFlags() []FlagSpec {
 		flags = append(flags,
 			FlagSpec{Name: f.clearName, Category: Clear, Field: f.field},
 			FlagSpec{
-				Name: f.appendName, Short: f.appendShort, Value: TextValue,
+				Name: f.appendName, Value: TextValue,
 				Repeatable: true, Category: Add, Field: f.field,
 			},
 		)
@@ -147,7 +144,7 @@ func fieldFlags() []FlagSpec {
 			flags = append(flags, FlagSpec{Name: f.clear, Category: Clear, Field: f.field})
 		}
 		flags = append(flags, FlagSpec{
-			Name: f.name, Short: f.short, Value: value, Category: Scalar,
+			Name: f.name, Value: value, Category: Scalar,
 			ClosedVocabulary: f.vocabulary, SingleLine: f.singleLine,
 			ClearFlag: f.clear, Field: f.field,
 		})

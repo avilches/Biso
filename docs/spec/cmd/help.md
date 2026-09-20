@@ -8,9 +8,9 @@
 biso help [<command>... | all]
 ```
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<command>` | | no | nombre de comando, o `all` | ninguno | sí | no | |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<command>` | no | nombre de comando, o `all` | ninguno | sí | no | |
 
 | Caso | Qué pasa |
 |---|---|

@@ -6,15 +6,15 @@
 biso snapshot [--vcs <mode>]
 ```
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `--vcs <mode>` | | no | `none`, `commit` o `push` | `commit` | no | no | ninguno |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `--vcs <mode>` | no | `none`, `commit` o `push` | `commit` | no | no | ninguno |
 
 **`biso snapshot` no cambia ningún dato del tablero**, así que la sección ["Flags globales"](flags-globales.md#flags-globales) lo clasifica junto a
 `export` entre los comandos donde `--print` y `--dry-run` son error de uso con código 2: no hay
 ninguna tarea afectada que imprimir, ni ninguna escritura de tarea que simular.
 
-**No tiene flag `-o`/`--out`.** A diferencia de `export`, que escribe donde se le diga,
+**No tiene flag `--out`.** A diferencia de `export`, que escribe donde se le diga,
 `snapshot` escribe siempre en el propio directorio del tablero (["`biso init`"](init.md)), con nombre fijo:
 `snapshot.ndjson` y `board.json`. Es la instantánea del tablero para sí mismo, no un volcado a otra
 parte; para volcar a otra parte está `export`.

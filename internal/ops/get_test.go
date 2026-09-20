@@ -128,7 +128,7 @@ func TestGetByTextWithSeveralMatchesCarriesTheCandidatesAlreadyListed(t *testing
 // would answer, and docs/spec/referencias.md#la-búsqueda-por-texto says so
 // on purpose: resolving a reference searches the whole board, and the only
 // thing it leaves out is an archived task. A listing leaves out the
-// terminal status too, because that is the default value of its -s, and a
+// terminal status too, because that is the default value of its --status, and a
 // finished task is still a task anyone can name.
 func TestTheCandidatesReachATaskInTheTerminalStatus(t *testing.T) {
 	h := newHarness(t)
@@ -136,7 +136,7 @@ func TestTheCandidatesReachATaskInTheTerminalStatus(t *testing.T) {
 	finished := h.create("Another about CRLF")
 	h.set(finished, scalar("status", "Done"))
 
-	// The listing does not have it, because its -s defaults to every
+	// The listing does not have it, because its --status defaults to every
 	// status but the terminal one.
 	if got := ids(h.list(ListParams{Search: pointer("CRLF")})); !reflect.DeepEqual(got, []string{"MYP-1"}) {
 		t.Fatalf("the listing answered %v, and a finished task is not in it by default", got)

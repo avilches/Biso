@@ -389,6 +389,16 @@ func newParams(p *Parsed) (ops.NewParams, error) {
 	if len(p.Positionals) == 1 {
 		params.Title, params.HasTitle = p.Positionals[0], true
 	}
+	if title, ok := p.Value("title"); ok {
+		// The title has two ways in, the argument and --title, and giving
+		// both is a contradiction that used to be settled in silence in
+		// favor of the flag (docs/spec/cmd/new.md#comportamiento-caso-a-caso).
+		if params.HasTitle {
+			return ops.NewParams{}, usage("incompatible_flags",
+				"--title and the title argument cannot be used together")
+		}
+		params.Title, params.HasTitle = title, true
+	}
 	return params, nil
 }
 

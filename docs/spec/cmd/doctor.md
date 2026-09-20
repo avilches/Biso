@@ -6,9 +6,9 @@
 biso doctor [--fix]
 ```
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `--fix` | | no | booleano | falso | no | no | ninguno |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `--fix` | no | booleano | falso | no | no | ninguno |
 
 **`biso doctor` sin `--fix` es de solo lectura**, y `--print` y `--dry-run` de la sección ["Flags globales"](flags-globales.md#flags-globales) son error 2
 igual que en cualquier otro comando de lectura. **Con `--fix` es un comando de escritura**: ahí

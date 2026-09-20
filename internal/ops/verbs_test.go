@@ -238,7 +238,7 @@ func TestStartReclaimsAnExpiredLease(t *testing.T) {
 	}
 }
 
-// -s with a status that is not the active one claims nothing, and empties
+// --status with a status that is not the active one claims nothing, and empties
 // what the task had, because the fields only hold a value on an active and
 // assigned task (docs/spec/lease.md#el-vaciado).
 func TestStartWithAnotherStatusClaimsNoLeaseAndEmptiesTheOneItHad(t *testing.T) {
@@ -254,7 +254,7 @@ func TestStartWithAnotherStatusClaimsNoLeaseAndEmptiesTheOneItHad(t *testing.T) 
 	}
 
 	if !noted(result, id+" was moved to To Do, no lease was claimed") {
-		t.Errorf("notes = %v, want the one of -s to another status", result.Notes)
+		t.Errorf("notes = %v, want the one of --status to another status", result.Notes)
 	}
 	task := h.load(id)
 	if task.LeaseHolder != "" || !task.LeaseExpiresAt.IsZero() {
@@ -290,7 +290,7 @@ func TestStartAddsWhatExplicitAddAssigneesSays(t *testing.T) {
 	}
 
 	if got := strings.Join(h.load(id).Assignees, ","); got != "@sara,@juan" {
-		t.Errorf("assignees = %q, want what -a said added to what was there", got)
+		t.Errorf("assignees = %q, want what --add-assignees said added to what was there", got)
 	}
 }
 
@@ -819,7 +819,7 @@ func TestFinishToAStatusThatIsNotTheTerminalOneEmptiesTheLeaseAllTheSame(t *test
 }
 
 // The four checks of this verb are the checks of arriving at the terminal
-// status, so a -s that names another status has no close to check: neither
+// status, so a --status that names another status has no close to check: neither
 // the warnings nor the error 6 of --strict come out
 // (docs/spec/cmd/verbos-del-ciclo.md#biso-finish).
 func TestFinishToAStatusThatIsNotTheTerminalOneChecksNothing(t *testing.T) {
@@ -841,10 +841,10 @@ func TestFinishToAStatusThatIsNotTheTerminalOneChecksNothing(t *testing.T) {
 	if _, err := FinishOn(h.b, h.env, FinishParams{
 		Refs: []string{id}, Strict: true, Changes: []Change{scalar("status", "To Do")},
 	}); err != nil {
-		t.Errorf("biso finish -s --strict = %v, and it closed nothing to refuse", err)
+		t.Errorf("biso finish --status --strict = %v, and it closed nothing to refuse", err)
 	}
 	if h.load(id).Status != "To Do" {
-		t.Errorf("status = %q, want the one -s named", h.load(id).Status)
+		t.Errorf("status = %q, want the one --status named", h.load(id).Status)
 	}
 }
 

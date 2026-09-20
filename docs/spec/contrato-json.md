@@ -36,24 +36,24 @@ su formato es NDJSON por definición.
 
 `data.filters`, dentro del sobre de `task.list` (["`biso ls`"](cmd/ls.md#el-esquema-json)), no es un
 eco de los flags que se escribieron: es el filtro **efectivo, ya resuelto**, que produjo `data.tasks`,
-incluidos los valores que se resuelven por defecto (el estado terminal excluido sin `-s`, o `--mine`
+incluidos los valores que se resuelven por defecto (el estado terminal excluido sin `--status`, o `--mine`
 resuelto a la identidad concreta que se usó). Como cualquier otra clave documentada de este contrato,
 **está siempre presente**, con la forma de esta tabla:
 
 | Clave | Flag(s) de `biso ls` | Forma | Valor cuando no se filtra por él |
 |---|---|---|---|
-| `status` | `-s/--status` | `list<string>` | el valor por defecto ya resuelto: todo menos el estado terminal, o **todos** cuando se escribió `--any-status`, porque ese es el filtro que de verdad se aplicó |
+| `status` | `--status` | `list<string>` | el valor por defecto ya resuelto: todo menos el estado terminal, o **todos** cuando se escribió `--any-status`, porque ese es el filtro que de verdad se aplicó |
 | `notStatus` | `--not-status` | `list<string>` | `[]` |
 | `anyStatus` | `--any-status` | `bool` | `false` |
 | `archived` | `--archived` | `bool` | `false` |
 | `onlyArchived` | `--only-archived` | `bool` | `false` |
 | `type` | `--type` | `list<string>` | `[]` |
 | `priority` | `--priority` | `list<string>` | `[]` |
-| `label` | `-l/--label` | `list<string>` | `[]` |
+| `label` | `--label` | `list<string>` | `[]` |
 | `labelOr` | `--label-or` | `list<string>` | `[]` |
-| `assignee` | `-a/--assignee`, `--mine` | `list<string>` | `[]` |
+| `assignee` | `--assignee`, `--mine` | `list<string>` | `[]` |
 | `unassigned` | `--unassigned` | `bool` | `false` |
-| `parent` | `-p/--parent` | `string \| null` | `null` |
+| `parent` | `--parent` | `string \| null` | `null` |
 | `blocked` | `--blocked` / `--not-blocked` | `bool \| null` | `null` |
 | `waiting` | `--waiting` / `--not-waiting` | `bool \| null` | `null` |
 | `active` | `--active` / `--not-active` | `bool \| null` | `null` |
@@ -71,7 +71,7 @@ Precisiones:
   resuelve su valor por defecto. `unassigned` es una clave aparte porque "nadie asignado" no es una
   persona que se pueda meter en esa lista.
 - **`parent` es el identificador ya resuelto** (`MYP-11`), nunca el texto de búsqueda que se haya
-  tecleado tras `-p` (["Cómo se resuelve una referencia a una tarea"](referencias.md)).
+  tecleado tras `--parent` (["Cómo se resuelve una referencia a una tarea"](referencias.md)).
 - **`blocked`, `waiting` y `active` son los tres únicos filtros con un opuesto explícito que compite
   por el mismo bit.** `null` es "no se pidió ninguno de los dos", la misma convención que usa el resto
   de este contrato para "sin valor" (["Números, fechas y ausencias"](#números-fechas-y-ausencias)), y

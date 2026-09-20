@@ -5,19 +5,19 @@ archived ones, and says on stderr what it left out. A filter value the board
 does not have is an error, never an empty list, so an empty list is a fact.
 
 Filters (repeat or comma-separate; same field is OR, different fields are AND):
-  -s, --status <value>       configured status (default: all but the terminal)
+      --status <value>       configured status (default: all but the terminal)
       --not-status <value>   exclude a status
       --any-status           include the terminal status too
       --archived             include archived tasks
       --only-archived        only archived tasks
       --type <value>         configured type
       --priority <value>     configured priority
-  -l, --label <value>        label; several labels are ANDed
+      --label <value>        label; several labels are ANDed
       --label-or <value>     label; several are ORed
-  -a, --assignee <@who>      assignee
+      --assignee <@who>      assignee
       --mine                 assigned to you
       --unassigned           assigned to nobody
-  -p, --parent <ref>         subtasks of this task
+      --parent <ref>         subtasks of this task
       --blocked              something unfinished blocks it
       --not-blocked          nothing unfinished blocks it; it may still be
                              waiting on an answer, so add --not-waiting
@@ -54,7 +54,7 @@ Exit codes:
 
 Examples:
   biso ls
-  biso ls -s "In Progress" --mine
+  biso ls --status "In Progress" --mine
   biso ls --type bug --priority high --limit 10
   biso ls --not-blocked --not-waiting --ids
   biso ls --any-status --archived --all

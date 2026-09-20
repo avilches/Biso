@@ -24,7 +24,7 @@ agente" convive con cualquier punto del camino, porque una tarea puede estar rec
 o aparcada en una pregunta abierta y seguir siendo de quien se la asignaron.
 
 **Esta lectura solo es cierta sin la clave de configuración `default_assignee`.** Esa clave habría
-asignado una persona a toda tarea creada sin `-a`. En un tablero que la usara, absolutamente todo
+asignado una persona a toda tarea creada sin `--add-assignees`. En un tablero que la usara, absolutamente todo
 nacería asignado, y la asignación dejaría de significar que alguien decidió encargarte justo esa
 tarea: la consulta de arranque de un agente devolvería el backlog entero disfrazado de encargo. Se
 retira la clave entera: su fila en la tabla de configuración, su comportamiento en `biso new`, su
@@ -164,7 +164,7 @@ especificación le dice que basta.
 **Y `biso new --start` reclama el arrendamiento, porque es el atajo de dos llamadas y la equivalencia
 tiene que ser real.** ["El porqué de reglas concretas"](comandos-y-flags.md#el-porqué-de-reglas-concretas) justifica ese flag como el ahorro de `biso new` más `biso start`;
 si creara la tarea activa y asignada pero sin arrendamiento, las dos vías darían dos tareas distintas y
-la única forma de saberlo sería leer la letra pequeña. La excepción simétrica es `biso start -s` con un
+la única forma de saberlo sería leer la letra pequeña. La excepción simétrica es `biso start --status` con un
 estado que no es el activo: ahí no se fija arrendamiento, porque fijarlo rompería la invariante de
 arriba, y hay que nombrarla explícitamente para que la frase "solo `start` reclama" no se lea como una
 regla sin excepciones.

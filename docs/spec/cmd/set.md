@@ -17,17 +17,17 @@ biso set <ref>... [cualquier flag de campo de las familias de flags]
 **Todos** los flags de las secciones ["Campos de lista que admiten coma"](../familias-de-flags.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-flags.md#campos-de-prosa), ["Campos escalares"](../familias-de-flags.md#campos-escalares) y ["Campos externos"](../familias-de-flags.md#campos-externos) valen aquí, con exactamente el mismo
 significado que en cualquier otro comando. Lo propio de `set`:
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí, una o más | referencia | | sí | no | |
-| `--check-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--uncheck-ac` |
-| `--uncheck-ac <sel>` | | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--check-ac` |
-| `--comment <text>` | | no | texto largo | | sí | no | |
-| `--comment-author <@who>` | | no | texto libre | `me` | no | no | requiere `--comment` |
-| `--rm-comment <sel>` | | no | selector ["Comentarios"](../familias-de-flags.md#comentarios) | | sí | ver ["Comentarios"](../familias-de-flags.md#comentarios) | solape con `--set-comment-date` sobre la misma clave |
-| `--set-comment-date <sel>=<instante>` | | no | selector ["Comentarios"](../familias-de-flags.md#comentarios) + instante UTC | | sí | ver ["Comentarios"](../familias-de-flags.md#comentarios) | solape con `--rm-comment` sobre la misma clave |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí, una o más | referencia | | sí | no | |
+| `--check-ac <sel>` | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--uncheck-ac` |
+| `--uncheck-ac <sel>` | no | selector ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | | sí | ver ["Selectores de criterios"](../familias-de-flags.md#selectores-de-criterios) | solape con `--check-ac` |
+| `--comment <text>` | no | texto largo | | sí | no | |
+| `--comment-author <@who>` | no | texto libre | `me` | no | no | requiere `--comment` |
+| `--rm-comment <sel>` | no | selector ["Comentarios"](../familias-de-flags.md#comentarios) | | sí | ver ["Comentarios"](../familias-de-flags.md#comentarios) | solape con `--set-comment-date` sobre la misma clave |
+| `--set-comment-date <sel>=<instante>` | no | selector ["Comentarios"](../familias-de-flags.md#comentarios) + instante UTC | | sí | ver ["Comentarios"](../familias-de-flags.md#comentarios) | solape con `--rm-comment` sobre la misma clave |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
 
 **El autor de un comentario se llama `--comment-author` en todos los comandos que lo aceptan**, sin
 excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto, un nombre.
@@ -179,7 +179,7 @@ adding in the same call.
 
 Prose fields have two, because a block of text has no single item to remove.
 Replace by clearing and appending in the same call.
-      --append-desc X (-d)   append a paragraph
+      --append-desc X        append a paragraph
       --append-plan X
       --append-note X
       --append-summary X
@@ -189,8 +189,8 @@ External fields have three: --ext key=value sets that one key, --rm-ext key
 drops it, --clear-ext empties the map. There is no --replace-ext: setting a
 key already replaces its value.
 
-Scalars just take a value: -t/--title, -s/--status, --type, --priority,
--p/--parent, --due, --ordinal, --author. Each has a --clear-<field>. An
+Scalars just take a value: --title, --status, --type, --priority,
+--parent, --due, --ordinal, --author. Each has a --clear-<field>. An
 empty string is never a way to clear anything.
 
 Comments:

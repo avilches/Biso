@@ -1,2 +1,2 @@
 warning: 28 more tasks match; showing 30 of 58
-hint: narrow with -s, --type or -l, or ask for everything with --all
+hint: narrow with --status, --type or --label, or ask for everything with --all

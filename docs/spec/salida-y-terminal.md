@@ -142,6 +142,6 @@ ni de campos, la misma garantía que ya tiene la tabla de `code` de error.
   dos caracteres `\` `n` y **ningún** salto de línea real produce este aviso, y se guarda igual:
   ```
   warning: --append-desc contains a literal \n and no real newline; it will be stored as text
-  hint: use a real newline, or -d @file.md, or -d - to read from stdin
+  hint: use a real newline, or --append-desc @file.md, or --append-desc - to read from stdin
   ```
 

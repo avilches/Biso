@@ -138,7 +138,7 @@ func (w *writer) start(t *model.Task) {
 		}
 	}
 	// Whoever writes is who takes the lease, not whoever is in assignees:
-	// `biso new "X" --start -a @sara` leaves the task assigned to @sara
+	// `biso new "X" --start --add-assignees @sara` leaves the task assigned to @sara
 	// with the lease of the caller.
 	w.claimLease(t)
 }

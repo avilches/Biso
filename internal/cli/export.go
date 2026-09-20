@@ -9,7 +9,7 @@ import (
 )
 
 // This file is the output of docs/spec/cmd/export.md: NDJSON on stdout or
-// into the file -o names, and the one command of the program whose answer
+// into the file --out names, and the one command of the program whose answer
 // carries no envelope, because its format is already one JSON object per
 // line.
 
@@ -49,7 +49,7 @@ func runExport(s Streams, p *Parsed, env ops.Env) int {
 	return 0
 }
 
-// writeExport puts the dump where -o says, which is standard output unless
+// writeExport puts the dump where --out says, which is standard output unless
 // it names a file.
 func writeExport(s Streams, p *Parsed, ndjson []byte) error {
 	out, ok := p.Value("out")

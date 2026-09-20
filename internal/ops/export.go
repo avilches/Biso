@@ -19,7 +19,7 @@ import (
 type ExportParams struct {
 	Filters
 
-	// HasStatus says the call wrote -s at all. Without it `export` takes
+	// HasStatus says the call wrote --status at all. Without it `export` takes
 	// every status, the terminal one included, which is the one difference
 	// between its base and the base of `biso ls`.
 	HasStatus bool
@@ -106,7 +106,7 @@ func ExportOn(b *board.Board, env Env, p ExportParams) (*ExportResult, error) {
 // spelled out.
 //
 // Archived tasks come in unless --no-archived says otherwise, and without
-// an explicit -s every status counts, the terminal one included. The second
+// an explicit --status every status counts, the terminal one included. The second
 // is written as --any-status, because that flag is exactly "every status
 // the board configures" and `export` has no other way of saying it.
 func exportAsListing(p ExportParams) ListParams {

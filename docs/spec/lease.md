@@ -58,7 +58,7 @@ nada.
 
 **Reclamar es de [`biso start`](cmd/verbos-del-ciclo.md#biso-start) y de su atajo [`biso new
 --start`](cmd/new.md), y de nadie más**, con una excepción que hay que nombrar porque sin ella la
-frase sería falsa: `biso start -s <estado>` con un estado que no es el activo no fija arrendamiento,
+frase sería falsa: `biso start --status <estado>` con un estado que no es el activo no fija arrendamiento,
 ya que fijarlo ahí rompería la invariante de [El vaciado](#el-vaciado), y deja los campos como los
 dejaría cualquier otra escritura. Una tarea que llega a activa y asignada por cualquier otra vía no
 tiene arrendamiento hasta que alguien llame a `biso start` sobre ella, y esas vías son exactamente

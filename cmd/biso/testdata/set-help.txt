@@ -24,7 +24,7 @@ adding in the same call.
 
 Prose fields have two, because a block of text has no single item to remove.
 Replace by clearing and appending in the same call.
-      --append-desc X (-d)   append a paragraph
+      --append-desc X        append a paragraph
       --append-plan X
       --append-note X
       --append-summary X
@@ -34,8 +34,8 @@ External fields have three: --ext key=value sets that one key, --rm-ext key
 drops it, --clear-ext empties the map. There is no --replace-ext: setting a
 key already replaces its value.
 
-Scalars just take a value: -t/--title, -s/--status, --type, --priority,
--p/--parent, --due, --ordinal, --author. Each has a --clear-<field>. An
+Scalars just take a value: --title, --status, --type, --priority,
+--parent, --due, --ordinal, --author. Each has a --clear-<field>. An
 empty string is never a way to clear anything.
 
 Comments:

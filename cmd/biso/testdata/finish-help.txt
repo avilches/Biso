@@ -10,7 +10,7 @@ Options:
                                With several tasks the selector has to be `all`
       --append-note <text>     one last implementation note; repeatable
       --add-files <path>       record a modified file; repeatable
-  -s, --status <value>         use another status instead of the terminal one
+      --status <value>         use another status instead of the terminal one
       --strict           refuse to finish with unchecked criteria, unfinished
                          subtasks or no summary
                          (default: warn and go on; see finish_strict)

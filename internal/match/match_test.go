@@ -291,7 +291,7 @@ type outcome struct {
 // TestTheSameTextIsWorthTheSameInBothDirections walks the contract table of
 // docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos
 // row by row. Each row transcribes its two columns separately, the one for
-// writing (biso set -s <v>) and the one for filtering (biso ls -s <v>), and
+// writing (biso set --status <v>) and the one for filtering (biso ls --status <v>), and
 // the test checks the implementation against each column on its own. The two
 // columns are data copied from the document, not one computed from the other,
 // so a row whose two halves stopped agreeing, or that stopped agreeing with

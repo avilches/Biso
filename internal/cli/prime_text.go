@@ -17,9 +17,9 @@ import "strings"
 // primeCommands is the COMMANDS block: the ten orders of the cycle with
 // their shape.
 const primeCommands = "COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)\n" +
-	"  biso ls [-s STATUS] [--type T] [-l LABEL] [--mine] [--search TEXT]\n" +
+	"  biso ls [--status STATUS] [--type T] [--label LABEL] [--mine] [--search TEXT]\n" +
 	"  biso get <ref> [--section ac]\n" +
-	"  biso new \"TITLE\" [-d TEXT] [--add-ac TEXT]... [--type T] [--priority P]\n" +
+	"  biso new \"TITLE\" [--append-desc TEXT] [--add-ac TEXT]... [--type T] [--priority P]\n" +
 	"  biso start <ref>... [--append-plan TEXT]\n" +
 	"  biso note <ref> \"TEXT\"\n" +
 	"  biso ask <ref> \"QUESTION\"\n" +
@@ -32,16 +32,16 @@ const primeCommands = "COMMANDS  (`biso help <cmd>...` for the detail of any, se
 // in thirteen lines. `--full` prints the same flags grouped by the field
 // they write, and neither block replaces the other.
 const primeFieldFlags = "FIELD FLAGS  (same names, same meaning, in every command above that writes)\n" +
-	"  -t --title  -s --status  --type --clear-type  --priority --clear-priority\n" +
-	"  -p --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author\n" +
-	"  -l --add-labels --rm-labels --clear-labels --replace-labels\n" +
-	"  -a --add-assignees --rm-assignees --clear-assignees --replace-assignees\n" +
+	"  --title  --status  --type --clear-type  --priority --clear-priority\n" +
+	"  --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author\n" +
+	"  --add-labels --rm-labels --clear-labels --replace-labels\n" +
+	"  --add-assignees --rm-assignees --clear-assignees --replace-assignees\n" +
 	"  --add-refs --rm-refs --clear-refs --replace-refs\n" +
 	"  --add-docs --rm-docs --clear-docs --replace-docs\n" +
 	"  --add-deps --rm-deps --clear-deps --replace-deps\n" +
 	"  --add-files --rm-files --clear-files --replace-files\n" +
 	"  --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac\n" +
-	"  -d --append-desc --clear-desc  --append-plan --clear-plan\n" +
+	"  --append-desc --clear-desc  --append-plan --clear-plan\n" +
 	"  --append-note --clear-notes  --append-summary --clear-summary\n" +
 	"  --comment --rm-comment --set-comment-date\n" +
 	"  --ext K=V --rm-ext --clear-ext\n"
@@ -53,9 +53,9 @@ const primeRules = "RULES  (none of these are guessable; they are the whole lear
 	"     matching several tasks is an error that lists them, never a guess. `note`,\n" +
 	"     `comment`, `ask` and `answer` take one <ref>; `set`, `start` and `finish`\n" +
 	"     take several.\n" +
-	"  3. Filters reject values this board does not have: `-s Pending` is an error,\n" +
+	"  3. Filters reject values this board does not have: `--status Pending` is an error,\n" +
 	"     not an empty list. Case, spaces, hyphens and underscores are ignored, so\n" +
-	"     `-s todo`, `-s \"To Do\"` and `-s TO_DO` are one and the same filter. An\n" +
+	"     `--status todo`, `--status \"To Do\"` and `--status TO_DO` are one and the same filter. An\n" +
 	"     empty list is therefore a fact about the board that you can act on.\n" +
 	"  4. `biso ls` prints 30 tasks by urgency and leaves out the Done ones. It says\n" +
 	"     on stderr what it left out. --all lifts the limit, --any-status includes\n" +
@@ -67,7 +67,7 @@ const primeRules = "RULES  (none of these are guessable; they are the whole lear
 	"     line per task: id, status, criteria, urgency. Add --print for the whole\n" +
 	"     record, or --json for a versioned envelope.\n" +
 	"  7. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.\n" +
-	"  8. Long text: a real newline works, and so do -d @file.md and -d - for stdin.\n" +
+	"  8. Long text: a real newline works, and so do --append-desc @file.md and --append-desc - for stdin.\n" +
 	"  9. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,\n" +
 	"     6 precondition not met, 7 nothing written, 8 environment, 20 no board here.\n" +
 	" 10. `biso ask <ref> \"...\"` parks a task on a question and `biso answer` unparks\n" +
@@ -84,7 +84,7 @@ const primeClosing = "Pick one, `biso start <ref> --append-plan \"...\"`, work, 
 // none (docs/spec/cmd/prime.md#tablero-vacío).
 const primeEmptyBoard = "THE BOARD IS EMPTY\n" +
 	"  Create the first one:\n" +
-	"  biso new \"Title\" -d \"What and why\" --add-ac \"How we will know it works\"\n"
+	"  biso new \"Title\" --append-desc \"What and why\" --add-ac \"How we will know it works\"\n"
 
 // primeTitle is the first line, and the one thing of the fixed part that
 // changes: the version string is the one of whoever runs it, and the
@@ -144,11 +144,7 @@ func fieldFlagsByField() (map[string][]string, []string) {
 		if _, seen := groups[field]; !seen {
 			order = append(order, field)
 		}
-		name := "--" + f.Name
-		if f.Short != "" {
-			name = "-" + f.Short + " " + name
-		}
-		groups[field] = append(groups[field], name)
+		groups[field] = append(groups[field], "--"+f.Name)
 	}
 	return groups, order
 }

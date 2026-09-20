@@ -31,24 +31,24 @@ biso finish MYP-11 --check-ac all --append-summary "Normalize CRLF in the diff, 
 ### Firma
 
 ```
-biso start <ref>... [--append-plan <text>] [-a <@who>]... [-s <v>] [--reopen]
+biso start <ref>... [--append-plan <text>] [--add-assignees <@who>]... [--status <v>] [--reopen]
            [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
 ### Parámetros propios
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí, una o más | referencia | | sí | no | |
-| `--status <v>` | `-s` | no | vocabulario | `active_status` | no | no | |
-| `--reopen` | | no | booleano | falso | no | no | |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí, una o más | referencia | | sí | no | |
+| `--status <v>` | no | vocabulario | `active_status` | no | no | |
+| `--reopen` | no | booleano | falso | no | no | |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
 
-`--append-plan` y `-a/--add-assignees` son los flags de campo de la sección ["Las familias de flags"](../familias-de-flags.md), con su
+`--append-plan` y `--add-assignees` son los flags de campo de la sección ["Las familias de flags"](../familias-de-flags.md), con su
 significado de siempre: **las dos añaden**. `--append-plan` añade al plan existente; sustituirlo entero
 se hace vaciando y añadiendo en la misma llamada (`--clear-plan --append-plan ...`), porque un bloque
-de prosa no tiene flag de sustituir entera. `-a` añade una persona y `--replace-assignees` reemplaza
+de prosa no tiene flag de sustituir entera. `--add-assignees` añade una persona y `--replace-assignees` reemplaza
 la lista.
 
 ### Qué hace
@@ -57,7 +57,7 @@ Cuatro cosas en una escritura: pone el estado activo, **asigna la tarea a `me` s
 persona asignada**, toma el arrendamiento (`leaseExpiresAt`, `leaseHolder`, sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md)) a favor de
 quien llama (renovándolo si ya era suyo, reclamándolo si estaba vencido, o tomándolo si era de otra
 identidad: es el único comando que hace las tres cosas sobre una tarea que ya existe, sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md)), y
-añade el plan si se ha pasado. Con `-s` a un estado que no es el activo no hay arrendamiento que tomar,
+añade el plan si se ha pasado. Con `--status` a un estado que no es el activo no hay arrendamiento que tomar,
 y la fila correspondiente de la tabla dice qué pasa entonces.
 
 | Caso | Qué pasa |
@@ -69,9 +69,9 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | La tarea tiene [una pregunta abierta](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
 | El arrendamiento de la tarea está vencido (`leaseExpired`, ["Cuándo cuenta como vencido"](../lease.md#cuándo-cuenta-como-vencido) de `lease.md`) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (["La renovación"](../lease.md#la-renovación) de `lease.md`), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../decisiones/modelo-de-estados.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados). La reclamación que pierde esa carrera no escribe **nada**, ni siquiera los campos que no tenían que ver con el arrendamiento: sale con código 8 y `code` `lease_lost`, diciendo quién se lo llevó, y quien la hizo puede repetir la llamada, que entonces cae en la fila siguiente y se lo lleva con aviso |
 | El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
-| `-s` con un estado que no es el activo, por ejemplo `biso start MYP-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
-| La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: MYP-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
-| No hay [ninguna identidad configurada](../invocacion.md#variables-de-entorno) y no se pasa `-a` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
+| `--status` con un estado que no es el activo, por ejemplo `biso start MYP-1 --status "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `--status` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
+| La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: MYP-11 is assigned to @sara, left as is`. Con `--add-assignees` explícito, se añade lo que diga `--add-assignees` |
+| No hay [ninguna identidad configurada](../invocacion.md#variables-de-entorno) y no se pasa `--add-assignees` | No asigna a nadie, con `note: no identity configured, task left unassigned`, y tampoco se fija el arrendamiento: no hay ninguna identidad a la que atribuírselo |
 | La tarea ya tiene plan y se pasa `--append-plan` | Se añade al final, como todo flag de añadir |
 | Varias referencias | Todo o nada |
 
@@ -132,9 +132,9 @@ you, assign them to you if nobody has them, and record a plan. One call.
 Options:
       --append-plan <text>       add to the implementation plan; repeatable,
                                  and takes @file and - like every text option
-  -a, --add-assignees <@who>     add an assignee (--replace-assignees replaces
+      --add-assignees <@who>     add an assignee (--replace-assignees replaces
                                  the list)
-  -s, --status <value>           use another status instead of the active one;
+      --status <value>           use another status instead of the active one;
                                  no lease is claimed then, a lease only exists
                                  on an active task
       --reopen           allow starting a task that is already finished
@@ -168,12 +168,12 @@ biso note <ref> [<text>...] [--id] [--match] [cualquier flag de campo de las fam
 
 ### Parámetros propios
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí, exactamente una | referencia | | no | no | |
-| `<text>` | | sí, salvo con `--note` | texto largo | | sí, como posicional | no | |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí, exactamente una | referencia | | no | no | |
+| `<text>` | sí, salvo con `--note` | texto largo | | sí, como posicional | no | |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
 
 Cada texto es un párrafo propio en la sección de notas. Aceptan `@fichero` y `-` como cualquier texto
 largo.
@@ -288,13 +288,13 @@ biso comment <ref> [<text>...] [--comment-author <@who>]
              [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí, exactamente una | referencia | | no | no | |
-| `<text>` | | sí, salvo con `--comment` | texto largo | | sí | no | |
-| `--comment-author <@who>` | | no | texto libre | `me` | no | no | |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí, exactamente una | referencia | | no | no | |
+| `<text>` | sí, salvo con `--comment` | texto largo | | sí | no | |
+| `--comment-author <@who>` | no | texto libre | `me` | no | no | |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
 
 Se aplican las mismas reglas de posicional que en `biso note`, incluida la del texto que parece un
 identificador, con el mensaje escrito para este comando y su propio flag de campo:
@@ -373,20 +373,20 @@ Examples:
 
 ```
 biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]...
-            [--append-note <text>]... [--add-files <path>]... [-s <v>] [--strict] [--no-checks]
+            [--append-note <text>]... [--add-files <path>]... [--status <v>] [--strict] [--no-checks]
             [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
 ### Parámetros propios
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí, una o más | referencia | | sí | no | |
-| `--status <v>` | `-s` | no | vocabulario | `terminal_status` | no | no | |
-| `--strict` | | no | booleano | el valor de `finish_strict` | no | no | `--no-checks` |
-| `--no-checks` | | no | booleano | falso | no | no | `--strict` |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí, una o más | referencia | | sí | no | |
+| `--status <v>` | no | vocabulario | `terminal_status` | no | no | |
+| `--strict` | no | booleano | el valor de `finish_strict` | no | no | `--no-checks` |
+| `--no-checks` | no | booleano | falso | no | no | `--strict` |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
 
 `--append-summary`, `--check-ac`, `--append-note` y `--add-files` son los flags de
 campo de siempre.
@@ -407,8 +407,8 @@ terminal, todo en una escritura.
 | La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con `note: MYP-11 was already Done` |
 | La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. Solo `start` queda bloqueado sobre una tarea archivada |
 | La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
-| La tarea tiene el arrendamiento y `-s` la lleva a otro estado que tampoco es el activo | Los campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
-| `-s` lleva a un estado que no es el terminal | No se emite ninguno de los avisos de esta tabla, ni con `--strict`. Los avisos de cierre son los de llegar a un estado terminal, según ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos), y una llamada que no cierra nada no tiene nada que comprobar. El resto de la escritura se aplica igual, el vaciado del arrendamiento de la fila anterior incluido |
+| La tarea tiene el arrendamiento y `--status` la lleva a otro estado que tampoco es el activo | Los campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
+| `--status` lleva a un estado que no es el terminal | No se emite ninguno de los avisos de esta tabla, ni con `--strict`. Los avisos de cierre son los de llegar a un estado terminal, según ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos), y una llamada que no cierra nada no tiene nada que comprobar. El resto de la escritura se aplica igual, el vaciado del arrendamiento de la fila anterior incluido |
 | `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos, incluido el de la pregunta abierta |
 | Varias referencias | Todo o nada |
 
@@ -495,7 +495,7 @@ Options:
                                With several tasks the selector has to be `all`
       --append-note <text>     one last implementation note; repeatable
       --add-files <path>       record a modified file; repeatable
-  -s, --status <value>         use another status instead of the terminal one
+      --status <value>         use another status instead of the terminal one
       --strict           refuse to finish with unchecked criteria, unfinished
                          subtasks or no summary
                          (default: warn and go on; see finish_strict)
@@ -526,12 +526,12 @@ biso ask <ref> <text>... [--id] [--match] [cualquier flag de campo de las famili
 
 ### Parámetros propios
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí, exactamente una | referencia | | no | no | |
-| `<text>` | | sí | texto largo | | sí, como posicional | no | |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí, exactamente una | referencia | | no | no | |
+| `<text>` | sí | texto largo | | sí, como posicional | no | |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
 
 Cada texto es un párrafo propio del cuerpo de la pregunta, igual que en [`biso note`](#biso-note). Acepta
 `@fichero` y `-` como [cualquier texto largo](../valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
@@ -653,12 +653,12 @@ biso answer <ref> <text>... [--id] [--match] [cualquier flag de campo de las fam
 
 ### Parámetros propios
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí, exactamente una | referencia | | no | no | |
-| `<text>` | | sí | texto largo | | sí, como posicional | no | |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí, exactamente una | referencia | | no | no | |
+| `<text>` | sí | texto largo | | sí, como posicional | no | |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
 
 Cada texto es un párrafo propio de la respuesta, igual que en [`biso ask`](#biso-ask) y en [`biso note`](#biso-note). Acepta `@fichero` y `-` como [cualquier texto largo](../valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
 

@@ -34,7 +34,7 @@ You want to see what's still pending and type the status name the way you'd call
 other task tracker.
 
 ```console
-$ biso ls -s Pending
+$ biso ls --status Pending
 error: unknown status: "Pending"
        valid statuses on this board: To Do, In Progress, Done
 ```
@@ -47,7 +47,7 @@ You try a value that does exist, but typed however it comes out: in uppercase, w
 underscore.
 
 ```console
-$ biso ls --count -s TO_DO
+$ biso ls --count --status TO_DO
 54
 ```
 
@@ -60,7 +60,7 @@ Exit code: `0`
 You try again, now with a hyphen and mixed case.
 
 ```console
-$ biso ls --count -s To-Do
+$ biso ls --count --status To-Do
 54
 ```
 

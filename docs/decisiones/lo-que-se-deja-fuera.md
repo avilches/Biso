@@ -39,7 +39,7 @@ las descarta.
   identidad de la tarea en el otro sistema, el autor libre en los comentarios, las fechas fijables al
   importar y la simetría de `export` con `new --from`.
 - **La clave de configuración `default_assignee`.** Habría asignado una persona a toda tarea creada
-  sin `-a`. Se descarta porque en un tablero que la usara, absolutamente todo nacería asignado, y la
+  sin `--add-assignees`. Se descarta porque en un tablero que la usara, absolutamente todo nacería asignado, y la
   asignación dejaría de significar que alguien decidió encargarte justo esa tarea: la consulta de
   arranque de un agente devolvería el backlog entero disfrazado de encargo. Es la comodidad concreta
   que habría destruido la señal en la que se apoya la decisión de ["Distinguir el encargo de la ejecución: resuelto sin estado nuevo"](modelo-de-estados.md#distinguir-el-encargo-de-la-ejecución-resuelto-sin-estado-nuevo), que la asignación sea

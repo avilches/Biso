@@ -43,7 +43,7 @@ Sara declares her identity for this session, which is an environment variable an
 `biso` command, and hands the task to the agent.
 
 ```console
-$ biso set TASK-19 -a @claude
+$ biso set TASK-19 --add-assignees @claude
 TASK-19  To Do  ac 0/2  urgency 7.0
 ```
 
@@ -76,7 +76,7 @@ The startup message tells the same story another way. If the agent ran it again 
 `TASK-19` would have moved.
 
 ```console
-$ biso ls --mine -s "To Do"
+$ biso ls --mine --status "To Do"
 TASK-19  To Do  task  high    Retry the upload on 5xx                ac 0/2  @claude  -
 TASK-61  To Do  docs  medium  Rewrite the install section            ac 0/1  @claude  -
 TASK-33  To Do  task  medium  Add a retry counter to the upload log  ac 1/3  @claude  -

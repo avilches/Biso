@@ -63,7 +63,7 @@ type Filters struct {
 type ListParams struct {
 	Filters
 
-	// HasStatus says the call wrote -s at all, which is what tells an
+	// HasStatus says the call wrote --status at all, which is what tells an
 	// explicit status apart from the default that excludes the terminal
 	// one (docs/spec/cmd/ls.md).
 	HasStatus bool `json:"-"`
@@ -209,7 +209,7 @@ func truncationWarning(shown, matched int) Warning {
 		Message: fmt.Sprintf("%d more tasks match; showing %d of %d",
 			matched-shown, shown, matched),
 		Hints: []string{
-			"narrow with -s, --type or -l, or ask for everything with --all",
+			"narrow with --status, --type or --label, or ask for everything with --all",
 		},
 		Fields: map[string]any{"shown": shown, "matched": matched},
 	}
@@ -217,8 +217,8 @@ func truncationWarning(shown, matched int) Warning {
 
 // resolveFilters turns what the caller typed into the effective filter:
 // every closed vocabulary matched against the board's own spelling, --mine
-// turned into the identity it used, -p resolved to an identifier, and the
-// default of -s spelled out.
+// turned into the identity it used, --parent resolved to an identifier, and the
+// default of --status spelled out.
 //
 // It is the whole of docs/spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué,
 // and it calls the one matching algorithm there is, so that the same text
@@ -240,7 +240,7 @@ func (r *reader) resolveFilters(p ListParams) (Filters, error) {
 		return f, err
 	}
 
-	// Without an explicit -s the default is every status but the terminal
+	// Without an explicit --status the default is every status but the terminal
 	// one, and --any-status is the only other way to bring it back. That
 	// is the default value of the flag spelled out, not a rule laid on top
 	// of it (docs/spec/cmd/ls.md).
@@ -301,7 +301,7 @@ func (r *reader) resolveFilters(p ListParams) (Filters, error) {
 	return f, nil
 }
 
-// everyStatus is the resolved default of -s: every status the board
+// everyStatus is the resolved default of --status: every status the board
 // configures, with the terminal one left out unless --any-status asked for
 // it.
 func (r *reader) everyStatus(anyStatus bool) []string {

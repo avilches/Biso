@@ -262,7 +262,7 @@ func readBatchLine(cfg board.Config, line *batchLine, text string, now time.Time
 		}
 	}
 	// The status is the initial one when the line does not say, exactly as
-	// a task created with no -s (docs/spec/cmd/new.md).
+	// a task created with no --status (docs/spec/cmd/new.md).
 	t.Status = cfg.InitialStatus
 	if d.hasStatus {
 		status, matchErr := match.Match(match.Status, d.rawStatus, cfg.Statuses)

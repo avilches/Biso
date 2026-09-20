@@ -6,9 +6,9 @@ you, assign them to you if nobody has them, and record a plan. One call.
 Options:
       --append-plan <text>       add to the implementation plan; repeatable,
                                  and takes @file and - like every text option
-  -a, --add-assignees <@who>     add an assignee (--replace-assignees replaces
+      --add-assignees <@who>     add an assignee (--replace-assignees replaces
                                  the list)
-  -s, --status <value>           use another status instead of the active one;
+      --status <value>           use another status instead of the active one;
                                  no lease is claimed then, a lease only exists
                                  on an active task
       --reopen           allow starting a task that is already finished

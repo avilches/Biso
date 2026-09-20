@@ -50,12 +50,12 @@ func TestListRejectsAValueTheVocabularyDoesNotHave(t *testing.T) {
 func TestListSuggestsTheClosestLabelAndAssignee(t *testing.T) {
 	m := smallBoard(t)
 
-	label := m.run(t, "ls", "-l", "fronted").assertCode(t, 3)
+	label := m.run(t, "ls", "--label", "fronted").assertCode(t, 3)
 	assertEqual(t, label.stderr,
 		"error: unknown label: \"fronted\"\nhint: did you mean: frontend?\n",
 		"the message of an unknown label")
 
-	assignee := m.run(t, "ls", "-a", "@clude").assertCode(t, 3)
+	assignee := m.run(t, "ls", "--assignee", "@clude").assertCode(t, 3)
 	assertEqual(t, assignee.stderr,
 		"error: unknown assignee: \"@clude\"\nhint: did you mean: @claude?\n",
 		"the message of an unknown assignee")
@@ -67,7 +67,7 @@ func TestListSuggestsTheClosestLabelAndAssignee(t *testing.T) {
 func TestListUncheckedTurnsOffThoseTwoChecksAndNothingElse(t *testing.T) {
 	m := smallBoard(t)
 
-	accepted := m.run(t, "ls", "-l", "fronted", "--unchecked").assertCode(t, 0)
+	accepted := m.run(t, "ls", "--label", "fronted", "--unchecked").assertCode(t, 0)
 	assertEqual(t, accepted.stdout, "", "a label nobody has, with --unchecked")
 
 	// And the vocabulary of a configured field still answers exit code 3.
@@ -90,7 +90,7 @@ func TestListMineWithoutAnIdentityIsExitCodeSix(t *testing.T) {
 }
 
 // TestListHidesTheTerminalStatusUnlessItIsNamed is the rule of the default
-// value of -s: the terminal status is out unless -s names it or
+// value of --status: the terminal status is out unless --status names it or
 // --any-status asks for it, and --not-status does not bring it back.
 func TestListHidesTheTerminalStatusUnlessItIsNamed(t *testing.T) {
 	m := smallBoard(t)
@@ -102,7 +102,7 @@ func TestListHidesTheTerminalStatusUnlessItIsNamed(t *testing.T) {
 		what string
 	}{
 		{[]string{"ls", "--ids"}, []string{"MYP-1", "MYP-2", "MYP-3"}, "the default"},
-		{[]string{"ls", "--ids", "-s", "Done"}, []string{"MYP-4"}, "-s Done"},
+		{[]string{"ls", "--ids", "--status", "Done"}, []string{"MYP-4"}, "--status Done"},
 		{[]string{"ls", "--ids", "--any-status"},
 			[]string{"MYP-1", "MYP-2", "MYP-3", "MYP-4"}, "--any-status"},
 		{[]string{"ls", "--ids", "--not-status", "To Do"}, nil, "--not-status on its own"},
@@ -138,7 +138,7 @@ func TestListArchivedTasksAreOutUnlessAskedFor(t *testing.T) {
 func TestListCombinesLabelsWithAndAndLabelOrWithOr(t *testing.T) {
 	m := smallBoard(t)
 
-	both := m.run(t, "ls", "--ids", "-l", "frontend", "-l", "backend").assertCode(t, 0)
+	both := m.run(t, "ls", "--ids", "--label", "frontend", "--label", "backend").assertCode(t, 0)
 	assertEqual(t, both.stdout, "MYP-1\n", "two labels ANDed")
 
 	either := m.run(t, "ls", "--ids", "--label-or", "frontend",
@@ -487,7 +487,7 @@ func TestGetWithJsonAnswersTheCandidatesEnvelope(t *testing.T) {
 func TestListWithAnAmbiguousParentAnswersTheOrdinaryErrorEnvelope(t *testing.T) {
 	m := smallBoard(t)
 
-	got := m.run(t, "ls", "-p", "Task", "--json").assertCode(t, 5)
+	got := m.run(t, "ls", "--parent", "Task", "--json").assertCode(t, 5)
 
 	envelope := envelopeOf(t, got.stderr)
 	if envelope["kind"] != "error" {
@@ -505,11 +505,11 @@ func TestListParentFiltersTheSubtasksOfTheResolvedTask(t *testing.T) {
 	m.run(t, "set", "MYP-2", "--parent", "MYP-1").assertCode(t, 0)
 	m.run(t, "set", "MYP-3", "--parent", "MYP-1").assertCode(t, 0)
 
-	got := m.run(t, "ls", "--ids", "-p", "1").assertCode(t, 0)
+	got := m.run(t, "ls", "--ids", "--parent", "1").assertCode(t, 0)
 
 	assertEqual(t, got.stdout, "MYP-2\nMYP-3\n", "the subtasks of MYP-1")
 
-	envelope := m.run(t, "ls", "-p", "1", "--json").assertCode(t, 0)
+	envelope := m.run(t, "ls", "--parent", "1", "--json").assertCode(t, 0)
 	filters := envelopeOf(t, envelope.stdout)["data"].(map[string]any)["filters"].(map[string]any)
 	if filters["parent"] != "MYP-1" {
 		t.Errorf("the effective parent filter is %v and not the resolved id", filters["parent"])
@@ -521,7 +521,7 @@ func TestListParentFiltersTheSubtasksOfTheResolvedTask(t *testing.T) {
 func TestListParentThatDoesNotExistIsExitCodeFour(t *testing.T) {
 	m := smallBoard(t)
 
-	got := m.run(t, "ls", "-p", "MYP-999").assertCode(t, 4)
+	got := m.run(t, "ls", "--parent", "MYP-999").assertCode(t, 4)
 
 	if !strings.Contains(got.stderr, "MYP-999 has never existed on this board") {
 		t.Errorf("the message is %q", got.stderr)

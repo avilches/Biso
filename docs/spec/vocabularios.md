@@ -180,7 +180,7 @@ llama montó la suya.
 Esta tabla es el contrato, y es la prueba de aceptación que hay que poder ejecutar. Tablero con los
 estados `To Do`, `In Progress` y `Done`:
 
-| Entrada | `biso set MYP-1 -s <v>` | `biso ls -s <v>` |
+| Entrada | `biso set MYP-1 --status <v>` | `biso ls --status <v>` |
 |---|---|---|
 | `To Do` | escribe | filtra |
 | `todo` | escribe | filtra |
@@ -225,11 +225,11 @@ Un tablero con las etiquetas `frontend`, `backend`, `bug`, `docs` y `parser`, y 
 `@claude`, `@sara` y `@avilches`:
 
 ```
-$ biso ls -l fronted
+$ biso ls --label fronted
 error: unknown label: "fronted"
 hint: did you mean: frontend?
 
-$ biso ls -a @clude
+$ biso ls --assignee @clude
 error: unknown assignee: "@clude"
 hint: did you mean: @claude?
 ```

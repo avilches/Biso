@@ -99,8 +99,8 @@ func Start(env Env, p StartParams) (*WriteResult, error) {
 func StartOn(b *board.Board, env Env, p StartParams) (*WriteResult, error) {
 	changes := p.Changes
 	if !writesFlag(changes, "status") {
-		// -s names another status, and then there is no lease to claim;
-		// with no -s the status is the board's active one, which is the
+		// --status names another status, and then there is no lease to claim;
+		// with no --status the status is the board's active one, which is the
 		// whole point of the verb.
 		changes = append(changes, Change{
 			Flag: "status", Step: StepScalar, Value: b.Config.ActiveStatus,
@@ -192,7 +192,7 @@ func (w *writer) assignToCaller(t, before *model.Task) {
 				t.ID, before.Assignees[0]))
 		}
 	case len(t.Assignees) > 0:
-		// -a named somebody on a task that had nobody, so that is who
+		// --add-assignees named somebody on a task that had nobody, so that is who
 		// has it now and `me` is not added on top.
 	case w.env.Me == "":
 		// No identity to attribute it to, so the task is left
@@ -424,7 +424,7 @@ func FinishOn(b *board.Board, env Env, p FinishParams) (*WriteResult, error) {
 // --strict: refusing would only push the caller into `biso set`.
 func (w *writer) finishChecks(t *model.Task, byID map[string]*model.Task, strict bool) error {
 	if t.Status != w.b.Config.TerminalStatus {
-		// These are the checks of arriving at a terminal status, and -s
+		// These are the checks of arriving at a terminal status, and --status
 		// named another one: nothing is being closed here, so there is
 		// nothing to warn about and nothing for --strict to refuse
 		// (docs/spec/salida-y-terminal.md#notas-y-avisos). The rest of
@@ -659,7 +659,7 @@ func writesAnyField(changes []Change) bool {
 
 // writesFlag answers whether the call already wrote that field flag, which
 // is how `start` and `finish` tell their own default apart from an explicit
-// -s.
+// --status.
 func writesFlag(changes []Change, flag string) bool {
 	for _, c := range changes {
 		if c.Flag == flag {

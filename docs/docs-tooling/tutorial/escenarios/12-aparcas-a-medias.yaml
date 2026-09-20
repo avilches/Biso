@@ -86,7 +86,7 @@ steps:
       means. The task hasn't gone anywhere, it's just been moved out of the way.
   - narration: |
       And to close the idea, it checks what's still in progress now.
-    command: biso ls -s "In Progress"
+    command: biso ls --status "In Progress"
     output: |
       TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
       TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -

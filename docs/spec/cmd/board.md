@@ -6,10 +6,10 @@
 biso board [--port <n>] [--no-open]
 ```
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `--port <n>` | | no | entero entre 1024 y 65535 | 6420 | no | no | ninguno |
-| `--no-open` | | no | booleano | falso | no | no | ninguno |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `--port <n>` | no | entero entre 1024 y 65535 | 6420 | no | no | ninguno |
+| `--no-open` | no | booleano | falso | no | no | ninguno |
 
 La interfaz interactiva, y **el único comando del programa que abre una interfaz**. Ningún otro puede
 abrirla, ni la abre nadie por su cuenta.
@@ -41,7 +41,7 @@ control de la propia interfaz y que no se combinan entre sí:
 
 Sin agrupar, que es lo que se ve por defecto, las tareas quedan sueltas dentro de cada columna de
 estado. La agrupación es solo de esta interfaz: no existe ningún flag equivalente en `biso ls` ni
-en `biso prime`, aunque las dos ya permiten filtrar por `-p/--parent` y por `--type`
+en `biso prime`, aunque las dos ya permiten filtrar por `--parent` y por `--type`
 (secciones [`biso ls`](ls.md) y [`biso set`](set.md)).
 
 ## Salida

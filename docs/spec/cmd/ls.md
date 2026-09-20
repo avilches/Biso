@@ -3,10 +3,10 @@
 ## Firma
 
 ```
-biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] [--only-archived]
+biso ls [--status <status>]... [--not-status <status>]... [--any-status] [--archived] [--only-archived]
         [--type <v>]... [--priority <v>]...
-        [-l <label>]... [--label-or <label>]... [-a <@who>]... [--mine] [--unassigned]
-        [-p <ref>] [--blocked] [--not-blocked] [--waiting] [--not-waiting]
+        [--label <label>]... [--label-or <label>]... [--assignee <@who>]... [--mine] [--unassigned]
+        [--parent <ref>] [--blocked] [--not-blocked] [--waiting] [--not-waiting]
         [--active] [--not-active] [--overdue] [--due-before <date>]
         [--search <text>] [--unchecked]
         [--sort <field>] [--reverse] [--limit <n>] [--all] [--ids] [--count]
@@ -14,57 +14,57 @@ biso ls [-s <status>]... [--not-status <status>]... [--any-status] [--archived] 
 
 ## Parámetros
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `--status <v>` | `-s` | no | vocabulario | todos menos el terminal | sí | sí | `--any-status` |
-| `--not-status <v>` | | no | vocabulario | | sí | sí | `--any-status` |
-| `--any-status` | | no | booleano | falso | no | no | `-s`, `--not-status` |
-| `--archived` | | no | booleano | falso | no | no | `--only-archived` |
-| `--only-archived` | | no | booleano | falso | no | no | `--archived` |
-| `--type <v>` | | no | vocabulario | | sí | sí | |
-| `--priority <v>` | | no | vocabulario | | sí | sí | |
-| `--label <l>` | `-l` | no | etiqueta | | sí | sí | |
-| `--label-or <l>` | | no | etiqueta | | sí | sí | |
-| `--assignee <@w>` | `-a` | no | persona | | sí | sí | `--mine`, `--unassigned` |
-| `--mine` | | no | booleano | falso | no | no | `-a`, `--unassigned` |
-| `--unassigned` | | no | booleano | falso | no | no | `-a`, `--mine` |
-| `--parent <ref>` | `-p` | no | referencia | | no | no | |
-| `--blocked` | | no | booleano | falso | no | no | `--not-blocked` |
-| `--not-blocked` | | no | booleano | falso | no | no | `--blocked` |
-| `--waiting` | | no | booleano | falso | no | no | `--not-waiting` |
-| `--not-waiting` | | no | booleano | falso | no | no | `--waiting` |
-| `--active` | | no | booleano | falso | no | no | `--not-active` |
-| `--not-active` | | no | booleano | falso | no | no | `--active` |
-| `--overdue` | | no | booleano | falso | no | no | |
-| `--due-before <d>` | | no | `YYYY-MM-DD` | | no | no | |
-| `--search <text>` | | no | texto libre | | no | no | |
-| `--unchecked` | | no | booleano | falso | no | no | |
-| `--sort <field>` | | no | `urgency`, `id`, `ordinal`, `due`, `updated`, `created`, `title` | el orden de abajo | no | no | |
-| `--reverse` | | no | booleano | falso | no | no | |
-| `--limit <n>` | | no | entero >= 0 | 30 | no | no | `--all` |
-| `--all` | | no | booleano | falso | no | no | `--limit` |
-| `--ids` | | no | booleano | falso | no | no | `--count` |
-| `--count` | | no | booleano | falso | no | no | `--ids` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `--status <v>` | no | vocabulario | todos menos el terminal | sí | sí | `--any-status` |
+| `--not-status <v>` | no | vocabulario | | sí | sí | `--any-status` |
+| `--any-status` | no | booleano | falso | no | no | `--status`, `--not-status` |
+| `--archived` | no | booleano | falso | no | no | `--only-archived` |
+| `--only-archived` | no | booleano | falso | no | no | `--archived` |
+| `--type <v>` | no | vocabulario | | sí | sí | |
+| `--priority <v>` | no | vocabulario | | sí | sí | |
+| `--label <l>` | no | etiqueta | | sí | sí | |
+| `--label-or <l>` | no | etiqueta | | sí | sí | |
+| `--assignee <@w>` | no | persona | | sí | sí | `--mine`, `--unassigned` |
+| `--mine` | no | booleano | falso | no | no | `--assignee`, `--unassigned` |
+| `--unassigned` | no | booleano | falso | no | no | `--assignee`, `--mine` |
+| `--parent <ref>` | no | referencia | | no | no | |
+| `--blocked` | no | booleano | falso | no | no | `--not-blocked` |
+| `--not-blocked` | no | booleano | falso | no | no | `--blocked` |
+| `--waiting` | no | booleano | falso | no | no | `--not-waiting` |
+| `--not-waiting` | no | booleano | falso | no | no | `--waiting` |
+| `--active` | no | booleano | falso | no | no | `--not-active` |
+| `--not-active` | no | booleano | falso | no | no | `--active` |
+| `--overdue` | no | booleano | falso | no | no | |
+| `--due-before <d>` | no | `YYYY-MM-DD` | | no | no | |
+| `--search <text>` | no | texto libre | | no | no | |
+| `--unchecked` | no | booleano | falso | no | no | |
+| `--sort <field>` | no | `urgency`, `id`, `ordinal`, `due`, `updated`, `created`, `title` | el orden de abajo | no | no | |
+| `--reverse` | no | booleano | falso | no | no | |
+| `--limit <n>` | no | entero >= 0 | 30 | no | no | `--all` |
+| `--all` | no | booleano | falso | no | no | `--limit` |
+| `--ids` | no | booleano | falso | no | no | `--count` |
+| `--count` | no | booleano | falso | no | no | `--ids` |
 
 Reglas de combinación de filtros:
 
-- **Filtros de campos distintos se combinan con `y`.** `-s "To Do" --type bug` son las que cumplen las
+- **Filtros de campos distintos se combinan con `y`.** `--status "To Do" --type bug` son las que cumplen las
   dos cosas.
 - **Valores repetidos del mismo campo se combinan con `o`.** `--type bug --type docs` son las de
   cualquiera de los tipos. Esto vale para `--status`, `--type`, `--priority`, `--assignee` y
   `--label-or`.
-- **`-l/--label` es la única que se combina con `y`.** `-l frontend -l bug` son las que llevan las
+- **`--label` es la única que se combina con `y`.** `--label frontend --label bug` son las que llevan las
   dos. Para el `o` está `--label-or`, que valida igual.
-- **`--unchecked` apaga la comprobación de existencia de `-l`, `--label-or` y `-a`, y ninguna otra.**
+- **`--unchecked` apaga la comprobación de existencia de `--label`, `--label-or` y `--assignee`, y ninguna otra.**
   No cambia cómo se combinan ni afecta a ningún otro filtro. Los vocabularios configurados siguen
-  validando, y `-p/--parent` sigue resolviendo su referencia.
-- **Sin `-s` explícito, el estado terminal se excluye salvo `--any-status`; con `-s` explícito se
+  validando, y `--parent` sigue resolviendo su referencia.
+- **Sin `--status` explícito, el estado terminal se excluye salvo `--any-status`; con `--status` explícito se
   filtra por ese valor tal cual, terminal incluido.** La exclusión del terminal es el comportamiento
-  del valor por defecto de `-s`, no una regla aparte que se superponga a él: `biso ls -s Done`
-  devuelve las tareas `Done`, exactamente como pide cualquier otro valor de `-s`. `--not-status <x>`
-  sin `-s` sigue restando sobre la base por defecto (todos menos el terminal), así que por sí solo no
+  del valor por defecto de `--status`, no una regla aparte que se superponga a él: `biso ls --status Done`
+  devuelve las tareas `Done`, exactamente como pide cualquier otro valor de `--status`. `--not-status <x>`
+  sin `--status` sigue restando sobre la base por defecto (todos menos el terminal), así que por sí solo no
   reintroduce el terminal: `biso ls --not-status "To Do"` excluye `"To Do"` y sigue sin traer `Done`.
-  `--any-status` sigue siendo la única forma de traer el terminal sin nombrarlo con `-s`.
+  `--any-status` sigue siendo la única forma de traer el terminal sin nombrarlo con `--status`.
 - **Las archivadas se excluyen por defecto.** `--archived` las añade a las vivas y `--only-archived`
   deja solo las archivadas.
 - **`--blocked` es incompatible con `--not-blocked`.** Los dos miran las dependencias sin terminar y
@@ -79,10 +79,10 @@ Reglas de combinación de filtros:
   `dias = 0` y no es `--overdue`.
 - **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada uno con su
   opuesto.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
-  razón de ser: sin ellos, pedir la cola activa obligaría a escribir `-s "In Progress"`, el nombre
+  razón de ser: sin ellos, pedir la cola activa obligaría a escribir `--status "In Progress"`, el nombre
   concreto de un tablero concreto, y la misma consulta dejaría de servir en otro. Los cuatro son
-  compatibles con `-s`, con `--not-status` y con `--any-status`, porque filtran sobre el mismo eje sin
-  contradecirse: `-s "To Do" --active` es una lista vacía en unos tableros y no en otros. La regla
+  compatibles con `--status`, con `--not-status` y con `--any-status`, porque filtran sobre el mismo eje sin
+  contradecirse: `--status "To Do" --active` es una lista vacía en unos tableros y no en otros. La regla
   general: **dos filtros que se contradicen por construcción son incompatibles. Una combinación de
   filtros válidos que resulte vacía en este tablero es un hecho legítimo sobre el tablero, no un
   error.**
@@ -116,7 +116,7 @@ que ["Los principios"](../principios.md) no admite. Para un título mal ordenado
 | Caso | Qué pasa |
 |---|---|
 | Filtro con un valor fuera del vocabulario | Error 3, con la lista de válidos |
-| `-l` con una etiqueta o `-a` con una persona que el tablero no tiene | Error 3, con hasta cinco de las más parecidas, igual que en la sección ["Qué valida cada filtro, y contra qué"](../vocabularios.md#qué-valida-cada-filtro-y-contra-qué) |
+| `--label` con una etiqueta o `--assignee` con una persona que el tablero no tiene | Error 3, con hasta cinco de las más parecidas, igual que en la sección ["Qué valida cada filtro, y contra qué"](../vocabularios.md#qué-valida-cada-filtro-y-contra-qué) |
 | Lo mismo con `--unchecked` | Se acepta, y probablemente no devuelve nada |
 | Filtro válido sin resultados | Ninguna línea por stdout, `note: no tasks match` por stderr, código **0** |
 | Hay más resultados que el límite | Se imprimen los primeros y sale el aviso de recorte |
@@ -186,7 +186,7 @@ Y por stderr, siempre que se haya recortado:
 
 ```
 warning: 28 more tasks match; showing 30 of 58
-hint: narrow with -s, --type or -l, or ask for everything with --all
+hint: narrow with --status, --type or --label, or ask for everything with --all
 ```
 
 Con `--ids`:
@@ -324,19 +324,19 @@ archived ones, and says on stderr what it left out. A filter value the board
 does not have is an error, never an empty list, so an empty list is a fact.
 
 Filters (repeat or comma-separate; same field is OR, different fields are AND):
-  -s, --status <value>       configured status (default: all but the terminal)
+      --status <value>       configured status (default: all but the terminal)
       --not-status <value>   exclude a status
       --any-status           include the terminal status too
       --archived             include archived tasks
       --only-archived        only archived tasks
       --type <value>         configured type
       --priority <value>     configured priority
-  -l, --label <value>        label; several labels are ANDed
+      --label <value>        label; several labels are ANDed
       --label-or <value>     label; several are ORed
-  -a, --assignee <@who>      assignee
+      --assignee <@who>      assignee
       --mine                 assigned to you
       --unassigned           assigned to nobody
-  -p, --parent <ref>         subtasks of this task
+      --parent <ref>         subtasks of this task
       --blocked              something unfinished blocks it
       --not-blocked          nothing unfinished blocks it; it may still be
                              waiting on an answer, so add --not-waiting
@@ -373,7 +373,7 @@ Exit codes:
 
 Examples:
   biso ls
-  biso ls -s "In Progress" --mine
+  biso ls --status "In Progress" --mine
   biso ls --type bug --priority high --limit 10
   biso ls --not-blocked --not-waiting --ids
   biso ls --any-status --archived --all

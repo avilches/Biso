@@ -45,13 +45,6 @@ func TestTheFieldFlagsGridNamesEveryFlagOfTheTable(t *testing.T) {
 			missing = append(missing, name)
 		}
 		delete(inGrid, name)
-		if f.Short != "" {
-			short := "-" + f.Short
-			if !inGrid[short] {
-				missing = append(missing, short+" (the short name of "+name+")")
-			}
-			delete(inGrid, short)
-		}
 	}
 	if len(missing) > 0 {
 		t.Errorf("the FIELD FLAGS grid does not name %s", strings.Join(missing, ", "))
@@ -59,29 +52,6 @@ func TestTheFieldFlagsGridNamesEveryFlagOfTheTable(t *testing.T) {
 	if left := sorted(inGrid); len(left) > 0 {
 		t.Errorf("the FIELD FLAGS grid names %s, which the table of fields.go does not have",
 			strings.Join(left, ", "))
-	}
-}
-
-// TestTheFieldFlagsGridPairsEveryShortNameWithItsOwnFlag is the other half:
-// the set being right would not stop `-l` from ending up next to
-// `--add-assignees`.
-func TestTheFieldFlagsGridPairsEveryShortNameWithItsOwnFlag(t *testing.T) {
-	owner := map[string]string{}
-	for _, f := range fieldFlags() {
-		if f.Short != "" {
-			owner["-"+f.Short] = "--" + f.Name
-		}
-	}
-	tokens := tokensOfTheGrid(t)
-	for i, token := range tokens {
-		long, isShort := owner[token]
-		if !isShort {
-			continue
-		}
-		if i+1 >= len(tokens) || tokens[i+1] != long {
-			t.Errorf("the grid writes %s and then %q, and %s belongs to %s",
-				token, next(tokens, i), token, long)
-		}
 	}
 }
 
@@ -113,13 +83,6 @@ func tokensOfTheGrid(t *testing.T) []string {
 		}
 	}
 	return tokens
-}
-
-func next(tokens []string, i int) string {
-	if i+1 >= len(tokens) {
-		return ""
-	}
-	return tokens[i+1]
 }
 
 func sorted(set map[string]bool) []string {

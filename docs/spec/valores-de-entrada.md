@@ -213,7 +213,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
   lo mismo, porque las formas de ["Tres formas de pasar un valor largo"](#tres-formas-de-pasar-un-valor-largo)
   hablan del valor y no de cómo se pegó al flag.
 - **Un mensaje nombra siempre el flag por su forma larga**, aunque se haya escrito la corta, para que
-  el texto de un error no dependa de cómo se tecleó la llamada: `-l 'urgent!'` falla nombrando
+  el texto de un error no dependa de cómo se tecleó la llamada: `--add-labels 'urgent!'` falla nombrando
   `--add-labels`.
 - **Un valor vacío en un flag que no añade, no sustituye y no es un escalar de tarea de
   ["El valor vacío"](#el-valor-vacío)**, por ejemplo `--rm-labels ""`, `--cwd ""` o `--ext k=`, es
@@ -248,6 +248,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | `BISO_LIMIT` con algo que no es un número de filas (["Variables de entorno"](invocacion.md#variables-de-entorno)) | 2 | `invalid_number` | `error: BISO_LIMIT: not a whole number of rows: "lots"` |
 | Una pareja de `--json`, `--quiet` y `--print` | 2 | `incompatible_flags` | `error: --json and --quiet cannot be used together` |
 | Un flag que exige otro, sin ese otro | 2 | `incompatible_flags` | `error: --comment-author requires --comment` |
+| El título de `biso new` dado como argumento y con `--title` | 2 | `incompatible_flags` | `error: --title and the title argument cannot be used together` |
 | `--dry-run` en un comando de lectura | 2 | `read_only_flag` | `error: --dry-run does not apply to a read-only command` |
 | `--print` donde no afecta a ninguna tarea | 2 | `read_only_flag` | `error: --print does not apply to a command that affects no task` |
 | Un valor vacío donde no se documenta ninguno | 2 | `unexpected_argument` | `error: --rm-labels cannot be empty` |

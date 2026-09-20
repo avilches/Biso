@@ -52,7 +52,7 @@ TASK-11  In Progress  bug   high    Normalize CRLF in the diff                  
 TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
 TASK-61  To Do        docs  medium  Rewrite the install section                       ac 0/1  @claude  -
 warning: 2 more tasks match; showing 3 of 5
-hint: narrow with -s, --type or -l, or ask for everything with --all
+hint: narrow with --status, --type or --label, or ask for everything with --all
 ```
 
 Exit code: `0`

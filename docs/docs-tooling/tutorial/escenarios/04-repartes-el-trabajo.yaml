@@ -45,7 +45,7 @@ steps:
   - narration: |
       Sara declares her identity for this session, which is an environment variable and not a
       `biso` command, and hands the task to the agent.
-    command: biso set TASK-19 -a @claude
+    command: biso set TASK-19 --add-assignees @claude
     output: |
       TASK-19  To Do  ac 0/2  urgency 7.0
     exit_code: 0
@@ -95,7 +95,7 @@ steps:
   - narration: |
       The startup message tells the same story another way. If the agent ran it again now,
       `TASK-19` would have moved.
-    command: biso ls --mine -s "To Do"
+    command: biso ls --mine --status "To Do"
     output: |
       TASK-19  To Do  task  high    Retry the upload on 5xx                ac 0/2  @claude  -
       TASK-61  To Do  docs  medium  Rewrite the install section            ac 0/1  @claude  -

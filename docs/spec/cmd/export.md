@@ -3,14 +3,14 @@
 ## Firma
 
 ```
-biso export [-o <file|->] [--no-archived] [cualquier filtro de biso ls, salvo --archived y --only-archived]
+biso export [--out <file|->] [--no-archived] [cualquier filtro de biso ls, salvo --archived y --only-archived]
 ```
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `--out <file|->` | `-o` | no | ruta o `-` | `-`, es decir stdout | no | no | |
-| `--no-archived` | | no | booleano | falso | no | no | |
-| filtros de `ls` | | no | | | | | `--sort`, `--limit`, `--all`, `--ids`, `--count`, `--archived`, `--only-archived` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `--out <file|->` | no | ruta o `-` | `-`, es decir stdout | no | no | |
+| `--no-archived` | no | booleano | falso | no | no | |
+| filtros de `ls` | no | | | | | `--sort`, `--limit`, `--all`, `--ids`, `--count`, `--archived`, `--only-archived` |
 
 **`biso export` sin filtros exporta el tablero entero**: todos los estados, el terminal incluido, y
 todas las tareas, las archivadas incluidas. **No hereda ni el límite por defecto de `biso ls` ni su
@@ -19,10 +19,10 @@ aceptan para acotar a propósito, y los flags de forma de `ls` no, porque un vol
 que elegir. **Tampoco se aceptan `--archived` ni `--only-archived`**, porque las archivadas ya salen
 por defecto: el único flag de `export` sobre el archivo es `--no-archived`.
 
-Cuando `export` acepta `-s` como cualquier otro filtro de `biso ls`, se aplica igual que allí: un
-`-s` explícito filtra por ese valor tal cual, terminal incluido (["`biso ls`"](ls.md#comportamiento-caso-a-caso)), así que
-`biso export -s Done --no-archived -o done.ndjson` exporta exactamente las tareas `Done` vivas. La
-diferencia con `ls` es solo la base cuando no se pasa ningún `-s`: `export` parte de todos los
+Cuando `export` acepta `--status` como cualquier otro filtro de `biso ls`, se aplica igual que allí: un
+`--status` explícito filtra por ese valor tal cual, terminal incluido (["`biso ls`"](ls.md#comportamiento-caso-a-caso)), así que
+`biso export --status Done --no-archived --out done.ndjson` exporta exactamente las tareas `Done` vivas. La
+diferencia con `ls` es solo la base cuando no se pasa ningún `--status`: `export` parte de todos los
 estados, `ls` parte de todos menos el terminal.
 
 ## La garantía de simetría
@@ -145,7 +145,7 @@ If a task cannot be read, the rest is still written and the exit code is 6,
 not 0: this is the one command whose purpose is to lose nothing.
 
 Options:
-  -o, --out <file|->   where to write (default: stdout)
+      --out <file|->   where to write (default: stdout)
       --no-archived    leave the archived tasks out
   -h, --help           show this help
 
@@ -164,8 +164,8 @@ Exit codes:
   8  cannot write there                20 no board here
 
 Examples:
-  biso export -o backup.ndjson
-  biso export -s Done --no-archived -o done.ndjson
+  biso export --out backup.ndjson
+  biso export --status Done --no-archived --out done.ndjson
 ```
 
 ---

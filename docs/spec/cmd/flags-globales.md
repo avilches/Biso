@@ -3,6 +3,12 @@
 Valen para todos los comandos, se pueden escribir antes o después del nombre del comando, y ningún
 comando puede redefinir ninguno de ellos ni cambiar su significado.
 
+**Estos son los únicos flags de `biso` con forma corta**: `-C`, `-q`, `-V` y `-h`. Ningún flag propio de
+un comando la tiene, porque una forma corta solo existe si ningún otro flag del mismo comando empieza por
+su letra (["Una forma corta solo existe si nadie más reclama su inicial"](../../decisiones/comandos-y-flags.md#una-forma-corta-solo-existe-si-nadie-más-reclama-su-inicial)).
+Escribir la inicial de cualquier otro flag es un error 2 con el `code` `unknown_flag`, como con cualquier flag que
+el comando no tiene: `error: unknown flag: -x`.
+
 Flags con valor:
 
 | Flag | Corta | Valores | Por defecto | Qué hace |

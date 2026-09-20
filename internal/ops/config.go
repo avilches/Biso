@@ -308,7 +308,7 @@ func writeUrgencyKey(cfg *board.Config, p ConfigParams) *model.Error {
 // configStatusRole writes one of the three roles. Its value has to name one
 // of the board's statuses, matched with the same algorithm every other
 // status value of the program goes through, so that the same text is worth
-// the same here as behind -s
+// the same here as behind --status
 // (docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos).
 func configStatusRole(p ConfigParams, cfg *board.Config, into *string) *model.Error {
 	status, err := match.Match(match.Status, p.Value, cfg.Statuses)

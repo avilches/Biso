@@ -63,7 +63,7 @@ error: "CRLF" matches 3 tasks
 ```
 
 **Las candidatas se imprimen en todos los comandos que resuelven una referencia**, no solo en
-`biso get`: `biso set`, los verbos del ciclo y el `-p` de `biso ls` las sacan igual, en el mismo
+`biso get`: `biso set`, los verbos del ciclo y el `--parent` de `biso ls` las sacan igual, en el mismo
 formato y con el mismo orden por defecto, porque esta rutina no tiene variantes por comando. Con
 `--json`, en cambio, solo `biso get` contesta el sobre de datos `task.candidates`; los demás
 contestan el sobre de error con el mismo código 5, según la tabla de `kind` de ["El sobre"](contrato-json.md#el-sobre).
@@ -81,7 +81,7 @@ no encontrarlo nunca.
 **El único filtro que se aplica al resolver una referencia es ese, el de archivada, y el estado no
 filtra nada.** Una tarea en el estado terminal se resuelve como cualquier otra y aparece entre las
 candidatas de un error 5, aunque `biso ls --search "<texto>"` no la traiga: ese listado la deja
-fuera por el valor por defecto de su `-s` (["`biso ls`"](cmd/ls.md)), que es un filtro suyo y no una regla de esta
+fuera por el valor por defecto de su `--status` (["`biso ls`"](cmd/ls.md)), que es un filtro suyo y no una regla de esta
 rutina. Resolver una referencia tiene que poder llegar a cualquier tarea del tablero, y una tarea
 terminada se lee, se comenta y se reabre igual que las demás; si las candidatas la escondieran,
 `biso get "CRLF"` diría que el texto encaja con una sola tarea mientras la lista de candidatas de un

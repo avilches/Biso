@@ -22,10 +22,10 @@ biso prime [--full] [--limit <n>] [--json]
 
 ## Parámetros
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `--full` | | no | booleano | falso | no | no | `--json` |
-| `--limit <n>` | | no | entero >= 0 | 5 | no | no | ninguno |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `--full` | no | booleano | falso | no | no | `--json` |
+| `--limit <n>` | no | entero >= 0 | 5 | no | no | ninguno |
 
 - `--limit` acota juntas las secciones `ASSIGNED TO YOU` y `NEXT UP`: su valor son filas repartidas
   entre las dos, en ese orden de preferencia, con una sola línea de recuento al final de la última que
@@ -116,9 +116,9 @@ BOARD  My project
   you are     @claude
 
 COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
-  biso ls [-s STATUS] [--type T] [-l LABEL] [--mine] [--search TEXT]
+  biso ls [--status STATUS] [--type T] [--label LABEL] [--mine] [--search TEXT]
   biso get <ref> [--section ac]
-  biso new "TITLE" [-d TEXT] [--add-ac TEXT]... [--type T] [--priority P]
+  biso new "TITLE" [--append-desc TEXT] [--add-ac TEXT]... [--type T] [--priority P]
   biso start <ref>... [--append-plan TEXT]
   biso note <ref> "TEXT"
   biso ask <ref> "QUESTION"
@@ -128,16 +128,16 @@ COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
   biso comment <ref> "TEXT" [--comment-author @who]
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
-  -t --title  -s --status  --type --clear-type  --priority --clear-priority
-  -p --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author
-  -l --add-labels --rm-labels --clear-labels --replace-labels
-  -a --add-assignees --rm-assignees --clear-assignees --replace-assignees
+  --title  --status  --type --clear-type  --priority --clear-priority
+  --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author
+  --add-labels --rm-labels --clear-labels --replace-labels
+  --add-assignees --rm-assignees --clear-assignees --replace-assignees
   --add-refs --rm-refs --clear-refs --replace-refs
   --add-docs --rm-docs --clear-docs --replace-docs
   --add-deps --rm-deps --clear-deps --replace-deps
   --add-files --rm-files --clear-files --replace-files
   --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac
-  -d --append-desc --clear-desc  --append-plan --clear-plan
+  --append-desc --clear-desc  --append-plan --clear-plan
   --append-note --clear-notes  --append-summary --clear-summary
   --comment --rm-comment --set-comment-date
   --ext K=V --rm-ext --clear-ext
@@ -148,9 +148,9 @@ RULES  (none of these are guessable; they are the whole learning curve)
      matching several tasks is an error that lists them, never a guess. `note`,
      `comment`, `ask` and `answer` take one <ref>; `set`, `start` and `finish`
      take several.
-  3. Filters reject values this board does not have: `-s Pending` is an error,
+  3. Filters reject values this board does not have: `--status Pending` is an error,
      not an empty list. Case, spaces, hyphens and underscores are ignored, so
-     `-s todo`, `-s "To Do"` and `-s TO_DO` are one and the same filter. An
+     `--status todo`, `--status "To Do"` and `--status TO_DO` are one and the same filter. An
      empty list is therefore a fact about the board that you can act on.
   4. `biso ls` prints 30 tasks by urgency and leaves out the Done ones. It says
      on stderr what it left out. --all lifts the limit, --any-status includes
@@ -162,7 +162,7 @@ RULES  (none of these are guessable; they are the whole learning curve)
      line per task: id, status, criteria, urgency. Add --print for the whole
      record, or --json for a versioned envelope.
   7. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.
-  8. Long text: a real newline works, and so do -d @file.md and -d - for stdin.
+  8. Long text: a real newline works, and so do --append-desc @file.md and --append-desc - for stdin.
   9. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
      6 precondition not met, 7 nothing written, 8 environment, 20 no board here.
  10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
@@ -296,7 +296,7 @@ Los bloques `COMMANDS`, `FIELD FLAGS`, `RULES` y el párrafo final se imprimen c
 como los escribe la sección ["La salida literal"](#la-salida-literal), sea cual sea la configuración
 del tablero. Lo único de esa parte que cambia es la cadena de versión de la primera línea.
 
-Eso vale también para los ejemplos que esas reglas usan: el `MYP-12` de la regla 2, el `-s Pending`
+Eso vale también para los ejemplos que esas reglas usan: el `MYP-12` de la regla 2, el `--status Pending`
 y el `To Do` de la regla 3 y el `Done` de la regla 4 ilustran la forma de un identificador, la de un
 valor que no existe y la de un estado terminal, y no afirman nada sobre este tablero en concreto. El
 vocabulario de verdad ya está dos bloques más arriba, en `BOARD`, con el estado inicial, el activo y
@@ -368,7 +368,7 @@ ninguno de sus encabezados, y el resto del mensaje no cambia:
 ```
 THE BOARD IS EMPTY
   Create the first one:
-  biso new "Title" -d "What and why" --add-ac "How we will know it works"
+  biso new "Title" --append-desc "What and why" --add-ac "How we will know it works"
 ```
 
 **Vacío quiere decir que el tablero no guarda ninguna tarea**, archivadas incluidas. Un tablero que
@@ -388,23 +388,23 @@ que es lo que la rejilla no puede decir sin ocupar el triple.
 
 ```
 ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies them)
-  labels              --clear-labels --replace-labels --rm-labels -l --add-labels
-  assignees           --clear-assignees --replace-assignees --rm-assignees -a --add-assignees
+  labels              --clear-labels --replace-labels --rm-labels --add-labels
+  assignees           --clear-assignees --replace-assignees --rm-assignees --add-assignees
   references          --clear-refs --replace-refs --rm-refs --add-refs
   documentation       --clear-docs --replace-docs --rm-docs --add-docs
   dependencies        --clear-deps --replace-deps --rm-deps --add-deps
   modifiedFiles       --clear-files --replace-files --rm-files --add-files
   acceptanceCriteria  --clear-acs --rm-ac --add-ac --check-ac --uncheck-ac
-  description         --clear-desc -d --append-desc
+  description         --clear-desc --append-desc
   plan                --clear-plan --append-plan
   notes               --clear-notes --append-note
   summary             --clear-summary --append-summary
   ext                 --clear-ext --rm-ext --ext
-  title               -t --title
-  status              -s --status
+  title               --title
+  status              --status
   type                --clear-type --type
   priority            --clear-priority --priority
-  parent              --clear-parent -p --parent
+  parent              --clear-parent --parent
   due                 --clear-due --due
   ordinal             --clear-ordinal --ordinal
   author              --clear-author --author
@@ -415,8 +415,7 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
 
 El nombre de la izquierda es el del campo en el esquema JSON (["El contrato JSON"](../contrato-json.md))
 y no el del flag, porque es justamente lo que un flag no dice: `--add-files` y `modifiedFiles` son la
-misma cosa escrita de dos maneras, y quien lee el sobre necesita el puente. Un flag con nombre corto
-lo lleva pegado delante, como en la rejilla `FIELD FLAGS`.
+misma cosa escrita de dos maneras, y quien lee el sobre necesita el puente.
 
 ## El esquema JSON
 

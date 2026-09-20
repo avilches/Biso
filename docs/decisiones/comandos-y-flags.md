@@ -201,3 +201,71 @@ esa parte de su llamada no hizo nada. Devolver la ayuda de los nombres válidos 
 inválido con un aviso, en vez de fallar la llamada entera, se descarta porque mezclaría una salida de
 datos con un error a medias, y porque nada distingue en ese caso un nombre mal escrito de una llamada
 que de verdad quería sólo los nombres que sí existían.
+
+---
+
+## Una forma corta solo existe si nadie más reclama su inicial
+
+**La decisión.** Un flag tiene forma corta solo si ningún otro flag del mismo comando, contando los
+globales, empieza por su misma letra. La letra se compara tal como se escribe, así que `-C` y `-c`
+son letras distintas. Hoy ningún flag propio de un comando cumple la condición, y por eso **solo
+tienen forma corta los flags globales `-C`, `-q`, `-V` y `-h`** (["Los flags globales"](../spec/cmd/flags-globales.md)).
+Todo lo demás se escribe entero, y una forma corta que ya no existe es un error 2 con el `code`
+`unknown_flag`, como cualquier otro flag que el comando no tiene. Quien proponga una forma corta
+nueva tiene que demostrar que su inicial no la reclama ningún otro flag del comando, y esa
+comprobación la hace una prueba (`internal/cli/short_flags_test.go`), no una revisión.
+
+**Las siete formas que se retiran**, todas medidas contra la tabla de flags de cada comando:
+
+| Corta | Era | Y el mismo comando acepta también |
+|---|---|---|
+| `-a` | `--add-assignees` (`--assignee` en `ls`) | `--add-ac`, `--add-deps`, `--add-labels`, `--append-desc`, `--append-plan` |
+| `-d` | `--append-desc` | `--due`, `--dry-run` |
+| `-l` | `--add-labels` (`--label` en `ls`) | `--label-or`, `--limit` |
+| `-o` | `--out` (`export`) | `--overdue` |
+| `-p` | `--parent` | `--priority`, `--print` |
+| `-s` | `--status` | `--search`, `--sort`, `--start`, `--strict` |
+| `-t` | `--title` | `--type` |
+
+**Por qué.** La confusión que lo motivó no fue un despiste, fue el diseño invitando a ella. En la
+primera sesión real con la herramienta alguien escribió `biso new "Mi título" -t feature` creyendo
+que `-t` era la forma corta de `--type`, y la tarea se creó titulada `feature`, sin tipo y con
+código de salida 0. Es el peor fallo posible en una herramienta pensada para agentes: no falla, hace
+algo distinto de lo que se le pidió y calla, y un agente no relee lo que escribió. `-a` es casi tan
+peligroso como `-t`: en `biso new`, quien quiera añadir un criterio de aceptación escribirá `-a`
+pensando en `--add-ac` y asignará a una persona. Y `-o` es el caso que peor acaba: en `biso export`,
+quien escriba `-o` pensando en `--overdue` hace que la palabra siguiente se tome como la ruta del
+fichero donde escribir, que se crea o se sobrescribe. **Una forma corta ambigua es una promesa que
+la herramienta no puede cumplir**, y la letra sola no dice cuál de los flags que empiezan por ella se
+quiso decir.
+
+**El precio se ha medido y se acepta: se escribe más.** A cambio, ninguna llamada hace en silencio
+algo distinto de lo que se le pidió, que es el principio que esta herramienta dice defender.
+
+**Consecuencias que se han escrito en otros sitios:**
+
+- **`biso new` con el título dado como argumento y con `--title` es un error 2**, con el `code`
+  `incompatible_flags`, en lugar de quedarse con uno de los dos en silencio (["`biso new`"](../spec/cmd/new.md)).
+  `--title` sin argumento sí vale, y `biso new --help` lo lista.
+- **Ningún otro comando tiene un flag que duplique un argumento posicional y deje que uno pise al
+  otro.** Se revisaron todos, con el binario. `biso new` era el único donde un mismo valor tenía dos
+  entradas incompatibles, el argumento `<title>` y `--title`. `biso note` y `biso comment` sí tienen
+  más de una entrada para un mismo campo, `<text>` y `--append-note` o `--comment`, pero son campos que se
+  acumulan y las dos quedan escritas, la del argumento primero (`biso note MYP-1 "a" --append-note "b"`
+  deja las dos notas), así que no hay nada que descartar. `biso init` y `biso archive` tampoco: `<name>` y `<ref>...` no
+  tienen flag equivalente.
+
+**Descartado.**
+
+- **Retirar solo `-t`.** Era la lectura estrecha del fallo, y dejaba las otras seis formas con el
+  mismo defecto y sin regla que dijera por qué `-t` se iba y `-s` se quedaba. Medida la tabla, las
+  seis primeras chocan por igual.
+- **Conservar las formas cortas y avisar cuando el valor no encaja.** Descartado porque el aviso
+  sale por `stderr`, y un agente que no relee lo que escribió tampoco relee lo que se le avisó. Un
+  error es lo único que se distingue por su código sin leer el mensaje.
+- **Comparar las letras sin distinguir mayúsculas.** Descartado porque retiraría `-C` y `-V` por
+  chocar con `--color`, `--clear-*` y `--vcs`, y `-C` es lo que sustituye a `cd <dir> && biso ...`
+  (regla 7 del mensaje de arranque). `-C` y `-c` son letras distintas también para quien teclea, y
+  ningún flag de ningún comando usa `-c`.
+- **Resolver el choque con una prioridad fija**, por ejemplo que `-t` fuera siempre `--title`. Es
+  exactamente lo que ya ocurría, y lo que se está retirando.

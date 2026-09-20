@@ -445,7 +445,7 @@ func TestTheFiltersOfTheEnvelopeAreTheEffectiveOnes(t *testing.T) {
 	got := m.run(t, "ls", "--mine", "--json").assertCode(t, 0)
 
 	filters := envelopeOf(t, got.stdout)["data"].(map[string]any)["filters"].(map[string]any)
-	// --mine resolved to the identity it used, and -s resolved to every
+	// --mine resolved to the identity it used, and --status resolved to every
 	// status but the terminal one.
 	assertJSONEqual(t, filters["assignee"], []any{"@avilches"}, "the assignee filter")
 	assertJSONEqual(t, filters["status"], []any{"To Do", "In Progress"}, "the status filter")

@@ -73,7 +73,7 @@ Exit code: `0`
 And to close the idea, it checks what's still in progress now.
 
 ```console
-$ biso ls -s "In Progress"
+$ biso ls --status "In Progress"
 TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
 TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -
 TASK-40  In Progress  task  medium  Split the config loader                           ac 0/2  @claude  -

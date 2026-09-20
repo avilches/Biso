@@ -144,21 +144,23 @@ const whereHelp = "Usage: biso where [options]\n" +
 
 // newHelp is `biso new --help` (docs/spec/cmd/new.md).
 const newHelp = "Usage: biso new <title> [options]\n" +
+	"       biso new --title <text> [options]\n" +
 	"       biso new --from <file|-> [options]\n" +
 	"\n" +
 	"Create a task and print its id. Every field flag of `biso set` works here.\n" +
 	"\n" +
 	"Arguments:\n" +
-	"  title                      task title (required unless --from is given)\n" +
+	"  title                      task title (required unless --title or --from is given)\n" +
 	"\n" +
 	"Most used:\n" +
-	"  -d, --append-desc <text>    description; repeat to append paragraphs\n" +
+	"      --title <text>          the title, instead of the argument; never both\n" +
+	"      --append-desc <text>    description; repeat to append paragraphs\n" +
 	"      --add-ac <text>         add an acceptance criterion; repeatable\n" +
 	"      --type <value>          configured type\n" +
 	"      --priority <value>      configured priority\n" +
-	"  -s, --status <value>        configured status (default: the initial one)\n" +
-	"  -l, --add-labels <value>    add a label; repeatable or comma-separated\n" +
-	"  -a, --add-assignees <@who>  add an assignee; repeatable or comma-separated\n" +
+	"      --status <value>        configured status (default: the initial one)\n" +
+	"      --add-labels <value>    add a label; repeatable or comma-separated\n" +
+	"      --add-assignees <@who>  add an assignee; repeatable or comma-separated\n" +
 	"      --add-deps <ref>        add a dependency; validated, repeatable\n" +
 	"      --due <YYYY-MM-DD>      due date\n" +
 	"      --comment <text>        add a discussion comment; repeatable\n" +
@@ -186,7 +188,7 @@ const newHelp = "Usage: biso new <title> [options]\n" +
 	"Examples:\n" +
 	"  biso new \"Normalize CRLF in the diff\" --type bug --priority high\n" +
 	"  biso new \"Add OAuth\" --add-ac \"Login succeeds\" --add-ac \"Token refreshes\"\n" +
-	"  biso new \"Rewrite the installer\" -d @docs/installer.md --start\n" +
+	"  biso new \"Rewrite the installer\" --append-desc @docs/installer.md --start\n" +
 	"  biso new --from tasks.ndjson --dry-run\n"
 
 // setHelp is `biso set --help` (docs/spec/cmd/set.md).
@@ -216,7 +218,7 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"\n" +
 	"Prose fields have two, because a block of text has no single item to remove.\n" +
 	"Replace by clearing and appending in the same call.\n" +
-	"      --append-desc X (-d)   append a paragraph\n" +
+	"      --append-desc X        append a paragraph\n" +
 	"      --append-plan X\n" +
 	"      --append-note X\n" +
 	"      --append-summary X\n" +
@@ -226,8 +228,8 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"drops it, --clear-ext empties the map. There is no --replace-ext: setting a\n" +
 	"key already replaces its value.\n" +
 	"\n" +
-	"Scalars just take a value: -t/--title, -s/--status, --type, --priority,\n" +
-	"-p/--parent, --due, --ordinal, --author. Each has a --clear-<field>. An\n" +
+	"Scalars just take a value: --title, --status, --type, --priority,\n" +
+	"--parent, --due, --ordinal, --author. Each has a --clear-<field>. An\n" +
 	"empty string is never a way to clear anything.\n" +
 	"\n" +
 	"Comments:\n" +
@@ -268,19 +270,19 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"does not have is an error, never an empty list, so an empty list is a fact.\n" +
 	"\n" +
 	"Filters (repeat or comma-separate; same field is OR, different fields are AND):\n" +
-	"  -s, --status <value>       configured status (default: all but the terminal)\n" +
+	"      --status <value>       configured status (default: all but the terminal)\n" +
 	"      --not-status <value>   exclude a status\n" +
 	"      --any-status           include the terminal status too\n" +
 	"      --archived             include archived tasks\n" +
 	"      --only-archived        only archived tasks\n" +
 	"      --type <value>         configured type\n" +
 	"      --priority <value>     configured priority\n" +
-	"  -l, --label <value>        label; several labels are ANDed\n" +
+	"      --label <value>        label; several labels are ANDed\n" +
 	"      --label-or <value>     label; several are ORed\n" +
-	"  -a, --assignee <@who>      assignee\n" +
+	"      --assignee <@who>      assignee\n" +
 	"      --mine                 assigned to you\n" +
 	"      --unassigned           assigned to nobody\n" +
-	"  -p, --parent <ref>         subtasks of this task\n" +
+	"      --parent <ref>         subtasks of this task\n" +
 	"      --blocked              something unfinished blocks it\n" +
 	"      --not-blocked          nothing unfinished blocks it; it may still be\n" +
 	"                             waiting on an answer, so add --not-waiting\n" +
@@ -317,7 +319,7 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso ls\n" +
-	"  biso ls -s \"In Progress\" --mine\n" +
+	"  biso ls --status \"In Progress\" --mine\n" +
 	"  biso ls --type bug --priority high --limit 10\n" +
 	"  biso ls --not-blocked --not-waiting --ids\n" +
 	"  biso ls --any-status --archived --all\n"
@@ -394,7 +396,7 @@ const exportHelp = "Usage: biso export [options]\n" +
 	"not 0: this is the one command whose purpose is to lose nothing.\n" +
 	"\n" +
 	"Options:\n" +
-	"  -o, --out <file|->   where to write (default: stdout)\n" +
+	"      --out <file|->   where to write (default: stdout)\n" +
 	"      --no-archived    leave the archived tasks out\n" +
 	"  -h, --help           show this help\n" +
 	"\n" +
@@ -413,8 +415,8 @@ const exportHelp = "Usage: biso export [options]\n" +
 	"  8  cannot write there                20 no board here\n" +
 	"\n" +
 	"Examples:\n" +
-	"  biso export -o backup.ndjson\n" +
-	"  biso export -s Done --no-archived -o done.ndjson\n"
+	"  biso export --out backup.ndjson\n" +
+	"  biso export --status Done --no-archived --out done.ndjson\n"
 
 // snapshotHelp is `biso snapshot --help` (docs/spec/cmd/snapshot.md).
 const snapshotHelp = "Usage: biso snapshot [options]\n" +

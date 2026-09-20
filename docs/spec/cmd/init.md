@@ -12,20 +12,20 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 
 ## Parámetros
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<name>` | | no | texto | el nombre del proyecto | no | no | |
-| `--at <dir>` | | no | ruta de un directorio | una carpeta nueva en la raíz por defecto de la máquina (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) | no | no | |
-| `--statuses <list>` | | no | lista | `To Do, In Progress, Done` ¹ | sí | sí | |
-| `--initial-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
-| `--active-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
-| `--terminal-status <status>` | | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
-| `--types <list>` | | no | lista | `task, bug, docs` ¹ | sí | sí | |
-| `--priorities <list>` | | no | lista | `high, medium, low` ¹ | sí | sí | |
-| `--extensions <list>` | | no | lista | vacía ¹ | sí | sí | |
-| `--prefix <text>` | | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) ¹ | no | no | |
-| `--overwrite-config` | | no | booleano | falso | no | no | |
-| `--from <location>` | | no | ruta de un directorio | | no | no | `<name>`<br>`--statuses`<br>`--initial-status`<br>`--active-status`<br>`--terminal-status`<br>`--types`<br>`--priorities`<br>`--extensions`<br>`--prefix`<br>`--overwrite-config` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<name>` | no | texto | el nombre del proyecto | no | no | |
+| `--at <dir>` | no | ruta de un directorio | una carpeta nueva en la raíz por defecto de la máquina (sección ["Configuración de máquina"](../invocacion.md#configuración-de-máquina)) | no | no | |
+| `--statuses <list>` | no | lista | `To Do, In Progress, Done` ¹ | sí | sí | |
+| `--initial-status <status>` | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
+| `--active-status <status>` | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
+| `--terminal-status <status>` | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
+| `--types <list>` | no | lista | `task, bug, docs` ¹ | sí | sí | |
+| `--priorities <list>` | no | lista | `high, medium, low` ¹ | sí | sí | |
+| `--extensions <list>` | no | lista | vacía ¹ | sí | sí | |
+| `--prefix <text>` | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) ¹ | no | no | |
+| `--overwrite-config` | no | booleano | falso | no | no | |
+| `--from <location>` | no | ruta de un directorio | | no | no | `<name>`<br>`--statuses`<br>`--initial-status`<br>`--active-status`<br>`--terminal-status`<br>`--types`<br>`--priorities`<br>`--extensions`<br>`--prefix`<br>`--overwrite-config` |
 
 ¹ Solo aplica al crear un tablero nuevo. Con `--overwrite-config` sobre un tablero que ya existe,
 no pasar este flag no vuelve a este valor por defecto: conserva el valor que el tablero ya tenía

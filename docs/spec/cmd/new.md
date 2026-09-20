@@ -3,26 +3,32 @@
 ## Firma
 
 ```
-biso new [<title>] [--start] [--from <file|->] [cualquier flag de campo de las familias de flags]
+biso new [<title>] [--start] [--from <file|->] [cualquier flag de campo de las familias de flags, `--title` incluido]
 ```
 
 ## Parámetros propios
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<title>` | | sí, salvo con `--from` | texto | | no | no | `--from` |
-| `--start` | | no | booleano | falso | no | no | `-s`, `--from` |
-| `--from <file|->` | | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<title>` | sí, salvo con `--title` o `--from` | texto | | no | no | `--title`, `--from` |
+| `--start` | no | booleano | falso | no | no | `--status`, `--from` |
+| `--from <file|->` | no | ruta o `-` | | no | no | `<title>` y todas las de campo |
 
 Todos los flags de campo de la sección ["Las familias de flags"](../familias-de-flags.md) valen aquí. En una tarea nueva no hay nada que sustituir
 ni que quitar: `--replace-*` se acepta y deja la lista igual que `--add-*`, porque no hay nada previo
 que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que actuar. `--clear-*` no
 hace nada y avisa. Las que se usan de verdad al crear son
-`-d/--append-desc`, `--add-ac`, `--type`, `--priority`, `-l/--add-labels`,
-`-a/--add-assignees`, `--add-refs`, `--add-docs`, `--add-deps`, `-p/--parent`,
+`--append-desc`, `--add-ac`, `--type`, `--priority`, `--add-labels`,
+`--add-assignees`, `--add-refs`, `--add-docs`, `--add-deps`, `--parent`,
 `--due`, `--ordinal`, `--author`, `--ext`, `--append-plan`, `--append-note`,
 `--append-summary` y `--comment`.
 
+- **El título llega por un sitio, y solo por uno.** Se escribe como argumento (`biso new "Fix the parser"`)
+  o con `--title` (`biso new --title "Fix the parser"`), que es el mismo flag de campo que usa `biso set`
+  (["Campos escalares"](../familias-de-flags.md#campos-escalares)). Darlo por los dos a la vez es un error
+  aunque los dos textos sean iguales, porque quedarse con uno y descartar el otro en silencio sería
+  una llamada que hace algo distinto de lo que se le pidió y sale con código 0. `--title` no tiene forma
+  corta (["Una forma corta solo existe si nadie más reclama su inicial"](../../decisiones/comandos-y-flags.md#una-forma-corta-solo-existe-si-nadie-más-reclama-su-inicial)).
 - **`--start`** crea la tarea directamente en el estado activo, asignada a `me` y con el arrendamiento
   tomado a favor de quien llama (`leaseExpiresAt` y `leaseHolder`, ["El arrendamiento de una tarea"](../lease.md)), exactamente como lo haría
   `biso start` sobre ella. Es el atajo de esas dos llamadas, así que la equivalencia tiene que ser real:
@@ -37,7 +43,9 @@ hace nada y avisa. Las que se usan de verdad al crear son
 
 | Caso | Qué pasa |
 |---|---|
-| Título vacío o solo espacios | Error 2: `error: title cannot be empty` |
+| Título vacío, solo espacios o ausente, ya sea como argumento o con `--title` | Error 2: `error: title cannot be empty`, con el `code` `missing_title` |
+| El título dado como argumento y con `--title` | Error 2, con el `code` `incompatible_flags`: `error: --title and the title argument cannot be used together` |
+| El título dado solo con `--title` | Se crea la tarea, igual que con el argumento |
 | Título muy largo | Se acepta entero, sin recortar |
 | Título repetido | Se acepta sin aviso. Dos tareas pueden llamarse igual, para eso está el identificador |
 | Valor fuera de un vocabulario cerrado | Error 3, con la lista de válidos |
@@ -47,9 +55,9 @@ hace nada y avisa. Las que se usan de verdad al crear son
 | `--ext` con una clave no declarada | Error 3 |
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
 | `--due` en el pasado | Se acepta, con aviso |
-| `-d @fichero` que no existe | Error 4 |
-| `--start` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) y sin `-a` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (["El arrendamiento de una tarea"](../lease.md)). Es el mismo caso que la fila equivalente de `biso start` (["`biso start`"](verbos-del-ciclo.md#biso-start)) |
-| `--start` con `-a @sara` y una identidad configurada distinta | La tarea queda asignada a `@sara` y el arrendamiento es de quien llama, igual que en `biso start`: quien lo toma es quien escribe, no quien figura en `assignees` |
+| `--append-desc @fichero` que no existe | Error 4 |
+| `--start` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) y sin `--add-assignees` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (["El arrendamiento de una tarea"](../lease.md)). Es el mismo caso que la fila equivalente de `biso start` (["`biso start`"](verbos-del-ciclo.md#biso-start)) |
+| `--start` con `--add-assignees @sara` y una identidad configurada distinta | La tarea queda asignada a `@sara` y el arrendamiento es de quien llama, igual que en `biso start`: quien lo toma es quien escribe, no quien figura en `assignees` |
 | Todo bien | Se crea la tarea, código 0 |
 
 ## Salida
@@ -319,21 +327,23 @@ pasada. La línea 130 del bloque de arriba es justo uno de ellos, y aun así sal
 
 ```
 Usage: biso new <title> [options]
+       biso new --title <text> [options]
        biso new --from <file|-> [options]
 
 Create a task and print its id. Every field flag of `biso set` works here.
 
 Arguments:
-  title                      task title (required unless --from is given)
+  title                      task title (required unless --title or --from is given)
 
 Most used:
-  -d, --append-desc <text>    description; repeat to append paragraphs
+      --title <text>          the title, instead of the argument; never both
+      --append-desc <text>    description; repeat to append paragraphs
       --add-ac <text>         add an acceptance criterion; repeatable
       --type <value>          configured type
       --priority <value>      configured priority
-  -s, --status <value>        configured status (default: the initial one)
-  -l, --add-labels <value>    add a label; repeatable or comma-separated
-  -a, --add-assignees <@who>  add an assignee; repeatable or comma-separated
+      --status <value>        configured status (default: the initial one)
+      --add-labels <value>    add a label; repeatable or comma-separated
+      --add-assignees <@who>  add an assignee; repeatable or comma-separated
       --add-deps <ref>        add a dependency; validated, repeatable
       --due <YYYY-MM-DD>      due date
       --comment <text>        add a discussion comment; repeatable
@@ -361,7 +371,7 @@ Exit codes:
 Examples:
   biso new "Normalize CRLF in the diff" --type bug --priority high
   biso new "Add OAuth" --add-ac "Login succeeds" --add-ac "Token refreshes"
-  biso new "Rewrite the installer" -d @docs/installer.md --start
+  biso new "Rewrite the installer" --append-desc @docs/installer.md --start
   biso new --from tasks.ndjson --dry-run
 ```
 

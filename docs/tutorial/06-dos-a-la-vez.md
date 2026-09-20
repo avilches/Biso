@@ -79,7 +79,7 @@ checklist, has been in progress for days and was reserved by `@bob`, who hasn't 
 a while. The agent looks at what's currently in progress.
 
 ```console
-$ biso ls -s "In Progress"
+$ biso ls --status "In Progress"
 TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
 TASK-19  In Progress  task  high    Retry the upload on 5xx                           ac 0/2  @claude  -
 TASK-60  In Progress  task  high    Confirm the retry budget for the upload endpoint  ac 0/2  @claude  -

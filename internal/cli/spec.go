@@ -212,8 +212,9 @@ func (f *FlagSpec) named() string {
 func (f *FlagSpec) long() string { return "--" + f.Name }
 
 // shortest is the spelling a hint uses when it shows the flag inside an
-// example command line, so that the hint of --append-desc reads "-d @file.md"
-// exactly as docs/spec/salida-y-terminal.md#codificación-y-texto prints it.
+// example command line: the short form for the few flags that have one, and
+// the long name for every other, as in the hint of --append-desc that
+// docs/spec/salida-y-terminal.md#codificación-y-texto prints.
 func (f *FlagSpec) shortest() string {
 	if f.Short != "" {
 		return "-" + f.Short

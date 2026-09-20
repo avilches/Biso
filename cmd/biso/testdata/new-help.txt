@@ -1,19 +1,21 @@
 Usage: biso new <title> [options]
+       biso new --title <text> [options]
        biso new --from <file|-> [options]
 
 Create a task and print its id. Every field flag of `biso set` works here.
 
 Arguments:
-  title                      task title (required unless --from is given)
+  title                      task title (required unless --title or --from is given)
 
 Most used:
-  -d, --append-desc <text>    description; repeat to append paragraphs
+      --title <text>          the title, instead of the argument; never both
+      --append-desc <text>    description; repeat to append paragraphs
       --add-ac <text>         add an acceptance criterion; repeatable
       --type <value>          configured type
       --priority <value>      configured priority
-  -s, --status <value>        configured status (default: the initial one)
-  -l, --add-labels <value>    add a label; repeatable or comma-separated
-  -a, --add-assignees <@who>  add an assignee; repeatable or comma-separated
+      --status <value>        configured status (default: the initial one)
+      --add-labels <value>    add a label; repeatable or comma-separated
+      --add-assignees <@who>  add an assignee; repeatable or comma-separated
       --add-deps <ref>        add a dependency; validated, repeatable
       --due <YYYY-MM-DD>      due date
       --comment <text>        add a discussion comment; repeatable
@@ -41,5 +43,5 @@ Exit codes:
 Examples:
   biso new "Normalize CRLF in the diff" --type bug --priority high
   biso new "Add OAuth" --add-ac "Login succeeds" --add-ac "Token refreshes"
-  biso new "Rewrite the installer" -d @docs/installer.md --start
+  biso new "Rewrite the installer" --append-desc @docs/installer.md --start
   biso new --from tasks.ndjson --dry-run

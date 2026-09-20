@@ -15,9 +15,9 @@ const startHelp = "Usage: biso start <ref>... [options]\n" +
 	"Options:\n" +
 	"      --append-plan <text>       add to the implementation plan; repeatable,\n" +
 	"                                 and takes @file and - like every text option\n" +
-	"  -a, --add-assignees <@who>     add an assignee (--replace-assignees replaces\n" +
+	"      --add-assignees <@who>     add an assignee (--replace-assignees replaces\n" +
 	"                                 the list)\n" +
-	"  -s, --status <value>           use another status instead of the active one;\n" +
+	"      --status <value>           use another status instead of the active one;\n" +
 	"                                 no lease is claimed then, a lease only exists\n" +
 	"                                 on an active task\n" +
 	"      --reopen           allow starting a task that is already finished\n" +
@@ -116,7 +116,7 @@ const finishHelp = "Usage: biso finish <ref>... [options]\n" +
 	"                               With several tasks the selector has to be `all`\n" +
 	"      --append-note <text>     one last implementation note; repeatable\n" +
 	"      --add-files <path>       record a modified file; repeatable\n" +
-	"  -s, --status <value>         use another status instead of the terminal one\n" +
+	"      --status <value>         use another status instead of the terminal one\n" +
 	"      --strict           refuse to finish with unchecked criteria, unfinished\n" +
 	"                         subtasks or no summary\n" +
 	"                         (default: warn and go on; see finish_strict)\n" +

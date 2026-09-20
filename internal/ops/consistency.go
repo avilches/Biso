@@ -209,7 +209,7 @@ func (w *writer) warnAboutTerminal(t *model.Task, previousStatus string) {
 //
 // status is the one the message names, which is the status the write leaves
 // the task in. It is always the board's terminal one, in both callers,
-// because these are the warnings of arriving there: a `biso finish -s` that
+// because these are the warnings of arriving there: a `biso finish --status` that
 // names another status closes nothing and asks none of them
 // (docs/spec/cmd/verbos-del-ciclo.md#biso-finish).
 

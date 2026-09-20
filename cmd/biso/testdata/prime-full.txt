@@ -1,21 +1,21 @@
 ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies them)
-  labels              --clear-labels --replace-labels --rm-labels -l --add-labels
-  assignees           --clear-assignees --replace-assignees --rm-assignees -a --add-assignees
+  labels              --clear-labels --replace-labels --rm-labels --add-labels
+  assignees           --clear-assignees --replace-assignees --rm-assignees --add-assignees
   references          --clear-refs --replace-refs --rm-refs --add-refs
   documentation       --clear-docs --replace-docs --rm-docs --add-docs
   dependencies        --clear-deps --replace-deps --rm-deps --add-deps
   modifiedFiles       --clear-files --replace-files --rm-files --add-files
   acceptanceCriteria  --clear-acs --rm-ac --add-ac --check-ac --uncheck-ac
-  description         --clear-desc -d --append-desc
+  description         --clear-desc --append-desc
   plan                --clear-plan --append-plan
   notes               --clear-notes --append-note
   summary             --clear-summary --append-summary
   ext                 --clear-ext --rm-ext --ext
-  title               -t --title
-  status              -s --status
+  title               --title
+  status              --status
   type                --clear-type --type
   priority            --clear-priority --priority
-  parent              --clear-parent -p --parent
+  parent              --clear-parent --parent
   due                 --clear-due --due
   ordinal             --clear-ordinal --ordinal
   author              --clear-author --author

@@ -140,7 +140,7 @@ func roundTripInvocations() [][]string {
 	return [][]string{
 		{"set", "MYP-1"},
 		{"set", "MYP-1", "MYP-2", "--add-labels", "a,b", "--add-labels", "c"},
-		{"set", "MYP-1", "-l", "urgent", "--status", "Done", "--clear-desc"},
+		{"set", "MYP-1", "--add-labels", "urgent", "--status", "Done", "--clear-desc"},
 		{"set", "MYP-1", "--append-note", "-x", "--append-desc", "several\nlines"},
 		{"set", "MYP-1", "--ext", "trello=card/9", "--rm-ext", "old"},
 		{"set", "MYP-1", "--set-comment-date", "a=b=2026-08-14T10:22:00Z"},
@@ -151,11 +151,11 @@ func roundTripInvocations() [][]string {
 		// one reference with a comma inside, and one with a backslash of its own.
 		{"set", "MYP-1", "--add-refs", `notes/a\,b.md`},
 		{"set", "MYP-1", "--add-refs", `C:\dir\,notes/b.md`, "--add-refs", `ends-in\\`},
-		{"set", "MYP-1", "-d", "-5 degrees", "-t", "A title"},
+		{"set", "MYP-1", "--append-desc", "-5 degrees", "--title", "A title"},
 		// Four flags with a value, so that the fourth one is rendered as
 		// "-f value", the last of the four spellings.
 		{"set", "MYP-1", "--append-plan", "p", "--append-note", "n",
-			"--add-refs", "r", "-l", "x"},
+			"--add-refs", "r", "--add-labels", "x"},
 		{"ls", "--json"},
 		{"ls", "--limit", "10", "--mine"},
 		{"init", "--at", "../boards/mine", "--dry-run"},
@@ -246,11 +246,11 @@ func realInvocations() [][]string {
 		{"init", "--at", "../boards/mine", "--dry-run"},
 		{"where"},
 		{"ls"},
-		{"ls", "-s", "In Progress", "--mine"},
+		{"ls", "--status", "In Progress", "--mine"},
 		{"ls", "--type", "bug", "--priority", "high", "--limit", "10"},
 		{"ls", "--not-blocked", "--not-waiting", "--ids"},
 		{"ls", "--any-status", "--archived", "--all"},
-		{"ls", "-l", "parser", "--label-or", "ui,cli", "--search", "CRLF"},
+		{"ls", "--label", "parser", "--label-or", "ui,cli", "--search", "CRLF"},
 		{"ls", "--sort", "urgency", "--reverse", "--due-before", "2026-09-20"},
 		{"get", "MYP-11"},
 		{"get", "11", "--section", "ac"},

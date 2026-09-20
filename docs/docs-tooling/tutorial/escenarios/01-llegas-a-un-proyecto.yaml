@@ -26,9 +26,9 @@ steps:
         you are     @claude
 
       COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
-        biso ls [-s STATUS] [--type T] [-l LABEL] [--mine] [--search TEXT]
+        biso ls [--status STATUS] [--type T] [--label LABEL] [--mine] [--search TEXT]
         biso get <ref> [--section ac]
-        biso new "TITLE" [-d TEXT] [--add-ac TEXT]... [--type T] [--priority P]
+        biso new "TITLE" [--append-desc TEXT] [--add-ac TEXT]... [--type T] [--priority P]
         biso start <ref>... [--append-plan TEXT]
         biso note <ref> "TEXT"
         biso ask <ref> "QUESTION"
@@ -38,16 +38,16 @@ steps:
         biso comment <ref> "TEXT" [--comment-author @who]
 
       FIELD FLAGS  (same names, same meaning, in every command above that writes)
-        -t --title  -s --status  --type --clear-type  --priority --clear-priority
-        -p --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author
-        -l --add-labels --rm-labels --clear-labels --replace-labels
-        -a --add-assignees --rm-assignees --clear-assignees --replace-assignees
+        --title  --status  --type --clear-type  --priority --clear-priority
+        --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author
+        --add-labels --rm-labels --clear-labels --replace-labels
+        --add-assignees --rm-assignees --clear-assignees --replace-assignees
         --add-refs --rm-refs --clear-refs --replace-refs
         --add-docs --rm-docs --clear-docs --replace-docs
         --add-deps --rm-deps --clear-deps --replace-deps
         --add-files --rm-files --clear-files --replace-files
         --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac
-        -d --append-desc --clear-desc  --append-plan --clear-plan
+        --append-desc --clear-desc  --append-plan --clear-plan
         --append-note --clear-notes  --append-summary --clear-summary
         --comment --rm-comment --set-comment-date
         --ext K=V --rm-ext --clear-ext
@@ -58,9 +58,9 @@ steps:
            matching several tasks is an error that lists them, never a guess. `note`,
            `comment`, `ask` and `answer` take one <ref>; `set`, `start` and `finish`
            take several.
-        3. Filters reject values this board does not have: `-s Pending` is an error,
+        3. Filters reject values this board does not have: `--status Pending` is an error,
            not an empty list. Case, spaces, hyphens and underscores are ignored, so
-           `-s todo`, `-s "To Do"` and `-s TO_DO` are one and the same filter. An
+           `--status todo`, `--status "To Do"` and `--status TO_DO` are one and the same filter. An
            empty list is therefore a fact about the board that you can act on.
         4. `biso ls` prints 30 tasks by urgency and leaves out the Done ones. It says
            on stderr what it left out. --all lifts the limit, --any-status includes
@@ -72,7 +72,7 @@ steps:
            line per task: id, status, criteria, urgency. Add --print for the whole
            record, or --json for a versioned envelope.
         7. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.
-        8. Long text: a real newline works, and so do -d @file.md and -d - for stdin.
+        8. Long text: a real newline works, and so do --append-desc @file.md and --append-desc - for stdin.
         9. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
            6 precondition not met, 7 nothing written, 8 environment, 20 no board here.
        10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks

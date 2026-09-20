@@ -224,7 +224,7 @@ ellos las piezas que faltaban de estos transversales:
   `golang.org/x/term`.
 - **Las candidatas de una referencia ambigua**, que es lo que le faltaba a ["Cómo se resuelve una referencia a una tarea"](referencias.md): salen por
   stdout en el formato del listado, con su orden y su límite, y lo hacen en todo comando que resuelva
-  una referencia, que hoy son `get`, `set` y el `-p` de `ls`.
+  una referencia, que hoy son `get`, `set` y el `--parent` de `ls`.
 - **`--print`**, que ya imprime la ficha completa de cada tarea afectada, porque esa ficha es la de
   `biso get`.
 
@@ -270,7 +270,7 @@ de ellas cambiaron la especificación:
   ["Números, fechas y ausencias"](contrato-json.md#números-fechas-y-ausencias) la dice de los dos.
 - **Las candidatas de una referencia ambigua salen del tablero entero**, sin filtrar por estado, así
   que una tarea terminada aparece entre ellas aunque `biso ls --search` la deje fuera por el valor por
-  defecto de su `-s`. El código ya lo hacía; el texto se podía leer de las dos maneras y ahora lo dice
+  defecto de su `--status`. El código ya lo hacía; el texto se podía leer de las dos maneras y ahora lo dice
   explícitamente (["Cómo se resuelve una referencia a una tarea"](referencias.md#la-búsqueda-por-texto)).
 - Las otras dos eran huecos de prueba y no de comportamiento: el paso 2 del orden de aplicación (los
   `--replace-*`) no lo cubría ninguna prueba, y una frase de ["`biso new`"](cmd/new.md#salida) seguía diciendo que la
@@ -311,7 +311,7 @@ que decidir son esas mismas: qué dice cada uno de esos errores.
 
 La revisión del paso corrigió cuatro cosas más, tres de ellas también en la especificación:
 
-- **Los avisos de cierre de `biso finish` son los de llegar a un estado terminal**, así que con `-s`
+- **Los avisos de cierre de `biso finish` son los de llegar a un estado terminal**, así que con `--status`
   hacia otro estado no sale ninguno, ni siquiera convertido en el error 6 de `--strict`. La página
   del verbo no tenía fila para ese caso y ahora la tiene (["`biso finish`"](cmd/verbos-del-ciclo.md#biso-finish)).
 - **La llamada sin ningún texto de `biso ask` y de `biso answer` tiene su bloque literal**, como ya lo
@@ -340,10 +340,10 @@ esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
   prioridades de nombre largo, y un tablero cuyo nombre son diez mil caracteres. Los dos últimos son
   los que hacen cierta la palabra "siempre": los cuatro primeros escalones solo recortan tareas, así
   que un tablero sin ninguna se escapaba del tope por el bloque `BOARD` (imprimía 8.465 bytes) hasta
-  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.039 bytes** de
-  los 5.504, **3.550** de parte fija y **1.489** de resumen, que es exactamente lo que dice
+  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.089 bytes** de
+  los 5.504, **3.600** de parte fija y **1.489** de resumen, que es exactamente lo que dice
   ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño); con el de los vocabularios
-  largos, **5.175**, y con el del nombre kilométrico, **5.214**.
+  largos, **5.236**, y con el del nombre kilométrico, **5.264**.
 - **La medida del presupuesto de arranque ya es la de verdad**, en `cmd/biso/budget_test.go`:
   ejecuta el binario compilado, `biso ls` y `biso prime`, sobre un tablero real de 300 tareas con
   los cuatro bloques poblados, y mide de la llamada al código de salida, arranque del proceso
@@ -636,6 +636,28 @@ con lo que hace el programa. Encontró nueve divergencias, y estas son las que c
   la búsqueda por texto; y los dos fallos del arrendamiento de un lote ya no llevan una clave `given`
   vacía, que es una segunda excepción declarada de
   ["Los errores en JSON"](contrato-json.md#los-errores-en-json).
+
+### Qué dejó hecha la retirada de las formas cortas
+
+La tarea `TASK-69` aplicó la regla de
+["Una forma corta solo existe si nadie más reclama su inicial"](../decisiones/comandos-y-flags.md#una-forma-corta-solo-existe-si-nadie-más-reclama-su-inicial)
+al programa y a la especificación:
+
+- **Las formas cortas de la tabla de la decisión ya no existen.** Usarlas es un error 2 con el `code`
+  `unknown_flag`. La medida de la tarea contaba seis, y al escribir la prueba que aplica la regla a
+  todos los comandos apareció una más, la de `--out` en `biso export`, que chocaba con `--overdue`.
+  Las de los flags globales se quedan.
+- **Las tablas de parámetros de `docs/spec/cmd/` ya no tienen la columna `Corto`**, salvo la de los
+  flags globales, que es donde la forma corta sigue existiendo.
+- **`biso new` acepta el título por `--title` y rechaza darlo también como argumento**, con el `code`
+  `incompatible_flags` (["`biso new`"](cmd/new.md#comportamiento-caso-a-caso)), y `biso new --help`
+  lista `--title`.
+- **Las pruebas** están en `cmd/biso/short_flags_test.go`, que ejecuta el binario con cada forma
+  retirada, con el choque de título y con la ayuda de `new`, y en `internal/cli/short_flags_test.go`,
+  que recorre la tabla de todos los comandos y falla si una forma corta la reclama otro flag.
+- **El mensaje de arranque mide ahora 5.089 bytes** con el tablero del ejemplo, cincuenta más que
+  antes, porque sus flags se escriben enteros
+  (["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño)).
 
 ## Antes de empezar un paso
 

@@ -201,7 +201,7 @@ func TestTheAuthorOfANewTask(t *testing.T) {
 	}
 }
 
-// docs/spec/cmd/new.md: --start without any identity and without -a leaves
+// docs/spec/cmd/new.md: --start without any identity and without --add-assignees leaves
 // the task active and unassigned, with a note and WITHOUT a lease, because
 // there is nobody to attribute one to.
 func TestStartWithoutAnIdentityLeavesTheTaskUnassignedAndWithoutALease(t *testing.T) {
@@ -227,7 +227,7 @@ func TestStartWithoutAnIdentityLeavesTheTaskUnassignedAndWithoutALease(t *testin
 	}
 }
 
-// docs/spec/cmd/new.md: with -a @sara and another identity configured, the
+// docs/spec/cmd/new.md: with --add-assignees @sara and another identity configured, the
 // task is assigned to @sara and the lease is the caller's, because whoever
 // takes it is whoever writes and not whoever is in assignees.
 func TestStartAssignsToWhoWasNamedAndLeasesToWhoCalls(t *testing.T) {

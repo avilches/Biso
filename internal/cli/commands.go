@@ -174,7 +174,7 @@ func newCommand() CommandSpec {
 // this command has about the archive is --no-archived.
 func exportCommand() CommandSpec {
 	flags := append(filterFlags(),
-		FlagSpec{Name: "out", Short: "o", Value: PlainValue},
+		FlagSpec{Name: "out", Value: PlainValue},
 		FlagSpec{Name: "no-archived"},
 	)
 	return CommandSpec{Name: "export", ReadOnly: true, AffectsNoTask: true, Flags: flags}
@@ -318,9 +318,9 @@ func filterFlags() []FlagSpec {
 	// A filter that repeats accumulates values and admits a list separated
 	// by commas, which is what the head of its table says
 	// ("repeat or comma-separate").
-	filter := func(name, short string, conflicts ...string) FlagSpec {
+	filter := func(name string, conflicts ...string) FlagSpec {
 		return FlagSpec{
-			Name: name, Short: short, Value: PlainValue,
+			Name: name, Value: PlainValue,
 			Repeatable: true, Comma: true, Conflicts: conflicts,
 		}
 	}
@@ -329,8 +329,8 @@ func filterFlags() []FlagSpec {
 	// rejected here: the empty value is an unknown value of that
 	// vocabulary, exit code 3, in both directions
 	// (docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos).
-	vocabulary := func(name, short string, conflicts ...string) FlagSpec {
-		f := filter(name, short, conflicts...)
+	vocabulary := func(name string, conflicts ...string) FlagSpec {
+		f := filter(name, conflicts...)
 		f.ClosedVocabulary = true
 		return f
 	}
@@ -343,17 +343,17 @@ func filterFlags() []FlagSpec {
 		}
 	}
 	flags := []FlagSpec{
-		vocabulary("status", "s", "any-status"),
-		vocabulary("not-status", "", "any-status"),
+		vocabulary("status", "any-status"),
+		vocabulary("not-status", "any-status"),
 		{Name: "any-status", Conflicts: []string{"status", "not-status"}},
-		vocabulary("type", ""),
-		vocabulary("priority", ""),
-		filter("label", "l"),
-		filter("label-or", ""),
-		filter("assignee", "a", "mine", "unassigned"),
+		vocabulary("type"),
+		vocabulary("priority"),
+		filter("label"),
+		filter("label-or"),
+		filter("assignee", "mine", "unassigned"),
 		{Name: "mine", Conflicts: []string{"assignee", "unassigned"}},
 		{Name: "unassigned", Conflicts: []string{"assignee", "mine"}},
-		{Name: "parent", Short: "p", Value: PlainValue},
+		{Name: "parent", Value: PlainValue},
 	}
 	flags = append(flags, opposites("blocked", "not-blocked")...)
 	flags = append(flags, opposites("waiting", "not-waiting")...)

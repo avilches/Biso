@@ -11,7 +11,7 @@ If a task cannot be read, the rest is still written and the exit code is 6,
 not 0: this is the one command whose purpose is to lose nothing.
 
 Options:
-  -o, --out <file|->   where to write (default: stdout)
+      --out <file|->   where to write (default: stdout)
       --no-archived    leave the archived tasks out
   -h, --help           show this help
 
@@ -30,5 +30,5 @@ Exit codes:
   8  cannot write there                20 no board here
 
 Examples:
-  biso export -o backup.ndjson
-  biso export -s Done --no-archived -o done.ndjson
+  biso export --out backup.ndjson
+  biso export --status Done --no-archived --out done.ndjson

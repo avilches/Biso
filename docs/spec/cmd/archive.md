@@ -7,12 +7,12 @@ biso archive <ref>... [--unarchive] [--id] [--match]
              [cualquier flag de campo de las familias de flags]
 ```
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí, una o más | referencia | | sí | no | |
-| `--unarchive` | | no | booleano | falso | no | no | |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí, una o más | referencia | | sí | no | |
+| `--unarchive` | no | booleano | falso | no | no | |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
 
 Saca la tarea del tablero activo. **La tarea sigue existiendo**, su identificador sigue reservado,
 `biso get` la encuentra avisando de que está archivada, y `biso ls --archived` la lista.

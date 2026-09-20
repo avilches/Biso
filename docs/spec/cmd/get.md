@@ -8,13 +8,13 @@ biso get <ref> [--id] [--match] [--section <name>]... [--explain-urgency]
 
 ## Parámetros
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<ref>` | | sí | referencia | | no | no | |
-| `--id` | | no | booleano | falso | no | no | `--match` |
-| `--match` | | no | booleano | falso | no | no | `--id` |
-| `--section <name>` | | no | `meta`, `desc`, `ac`, `plan`, `notes`, `summary`, `comments`, `question` | todas | sí | sí | |
-| `--explain-urgency` | | no | booleano | falso | no | no | |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<ref>` | sí | referencia | | no | no | |
+| `--id` | no | booleano | falso | no | no | `--match` |
+| `--match` | no | booleano | falso | no | no | `--id` |
+| `--section <name>` | no | `meta`, `desc`, `ac`, `plan`, `notes`, `summary`, `comments`, `question` | todas | sí | sí | |
+| `--explain-urgency` | no | booleano | falso | no | no | |
 
 `--section` sirve para pedir solo una parte. `biso get MYP-11 --section ac` imprime los criterios con
 sus claves y cuesta unas decenas de bytes en vez de la ficha entera, que es lo que hace falta antes de
@@ -33,7 +33,7 @@ La resolución de `<ref>` está en la sección ["Cómo se resuelve una referenci
 | Caso | Qué pasa |
 |---|---|
 | La referencia resuelve a una tarea | Se imprime, código 0 |
-| La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** exactamente como las imprimiría `biso ls --search "<texto>"` (["`biso ls`"](ls.md)), y ese "exactamente" son tres cosas y solo tres: el mismo orden, el mismo límite de 30 y el mismo aviso de recorte si hace falta. **No son los filtros de ese listado**: las candidatas salen del tablero entero y una tarea en el estado terminal aparece entre ellas, aunque `biso ls` la deje fuera por el valor por defecto de su `-s` (["Cómo se resuelve una referencia a una tarea"](../referencias.md#la-búsqueda-por-texto)) |
+| La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** exactamente como las imprimiría `biso ls --search "<texto>"` (["`biso ls`"](ls.md)), y ese "exactamente" son tres cosas y solo tres: el mismo orden, el mismo límite de 30 y el mismo aviso de recorte si hace falta. **No son los filtros de ese listado**: las candidatas salen del tablero entero y una tarea en el estado terminal aparece entre ellas, aunque `biso ls` la deje fuera por el valor por defecto de su `--status` (["Cómo se resuelve una referencia a una tarea"](../referencias.md#la-búsqueda-por-texto)) |
 | La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched MYP-11` por stderr |
 | La tarea está archivada | Se imprime, con `note: MYP-11 is archived` por stderr |
 | La tarea no se puede leer | Error 3, según la regla de lectura dirigida de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
@@ -251,7 +251,7 @@ Con varias coincidencias, `kind` es `task.candidates`, `data.tasks` es la lista 
 Ese sobre lleva `data` y no `error`, aunque el código no sea cero, y es el único de todo el programa
 que hace eso: las candidatas son un dato, no la descripción de un fallo. **`biso get` es también el
 único comando que lo emite**: cualquier otro que resuelva una referencia ambigua con `--json`, como
-`biso set` o el `-p` de `biso ls`, contesta el sobre de error de ["Los errores en JSON"](../contrato-json.md#los-errores-en-json) con el mismo código 5,
+`biso set` o el `--parent` de `biso ls`, contesta el sobre de error de ["Los errores en JSON"](../contrato-json.md#los-errores-en-json) con el mismo código 5,
 porque la tabla de `kind` de ["El sobre"](../contrato-json.md#el-sobre) le da `task.candidates` a `get` y a ningún otro.
 
 ## Códigos de salida

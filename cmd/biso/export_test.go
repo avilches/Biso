@@ -58,23 +58,23 @@ func TestExportLeavesTheArchivedOutOnRequest(t *testing.T) {
 func TestExportAppliesTheFiltersOfAListing(t *testing.T) {
 	m := exportBoard(t)
 
-	// The example of the specification: an explicit -s filters by that value
+	// The example of the specification: an explicit --status filters by that value
 	// as it is, the terminal status included.
-	got := m.run(t, "export", "-s", "Done", "--no-archived").assertCode(t, 0)
+	got := m.run(t, "export", "--status", "Done", "--no-archived").assertCode(t, 0)
 
 	if !strings.Contains(got.stdout, `"id":"MYP-2"`) || strings.Count(got.stdout, "\n") != 1 {
 		t.Errorf("-s Done --no-archived answered:\n%s", got.stdout)
 	}
 }
 
-func TestExportWritesTheFileMinusOAsks(t *testing.T) {
+func TestExportWritesTheFileThatOutNames(t *testing.T) {
 	m := exportBoard(t)
 	path := filepath.Join(m.dir, "backup.ndjson")
 
-	got := m.run(t, "export", "-o", path).assertCode(t, 0)
+	got := m.run(t, "export", "--out", path).assertCode(t, 0)
 
 	if got.stdout != "" {
-		t.Errorf("with -o the dump still went to stdout:\n%s", got.stdout)
+		t.Errorf("with --out the dump still went to stdout:\n%s", got.stdout)
 	}
 	if lines := strings.Count(m.read(t, path), "\n"); lines != 3 {
 		t.Errorf("the file has %d lines and the board has three tasks", lines)
@@ -123,7 +123,7 @@ func TestExportRefusesJSONInPlainText(t *testing.T) {
 
 func TestExportRefusesAFilterValueTheBoardDoesNotHave(t *testing.T) {
 	m := exportBoard(t)
-	m.run(t, "export", "-s", "Pendiente").assertCode(t, 3)
+	m.run(t, "export", "--status", "Pendiente").assertCode(t, 3)
 }
 
 func TestExportAnswersSixWhenItSkippedATask(t *testing.T) {
@@ -161,7 +161,7 @@ func TestExportCannotWriteWhereItWasTold(t *testing.T) {
 	}
 	t.Cleanup(func() { os.Chmod(closed, 0o700) })
 
-	m.run(t, "export", "-o", filepath.Join(closed, "backup.ndjson")).assertCode(t, 8)
+	m.run(t, "export", "--out", filepath.Join(closed, "backup.ndjson")).assertCode(t, 8)
 }
 
 // everyFieldOfTheFormat is a task with every key of the interchange format
@@ -208,7 +208,7 @@ func TestExportWritesEveryFieldOfTheFormat(t *testing.T) {
 
 	// The filter leaves the plain first task out, so what is compared is
 	// the one line that carries everything.
-	got := m.run(t, "export", "-s", "In Progress").assertCode(t, 0)
+	got := m.run(t, "export", "--status", "In Progress").assertCode(t, 0)
 
 	assertEqual(t, got.stdout, fixture(t, "export-line.txt"),
 		"the exported line of a task with every field of the format")

@@ -10,10 +10,10 @@ biso config list
 
 ## Parámetros
 
-| Parámetro | Corto | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
-|---|---|---|---|---|---|---|---|
-| `<key>` | | sí en `get` y `set` | una clave de la tabla de abajo | | no | no | |
-| `<value>` | | sí en `set` | según la clave | | no | sí en las claves de lista | |
+| Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
+|---|---|---|---|---|---|---|
+| `<key>` | sí en `get` y `set` | una clave de la tabla de abajo | | no | no | |
+| `<value>` | sí en `set` | según la clave | | no | sí en las claves de lista | |
 
 `--json` solo se acepta en `config list`. En `get` la salida ya es un solo valor y en `set` no hay
 salida por stdout, así que en los dos es un error de uso con código 2. El rechazo es texto plano por

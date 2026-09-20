@@ -81,8 +81,8 @@ a añadir un elemento de una lista es una operación con un resultado bien defin
 
 | Campo | Añade | Quita (uno o varios) | Vacía | Sustituye entera |
 |---|---|---|---|---|
-| etiquetas | `-l, --add-labels` | `--rm-labels` | `--clear-labels` | `--replace-labels` |
-| personas asignadas | `-a, --add-assignees` | `--rm-assignees` | `--clear-assignees` | `--replace-assignees` |
+| etiquetas | `--add-labels` | `--rm-labels` | `--clear-labels` | `--replace-labels` |
+| personas asignadas | `--add-assignees` | `--rm-assignees` | `--clear-assignees` | `--replace-assignees` |
 | referencias | `--add-refs` | `--rm-refs` | `--clear-refs` | `--replace-refs` |
 | documentación | `--add-docs` | `--rm-docs` | `--clear-docs` | `--replace-docs` |
 | dependencias | `--add-deps` | `--rm-deps` | `--clear-deps` | `--replace-deps` |
@@ -101,7 +101,7 @@ mismas etiquetas, `cli`, `parser` y `urgent`:
 ```
 biso set MYP-11 --add-labels parser,urgent
 biso set MYP-11 --add-labels parser --add-labels urgent
-biso set MYP-11 -l parser,urgent
+biso set MYP-11 --add-labels parser,urgent
 ```
 
 Y esta, en cambio, deja solo `parser` y `urgent`, porque sustituye la lista y `cli` desaparece:
@@ -210,7 +210,7 @@ sección.
 
 | Campo | Añade al final | Vacía |
 |---|---|---|
-| descripción | `-d, --append-desc` | `--clear-desc` |
+| descripción | `--append-desc` | `--clear-desc` |
 | plan | `--append-plan` | `--clear-plan` |
 | notas | `--append-note` | `--clear-notes` |
 | resumen final | `--append-summary` | `--clear-summary` |
@@ -436,11 +436,11 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 
 | Campo | Fija | Vacía |
 |---|---|---|
-| título | `-t, --title` | no se puede, es obligatorio |
-| estado | `-s, --status` | no se puede, es obligatorio |
+| título | `--title` | no se puede, es obligatorio |
+| estado | `--status` | no se puede, es obligatorio |
 | tipo | `--type` | `--clear-type` |
 | prioridad | `--priority` | `--clear-priority` |
-| tarea padre | `-p, --parent` | `--clear-parent` |
+| tarea padre | `--parent` | `--clear-parent` |
 | fecha límite | `--due` | `--clear-due` |
 | orden manual | `--ordinal` | `--clear-ordinal` |
 | autor de la tarea | `--author` | `--clear-author` |
