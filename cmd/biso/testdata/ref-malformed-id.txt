@@ -1,0 +1,3 @@
+$ biso get MYP-1.1 --id
+error: malformed task id: "MYP-1.1"
+hint: ids look like MYP-11 or 11. A subtask is an ordinary task with --parent MYP-1

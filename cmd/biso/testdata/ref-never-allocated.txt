@@ -1,0 +1,3 @@
+$ biso get MYP-999
+error: MYP-999 has never existed on this board
+note: the highest id ever assigned here is MYP-90
