@@ -1,0 +1,2 @@
+error: "MYP-2" looks like a task id, and `biso ask` takes only one task
+hint: to write that text literally, use @file or - for stdin

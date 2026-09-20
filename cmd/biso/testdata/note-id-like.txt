@@ -1,0 +1,3 @@
+error: "MYP-2" looks like a task id, and `biso note` takes only one task
+hint: to note the same thing on several tasks: biso set MYP-1 MYP-2 --append-note "..."
+      to write that text literally:            biso note MYP-1 --append-note "MYP-2"

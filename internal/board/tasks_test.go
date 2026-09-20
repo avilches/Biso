@@ -906,3 +906,103 @@ func TestSaveAllValidatesEverythingBeforeItOpensTheTransaction(t *testing.T) {
 		t.Errorf("the first task was written although the batch failed: %q", stored.Title)
 	}
 }
+
+// TestAnExpiredLeaseIsClaimedByOnlyOneOfTwoSimultaneousClaims is the
+// conditional half of `biso start`
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-start). Two processes read the
+// same expired lease, one of them writes first, and the second one is told
+// it lost instead of overwriting the winner in silence.
+//
+// The two go through two independent stores over the same file, which is
+// what a second process really is.
+func TestAnExpiredLeaseIsClaimedByOnlyOneOfTwoSimultaneousClaims(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "board.sqlite")
+	now := time.Date(2026, 9, 6, 9, 12, 4, 0, time.UTC)
+
+	first, closeFirst := openTasks(t, path)
+	defer closeFirst()
+	task := &model.Task{
+		Title: "Normalize CRLF", Status: "In Progress",
+		Assignees:      []string{"@sara"},
+		LeaseHolder:    "@sara",
+		LeaseExpiresAt: now.Add(-time.Hour),
+	}
+	if err := first.Create(task); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Both read the task while the lease is expired, and each one prepares
+	// its own claim of it.
+	mine, err := first.Load(task.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, closeSecond := openTasks(t, path)
+	defer closeSecond()
+	theirs, err := second.Load(task.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	theirs.Assignees = []string{"@juan"}
+	theirs.LeaseHolder, theirs.LeaseExpiresAt = "@juan", now.Add(time.Hour)
+	if err := second.SaveAll([]*model.Task{theirs},
+		LeaseClaim{TaskID: task.ID, Holder: "@juan", Now: now}); err != nil {
+		t.Fatalf("the first claim did not win: %v", err)
+	}
+
+	mine.Assignees = []string{"@claude"}
+	mine.LeaseHolder, mine.LeaseExpiresAt = "@claude", now.Add(time.Hour)
+	err = first.SaveAll([]*model.Task{mine},
+		LeaseClaim{TaskID: task.ID, Holder: "@claude", Now: now})
+
+	var e *model.Error
+	if !errors.As(err, &e) || e.ExitCode != 8 || e.Code != "lease_lost" {
+		t.Fatalf("error = %v, want exit code 8 with lease_lost", err)
+	}
+	// And the loser wrote nothing at all, not even the fields that had
+	// nothing to do with the lease.
+	after, err := first.Load(task.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.LeaseHolder != "@juan" {
+		t.Errorf("leaseHolder = %q, want the winner's", after.LeaseHolder)
+	}
+	if strings.Join(after.Assignees, ",") != "@juan" {
+		t.Errorf("assignees = %v, and the loser's write was rolled back whole", after.Assignees)
+	}
+}
+
+// A claim over a lease that is still expired at write time goes through:
+// nobody else got there first.
+func TestAClaimOverALeaseThatIsStillExpiredGoesThrough(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "board.sqlite")
+	now := time.Date(2026, 9, 6, 9, 12, 4, 0, time.UTC)
+
+	tasks, done := openTasks(t, path)
+	defer done()
+	task := &model.Task{
+		Title: "Normalize CRLF", Status: "In Progress",
+		Assignees:      []string{"@sara"},
+		LeaseHolder:    "@sara",
+		LeaseExpiresAt: now.Add(-time.Hour),
+	}
+	if err := tasks.Create(task); err != nil {
+		t.Fatal(err)
+	}
+
+	task.LeaseHolder, task.LeaseExpiresAt = "@claude", now.Add(time.Hour)
+	if err := tasks.SaveAll([]*model.Task{task},
+		LeaseClaim{TaskID: task.ID, Holder: "@claude", Now: now}); err != nil {
+		t.Fatalf("SaveAll: %v", err)
+	}
+
+	after, err := tasks.Load(task.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.LeaseHolder != "@claude" {
+		t.Errorf("leaseHolder = %q, want the caller", after.LeaseHolder)
+	}
+}

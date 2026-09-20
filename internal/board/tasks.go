@@ -104,7 +104,9 @@ func (r *Tasks) Save(task *model.Task) error {
 // never sees the board halfway through. Everything that can be judged
 // without touching the database is judged first, over every task, so that a
 // call that is going to fail does not even open one.
-func (r *Tasks) SaveAll(tasks []*model.Task) error {
+// claims are the conditional half of the write, and they are checked inside
+// that same transaction, just before the rows are replaced.
+func (r *Tasks) SaveAll(tasks []*model.Task, claims ...LeaseClaim) error {
 	nums := make([]int, len(tasks))
 	for i, task := range tasks {
 		if err := r.validate(task); err != nil {
@@ -118,6 +120,11 @@ func (r *Tasks) SaveAll(tasks []*model.Task) error {
 	}
 
 	return r.store.WithTx(func(tx *sql.Tx) error {
+		for _, claim := range claims {
+			if err := claim.check(tx); err != nil {
+				return err
+			}
+		}
 		for i, task := range tasks {
 			if err := r.saveWithin(tx, task, nums[i]); err != nil {
 				return err
@@ -125,6 +132,54 @@ func (r *Tasks) SaveAll(tasks []*model.Task) error {
 		}
 		return nil
 	})
+}
+
+// LeaseClaim is the one conditional write the program has: `biso start`
+// taking an expired lease reads it outside the transaction and claims it
+// inside, so the claim has to say what it was claiming against
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-start). Checked here and not in
+// internal/ops because only this layer can ask the question inside the
+// transaction that is about to write.
+//
+// Holder is who is claiming, and Now the clock of the call. The claim is
+// lost when, at that moment, the row already carries a live lease of a
+// different identity: another claim of the same expired lease got there
+// first, and of two simultaneous ones only one wins.
+type LeaseClaim struct {
+	TaskID string
+	Holder string
+	Now    time.Time
+}
+
+func (c LeaseClaim) check(tx *sql.Tx) error {
+	var expiresAt, holder string
+	err := tx.QueryRow(
+		"SELECT lease_expires_at, lease_holder FROM task WHERE id = ?",
+		c.TaskID).Scan(&expiresAt, &holder)
+	if errors.Is(err, sql.ErrNoRows) {
+		// The task going missing between the read and the write is not
+		// this check's business: saveWithin answers it with the message
+		// of docs/spec/referencias.md.
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if holder == "" || holder == c.Holder || expiresAt == "" {
+		return nil
+	}
+	until, err := parseInstant(expiresAt)
+	if err != nil || !until.After(c.Now) {
+		return nil
+	}
+	return &model.Error{
+		ExitCode: 8,
+		Code:     "lease_lost",
+		Message: fmt.Sprintf("%s's expired lease was claimed by %s while this call was running",
+			c.TaskID, holder),
+		Hints: []string{fmt.Sprintf(
+			"nothing was written; run `biso start %s` again to take it over", c.TaskID)},
+	}
 }
 
 // saveWithin writes one task inside a transaction the caller owns.

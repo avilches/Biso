@@ -1,0 +1,2 @@
+error: MYP-11 already has an open question
+hint: answer it first with `biso answer MYP-11 <text>`

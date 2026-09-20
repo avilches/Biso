@@ -21,6 +21,8 @@ func Commands() []CommandSpec {
 	return []CommandSpec{
 		initCommand(), whereCommand(), newCommand(),
 		listCommand(), getCommand(), setCommand(),
+		startCommand(), noteCommand(), commentCommand(),
+		finishCommand(), askCommand(), answerCommand(),
 	}
 }
 
@@ -92,11 +94,92 @@ func newCommand() CommandSpec {
 // setCommand is the table of docs/spec/cmd/set.md: the field flags, plus the
 // two that force how a <ref> is read.
 func setCommand() CommandSpec {
-	flags := append(fieldFlags(),
-		FlagSpec{Name: "id", Conflicts: []string{"match"}},
-		FlagSpec{Name: "match", Conflicts: []string{"id"}},
+	return CommandSpec{Name: "set", Flags: append(fieldFlags(), resolution()...)}
+}
+
+// The six verbs of the cycle, each one the field flags of fields.go plus its
+// own row or two (docs/spec/cmd/verbos-del-ciclo.md). They take all of them
+// and not a subset, which is the promise that page opens with, so the table
+// is built from the same function `biso set` builds its own from.
+
+// resolution is the pair that forces how a <ref> is read, which every
+// command with a positional reference carries
+// (docs/spec/referencias.md#la-gramática).
+func resolution() []FlagSpec {
+	return []FlagSpec{
+		{Name: "id", Conflicts: []string{"match"}},
+		{Name: "match", Conflicts: []string{"id"}},
+	}
+}
+
+func startCommand() CommandSpec {
+	flags := append(fieldFlags(), resolution()...)
+	flags = append(flags, FlagSpec{Name: "reopen"})
+	return CommandSpec{Name: "start", Flags: flags}
+}
+
+// noteCommand and the three verbs below take exactly one reference and read
+// every positional after it as a long text, which is what makes
+// `biso note MYP-11 @findings.md` work.
+func noteCommand() CommandSpec {
+	return CommandSpec{
+		Name:                "note",
+		Flags:               append(fieldFlags(), resolution()...),
+		TextPositionalsFrom: 1,
+	}
+}
+
+// commentCommand is the one command where --comment-author stands on its
+// own: everywhere else it is the author of a --comment, and here the
+// positional text is the comment (docs/spec/cmd/verbos-del-ciclo.md#biso-comment).
+func commentCommand() CommandSpec {
+	flags := append(fieldFlags(), resolution()...)
+	for i := range flags {
+		if flags[i].Name == "comment-author" {
+			flags[i].Requires = nil
+		}
+	}
+	return CommandSpec{Name: "comment", Flags: flags, TextPositionalsFrom: 1}
+}
+
+func finishCommand() CommandSpec {
+	flags := append(fieldFlags(), resolution()...)
+	flags = append(flags,
+		FlagSpec{Name: "strict", Conflicts: []string{"no-checks"}},
+		FlagSpec{Name: "no-checks", Conflicts: []string{"strict"}},
 	)
-	return CommandSpec{Name: "set", Flags: flags}
+	return CommandSpec{Name: "finish", Flags: flags}
+}
+
+// askCommand and answerCommand drop --comment-author from the table: the
+// author of a question is always the configured identity, and of the two
+// comments `biso answer` writes only the answer is signed by the caller
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-ask).
+func askCommand() CommandSpec {
+	return CommandSpec{
+		Name:                "ask",
+		Flags:               withoutCommentAuthor(append(fieldFlags(), resolution()...)),
+		TextPositionalsFrom: 1,
+	}
+}
+
+func answerCommand() CommandSpec {
+	return CommandSpec{
+		Name:                "answer",
+		Flags:               withoutCommentAuthor(append(fieldFlags(), resolution()...)),
+		TextPositionalsFrom: 1,
+	}
+}
+
+func withoutCommentAuthor(flags []FlagSpec) []FlagSpec {
+	out := make([]FlagSpec, 0, len(flags))
+	for _, f := range flags {
+		if f.Name == "comment-author" {
+			continue
+		}
+		out = append(out, f)
+	}
+	return out
 }
 
 // listCommand is the table of docs/spec/cmd/ls.md: the filters, with the

@@ -134,7 +134,7 @@ func errEmptyScalar(f *FlagSpec) *model.Error {
 func errTwoStdin(first, second *FlagSpec) *model.Error {
 	return flagUsage("two_stdin", second, "-", fmt.Sprintf(
 		"- can be given only once per invocation; %s and %s both read stdin",
-		first.long(), second.long()))
+		first.named(), second.named()))
 }
 
 // errStdinTwiceInOneFlag is the same rule when it is one repeatable flag
@@ -142,14 +142,14 @@ func errTwoStdin(first, second *FlagSpec) *model.Error {
 // same flag on both sides of "and" reads like a bug in the message.
 func errStdinTwiceInOneFlag(f *FlagSpec) *model.Error {
 	return flagUsage("two_stdin", f, "-", fmt.Sprintf(
-		"- can be given only once per invocation; %s reads stdin twice", f.long()))
+		"- can be given only once per invocation; %s reads stdin twice", f.named()))
 }
 
 func errFileNotFound(f *FlagSpec, path string) *model.Error {
 	return &model.Error{
 		ExitCode: 4,
 		Code:     "file_not_found",
-		Message:  fmt.Sprintf("%s: file not found: %s", f.long(), path),
+		Message:  fmt.Sprintf("%s: file not found: %s", f.named(), path),
 		Field:    f.field(),
 		Given:    path,
 	}
@@ -159,7 +159,7 @@ func errFileUnreadable(f *FlagSpec, path string) *model.Error {
 	return &model.Error{
 		ExitCode: 8,
 		Code:     "file_unreadable",
-		Message:  fmt.Sprintf("%s: file cannot be read: %s", f.long(), path),
+		Message:  fmt.Sprintf("%s: file cannot be read: %s", f.named(), path),
 		Field:    f.field(),
 		Given:    path,
 	}
@@ -172,7 +172,7 @@ func errStdinUnreadable(f *FlagSpec, err error) *model.Error {
 	return &model.Error{
 		ExitCode: 8,
 		Code:     "io_error",
-		Message:  fmt.Sprintf("%s: stdin cannot be read: %v", f.long(), err),
+		Message:  fmt.Sprintf("%s: stdin cannot be read: %v", f.named(), err),
 		Field:    f.field(),
 		Given:    "-",
 	}
@@ -189,7 +189,7 @@ func errInvalidEncoding(f *FlagSpec, given string, offset int) *model.Error {
 	return &model.Error{
 		ExitCode: 3,
 		Code:     "invalid_encoding",
-		Message:  fmt.Sprintf("%s: invalid UTF-8 at byte %d", f.long(), offset),
+		Message:  fmt.Sprintf("%s: invalid UTF-8 at byte %d", f.named(), offset),
 		Field:    f.field(),
 		Given:    given,
 	}

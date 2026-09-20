@@ -1,0 +1,28 @@
+Usage: biso note <ref> <text>... [options]
+
+Append one or more paragraphs to the implementation notes of ONE task. It never
+replaces anything; clearing and appending in the same `biso set <ref>` call does.
+
+Arguments:
+  ref            one task: an id, a bare number or free text
+  text           one paragraph per argument; @file and - work here too
+
+Options:
+      --id / --match   force <ref> to be an id, or free text
+  -h, --help           show this help
+
+Every field flag of `biso set --help` works here too. Use `--append-note <text>`
+for a paragraph that is not checked against the id grammar, for when the note
+itself looks like an id.
+
+To note the same thing on several tasks, use `biso set A B --append-note "..."`.
+
+Exit codes:
+  0  appended       3  the task could not be read     7  --dry-run did not pass
+  2  bad usage      4  not found                      8  could not be written
+                    5  ambiguous                     20  no board here
+
+Examples:
+  biso note MYP-11 "The parser already normalized LF, CRLF was missing"
+  biso note 11 "First finding" "Second finding"
+  biso note MYP-11 @/tmp/benchmark-output.txt

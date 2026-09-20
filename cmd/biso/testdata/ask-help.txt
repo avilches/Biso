@@ -1,0 +1,28 @@
+Usage: biso ask <ref> <text>... [options]
+
+Park ONE task on a question for a person. The task keeps its status, but it
+leaves the IN PROGRESS block of `biso prime` and shows up under NEEDS ANSWER
+until somebody runs `biso answer`.
+
+Arguments:
+  ref                one task: an id, a bare number or free text
+  text               the question; @file and - work too
+
+Options:
+      --id / --match force <ref> to be an id, or free text
+  -h, --help         show this help
+
+Every field flag of `biso set --help` works here too, but nothing except this
+command and `biso answer` ever writes the question itself.
+
+A task holds one open question at a time. Answer it before asking another.
+
+Exit codes:
+  0  asked          4  not found        7  --dry-run did not pass
+  2  bad usage      5  ambiguous        8  could not be written
+  3  empty question, or unreadable      20 no board here
+  6  already asking, or already finished
+
+Examples:
+  biso ask MYP-11 "Do we normalize binary files too, or only text?"
+  biso ask 11 @/tmp/question.md

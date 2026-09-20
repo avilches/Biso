@@ -149,6 +149,12 @@ func TestHelpTextsAreTheOnesOfTheSpecification(t *testing.T) {
 		{[]string{"ls", "--help"}, fixture(t, "ls-help.txt"), "biso ls --help"},
 		{[]string{"get", "--help"}, fixture(t, "get-help.txt"), "biso get --help"},
 		{[]string{"set", "--help"}, fixture(t, "set-help.txt"), "biso set --help"},
+		{[]string{"start", "--help"}, fixture(t, "start-help.txt"), "biso start --help"},
+		{[]string{"note", "--help"}, fixture(t, "note-help.txt"), "biso note --help"},
+		{[]string{"comment", "--help"}, fixture(t, "comment-help.txt"), "biso comment --help"},
+		{[]string{"finish", "--help"}, fixture(t, "finish-help.txt"), "biso finish --help"},
+		{[]string{"ask", "--help"}, fixture(t, "ask-help.txt"), "biso ask --help"},
+		{[]string{"answer", "--help"}, fixture(t, "answer-help.txt"), "biso answer --help"},
 	} {
 		got := m.run(t, c.argv...).assertCode(t, 0)
 		assertEqual(t, got.stdout, c.want, c.subject)
@@ -174,41 +180,75 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 	for _, c := range []struct {
 		fixture string
 		page    string
+		// section is the level-two heading the block hangs from, needed
+		// on a page that documents six commands and therefore repeats
+		// every heading six times. It is empty where the heading alone
+		// names one place.
+		section string
 		heading string
 		index   int
 	}{
-		{"init-help.txt", "cmd/init.md", "`biso init --help`", 0},
-		{"where-help.txt", "cmd/where.md", "`biso where --help`", 0},
-		{"top-help.txt", "cmd/help.md", "La ayuda de primer nivel", 0},
-		{"init-output.txt", "cmd/init.md", "Salida", 0},
-		{"init-notes.txt", "cmd/init.md", "Salida", 1},
-		{"init-json.txt", "cmd/init.md", "El esquema JSON", 0},
-		{"where-output.txt", "cmd/where.md", "Salida", 0},
-		{"where-candidates.txt", "cmd/where.md", "Cuando hay más de un candidato", 0},
-		{"where-no-board.txt", "cmd/where.md", "Cuando hay más de un candidato", 1},
-		{"where-unresolved.txt", "cmd/where.md", "Cuando hay más de un candidato", 2},
-		{"where-json.txt", "cmd/where.md", "El esquema JSON", 0},
-		{"new-help.txt", "cmd/new.md", "`biso new --help`", 0},
-		{"set-help.txt", "cmd/set.md", "`biso set --help`", 0},
-		{"set-status-line.txt", "cmd/set.md", "Salida", 0},
-		{"set-added-ac.txt", "cmd/set.md", "Salida", 1},
-		{"set-dry-run.txt", "cmd/set.md", "Salida", 2},
-		{"set-overwrite.txt", "cmd/set.md", "Salida", 3},
-		{"ls-help.txt", "cmd/ls.md", "`biso ls --help`", 0},
-		{"ls-output.txt", "cmd/ls.md", "Salida", 0},
-		{"ls-truncated.txt", "cmd/ls.md", "Salida", 1},
-		{"ls-ids.txt", "cmd/ls.md", "Salida", 2},
-		{"ls-count.txt", "cmd/ls.md", "Salida", 3},
-		{"ls-json.txt", "cmd/ls.md", "El esquema JSON", 0},
-		{"get-help.txt", "cmd/get.md", "`biso get --help`", 0},
-		{"get-output.txt", "cmd/get.md", "Salida", 0},
-		{"get-section-ac.txt", "cmd/get.md", "Salida", 1},
-		{"get-question.txt", "cmd/get.md", "Salida", 2},
-		{"get-explain.txt", "cmd/get.md", "Salida", 3},
-		{"get-terminal-urgency.txt", "cmd/get.md", "Salida", 4},
-		{"get-json.txt", "cmd/get.md", "El esquema JSON", 0},
+		{"init-help.txt", "cmd/init.md", "", "`biso init --help`", 0},
+		{"where-help.txt", "cmd/where.md", "", "`biso where --help`", 0},
+		{"top-help.txt", "cmd/help.md", "", "La ayuda de primer nivel", 0},
+		{"init-output.txt", "cmd/init.md", "", "Salida", 0},
+		{"init-notes.txt", "cmd/init.md", "", "Salida", 1},
+		{"init-json.txt", "cmd/init.md", "", "El esquema JSON", 0},
+		{"where-output.txt", "cmd/where.md", "", "Salida", 0},
+		{"where-candidates.txt", "cmd/where.md", "", "Cuando hay más de un candidato", 0},
+		{"where-no-board.txt", "cmd/where.md", "", "Cuando hay más de un candidato", 1},
+		{"where-unresolved.txt", "cmd/where.md", "", "Cuando hay más de un candidato", 2},
+		{"where-json.txt", "cmd/where.md", "", "El esquema JSON", 0},
+		{"new-help.txt", "cmd/new.md", "", "`biso new --help`", 0},
+		{"set-help.txt", "cmd/set.md", "", "`biso set --help`", 0},
+		{"set-status-line.txt", "cmd/set.md", "", "Salida", 0},
+		{"set-added-ac.txt", "cmd/set.md", "", "Salida", 1},
+		{"set-dry-run.txt", "cmd/set.md", "", "Salida", 2},
+		{"set-overwrite.txt", "cmd/set.md", "", "Salida", 3},
+		{"ls-help.txt", "cmd/ls.md", "", "`biso ls --help`", 0},
+		{"ls-output.txt", "cmd/ls.md", "", "Salida", 0},
+		{"ls-truncated.txt", "cmd/ls.md", "", "Salida", 1},
+		{"ls-ids.txt", "cmd/ls.md", "", "Salida", 2},
+		{"ls-count.txt", "cmd/ls.md", "", "Salida", 3},
+		{"ls-json.txt", "cmd/ls.md", "", "El esquema JSON", 0},
+		{"get-help.txt", "cmd/get.md", "", "`biso get --help`", 0},
+		{"get-output.txt", "cmd/get.md", "", "Salida", 0},
+		{"get-section-ac.txt", "cmd/get.md", "", "Salida", 1},
+		{"get-question.txt", "cmd/get.md", "", "Salida", 2},
+		{"get-explain.txt", "cmd/get.md", "", "Salida", 3},
+		{"get-terminal-urgency.txt", "cmd/get.md", "", "Salida", 4},
+		{"get-json.txt", "cmd/get.md", "", "El esquema JSON", 0},
+		{"start-help.txt", "cmd/verbos-del-ciclo.md", "`biso start`", "`biso start --help`", 0},
+		{"note-help.txt", "cmd/verbos-del-ciclo.md", "`biso note`", "`biso note --help`", 0},
+		{"comment-help.txt", "cmd/verbos-del-ciclo.md", "`biso comment`", "`biso comment --help`", 0},
+		{"finish-help.txt", "cmd/verbos-del-ciclo.md", "`biso finish`", "`biso finish --help`", 0},
+		{"ask-help.txt", "cmd/verbos-del-ciclo.md", "`biso ask`", "`biso ask --help`", 0},
+		{"answer-help.txt", "cmd/verbos-del-ciclo.md", "`biso answer`", "`biso answer --help`", 0},
+		{"start-archived.txt", "cmd/verbos-del-ciclo.md", "`biso start`", "Qué hace", 0},
+		{"start-status-line.txt", "cmd/verbos-del-ciclo.md", "`biso start`", "Salida", 0},
+		{"start-dry-run.txt", "cmd/verbos-del-ciclo.md", "`biso start`", "Salida", 1},
+		{"note-id-like.txt", "cmd/verbos-del-ciclo.md", "`biso note`", "El posicional que parece un identificador", 0},
+		{"note-status-line.txt", "cmd/verbos-del-ciclo.md", "`biso note`", "Salida", 0},
+		{"comment-status-line.txt", "cmd/verbos-del-ciclo.md", "`biso comment`", "Salida", 0},
+		{"finish-status-line.txt", "cmd/verbos-del-ciclo.md", "`biso finish`", "Salida", 0},
+		{"finish-ac-warning.txt", "cmd/verbos-del-ciclo.md", "`biso finish`", "Salida", 1},
+		{"finish-subtasks-warning.txt", "cmd/verbos-del-ciclo.md", "`biso finish`", "Salida", 2},
+		{"finish-dry-run.txt", "cmd/verbos-del-ciclo.md", "`biso finish`", "Salida", 3},
+		{"ask-id-like.txt", "cmd/verbos-del-ciclo.md", "`biso ask`", "Parámetros propios", 0},
+		{"ask-open-question.txt", "cmd/verbos-del-ciclo.md", "`biso ask`", "Qué hace", 0},
+		{"ask-finished.txt", "cmd/verbos-del-ciclo.md", "`biso ask`", "Qué hace", 1},
+		{"ask-missing-text.txt", "cmd/verbos-del-ciclo.md", "`biso ask`", "Qué hace", 2},
+		{"ask-status-line.txt", "cmd/verbos-del-ciclo.md", "`biso ask`", "Salida", 0},
+		{"answer-id-like.txt", "cmd/verbos-del-ciclo.md", "`biso answer`", "Parámetros propios", 0},
+		{"answer-no-question.txt", "cmd/verbos-del-ciclo.md", "`biso answer`", "Qué hace", 0},
+		{"answer-missing-text.txt", "cmd/verbos-del-ciclo.md", "`biso answer`", "Qué hace", 1},
+		{"answer-status-line.txt", "cmd/verbos-del-ciclo.md", "`biso answer`", "Salida", 0},
+		{"start-already-finished.txt", "cmd/verbos-del-ciclo.md", "`biso start`", "Qué hace", 1},
+		{"note-missing-text.txt", "cmd/verbos-del-ciclo.md", "`biso note`", "Qué hace", 0},
+		{"comment-id-like.txt", "cmd/verbos-del-ciclo.md", "`biso comment`", "Firma", 1},
+		{"finish-strict.txt", "cmd/verbos-del-ciclo.md", "`biso finish`", "Qué hace", 0},
 	} {
-		block := specBlock(t, c.page, c.heading, c.index)
+		block := specBlockIn(t, c.page, c.section, c.heading, c.index)
 		assertEqual(t, fixture(t, c.fixture), block,
 			c.fixture+", against "+c.page)
 	}
@@ -218,20 +258,35 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 // specification.
 func specBlock(t *testing.T, page, heading string, index int) string {
 	t.Helper()
+	return specBlockIn(t, page, "", heading, index)
+}
+
+// specBlockIn is specBlock narrowed to one section of the page, because a
+// page that documents six commands repeats "Salida" six times and the
+// heading alone no longer names one block. within is the level-two heading
+// the section hangs from, and the empty string means any.
+func specBlockIn(t *testing.T, page, within, heading string, index int) string {
+	t.Helper()
 	b, err := os.ReadFile(filepath.Join("..", "..", "docs", "spec", page))
 	if err != nil {
 		t.Fatal(err)
 	}
 	lines := strings.Split(string(b), "\n")
-	current := ""
+	section, current := "", ""
+	found := false
 	var blocks []string
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
 		if strings.HasPrefix(line, "#") {
-			if current == heading {
+			if current == heading && (within == "" || section == within) {
+				found = true
 				break
 			}
-			current = strings.TrimSpace(strings.TrimLeft(line, "#"))
+			title := strings.TrimSpace(strings.TrimLeft(line, "#"))
+			if strings.HasPrefix(line, "## ") {
+				section = title
+			}
+			current = title
 			blocks = nil
 			continue
 		}
@@ -248,8 +303,8 @@ func specBlock(t *testing.T, page, heading string, index int) string {
 		}
 		blocks = append(blocks, strings.Join(body, "\n")+"\n")
 	}
-	if current != heading {
-		t.Fatalf("docs/spec/%s has no heading %q", page, heading)
+	if !found && !(current == heading && (within == "" || section == within)) {
+		t.Fatalf("docs/spec/%s has no heading %q under %q", page, heading, within)
 	}
 	if index >= len(blocks) {
 		t.Fatalf("docs/spec/%s, under %q, has %d blocks and not %d",

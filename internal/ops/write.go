@@ -64,6 +64,13 @@ type Warning struct {
 	Message string
 	Hints   []string
 	Fields  map[string]any
+	// Detail are the lines printed under the message, each one already
+	// carrying its own indentation, the way the unchecked criteria are
+	// listed under the warning of
+	// docs/spec/cmd/verbos-del-ciclo.md#biso-finish. They are text for
+	// whoever is reading and never travel in the JSON object: what a
+	// program needs about that warning is already in Fields.
+	Detail []string
 }
 
 // TaskWrite is one task a write affected, with the three derived data of the
@@ -110,6 +117,14 @@ type writer struct {
 	// yet, where every --clear-* does nothing and warns
 	// (docs/spec/cmd/new.md).
 	newTask bool
+	// leading is what a verb writes into the comments of a task before the
+	// --comment flags of the same call, whatever order the command line
+	// had. `biso answer` is the one verb that has any
+	// (docs/spec/cmd/verbos-del-ciclo.md#biso-answer).
+	leading func(t *model.Task) error
+	// claims are the conditional lease claims this write carries, which
+	// internal/board checks inside the transaction that writes the rows.
+	claims []board.LeaseClaim
 
 	warnings []Warning
 	notes    []string
@@ -756,6 +771,15 @@ func (w *writer) applyCommentDates(t *model.Task, dates map[int]time.Time) {
 // target of --rm-comment or --set-comment-date, because those two resolved
 // their selectors against the list of before.
 func (w *writer) applyComments(t *model.Task) error {
+	if w.leading != nil {
+		// The two comments of `biso answer` go in front of every
+		// --comment of the same call, even one written before the
+		// answer on the command line
+		// (docs/spec/cmd/verbos-del-ciclo.md#biso-answer).
+		if err := w.leading(t); err != nil {
+			return err
+		}
+	}
 	added := w.ofStep(StepComment)
 	if len(added) == 0 {
 		return nil

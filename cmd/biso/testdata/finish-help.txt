@@ -1,0 +1,32 @@
+Usage: biso finish <ref>... [options]
+
+Close one or more tasks: check criteria, add the last note, write the final
+summary and move to the terminal status. One call.
+
+Options:
+      --append-summary <text>  add to the final summary; repeatable, takes
+                               @file and -
+      --check-ac <sel>         check criteria: all, 3, 1-4, 1,3,7 or the text.
+                               With several tasks the selector has to be `all`
+      --append-note <text>     one last implementation note; repeatable
+      --add-files <path>       record a modified file; repeatable
+  -s, --status <value>         use another status instead of the terminal one
+      --strict           refuse to finish with unchecked criteria, unfinished
+                         subtasks or no summary
+                         (default: warn and go on; see finish_strict)
+      --no-checks        skip every check and every warning
+      --id / --match     force <ref> to be an id, or free text
+  -h, --help             show this help
+
+Every field flag of `biso set --help` works here too.
+
+Exit codes:
+  0  finished       3  unknown value    6  --strict and something is missing
+  2  bad usage      4  not found        7  --dry-run did not pass
+                    5  ambiguous        8  the board could not be written
+                                        20 no board here
+
+Examples:
+  biso finish MYP-11 --check-ac all --append-summary "Normalizes CRLF"
+  biso finish MYP-11 --check-ac "covers CRLF" --append-note "313 tests green"
+  biso finish MYP-11 MYP-12 --check-ac all --append-summary "Both closed by PR 42"

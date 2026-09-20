@@ -60,8 +60,13 @@ type Parsed struct {
 	// Command is the name of the command, empty when the call named none.
 	Command string
 	// Positionals are the arguments that are not flags, in the order they
-	// were written.
+	// were written, exactly as they were typed.
 	Positionals []string
+	// Texts are the positional arguments the command reads as long text
+	// values, from CommandSpec.TextPositionalsFrom on: each one as it was
+	// typed and as it resolved through the three forms of
+	// docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo.
+	Texts []PositionalText
 	// Action is set when the call ended early because it asked for the
 	// help or for the version.
 	Action Action
@@ -75,6 +80,16 @@ type Parsed struct {
 	cmd     *CommandSpec
 }
 
+// PositionalText is one positional argument of kind TextValue: what was
+// typed, and the value it resolved to. The two travel together because the
+// rule of the positional that looks like an identifier judges the first and
+// the write stores the second
+// (docs/spec/cmd/verbos-del-ciclo.md#el-posicional-que-parece-un-identificador).
+type PositionalText struct {
+	Typed string
+	Value string
+}
+
 // Warning is one line of docs/spec/salida-y-terminal.md#notas-y-avisos: its
 // stable code, the text that follows "warning: " on stderr, the hint lines
 // that follow it when the case has one, and the fields the JSON object of
@@ -84,6 +99,11 @@ type Warning struct {
 	Message string
 	Hints   []string
 	Fields  map[string]any
+	// Detail are the display lines printed under the message, each one
+	// carrying its own indentation, such as the unchecked criteria of
+	// docs/spec/cmd/verbos-del-ciclo.md#biso-finish. They never reach the
+	// JSON object, which carries Fields instead.
+	Detail []string
 }
 
 // Change is one value of one flag that writes a field, with the step of
@@ -467,7 +487,7 @@ func (st *parser) warnLiteralNewline(f *FlagSpec, v string) {
 	}
 	st.warn(Warning{
 		Code:    "literal_newline",
-		Message: f.long() + ` contains a literal \n and no real newline; it will be stored as text`,
+		Message: f.named() + ` contains a literal \n and no real newline; it will be stored as text`,
 		Hints: []string{fmt.Sprintf(
 			"use a real newline, or %s @file.md, or %s - to read from stdin",
 			f.shortest(), f.shortest())},
@@ -553,6 +573,9 @@ func (st *parser) finish() error {
 	if st.cmd == nil {
 		return nil
 	}
+	if err := st.textPositionals(); err != nil {
+		return err
+	}
 	// The two rules of docs/spec/cmd/flags-globales.md: neither flag is ever
 	// ignored in silence where it has nothing to do, and each one is
 	// defined over a different thing, so each has its own list.
@@ -570,6 +593,41 @@ func (st *parser) finish() error {
 	}
 	if f := st.given("print"); f != nil && (readOnly || st.cmd.AffectsNoTask) {
 		return errReadOnlyFlag(f, "--print does not apply to a command that affects no task")
+	}
+	return nil
+}
+
+// textPositional is the entry the value rules are applied through for a
+// positional of kind TextValue. It is one single value for the whole
+// program, so that two of them asking for standard input in the same call
+// collide exactly as two flags would.
+var textPositional = FlagSpec{Name: "text", Label: "text", Value: TextValue, Field: "text"}
+
+// textPositionals reads the positional arguments a command declares as long
+// texts through the three forms of
+// docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo, which
+// is what makes `biso note MYP-11 @findings.md` mean the same as
+// `biso set MYP-11 --append-note @findings.md`.
+func (st *parser) textPositionals() error {
+	from := st.cmd.TextPositionalsFrom
+	if from <= 0 {
+		return nil
+	}
+	for i := from; i < len(st.p.Positionals); i++ {
+		typed := st.p.Positionals[i]
+		value, err := st.readValue(&textPositional, typed)
+		if err != nil {
+			return err
+		}
+		if at := invalidUTF8At(value); at >= 0 {
+			return errInvalidEncoding(&textPositional, typed, at)
+		}
+		value = normalizeNewlines(value)
+		st.warnLiteralNewline(&textPositional, value)
+		st.p.Texts = append(st.p.Texts, PositionalText{Typed: typed, Value: value})
+	}
+	if len(st.p.Positionals) > from {
+		st.p.Positionals = st.p.Positionals[:from]
 	}
 	return nil
 }

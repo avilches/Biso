@@ -67,7 +67,7 @@ y la fila correspondiente de la tabla dice qué pasa entonces.
 | La tarea está archivada | Error 6, con la pista de usar `biso archive --unarchive` primero. Tomar el arrendamiento de una tarea archivada reintroduciría la afirmación de que alguien trabaja en ella ahora, justo lo que archivar contradice (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 | La tarea tiene dependencias sin terminar | Se empieza igual, con el aviso correspondiente. **Avisa, no impide** |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) | Se empieza igual, con el aviso correspondiente. **Avisa, no impide**, exactamente como con las dependencias sin terminar |
-| El arrendamiento de la tarea está vencido (`leaseExpired`, ["Cuándo cuenta como vencido"](../lease.md#cuándo-cuenta-como-vencido) de `lease.md`) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (["La renovación"](../lease.md#la-renovación) de `lease.md`), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../decisiones/modelo-de-estados.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados) |
+| El arrendamiento de la tarea está vencido (`leaseExpired`, ["Cuándo cuenta como vencido"](../lease.md#cuándo-cuenta-como-vencido) de `lease.md`) | Se reclama dentro de la misma transacción: `leaseHolder` pasa a ser quien llama y `leaseExpiresAt` se renueva, comprobando en esa misma transacción que seguía vencido, **para que de dos reclamaciones simultáneas del mismo arrendamiento vencido solo gane una**. Lo que esa comprobación no hace es impedirle escribir al tenedor viejo cuando despierte: ninguna escritura corriente suya renueva ni recupera un arrendamiento que ya es de otra identidad (["La renovación"](../lease.md#la-renovación) de `lease.md`), pero puede seguir anotando, comentando y cerrando la tarea, y con otro `biso start` se la lleva de vuelta con el aviso de la fila siguiente. Es la diferencia deliberada con el token de vallado del patrón, anotada como riesgo aceptado en la sección ["Riesgos conocidos y aceptados del modelo de estados"](../../decisiones/modelo-de-estados.md#riesgos-conocidos-y-aceptados-del-modelo-de-estados). La reclamación que pierde esa carrera no escribe **nada**, ni siquiera los campos que no tenían que ver con el arrendamiento: sale con código 8 y `code` `lease_lost`, diciendo quién se lo llevó, y quien la hizo puede repetir la llamada, que entonces cae en la fila siguiente y se lo lleva con aviso |
 | El arrendamiento de la tarea está vivo y es de otra identidad | Se coge igual, con `warning: MYP-11's lease is held by @sara until 2026-09-08T14:00:00Z`. **Avisa, no impide**, por el mismo motivo que las dependencias sin terminar y la pregunta abierta: un bloqueo de flujo no evita el trabajo duplicado, solo empuja a rodear la herramienta modificando datos que no deberían tocarse |
 | `-s` con un estado que no es el activo, por ejemplo `biso start MYP-1 -s "To Do"` | Se aplica todo lo demás, pero **no se fija ningún arrendamiento**, y si la tarea lo tenía se vacía como en cualquier otra escritura que la saque del estado activo (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Fijarlo ahí rompería la invariante de que los campos solo tienen valor en una tarea activa y asignada, y `-s` acepta cualquier estado del vocabulario, así que este caso existe. Sale `note: MYP-1 was moved to To Do, no lease was claimed` |
 | La tarea ya tiene otra persona asignada | No se añade `me`, y sale `note: MYP-11 is assigned to @sara, left as is`. Con `-a` explícito, se añade lo que diga `-a` |
@@ -80,6 +80,14 @@ El error 6 de una tarea archivada lleva pista:
 ```
 error: MYP-11 is archived
 hint: unarchive it first with `biso archive MYP-11 --unarchive`
+```
+
+Y el de una tarea que ya está en el estado terminal lleva la suya, que es la del flag que la
+reabriría en la misma llamada:
+
+```
+error: MYP-11 is already Done
+hint: start it again with `biso start MYP-11 --reopen`
 ```
 
 ### Salida
@@ -197,11 +205,21 @@ que las demás.
 
 | Caso | Qué pasa |
 |---|---|
-| Sin ningún texto y sin ningún flag de campo | Error 2 |
+| Sin ningún texto y sin ningún flag de campo | Error 2, con el `code` `missing_text` y el mensaje de abajo |
 | Texto vacío | No añade nada y avisa, según ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) |
 | La tarea no tiene notas todavía | Se crean |
 | Varios textos | Un párrafo por texto, en el orden dado |
 | La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. Solo `start` queda bloqueado sobre una tarea archivada, porque solo `start` reclama un arrendamiento (["`biso start`"](#biso-start)) |
+
+Una llamada que no dice qué añadir no escribe nada y lo dice así:
+
+```
+error: biso note needs a text to append
+hint: biso note MYP-11 "The parser already normalized LF, CRLF was missing"
+```
+
+**Un texto vacío no es ese caso**: la llamada sigue siendo una escritura, con su aviso y su línea de
+estado, y lo único que no pasa es que se añada un párrafo vacío.
 
 ### Salida
 
@@ -277,7 +295,18 @@ biso comment <ref> [<text>...] [--comment-author <@who>]
 | `--match` | | no | booleano | falso | no | no | `--id` |
 
 Se aplican las mismas reglas de posicional que en `biso note`, incluida la del texto que parece un
-identificador. El autor es texto libre, no se valida contra nada y no interpreta el `@` inicial. **Sin
+identificador, con el mensaje escrito para este comando y su propio flag de campo:
+
+```
+error: "MYP-2" looks like a task id, and `biso comment` takes only one task
+hint: to comment the same thing on several tasks: biso set MYP-1 MYP-2 --comment "..."
+      to write that text literally:               biso comment MYP-1 --comment "MYP-2"
+```
+
+Y sin ningún texto y sin ningún flag de campo es el error 2 de `biso note`, con su mismo `code`
+`missing_text`: `error: biso comment needs a text to append`.
+
+El autor es texto libre, no se valida contra nada y no interpreta el `@` inicial. **Sin
 `--comment-author` y sin [ninguna identidad configurada](../invocacion.md#variables-de-entorno), es error 2**: `error: --comment-author is
 required, no identity is configured`. Lo mismo vale para `--comment` en cualquier otro comando de
 escritura.
@@ -373,15 +402,28 @@ terminal, todo en una escritura.
 | Lo mismo, con `--strict` | Error 6 |
 | La tarea tiene subtareas sin terminar | Aviso con la lista, marcando `(archived)` junto a cada subtarea archivada de la lista para no confundirla con una viva de verdad. Con `--strict`, error 6 |
 | La tarea tiene [una pregunta abierta](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta) | Se cierra igual, con el aviso correspondiente. **Avisa, no impide, ni con `--strict`**: impedirlo empujaría a rodear la herramienta con `biso set` |
-| La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con un `note:` |
+| La tarea ya estaba terminada | Se aplica el resto sin cambiar el estado, con `note: MYP-11 was already Done` |
 | La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. Solo `start` queda bloqueado sobre una tarea archivada |
 | La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 | La tarea tiene el arrendamiento y `-s` la lleva a otro estado que tampoco es el activo | Los campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
+| `-s` lleva a un estado que no es el terminal | No se emite ninguno de los avisos de esta tabla, ni con `--strict`. Los avisos de cierre son los de llegar a un estado terminal, según ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos), y una llamada que no cierra nada no tiene nada que comprobar. El resto de la escritura se aplica igual, el vaciado del arrendamiento de la fila anterior incluido |
 | `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos, incluido el de la pregunta abierta |
 | Varias referencias | Todo o nada |
 
 Quien quiera la política dura tiene `--strict`, y puede fijarla por defecto con
-`biso config set finish_strict true`.
+`biso config set finish_strict true`. Su error 6 nombra de una vez todo lo que falta, para que no
+haga falta una llamada por cada cosa:
+
+```
+error: MYP-11 is not ready to finish
+  MYP-11 moved to Done with 1 of 2 acceptance criteria unchecked
+  MYP-11 has unfinished subtasks: MYP-14
+hint: finish it without --strict, or write what is missing
+```
+
+Cada línea de debajo del mensaje es la del aviso que esa comprobación habría emitido sin `--strict`,
+así que el texto de las dos políticas es el mismo y no hay dos frases que mantener para un mismo
+hecho.
 
 **Las comprobaciones de la tabla, la de criterios y la de resumen, se
 leen por el estado del campo después de esta escritura, nunca por si el flag correspondiente se
@@ -522,6 +564,7 @@ estado de la tarea.**
 | El texto está vacío | Error 3: `error: the question cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
 | Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso ask needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
+| Falta el posicional del texto | Error 2, con el `code` `missing_text`: `error: biso ask needs a question` |
 | Varias referencias | No se admiten: toma exactamente una, como `biso note` y `biso comment` |
 
 Los errores 6 llevan pista:
@@ -534,6 +577,13 @@ hint: answer it first with `biso answer MYP-11 <text>`
 ```
 error: MYP-11 is already Done
 hint: reopen it first with `biso start MYP-11 --reopen`
+```
+
+Y la llamada sin ningún texto nombra lo que falta y la forma de la que sí habría funcionado:
+
+```
+error: biso ask needs a question
+hint: biso ask MYP-11 "..."
 ```
 
 ### Salida
@@ -552,7 +602,7 @@ cierto.
 |---|---:|
 | Preguntada | 0 |
 | Ya hay una pregunta abierta, o la tarea ya está en el estado terminal | 6 |
-| Referencia mal formada, flags incompatibles, posicional que parece un identificador | 2 |
+| Referencia mal formada, flags incompatibles, posicional que parece un identificador, falta el texto | 2 |
 | Sin identidad configurada | 2 |
 | Pregunta vacía, tarea ilegible | 3 |
 | Referencia inexistente, o fichero de `@` inexistente | 4 |
@@ -652,7 +702,7 @@ instante de cada uno sigue diciendo la verdad.
 | Caso | Qué pasa |
 |---|---|
 | La tarea no tiene pregunta abierta | Error 6, con la pista de usar `biso comment` |
-| Falta el positional del texto | Error 2. Una respuesta sin respuesta no cierra nada |
+| Falta el positional del texto | Error 2, con el `code` `missing_text`: `error: biso answer needs an answer`. Una respuesta sin respuesta no cierra nada |
 | El texto está vacío (`biso answer MYP-11 ""`) | Error 3: `error: the answer cannot be empty`, `code` [`empty_scalar_value`](../valores-de-entrada.md#el-valor-vacío) |
 | Sin [identidad configurada](../invocacion.md#variables-de-entorno) | Error 2: `error: biso answer needs an identity; set BISO_ME, or add "me" to ~/.biso/config.json` |
 | Un posicional que encaja con la gramática de identificador | Error 2, la misma regla que [`biso note`](#biso-note) |
@@ -671,6 +721,13 @@ tarea terminada cerraría esa única vía.
 ```
 error: MYP-11 has no open question
 hint: use `biso comment` to add a comment
+```
+
+Y la llamada sin ningún texto, que es la de arriba de la tabla:
+
+```
+error: biso answer needs an answer
+hint: biso answer MYP-11 "..."
 ```
 
 ### Salida
