@@ -31,7 +31,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 2 | El modelo de datos lógico ([`modelo-de-datos/`](modelo-de-datos/index.md)) y la garantía de identificadores únicos | hecho | TASK-10 |
 | 3 | El algoritmo de coincidencia ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-coincidencia)) y el de sugerencias ([`vocabularios.md`](vocabularios.md#el-algoritmo-de-sugerencias-más-parecidas)), en `internal/match` | hecho | TASK-11 |
 | 4 | [`init`](cmd/init.md) y [`where`](cmd/where.md) | hecho con matices | TASK-12 |
-| 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | pendiente | TASK-13 |
+| 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | en curso: `new` y `set` hechos, `ls` y `get` pendientes | TASK-13 |
 | 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | pendiente | TASK-14 |
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | pendiente | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | pendiente | TASK-16 |
@@ -54,10 +54,10 @@ cerradas.
 | [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 4, 5 y 7 | en curso |
 | [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
 | [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5 y 8 | en curso |
-| [El arrendamiento de una tarea](lease.md) | pasos 2 y 6 | pendiente |
+| [El arrendamiento de una tarea](lease.md) | pasos 2, 5 y 6 | en curso |
 | [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | en curso |
-| [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | pendiente |
-| [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | pendiente |
+| [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | en curso |
+| [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | en curso |
 | [El contrato JSON](contrato-json.md) | pasos 4 a 9 | en curso |
 | [El contrato de estabilidad](estabilidad.md) | paso 7 | pendiente |
 | [Lo que se deja fuera a propósito](fuera-de-alcance.md) | ninguno | fuera de alcance |
@@ -153,6 +153,45 @@ hasta que lleguen `ls` y `prime`. De ["El contrato JSON"](contrato-json.md) est�
 esquemas de estos comandos y el sobre de error con sus claves de detalle, `warnings` incluida; falta
 el resto de los `kind`. Y de ["Flags globales"](cmd/flags-globales.md) están todos salvo `--print` en
 un comando que sí afecta a alguna tarea, que no existe todavía.
+
+### Qué dejó hecha la primera mitad del paso 5
+
+La primera mitad del paso 5 son los comandos que escriben, [`biso new`](cmd/new.md) y
+[`biso set`](cmd/set.md), y con ellos las tres piezas transversales que hacían falta para
+escribirlos y que los demás comandos reusarán tal cual:
+
+- **[Las familias de flags](familias-de-flags.md) enteras**, en una sola tabla de `internal/cli` que
+  todo comando de escritura toma igual, y un solo motor en `internal/ops` que las aplica en los nueve
+  pasos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura).
+  Los seis verbos del ciclo y `biso archive` son ese mismo motor con un nombre y unos valores por
+  defecto encima.
+- **[Cómo se resuelve una referencia a una tarea](referencias.md)**, como función interna compartida
+  de `internal/ops`: la gramática, `--id` y `--match`, el ámbito de búsqueda de texto y los tres
+  desenlaces. **Lo único que falta de esa página es imprimir las candidatas** del error 5 en el
+  formato de `biso ls`: el error ya las lleva dentro, y la mitad que las imprime llega con `ls`.
+- **[El arrendamiento](lease.md)** en todo lo que toca a una escritura: la renovación del tenedor, el
+  aviso del arrendamiento ajeno, el vaciado al perder el estado activo, la última persona asignada o
+  al archivar, y la reclamación de `biso new --start`, que es el atajo de `biso start` y deja la misma
+  tarea. Lo que queda es `biso start` mismo, del paso 6.
+
+De estos comandos falta lo siguiente, y nada de ello es un descuido:
+
+- **El lote de `biso new --from`** es alcance declarado del paso 8 (TASK-16), porque necesita el
+  formato de intercambio que trae ese paso. El flag **no se analiza todavía**, así que escribirlo hoy
+  responde `unknown flag: --from`.
+- **`--print`** imprime de momento la misma salida que sin él. La ficha completa que ese flag promete
+  es la de [`biso get`](cmd/get.md), y llega con la segunda mitad de este mismo paso.
+
+Al implementarlos se cerraron varias lagunas de la especificación, todas escritas en su página antes
+de escribir el código: el desenlace de `--dry-run` sobre una sola tarea y por qué ahí nunca sale el
+código 7 (["`biso new`"](cmd/new.md#--dry-run-sobre-una-sola-tarea)); el mensaje de una referencia de
+texto que no encaja con ninguna tarea y qué pasa cuando encaja con dos títulos
+(["Cómo se resuelve una referencia a una tarea"](referencias.md#la-búsqueda-por-texto)); los dos
+avisos de añadir un valor que ya estaba y de quitar uno que no estaba, que la lista de
+["Notas y avisos"](salida-y-terminal.md#notas-y-avisos) se declaraba completa sin llevarlos; los
+mensajes literales de los selectores de texto, del rango invertido, del solape de comentarios, de
+`--due` y de `--ordinal` (["Las familias de flags"](familias-de-flags.md)); y cómo se calcula
+`changed` (["`biso set`"](cmd/set.md#el-esquema-json)).
 
 ## Antes de empezar un paso
 
