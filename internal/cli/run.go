@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -185,13 +186,48 @@ func environment(s Streams, p *Parsed) (ops.Env, error) {
 	}
 	dir = filepath.Clean(dir)
 
+	limit, err := listLimit(s)
+	if err != nil {
+		return ops.Env{}, err
+	}
+
 	// Reading ~/.biso/config.json is internal/ops's job and not this
 	// layer's: this package depends on ops and on model, and on nothing
 	// below them (section 3 of
 	// docs/superpowers/specs/2026-09-10-arquitectura-implementacion-design.md).
 	return ops.NewEnv(ops.Call{
-		Dir: dir, Home: s.Home, Me: s.getenv("BISO_ME"), Now: s.Now, NewID: s.NewID,
+		Dir: dir, Home: s.Home, Me: s.getenv("BISO_ME"), Limit: limit,
+		Now: s.Now, NewID: s.NewID,
 	})
+}
+
+// listLimit reads BISO_LIMIT, the middle rung of the precedence of
+// docs/spec/invocacion.md#variables-de-entorno, and answers nil when the
+// variable says nothing.
+//
+// It is read on every call and not only on `biso ls`, and a value outside
+// its domain stops any of them, which is the same judgement the
+// `default_limit` key of the machine's configuration already gets: both say
+// how many rows this machine lists by default, and a value that is not a
+// whole number of rows is a configuration that cannot work, never something
+// read half way or ignored in silence.
+func listLimit(s Streams) (*int, error) {
+	v := s.getenv("BISO_LIMIT")
+	if v == "" {
+		return nil, nil
+	}
+	limit, err := strconv.Atoi(v)
+	if err != nil || limit < 0 {
+		return nil, &model.Error{
+			ExitCode: 2,
+			Code:     "invalid_number",
+			Message:  fmt.Sprintf("BISO_LIMIT: not a whole number of rows: %q", v),
+			Hints:    []string{"a limit is zero or more"},
+			Field:    "BISO_LIMIT",
+			Given:    v,
+		}
+	}
+	return &limit, nil
 }
 
 func runInit(s Streams, p *Parsed, env ops.Env) int {

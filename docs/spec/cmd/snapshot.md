@@ -320,7 +320,7 @@ git:  3 files changed, 12 insertions(+), 4 deletions(-)
 
 **Una llamada que acaba en error 8 imprime igualmente lo que sí llegó a pasar**, con las mismas
 líneas y las mismas notas que imprimiría sin el fallo, y la línea de error detrás. Los dos ficheros
-se escriben antes de ejecutar nada, así que en cualquiera de los dos errores 8 de la tabla de casos
+se escriben antes de ejecutar nada, así que en un error 8 de la tabla de casos
 ya están en el disco, y en `vcs_push_failed` la revisión además está guardada: callarlo dejaría una
 llamada que escribió dos ficheros con el mismo aspecto que una que no escribió ninguno. Una
 publicación que falla sobre un tablero sin nada nuevo que guardar imprime, por tanto, las tres

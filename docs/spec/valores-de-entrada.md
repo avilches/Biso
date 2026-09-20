@@ -240,6 +240,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | Más de un flag pidiendo la entrada estándar | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc and --append-plan both read stdin` |
 | El mismo flag repetible pidiéndola dos veces | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc reads stdin twice` |
 | Un valor fuera del dominio de `--color` | 2 | `invalid_color_mode` | `error: --color: unknown value: "sometimes"` |
+| `BISO_LIMIT` con algo que no es un número de filas (["Variables de entorno"](invocacion.md#variables-de-entorno)) | 2 | `invalid_number` | `error: BISO_LIMIT: not a whole number of rows: "lots"` |
 | Una pareja de `--json`, `--quiet` y `--print` | 2 | `incompatible_flags` | `error: --json and --quiet cannot be used together` |
 | Un flag que exige otro, sin ese otro | 2 | `incompatible_flags` | `error: --comment-author requires --comment` |
 | `--dry-run` en un comando de lectura | 2 | `read_only_flag` | `error: --dry-run does not apply to a read-only command` |

@@ -16,9 +16,12 @@ import (
 // limit. It answers the tasks to print and the effective filter that
 // produced them; the columns and the JSON envelope are internal/cli's job.
 
-// DefaultLimit is how many rows `biso ls` prints when the call does not say
-// (docs/spec/cmd/ls.md).
-const DefaultLimit = 30
+// DefaultLimit is how many rows `biso ls` prints when nothing at all says
+// otherwise: not the call, not BISO_LIMIT and not the machine's
+// `default_limit` key (docs/spec/cmd/ls.md). It is the last rung of the
+// precedence of docs/spec/invocacion.md#variables-de-entorno, and the same
+// number board.DefaultLimit fills that key in with.
+const DefaultLimit = board.DefaultLimit
 
 // Filters is the filter of one `biso ls` call. The same struct carries what
 // the caller typed and, once resolved, what really produced the listing,
@@ -153,7 +156,7 @@ func ListOn(b *board.Board, env Env, p ListParams) (*ListResult, error) {
 		Filters: filters,
 	}
 	if !p.Count {
-		result.Tasks = matched[:limitOf(p, len(matched))]
+		result.Tasks = matched[:limitOf(p, env, len(matched))]
 		result.Shown = len(result.Tasks)
 		result.Hidden = result.Matched - result.Shown
 		result.Truncated = result.Hidden > 0
@@ -176,10 +179,16 @@ func ListOn(b *board.Board, env Env, p ListParams) (*ListResult, error) {
 	return result, nil
 }
 
-// limitOf is how many rows this call prints: thirty unless --limit or --all
-// says otherwise, and never more than there are.
-func limitOf(p ListParams, matched int) int {
+// limitOf is how many rows this call prints, reading the precedence of
+// docs/spec/invocacion.md#variables-de-entorno from the top: --all asks for
+// everything, --limit is the flag of this call, and the environment answers
+// for the rest, with the built-in thirty behind it. Never more rows than
+// there are.
+func limitOf(p ListParams, env Env, matched int) int {
 	limit := DefaultLimit
+	if env.ListLimit != nil {
+		limit = *env.ListLimit
+	}
 	switch {
 	case p.All:
 		return matched
@@ -605,7 +614,11 @@ func (r *reader) listing(tasks []*model.Task) *ListResult {
 	r.sortTasks(views, ListParams{})
 
 	result := &ListResult{Matched: len(views), Sort: DefaultSort}
-	result.Tasks = views[:limitOf(ListParams{}, len(views))]
+	// Thirty, and not the limit this machine configured: what
+	// docs/spec/referencias.md promises about a list of candidates is the
+	// order, the limit of thirty and the truncation warning, and a
+	// reference resolves the same on every machine.
+	result.Tasks = views[:min(DefaultLimit, len(views))]
 	result.Shown = len(result.Tasks)
 	result.Hidden = result.Matched - result.Shown
 	result.Truncated = result.Hidden > 0

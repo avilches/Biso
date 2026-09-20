@@ -21,6 +21,29 @@ porque es lo más específico de la llamada:
 - `BISO_ME` no tiene flag. Si no está definida, se usa la clave `me` de la
   ["Configuración de máquina"](#configuración-de-máquina), en `~/.biso/config.json`.
 
+**Una `BISO_LIMIT` que no sea un número entero de filas mayor o igual que cero es error 2**, con el
+`code` `invalid_number`, y detiene cualquier llamada, no solo la de `biso ls`:
+
+```
+error: BISO_LIMIT: not a whole number of rows: "lots"
+hint: a limit is zero or more
+```
+
+Es el mismo juicio que ya recibe la clave `default_limit` del fichero de máquina, que es error 3 al
+leerse y lo es también en un comando que no lista nada: las dos dicen cuántas filas lista esta
+máquina por defecto, así que un valor que no es un número de filas es una configuración que no puede
+funcionar, y nunca algo que se lea a medias o se ignore en silencio. El texto nombra la variable y no
+un flag, porque es la variable la que está mal escrita; `--limit` con el mismo valor da su propio
+mensaje (["`biso ls`"](cmd/ls.md)). Una `BISO_LIMIT` definida y vacía es como no definirla, igual
+que `BISO_CWD` y `BISO_ME`.
+
+**`BISO_LIMIT` y `default_limit` son el valor por defecto de `biso ls` y de nada más.** `biso prime`
+tiene su propio valor por defecto, el que reparte entre `ASSIGNED TO YOU` y `NEXT UP` (["`biso prime`"](cmd/prime.md)),
+y la lista de candidatas de una referencia ambigua se corta siempre en treinta
+(["Cómo se resuelve una referencia a una tarea"](referencias.md)), porque resolver una referencia
+tiene que dar lo mismo en cualquier máquina. En los dos sitios manda el número del programa y no el
+de esta máquina.
+
 **Qué pasa si no hay identidad**, es decir, si no está definida la variable de entorno `BISO_ME` ni la
 clave `me` del fichero de configuración de máquina `~/.biso/config.json`:
 
