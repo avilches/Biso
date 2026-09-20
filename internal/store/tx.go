@@ -20,9 +20,14 @@ import (
 //
 // If fn returns an error, the transaction is rolled back entirely and that
 // error is returned as-is, unwrapped: the caller can recognize its own
-// with errors.Is or errors.As. If BEGIN or COMMIT itself fails because the
-// write lock was not available, the *model.Error of guarantee 5 is
-// returned instead: exit code 8 and the literal text of the specification.
+// with errors.Is or errors.As. The one thing that does change on the way
+// out is a failure of the driver itself, which is classified like any
+// other (see Classify): a statement that could not be written because the
+// file is read only is the environment failing and has to end up as exit
+// code 8, not as the unforeseen failure of exit code 1. If BEGIN or COMMIT
+// itself fails because the write lock was not available, the *model.Error
+// of guarantee 5 is returned instead: exit code 8 and the literal text of
+// the specification.
 //
 // A panic inside fn rolls the transaction back and travels on, so no
 // failure can leave the single connection of Open held by an open
@@ -49,7 +54,7 @@ func (s *Store) WithTx(fn func(*sql.Tx) error) error {
 	}()
 
 	if err := fn(tx); err != nil {
-		return err
+		return s.Classify(err)
 	}
 
 	if err := tx.Commit(); err != nil {

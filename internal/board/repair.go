@@ -81,9 +81,9 @@ func (b *Board) groupCount(query string) (map[string]int, error) {
 		var key string
 		var n int
 		if err := rows.Scan(&key, &n); err != nil {
-			return nil, err
+			return nil, b.Store.Classify(err)
 		}
 		out[key] = n
 	}
-	return out, rows.Err()
+	return out, b.Store.Classify(rows.Err())
 }

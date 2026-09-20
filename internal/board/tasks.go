@@ -222,15 +222,15 @@ func (r *Tasks) LastAllocated() (int, error) {
 
 	if !rows.Next() {
 		if err := rows.Err(); err != nil {
-			return 0, err
+			return 0, r.store.Classify(err)
 		}
 		return 0, fmt.Errorf("the board counter row is missing")
 	}
 	var last int
 	if err := rows.Scan(&last); err != nil {
-		return 0, err
+		return 0, r.store.Classify(err)
 	}
-	return last, rows.Err()
+	return last, r.store.Classify(rows.Err())
 }
 
 // Load answers one task by its identifier.
