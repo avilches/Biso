@@ -185,7 +185,15 @@ Las reglas del lote, todas obligatorias:
   `askedAt` es opcional y, si falta, se pone el instante de la importación, igual que `createdAt` en
   `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.
 - **`id`, `createdAt` y `updatedAt` se aceptan aquí y solo aquí.** Un `id` ya ocupado es un fallo de
-  validación; un `id` libre se reserva y el tablero no lo volverá a asignar.
+  validación; un `id` libre se reserva y el tablero no lo volverá a asignar. **Estar ocupado tiene
+  dos formas distintas y el mensaje las distingue**, porque en la segunda el tablero no tiene nada
+  que ver: lo puede tener ya el tablero de destino, o lo puede haber tomado una línea anterior de
+  este mismo fichero, y entonces el mensaje nombra esa línea y no el tablero. Las dos llevan el mismo
+  `code` `id_taken` (["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)):
+  ```
+  line 7: id "MYP-11" is already taken on this board
+  line 9: id "MYP-12" is already taken by line 3 of this file
+  ```
 - **`leaseExpiresAt` y `leaseHolder` se aceptan aquí con el valor que traiga el fichero**, que es lo
   que hace cierta la garantía de simetría de ["`biso export`"](export.md) para ellos dos. La invariante de ["El vaciado"](../lease.md#el-vaciado) de `lease.md` se
   comprueba en la validación, en sus dos mitades, y cada una es un fallo que nombra la línea y el campo.
@@ -271,12 +279,19 @@ Salida de `--dry-run` cuando todo está bien, por stderr y con código 0:
 Y cuando no, por stderr y con código 7, **con todos los fallos, no solo el primero**:
 
 ```
-error: 4 of 242 lines are invalid, nothing was written
+error: 5 of 242 lines are invalid, nothing was written
   line 12: id "OTHER-5" does not match this board's task prefix "MYP"
   line 47: unknown status: "Pendiente" (valid: To Do, In Progress, Done)
   line 88: unknown key: "trelloCard"
+  line 130: parent names "MYP-900", which is not on this board and not in this file
   line 201: title cannot be empty
 ```
+
+**Los fallos salen siempre en orden ascendente de línea**, sea cual sea el momento en que se
+descubren. No es una consecuencia gratuita de leer el fichero de arriba abajo: el `parent` y las
+`dependencies` de una línea no se pueden juzgar hasta haber leído el fichero entero, porque pueden
+nombrar una tarea que crea una línea posterior, así que esos dos fallos se encuentran en una segunda
+pasada. La línea 130 del bloque de arriba es justo uno de ellos, y aun así sale entre la 88 y la 201.
 
 ## Códigos de salida
 

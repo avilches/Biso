@@ -12,10 +12,14 @@ import (
 )
 
 // These are the golden tests of the batch of docs/spec/cmd/new.md#el-modo-lote.
-// Its two blocks speak of a file of two hundred and forty two lines, four of
-// them invalid for four different reasons and at four given line numbers, so
+// Its two blocks speak of a file of two hundred and forty two lines, five of
+// them invalid for five different reasons and at five given line numbers, so
 // the file the tests build is exactly that file: the numbers of the message
 // are not adjusted to whatever came out.
+//
+// One of the five is a failure of the graph, which is found only once the
+// whole file has been read, and it sits between the other two that surround
+// it: that is the order of the file the block promises.
 
 // batchBoard is a board with the prefix and the extension key the examples
 // of the batch use.
@@ -29,8 +33,8 @@ func batchBoard(t *testing.T) *machine {
 }
 
 // twoHundredAndFortyTwoLines writes the file of the examples: two hundred
-// and forty two tasks, with the four the failing example names replaced by
-// the four bad lines it shows, each one at its own line number.
+// and forty two tasks, with the ones the failing example names replaced by
+// the bad lines it shows, each one at its own line number.
 func twoHundredAndFortyTwoLines(bad map[int]string) string {
 	var b strings.Builder
 	for line := 1; line <= 242; line++ {
@@ -65,6 +69,7 @@ func TestBatchListsEveryInvalidLineOfTheSpecification(t *testing.T) {
 		12:  `{"id":"OTHER-5","title":"From another board"}`,
 		47:  `{"title":"Wrong status","status":"Pendiente"}`,
 		88:  `{"title":"Unknown key","trelloCard":"5f2a8c1e"}`,
+		130: `{"title":"Nowhere to hang from","parent":"MYP-900"}`,
 		201: `{"title":"   "}`,
 	}))
 
