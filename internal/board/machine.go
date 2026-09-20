@@ -127,6 +127,22 @@ func LoadMachine(home string) (Machine, error) {
 		}
 	}
 	if shape.VCSCustom != nil {
+		// The table of docs/spec/invocacion.md#configuración-de-máquina
+		// gives vcs_custom only to the custom mode, and a key that does not
+		// fit is exit code 3 there like anywhere else, never something
+		// accepted in silence: taking these commands in with vcs at git
+		// would store a configuration that nothing will ever run.
+		if m.VCS != "custom" {
+			return Machine{}, &model.Error{
+				ExitCode: 3,
+				Code:     "bad_config_value",
+				Message: fmt.Sprintf(
+					"%s: vcs_custom is only valid with vcs %q, and vcs is %q",
+					path, "custom", m.VCS),
+				Field: "vcs_custom",
+				Given: m.VCS,
+			}
+		}
 		m.VCSCustom = MachineVCSCustom{
 			Commit:     shape.VCSCustom.Commit,
 			Publish:    shape.VCSCustom.Publish,

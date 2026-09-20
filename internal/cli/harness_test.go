@@ -13,6 +13,11 @@ import (
 // machine in a temporary directory, with its own home, its own boards root
 // and its own clock, so that nothing a test does can reach the machine it
 // runs on and nothing the machine has can change what a test sees.
+//
+// These tests drive Run in this process, which is what lets them fix the
+// clock and the identifiers a call mints. The golden tests, where what is
+// checked is the literal text of a command, live in cmd/biso instead and
+// run the compiled program.
 
 // fixedNow is the instant every envelope of these tests is stamped with. It
 // is the one the examples of docs/spec/ carry.
@@ -143,16 +148,6 @@ func (o outcome) assertCode(t *testing.T, want int) outcome {
 			o.code, want, o.stdout, o.stderr)
 	}
 	return o
-}
-
-// fixture reads one of the blocks transcribed from docs/spec/.
-func fixture(t *testing.T, name string) string {
-	t.Helper()
-	b, err := os.ReadFile(filepath.Join("testdata", name))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(b)
 }
 
 // assertEqual compares two texts character for character, and shows them

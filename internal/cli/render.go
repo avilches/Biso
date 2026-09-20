@@ -141,6 +141,11 @@ type envelope struct {
 	GeneratedAt   string       `json:"generatedAt"`
 	Data          any          `json:"data,omitempty"`
 	Error         *errorObject `json:"error,omitempty"`
+	// Warnings sits beside error and not inside it, and only on an
+	// envelope that carries one: it is the warnings the failed call had
+	// already produced (docs/spec/contrato-json.md#los-errores-en-json).
+	// Its absence is not distinguishable from an empty list.
+	Warnings []map[string]any `json:"warnings,omitempty"`
 }
 
 // errorObject is the error of
@@ -261,7 +266,7 @@ func writeEnvelope(s Streams, env ops.Env, kind string, data any) {
 // It does not go through the environment, because a call can fail before
 // there is one: the timestamp of an error envelope comes from the clock
 // directly.
-func writeErrorEnvelope(s Streams, e *model.Error) {
+func writeErrorEnvelope(s Streams, e *model.Error, warnings []Warning) {
 	obj := &errorObject{
 		ExitCode: e.ExitCode,
 		Code:     e.Code,
@@ -287,7 +292,25 @@ func writeErrorEnvelope(s Streams, e *model.Error) {
 		Kind:          "error",
 		GeneratedAt:   generatedAt(ops.Env{Now: s.Now}.WithDefaults()),
 		Error:         obj,
+		Warnings:      warningObjects(warnings),
 	})
+}
+
+// warningObjects is one warning as data.warnings carries it
+// (docs/spec/cmd/set.md#el-esquema-json): its stable code and the fields
+// its sentence interpolates, flat in the same object. The text of the
+// warning is not among them, the same way an error's message is not
+// rebuilt from its fields: whoever reads JSON branches on the code.
+func warningObjects(warnings []Warning) []map[string]any {
+	var out []map[string]any
+	for _, w := range warnings {
+		object := map[string]any{"code": w.Code}
+		for key, value := range w.Fields {
+			object[key] = value
+		}
+		out = append(out, object)
+	}
+	return out
 }
 
 // generatedAt is the instant of docs/spec/contrato-json.md#números-fechas-y-ausencias:

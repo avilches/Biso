@@ -104,7 +104,9 @@ func summaryOf(cfg board.Config) BoardSummary {
 // InitResult is what `biso init` answers.
 type InitResult struct {
 	Action InitAction
-	Board  BoardSummary
+	// ID is the board's identity, minted, adopted or already there.
+	ID    string
+	Board BoardSummary
 	// Path is the board directory, resolved.
 	Path string
 	// StoredPath is the text the pointer holds, empty when it holds none.
@@ -160,7 +162,22 @@ func Init(env Env, p InitParams) (*InitResult, error) {
 	}
 
 	if loc != nil {
-		return rewrite(env, p, cfgFlags, loc, target)
+		// A board whose database does not open does not count as one for
+		// this command, which is the whole remedy of
+		// docs/spec/garantias.md#el-segundo-caso-la-base-de-datos-que-no-se-puede-leer:
+		// `init` rebuilds it in place instead of answering that there is
+		// already one here. It is the same directory, so it becomes the
+		// destination, and its marker is the identity that gets adopted.
+		readable, err := board.DatabaseReadable(loc.Dir)
+		if err != nil {
+			return nil, err
+		}
+		if readable {
+			return rewrite(env, p, cfgFlags, facts, loc, target)
+		}
+		if target == "" {
+			target = loc.Dir
+		}
 	}
 	return create(env, p, cfgFlags, facts, target)
 }
@@ -191,10 +208,20 @@ func readVocabularyFlags(p InitParams) (vocabularyFlags, *model.Error) {
 
 	if !p.HasStatuses {
 		if v.rolesGiven {
+			// It names a flag, so it carries field and given, like every
+			// other error of code 2 that names one: the only exception
+			// declared by docs/spec/contrato-json.md#los-errores-en-json is
+			// incompatible_flags. The one named is the first role written
+			// down in the order of the table of docs/spec/cmd/init.md,
+			// which is the same canonical order a pair of flags is named
+			// in, and not the order of argv.
+			role, given := firstRoleGiven(p)
 			return v, &model.Error{
 				ExitCode: 2,
 				Code:     "invalid_status_roles",
 				Message:  "the status roles are only set together with --statuses",
+				Field:    role,
+				Given:    given,
 				Hints: []string{
 					"give --statuses, and then --initial-status, --active-status and --terminal-status",
 				},
@@ -233,6 +260,10 @@ func readVocabularyFlags(p InitParams) (vocabularyFlags, *model.Error) {
 			Message: fmt.Sprintf(
 				"--statuses needs --initial-status, --active-status and --terminal-status, and %s missing",
 				listAndIsAre(missing)),
+			// The flag this one names is --statuses, which is the one that
+			// was written and the one that demands the other three.
+			Field: "statuses",
+			Given: strings.Join(p.Statuses, ","),
 		}
 	}
 
@@ -269,6 +300,19 @@ func readVocabularyFlags(p InitParams) (vocabularyFlags, *model.Error) {
 		}
 	}
 	return v, checkPrefixFlag(p)
+}
+
+// firstRoleGiven answers the first status role this call wrote, in the
+// order of the table of docs/spec/cmd/init.md, with its value.
+func firstRoleGiven(p InitParams) (string, string) {
+	switch {
+	case p.HasInitialStatus:
+		return "initial-status", p.InitialStatus
+	case p.HasActiveStatus:
+		return "active-status", p.ActiveStatus
+	default:
+		return "terminal-status", p.TerminalStatus
+	}
 }
 
 func checkPrefixFlag(p InitParams) *model.Error {
@@ -313,32 +357,41 @@ func create(env Env, p InitParams, v vocabularyFlags, facts board.Searched, targ
 		cfg.Extensions = v.extensions
 	}
 
-	// The identity: the one the pointer already names, the one the marker of
-	// the destination already carries, or a new one. The two adoptions are
-	// what keeps two machines talking about the same board
+	// The identity: the one the marker of the destination already carries,
+	// the one the pointer already names, or a new one. The two adoptions
+	// are what keeps two machines talking about the same board
 	// (docs/spec/resolucion-del-tablero.md#cómo-biso-init-genera-el-id-y-escribe-el-puntero).
-	id, adopted := facts.PointerID, facts.PointerID != ""
+	//
+	// The destination wins over the pointer, and there is no third answer
+	// where the two disagree: getting here at all means this project
+	// resolves to no accessible board of its own, and that is precisely
+	// when docs/spec/cmd/init.md hands the identity to the marker of the
+	// destination and has the pointer rewritten ("cuando no hay ningún
+	// puntero aquí, o cuando el que hay no resuelve a nada en esta
+	// máquina"). A pointer that does resolve never reaches this function.
 	destinationID := ""
 	if target != "" {
 		destinationID = board.MarkerID(target)
 	}
-	if !adopted && destinationID != "" {
-		id, adopted = destinationID, true
+	id, adopted := destinationID, destinationID != ""
+	if !adopted && facts.PointerID != "" {
+		id, adopted = facts.PointerID, true
 	}
-	if !adopted {
+	if adopted {
+		// The roots are walked for an adopted identity too, and not only
+		// for a minted one, because the same id in two of them is the
+		// error of docs/spec/resolucion-del-tablero.md#el-mismo-id-en-dos-sitios
+		// however this call came by it (the row of code 22 of
+		// docs/spec/cmd/init.md says "acuñar o adoptar").
+		if _, err := board.FindID(env.Machine, id); err != nil {
+			return nil, err
+		}
+	} else {
 		fresh, err := mintID(env)
 		if err != nil {
 			return nil, err
 		}
 		id = fresh
-	} else if facts.PointerID != "" && destinationID != "" && destinationID != facts.PointerID {
-		return nil, &model.Error{
-			ExitCode: 2,
-			Code:     "board_exists",
-			Message: fmt.Sprintf("%s already holds board %s, and this project's pointer names %s",
-				target, destinationID, facts.PointerID),
-			Hints: []string{"`biso where` says which rule picked it"},
-		}
 	}
 
 	dir := target
@@ -348,23 +401,40 @@ func create(env Env, p InitParams, v vocabularyFlags, facts board.Searched, targ
 
 	// A destination that is already a whole board is adopted and never
 	// touched: the operation is local to this project, telling it where its
-	// board is (docs/spec/cmd/init.md).
-	adoptWhole := target != "" && destinationID != "" && board.HasDatabase(target)
+	// board is (docs/spec/cmd/init.md). One whose database does not open is
+	// not whole, and is rebuilt in place instead.
+	adoptWhole := false
+	if target != "" && destinationID != "" {
+		readable, err := board.DatabaseReadable(target)
+		if err != nil {
+			return nil, err
+		}
+		adoptWhole = readable
+	}
 
+	// The text the pointer stores is the one --at was given, and the one
+	// a board that is being rebuilt in place needs to be found again when
+	// no --at named it (docs/spec/cmd/init.md).
 	stored := ""
-	if p.HasAt {
+	switch {
+	case p.HasAt:
 		stored = p.At
+	case target != "":
+		stored = pointerPathFor(env, p, target)
 	}
 	notes := initNotes(env, p, dir, stored)
 
 	if p.DryRun {
 		return &InitResult{
-			Action: Created, Board: summaryOf(cfg), Path: dir, StoredPath: stored,
+			Action: Created, ID: id, Board: summaryOf(cfg), Path: dir, StoredPath: stored,
 			Notes: notes, DryRun: true, DryRunPath: dryRunPath(p, dir),
 		}, nil
 	}
 
-	result := &InitResult{Action: Created, Board: summaryOf(cfg), Path: dir, StoredPath: stored, Notes: notes}
+	result := &InitResult{
+		Action: Created, ID: id, Board: summaryOf(cfg),
+		Path: dir, StoredPath: stored, Notes: notes,
+	}
 	if adoptWhole {
 		b, err := board.Open(&board.Location{ID: id, Dir: dir, Way: board.WayWorkingDirectory}, env.Machine)
 		if err != nil {
@@ -373,6 +443,9 @@ func create(env Env, p InitParams, v vocabularyFlags, facts board.Searched, targ
 		defer b.Close()
 		result.Action, result.Board = Adopted, summaryOf(b.Config)
 	} else {
+		if err := clearUnreadableDatabase(dir); err != nil {
+			return nil, err
+		}
 		b, err := board.Create(dir, id, cfg, env.Machine)
 		if err != nil {
 			return nil, err
@@ -394,10 +467,24 @@ func create(env Env, p InitParams, v vocabularyFlags, facts board.Searched, targ
 	return result, nil
 }
 
+// clearUnreadableDatabase takes the database out of a directory that is
+// about to hold a board again and whose current one cannot be read. That is
+// the only case where this command touches a file it did not write: the
+// case table of docs/spec/cmd/init.md answers 0 and a board created here
+// for a destination "con el marcador pero sin una base de datos legible",
+// and a file the program cannot read is not one it can keep either.
+func clearUnreadableDatabase(dir string) error {
+	readable, err := board.DatabaseReadable(dir)
+	if err != nil || readable || !board.HasDatabase(dir) {
+		return err
+	}
+	return board.RemoveDatabase(dir)
+}
+
 // rewrite is `biso init` where a board is already reachable: the most likely
 // ending of this command, and an error unless --overwrite-config says to
 // replace its configuration, which never touches a task.
-func rewrite(env Env, p InitParams, v vocabularyFlags, loc *board.Location, target string) (*InitResult, error) {
+func rewrite(env Env, p InitParams, v vocabularyFlags, facts board.Searched, loc *board.Location, target string) (*InitResult, error) {
 	if !p.OverwriteConfig {
 		return nil, &model.Error{
 			ExitCode: 2,
@@ -453,7 +540,7 @@ func rewrite(env Env, p InitParams, v vocabularyFlags, loc *board.Location, targ
 		return nil, err
 	}
 
-	result := &InitResult{Action: Rewrote, Board: summaryOf(cfg), Path: b.Location.Dir}
+	result := &InitResult{Action: Rewrote, ID: b.Location.ID, Board: summaryOf(cfg), Path: b.Location.Dir}
 	if p.DryRun {
 		result.DryRun = true
 		result.DryRunPath = b.Location.Dir
@@ -462,7 +549,40 @@ func rewrite(env Env, p InitParams, v vocabularyFlags, loc *board.Location, targ
 	if err := b.Rewrite(cfg); err != nil {
 		return nil, err
 	}
+
+	// The output says the project points at this board, and that sentence
+	// is only true if something points at it: docs/spec/cmd/init.md prints
+	// it "se escriba el puntero en esta llamada o ya estuviera escrito de
+	// antes", which leaves no third case where nobody wrote one. It happens
+	// when the board was reached by the first way, standing inside it, with
+	// no pointer anywhere between here and the cap of the search, and the
+	// answer is to write it, the same way a creation does.
+	if facts.PointerDir == "" {
+		written, err := writePointer(env, facts, b.Location.ID, pointerPathFor(env, p, b.Location.Dir))
+		if err != nil {
+			return nil, err
+		}
+		result.PointerWritten = written
+	}
 	return result, nil
+}
+
+// pointerPathFor is the `path` key a pointer needs to find a board that is
+// already there: none when the board sits directly under one of the
+// machine's roots, because the search by marker finds it
+// (docs/spec/resolucion-del-tablero.md#cómo-biso-init-genera-el-id-y-escribe-el-puntero),
+// the text of --at when this call gave one, and the board's own directory
+// otherwise.
+func pointerPathFor(env Env, p InitParams, dir string) string {
+	if p.HasAt {
+		return p.At
+	}
+	for _, root := range env.Machine.Roots() {
+		if filepath.Dir(dir) == filepath.Clean(root) {
+			return ""
+		}
+	}
+	return dir
 }
 
 // checkNothingInUseIsRemoved is the exit code 6 of

@@ -383,3 +383,68 @@ func TestABoardWithNoMarkerStillOpensAndSaysItsId(t *testing.T) {
 	assertContains(t, got.stdout, "id       3f9a2b1c")
 	assertContains(t, got.stdout, "source   the working directory is this board")
 }
+
+// TestAtAWholeBoardWhileThePointerNamesAnAbsentOneAdoptsTheDestination is
+// the second exception of
+// docs/spec/resolucion-del-tablero.md#cómo-biso-init-genera-el-id-y-escribe-el-puntero
+// in its second half: the exception applies "cuando no hay ningún puntero
+// aquí, **o cuando el que hay no resuelve a nada en esta máquina**", and this
+// is the second of those two. The destination's marker wins, and the pointer
+// is rewritten, because there was no correct one to keep.
+func TestAtAWholeBoardWhileThePointerNamesAnAbsentOneAdoptsTheDestination(t *testing.T) {
+	m := newMachine(t).withIDs("7a1b2c3d")
+	other := m.at(filepath.Join(m.home, "other-project"))
+	other.run("init", "Other project", "--at", filepath.Join(m.home, "board")).assertCode(t, 0)
+	dir := filepath.Join(m.home, "board")
+
+	// This project's pointer names a board that is not on this machine.
+	m.writeFile(filepath.Join(m.dir, ".biso.json"), "{ \"version\": 1, \"id\": \"3f9a2b1c\" }\n")
+	m.run("where").assertCode(t, 20)
+
+	got := m.run("init", "--at", dir).assertCode(t, 0)
+
+	assertContains(t, got.stdout, "Adopted board \"Other project\"")
+	assertEqual(t, m.read(filepath.Join(m.dir, ".biso.json")),
+		"{ \"version\": 1, \"id\": \"7a1b2c3d\", \"path\": \""+dir+"\" }\n",
+		"the pointer rewritten with the id of the destination")
+	assertContains(t, m.run("where").assertCode(t, 0).stdout, "id       7a1b2c3d")
+}
+
+// TestAnIdIsNotMintedOverADirectoryThatOnlyHasTheMarker is the check
+// docs/spec/resolucion-del-tablero.md#cómo-biso-init-genera-el-id-y-escribe-el-puntero
+// asks `biso init` to make before minting: an id that already exists in a
+// root is taken, and a directory with the marker and no database is already
+// claiming it, however little of a board it is.
+func TestAnIdIsNotMintedOverADirectoryThatOnlyHasTheMarker(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c", "7a1b2c3d")
+	m.writeFile(filepath.Join(m.boardsRoot(), "half-written", "3f9a2b1c.id"),
+		"{ \"storeVersion\": 1 }\n")
+
+	m.run("init", "My project").assertCode(t, 0)
+
+	if !m.exists(filepath.Join(m.boardsRoot(), "my-project-7a1b2c3d", "board.db")) {
+		t.Fatal("the minted id was the one a half-written directory already claimed")
+	}
+}
+
+// TestAnAdoptedIdWalksTheRootsToo is the row of code 22 of
+// docs/spec/cmd/init.md, which says `init` walks the roots for the id it is
+// about to mint "o a adoptar": adopting the marker of a destination is no
+// excuse for not looking.
+func TestAnAdoptedIdWalksTheRootsToo(t *testing.T) {
+	m := newMachine(t).withIDs("ffffffff")
+	extra := filepath.Join(m.home, "extra-root")
+	m.writeFile(filepath.Join(m.home, ".biso", "config.json"),
+		"{\"boards_extra_roots\": [\""+extra+"\"]}\n")
+	for _, root := range []string{m.boardsRoot(), extra} {
+		m.writeFile(filepath.Join(root, "copy-3f9a2b1c", "3f9a2b1c.id"), "{ \"storeVersion\": 1 }\n")
+	}
+
+	// The destination carries that same identity, so adopting it would make
+	// a third place with it.
+	dir := filepath.Join(m.dir, "board")
+	m.writeFile(filepath.Join(dir, "3f9a2b1c.id"), "{ \"storeVersion\": 1 }\n")
+
+	got := m.run("init", "My project", "--at", "board").assertCode(t, 22)
+	assertContains(t, got.stderr, "board 3f9a2b1c is in two places, and biso will not choose between them")
+}

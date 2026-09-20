@@ -111,7 +111,23 @@ func Resolve(s Search) (*Location, Searched, *model.Error) {
 		here = &Location{ID: MarkerID(s.Dir), Dir: s.Dir, Way: WayWorkingDirectory}
 	}
 
-	viaPointer, perr := resolvePointer(s, &facts)
+	// The pointer is read before either way is chosen, because a pointer
+	// that cannot be read is exit code 3 whichever way ends up winning
+	// (docs/spec/resolucion-del-tablero.md#cómo-se-lee-el-puntero).
+	// Discarding a malformed one in silence because the working directory
+	// happens to be a board is the very thing that page forbids: there is a
+	// pointer here and what happens is that it is written wrong.
+	p, pointerDir, readErr := findAndReadPointer(s.Dir, facts.Stop)
+	if readErr != nil {
+		return nil, facts, readErr
+	}
+
+	var viaPointer *Location
+	var perr *model.Error
+	if p != nil {
+		facts.PointerDir, facts.PointerID = pointerDir, p.ID
+		viaPointer, perr = boardOfPointer(s, *p, pointerDir, &facts)
+	}
 
 	if here != nil {
 		// The first way wins always, and the only conflict there can be
@@ -137,19 +153,25 @@ func Resolve(s Search) (*Location, Searched, *model.Error) {
 	return nil, facts, NoBoardError()
 }
 
-// resolvePointer is the second way: find the pointer, then find the board it
-// names.
-func resolvePointer(s Search, facts *Searched) (*Location, *model.Error) {
-	dir, path := findPointer(s.Dir, facts.Stop)
+// findAndReadPointer answers the project's pointer, the directory it came
+// from, and the error of one that is there and cannot be read. A project
+// with no pointer at all answers three zero values, which is not an error.
+func findAndReadPointer(dir, stop string) (*Pointer, string, *model.Error) {
+	pointerDir, path := findPointer(dir, stop)
 	if path == "" {
-		return nil, nil
+		return nil, "", nil
 	}
 	p, err := ReadPointer(path)
 	if err != nil {
-		return nil, err.(*model.Error)
+		return nil, "", err.(*model.Error)
 	}
-	facts.PointerDir, facts.PointerID = dir, p.ID
+	return p, pointerDir, nil
+}
 
+// boardOfPointer is the second half of the second way: the board the
+// pointer names, looked for where its path says and then in the machine's
+// roots.
+func boardOfPointer(s Search, p Pointer, dir string, facts *Searched) (*Location, *model.Error) {
 	if p.Path != "" {
 		for _, candidate := range pointerCandidates(p.Path, dir, facts.Stop, s.Machine.Home) {
 			if HasMarker(candidate, p.ID) {
@@ -171,7 +193,7 @@ func resolvePointer(s Search, facts *Searched) (*Location, *model.Error) {
 	// Either the pointer carries no path, or the one it carries did not
 	// resolve: both end up walking the machine's roots looking for the
 	// marker (docs/spec/resolucion-del-tablero.md#cómo-se-lee-el-puntero).
-	hits, err := searchRoots(s.Machine, p.ID)
+	hits, err := searchRoots(s.Machine, p.ID, true)
 	if err != nil {
 		return nil, err.(*model.Error)
 	}
@@ -213,11 +235,20 @@ func pointerCandidates(path, pointerDir, stop, home string) []string {
 }
 
 // searchRoots walks the machine's roots looking for the directory that
-// carries the marker of id and a database, and answers every one it finds.
-// A root that does not exist or cannot be read is not an error: a machine
-// can have a disk configured that is not mounted today
+// carries the marker of id, and answers every one it finds. A root that
+// does not exist or cannot be read is not an error: a machine can have a
+// disk configured that is not mounted today
 // (docs/spec/invocacion.md#configuración-de-máquina).
-func searchRoots(m Machine, id string) ([]string, error) {
+//
+// withDatabase says whether a directory has to carry the database as well
+// to count, and the two callers of this function want different answers.
+// Choosing a board to work on asks for both, because a directory with the
+// marker and no database is not a board and the search goes on past it.
+// Asking whether an identity is already taken settles for the marker,
+// because that half-written directory is already claiming that id, and
+// minting it again would make the two of them the duplicate of
+// docs/spec/resolucion-del-tablero.md#el-mismo-id-en-dos-sitios.
+func searchRoots(m Machine, id string, withDatabase bool) ([]string, error) {
 	var hits []string
 	for _, root := range m.Roots() {
 		entries, err := os.ReadDir(root)
@@ -229,7 +260,7 @@ func searchRoots(m Machine, id string) ([]string, error) {
 				continue
 			}
 			dir := filepath.Join(root, e.Name())
-			if HasMarker(dir, id) && HasDatabase(dir) {
+			if HasMarker(dir, id) && (!withDatabase || HasDatabase(dir)) {
 				hits = append(hits, dir)
 			}
 		}
@@ -243,7 +274,8 @@ func searchRoots(m Machine, id string) ([]string, error) {
 // FindID answers where a board id already lives on this machine, which is
 // what `biso init` asks before minting or adopting one
 // (docs/spec/resolucion-del-tablero.md#cómo-biso-init-genera-el-id-y-escribe-el-puntero).
-func FindID(m Machine, id string) ([]string, error) { return searchRoots(m, id) }
+// The marker alone is enough to answer yes, per the rule above.
+func FindID(m Machine, id string) ([]string, error) { return searchRoots(m, id, false) }
 
 // Ancestors is the walk upward: dir, its parent, and so on, up to and
 // including stop. A dir that is not under stop answers just itself, so the

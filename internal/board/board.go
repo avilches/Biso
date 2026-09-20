@@ -3,6 +3,7 @@ package board
 import (
 	"database/sql"
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -56,6 +57,46 @@ func Open(loc *Location, m Machine) (*Board, error) {
 		Store:    s,
 		Tasks:    NewTasks(s, cfg.TaskPrefix, cfg.Extensions),
 	}, nil
+}
+
+// DatabaseReadable answers whether dir is a board this program can open:
+// the database is there and it opens. The question exists because
+// docs/spec/garantias.md#el-segundo-caso-la-base-de-datos-que-no-se-puede-leer
+// says a directory whose database does not open does not count as a board
+// for `biso init`, exactly like one that has no database at all, so
+// HasDatabase is not the whole answer for that command.
+//
+// Everything that is not the database failing to be read travels up
+// untouched: a board somebody else is writing to answers the busy error of
+// exit code 8, and answering "not a board" there would let `biso init`
+// build a second one over a live one.
+func DatabaseReadable(dir string) (bool, error) {
+	if !HasDatabase(dir) {
+		return false, nil
+	}
+	s, err := store.Open(MarkerID(dir), filepath.Join(dir, DatabaseFile))
+	if err != nil {
+		if e, ok := err.(*model.Error); ok && e.ExitCode == 21 {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, s.Close()
+}
+
+// RemoveDatabase deletes the database and its two auxiliary files, which is
+// what rebuilding a board in place means when the file that is there cannot
+// be read: `biso init` over such a directory creates the board there and
+// exits 0 (docs/spec/cmd/init.md), and it can only do that by putting a new
+// database where the unreadable one was. It is never called over a database
+// that opens.
+func RemoveDatabase(dir string) error {
+	for _, name := range []string{DatabaseFile, DatabaseFile + "-wal", DatabaseFile + "-shm"} {
+		if err := os.Remove(filepath.Join(dir, name)); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return cannotWrite(filepath.Join(dir, name), err)
+		}
+	}
+	return nil
 }
 
 // Create makes the board directory if it is not there, creates its database

@@ -9,7 +9,6 @@ import (
 
 	"golang.org/x/term"
 
-	"biso/internal/board"
 	"biso/internal/model"
 	"biso/internal/ops"
 )
@@ -72,9 +71,13 @@ func Run(argv []string, s Streams) int {
 	// (docs/spec/contrato-json.md#los-errores-en-json).
 	asJSON := wantsJSON(argv)
 
+	// An analysis that fails still answers the warnings it had already
+	// found, because a warning is never suppressed
+	// (docs/spec/salida-y-terminal.md#notas-y-avisos): they go with the
+	// error instead of being dropped with it.
 	p, err := Parse(argv, Commands(), Env{Stdin: s.Stdin})
 	if err != nil {
-		return fail(s, asJSON, err)
+		return fail(s, asJSON, err, warningsOf(p))
 	}
 
 	switch p.Action {
@@ -95,7 +98,7 @@ func Run(argv []string, s Streams) int {
 
 	env, err := environment(s, p)
 	if err != nil {
-		return fail(s, asJSON, err)
+		return fail(s, asJSON, err, warningsOf(p))
 	}
 
 	switch p.Command {
@@ -109,7 +112,7 @@ func Run(argv []string, s Streams) int {
 	return fail(s, asJSON, &model.Error{
 		ExitCode: 1, Code: "internal",
 		Message: fmt.Sprintf("no implementation for command %q", p.Command),
-	})
+	}, warningsOf(p))
 }
 
 // wantsJSON answers whether the call wrote --json, reading argv the way the
@@ -146,28 +149,24 @@ func environment(s Streams, p *Parsed) (ops.Env, error) {
 	}
 	dir = filepath.Clean(dir)
 
-	machine, err := board.LoadMachine(s.Home)
-	if err != nil {
-		return ops.Env{}, err
-	}
-	me := machine.Me
-	if v := s.getenv("BISO_ME"); v != "" {
-		me = v
-	}
-	return ops.Env{
-		Dir: dir, Machine: machine, Me: me, Now: s.Now, NewID: s.NewID,
-	}.WithDefaults(), nil
+	// Reading ~/.biso/config.json is internal/ops's job and not this
+	// layer's: this package depends on ops and on model, and on nothing
+	// below them (section 3 of
+	// docs/superpowers/specs/2026-09-10-arquitectura-implementacion-design.md).
+	return ops.NewEnv(ops.Call{
+		Dir: dir, Home: s.Home, Me: s.getenv("BISO_ME"), Now: s.Now, NewID: s.NewID,
+	})
 }
 
 func runInit(s Streams, p *Parsed, env ops.Env) int {
 	asJSON := p.Has("json")
 	params, err := initParams(p)
 	if err != nil {
-		return fail(s, asJSON, err)
+		return fail(s, asJSON, err, warningsOf(p))
 	}
 	result, err := ops.Init(env, params)
 	if err != nil {
-		return fail(s, asJSON, err)
+		return fail(s, asJSON, err, warningsOf(p))
 	}
 	printWarnings(s, p)
 	switch {
@@ -191,11 +190,11 @@ func runInit(s Streams, p *Parsed, env ops.Env) int {
 func runWhere(s Streams, p *Parsed, env ops.Env) int {
 	asJSON := p.Has("json")
 	if len(p.Positionals) > 0 {
-		return fail(s, asJSON, errUnexpectedArgument(p.Positionals[0]))
+		return fail(s, asJSON, errUnexpectedArgument(p.Positionals[0]), warningsOf(p))
 	}
 	result, err := ops.Where(env)
 	if err != nil {
-		return fail(s, asJSON, err)
+		return fail(s, asJSON, err, warningsOf(p))
 	}
 	printWarnings(s, p)
 	if asJSON {
@@ -273,9 +272,21 @@ func helpOf(command string) string {
 
 // notesOf is the notes a result carries. `biso init` is the only command of
 // this step that has any: the two of --at, and the one of a preview.
+//
+// The note of a preview says what that preview would have done, and the two
+// endings are not the same thing: docs/spec/cmd/init.md fixes "board would
+// be created at" for a board that does not exist yet, and a preview of
+// --overwrite-config over one that does exist would create nothing.
 func notesOf(result *ops.InitResult) []string {
 	notes := append([]string(nil), result.Notes...)
-	if result.DryRun {
+	switch {
+	case !result.DryRun:
+	case result.Action == ops.Rewrote:
+		notes = append(notes, fmt.Sprintf(
+			"the configuration of board %s at %s\n"+
+				"would be rewritten, and no task would change (--dry-run)",
+			result.ID, result.DryRunPath))
+	default:
 		notes = append(notes, fmt.Sprintf(
 			"board would be created at %s (--dry-run)", result.DryRunPath))
 	}
@@ -284,11 +295,12 @@ func notesOf(result *ops.InitResult) []string {
 
 // printNote writes one note: "note: " and, under it, every further line of
 // the same note aligned with the first
-// (docs/spec/salida-y-terminal.md#notas-y-avisos). --quiet suppresses it,
-// and so does --json, where the data travels in the envelope and a note is
-// context for whoever is reading and not data.
+// (docs/spec/salida-y-terminal.md#notas-y-avisos). --quiet is the one thing
+// that suppresses it; --json does not, and the note keeps travelling as
+// text on stderr, because it is context for whoever is reading and never
+// data, so no envelope carries it.
 func printNote(s Streams, p *Parsed, note string) {
-	if p.Has("quiet") || p.Has("json") {
+	if p.Has("quiet") {
 		return
 	}
 	fmt.Fprint(s.Stderr, prefixed("note: ", note))
@@ -298,7 +310,7 @@ func printNote(s Streams, p *Parsed, note string) {
 // produced. A warning is never suppressed, not even by --quiet: silencing
 // one is the caller's business, with 2>/dev/null.
 func printWarnings(s Streams, p *Parsed) {
-	for _, w := range p.Warnings {
+	for _, w := range warningsOf(p) {
 		fmt.Fprint(s.Stderr, prefixed("warning: ", w.Message))
 		for _, hint := range w.Hints {
 			fmt.Fprint(s.Stderr, prefixed("hint: ", hint))
@@ -306,10 +318,27 @@ func printWarnings(s Streams, p *Parsed) {
 	}
 }
 
+// warningsOf is the warnings of an analysis that may not have finished: a
+// call that fails to parse answers a partial Parsed, and one that fails
+// before it is even attempted answers none.
+func warningsOf(p *Parsed) []Warning {
+	if p == nil {
+		return nil
+	}
+	return p.Warnings
+}
+
 // fail is the one place an error becomes text or JSON and an exit code. The
 // error is printed exactly as it was born, several layers down, with nothing
 // reinterpreted on the way up.
-func fail(s Streams, asJSON bool, err error) int {
+//
+// warnings are the ones the call had already produced, which a failure
+// never swallows (docs/spec/salida-y-terminal.md#notas-y-avisos). Without
+// --json they are printed as text, before the error, in the order they were
+// found; with --json they fold into the same envelope as the error, because
+// stderr must not mix the text of a warning with the JSON object of an
+// error (docs/spec/contrato-json.md#los-errores-en-json).
+func fail(s Streams, asJSON bool, err error, warnings []Warning) int {
 	e, ok := err.(*model.Error)
 	if !ok {
 		// Anything that is not a case of the specification is the program
@@ -317,8 +346,14 @@ func fail(s Streams, asJSON bool, err error) int {
 		e = &model.Error{ExitCode: 1, Code: "internal", Message: err.Error()}
 	}
 	if asJSON {
-		writeErrorEnvelope(s, e)
+		writeErrorEnvelope(s, e, warnings)
 		return e.ExitCode
+	}
+	for _, w := range warnings {
+		fmt.Fprint(s.Stderr, prefixed("warning: ", w.Message))
+		for _, hint := range w.Hints {
+			fmt.Fprint(s.Stderr, prefixed("hint: ", hint))
+		}
 	}
 	fmt.Fprint(s.Stderr, prefixed("error: ", e.Message))
 	for _, line := range e.Detail {

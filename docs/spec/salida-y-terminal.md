@@ -60,6 +60,16 @@ texto suelto: se pliega dentro del mismo sobre de error que ya sale por stderr**
 llamada texto humano de un aviso y el objeto JSON de un error: cuando hay error, todo lo que hay que
 saber, avisos incluidos, viaja dentro de ese único objeto.
 
+**Con `--json`, una `note:` se sigue imprimiendo como texto por stderr, igual que sin `--json`, y no
+viaja en ningún sobre**, ni en el de datos ni en el de error. Es el caso hermano del aviso, con una
+diferencia que lo decide: un aviso tiene sitio en el sobre, así que hay dónde plegarlo cuando la
+llamada falla, y una nota no tiene ninguno. Y no lo tiene porque una nota es contexto para quien
+lee, nunca un dato del resultado: nada de lo que un programa consuma depende de ella. Suprimirla
+por el hecho de que la salida sea JSON dejaría a quien mira el terminal sin la única frase que
+explica lo que acaba de pasar, sin ganar nada a cambio, porque el sobre que ese mismo terminal
+imprime por stdout no la lleva. Lo único que suprime una nota es `--quiet`, como dice la lista de
+arriba.
+
 Esta es la lista completa de avisos que el programa emite. No hay ningún otro. Cada uno lleva un
 `code` estable, en el mismo estilo que los `code` de error de la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), con los
 campos que interpola su frase; esos campos son los que trae el objeto de `data.warnings` en el JSON

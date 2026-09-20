@@ -41,6 +41,47 @@ type Env struct {
 	NewID func() (string, error)
 }
 
+// Call is what the layer above knows about an invocation before any board
+// exists: where it is being made from, whose machine it is, and the
+// identity the environment declared, empty when it declared none
+// (docs/spec/invocacion.md#variables-de-entorno).
+//
+// It exists so that reading the machine's configuration is this layer's
+// job and not the command line's. internal/cli depends on ops and on
+// model, and on nothing below them, per section 3 of
+// docs/superpowers/specs/2026-09-10-arquitectura-implementacion-design.md:
+// loading ~/.biso/config.json is opening a file of a board's world, so the
+// call that does it belongs here.
+type Call struct {
+	// Dir is the working directory, absolute and clean.
+	Dir string
+	// Home is the caller's home directory, where the machine
+	// configuration lives and where the upward search stops.
+	Home string
+	// Me is what BISO_ME said, and empty when it said nothing, in which
+	// case the machine's `me` key answers instead.
+	Me string
+
+	Now   func() time.Time
+	NewID func() (string, error)
+}
+
+// NewEnv reads this machine's configuration and answers the environment
+// every command works in.
+func NewEnv(c Call) (Env, error) {
+	machine, err := board.LoadMachine(c.Home)
+	if err != nil {
+		return Env{}, err
+	}
+	me := machine.Me
+	if c.Me != "" {
+		me = c.Me
+	}
+	return Env{
+		Dir: c.Dir, Machine: machine, Me: me, Now: c.Now, NewID: c.NewID,
+	}.WithDefaults(), nil
+}
+
 // WithDefaults fills in the two sources with the real ones.
 func (e Env) WithDefaults() Env {
 	if e.Now == nil {

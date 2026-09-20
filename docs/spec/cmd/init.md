@@ -145,6 +145,18 @@ parte, el error nombra ese directorio a medias, porque es la pista de lo que ha 
 dos remedios, según si el directorio también lleva la instantánea o solo el marcador, están en la
 sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-puntero-nombra-un-tablero-que-no-está-en-esta-máquina).
 
+**Un directorio de destino cuya base de datos está pero no se puede leer se trata igual que uno al que
+le falta**, que es lo que dice la tabla de abajo, en sus filas sobre un destino sin base de datos
+legible, y la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar): no
+cuenta como tablero accesible, así que `init` no da el Error 2 de "ya hay uno" sino que crea el tablero
+ahí mismo, adoptando el `id` del marcador, con código 0. **Para poder hacerlo, sustituye el fichero**:
+borra `board.db` y sus dos auxiliares y escribe una base de datos nueva encima. Es lo único que este
+comando borra en toda la especificación, y no hay otra forma de cumplir lo que esa tabla promete,
+porque reconstruir en el sitio (el remedio que el `hint` del error 21 manda teclear) es exactamente
+poner una base de datos donde estaba la que no se puede leer. Un fichero que el programa no sabe leer
+tampoco es uno que pueda conservar, y quien tenga una instantánea recupera además las tareas con
+`--from` en vez de quedarse con un tablero vacío.
+
 **Si ya existe un puntero pero el tablero que nombra no está en esta máquina** (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), `init`
 no acuña un `id` nuevo: usa el que ya lleva el puntero, para que las dos máquinas sigan hablando del
 mismo tablero. Y no reescribe el puntero, porque ya era correcto.
@@ -173,6 +185,17 @@ ya no nombra dónde ha ido a parar el tablero, que es lo que pasa al mover un ta
 misma razón: dejarlo como está sería dejar al proyecto sin poder encontrar su tablero. En la práctica
 la comparación es entre el `id` y la `path` que el puntero tiene y los que tendría que tener, que son
 el `id` en uso y el texto de `--at` tal cual se escribió, o ninguna `path` si no hubo `--at`.
+
+**La regla vale igual con `--overwrite-config`**, que reescribe la configuración de un tablero que ya
+existe en vez de crear uno: si al llamar no hay ningún puntero entre el directorio de trabajo y el
+tope de la búsqueda, `init` lo escribe. Solo puede pasar llegando al tablero por la primera vía, es
+decir estando dentro de su directorio, porque llegar por la segunda es precisamente tener un puntero.
+La razón es la línea "This project now points at that board.", que sale siempre: dejar al proyecto sin
+nada apuntado y decir a la vez que apunta sería mentir, y de las dos formas de arreglarlo (escribir el
+puntero o callarse la línea) solo la primera deja al proyecto encontrando su tablero desde cualquier
+otro sitio. La `path` que se escribe es la que haría falta para encontrarlo: ninguna si el tablero está
+directamente bajo una de las raíces de la máquina, la de `--at` tal cual se escribió si esta llamada lo
+pasó, y la ruta del directorio del tablero en cualquier otro caso.
 
 La clave `pointerCreated` del sobre JSON dice exactamente eso: si esta llamada escribió el fichero.
 
@@ -227,6 +250,18 @@ $ biso init "My project" --dry-run
 note: board would be created at /Users/avilches/.biso/boards/my-project-3f9a2b1c (--dry-run)
 ```
 
+**Con `--overwrite-config`, esa nota diría algo falso**, porque ahí no se crea ningún tablero: el que
+hay ya existe y lo que la llamada haría es reescribir su configuración. La frase es entonces esta otra,
+y nombra el tablero por su `id` y por su ruta, como hace el error de que ya existe:
+
+```
+note: the configuration of board 3f9a2b1c at /Users/avilches/.biso/boards/my-project-3f9a2b1c
+      would be rewritten, and no task would change (--dry-run)
+```
+
+El salto de línea está donde está, entre la ruta y el verbo, y no depende de lo larga que sea la ruta,
+igual que en las dos notas de `--at`.
+
 Con `--at`, la ruta que nombra la nota es la que `--at` da, con la misma forma (relativa o absoluta)
 que llevaría el puntero si la llamada fuera real. **Con `--from`, en cambio, la frase es la del lote de
 importación** (sección ["`biso new`"](new.md#el-modo-lote)), `<N> tasks would be created, nothing was
@@ -239,7 +274,7 @@ además de esa frase, para no decir dos veces que no se ha escrito nada.
 | `--overwrite-config` sin uno de los flags de vocabulario (`--statuses` y sus tres papeles, `--types`, `--priorities`, `--extensions`) | No es un error: esa clave conserva el valor que el tablero ya tenía, igual que `project_name` sin `<name>` explícito (sección ["`biso config`"](config.md)). Como consecuencia, el prefijo sin `<name>` ni `--prefix` también se conserva, porque se deriva de `project_name`, que a su vez se conserva; no hace falta ningún caso especial para él |
 | El directorio de destino no tiene una base de datos legible: le falta, o no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo, con `--at` apuntando a ese mismo directorio, adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 21 nombra, y también el que necesita un clon traído a otra máquina que llega con la carpeta del tablero versionada y sin base de datos: el mismo remedio lo repite el `hint` del error `pointer_unresolved` (código 20) cuando es la resolución normal, no `init`, quien encuentra ese directorio a medias (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-puntero-nombra-un-tablero-que-no-está-en-esta-máquina)) |
 | `--at`, sin `--from`, al mismo directorio de la fila anterior: con el marcador pero sin una base de datos legible | No cuenta como tablero accesible, igual que en la fila anterior: `init` lo crea ahí mismo, adoptando el `id` del marcador, código 0. Sin `--from` no hay instantánea que restaurar, así que el tablero nace vacío; es el remedio de un clon cuyo directorio del tablero se versionó antes de la primera instantánea |
-| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila de arriba, alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que ese flag significa. Un tablero no se crea nunca dentro de otro |
+| El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila "Ya hay un tablero accesible desde aquí", alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que ese flag significa. Un tablero no se crea nunca dentro de otro. Si la base de datos que ese directorio tiene no se puede leer, no es un tablero accesible y manda la fila de arriba: `init` lo crea ahí mismo, adoptando el `id` de su marcador, código 0 |
 | Ya hay un puntero, pero el tablero que nombra no está en esta máquina | No es un error: se crea el tablero adoptando el `id` que el puntero ya lleva, y el puntero no se reescribe porque ya era correcto, código 0 |
 | `--at` a un directorio que ya es el directorio de un tablero, con `board.db` legible | Depende de si este proyecto ya resuelve, por su cuenta, a un tablero accesible (fila "Ya hay un tablero accesible desde aquí"). Si lo resuelve, Error 2, con el mismo motivo visto desde el otro lado: el destino también es un tablero. Si no lo resuelve, porque no hay puntero aquí o el que hay no resuelve a nada en esta máquina, no es un error: adopta el `id` del marcador del destino y escribe, o reescribe, el puntero de este proyecto con ese `id` y esa `path`, sin tocar la configuración ni las tareas del destino, código 0 |
 | `--at` con una ruta relativa | No es un error: el tablero se crea ahí y el puntero lleva esa misma ruta relativa, código 0 |

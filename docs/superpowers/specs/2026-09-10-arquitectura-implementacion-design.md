@@ -233,6 +233,13 @@ identificadores. A ninguno de los dos se le puede entregar un tablero ya abierto
 otro existe para explicar cómo se encontró, incluso cuando no se encuentra ninguno. Cada una de las
 dos abre el suyo por dentro y lo cierra antes de devolver.
 
+**Ese `Env` lo construye esta capa y no la de arriba**, con `ops.NewEnv`, que es quien lee
+`~/.biso/config.json` (`docs/spec/invocacion.md#configuración-de-máquina`) y quien resuelve la
+identidad de quien llama entre `BISO_ME` y la clave `me`. `internal/cli` le pasa solo lo que sabe
+sin abrir ningún fichero: el directorio de trabajo ya resuelto, el directorio personal y el valor
+de las variables de entorno. Si la construyera `internal/cli`, esa capa tendría que importar
+`internal/board`, que es justo lo que la regla de dependencias de la sección 3 no admite.
+
 Aquí vive toda
 la lógica de negocio de `docs/spec/`: qué combinación de campos es válida, qué garantías hay que
 respetar dentro de la transacción, qué mensaje de error corresponde a qué caso. Nada de esta capa

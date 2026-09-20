@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -333,4 +334,230 @@ func TestWhereDoesNotDodgeADatabaseItCannotRead(t *testing.T) {
 			"hint: it did not open, or it failed its integrity check, and there is no automatic repair\n"+
 			"hint: rebuild it in place with `biso init --from <snapshot dir>`, which keeps its id\n",
 		"the message of a database that cannot be read")
+}
+
+// TestABoardWhoseDatabaseCannotBeReadIsNotOneForInit walks the two rows of
+// the case table of docs/spec/cmd/init.md for a destination "sin una base de
+// datos legible", which
+// docs/spec/garantias.md#el-segundo-caso-la-base-de-datos-que-no-se-puede-leer
+// says does not count as an accessible board for this command: it is rebuilt
+// in place, adopting the id of its marker, with exit code 0.
+func TestABoardWhoseDatabaseCannotBeReadIsNotOneForInit(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		from func(m *machine, dir string) *machine
+		argv []string
+	}{
+		{"with an explicit destination", func(m *machine, dir string) *machine { return m },
+			[]string{"init", "My project", "--at"}},
+		{"standing inside it", func(m *machine, dir string) *machine { return m.at(dir) },
+			[]string{"init", "My project"}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			m := newMachine(t).withIDs("ffffffff")
+			dir := filepath.Join(m.home, "boards", "my-project-3f9a2b1c")
+			m.writeFile(filepath.Join(dir, "3f9a2b1c.id"), "{ \"storeVersion\": 1 }\n")
+			m.writeFile(filepath.Join(dir, "board.db"), "this is not a database")
+
+			argv := c.argv
+			if argv[len(argv)-1] == "--at" {
+				argv = append(argv, dir)
+			}
+			got := c.from(m, dir).run(argv...).assertCode(t, 0)
+
+			assertContains(t, got.stdout, "Created board \"My project\"")
+			// The identity is the marker's, not a minted one, and the
+			// database that could not be read is now one that can.
+			where := c.from(m, dir).run("where").assertCode(t, 0)
+			assertContains(t, where.stdout, "id       3f9a2b1c")
+			assertContains(t, where.stdout, "path     "+dir)
+
+			// And the project points at it: the board is under no root of
+			// this machine, so the pointer carries its path.
+			assertEqual(t, m.read(filepath.Join(c.from(m, dir).dir, ".biso.json")),
+				"{ \"version\": 1, \"id\": \"3f9a2b1c\", \"path\": \""+dir+"\" }\n",
+				"the pointer of a board rebuilt in place")
+		})
+	}
+}
+
+// TestAWarningIsNeverLostWhenTheCallFails is the rule of
+// docs/spec/salida-y-terminal.md#notas-y-avisos, "nunca se suprime", applied
+// to the call that does not reach its own output: without --json the warning
+// is printed as text before the error, and with --json it folds into the same
+// envelope (docs/spec/contrato-json.md#los-errores-en-json).
+func TestAWarningIsNeverLostWhenTheCallFails(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	m.run("init", "My project").assertCode(t, 0)
+
+	// A repeated value warns, and this second init fails with board_exists.
+	got := m.run("init", "Another", "--types", "task,task").assertCode(t, 2)
+	assertContains(t, got.stderr, "warning: --types: \"task\" given twice, kept once")
+	assertContains(t, got.stderr, "error: this project already has board 3f9a2b1c")
+
+	got = m.run("init", "Another", "--types", "task,task", "--json").assertCode(t, 2)
+	var envelope struct {
+		Error struct {
+			Code string `json:"code"`
+		} `json:"error"`
+		Warnings []struct {
+			Code  string `json:"code"`
+			Flag  string `json:"flag"`
+			Value string `json:"value"`
+		} `json:"warnings"`
+	}
+	if err := json.Unmarshal([]byte(got.stderr), &envelope); err != nil {
+		t.Fatalf("stderr is not one JSON object: %v\n%s", err, got.stderr)
+	}
+	if envelope.Error.Code != "board_exists" {
+		t.Errorf("error code = %q", envelope.Error.Code)
+	}
+	if len(envelope.Warnings) != 1 || envelope.Warnings[0].Code != "duplicate_flag_value" ||
+		envelope.Warnings[0].Flag != "--types" || envelope.Warnings[0].Value != "task" {
+		t.Errorf("warnings = %+v, want the duplicate value of --types", envelope.Warnings)
+	}
+	if strings.Contains(got.stderr, "warning: ") {
+		t.Errorf("with --json the text of a warning does not travel beside the envelope:\n%s", got.stderr)
+	}
+}
+
+// TestAWarningOfACallThatDoesNotEvenParseIsPrinted is the same rule one step
+// earlier: the analysis itself fails, and the warnings it had already found
+// do not disappear with it.
+func TestAWarningOfACallThatDoesNotEvenParseIsPrinted(t *testing.T) {
+	m := newMachine(t)
+	got := m.run("init", "P", "--types", "task,task", "--nope").assertCode(t, 2)
+	assertContains(t, got.stderr, "warning: --types: \"task\" given twice, kept once")
+	assertContains(t, got.stderr, "error: unknown flag: --nope")
+}
+
+// TestTheNotesTravelAsTextWithJSONAsWell is the sibling case of the warning
+// above, decided the other way round by
+// docs/spec/salida-y-terminal.md#notas-y-avisos: a note has no place in any
+// envelope, so --json does not suppress it and it stays on stderr.
+func TestTheNotesTravelAsTextWithJSONAsWell(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	got := m.run("init", "My project", "--at", "board", "--json").assertCode(t, 0)
+	assertContains(t, got.stderr, "note: the board lives inside this project.")
+	assertContains(t, got.stderr, "note: the location is stored as the relative path \"board\".")
+}
+
+// TestTheDryRunOfOverwriteConfigDoesNotSayTheBoardWouldBeCreated is the note
+// of a preview that creates nothing, fixed by docs/spec/cmd/init.md.
+func TestTheDryRunOfOverwriteConfigDoesNotSayTheBoardWouldBeCreated(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	m.run("init", "My project").assertCode(t, 0)
+	dir := filepath.Join(m.boardsRoot(), "my-project-3f9a2b1c")
+
+	got := m.run("init", "--overwrite-config", "--types", "task", "--dry-run").assertCode(t, 0)
+
+	assertEqual(t, got.stderr,
+		"note: the configuration of board 3f9a2b1c at "+dir+"\n"+
+			"      would be rewritten, and no task would change (--dry-run)\n",
+		"the note of a preview of --overwrite-config")
+
+	// And it was a preview: the configuration is the one it had.
+	assertContains(t, m.run("where").assertCode(t, 0).stdout, "board    My project")
+	got = m.run("init", "--overwrite-config", "--types", "task").assertCode(t, 0)
+	assertContains(t, got.stdout, "  types       task")
+}
+
+// TestOverwriteConfigWritesThePointerWhenThereIsNone keeps the last line of
+// the output honest: docs/spec/cmd/init.md prints "This project now points at
+// that board." always, so a call that leaves nothing pointing at it would be
+// saying something false.
+func TestOverwriteConfigWritesThePointerWhenThereIsNone(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	m.run("init", "My project").assertCode(t, 0)
+	dir := filepath.Join(m.boardsRoot(), "my-project-3f9a2b1c")
+
+	// Standing inside the board, where the first way finds it and no
+	// pointer of this project is anywhere above.
+	inside := m.at(dir)
+	got := inside.run("init", "--overwrite-config", "--types", "task").assertCode(t, 0)
+	assertContains(t, got.stdout, "This project now points at that board.")
+
+	// The board sits directly under a root, so the pointer needs no path:
+	// the search by marker finds it.
+	assertEqual(t, m.read(filepath.Join(dir, ".biso.json")),
+		"{ \"version\": 1, \"id\": \"3f9a2b1c\" }\n",
+		"the pointer written by --overwrite-config")
+
+	// A board outside every root needs its own path instead.
+	other := m.at(filepath.Join(m.home, "other-project")).withIDs("7a1b2c3d")
+	board := filepath.Join(m.home, "outside")
+	other.run("init", "Other project", "--at", board).assertCode(t, 0)
+	if err := os.Remove(filepath.Join(other.dir, ".biso.json")); err != nil {
+		t.Fatal(err)
+	}
+	m.at(board).run("init", "--overwrite-config", "--types", "task").assertCode(t, 0)
+	assertEqual(t, m.read(filepath.Join(board, ".biso.json")),
+		"{ \"version\": 1, \"id\": \"7a1b2c3d\", \"path\": \""+board+"\" }\n",
+		"the pointer of a board that no root holds")
+}
+
+// TestTheStatusRoleErrorsNameTheFlagTheyBlame is the rule of the table of
+// docs/spec/contrato-json.md#los-errores-en-json: an error of code 2 that
+// names a flag carries field and given, and the only one exempt is
+// incompatible_flags.
+func TestTheStatusRoleErrorsNameTheFlagTheyBlame(t *testing.T) {
+	m := newMachine(t)
+	for _, c := range []struct {
+		argv  []string
+		field string
+		given string
+	}{
+		{[]string{"init", "P", "--active-status", "Doing"}, "active-status", "Doing"},
+		{[]string{"init", "P", "--statuses", "A,B,C"}, "statuses", "A,B,C"},
+	} {
+		got := m.run(append(c.argv, "--json")...).assertCode(t, 2)
+		var envelope struct {
+			Error struct {
+				Code  string `json:"code"`
+				Field string `json:"field"`
+				Given string `json:"given"`
+			} `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(got.stderr), &envelope); err != nil {
+			t.Fatalf("stderr is not one JSON object: %v\n%s", err, got.stderr)
+		}
+		if envelope.Error.Field != c.field || envelope.Error.Given != c.given {
+			t.Errorf("%v gave field %q and given %q, want %q and %q",
+				c.argv, envelope.Error.Field, envelope.Error.Given, c.field, c.given)
+		}
+	}
+}
+
+// TestVcsCustomOnlyBelongsToTheCustomMode is the row of the table of
+// docs/spec/invocacion.md#configuración-de-máquina that gives vcs_custom to
+// the custom mode alone, and every key of that file that does not fit is
+// exit code 3.
+func TestVcsCustomOnlyBelongsToTheCustomMode(t *testing.T) {
+	m := newMachine(t)
+	m.writeFile(filepath.Join(m.home, ".biso", "config.json"),
+		"{\"vcs\": \"git\", \"vcs_custom\": {\"commit\": [\"jj\", \"commit\"]}}\n")
+
+	got := m.run("where", "--json").assertCode(t, 3)
+	assertErrorCode(t, got.stderr, "bad_config_value")
+
+	// With the mode it belongs to, the same file is fine.
+	m.writeFile(filepath.Join(m.home, ".biso", "config.json"),
+		"{\"vcs\": \"custom\", \"vcs_custom\": {\"commit\": [\"jj\", \"commit\"]}}\n")
+	m.run("where").assertCode(t, 20)
+}
+
+// TestAMalformedPointerIsAnErrorEvenInsideABoard is the rule of
+// docs/spec/resolucion-del-tablero.md#cómo-se-lee-el-puntero: a pointer that
+// cannot be read is exit code 3 and never something discarded in silence,
+// and the working directory being a board of its own does not change it.
+func TestAMalformedPointerIsAnErrorEvenInsideABoard(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	m.run("init", "My project").assertCode(t, 0)
+	dir := filepath.Join(m.boardsRoot(), "my-project-3f9a2b1c")
+
+	inside := m.at(dir)
+	inside.writeFile(filepath.Join(dir, ".biso.json"), "{ \"version\": 1, \"id\": \"nope\" }\n")
+
+	got := inside.run("where", "--json").assertCode(t, 3)
+	assertErrorCode(t, got.stderr, "bad_config_value")
 }
