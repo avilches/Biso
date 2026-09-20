@@ -1,0 +1,137 @@
+# Decisiones de diseño
+
+Cada entrada dice primero la decisión vigente, en un párrafo que se puede citar sin más contexto. Las
+alternativas que se consideraron van después, marcadas como **descartadas** y con la razón. Si una
+decisión nueva deja obsoleta una anterior, la vieja se corrige aquí mismo.
+
+## Es un proyecto independiente de `biso`
+
+**La decisión.** `backlog.md-migrate` vive en `tools/backlog.md-migrate/` del repositorio de `biso`,
+con su propio módulo Go, su propia documentación y sus propias decisiones. No importa ningún paquete de
+`internal/` de `biso`, no cuelga de su documentación ni de su sitio, y habla con `biso` ejecutando su
+binario. Una utilidad de migración es utillaje que se usa una vez o unas pocas, no parte del producto,
+y así no toca el binario Go de `biso`, ni su presupuesto de arranque, ni el recuento de comandos de su
+especificación.
+
+**Descartado: un subcomando de `biso`** (`biso import-backlog`). Obligaba a añadirlo a la
+especificación, al recuento de comandos y a la ayuda, y a meter en el binario un lector de un formato
+ajeno. **Descartado: un repositorio aparte.** La prueba necesita un `biso` compilado y viviendo en el
+mismo repositorio lo encuentra en `bin/biso`, sin fijar cómo se localiza entre repositorios.
+
+## Dos órdenes independientes, una dirección cada vez
+
+**La decisión.** `import` y `export` son dos órdenes hermanas. Cada una convierte en un sentido y se
+ejecuta una vez, o unas pocas mientras los dos tableros conviven. Ninguna mira el estado de la otra.
+
+**Descartado: un sincronizador continuo.** Exige decidir qué gana cuando cambian los dos lados, y ese
+es justo el tipo de problema que el proyecto no quiere tener. El nombre `backlog.md-migrate` lo dice.
+
+## El milestone es una etiqueta `milestone:<slug>`
+
+**La decisión.** `biso` no tiene milestone en su modelo de datos, y en Backlog.md es un dato que se
+guarda en cada tarea que pertenece a uno. Cada tarea recibe una etiqueta `milestone:<slug>`, con el slug del título del
+milestone. El alfabeto de las etiquetas admite los dos puntos, no añade ningún campo al modelo, se
+filtra con `--label` y se ve en `biso ls`.
+
+**Descartado: un campo de extensión (`ext`).** Su clave es un identificador en otro sistema y no está
+claro que se pueda filtrar como una etiqueta. **Descartado: asumir la pérdida.** Se perdería la
+agrupación por hitos de casi todo el tablero.
+
+## Los identificadores conservan su número y cambian de prefijo
+
+**La decisión.** El tablero destino se crea antes, con el prefijo que se quiera, y el convertidor lo
+lee de `biso`. Cada id de origen conserva su número con el prefijo del destino. Solo los ids cuyo número
+ya existe en el destino cambian de número, con el siguiente libre por encima del mayor que haya entre
+origen y destino, y las menciones de esos ids se reescriben en todo el texto, títulos incluidos. Ninguna
+tarea que no choque se desplaza. Así el destino puede tener el prefijo que quiera y no tiene por qué
+estar vacío. **Una excepción: una tarea que ya está en el destino no se vuelve a importar.** Si el id
+existe allí con el mismo título y la misma fecha de creación, es la misma tarea de una importación
+anterior y se salta con un hallazgo. Sin esto, ejecutar `import` dos veces duplicaría el tablero: `biso`
+rechazaría el lote por ids ocupados, pero el convertidor lo evitaría reasignando todos los ids.
+
+**La coincidencia de menciones distingue mayúsculas y no toca lo que va pegado a otras palabras.** En el
+tablero medido hay cinco menciones en minúsculas que son nombres de ramas y de worktrees
+(`task-10-modelo`), y reescribirlas sin distinguir mayúsculas las habría corrompido.
+
+**Descartado: obligar a que el destino tenga el mismo prefijo que el origen** (`--prefix TASK`).
+Dejaba un tablero con un prefijo que no elige nadie y que no se puede cambiar después. **Descartado:
+renumerar todo desde el siguiente libre.** Cambia todos los números aunque no choque nada y rompe el
+parecido entre los dos tableros. **Descartado: dejar que `biso` asigne los ids.** Un lote no puede
+expresar un padre o una dependencia sobre un id que todavía no existe.
+
+## Las fechas se leen como UTC
+
+**La decisión.** Backlog.md 1.52.0 guarda las fechas como `YYYY-MM-DD HH:mm` en UTC, y `biso` usa
+instantes UTC con precisión de segundo. La conversión añade `:00` y la `Z`. Se comprobó contra un
+reloj independiente: el commit automático que hizo Backlog.md al editar una tarea lleva la hora
+`17:30:22-04:00`, y el `updated_date` de esa misma tarea dice `21:30`, es decir, UTC y no la hora local
+de esa máquina. Sin `updated_date`, `updatedAt` toma la
+`createdAt`, porque `biso` pondría de otro modo el instante de la importación y la tarea parecería
+recién modificada.
+
+**Descartado: un flag de zona horaria.** Hasta que aparezca una versión de Backlog.md que no guarde en
+UTC, sería configuración para un caso que no existe.
+
+## Estados, tipos y prioridades son los del destino
+
+**La decisión.** La utilidad no impone ningún vocabulario. El destino se crea antes con el suyo, y el
+convertidor casa cada valor de origen con uno de los declarados, con la misma regla de coincidencia que
+usa `biso` (plegar mayúsculas, quitar diacríticos, espacios, guiones y guiones bajos). Lo que no case se
+omite de la línea y se informa, en lugar de corregirlo por su cuenta.
+
+**Descartado: declarar en el destino los cinco estados de Backlog.md por defecto.** Sirve para el
+tablero de este proyecto, pero una utilidad general no puede suponer los estados de un tablero ajeno.
+
+## `documentation` y `references` van tal cual
+
+**La decisión.** En `biso` los campos `documentation` y `references` son texto libre, sin restricción de
+caracteres, así que las listas de Backlog.md pasan sin comprobación ni cambio. El alfabeto cerrado de
+`biso` (letras, dígitos y `- _ . : @`) rige solo para `labels`, `assignees` y las claves de `ext`, y
+solo esos campos se validan. Un valor inválido se quita de la lista y se informa, para que un lote no
+falle entero por una etiqueta.
+
+## La definición de hecho se marca con el sufijo `#dod`
+
+**La decisión.** `biso` no tiene definición de hecho: al importar, la convierte en criterios de
+aceptación y ya no se distinguen. Para que `export` pueda devolverlos a su sección, el convertidor los
+añade como criterios con el texto seguido de un espacio y `#dod`. En la exportación, un criterio cuyo
+texto acaba en ` #dod` va a la definición de hecho, sin el sufijo, y uno que no lo lleva se queda como
+criterio de aceptación. Es una convención de texto en la frontera con otra herramienta, no un campo
+nuevo, y no contradice la decisión de `biso` de tener una sola lista de comprobación.
+
+**La pega.** Un criterio que acabe por casualidad en ` #dod` se exportará como definición de hecho.
+Se acepta porque es un sufijo muy poco probable en un criterio real.
+
+**Descartado: dejar que `biso` convierta `definitionOfDone` por su cuenta.** Es lo que ya hace, pero no
+deja huella para volver, y el objetivo es que exportar e importar de nuevo conserve todo.
+**Descartado: perder la distinción.** Que los tableros con los que se midió no usen la definición de
+hecho no dice nada de otros tableros, y la utilidad es general.
+
+## Nada se pierde en silencio
+
+**La decisión.** Todo lo que el convertidor no puede mapear, cambia o quita, sale como un hallazgo por
+la salida de errores, con el fichero y el campo. Incluye una clave del frontmatter o una sección del
+cuerpo que no reconoce. El código de salida 5 avisa de que hubo hallazgos y `--strict` permite negarse
+a escribir nada si los hay. Quien ejecuta decide.
+
+**Descartado: abortar en el primer hallazgo.** Un solo estado desconocido impediría ver el resto de
+problemas del tablero de una sola vez.
+
+## La exportación: mejor esfuerzo, pero reversible
+
+**La decisión (sin implementar; su diseño y su prueba son TASK-7).** `export` escribe un directorio
+`backlog/` que Backlog.md abre. Los campos de `biso` que Backlog.md no tiene (comentarios, pregunta
+abierta, arrendamiento, `ext`, `modifiedFiles`) se escriben como una sección de Markdown delimitada y
+legible por máquina, dentro de la descripción o de las notas, y `import` la reconstruye como campos:
+exportar e importar de nuevo conserva todo. Las reglas de arriba se aplican al revés: el prefijo de
+`biso` pasa al del Backlog.md de destino con las mismas reglas de colisión, la etiqueta
+`milestone:<slug>` vuelve a ser un milestone y el exportador crea el fichero de milestone que falte,
+` #dod` vuelve a la definición de hecho y las fechas se escriben al minuto en UTC.
+
+**Riesgo abierto.** Backlog.md pierde las claves de frontmatter que no conoce cuando edita una tarea.
+Hay que medir si conserva también una sección desconocida del cuerpo.
+
+**Descartado: reutilizar el formato Markdown de Backlog.md como formato de intercambio propio de
+`biso`.** Heredaría sus bugs conocidos, no tiene sitio para lo que `biso` sí modela, y la garantía de
+simetría de `biso export` con `biso new --from` no se podría cumplir. Un Markdown propio de `biso` sería
+una función nueva de `biso`, no de esta utilidad.
