@@ -80,6 +80,28 @@ vocabulario distinto. Comparar esto con la vía manual de [`biso new --from`](ne
 existiendo para importar un NDJSON suelto en un tablero cuyo vocabulario ya se ha declarado por
 separado, pero ya no es la única manera de reconstruir un tablero entero.
 
+## El rechazo de `--json`
+
+`--json` es aquí la parte inválida de la llamada, así que el rechazo es texto plano por stderr y no
+el sobre de error, como en cualquier otro comando que no acepta el flag en absoluto
+(["Los errores en JSON"](../contrato-json.md#los-errores-en-json)):
+
+```
+error: --json does not apply to export, whose output is already NDJSON
+```
+
+## El contador de claves no es una clave del formato
+
+`export` no escribe los dos contadores de una tarea, los de las claves de sus criterios y de sus
+comentarios, porque no son campos del modelo que nadie pueda escribir: se deducen al importar, por
+encima de la clave mayor que traiga la línea (["`biso new`"](new.md#el-modo-lote)). En la práctica
+eso los reproduce, porque un contador vale siempre uno más que la clave mayor que exista. **La
+excepción es una tarea a la que se le han quitado todos los criterios**, o todos los comentarios:
+ahí la lista queda vacía, el contador se queda donde estaba y la importación lo devuelve a 1, así que
+el siguiente criterio de esa tarea recibe una clave que ya se había usado antes. Es el único dato
+del tablero que la ida y vuelta no conserva, y se deja así a propósito: guardarlo obligaría a añadir
+al formato dos claves que ningún comando escribe y que solo servirían para ese caso.
+
 ## Códigos de salida
 
 | Desenlace | Código |

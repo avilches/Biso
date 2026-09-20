@@ -34,7 +34,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 5 | [`new`](cmd/new.md), [`ls`](cmd/ls.md), [`get`](cmd/get.md), [`set`](cmd/set.md) | hecho con matices | TASK-13 |
 | 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | pendiente | TASK-14 |
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | pendiente | TASK-15 |
-| 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | pendiente | TASK-16 |
+| 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | en curso | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`board`](cmd/board.md), [`help`](cmd/help.md) | pendiente | TASK-17 |
 
 ## Los documentos transversales
@@ -127,13 +127,12 @@ y capa de salida, `internal/ops` con la lógica de cada comando, y el tipo `Boar
 con la resolución entera de ["Cómo se elige el tablero"](resolucion-del-tablero.md), que queda hecha
 al cerrarse esta tarea porque ningún otro paso la ejerce.
 
-De ["`biso init`"](cmd/init.md) queda **una sola cosa fuera: `--from` no está implementado**, y no es
-un descuido sino alcance declarado del paso 8 (TASK-16), porque restaurar una instantánea necesita el
-formato de intercambio que trae ese paso. El flag se analiza y sus incompatibilidades se comprueban,
-pero la llamada termina con **código 1** y la clave `internal`, diciendo que todavía no existe: es la
-única invocación de todo `biso` que hoy contesta ese código, y es un código que su propia página no
-lista, así que quien la lea encontrará una diferencia mientras TASK-16 no cierre. Es también el motivo
-de que la fila del paso 4 diga "hecho con matices" y no "hecho". Todo lo demás de esa página está: las
+De ["`biso init`"](cmd/init.md) quedó fuera **`--from`**, y no fue un descuido sino alcance declarado
+del paso 8 (TASK-16), porque restaurar una instantánea necesita el formato de intercambio que trae ese
+paso. Mientras tanto el flag se analizaba y sus incompatibilidades se comprobaban, pero la llamada
+terminaba con código 1, que es el motivo de que la fila del paso 4 diga "hecho con matices" y no
+"hecho"; **desde el paso 8 ese hueco ya no existe**. Todo lo demás de esa página estaba desde el
+principio: las
 dos adopciones de identidad, `--overwrite-config` con sus errores de código 6, `--dry-run` con sus dos
 notas, las dos notas de `--at`, el fichero de exclusión y el marcador.
 
@@ -176,9 +175,9 @@ escribirlos y que los demás comandos reusarán tal cual:
 
 De estos comandos falta lo siguiente, y nada de ello es un descuido:
 
-- **El lote de `biso new --from`** es alcance declarado del paso 8 (TASK-16), porque necesita el
-  formato de intercambio que trae ese paso. El flag **no se analiza todavía**, así que escribirlo hoy
-  responde `unknown flag: --from`.
+- **El lote de `biso new --from`** era alcance declarado del paso 8 (TASK-16), porque necesita el
+  formato de intercambio que trae ese paso, y hasta entonces el flag ni siquiera se analizaba. Desde
+  ese paso está implementado.
 
 Al implementarlos se cerraron varias lagunas de la especificación, todas escritas en su página antes
 de escribir el código: el desenlace de `--dry-run` sobre una sola tarea y por qué ahí nunca sale el
@@ -226,12 +225,12 @@ código 2, que es la que dicen esas páginas y la que corresponde a un dominio c
 ### Qué le falta al paso 5, y qué corrigió su revisión
 
 **La fila del paso 5 dice "hecho con matices" y no "hecho" por una sola cosa: el lote de
-`biso new --from` no existe.** Es alcance declarado del paso 8 (TASK-16), porque necesita el formato
-de intercambio que trae ese paso, y hasta entonces el flag **ni siquiera se analiza**: escribirlo hoy
-responde `unknown flag: --from` con código 2, que es la respuesta de un flag que el programa no
-conoce y no la de un flag documentado que todavía no hace nada. Quien lea ["`biso new`"](cmd/new.md#el-modo-lote), que sí lo
-documenta entero, encontrará esa diferencia mientras TASK-16 no cierre. Todo lo demás de las cuatro
-páginas está implementado y probado.
+`biso new --from` no formaba parte de ese paso.** Es alcance declarado del paso 8 (TASK-16), porque
+necesita el formato de intercambio que trae ese paso, y hasta entonces el flag ni siquiera se
+analizaba: escribirlo respondía `unknown flag: --from` con código 2, que es la respuesta de un flag
+que el programa no conoce y no la de un flag documentado que todavía no hace nada. **Desde el paso 8
+existe**, con todas las reglas que documenta ["`biso new`"](cmd/new.md#el-modo-lote). Todo lo demás
+de las cuatro páginas está implementado y probado.
 
 La revisión adversarial del paso corrigió seis cosas, y conviene saber en qué quedaron porque cuatro
 de ellas cambiaron la especificación:
@@ -254,6 +253,40 @@ de ellas cambiaron la especificación:
 - Las otras dos eran huecos de prueba y no de comportamiento: el paso 2 del orden de aplicación (los
   `--replace-*`) no lo cubría ninguna prueba, y una frase de ["`biso new`"](cmd/new.md#salida) seguía diciendo que la
   ficha de `--print` venía debajo de la línea del identificador en vez de sustituirla.
+
+### Qué dejó hecho el paso 8
+
+El paso 8 es el lote de comandos que mueve un tablero entero de un sitio a otro, y van juntos
+porque la garantía de simetría los necesita a la vez: [`export`](cmd/export.md), el modo lote de
+[`biso new --from`](cmd/new.md#el-modo-lote), [`snapshot`](cmd/snapshot.md) e
+[`init --from`](cmd/init.md).
+
+**El formato de intercambio está definido una sola vez**, en `internal/ops/interchange.go`: una
+estructura con sus etiquetas de serialización, una función que la escribe y otra que la lee, y la
+lista de claves admitidas deducida de esas mismas etiquetas en vez de repetida a mano. `board.json`
+tiene su propia mitad, con la misma regla, en `internal/ops/boardfile.go`. Es lo que hace que la
+prueba de simetría signifique algo: no hay una segunda implementación del formato que pueda
+desincronizarse de la primera.
+
+**La prueba de simetría son dos, porque las dos vías ejercitan código distinto.** La de
+`export` con `new --from` importa el volcado en un tablero que declara el mismo vocabulario a mano,
+y la de `snapshot` con `init --from` restaura un tablero entero sin declarar nada. Las dos comparan
+los volcados de los dos tableros byte a byte, que es la comparación más fuerte que se puede hacer
+desde fuera del programa: todos los campos no derivados de todas las tareas están ahí dentro, con sus
+identificadores, sus fechas y las claves de sus criterios y de sus comentarios.
+
+Lagunas que se cerraron en la especificación al implementarlos, todas escritas en su página antes de
+escribir el código: el texto literal con el que `export` rechaza `--json`
+(["`biso export`"](cmd/export.md#el-rechazo-de---json)); que los dos contadores de claves se deducen
+y qué caso no reproducen (["`biso export`"](cmd/export.md#el-contador-de-claves-no-es-una-clave-del-formato));
+que el autor de una tarea importada nunca es quien importa, que `parent` y `dependencies` son
+identificadores comprobados contra el tablero y contra el propio fichero, y que cada línea aporta un
+solo fallo al informe (["`biso new`"](cmd/new.md#el-modo-lote)); la tercera línea de la salida de
+`--vcs push` y la abreviatura del identificador de la revisión
+(["`biso snapshot`"](cmd/snapshot.md#salida)); de qué marcador sale la identidad de un tablero
+restaurado (["`biso init`"](cmd/init.md)); y los cinco `code` que faltaban en
+["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), `invalid_snapshot_id`
+incluido, que `init` ya nombraba y esa lista no llevaba.
 
 ## Antes de empezar un paso
 

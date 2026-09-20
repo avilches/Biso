@@ -222,6 +222,23 @@ Las reglas del lote, todas obligatorias:
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de
   la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables).
 - Un lote no admite `--start` ni ningún flag de campo: todo va en el fichero.
+- **El autor de una tarea importada es el que traiga la línea, y nunca la identidad de quien
+  importa.** Una línea sin `author` deja la tarea sin autor, a diferencia de `biso new "X"`, que
+  pone el de quien llama (["El autor"](../modelo-de-datos/autor.md)): el lote describe tareas que ya
+  existían en otra parte, así que firmarlas con quien las trae sería inventarse un dato. Lo mismo
+  vale para el autor de un comentario y para el de la pregunta abierta.
+- **`parent` y `dependencies` son identificadores y nunca un texto que buscar.** La gramática de
+  ["Cómo se resuelve una referencia a una tarea"](../referencias.md) no se aplica aquí: un fichero lo
+  escribe un programa y no una persona, y resolver texto haría que la misma línea significara tareas
+  distintas según lo que el tablero tuviera ese día. Cada uno se comprueba contra las tareas del
+  tablero **y contra las del propio fichero**, así que una línea puede depender de otra que una línea
+  posterior crea; un identificador que no está en ninguno de los dos sitios es un fallo de validación
+  con el código 4, el mismo que `--add-deps` a una tarea que no existe. Los ciclos, de dependencia y
+  de padres, se comprueban también sobre el resultado.
+- **Una línea aporta un solo fallo al informe**, el primero que se encuentra al leerla en el orden de
+  esta lista. Si además tiene claves desconocidas, se nombra la primera en orden alfabético y no la
+  primera escrita, para que el mismo fichero dé siempre el mismo mensaje. Lo que el informe no hace
+  nunca es pararse: las demás líneas se siguen leyendo, y el código 7 llega con todas.
 
 Salida del lote, una línea por tarea, en el orden del fichero:
 

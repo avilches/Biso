@@ -147,7 +147,8 @@ garantiza que `git commit` no lo toca, y `snapshot` además lo dice: `note: 2 st
 board were left untouched`, por stderr y en `data.stagedOutsideBoard` del JSON.
 
 El identificador que la salida devuelve es el del commit que resulta, completo en el JSON y abreviado en
-el texto. `git commit` no escribe el identificador entero, así que se pregunta después con
+el texto, donde son sus siete primeros caracteres. Con `custom`, que no devuelve ninguno, la línea se
+queda sin él y dice `Committed to ...` sin más. `git commit` no escribe el identificador entero, así que se pregunta después con
 `git rev-parse HEAD`, que es la quinta pregunta de la receta.
 
 **Preguntar por la exclusión es lo que separa los dos casos de un tablero que vive dentro del
@@ -278,8 +279,13 @@ Snapshot written: snapshot.ndjson, board.json (248 tasks)
 Committed a1b2c3d to /Users/avilches/Hub/Projects/My project, the repository this board lives in
 ```
 
-Con `--vcs push`, una tercera línea dice que se ha publicado. Sin nada que guardar, la primera línea por
-stdout y la nota por stderr:
+Con `--vcs push`, una tercera línea dice que se ha publicado, y es esta:
+
+```
+Pushed that branch to its remote
+```
+
+Sin nada que guardar, la primera línea por stdout y la nota por stderr:
 
 ```
 Snapshot written: snapshot.ndjson, board.json (248 tasks)

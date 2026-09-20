@@ -227,6 +227,12 @@ permitido, y lo hace `biso new --from`; lo que no existe es la copia paralela. S
 el mismo Error 2 de "ya hay uno accesible desde aquí", y no hace falta `--overwrite-config` para
 distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno existente.
 
+**La identidad que `--from` adopta es la del marcador de la instantánea, salvo que el destino ya
+tenga uno propio, y entonces manda el del destino.** Los dos casos no compiten en la práctica, porque
+el único destino que trae marcador es el tablero que se está reconstruyendo en su sitio, y ahí los
+dos marcadores llevan el mismo `id`; la regla se escribe de todas formas para que la reconstrucción
+en el sitio no dependa de que la instantánea que se le pase sea la suya.
+
 **El error de que ya hay un tablero es el más probable de este comando, y este es su mensaje**, con
 código 2 y la clave `code` `board_exists`. Nombra el tablero y su ruta, porque lo que quien llama
 necesita saber es cuál se ha encontrado, y remite a los dos caminos que hay desde ahí:
