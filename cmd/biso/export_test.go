@@ -213,3 +213,48 @@ func TestExportWritesEveryFieldOfTheFormat(t *testing.T) {
 	assertEqual(t, got.stdout, fixture(t, "export-line.txt"),
 		"the exported line of a task with every field of the format")
 }
+
+// TestExportLosesTheCounterOnlyWhenTheHighestKeyIsGone is the exception of
+// docs/spec/cmd/export.md#el-contador-de-claves-no-es-una-clave-del-formato,
+// pinned in its two halves: the round trip keeps the counter of a task that
+// still holds its highest key, and loses it as soon as that one is removed.
+//
+// Removing every criterion is only the extreme of the same thing, so the
+// test takes the smaller case, which is the one the sentence used to miss.
+func TestExportLosesTheCounterOnlyWhenTheHighestKeyIsGone(t *testing.T) {
+	m := newMachine(t)
+	m.env["BISO_ME"] = "@claude"
+	m.run(t, "init", "My project", "--prefix", "MYP").assertCode(t, 0)
+	// Two tasks with three criteria each, so that both can be asked the
+	// same question after the same round trip.
+	for _, title := range []string{"Keeps its highest", "Loses its highest"} {
+		m.run(t, "new", title, "--add-ac", "one", "--add-ac", "two", "--add-ac", "three").
+			assertCode(t, 0)
+	}
+	m.run(t, "set", "MYP-1", "--rm-ac", "2").assertCode(t, 0)
+	m.run(t, "set", "MYP-2", "--rm-ac", "3").assertCode(t, 0)
+
+	dump := m.run(t, "export").assertCode(t, 0).stdout
+	other := newMachine(t)
+	other.env["BISO_ME"] = "@claude"
+	other.run(t, "init", "Another project", "--prefix", "MYP").assertCode(t, 0)
+	path := filepath.Join(other.dir, "dump.ndjson")
+	other.write(t, path, dump)
+	other.run(t, "new", "--from", path).assertCode(t, 0)
+
+	// The next criterion of each task, on each board. MYP-1 still holds #3,
+	// so its counter comes back where it was; MYP-2 lost it, so the import
+	// hands out #3 again, a key that board had already used.
+	for _, c := range []struct {
+		id   string
+		same bool
+	}{{"MYP-1", true}, {"MYP-2", false}} {
+		m.run(t, "set", c.id, "--add-ac", "one more").assertCode(t, 0)
+		other.run(t, "set", c.id, "--add-ac", "one more").assertCode(t, 0)
+		here := m.run(t, "get", c.id, "--section", "ac").assertCode(t, 0).stdout
+		there := other.run(t, "get", c.id, "--section", "ac").assertCode(t, 0).stdout
+		if (here == there) != c.same {
+			t.Errorf("%s: the criteria of the two boards are %q and %q", c.id, here, there)
+		}
+	}
+}
