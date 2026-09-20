@@ -327,13 +327,19 @@ func (r *reader) matchAll(field match.Field, values, configured []string) ([]str
 // does not have is exit code 3 with up to five of the closest ones, which
 // --unchecked is the one thing that turns off
 // (docs/spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué).
+//
+// The comparison folds the case, because this is a reading filter and
+// docs/spec/familias-de-flags.md#campos-de-lista-que-admiten-coma says a
+// reading filter does not distinguish it. A board whose only label is
+// "Parser" knows the label "parser", and --label parser is a listing and not
+// an unknown value.
 func (r *reader) checkKnown(field string, values, known []string) *model.Error {
 	noun := "label"
 	if field == "assignee" {
 		noun = "assignee"
 	}
 	for _, v := range values {
-		if containsString(known, v) {
+		if containsFold(known, v) {
 			continue
 		}
 		e := &model.Error{
@@ -407,15 +413,19 @@ func (r *reader) matches(t *model.Task, f Filters) bool {
 	if len(f.Priority) > 0 && !containsString(f.Priority, t.Priority) {
 		return false
 	}
+	// The three filters over a label or a person fold the case, the same
+	// way checkKnown does, and for the same reason: a label is stored
+	// letter for letter and read without distinguishing
+	// (docs/spec/familias-de-flags.md#campos-de-lista-que-admiten-coma).
 	for _, label := range f.Label {
-		if !containsString(t.Labels, label) {
+		if !containsFold(t.Labels, label) {
 			return false
 		}
 	}
-	if len(f.LabelOr) > 0 && !anyOf(t.Labels, f.LabelOr) {
+	if len(f.LabelOr) > 0 && !anyOfFold(t.Labels, f.LabelOr) {
 		return false
 	}
-	if len(f.Assignee) > 0 && !anyOf(t.Assignees, f.Assignee) {
+	if len(f.Assignee) > 0 && !anyOfFold(t.Assignees, f.Assignee) {
 		return false
 	}
 	if f.Unassigned && len(t.Assignees) > 0 {
@@ -556,9 +566,22 @@ func containsString(values []string, v string) bool {
 	return false
 }
 
-func anyOf(values, wanted []string) bool {
+// containsFold and anyOfFold are the membership tests of a reading filter
+// over a label or a person: the same comparison as containsString with the
+// case folded on both sides.
+func containsFold(values []string, v string) bool {
+	folded := match.FoldCase(v)
+	for _, x := range values {
+		if match.FoldCase(x) == folded {
+			return true
+		}
+	}
+	return false
+}
+
+func anyOfFold(values, wanted []string) bool {
 	for _, w := range wanted {
-		if containsString(values, w) {
+		if containsFold(values, w) {
 			return true
 		}
 	}

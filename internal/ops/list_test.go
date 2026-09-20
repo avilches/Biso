@@ -321,3 +321,55 @@ func TestAnUnreadableTaskIsSkippedAndNamed(t *testing.T) {
 
 func pointer(s string) *string { return &s }
 func boolPointer(b bool) *bool { return &b }
+
+// TestALabelOrAssigneeFilterDoesNotDistinguishCase is the second half of the
+// rule of docs/spec/familias-de-flags.md#campos-de-lista-que-admiten-coma: a
+// label and a person are stored letter for letter, so "Parser" and "parser"
+// are two labels, and a reading filter folds the case, so either spelling
+// finds both. The board here has one label and one assignee, each written
+// with a capital, and every filter is typed in lowercase.
+func TestALabelOrAssigneeFilterDoesNotDistinguishCase(t *testing.T) {
+	h := newHarness(t)
+	h.create("A task",
+		add("add-labels", "Parser"),
+		add("add-assignees", "@Sara"))
+
+	cases := []struct {
+		name string
+		p    ListParams
+	}{
+		{"--label", ListParams{Filters: Filters{Label: []string{"parser"}}}},
+		{"--label in another case", ListParams{Filters: Filters{Label: []string{"PARSER"}}}},
+		{"--label-or", ListParams{Filters: Filters{LabelOr: []string{"parser"}}}},
+		{"--assignee", ListParams{Filters: Filters{Assignee: []string{"@sara"}}}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r, err := ListOn(h.b, h.env, c.p)
+			if err != nil {
+				t.Fatalf("biso ls: %v", err)
+			}
+			if got := ids(r); !reflect.DeepEqual(got, []string{"MYP-1"}) {
+				t.Errorf("the listing is %v and the filter should have found MYP-1", got)
+			}
+		})
+	}
+}
+
+// TestAFilterThatFoldsTheCaseStillRefusesAValueTheBoardDoesNotHave is the
+// other side of that rule: folding the case is not accepting anything, and a
+// label nobody wrote is still the exit code 3 of
+// docs/spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué. It also
+// fixes that folding is not dropping the accents, which that same rule
+// reserves for the text selectors and denies to a label.
+func TestAFilterThatFoldsTheCaseStillRefusesAValueTheBoardDoesNotHave(t *testing.T) {
+	h := newHarness(t)
+	h.create("A task", add("add-labels", "Parsé"))
+
+	for _, value := range []string{"parsers", "parse"} {
+		_, err := ListOn(h.b, h.env, ListParams{
+			Filters: Filters{Label: []string{value}},
+		})
+		assertSpec(t, err, 3, "unknown_label")
+	}
+}
