@@ -81,3 +81,25 @@ func TestFolderName(t *testing.T) {
 		t.Errorf("FolderName = %q", got)
 	}
 }
+
+func TestRandomIDIsEightLowercaseHexadecimalCharacters(t *testing.T) {
+	seen := map[string]bool{}
+	for i := 0; i < 50; i++ {
+		id, err := RandomID()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(id) != 8 {
+			t.Fatalf("RandomID() = %q, want eight characters", id)
+		}
+		for _, r := range id {
+			if !(r >= '0' && r <= '9') && !(r >= 'a' && r <= 'f') {
+				t.Fatalf("RandomID() = %q, want lowercase hexadecimal", id)
+			}
+		}
+		seen[id] = true
+	}
+	if len(seen) < 40 {
+		t.Errorf("fifty identifiers gave only %d different ones", len(seen))
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"biso/internal/model"
 	"biso/internal/store"
 )
 
@@ -66,8 +67,19 @@ func Create(dir, id string, cfg Config, m Machine) (*Board, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, cannotWrite(dir, err)
 	}
+	// A database that was not there and does not open is the directory
+	// refusing to be written to, not a damaged board: the file the store
+	// would be complaining about did not exist a moment ago. So this one
+	// path answers exit code 8 and not the 21 of
+	// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar,
+	// which is what the case table of docs/spec/cmd/init.md promises for an
+	// --at that cannot be written.
+	fresh := !HasDatabase(dir)
 	s, err := store.Open(id, filepath.Join(dir, DatabaseFile))
 	if err != nil {
+		if e, ok := err.(*model.Error); ok && fresh && e.ExitCode == 21 {
+			return nil, cannotWrite(filepath.Join(dir, DatabaseFile), errors.New("it could not be created"))
+		}
 		return nil, err
 	}
 	if err := s.WithTx(func(tx *sql.Tx) error {

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -296,4 +297,40 @@ func assertErrorCode(t *testing.T, stderr, want string) {
 	if envelope.Error.Code != want {
 		t.Errorf("error code = %q, want %q\n%s", envelope.Error.Code, want, stderr)
 	}
+}
+
+func TestAnAtWhereNothingCanBeWrittenIsTheEnvironmentFailing(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("a directory's permissions do not stop the superuser")
+	}
+	m := newMachine(t).withIDs("3f9a2b1c")
+	locked := filepath.Join(m.home, "locked")
+	if err := os.MkdirAll(locked, 0o555); err != nil {
+		t.Fatal(err)
+	}
+
+	got := m.run("init", "My project", "--at", filepath.Join(locked, "board"), "--json").assertCode(t, 8)
+	assertErrorCode(t, got.stderr, "io_error")
+}
+
+func TestWhereDoesNotDodgeADatabaseItCannotRead(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	m.run("init", "My project").assertCode(t, 0)
+
+	// Saying which board is in use means opening it, so a file that is not a
+	// database at all is exit code 21 here like anywhere else
+	// (docs/spec/cmd/where.md and
+	// docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar).
+	board := filepath.Join(m.boardsRoot(), "my-project-3f9a2b1c")
+	m.writeFile(filepath.Join(board, "board.db"), "this is not a database")
+	for _, name := range []string{"board.db-wal", "board.db-shm"} {
+		os.Remove(filepath.Join(board, name))
+	}
+
+	got := m.run("where").assertCode(t, 21)
+	assertEqual(t, got.stderr,
+		"error: board 3f9a2b1c's database could not be read\n"+
+			"hint: it did not open, or it failed its integrity check, and there is no automatic repair\n"+
+			"hint: rebuild it in place with `biso init --from <snapshot dir>`, which keeps its id\n",
+		"the message of a database that cannot be read")
 }

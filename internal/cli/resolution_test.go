@@ -365,3 +365,21 @@ func TestMovingABoardByHandIsFixedByInitAtItsNewPath(t *testing.T) {
 	assertContains(t, got.stdout, "Adopted board \"My project\"")
 	assertContains(t, m.run("where").assertCode(t, 0).stdout, "path     "+moved)
 }
+
+func TestABoardWithNoMarkerStillOpensAndSaysItsId(t *testing.T) {
+	m := newMachine(t).withIDs("3f9a2b1c")
+	m.run("init", "My project").assertCode(t, 0)
+	dir := filepath.Join(m.boardsRoot(), "my-project-3f9a2b1c")
+
+	// The first way of choosing a board settles for the database and does
+	// not ask for the marker, precisely so that a board missing one can be
+	// opened and repaired. The id then comes from inside the database,
+	// where it is kept as well.
+	if err := os.Remove(filepath.Join(dir, "3f9a2b1c.id")); err != nil {
+		t.Fatal(err)
+	}
+
+	got := m.at(dir).run("where").assertCode(t, 0)
+	assertContains(t, got.stdout, "id       3f9a2b1c")
+	assertContains(t, got.stdout, "source   the working directory is this board")
+}
