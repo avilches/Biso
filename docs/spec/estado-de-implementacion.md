@@ -51,10 +51,10 @@ cerradas.
 | [Códigos de salida](codigos-de-salida.md) | todos los que devuelven un código de error | en curso |
 | [Flags globales](cmd/flags-globales.md) | pasos 4 a 9 | en curso |
 | [Entorno y configuración de máquina](invocacion.md) | pasos 4 a 9 | en curso |
-| [Cómo se elige el tablero](resolucion-del-tablero.md) | paso 4 | hecho |
+| [Cómo se elige el tablero](resolucion-del-tablero.md) | pasos 4 y 9 | hecho |
 | [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 4, 5 y 7 | en curso |
 | [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
-| [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5 y 8 | en curso |
+| [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5, 8 y 9 | en curso |
 | [El arrendamiento de una tarea](lease.md) | pasos 2, 5 y 6 | hecho |
 | [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | hecho |
 | [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | en curso |
@@ -459,6 +459,58 @@ Y dos arreglos de código que la revisión del paso no habría visto desde fuera
   vacía directamente en la tabla de configuración, porque `biso config set types ""` no existía. Ya
   existe, y ahora la prueba pasa por ahí, que era la única puerta a ese estado. Lo mismo con el
   ayudante que archivaba una tarea a golpe de `UPDATE` en las pruebas de los verbos del ciclo.
+
+### Qué cerró la revisión del paso 9
+
+La revisión del paso encontró dos fallos que no eran de los comandos de ese paso sino de capas de abajo, y
+que se habían escapado precisamente porque eran de todos y de ninguno. Los dos están arreglados en la
+capa donde viven, `internal/store`, y probados desde varios comandos a la vez:
+
+- **Un fallo de escritura por permisos salía con código 1 y el mensaje crudo del controlador.** El
+  almacén solo clasificaba el tablero ocupado, la base de datos corrupta y el fichero que no es una
+  base de datos; el fichero de solo lectura, el disco lleno y el fallo de entrada/salida caían al error
+  genérico. Ahora son el código 8 con la clave `io_error`, que es lo que
+  ["Códigos de salida"](codigos-de-salida.md) promete para un entorno que falla, y la
+  especificación estrena la sección que fija su mensaje
+  (["Qué pasa cuando el almacén no se puede escribir"](garantias.md#qué-pasa-cuando-el-almacén-no-se-puede-escribir)).
+  La otra mitad del mismo camino, un directorio de tablero sin permiso de escritura, salía con 21 y un
+  hueco donde iría el `id`, porque el modo WAL necesita escribir para abrirse y ahí todavía no hay `id`
+  que leer: sale también con 8, y el mensaje nombra el fichero, que siempre se conoce.
+- **Un daño que solo se ve al leer una página salía con código 1.** Un fichero que no es una base de
+  datos falla al abrirse y siempre dio 21, pero uno cuya cabecera está intacta y cuyas páginas no
+  falla a mitad de una consulta, y ese error subía sin clasificar. La garantía de
+  ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)
+  es de todos los comandos, así que la clasificación está ahora en el almacén y alcanza también a lo
+  que falla recorriendo filas ya obtenidas.
+
+De `biso doctor` cerró lo que le faltaba de red y de texto:
+
+- **Las comprobaciones que `--fix` repara tienen sus dos formas escritas**, la de encontrado y la de
+  reparado, en la tabla normativa y con prueba de fichero dorado cada una
+  (["Las dos formas de un mensaje reparable"](cmd/doctor.md#las-dos-formas-de-un-mensaje-reparable)). Dos de las tres decían
+  algo que la especificación no recogía.
+- **Dos casos de borde que la especificación no cubría**: un contador a cero no es el identificador
+  `MYP-0` y el mensaje ya no se lo inventa, y una lista de vocabulario vacía ya no se cita con unas
+  comillas sin nada dentro.
+- **El informe sale en el orden de la tabla de comprobaciones**, que es lo que su comentario ya
+  prometía y lo que ahora fija la especificación
+  (["El orden en que sale el informe"](cmd/doctor.md#el-orden-en-que-sale-el-informe)). Las comprobaciones no corren en ese orden,
+  porque las que miran una tarea se hacen en una sola pasada.
+- **Las comprobaciones que no tenían ninguna prueba ya la tienen**: la clave de extensión no
+  declarada, los dos papeles de estado, el ciclo de dependencias, el de tarea padre y el aviso del
+  sistema de ficheros inseguro, que era el único que nadie había visto dispararse nunca. Y la sección
+  de atomicidad de una reparación con varios arreglos, la única que existe solo por este comando,
+  tiene ahora una prueba que la ejerce entera: la transacción de datos queda aplicada, la escritura
+  del marcador falla, el comando sale con 8 y el marcador vuelve a aparecer como error.
+
+Las que siguen sin prueba son las que el esquema de hoy contesta por construcción,
+los identificadores duplicados y las claves de criterio repetidas, y el código lo dice donde están.
+
+Y **["Cómo se elige el tablero"](resolucion-del-tablero.md) acota a qué vía se refiere** cuando dice
+que un tablero sin marcador tiene que poder abrirse para que `biso doctor --fix` se lo devuelva: habla
+de la primera vía, la del directorio de trabajo, y no de las dos. El puntero sigue exigiendo el
+marcador aunque su `path` resuelva, porque ahí manda el `id`, y esa única puerta basta para que el
+arreglo tenga algo que arreglar.
 
 ## Antes de empezar un paso
 
