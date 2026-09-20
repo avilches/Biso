@@ -60,7 +60,7 @@ cerradas.
 | [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | en curso |
 | [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | hecho |
 | [El contrato JSON](contrato-json.md) | pasos 4 a 9 | en curso |
-| [El contrato de estabilidad](estabilidad.md) | pasos 7 y 8 | en curso |
+| [El contrato de estabilidad](estabilidad.md) | pasos 7 y 8 | hecho |
 | [Lo que se deja fuera a propósito](fuera-de-alcance.md) | ninguno | fuera de alcance |
 
 ### Qué queda probado ya de los transversales que empezaron los pasos 1 y 2
@@ -372,11 +372,14 @@ de escribir el código:
   que ["`biso config`"](cmd/config.md#comportamiento-caso-a-caso) recoge ahora explícitamente, y la
   prueba lo construye escribiendo la configuración porque ese comando es del paso 9.
 
-**Por qué [el contrato de estabilidad](estabilidad.md) queda "en curso" y no "hecho".** El paso 7
-cierra lo único suyo que nombra un número, el tope de tamaño del mensaje de `biso prime`, pero ese
-documento congela además la simetría entre `biso export` y `biso new --from` y la de `biso snapshot`
-con `biso init --from`, que son del paso 8 y todavía no existen. La fila decía "paso 7, hecho" y
-afirmaba de más.
+**Por qué [el contrato de estabilidad](estabilidad.md) queda "hecho".** Ese documento congela
+ocho cosas, y las ocho existen hoy en código y tienen prueba: los códigos de salida y los
+identificadores `code`, el nombre y el significado de cada comando y de cada flag, las claves de
+`data` en cada `kind` de JSON, el algoritmo de coincidencia idéntico al leer y al escribir, la
+estabilidad de las claves de los criterios, el tope de tamaño del mensaje de `biso prime`, y las
+dos simetrías, la de `biso export` con `biso new --from` y la de `biso snapshot` con
+`biso init --from`. Las dos últimas las cierra el paso 8, y su prueba compara un volcado de las
+dos bases de datos, no dos salidas del mismo codificador, que es lo que hace que pueda fallar.
 
 ### Qué dejó hecho el paso 8
 
