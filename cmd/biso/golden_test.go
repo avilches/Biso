@@ -145,6 +145,8 @@ func TestHelpTextsAreTheOnesOfTheSpecification(t *testing.T) {
 		{[]string{"init", "--help"}, fixture(t, "init-help.txt"), "biso init --help"},
 		{[]string{"where", "--help"}, fixture(t, "where-help.txt"), "biso where --help"},
 		{[]string{"where", "-h"}, fixture(t, "where-help.txt"), "biso where -h"},
+		{[]string{"new", "--help"}, fixture(t, "new-help.txt"), "biso new --help"},
+		{[]string{"set", "--help"}, fixture(t, "set-help.txt"), "biso set --help"},
 	} {
 		got := m.run(t, c.argv...).assertCode(t, 0)
 		assertEqual(t, got.stdout, c.want, c.subject)
@@ -184,6 +186,12 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"where-no-board.txt", "cmd/where.md", "Cuando hay más de un candidato", 1},
 		{"where-unresolved.txt", "cmd/where.md", "Cuando hay más de un candidato", 2},
 		{"where-json.txt", "cmd/where.md", "El esquema JSON", 0},
+		{"new-help.txt", "cmd/new.md", "`biso new --help`", 0},
+		{"set-help.txt", "cmd/set.md", "`biso set --help`", 0},
+		{"set-status-line.txt", "cmd/set.md", "Salida", 0},
+		{"set-added-ac.txt", "cmd/set.md", "Salida", 1},
+		{"set-dry-run.txt", "cmd/set.md", "Salida", 2},
+		{"set-overwrite.txt", "cmd/set.md", "Salida", 3},
 	} {
 		block := specBlock(t, c.page, c.heading, c.index)
 		assertEqual(t, fixture(t, c.fixture), block,
@@ -212,12 +220,16 @@ func specBlock(t *testing.T, page, heading string, index int) string {
 			blocks = nil
 			continue
 		}
-		if !strings.HasPrefix(line, "```") {
+		if !strings.HasPrefix(strings.TrimLeft(line, " "), "```") {
 			continue
 		}
+		// A fence inside a numbered list is indented, and so is its
+		// content: the block is what the page shows, without the
+		// indentation the list put in front of it.
+		indent := line[:len(line)-len(strings.TrimLeft(line, " "))]
 		var body []string
-		for i++; i < len(lines) && !strings.HasPrefix(lines[i], "```"); i++ {
-			body = append(body, lines[i])
+		for i++; i < len(lines) && !strings.HasPrefix(strings.TrimLeft(lines[i], " "), "```"); i++ {
+			body = append(body, strings.TrimPrefix(lines[i], indent))
 		}
 		blocks = append(blocks, strings.Join(body, "\n")+"\n")
 	}

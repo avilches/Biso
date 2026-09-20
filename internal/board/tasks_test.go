@@ -830,3 +830,79 @@ func TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow(t *testing.T) {
 		t.Fatalf("skipped = %+v, want MYP-2", skipped)
 	}
 }
+
+// TestSaveAllIsOneTransaction is guarantee 2 of
+// docs/spec/garantias.md#concurrencia-atomicidad-y-garantías-observables
+// checked against SQLite and not against the code that calls it: a batch
+// where the last task cannot be written leaves the first ones exactly as
+// they were, and not "as they were plus the first change".
+func TestSaveAllIsOneTransaction(t *testing.T) {
+	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
+	defer done()
+
+	first := &model.Task{Title: "First", Status: "To Do"}
+	second := &model.Task{Title: "Second", Status: "To Do"}
+	for _, task := range []*model.Task{first, second} {
+		if err := tasks.Create(task); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// The third one was never allocated, so writing it fails inside the
+	// transaction, after the first two rows have already been rewritten.
+	first.Title = "First, renamed"
+	second.Title = "Second, renamed"
+	missing := &model.Task{ID: testPrefix + "-90", Title: "Never existed", Status: "To Do"}
+
+	err := tasks.SaveAll([]*model.Task{first, second, missing})
+	if err == nil {
+		t.Fatal("SaveAll succeeded over a task the board never allocated")
+	}
+	e, ok := err.(*model.Error)
+	if !ok || e.ExitCode != 4 || e.Code != "never_allocated" {
+		t.Fatalf("error = %v, want exit code 4 with never_allocated", err)
+	}
+
+	for _, c := range []struct{ id, title string }{
+		{testPrefix + "-1", "First"},
+		{testPrefix + "-2", "Second"},
+	} {
+		stored, err := tasks.Load(c.id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if stored.Title != c.title {
+			t.Errorf("%s was left titled %q, and the batch wrote nothing", c.id, stored.Title)
+		}
+	}
+}
+
+// TestSaveAllValidatesEverythingBeforeItOpensTheTransaction is the other
+// half of the same guarantee: a batch that is going to fail on its second
+// task does not write the first one and then undo it, it never starts.
+func TestSaveAllValidatesEverythingBeforeItOpensTheTransaction(t *testing.T) {
+	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
+	defer done()
+
+	first := &model.Task{Title: "First", Status: "To Do"}
+	second := &model.Task{Title: "Second", Status: "To Do"}
+	for _, task := range []*model.Task{first, second} {
+		if err := tasks.Create(task); err != nil {
+			t.Fatal(err)
+		}
+	}
+	first.Title = "First, renamed"
+	second.Title = "" // a title is required, and the model says so
+
+	if err := tasks.SaveAll([]*model.Task{first, second}); err == nil {
+		t.Fatal("SaveAll accepted a task with no title")
+	}
+
+	stored, err := tasks.Load(testPrefix + "-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Title != "First" {
+		t.Errorf("the first task was written although the batch failed: %q", stored.Title)
+	}
+}

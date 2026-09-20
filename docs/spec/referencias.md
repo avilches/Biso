@@ -46,8 +46,14 @@ Cuando se usa para resolver una referencia, y solo entonces, se aplican además 
 | Coincidencias | Qué pasa |
 |---:|---|
 | exactamente 1 | se usa esa tarea, con `note: "CRLF" matched MYP-11` por stderr |
-| 0 | error 4 |
+| 0 | error 4, con `code` igual a `not_found`: `error: no task matches "CRLF"` |
 | más de 1 | error 5, con las candidatas por stdout en el formato de `biso ls` |
+
+**Dos coincidencias en el título son la ambigüedad, y los cuerpos no la agrandan.** La regla de que
+el título gana no es solo un desempate para el caso de una: si el texto aparece en el título de dos
+tareas, las candidatas del error 5 son esas dos y ninguna más, aunque el mismo texto esté además en
+el cuerpo de otras diez. Solo cuando no aparece en ningún título se buscan las candidatas en el
+resto del ámbito.
 
 El caso de más de una coincidencia lleva, por stderr y antes de esas filas, esta línea, con `code`
 igual a `ambiguous_reference` (["El contrato JSON"](contrato-json.md#los-identificadores-de-error)):

@@ -74,6 +74,29 @@ la `#1`, el segundo la `#2`, y así en el mismo orden en que se escribieron los 
 imprimirlo sería el eco que el principio 4 prohíbe (["Los principios"](../principios.md)), y no la clase de dato que ese principio
 manda enseñar.
 
+### `--dry-run` sobre una sola tarea
+
+Con `--dry-run`, `biso new` valida exactamente lo mismo que validaría la escritura real y no escribe
+nada: ni la tarea, ni el identificador, que no llega a gastarse. Si todo está bien, no imprime ningún
+identificador, porque no hay ninguno que enseñar, y sale con código 0 y esta línea por stderr, que es
+la misma del lote en singular:
+
+```
+1 task would be created, nothing was written (--dry-run)
+```
+
+**Y si no está bien, el código nunca es el 7: es el código específico del fallo.** Una sola tarea no
+puede producir más de un fallo a la vez, y cualquiera de los que puede producir es atribuible a un
+elemento señalable, así que conserva su propio código igual que lo conservaría sin `--dry-run`: 2 para
+un título vacío o un ciclo, 3 para un valor fuera de un vocabulario, 4 para un `--parent` que no
+existe, 5 para una referencia de texto con varias coincidencias. Es la regla general de
+["El código 7 garantiza que no se ha escrito nada, y el código específico siempre gana sobre
+él"](../codigos-de-salida.md#el-código-7-garantiza-que-no-se-ha-escrito-nada-y-el-código-específico-siempre-gana-sobre-él),
+aplicada aquí: el 7 queda para los fallos que no apuntan a un elemento concreto, y el único sitio de
+`biso new` donde eso ocurre es el modo lote, donde `--from` puede traer muchas líneas malas por
+motivos distintos. La fila del 7 de la tabla de códigos de salida de más abajo es, por tanto, una
+fila del lote y solo del lote.
+
 ## El modo lote
 
 ```
@@ -217,7 +240,7 @@ error: 4 of 242 lines are invalid, nothing was written
 | Valor fuera de un vocabulario, clave de extensión no declarada, entrada no interpretable | 3 |
 | `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
 | `--add-deps` o `--parent` por texto con varias coincidencias | 5 |
-| Cualquier fallo de validación en un lote, o un `--dry-run` que no pasa | 7 |
+| Cualquier fallo de validación en el lote de `--from`, o un `--dry-run` de ese lote que no pasa. **Solo del lote**: un `--dry-run` sobre una sola tarea nunca da 7, sino el código específico de su fallo (["`--dry-run` sobre una sola tarea"](#--dry-run-sobre-una-sola-tarea)) | 7 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 8 |
 | No hay tablero | 20 |
 
