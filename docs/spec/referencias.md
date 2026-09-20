@@ -73,6 +73,17 @@ aparece en el título de una sola tarea, esa es la respuesta aunque aparezca en 
 diez, y no hay ambigüedad. La búsqueda para resolver una referencia mira solo las tareas **no
 archivadas**; el filtro `--search` mira las que digan los demás filtros.
 
+**El único filtro que se aplica al resolver una referencia es ese, el de archivada, y el estado no
+filtra nada.** Una tarea en el estado terminal se resuelve como cualquier otra y aparece entre las
+candidatas de un error 5, aunque `biso ls --search "<texto>"` no la traiga: ese listado la deja
+fuera por el valor por defecto de su `-s` (["`biso ls`"](cmd/ls.md)), que es un filtro suyo y no una regla de esta
+rutina. Resolver una referencia tiene que poder llegar a cualquier tarea del tablero, y una tarea
+terminada se lee, se comenta y se reabre igual que las demás; si las candidatas la escondieran,
+`biso get "CRLF"` diría que el texto encaja con una sola tarea mientras la lista de candidatas de un
+error 5 posterior contradiría esa cuenta. Cuando la tabla de ["`biso get`"](cmd/get.md#comportamiento-caso-a-caso) dice que las
+candidatas salen "exactamente" como las imprimiría ese listado, habla de la forma de imprimirlas, que
+son tres cosas y solo tres: el orden, el límite de treinta y el aviso de recorte.
+
 ## Los tres mensajes de "no la encuentro"
 
 **Identificador mal formado**, código 2, `code` igual a `malformed_id`:

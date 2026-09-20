@@ -123,6 +123,36 @@ func TestGetByTextWithSeveralMatchesCarriesTheCandidatesAlreadyListed(t *testing
 	}
 }
 
+// TestTheCandidatesReachATaskInTheTerminalStatus is the one place the
+// candidates of an ambiguous reference are not what `biso ls --search`
+// would answer, and docs/spec/referencias.md#la-búsqueda-por-texto says so
+// on purpose: resolving a reference searches the whole board, and the only
+// thing it leaves out is an archived task. A listing leaves out the
+// terminal status too, because that is the default value of its -s, and a
+// finished task is still a task anyone can name.
+func TestTheCandidatesReachATaskInTheTerminalStatus(t *testing.T) {
+	h := newHarness(t)
+	h.create("A task about CRLF")
+	finished := h.create("Another about CRLF")
+	h.set(finished, scalar("status", "Done"))
+
+	// The listing does not have it, because its -s defaults to every
+	// status but the terminal one.
+	if got := ids(h.list(ListParams{Search: pointer("CRLF")})); !reflect.DeepEqual(got, []string{"MYP-1"}) {
+		t.Fatalf("the listing answered %v, and a finished task is not in it by default", got)
+	}
+
+	_, err := GetOn(h.b, h.env, GetParams{Ref: "CRLF"})
+
+	var ambiguous *AmbiguousRef
+	if !errors.As(err, &ambiguous) {
+		t.Fatalf("the error is %v, and two tasks carry the text", err)
+	}
+	if got := ids(ambiguous.Listing); !reflect.DeepEqual(got, []string{"MYP-1", finished}) {
+		t.Errorf("the candidates are %v, and the finished task has to be among them", got)
+	}
+}
+
 // TestGetOfAnArchivedTaskSaysSo is the fourth row of the table.
 func TestGetOfAnArchivedTaskSaysSo(t *testing.T) {
 	h := newHarness(t)

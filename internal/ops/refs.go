@@ -154,6 +154,13 @@ func malformedIDError(ref string) *model.Error {
 // docs/spec/referencias.md#la-búsqueda-por-texto laid on top: it looks only
 // at tasks that are not archived, a hit in the title beats a hit anywhere
 // else, and the three counts end differently.
+//
+// Being archived is the one filter it applies. The status filters nothing,
+// so a task in the terminal status resolves like any other and is among the
+// candidates of an exit code 5, although `biso ls --search` leaves it out by
+// the default value of its own -s. What the candidates borrow from a listing
+// is how they are printed and not what it would have selected: the order,
+// the limit of thirty and the truncation warning.
 func searchForRef(b *board.Board, all []*model.Task, query string) (*Resolved, error) {
 	if all == nil {
 		var err error

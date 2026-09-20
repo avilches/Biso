@@ -33,7 +33,7 @@ La resolución de `<ref>` está en la sección ["Cómo se resuelve una referenci
 | Caso | Qué pasa |
 |---|---|
 | La referencia resuelve a una tarea | Se imprime, código 0 |
-| La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** exactamente como las imprimiría `biso ls --search "<texto>"` (["`biso ls`"](ls.md)): mismo orden, mismo límite de 30 y mismo aviso de recorte si hace falta |
+| La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** exactamente como las imprimiría `biso ls --search "<texto>"` (["`biso ls`"](ls.md)), y ese "exactamente" son tres cosas y solo tres: el mismo orden, el mismo límite de 30 y el mismo aviso de recorte si hace falta. **No son los filtros de ese listado**: las candidatas salen del tablero entero y una tarea en el estado terminal aparece entre ellas, aunque `biso ls` la deje fuera por el valor por defecto de su `-s` (["Cómo se resuelve una referencia a una tarea"](../referencias.md#la-búsqueda-por-texto)) |
 | La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched MYP-11` por stderr |
 | La tarea está archivada | Se imprime, con `note: MYP-11 is archived` por stderr |
 | La tarea no se puede leer | Error 3, según la regla de lectura dirigida de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
