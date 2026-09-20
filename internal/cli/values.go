@@ -58,6 +58,11 @@ func (st *parser) readValue(f *FlagSpec, raw string) (string, error) {
 // readStdin reads standard input whole, once. A second flag asking for it is a
 // usage error and not a second read: the stream is already exhausted, so it
 // would store the empty value without anyone noticing.
+//
+// The scan of refuseTwoStdin has already turned away every call that asks
+// twice, before this function ran even once, so what is left here is the
+// same rule answered where the value is resolved: it costs nothing and it
+// keeps the two messages next to the reason they exist.
 func (st *parser) readStdin(f *FlagSpec) (string, error) {
 	if st.stdinTakenBy != nil {
 		if st.stdinTakenBy == f {

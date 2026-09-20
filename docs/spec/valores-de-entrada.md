@@ -20,7 +20,12 @@ Reglas:
   ningún fichero.
 - **`-` solo puede aparecer una vez por invocación.** Dos parámetros que pidan la entrada estándar son
   un error de uso con código 2, porque el segundo leería un flujo agotado y guardaría el vacío sin
-  que se note.
+  que se note. **La cuenta se hace sobre la línea de comandos entera y antes de leer ningún valor**,
+  igual que la comprobación de codificación de ["Codificación y texto"](salida-y-terminal.md#codificación-y-texto):
+  una llamada que va a ser rechazada por esto no llega a tocar el flujo, así que no lo vacía para
+  quien la hizo y no emite ningún aviso sobre un valor que nunca se iba a guardar. Cuentan los dos
+  sitios donde un `-` significa la entrada estándar, el valor de un flag de texto largo y el
+  posicional que un verbo lee como texto, y da igual cuál de los dos vaya primero.
 - **Un guion suelto significa siempre la entrada estándar, y no hay ninguna forma de escribirlo como
   texto literal.** El escape `@@` existe solo para el `@`, y no hay ningún `--` ni ninguna otra
   sintaxis que convierta ese guion en un valor. Para guardar un texto que sea exactamente un guion,

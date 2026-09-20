@@ -123,3 +123,23 @@ func TestTheLimitOfPrimeIsItsOwn(t *testing.T) {
 		t.Errorf("prime shared its five rows differently:\n%s", got.stdout)
 	}
 }
+
+// TestATextPositionalAndAFlagCannotBothReadStdin is the rule of one
+// standard input per invocation reaching the positional argument that a
+// verb reads as long text, and reaching it before anything is read: the
+// refusal is the whole of what the call writes, with no warning in front
+// of it about a value that was never going to be stored
+// (docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
+func TestATextPositionalAndAFlagCannotBothReadStdin(t *testing.T) {
+	m := boardOfThirtyFive(t)
+
+	got := runWithStdin(t, m, "", "note", "MYP-1", "-", "--append-plan", "-")
+
+	if got.code != 2 {
+		t.Fatalf("the call answered %d and not 2:\n%s", got.code, got.stderr)
+	}
+	assertEqual(t, got.stderr,
+		"error: - can be given only once per invocation; "+
+			"text and --append-plan both read stdin\n",
+		"the refusal of two arguments reading standard input")
+}
