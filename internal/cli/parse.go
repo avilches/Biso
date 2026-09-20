@@ -356,9 +356,13 @@ func (st *parser) empty(f *FlagSpec, v string) error {
 		return nil
 	case f.ClosedVocabulary:
 		// The board's vocabulary is what judges this value, so it travels
-		// down untouched and internal/match answers with the code of an
-		// unknown value.
-		return st.repetition(f, v)
+		// down and internal/match answers with the code of an unknown
+		// value. What travels is the empty string and not the spaces that
+		// were typed: turning a value of nothing but spaces into the empty
+		// value is this layer's job, and a board that ever printed
+		// `unknown status: "   "` would be reporting a caller that skipped
+		// that conversion (docs/spec/vocabularios.md#el-algoritmo-de-coincidencia).
+		return st.repetition(f, "")
 	case f.Category == Scalar:
 		return errEmptyScalar(f)
 	}
@@ -608,6 +612,17 @@ func (p *Parsed) Values(name string) []string {
 // Emptied says a flag that replaces a whole list was given an empty value,
 // which leaves the field empty just like its --clear-* sibling.
 func (p *Parsed) Emptied(name string) bool { return p.emptied[name] }
+
+// EmptiedFlags are all of those, sorted, so that a caller that walks them
+// never depends on the order a map happens to have.
+func (p *Parsed) EmptiedFlags() []string {
+	names := make([]string, 0, len(p.emptied))
+	for name := range p.emptied {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
 
 // Changes are the values that write a field, sorted into the fixed steps of
 // docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura and, inside

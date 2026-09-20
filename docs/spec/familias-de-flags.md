@@ -115,6 +115,31 @@ tocado sí pueden, y entonces la coma se escapa con `\,`
 (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
 `--add-refs 'notes/a\,b.md'` añade una sola referencia, `notes/a,b.md`.
 
+**Las dependencias se validan al escribirlas, y solo al escribirlas.** `--add-deps` y
+`--replace-deps` resuelven cada valor con la rutina de ["Cómo se resuelve una referencia a una
+tarea"](referencias.md) y guardan el identificador al que resuelve, así que `--add-deps "CRLF"`
+deja guardado `MYP-11` y no el texto que se tecleó, y una referencia que no existe o que encaja con
+varias tareas falla con el código que le toca (4 o 5). `--rm-deps` y `--clear-deps` **no** resuelven
+nada: quitan el valor literal, porque exigir que una dependencia exista para poder quitarla haría
+imposible limpiar una que apunta a una tarea que ya no está, y porque quitar un valor que la lista no
+tiene es el aviso tolerante de más abajo y no un error.
+
+Una dependencia que fuera la propia tarea, o que cerrara un ciclo, es error 2, y el mensaje enseña el
+camino que se cerraría para que no haya que reconstruirlo a mano. Lo mismo vale para `--parent`:
+
+```
+error: MYP-11 cannot depend on itself
+error: --add-deps would close a dependency cycle: MYP-11 -> MYP-4 -> MYP-11
+error: MYP-11 cannot be its own parent
+error: --parent would close a parent cycle: MYP-11 -> MYP-4 -> MYP-11
+```
+
+Sus `code` son `self_dependency`, `dependency_cycle` y `parent_cycle`
+(["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)). En `biso new`
+ninguno de los cuatro puede llegar a darse, porque una tarea que todavía no existe no tiene
+identificador y nada puede apuntar a ella; las comprobaciones se hacen igual, con la misma función,
+y simplemente no encuentran nada.
+
 **Añadir un valor que la lista ya tiene, o quitar uno que no tiene, avisa pero nunca falla.** Ninguna
 de las dos operaciones exige leer la tarea primero para no fallar, que es justo lo que este diseño
 evita en cualquier otro sitio donde hay una alternativa tolerante. Las dos terminan con código 0:
@@ -293,6 +318,35 @@ error: --check-ac and --uncheck-ac both select acceptance criterion #3 of MYP-11
 Esta es la única familia de flags de esta sección donde el solape es un error en vez de resolverse
 por orden (["Sustituir un campo que no tiene flag de \"sustituir entera\""](#sustituir-un-campo-que-no-tiene-flag-de-sustituir-entera) explica por qué).
 
+**Un selector de texto que falla lista los elementos debajo de su mensaje**, indentados dos espacios y
+con la clave de cada uno delante, que es la clave que el selector siempre acepta. El de cero
+coincidencias sale con código 4 y el de dos o más con código 5:
+
+```
+error: no acceptance criterion of MYP-11 matches "covers CRLF"
+  #1 The diff ignores CRLF
+  #3 There is a test
+
+error: "test" matches 2 acceptance criteria of MYP-11
+  #3 There is a test
+  #4 There is a second test
+```
+
+Un rango invertido nombra el trozo que lo está, y no el selector entero:
+
+```
+error: --check-ac: inverted range: "4-1"
+hint: a range goes from the lower key to the higher one, as in 1-4
+```
+
+Y un selector que no es `all` sobre varias tareas dice cuál se escribió, porque el remedio es
+cambiarlo:
+
+```
+error: --check-ac: with several tasks the selector has to be all, and this one is "3"
+hint: the keys of the acceptance criteria of one task do not name the same thing in another
+```
+
 ## Comentarios
 
 | Operación | Flag | Repetible |
@@ -366,10 +420,10 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 | texto que encaja con dos o más | error 5, con los dos listados |
 | texto que solo encaja ignorando mayúsculas o acentos | encaja igual que si coincidiera carácter a carácter, misma regla que ["Selectores de criterios"](#selectores-de-criterios) |
 | rango invertido | error 2 |
-| `--set-comment-date` con un instante mal formado | error 2, señalando el formato ISO 8601 |
+| `--set-comment-date` con un instante mal formado | error 2, señalando el formato ISO 8601: `error: --set-comment-date: invalid instant: "2026-08-14"`, con `hint: an instant is written YYYY-MM-DDTHH:MM:SSZ, in UTC` y el `code` `invalid_date` |
 | la misma clave en dos `--set-comment-date` con instantes distintos | error 2, misma regla que un escalar repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)) |
 | la misma clave en dos `--set-comment-date` con el mismo instante | se aplica una vez, sin aviso |
-| `--rm-comment` y `--set-comment-date` sobre la misma clave en la misma llamada | error 2, detectado en la validación previa de arriba: borrar y corregir la fecha del mismo comentario a la vez es una petición contradictoria |
+| `--rm-comment` y `--set-comment-date` sobre la misma clave en la misma llamada | error 2, detectado en la validación previa de arriba: borrar y corregir la fecha del mismo comentario a la vez es una petición contradictoria. El mensaje es `error: --rm-comment and --set-comment-date both select comment #3 of MYP-11`, con el `code` `comment_selector_overlap` |
 | `--rm-comment all` en una tarea sin comentarios | sin efecto, con `warning: MYP-11 has no comments`, igual que `--check-ac all` sin criterios (["Selectores de criterios"](#selectores-de-criterios)) |
 | `--rm-comment all` o `--set-comment-date all=<instante>` sobre varias tareas | válido, cada tarea actúa sobre los suyos |
 | una clave, un rango, una lista o un texto sobre varias tareas | error 2, misma regla que la de ["Selectores de criterios"](#selectores-de-criterios): el selector de una tarea no tiene por qué significar lo mismo en otra |
@@ -393,6 +447,21 @@ prefijo, a diferencia de los campos de lista: no es una excepción a la regla de
 regla aplicada a una forma de dato que solo admite una operación de escritura.
 
 Un escalar **nunca** se borra pasándole la cadena vacía, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
+
+**Dos de estos escalares no son texto libre y rechazan lo que no cumple su forma**, los dos con
+código 2:
+
+```
+error: --due: invalid date: "20/09/2026"
+hint: a due date is written YYYY-MM-DD
+
+error: --ordinal: not a whole number: "first"
+```
+
+Su `code` es `invalid_date` y `invalid_number` respectivamente, los mismos que ya llevan la fecha mal
+formada y el `ordinal` negativo de ["El modelo de datos de una tarea"](modelo-de-datos/index.md).
+`--due` con una fecha ya pasada, en cambio, no es un error: se acepta con el aviso `due_in_past`
+(["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)).
 
 ## Campos externos
 

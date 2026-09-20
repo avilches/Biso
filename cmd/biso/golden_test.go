@@ -145,6 +145,10 @@ func TestHelpTextsAreTheOnesOfTheSpecification(t *testing.T) {
 		{[]string{"init", "--help"}, fixture(t, "init-help.txt"), "biso init --help"},
 		{[]string{"where", "--help"}, fixture(t, "where-help.txt"), "biso where --help"},
 		{[]string{"where", "-h"}, fixture(t, "where-help.txt"), "biso where -h"},
+		{[]string{"new", "--help"}, fixture(t, "new-help.txt"), "biso new --help"},
+		{[]string{"ls", "--help"}, fixture(t, "ls-help.txt"), "biso ls --help"},
+		{[]string{"get", "--help"}, fixture(t, "get-help.txt"), "biso get --help"},
+		{[]string{"set", "--help"}, fixture(t, "set-help.txt"), "biso set --help"},
 	} {
 		got := m.run(t, c.argv...).assertCode(t, 0)
 		assertEqual(t, got.stdout, c.want, c.subject)
@@ -184,6 +188,25 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"where-no-board.txt", "cmd/where.md", "Cuando hay más de un candidato", 1},
 		{"where-unresolved.txt", "cmd/where.md", "Cuando hay más de un candidato", 2},
 		{"where-json.txt", "cmd/where.md", "El esquema JSON", 0},
+		{"new-help.txt", "cmd/new.md", "`biso new --help`", 0},
+		{"set-help.txt", "cmd/set.md", "`biso set --help`", 0},
+		{"set-status-line.txt", "cmd/set.md", "Salida", 0},
+		{"set-added-ac.txt", "cmd/set.md", "Salida", 1},
+		{"set-dry-run.txt", "cmd/set.md", "Salida", 2},
+		{"set-overwrite.txt", "cmd/set.md", "Salida", 3},
+		{"ls-help.txt", "cmd/ls.md", "`biso ls --help`", 0},
+		{"ls-output.txt", "cmd/ls.md", "Salida", 0},
+		{"ls-truncated.txt", "cmd/ls.md", "Salida", 1},
+		{"ls-ids.txt", "cmd/ls.md", "Salida", 2},
+		{"ls-count.txt", "cmd/ls.md", "Salida", 3},
+		{"ls-json.txt", "cmd/ls.md", "El esquema JSON", 0},
+		{"get-help.txt", "cmd/get.md", "`biso get --help`", 0},
+		{"get-output.txt", "cmd/get.md", "Salida", 0},
+		{"get-section-ac.txt", "cmd/get.md", "Salida", 1},
+		{"get-question.txt", "cmd/get.md", "Salida", 2},
+		{"get-explain.txt", "cmd/get.md", "Salida", 3},
+		{"get-terminal-urgency.txt", "cmd/get.md", "Salida", 4},
+		{"get-json.txt", "cmd/get.md", "El esquema JSON", 0},
 	} {
 		block := specBlock(t, c.page, c.heading, c.index)
 		assertEqual(t, fixture(t, c.fixture), block,
@@ -212,12 +235,16 @@ func specBlock(t *testing.T, page, heading string, index int) string {
 			blocks = nil
 			continue
 		}
-		if !strings.HasPrefix(line, "```") {
+		if !strings.HasPrefix(strings.TrimLeft(line, " "), "```") {
 			continue
 		}
+		// A fence inside a numbered list is indented, and so is its
+		// content: the block is what the page shows, without the
+		// indentation the list put in front of it.
+		indent := line[:len(line)-len(strings.TrimLeft(line, " "))]
 		var body []string
-		for i++; i < len(lines) && !strings.HasPrefix(lines[i], "```"); i++ {
-			body = append(body, lines[i])
+		for i++; i < len(lines) && !strings.HasPrefix(strings.TrimLeft(lines[i], " "), "```"); i++ {
+			body = append(body, strings.TrimPrefix(lines[i], indent))
 		}
 		blocks = append(blocks, strings.Join(body, "\n")+"\n")
 	}

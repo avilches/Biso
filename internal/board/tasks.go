@@ -91,39 +91,67 @@ func (r *Tasks) Create(task *model.Task) error {
 // It does not touch updatedAt, in contrast: whether a call changed
 // anything is what decides that, and only the caller knows.
 func (r *Tasks) Save(task *model.Task) error {
-	if err := r.validate(task); err != nil {
-		return err
-	}
-	num, err := r.number(task.ID)
-	if err != nil {
-		return err
-	}
+	return r.SaveAll([]*model.Task{task})
+}
 
-	return r.store.WithTx(func(tx *sql.Tx) error {
-		var createdAt string
-		err := tx.QueryRow("SELECT created_at FROM task WHERE id = ?", task.ID).Scan(&createdAt)
-		if errors.Is(err, sql.ErrNoRows) {
-			var last int
-			if err := tx.QueryRow("SELECT last_task_num FROM board_counter WHERE id = 1").Scan(&last); err != nil {
-				return err
-			}
-			return r.missing(task.ID, num, last)
+// SaveAll writes several existing tasks over themselves, all of them inside
+// one single transaction.
+//
+// That one transaction is what makes guarantee 2 of
+// docs/spec/garantias.md#concurrencia-atomicidad-y-garantías-observables
+// observable: `biso set A B C` where the third task turns out not to be
+// writable leaves A and B exactly as they were, and a concurrent reader
+// never sees the board halfway through. Everything that can be judged
+// without touching the database is judged first, over every task, so that a
+// call that is going to fail does not even open one.
+func (r *Tasks) SaveAll(tasks []*model.Task) error {
+	nums := make([]int, len(tasks))
+	for i, task := range tasks {
+		if err := r.validate(task); err != nil {
+			return err
 		}
+		num, err := r.number(task.ID)
 		if err != nil {
 			return err
 		}
-		if task.CreatedAt, err = parseInstant(createdAt); err != nil {
-			return fmt.Errorf("%s: createdAt: %w", task.ID, err)
-		}
+		nums[i] = num
+	}
 
-		// The children go with it: every one of their tables declares the
-		// task as a foreign key with ON DELETE CASCADE, and the connection
-		// runs with foreign keys on.
-		if _, err := tx.Exec("DELETE FROM task WHERE id = ?", task.ID); err != nil {
+	return r.store.WithTx(func(tx *sql.Tx) error {
+		for i, task := range tasks {
+			if err := r.saveWithin(tx, task, nums[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// saveWithin writes one task inside a transaction the caller owns.
+func (r *Tasks) saveWithin(tx *sql.Tx, task *model.Task, num int) error {
+	var createdAt string
+	err := tx.QueryRow("SELECT created_at FROM task WHERE id = ?", task.ID).Scan(&createdAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		var last int
+		if err := tx.QueryRow("SELECT last_task_num FROM board_counter WHERE id = 1").Scan(&last); err != nil {
 			return err
 		}
-		return writeTask(tx, task, num)
-	})
+		return r.missing(task.ID, num, last)
+	}
+	if err != nil {
+		return err
+	}
+	if task.CreatedAt, err = parseInstant(createdAt); err != nil {
+		return fmt.Errorf("%s: createdAt: %w", task.ID, err)
+	}
+
+	// The children go with it: every one of their tables declares the
+	// task as a foreign key with ON DELETE CASCADE, and the connection
+	// runs with foreign keys on.
+	if _, err := tx.Exec("DELETE FROM task WHERE id = ?", task.ID); err != nil {
+		return err
+	}
+	return writeTask(tx, task, num)
 }
 
 // LastAllocated answers the highest task number the board has ever

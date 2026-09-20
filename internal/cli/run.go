@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"golang.org/x/term"
@@ -106,6 +108,14 @@ func Run(argv []string, s Streams) int {
 		return runInit(s, p, env)
 	case "where":
 		return runWhere(s, p, env)
+	case "new":
+		return runNew(s, p, env)
+	case "ls":
+		return runList(s, p, env)
+	case "get":
+		return runGet(s, p, env)
+	case "set":
+		return runSet(s, p, env)
 	}
 	// Parse only ever answers a command of the table, so this is
 	// unreachable; answering the internal error keeps it honest.
@@ -266,6 +276,14 @@ func helpOf(command string) string {
 		return initHelp
 	case "where":
 		return whereHelp
+	case "new":
+		return newHelp
+	case "ls":
+		return lsHelp
+	case "get":
+		return getHelp
+	case "set":
+		return setHelp
 	}
 	return topLevelHelp
 }
@@ -339,8 +357,11 @@ func warningsOf(p *Parsed) []Warning {
 // stderr must not mix the text of a warning with the JSON object of an
 // error (docs/spec/contrato-json.md#los-errores-en-json).
 func fail(s Streams, asJSON bool, err error, warnings []Warning) int {
-	e, ok := err.(*model.Error)
-	if !ok {
+	// errors.As and not a type assertion, because an error of the
+	// specification can travel inside a richer one: the ambiguous reference
+	// of docs/spec/referencias.md carries its candidates alongside it.
+	var e *model.Error
+	if !errors.As(err, &e) {
 		// Anything that is not a case of the specification is the program
 		// failing, which is exit code 1 of docs/spec/codigos-de-salida.md.
 		e = &model.Error{ExitCode: 1, Code: "internal", Message: err.Error()}
@@ -356,6 +377,9 @@ func fail(s Streams, asJSON bool, err error, warnings []Warning) int {
 		}
 	}
 	fmt.Fprint(s.Stderr, prefixed("error: ", e.Message))
+	if line := validValuesLine(e); line != "" {
+		fmt.Fprintln(s.Stderr, line)
+	}
 	for _, line := range e.Detail {
 		fmt.Fprintln(s.Stderr, line)
 	}
@@ -402,4 +426,42 @@ func splitLines(s string) []string {
 // for each of the two output streams.
 func Terminal(f *os.File) bool {
 	return term.IsTerminal(int(f.Fd()))
+}
+
+// validValuesLine is the second line that two families of error print under
+// their message, aligned with it: the vocabulary a closed field configures
+// (docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos)
+// and the extension keys a board declares
+// (docs/spec/modelo-de-datos/campos-externos.md).
+//
+// It is built here and not carried inside the error because the list it
+// names already travels in `valid`, and the JSON envelope does not repeat
+// the sentence that wraps it: whoever reads JSON reads the list.
+func validValuesLine(e *model.Error) string {
+	if len(e.Valid) == 0 {
+		return ""
+	}
+	var what string
+	switch e.Code {
+	case "unknown_status":
+		what = "valid statuses on this board"
+	case "unknown_type":
+		what = "valid types on this board"
+	case "unknown_priority":
+		what = "valid priorities on this board"
+	case "unknown_extension_key":
+		what = "declared keys on this board"
+	case "unknown_section":
+		// The two closed domains of the reading commands are not the
+		// board's vocabulary: they are the same everywhere, so the line
+		// does not say "on this board".
+		what = "valid sections"
+	case "unknown_sort_field":
+		what = "valid sort fields"
+	default:
+		return ""
+	}
+	// Seven spaces, which is the width of "error: ", so the line sits under
+	// the message exactly as docs/spec/vocabularios.md prints it.
+	return "       " + what + ": " + strings.Join(e.Valid, ", ")
 }

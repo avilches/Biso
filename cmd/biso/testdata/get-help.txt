@@ -1,0 +1,32 @@
+Usage: biso get <ref> [options]
+
+Show one task. <ref> is an id (MYP-11), a bare number (11) or free text
+("CRLF"). Free text that matches several tasks lists them and exits 5; it
+never picks one for you.
+
+Free text searches the title, description, plan, notes, final summary, the
+text of the criteria, the body of the comments, the body of the open question
+and the labels. A match in the title always
+wins over a match anywhere else. `biso ls --search` uses this same scope.
+
+Options:
+      --id                   force <ref> to be read as an id
+      --match                force <ref> to be read as free text
+      --section <name>       print only these sections; repeatable or comma
+                             separated. One of: meta, desc, ac, plan, notes,
+                             summary, comments, question
+      --explain-urgency      show how the urgency number is built
+  -h, --help                 show this help
+
+Exit codes:
+  0  printed          4  not on this board
+  2  bad usage        5  the text matched several tasks
+  3  the task could not be read
+  8  the board could not respond
+  20 no board here
+
+Examples:
+  biso get MYP-11
+  biso get 11 --section ac
+  biso get "CRLF"
+  biso get MYP-11 --explain-urgency

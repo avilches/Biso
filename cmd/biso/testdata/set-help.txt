@@ -1,0 +1,70 @@
+Usage: biso set <ref>... [options]
+
+Change any field of one or more tasks, all or nothing. Every flag here means
+the same in `biso new`, `biso start`, `biso note`, `biso comment`, `biso ask`,
+`biso answer`, `biso finish` and `biso archive`. Every flag name says what it
+does; there is no rule to learn beyond the name.
+
+List fields that take comma-separated values have four shapes, and there is no
+field that breaks them:
+  --add-labels X      add one or more       --replace-labels X   replace the whole list
+  --rm-labels X       remove one or more    --clear-labels       empty the list
+The same works for --assignees, --refs, --docs, --deps and --files.
+
+Criteria have three, because a criterion's text can contain a comma and so is
+never split on one. There is no whole-list replace; do it by clearing and
+adding in the same call.
+      --add-ac <text>        add a criterion; repeatable
+      --rm-ac <sel>          remove by selector; sel is all, 3, 1-4, 1,3,7 or
+                             the criterion text. The numbers are stable #N
+                             keys. With several tasks, sel has to be all
+      --clear-acs            empty the list
+      --check-ac <sel>       check criteria, by the same kind of selector
+      --uncheck-ac <sel>     the opposite
+
+Prose fields have two, because a block of text has no single item to remove.
+Replace by clearing and appending in the same call.
+      --append-desc X (-d)   append a paragraph
+      --append-plan X
+      --append-note X
+      --append-summary X
+      --clear-desc / --clear-plan / --clear-notes / --clear-summary
+
+External fields have three: --ext key=value sets that one key, --rm-ext key
+drops it, --clear-ext empties the map. There is no --replace-ext: setting a
+key already replaces its value.
+
+Scalars just take a value: -t/--title, -s/--status, --type, --priority,
+-p/--parent, --due, --ordinal, --author. Each has a --clear-<field>. An
+empty string is never a way to clear anything.
+
+Comments:
+      --comment <text>            append a comment; repeatable
+      --comment-author <@w>       who wrote it (default: you)
+      --rm-comment <sel>          remove one or more, by the same kind of
+                                   selector as --rm-ac; body and author are
+                                   never edited, by any flag
+      --set-comment-date <sel>=<instant>
+                                   correct only the date of one or more,
+                                   instant is YYYY-MM-DDTHH:MM:SSZ
+
+Resolution:
+      --id / --match         force <ref> to be an id, or free text
+
+Within one call, every --rm-*/--clear-* is applied before every --add-*/
+--append-*, regardless of the order they were written in. A --replace-* over
+a non-empty list is allowed and warns on stderr with how many items it
+replaced.
+
+Exit codes:
+  0  done                    5  something matched more than one thing
+  2  bad usage               7  --dry-run did not pass
+  3  unknown value           8  the board could not be written
+  4  a task, criterion or comment was not found
+                             20 no board here
+
+Examples:
+  biso set MYP-11 --priority high --add-labels parser
+  biso set MYP-11 --check-ac 1,3 --append-note "Both covered by diff_test.rs"
+  biso set MYP-11 MYP-12 --due 2026-09-20
+  biso set "CRLF" --clear-desc --append-desc @docs/bugs/BUG-02.md

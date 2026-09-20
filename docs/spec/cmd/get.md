@@ -33,11 +33,11 @@ La resolución de `<ref>` está en la sección ["Cómo se resuelve una referenci
 | Caso | Qué pasa |
 |---|---|
 | La referencia resuelve a una tarea | Se imprime, código 0 |
-| La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** exactamente como las imprimiría `biso ls --search "<texto>"` (["`biso ls`"](ls.md)): mismo orden, mismo límite de 30 y mismo aviso de recorte si hace falta |
+| La referencia es texto y encaja con varias | Error 5, y las candidatas salen **por stdout** exactamente como las imprimiría `biso ls --search "<texto>"` (["`biso ls`"](ls.md)), y ese "exactamente" son tres cosas y solo tres: el mismo orden, el mismo límite de 30 y el mismo aviso de recorte si hace falta. **No son los filtros de ese listado**: las candidatas salen del tablero entero y una tarea en el estado terminal aparece entre ellas, aunque `biso ls` la deje fuera por el valor por defecto de su `-s` (["Cómo se resuelve una referencia a una tarea"](../referencias.md#la-búsqueda-por-texto)) |
 | La referencia es texto y encaja con una | Se imprime, con `note: "CRLF" matched MYP-11` por stderr |
 | La tarea está archivada | Se imprime, con `note: MYP-11 is archived` por stderr |
 | La tarea no se puede leer | Error 3, según la regla de lectura dirigida de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) |
-| `--section` con un nombre inventado | Error 2, con los ocho nombres válidos |
+| `--section` con un nombre inventado | Error 2, `code` igual a `unknown_section`, con los ocho nombres válidos |
 | `--section` de una sección vacía | No imprime esa sección, y si no queda ninguna sección que imprimir, la salida está vacía y el código sigue siendo 0 |
 
 **Sin `--section`, la ficha completa imprime siempre las ocho secciones fijas, vacías incluidas,
@@ -92,6 +92,15 @@ La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la secci�
 
 Los encabezados de esta salida son un formato de presentación, no un formato de almacenamiento.
 
+**Cómo se escribe cada valor de ese bloque.** Una lista (`assignees`, `labels`, `depends`, `blocks`,
+`refs`, `docs`, `files`) va en una línea, con sus valores separados por coma y espacio; ninguno de
+esos campos admite una coma dentro, así que el separador nunca se puede confundir con parte de un
+valor. `ext` se escribe igual, con sus pares `clave=valor` **ordenados por clave**, para que la misma
+tarea imprima siempre la misma ficha. Un campo sin valor es un guion, como en las columnas de
+["`biso ls`"](ls.md). Los instantes (`created`, `updated`, `lease`) se escriben con el día y la hora
+hasta el minuto, `YYYY-MM-DD HH:MM`, que es la precisión que se lee: el segundo está en `--json`,
+que es donde lo lee un programa.
+
 **La línea `lease` sale solo cuando la tarea tiene arrendamiento**, y entonces sale con sus campos:
 `lease` es `leaseExpiresAt`, con el mismo formato de instante que `created` y `updated`, y `holder` es
 `leaseHolder` (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Los dos aparecen y desaparecen juntos, porque esa misma regla no admite uno sin
@@ -142,6 +151,10 @@ urgency 19.0
                                  -------
                                    19.00
 ```
+
+La primera línea nombra la prioridad de la tarea junto al término, y una tarea que no tiene ninguna
+imprime `priority (none)`, que es el caso con peso propio de ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia) y no el de una
+prioridad que el tablero ya no declara, que hace la tarea ilegible.
 
 El término `active` vale `1.00` solo si el estado es el activo y la tarea no tiene una pregunta
 abierta (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)); en cualquier otro caso vale `0.00`, y la etiqueta dice cuál de los dos motivos se
@@ -213,6 +226,11 @@ las repite todas para que sirva de esquema completo, verificable clave a clave:
 }
 ```
 
+Sobre una tarea en el estado terminal, `urgencyBreakdown` sale igualmente con `--explain-urgency`,
+con sus siete términos a `0.0` y `active.reason` en `"not_active"`: es la forma que le corresponde a
+una urgencia que vale cero por definición, sin ningún término calculado, y la clave sigue apareciendo
+siempre que se escribe el flag, como promete la regla de abajo.
+
 **`urgencyBreakdown` solo sale con `--explain-urgency`**, igual que el desglose de la salida de texto, y
 el ejemplo de arriba es el de una llamada que la lleva. Es la única clave de todo el documento que un
 flag añade, y la excepción a la regla de las claves siempre presentes está declarada en la sección ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), junto
@@ -223,8 +241,18 @@ entra en la suma, el producto del coeficiente por el factor, igual que en los de
 `reason` vale `null` cuando el término contribuye, y cuando contribuye `0.0` dice por qué:
 `"not_active"` si el estado no es el activo, y `"waiting"` si lo es pero hay una pregunta abierta.
 
-Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas. Con varias
-coincidencias, `kind` es `task.candidates`, `data.tasks` es la lista y el código es 5.
+Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas. **Una sección
+pedida que esté vacía sigue trayendo su clave, con el valor `null` o la lista vacía que le
+corresponda**: quitarla haría que la presencia de una clave dependiera de los datos, que es justo lo
+que prohíbe ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias). Omitir la sección vacía es cosa de la salida de texto, donde
+lo que sobra es un encabezado sin nada debajo.
+
+Con varias coincidencias, `kind` es `task.candidates`, `data.tasks` es la lista y el código es 5.
+Ese sobre lleva `data` y no `error`, aunque el código no sea cero, y es el único de todo el programa
+que hace eso: las candidatas son un dato, no la descripción de un fallo. **`biso get` es también el
+único comando que lo emite**: cualquier otro que resuelva una referencia ambigua con `--json`, como
+`biso set` o el `-p` de `biso ls`, contesta el sobre de error de ["Los errores en JSON"](../contrato-json.md#los-errores-en-json) con el mismo código 5,
+porque la tabla de `kind` de ["El sobre"](../contrato-json.md#el-sobre) le da `task.candidates` a `get` y a ningún otro.
 
 ## Códigos de salida
 

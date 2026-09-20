@@ -1,6 +1,7 @@
 package ops
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -173,14 +174,24 @@ func TestWhereCountsTheArchivedApart(t *testing.T) {
 
 func assertSpec(t *testing.T, err error, code int, identifier string) {
 	t.Helper()
-	if err == nil {
-		t.Fatalf("no error at all, want %d/%s", code, identifier)
-	}
-	e, ok := err.(*model.Error)
-	if !ok {
-		t.Fatalf("error = %v, want a *model.Error", err)
-	}
+	e := specError(t, err)
 	if e.ExitCode != code || e.Code != identifier {
 		t.Errorf("error = %d/%s (%s), want %d/%s", e.ExitCode, e.Code, e.Message, code, identifier)
 	}
+}
+
+// specError is the *model.Error inside an error. It goes through errors.As
+// and not through a type assertion because an error of the specification can
+// travel inside a richer one, as the ambiguous reference of
+// docs/spec/referencias.md does with its candidates.
+func specError(t *testing.T, err error) *model.Error {
+	t.Helper()
+	if err == nil {
+		t.Fatal("no error at all, and one was expected")
+	}
+	var e *model.Error
+	if !errors.As(err, &e) {
+		t.Fatalf("error = %v, want a *model.Error", err)
+	}
+	return e
 }

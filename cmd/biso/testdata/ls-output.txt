@@ -1,0 +1,4 @@
+MYP-7   To Do        bug   high    Crash on an empty repository  ac 0/4  -        2026-09-08
+MYP-11  In Progress  bug   high    Normalize CRLF in the diff    ac 1/2  @claude  -
+MYP-19  To Do        task  high    Retry the upload on 5xx       ac 0/2  -        -
+MYP-23  To Do        docs  medium  Rewrite the install section   ac 0/1  @sara+1  -

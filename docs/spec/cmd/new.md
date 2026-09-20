@@ -63,8 +63,10 @@ MYP-101
 `biso new` es el único comando de escritura cuya salida por defecto es distinta de la línea de estado
 de la sección ["`biso set`"](set.md), y así está dicho en el mensaje de arranque.
 
-Con `--print`, después de la línea del identificador viene la ficha completa en el formato de
-`biso get`. Con `--quiet`, solo el identificador y ninguna nota.
+Con `--print`, la ficha completa en el formato de `biso get` **sustituye** esa línea del
+identificador en vez de venir debajo de ella, que es la regla general del flag
+(["Flags globales"](flags-globales.md)): el identificador es la primera cosa que imprime la ficha, así que
+imprimir las dos cosas lo repetiría. Con `--quiet`, solo el identificador y ninguna nota.
 
 **`biso new` no anuncia la clave de un `--add-ac` creado al mismo tiempo que la
 tarea, a diferencia de la línea de estado de `biso set` (["`biso set`"](set.md#salida)).** Una tarea nace sin ningún
@@ -73,6 +75,44 @@ la `#1`, el segundo la `#2`, y así en el mismo orden en que se escribieron los 
 (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)). Quien llama ya lo sabe sin preguntar, así que
 imprimirlo sería el eco que el principio 4 prohíbe (["Los principios"](../principios.md)), y no la clase de dato que ese principio
 manda enseñar.
+
+### `--dry-run` sobre una sola tarea
+
+Con `--dry-run`, `biso new` valida exactamente lo mismo que validaría la escritura real y no escribe
+nada: ni la tarea, ni el identificador, que no llega a gastarse. Si todo está bien, no imprime ningún
+identificador, porque no hay ninguno que enseñar, y sale con código 0 y esta línea por stderr, que es
+la misma del lote en singular:
+
+```
+1 task would be created, nothing was written (--dry-run)
+```
+
+Con `--json`, el sobre es el de siempre y su `data.tasks` es una lista vacía, por el mismo motivo:
+no hay ninguna tarea creada a la que nombrar. La línea de arriba se sigue imprimiendo por stderr,
+porque no es una nota y no la lleva ningún sobre.
+
+**Una vista previa emite los mismos avisos que emitiría la llamada real, con una excepción: los tres
+de llegar a un estado terminal** (`terminal_ac_unchecked`, `terminal_no_summary` y
+`open_question_on_terminal`, ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Los tres nombran la tarea, en su frase y en su
+campo `task`, y aquí no hay ninguna que nombrar: el identificador no se ha gastado. Escribirlos con
+el hueco vacío daría una frase con dos espacios seguidos y un `task` con la cadena vacía, que es justo
+lo que prohíbe ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), y es el mismo motivo por el que el aviso
+`imported_dod_merged` del lote nombra la línea del fichero en vez de la tarea. Los demás avisos, que
+no nombran ninguna tarea, salen igual con `--dry-run` que sin él: `due_in_past`, `clear_on_new_task`,
+`duplicate_flag_value` y el resto. Crear la tarea de verdad en un estado terminal sí emite los tres,
+porque entonces el identificador ya existe.
+
+**Y si no está bien, el código nunca es el 7: es el código específico del fallo.** Una sola tarea no
+puede producir más de un fallo a la vez, y cualquiera de los que puede producir es atribuible a un
+elemento señalable, así que conserva su propio código igual que lo conservaría sin `--dry-run`: 2 para
+un título vacío o un ciclo, 3 para un valor fuera de un vocabulario, 4 para un `--parent` que no
+existe, 5 para una referencia de texto con varias coincidencias. Es la regla general de
+["El código 7 garantiza que no se ha escrito nada, y el código específico siempre gana sobre
+él"](../codigos-de-salida.md#el-código-7-garantiza-que-no-se-ha-escrito-nada-y-el-código-específico-siempre-gana-sobre-él),
+aplicada aquí: el 7 queda para los fallos que no apuntan a un elemento concreto, y el único sitio de
+`biso new` donde eso ocurre es el modo lote, donde `--from` puede traer muchas líneas malas por
+motivos distintos. La fila del 7 de la tabla de códigos de salida de más abajo es, por tanto, una
+fila del lote y solo del lote.
 
 ## El modo lote
 
@@ -217,7 +257,7 @@ error: 4 of 242 lines are invalid, nothing was written
 | Valor fuera de un vocabulario, clave de extensión no declarada, entrada no interpretable | 3 |
 | `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
 | `--add-deps` o `--parent` por texto con varias coincidencias | 5 |
-| Cualquier fallo de validación en un lote, o un `--dry-run` que no pasa | 7 |
+| Cualquier fallo de validación en el lote de `--from`, o un `--dry-run` de ese lote que no pasa. **Solo del lote**: un `--dry-run` sobre una sola tarea nunca da 7, sino el código específico de su fallo (["`--dry-run` sobre una sola tarea"](#--dry-run-sobre-una-sola-tarea)) | 7 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 8 |
 | No hay tablero | 20 |
 

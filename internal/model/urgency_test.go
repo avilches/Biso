@@ -239,3 +239,83 @@ func TestUrgencyOfAPriorityTheBoardDoesNotConfigureIsAnError(t *testing.T) {
 		t.Fatalf("Urgency() of a terminal task hid the priority the board does not have")
 	}
 }
+
+// TestUrgencyBreakdownIsTheSameComputation is what keeps the explanation of
+// `biso get --explain-urgency` honest: the terms it prints add up to the
+// number the derived field answers, because they are the same computation
+// and not a second one written next to it.
+func TestUrgencyBreakdownIsTheSameComputation(t *testing.T) {
+	today := time.Date(2026, 9, 6, 13, 31, 9, 0, time.UTC)
+	task := &Task{
+		ID:        "MYP-11",
+		Status:    "In Progress",
+		Priority:  "high",
+		CreatedAt: today,
+	}
+	task.AddCriterion("The diff ignores CRLF")
+	task.AddCriterion("There is a test that covers it")
+	ctx := defaultContext(today)
+	ctx.Blocking = true
+
+	b, err := task.UrgencyBreakdown(ctx)
+	if err != nil {
+		t.Fatalf("UrgencyBreakdown() failed: %v", err)
+	}
+	if b.Total != urgencyOf(t, task, ctx) {
+		t.Errorf("the breakdown totals %v and the field says %v", b.Total, urgencyOf(t, task, ctx))
+	}
+	if b.Sum != 19.0 {
+		t.Errorf("the terms add up to %v and not to 19.0", b.Sum)
+	}
+	if b.Priority.Value != 6.0 || b.Active.Value != 4.0 || b.Blocking.Value != 8.0 {
+		t.Errorf("the three terms that contribute are %v, %v and %v",
+			b.Priority.Value, b.Active.Value, b.Blocking.Value)
+	}
+	if b.ActiveReason != ActiveContributes {
+		t.Errorf("the active term of an active task says %q", b.ActiveReason)
+	}
+}
+
+// TestUrgencyBreakdownSaysWhyTheActiveTermIsZero is the rule of
+// docs/spec/cmd/get.md: the label of that term says which of the two
+// reasons applies.
+func TestUrgencyBreakdownSaysWhyTheActiveTermIsZero(t *testing.T) {
+	today := time.Date(2026, 9, 6, 0, 0, 0, 0, time.UTC)
+	for _, c := range []struct {
+		status   string
+		question *Question
+		reason   string
+	}{
+		{status: "To Do", reason: NotActive},
+		{status: "In Progress", question: &Question{Body: "?"}, reason: ActiveButWaiting},
+		{status: "In Progress", reason: ActiveContributes},
+	} {
+		task := &Task{ID: "MYP-1", Status: c.status, Priority: "high",
+			CreatedAt: today, Question: c.question}
+		b, err := task.UrgencyBreakdown(defaultContext(today))
+		if err != nil {
+			t.Fatalf("UrgencyBreakdown() failed: %v", err)
+		}
+		if b.ActiveReason != c.reason {
+			t.Errorf("a task in %q says %q and not %q", c.status, b.ActiveReason, c.reason)
+		}
+	}
+}
+
+// TestUrgencyBreakdownOfATerminalTaskComputesNoTerm is the shortcut of
+// docs/spec/modelo-de-datos/urgencia.md, which is what makes
+// --explain-urgency print one line instead of eight.
+func TestUrgencyBreakdownOfATerminalTaskComputesNoTerm(t *testing.T) {
+	today := time.Date(2026, 9, 6, 0, 0, 0, 0, time.UTC)
+	task := &Task{ID: "MYP-1", Status: "Done", Priority: "high", CreatedAt: today}
+	b, err := task.UrgencyBreakdown(defaultContext(today))
+	if err != nil {
+		t.Fatalf("UrgencyBreakdown() failed: %v", err)
+	}
+	if !b.Terminal {
+		t.Error("a terminal task's breakdown does not say it is terminal")
+	}
+	if b.Total != 0.0 || b.Priority.Value != 0.0 {
+		t.Errorf("a terminal task's breakdown computed something: %+v", b)
+	}
+}

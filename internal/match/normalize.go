@@ -109,3 +109,24 @@ func fold(r rune) rune {
 	}
 	return r
 }
+
+// FoldCase folds the case of every character and touches nothing else: no
+// diacritic is dropped and no separator is removed.
+//
+// It is the comparison that docs/spec/familias-de-flags.md#campos-de-lista-que-admiten-coma
+// fixes for a label and for a person, and it is deliberately weaker than the
+// two above. A label and a person are stored letter for letter, so "Parser"
+// and "parser" really are two labels, but a reading filter is not allowed to
+// tell them apart. It stops at the case because a label is a short token and
+// not prose: it does not share the accent rule of the text selectors, and
+// dropping the separators would make "in-progress" and "inprogress" the same
+// label, which the vocabulary rules never promised for a field the board does
+// not configure.
+func FoldCase(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		b.WriteRune(foldCase(r))
+	}
+	return b.String()
+}

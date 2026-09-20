@@ -219,3 +219,84 @@ func TestRoundTripCoversEverySpelling(t *testing.T) {
 		}
 	}
 }
+
+// realInvocations is the same property of section 7.1 over the table the
+// program really uses, and not over the shape-alike of testCommands: a
+// representative invocation per command, with the families of
+// docs/spec/familias-de-flags.md that each one accepts.
+//
+// It matters that this one walks Commands() and not a table written for the
+// test, because the bug it catches is in that table: a flag declared
+// repeatable that is not, or classified into the wrong step, changes what a
+// second parse of the same call resolves to.
+func realInvocations() [][]string {
+	return [][]string{
+		{"new", "Normalize CRLF in the diff", "--type", "bug", "--priority", "high"},
+		{"new", "Add OAuth", "--add-ac", "Login succeeds", "--add-ac", "Token refreshes"},
+		{"new", "Rewrite the installer", "--start", "--add-assignees", "@sara,@claude"},
+		{"new", "A task", "--ext", "trello.card=5f2a8c1e", "--due", "2026-09-20"},
+		{"set", "MYP-11", "--priority", "high", "--add-labels", "parser"},
+		{"set", "MYP-11", "--check-ac", "1,3", "--append-note", "Both covered by diff_test.rs"},
+		{"set", "MYP-11", "MYP-12", "--due", "2026-09-20"},
+		{"set", "CRLF", "--clear-desc", "--append-desc", "Rewritten whole", "--match"},
+		{"set", "MYP-11", "--rm-comment", "3", "--set-comment-date", "1=2026-08-14T10:22:00Z"},
+		{"set", "MYP-11", "--replace-labels", "urgent", "--rm-ext", "old", "--clear-acs"},
+		{"set", "MYP-11", "--comment", "said something", "--comment-author", "@sara"},
+		{"set", "MYP-11", "--uncheck-ac", "all", "--add-refs", `notes/a\,b.md`},
+		{"init", "--at", "../boards/mine", "--dry-run"},
+		{"where"},
+		{"ls"},
+		{"ls", "-s", "In Progress", "--mine"},
+		{"ls", "--type", "bug", "--priority", "high", "--limit", "10"},
+		{"ls", "--not-blocked", "--not-waiting", "--ids"},
+		{"ls", "--any-status", "--archived", "--all"},
+		{"ls", "-l", "parser", "--label-or", "ui,cli", "--search", "CRLF"},
+		{"ls", "--sort", "urgency", "--reverse", "--due-before", "2026-09-20"},
+		{"get", "MYP-11"},
+		{"get", "11", "--section", "ac"},
+		{"get", "CRLF", "--match", "--explain-urgency"},
+		{"get", "MYP-11", "--section", "plan,notes", "--id"},
+	}
+}
+
+func TestParseRenderRoundTripOverTheRealTable(t *testing.T) {
+	for _, argv := range realInvocations() {
+		t.Run(strings.Join(argv, " "), func(t *testing.T) {
+			first, err := Parse(argv, Commands(), Env{})
+			if err != nil {
+				t.Fatalf("parse(%q): %v", argv, err)
+			}
+			again := render(first)
+			second, err := Parse(again, Commands(), Env{})
+			if err != nil {
+				t.Fatalf("parse(render(...)) of %q: %v", again, err)
+			}
+			if got, want := fingerprint(second), fingerprint(first); got != want {
+				t.Errorf("round trip through %q changed the invocation:\ngot\n%s\nwant\n%s",
+					again, got, want)
+			}
+		})
+	}
+}
+
+// TestTheRealInvocationsCoverEveryStep is what keeps the table above
+// honest: it has to exercise the nine steps of
+// docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura, or the
+// property would be checking the ones it happens to mention and no more.
+func TestTheRealInvocationsCoverEveryStep(t *testing.T) {
+	seen := map[Category]bool{}
+	for _, argv := range realInvocations() {
+		p, err := Parse(argv, Commands(), Env{})
+		if err != nil {
+			t.Fatalf("parse(%q): %v", argv, err)
+		}
+		for _, c := range p.Changes() {
+			seen[c.Category] = true
+		}
+	}
+	for step := Clear; step <= AddComment; step++ {
+		if !seen[step] {
+			t.Errorf("no invocation of the table writes a flag of step %d", step)
+		}
+	}
+}

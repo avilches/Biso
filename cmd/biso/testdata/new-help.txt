@@ -1,0 +1,45 @@
+Usage: biso new <title> [options]
+       biso new --from <file|-> [options]
+
+Create a task and print its id. Every field flag of `biso set` works here.
+
+Arguments:
+  title                      task title (required unless --from is given)
+
+Most used:
+  -d, --append-desc <text>    description; repeat to append paragraphs
+      --add-ac <text>         add an acceptance criterion; repeatable
+      --type <value>          configured type
+      --priority <value>      configured priority
+  -s, --status <value>        configured status (default: the initial one)
+  -l, --add-labels <value>    add a label; repeatable or comma-separated
+  -a, --add-assignees <@who>  add an assignee; repeatable or comma-separated
+      --add-deps <ref>        add a dependency; validated, repeatable
+      --due <YYYY-MM-DD>      due date
+      --comment <text>        add a discussion comment; repeatable
+      --append-plan <text>    implementation plan
+      --start                 create it already in the active status, assigned
+                              to you, with the lease claimed for you
+
+Every other field flag of `biso set --help` is accepted too.
+
+Batch:
+      --from <file|->        NDJSON, one task object per line. The only place
+                             where id, createdAt, updatedAt, criterion keys,
+                             comment timestamps and question timestamps can be
+                             given. Validated whole before anything is written.
+
+Any text option also takes @file to read a file, or - to read stdin.
+
+Exit codes:
+  0  created            4  a referenced task or file does not exist
+  2  bad usage          5  a text reference matched several tasks
+  3  unknown value      8  the board could not be written
+  7  batch or --dry-run validation failed, nothing was written
+                        20 no board here
+
+Examples:
+  biso new "Normalize CRLF in the diff" --type bug --priority high
+  biso new "Add OAuth" --add-ac "Login succeeds" --add-ac "Token refreshes"
+  biso new "Rewrite the installer" -d @docs/installer.md --start
+  biso new --from tasks.ndjson --dry-run

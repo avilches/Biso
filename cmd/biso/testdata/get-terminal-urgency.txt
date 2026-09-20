@@ -1,0 +1,2 @@
+urgency 0.0
+  terminal status, urgency is zero by definition

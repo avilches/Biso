@@ -46,8 +46,14 @@ Cuando se usa para resolver una referencia, y solo entonces, se aplican además 
 | Coincidencias | Qué pasa |
 |---:|---|
 | exactamente 1 | se usa esa tarea, con `note: "CRLF" matched MYP-11` por stderr |
-| 0 | error 4 |
+| 0 | error 4, con `code` igual a `not_found`: `error: no task matches "CRLF"` |
 | más de 1 | error 5, con las candidatas por stdout en el formato de `biso ls` |
+
+**Dos coincidencias en el título son la ambigüedad, y los cuerpos no la agrandan.** La regla de que
+el título gana no es solo un desempate para el caso de una: si el texto aparece en el título de dos
+tareas, las candidatas del error 5 son esas dos y ninguna más, aunque el mismo texto esté además en
+el cuerpo de otras diez. Solo cuando no aparece en ningún título se buscan las candidatas en el
+resto del ámbito.
 
 El caso de más de una coincidencia lleva, por stderr y antes de esas filas, esta línea, con `code`
 igual a `ambiguous_reference` (["El contrato JSON"](contrato-json.md#los-identificadores-de-error)):
@@ -56,10 +62,27 @@ igual a `ambiguous_reference` (["El contrato JSON"](contrato-json.md#los-identif
 error: "CRLF" matches 3 tasks
 ```
 
+**Las candidatas se imprimen en todos los comandos que resuelven una referencia**, no solo en
+`biso get`: `biso set`, los verbos del ciclo y el `-p` de `biso ls` las sacan igual, en el mismo
+formato y con el mismo orden por defecto, porque esta rutina no tiene variantes por comando. Con
+`--json`, en cambio, solo `biso get` contesta el sobre de datos `task.candidates`; los demás
+contestan el sobre de error con el mismo código 5, según la tabla de `kind` de ["El sobre"](contrato-json.md#el-sobre).
+
 **Una coincidencia en el título gana sobre una coincidencia en cualquier otro sitio.** Si el texto
 aparece en el título de una sola tarea, esa es la respuesta aunque aparezca en el cuerpo de otras
 diez, y no hay ambigüedad. La búsqueda para resolver una referencia mira solo las tareas **no
 archivadas**; el filtro `--search` mira las que digan los demás filtros.
+
+**El único filtro que se aplica al resolver una referencia es ese, el de archivada, y el estado no
+filtra nada.** Una tarea en el estado terminal se resuelve como cualquier otra y aparece entre las
+candidatas de un error 5, aunque `biso ls --search "<texto>"` no la traiga: ese listado la deja
+fuera por el valor por defecto de su `-s` (["`biso ls`"](cmd/ls.md)), que es un filtro suyo y no una regla de esta
+rutina. Resolver una referencia tiene que poder llegar a cualquier tarea del tablero, y una tarea
+terminada se lee, se comenta y se reabre igual que las demás; si las candidatas la escondieran,
+`biso get "CRLF"` diría que el texto encaja con una sola tarea mientras la lista de candidatas de un
+error 5 posterior contradiría esa cuenta. Cuando la tabla de ["`biso get`"](cmd/get.md#comportamiento-caso-a-caso) dice que las
+candidatas salen "exactamente" como las imprimiría ese listado, habla de la forma de imprimirlas, que
+son tres cosas y solo tres: el orden, el límite de treinta y el aviso de recorte.
 
 ## Los tres mensajes de "no la encuentro"
 

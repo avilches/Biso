@@ -36,7 +36,9 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 
 | Caso | Qué pasa |
 |---|---|
-| Ningún flag de cambio | Error 2: `error: nothing to change` con un puntero a `biso get` |
+| Ninguna referencia | Error 2, con el `code` `missing_ref`: `error: biso set needs at least one task reference`, y `hint: biso set MYP-11 --priority high` |
+| Ningún flag de cambio | Error 2: `error: nothing to change` con un puntero a `biso get`, que nombra la primera referencia de la llamada: `hint: \`biso get MYP-11\` shows what the task has now` |
+| La misma tarea nombrada dos veces | Se escribe una sola vez. La segunda mención no dice nada que no dijera la primera, y aplicar los cambios dos veces añadiría dos veces el mismo comentario o el mismo criterio |
 | Varias referencias | El mismo cambio se aplica a todas, con la garantía de todo o nada de la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables) |
 | Varias referencias y un selector que no sea `all` (clave, rango, lista o texto) | Error 2, porque el selector de una tarea no tiene por qué significar lo mismo en otra |
 | Varias referencias y `--check-ac all` | Válido |
@@ -120,7 +122,14 @@ warning: --replace-labels replaced 2 existing labels
 
 `kind` es `task.write` para `new`, `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y
 `archive`, para que quien consuma la salida no tenga que distinguir qué verbo la produjo. `changed`
-dice qué campos han cambiado de verdad, que no es lo mismo que qué flags se han pasado. En el lote
+dice qué campos han cambiado de verdad, que no es lo mismo que qué flags se han pasado: se calcula
+comparando la tarea de antes con la de después, campo a campo, con los nombres de
+["El modelo de datos de una tarea"](../modelo-de-datos/index.md), y en el orden de la tabla de esa
+página. **`leaseExpiresAt` y `leaseHolder` no están nunca entre ellos**, porque una renovación no es
+un cambio de la tarea, que es lo mismo que dice la fila de `updatedAt` de esa tabla y lo que hace
+cierta la fila de "todos los flags dejan la tarea igual" de más arriba. Una lista vacía y una lista
+que nunca estuvo son el mismo campo sin valor, así que pasar de una a otra tampoco cuenta como
+cambio. En el lote
 de `new --from`, las 242 tareas van en `data.tasks` de **un solo sobre**, no en 242 objetos sueltos.
 
 **`acAdded` es la lista de claves que la llamada acaba de crear**, en el mismo orden en que se

@@ -1,0 +1,5 @@
+MYP-11  Normalize CRLF in the diff
+
+## Acceptance Criteria
+- [x] #1 The diff ignores CRLF
+- [ ] #3 There is a test that covers it
