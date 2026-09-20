@@ -101,32 +101,80 @@ type doctor struct {
 	// writing.
 	repairs board.Repairs
 	marker  string
-	// fixable maps the index of a problem to the message of the repair it
-	// would become, so that a fixed error leaves `problems` instead of
-	// being listed twice.
-	fixable map[int]Finding
+	// problems are the errors found, each with what repairing it would
+	// say when --fix can repair it, so that a fixed error moves from one
+	// list to the other instead of being listed twice. They are kept
+	// together, and not as an index into the result, because the report
+	// is sorted before it is answered.
+	problems []pending
+}
+
+// pending is one error found, and the line the repaired version of it
+// would print. repaired is nil when --fix cannot repair it.
+type pending struct {
+	found    Finding
+	repaired *Finding
 }
 
 func (d *doctor) problem(task, code, message string) {
-	d.result.Problems = append(d.result.Problems, Finding{Task: task, Code: code, Message: message})
+	d.problems = append(d.problems, pending{
+		found: Finding{Task: task, Code: code, Message: message}})
 }
 
 // fixableProblem records an error together with what repairing it would
 // say, so --fix can move it from one list to the other.
 func (d *doctor) fixableProblem(task, code, problem, repaired string) {
-	if d.fixable == nil {
-		d.fixable = map[int]Finding{}
-	}
-	d.fixable[len(d.result.Problems)] = Finding{Code: code, Message: repaired}
-	d.problem(task, code, problem)
+	d.problems = append(d.problems, pending{
+		found:    Finding{Task: task, Code: code, Message: problem},
+		repaired: &Finding{Code: code, Message: repaired},
+	})
 }
 
 func (d *doctor) warning(task, code, message string) {
 	d.result.Warnings = append(d.result.Warnings, Finding{Task: task, Code: code, Message: message})
 }
 
-// check runs every check of the table of docs/spec/cmd/doctor.md#qué-comprueba,
-// in the order the report lists them.
+// checkRank is the position of every check in the table of
+// docs/spec/cmd/doctor.md#qué-comprueba, which is the order the report
+// lists its findings in
+// (docs/spec/cmd/doctor.md#el-orden-en-que-sale-el-informe). The checks
+// themselves do not run in that order, because several of them are asked of
+// each task in one pass over the board, so the report is sorted by this map
+// before it is answered.
+var checkRank = map[string]int{
+	"duplicate_id":             1,
+	"task_unreadable":          2,
+	"undeclared_extension_key": 3,
+	"value_not_configured":     4,
+	"status_role_unknown":      5,
+	"status_role_invalid":      6,
+	"dependency_not_found":     7,
+	"dependency_cycle":         8,
+	"parent_cycle":             9,
+	"duplicate_criterion_key":  10,
+	"lease_invariant":          11,
+	"highest_id_behind":        12,
+	"marker_missing":           13,
+	"marker_id_mismatch":       14,
+	"extra_root_unreadable":    15,
+	"unsafe_wal_filesystem":    16,
+	"ignore_file_mismatch":     17,
+}
+
+// inTableOrder sorts the findings the way the table lists the checks. The
+// sort is stable, so two findings of the same check keep the order the
+// check produced them in, which is ascending identifier for everything
+// asked of a task.
+func inTableOrder[T any](items []T, codeOf func(T) string) {
+	sort.SliceStable(items, func(i, j int) bool {
+		return checkRank[codeOf(items[i])] < checkRank[codeOf(items[j])]
+	})
+}
+
+// check runs every check of the table of docs/spec/cmd/doctor.md#qué-comprueba.
+// They do not run in the order of that table, because the ones that are
+// about a task are all asked in a single pass over the board; the report is
+// put back into the table's order at the end.
 func (d *doctor) check() error {
 	if err := d.checkDuplicateIDs(); err != nil {
 		return err
@@ -149,6 +197,13 @@ func (d *doctor) check() error {
 	d.checkExtraRoots()
 	d.checkFilesystem()
 	d.checkIgnoreFile()
+
+	inTableOrder(d.problems, func(p pending) string { return p.found.Code })
+	inTableOrder(d.result.Warnings, func(w Finding) string { return w.Code })
+	d.result.Problems = make([]Finding, 0, len(d.problems))
+	for _, p := range d.problems {
+		d.result.Problems = append(d.result.Problems, p.found)
+	}
 	return nil
 }
 
@@ -258,9 +313,7 @@ func (d *doctor) checkTasks(tasks []*model.Task) error {
 			if containsString(cfg.Extensions, key) {
 				continue
 			}
-			d.problem(t.ID, "undeclared_extension_key", fmt.Sprintf(
-				"ext key %q is not declared, declared keys are %q",
-				key, strings.Join(cfg.Extensions, ", ")))
+			d.problem(t.ID, "undeclared_extension_key", undeclaredKeyMessage(key, cfg.Extensions))
 		}
 		for _, dep := range t.Dependencies {
 			if _, ok := byID[dep]; !ok {
@@ -295,9 +348,31 @@ func (d *doctor) checkVocabulary(t *model.Task, field, value string, configured 
 	case "priority":
 		noun = "priorities"
 	}
-	d.problem(t.ID, "value_not_configured", fmt.Sprintf(
-		"%s %q is not one of the configured %s %q",
-		field, value, noun, strings.Join(configured, ", ")))
+	d.problem(t.ID, "value_not_configured", notConfiguredMessage(field, value, noun, configured))
+}
+
+// notConfiguredMessage and undeclaredKeyMessage are the two messages that
+// quote a list the board may have emptied. `types`, `priorities` and
+// `extensions` can all be left with nothing in them
+// (docs/spec/cmd/config.md), and quoting an empty list would print a pair
+// of empty quotes where a value should be, which says nothing and reads
+// like a bug. The message says there is none instead
+// (docs/spec/cmd/doctor.md#el-code-y-el-mensaje-de-cada-comprobación).
+func notConfiguredMessage(field, value, noun string, configured []string) string {
+	if len(configured) == 0 {
+		return fmt.Sprintf("%s %q is not one of the configured %s, and the board configures none",
+			field, value, noun)
+	}
+	return fmt.Sprintf("%s %q is not one of the configured %s %q",
+		field, value, noun, strings.Join(configured, ", "))
+}
+
+func undeclaredKeyMessage(key string, declared []string) string {
+	if len(declared) == 0 {
+		return fmt.Sprintf("ext key %q is not declared, and the board declares none", key)
+	}
+	return fmt.Sprintf("ext key %q is not declared, declared keys are %q",
+		key, strings.Join(declared, ", "))
 }
 
 // checkCycle reports one finding per cycle and not one per task in it: the
@@ -366,8 +441,16 @@ func (d *doctor) checkHighestID(tasks []*model.Task) error {
 		return nil
 	}
 	prefix := d.b.Config.TaskPrefix
+	// A counter at zero is not an identifier: the board has never handed
+	// one out, so there is no MYP-0 to name and the message says that
+	// instead of inventing one
+	// (docs/spec/cmd/doctor.md#el-code-y-el-mensaje-de-cada-comprobación).
 	behind := fmt.Sprintf("the highest recorded id was %s-%d and tasks go up to %s-%d",
 		prefix, recorded, prefix, highest)
+	if recorded == 0 {
+		behind = fmt.Sprintf("no id is recorded as handed out and tasks go up to %s-%d",
+			prefix, highest)
+	}
 	d.repairs.HighestID = highest
 	d.fixableProblem("", "highest_id_behind", behind,
 		fmt.Sprintf("%s; recorded %s-%d", behind, prefix, highest))
@@ -477,14 +560,13 @@ func (d *doctor) fix(dryRun bool) error {
 			}
 		}
 	}
-	kept := make([]Finding, 0, len(d.result.Problems))
-	for i, problem := range d.result.Problems {
-		repaired, ok := d.fixable[i]
-		if !ok {
-			kept = append(kept, problem)
+	kept := make([]Finding, 0, len(d.problems))
+	for _, p := range d.problems {
+		if p.repaired == nil {
+			kept = append(kept, p.found)
 			continue
 		}
-		d.result.Fixed = append(d.result.Fixed, repaired)
+		d.result.Fixed = append(d.result.Fixed, *p.repaired)
 	}
 	d.result.Problems = kept
 	return nil

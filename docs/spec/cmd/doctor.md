@@ -316,13 +316,98 @@ concreto, el mismo criterio que ya usan `extra_root_unreadable` e `ignore_file_m
 | Ciclos de tarea padre | `parent_cycle` | una tarea del ciclo | `MYP-11 is part of a parent cycle: MYP-11 -> MYP-12 -> MYP-11` |
 | Claves de criterio repetidas dentro de una tarea | `duplicate_criterion_key` | la tarea | `acceptance criterion key #3 is used by 2 criteria, keys must be unique within a task` |
 | Arrendamiento sin tarea activa y asignada | `lease_invariant` | la tarea | `has a lease but is not both active and assigned` |
-| Identificador más alto por detrás | `highest_id_behind` | `null` | `the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52` |
+| Identificador más alto por detrás | `highest_id_behind` | `null` | `the highest recorded id was MYP-40 and tasks go up to MYP-52` |
 | Falta el marcador `<id>.id` | `marker_missing` | `null` | `board directory has no <id>.id marker, the database says id is "3f9a2b1c"` |
 | El marcador `<id>.id` nombra un `id` distinto | `marker_id_mismatch` | `null` | `marker file names id "a1b2c3d4", the database says id is "3f9a2b1c"` |
 | Raíz de `boards_extra_roots` no legible | `extra_root_unreadable` | `null` | `extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)` |
 | **Integridad de la base de datos falla** | **sin `code`** | | **Nunca entra en `problems`, `warnings` ni `fixed`: aborta el comando entero con su propio mensaje y el código 21, antes de que `doctor` construya ningún JSON** (sección ["El sondeo del sistema de ficheros"](#el-sondeo-del-sistema-de-ficheros) de más arriba explica el porqué con más detalle) |
 | Sistema de ficheros inseguro para WAL | `unsafe_wal_filesystem` | `null` | `board directory "/Users/avilches/.biso/boards/my-project-3f9a2b1c" is on a filesystem where SQLite's WAL mode is not safe (the byte-range lock or the shared mmap probe failed)` |
 | El fichero de exclusión no corresponde al `vcs` configurado | `ignore_file_mismatch` | `null` | `.gitignore does not match the configured vcs "none" (left over from git, biso does not rewrite it automatically)` |
+
+### Las dos formas de un mensaje reparable
+
+**Las tres comprobaciones que `--fix` repara dicen dos cosas distintas, y las dos son normativas**: una
+bajo `Errors:`, mientras el problema sigue ahí, y otra en el grupo de lo reparado, cuando `--fix` ya lo
+ha arreglado. La tabla de arriba fija la primera, que es la que se ve en un tablero sin tocar; esta fija
+las dos, una al lado de la otra, para que no haya que deducir ninguna. El `code` es el mismo en los dos
+sitios, y las dos formas tienen su prueba de fichero dorado.
+
+| `code` | Bajo `Errors:` | En el grupo de lo reparado |
+|---|---|---|
+| `lease_invariant` | `has a lease but is not both active and assigned` | `MYP-52 had a lease but was not both active and assigned; cleared leaseExpiresAt and leaseHolder` |
+| `highest_id_behind` | `the highest recorded id was MYP-40 and tasks go up to MYP-52` | `the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52` |
+| `marker_missing` | `board directory has no <id>.id marker, the database says id is "3f9a2b1c"` | `wrote the <id>.id marker, the database says id is "3f9a2b1c"` |
+
+La única de las tres que nombra la tarea en su propio texto es la del arrendamiento, y solo en la forma
+reparada: bajo `Errors:` el identificador va en la columna de la izquierda, y el grupo de lo reparado no
+tiene esa columna. Las otras dos son hallazgos del tablero, con `task` a `null`, así que no nombran
+ninguna. Las cuatro líneas del contador y del marcador, tal como salen en el informe:
+
+```
+  the highest recorded id was MYP-40 and tasks go up to MYP-52
+```
+
+```
+  the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52
+```
+
+```
+  board directory has no <id>.id marker, the database says id is "3f9a2b1c"
+```
+
+```
+  wrote the <id>.id marker, the database says id is "3f9a2b1c"
+```
+
+### Cuando el tablero no recuerda haber asignado ningún identificador
+
+El contador del identificador más alto vale cero en un tablero que nunca ha asignado ninguno, y cero no
+es un identificador: no existe ninguna tarea `MYP-0` y el mensaje no se la inventa. **Cuando el contador
+está a cero, el mensaje dice que no hay ninguno registrado** en vez de nombrar uno que nadie podría
+buscar:
+
+```
+  no id is recorded as handed out and tasks go up to MYP-52
+```
+
+La forma reparada es la misma regla de la subsección anterior, la frase de arriba seguida de lo que se
+registró: `no id is recorded as handed out and tasks go up to MYP-52; recorded MYP-52`. El `code` sigue
+siendo `highest_id_behind`, porque el hallazgo es el mismo y quien ramifica sobre el `code` no tiene que
+distinguir dos casos que se arreglan igual. Un tablero sin ninguna tarea tampoco dispara nada, porque el
+contador a cero solo está por detrás cuando existe alguna tarea con un número por delante de él.
+
+### Cuando la lista que el mensaje cita está vacía
+
+Dos de los mensajes citan una lista configurada: la de claves de extensión declaradas y la del
+vocabulario cerrado que un valor incumple. **`types`, `priorities` y `extensions` se pueden dejar
+vacías** (["`biso config`"](config.md)), y entonces citar la lista imprimiría unas comillas con nada
+dentro, que no dice nada y se lee como un fallo del programa. **Con la lista vacía el mensaje dice que
+no hay ninguna**, en vez de citarla:
+
+```
+  ext key "trello.card" is not declared, and the board declares none
+```
+
+```
+  type "bug" is not one of the configured types, and the board configures none
+```
+
+Los `code` no cambian, `undeclared_extension_key` y `value_not_configured`: es el mismo hallazgo
+contado con las palabras que le tocan. `statuses` no necesita esta forma, porque nunca puede quedarse
+vacía: la comprobación de la tabla de arriba exige al menos tres.
+
+### El orden en que sale el informe
+
+**Los hallazgos salen en el orden de la tabla ["Qué comprueba"](#qué-comprueba)**, de arriba abajo, y
+los avisos siguen esa misma tabla en su propia lista. Dentro de una misma comprobación el orden es el
+del tablero, es decir, identificador ascendente para todo lo que se pregunta de una tarea, y el orden
+en que están declaradas para lo que se pregunta de la configuración de la máquina.
+
+Es un orden fijo y no una consecuencia de cómo se implemente: varias de las comprobaciones que miran
+una tarea se hacen en una sola pasada por el tablero, que es lo barato, así que sin esta regla el
+informe saldría agrupado por tarea en un sitio y por comprobación en otro. Con ella, dos ejecuciones
+sobre el mismo tablero imprimen exactamente lo mismo, y quien lee el informe puede encontrar una
+comprobación por su posición en la tabla.
 
 ## Atomicidad de `--fix` con varias reparaciones
 

@@ -1,0 +1,1 @@
+  ext key "trello.card" is not declared, and the board declares none
