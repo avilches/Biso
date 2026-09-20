@@ -227,6 +227,16 @@ permitido, y lo hace `biso new --from`; lo que no existe es la copia paralela. S
 el mismo Error 2 de "ya hay uno accesible desde aquí", y no hace falta `--overwrite-config` para
 distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno existente.
 
+**"Un identificador que ya existe en esta máquina" son las raíces y solo las raíces.** La fila de
+abajo que da el error de identidad duplicada se mide igual que en cualquier otro comando, recorriendo
+las raíces de ["Configuración de máquina"](../invocacion.md#configuración-de-máquina) y no el disco
+entero: es el error 22 de ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-mismo-id-en-dos-sitios),
+el mismo `id` en dos de esas raíces. Por eso restaurar a un `--at` que cae fuera de todas ellas no es
+un error aunque la instantánea de origen viva dentro de una, que es exactamente lo que hace el ejemplo
+de la garantía de simetría de ["`biso export`"](export.md). Y restaurar encima de un tablero íntegro
+tampoco llega a plantear la pregunta: eso es el Error 2 de que ya hay uno, visto desde el lado del
+destino, porque `--from` siempre crea un tablero nuevo.
+
 **La identidad que `--from` adopta es la del marcador de la instantánea, salvo que el destino ya
 tenga uno propio, y entonces manda el del destino.** Los dos casos no compiten en la práctica, porque
 el único destino que trae marcador es el tablero que se está reconstruyendo en su sitio, y ahí los

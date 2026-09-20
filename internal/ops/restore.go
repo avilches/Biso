@@ -155,6 +155,24 @@ func restore(env Env, p InitParams, facts board.Searched, target string) (*InitR
 	if dir == "" {
 		dir = filepath.Join(env.Machine.BoardsRoot, FolderName(snap.Config.ProjectName, id))
 	}
+	// A restore always creates a new board and never rewrites one that is
+	// already there, so a destination that is still a whole board is the
+	// same board_exists of this command, seen from the other side
+	// (docs/spec/cmd/init.md). A destination whose database cannot be read
+	// is not a whole board, and that one is rebuilt in place.
+	readable, readErr := board.DatabaseReadable(dir)
+	if readErr != nil {
+		return nil, readErr
+	}
+	if readable {
+		return nil, &model.Error{
+			ExitCode: 2,
+			Code:     "board_exists",
+			Message:  fmt.Sprintf("%s already holds board %s", dir, board.MarkerID(dir)),
+			Hints:    []string{"--from always creates a new board, and never rewrites one that is already there"},
+		}
+	}
+
 	stored := ""
 	switch {
 	case p.HasAt:

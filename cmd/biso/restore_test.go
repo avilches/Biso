@@ -267,3 +267,19 @@ func copySnapshot(t *testing.T, m *machine, from, to string) {
 		m.write(t, filepath.Join(to, e.Name()), m.read(t, filepath.Join(from, e.Name())))
 	}
 }
+
+// TestRestoreRefusesADestinationThatIsStillAWholeBoard is the other side of
+// the board_exists of this command: --from always creates a board, so a
+// destination whose database opens is never rewritten.
+func TestRestoreRefusesADestinationThatIsStillAWholeBoard(t *testing.T) {
+	m, dir := snapshotDir(t)
+
+	got := m.restoreInto(t, dir, dir)
+
+	if got.code != 2 || !strings.Contains(got.stderr, "already holds board") {
+		t.Errorf("restoring over a live board exited %d:\n%s", got.code, got.stderr)
+	}
+	// The board it refused to touch is still there, whole.
+	assertEqual(t, m.run(t, "ls", "--any-status", "--count").assertCode(t, 0).stdout,
+		"2\n", "the tasks of the board a refused restore left alone")
+}
