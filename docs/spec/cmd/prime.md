@@ -52,8 +52,11 @@ biso prime [--full] [--limit <n>] [--json]
 | Alguna tarea no se puede leer | El mensaje sale igual, con una línea más en el bloque `BOARD` que resume el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) (por stdout, no por stderr: es la excepción declarada más abajo), código 0 |
 | `--limit` negativo | Código 2 |
 
-`biso prime` **no escribe nada, nunca**, y no necesita acceso exclusivo. Es seguro llamarlo en
-paralelo desde varias sesiones y mientras otro proceso escribe.
+`biso prime` **no cambia ni una tarea ni una clave de configuración**, y no necesita acceso
+exclusivo. Es seguro llamarlo en paralelo desde varias sesiones y mientras otro proceso escribe. Lo
+que sí hace, como cualquier otro comando, es abrir la base de datos, y abrirla en modo WAL ya es
+escribir: por eso puede salir con el código 8 si el almacén no se deja escribir, según
+["Qué pasa cuando el almacén no se puede escribir"](../garantias.md#qué-pasa-cuando-el-almacén-no-se-puede-escribir).
 
 Un `--limit` negativo es el mismo error que el de ["`biso ls`"](ls.md), con el mismo identificador
 `invalid_number`, porque es el mismo flag con el mismo valor mal escrito y no tendría sentido que
@@ -498,6 +501,7 @@ omitir la clave.
 | Mensaje impreso | 0 |
 | Mensaje impreso con alguna tarea ilegible | 0, con aviso |
 | `--limit` negativo, o `--full` junto con `--json` | 2 |
+| El almacén no se puede escribir | 8 |
 | No hay tablero | 20 |
 
 ## `biso prime --help`

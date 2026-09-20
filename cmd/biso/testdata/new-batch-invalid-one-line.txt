@@ -1,0 +1,2 @@
+error: 1 of 1 line is invalid, nothing was written
+  line 1: unknown key: "nosuch"

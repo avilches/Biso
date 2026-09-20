@@ -48,20 +48,36 @@ cerradas.
 |---|---|---|
 | [Vocabulario de esta especificación](vocabulario.md) | ninguno; fija nombres, no comportamiento | guía, no verificable |
 | [Los principios](principios.md) | todos | guía, no verificable |
-| [Códigos de salida](codigos-de-salida.md) | todos los que devuelven un código de error | en curso |
-| [Flags globales](cmd/flags-globales.md) | pasos 4 a 9 | en curso |
-| [Entorno y configuración de máquina](invocacion.md) | pasos 4 a 9 | en curso |
+| [Códigos de salida](codigos-de-salida.md) | todos los que devuelven un código de error | hecho |
+| [Flags globales](cmd/flags-globales.md) | pasos 4 a 9 | hecho con matices |
+| [Entorno y configuración de máquina](invocacion.md) | pasos 4 a 9 | hecho |
 | [Cómo se elige el tablero](resolucion-del-tablero.md) | pasos 4 y 9 | hecho |
-| [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 4, 5 y 7 | en curso |
-| [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
+| [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 4, 5 y 7 | hecho con matices |
+| [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | hecho |
 | [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5, 8 y 9 | hecho |
 | [El arrendamiento de una tarea](lease.md) | pasos 2, 5 y 6 | hecho |
 | [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | hecho |
-| [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | en curso |
+| [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | hecho |
 | [Las familias de flags](familias-de-flags.md) | pasos 5 y 6 | hecho |
-| [El contrato JSON](contrato-json.md) | pasos 4 a 9 | en curso |
+| [El contrato JSON](contrato-json.md) | pasos 4 a 9 | hecho con matices |
 | [El contrato de estabilidad](estabilidad.md) | pasos 7 y 8 | hecho |
 | [Lo que se deja fuera a propósito](fuera-de-alcance.md) | ninguno | fuera de alcance |
+
+### Los tres matices de la tabla de arriba
+
+Ninguna fila queda ya "en curso": ese estado significa, según la leyenda de esta página, que hay una
+tarea abierta que lo cubre, y las nueve subtareas de la implementación están cerradas. Las tres que
+quedan con matices son estas, y el matiz es siempre el mismo tipo de cosa, algo que la
+especificación describe y que la versión 1.0 acepta sin llegar a ejercer:
+
+- **[Flags globales](cmd/flags-globales.md)** y **[Terminal, flujos de salida y
+  codificación](salida-y-terminal.md)**: `--color` y `NO_COLOR` se analizan, se validan y deciden
+  correctamente si habría color, pero **ninguna salida de la versión 1.0 lleva color**, porque la
+  especificación fija cuándo lo habría y no dice en ningún sitio qué se pinta. Está escrito en esa
+  misma página y hay una prueba que comprueba que no cambian un byte.
+- **[El contrato JSON](contrato-json.md)**: dos de sus `code`, `no_terminal` y `port_in_use`, están
+  reservados para [`biso board`](cmd/board.md) y la versión 1.0 no los emite nunca. No se quitan
+  porque ["El contrato de estabilidad"](estabilidad.md) fija que las entradas son permanentes.
 
 ### Qué queda probado ya de los transversales que empezaron los pasos 1 y 2
 

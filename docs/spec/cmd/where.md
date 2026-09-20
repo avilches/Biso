@@ -153,6 +153,7 @@ como mucho uno, por la sección ["Cuando hay más de un candidato"](#cuando-hay-
 | Desenlace | Código |
 |---|---:|
 | Tablero encontrado | 0 |
+| El almacén no se puede escribir | 8 |
 | No hay tablero | 20 |
 | Su base de datos no se puede leer | 21 |
 | El mismo `id` está en dos raíces | 22 |

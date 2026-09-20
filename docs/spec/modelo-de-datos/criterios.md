@@ -29,4 +29,9 @@ Consecuencias que hay que respetar en toda la implementación:
 - Una lista con un elemento cuya clave no sea un entero positivo, o con dos elementos que compartan
   clave, **no se guarda**. Las claves las pone el programa, así que eso no es un error de quien llama
   sino un fallo de quien construyó la tarea, y se para antes de tocar el almacén: nunca sale como un
-  error de la base de datos nombrando una tabla.
+  error de la base de datos nombrando una tabla. **Y a propósito no tiene un `code` propio de
+  ["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)**, porque
+  ninguna invocación puede provocarlo: si ocurre, el programa está roto, así que sale por el
+  código 1 de ["El código 1 es un fallo del programa, no de quien
+  llama"](../codigos-de-salida.md#el-código-1-es-un-fallo-del-programa-no-de-quien-llama). Darle un
+  `code` lo presentaría como un caso previsto de la especificación, que es justo lo que no es.

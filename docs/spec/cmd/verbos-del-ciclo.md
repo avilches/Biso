@@ -216,6 +216,11 @@ error: biso note needs a text to append
 hint: biso note MYP-11 "The parser already normalized LF, CRLF was missing"
 ```
 
+**La pista repite la referencia que se escribió**, no una fija: en un tablero cuyo prefijo no sea
+`MYP` sale la que se tecleó, igual que hace la pista de ["nada que
+cambiar"](set.md) de `biso set`. Lo mismo vale para las pistas equivalentes de `biso comment`, de
+`biso ask` y de `biso answer`.
+
 **Un texto vacío no es ese caso**: la llamada sigue siendo una escritura, con su aviso y su línea de
 estado, y lo único que no pasa es que se añada un párrafo vacío.
 

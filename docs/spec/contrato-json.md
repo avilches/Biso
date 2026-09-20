@@ -175,6 +175,13 @@ agrupada por el código de salida con el que sale cada uno:
 | 21 | `database_unreadable` |
 | 22 | `ambiguous_board_id` |
 
+**Dos `code` de la fila del 8 están reservados y la versión 1.0 no los emite nunca**: `no_terminal`
+y `port_in_use` son de [`biso board`](cmd/board.md), la interfaz interactiva que
+["Qué hay implementado y qué no"](estado-de-implementacion.md) declara fuera del alcance de 1.0. No
+se quitan de la lista porque
+["El contrato de estabilidad"](estabilidad.md) fija que las entradas son permanentes; se nombran
+aquí para que quien recorra la lista buscando qué produce cada una no los busque en vano.
+
 **Los cinco `code` del lote y de la instantánea se añadieron al implementarlos**, porque la
 especificación describía sus mensajes sin darles identificador: `unknown_key` (una clave que el
 formato de intercambio no declara), `id_taken` (un `id` que el tablero ya tiene, o que aparece dos

@@ -496,7 +496,7 @@ No están en el bloque de arriba porque ese bloque es stdout, y las notas van po
 | Ya existía y no hay `--overwrite-config` | 2 |
 | Argumentos inválidos, incluido un `board.json` de `--from` inválido, o `--from` junto con `--overwrite-config` | 2 |
 | El nombre del tablero no deja ningún slug con el que nombrar su carpeta | 3 |
-| `--from` a un directorio sin `snapshot.ndjson`, sin `board.json`, o sin los dos | 4 |
+| `--from` a un directorio sin `snapshot.ndjson`, sin `board.json`, sin el marcador `<id>.id`, o sin varios de los tres | 4 |
 | `--overwrite-config` cambiaría `task_prefix` con tareas ya creadas | 6 |
 | El lote de `snapshot.ndjson` de `--from` falla su validación | 7 |
 | No se puede escribir | 8 |
@@ -574,7 +574,8 @@ the board works the same, only its history is lost.
 Exit codes:
   0  board created, or restored with --from
   2  bad usage, or a board is already reachable from here
-  4  --from points at a directory missing snapshot.ndjson, board.json, or both
+  4  --from points at a directory missing snapshot.ndjson, board.json,
+     the <id>.id marker, or several of the three
   6  --overwrite-config would change task_prefix on a board with tasks
   7  --from's snapshot.ndjson failed batch validation
   8  cannot write there

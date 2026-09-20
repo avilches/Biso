@@ -216,7 +216,7 @@ func Note(env Env, p NoteParams) (*WriteResult, error) {
 func NoteOn(b *board.Board, env Env, p NoteParams) (*WriteResult, error) {
 	if len(p.Texts) == 0 && !writesAnyField(p.Changes) {
 		return nil, missingText("note", "a text to append",
-			`biso note MYP-11 "The parser already normalized LF, CRLF was missing"`)
+			`biso note `+p.Ref+` "The parser already normalized LF, CRLF was missing"`)
 	}
 	changes, warnings, err := textChanges(b, "note", "append-note", StepAdd, p, noteIDLikeHint)
 	if err != nil {
@@ -237,7 +237,7 @@ func Comment(env Env, p CommentParams) (*WriteResult, error) {
 func CommentOn(b *board.Board, env Env, p CommentParams) (*WriteResult, error) {
 	if len(p.Texts) == 0 && !writesAnyField(p.Changes) {
 		return nil, missingText("comment", "a text to append",
-			`biso comment MYP-11 "A user with a Windows clone reported this"`)
+			`biso comment `+p.Ref+` "A user with a Windows clone reported this"`)
 	}
 	changes, warnings, err := textChanges(b, "comment", "comment", StepComment, p, commentIDLikeHint)
 	if err != nil {
@@ -543,7 +543,7 @@ func questionBody(b *board.Board, env Env, command, what, noun string, p NotePar
 	}
 	if len(paragraphs) == 0 {
 		return "", missingText(command, what,
-			fmt.Sprintf("biso %s MYP-11 \"...\"", command))
+			fmt.Sprintf("biso %s %s \"...\"", command, p.Ref))
 	}
 	if env.Me == "" {
 		// The author of a question and the author of an answer are

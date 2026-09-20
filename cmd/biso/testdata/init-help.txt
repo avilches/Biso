@@ -62,7 +62,8 @@ the board works the same, only its history is lost.
 Exit codes:
   0  board created, or restored with --from
   2  bad usage, or a board is already reachable from here
-  4  --from points at a directory missing snapshot.ndjson, board.json, or both
+  4  --from points at a directory missing snapshot.ndjson, board.json,
+     the <id>.id marker, or several of the three
   6  --overwrite-config would change task_prefix on a board with tasks
   7  --from's snapshot.ndjson failed batch validation
   8  cannot write there

@@ -108,7 +108,8 @@ const initHelp = "Usage: biso init [name] [options]\n" +
 	"Exit codes:\n" +
 	"  0  board created, or restored with --from\n" +
 	"  2  bad usage, or a board is already reachable from here\n" +
-	"  4  --from points at a directory missing snapshot.ndjson, board.json, or both\n" +
+	"  4  --from points at a directory missing snapshot.ndjson, board.json,\n" +
+	"     the <id>.id marker, or several of the three\n" +
 	"  6  --overwrite-config would change task_prefix on a board with tasks\n" +
 	"  7  --from's snapshot.ndjson failed batch validation\n" +
 	"  8  cannot write there\n" +
