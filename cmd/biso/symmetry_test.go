@@ -110,8 +110,8 @@ func TestExportAndNewFromLeaveTwoIdenticalBoards(t *testing.T) {
 	// identity of its own (docs/spec/cmd/export.md#la-garantía-de-simetría).
 	// The other way round, below, compares those two as well.
 	assertEqual(t,
-		dumpDatabase(t, boardDirOf(t, destination), taskTables...),
-		dumpDatabase(t, boardDirOf(t, source), taskTables...),
+		dumpDatabase(t, destination.boardDir(t), taskTables...),
+		dumpDatabase(t, source.boardDir(t), taskTables...),
 		"the tasks of the board the import produced")
 
 	// And the export of the two, which is the weaker comparison of the two
@@ -165,12 +165,6 @@ func TestSnapshotAndInitFromLeaveTwoIdenticalBoards(t *testing.T) {
 var taskTables = []string{
 	"board_counter", "task", "task_comment", "task_criterion",
 	"task_ext", "task_list_item",
-}
-
-// boardDirOf is boardDir for a machine whose project is where it was born.
-func boardDirOf(t *testing.T, m *machine) string {
-	t.Helper()
-	return m.boardDir(t)
 }
 
 // allTables are every table of a board's database, in alphabetical order,
