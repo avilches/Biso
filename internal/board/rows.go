@@ -25,10 +25,35 @@ const taskColumns = `id, num, title, status, type, priority, parent, author, due
 	lease_expires_at, lease_holder, question_author, question_asked_at, question_body,
 	next_criterion_key, next_comment_key`
 
+// atLeastOne is the one normalization this translation does: a counter of
+// criterion or of comment keys is stored as 1 and never as 0, because the
+// first key of either list is 1 (docs/spec/modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables)
+// and a task that has never had one is at the same point whichever of the
+// two numbers it carries.
+//
+// Writing them apart would be a difference between two boards that behave
+// identically, and the round trip of docs/spec/cmd/export.md would not
+// reproduce it: the counters are deduced on import, above the highest key
+// the line brought, so an imported task with no criteria comes back with a
+// 1. The dump of the two databases that the symmetry test compares is what
+// showed it.
+//
+// The task itself is settled and not only its row, so that what a caller
+// holds after writing is what the next read gives back.
+func atLeastOne(counter int) int {
+	if counter < 1 {
+		return 1
+	}
+	return counter
+}
+
 // writeTask inserts a task and all of its children. The caller has already
 // removed whatever was there under the same identifier, so this is the
 // only place that builds a row out of a task.
 func writeTask(tx *sql.Tx, task *model.Task, num int) error {
+	task.NextCriterionKey = atLeastOne(task.NextCriterionKey)
+	task.NextCommentKey = atLeastOne(task.NextCommentKey)
+
 	var ordinal any
 	if task.Ordinal != nil {
 		ordinal = *task.Ordinal

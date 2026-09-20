@@ -211,10 +211,10 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"get-json.txt", "cmd/get.md", "El esquema JSON", 0},
 		{"export-help.txt", "cmd/export.md", "`biso export --help`", 0},
 		{"snapshot-help.txt", "cmd/snapshot.md", "`biso snapshot --help`", 0},
-		{"new-batch-lease.txt", "cmd/new.md", "El modo lote", 3},
-		{"new-batch-ids.txt", "cmd/new.md", "El modo lote", 4},
-		{"new-batch-dry-run.txt", "cmd/new.md", "El modo lote", 5},
-		{"new-batch-invalid.txt", "cmd/new.md", "El modo lote", 6},
+		{"new-batch-lease.txt", "cmd/new.md", "El modo lote", 4},
+		{"new-batch-ids.txt", "cmd/new.md", "El modo lote", 5},
+		{"new-batch-dry-run.txt", "cmd/new.md", "El modo lote", 6},
+		{"new-batch-invalid.txt", "cmd/new.md", "El modo lote", 7},
 	} {
 		block := specBlock(t, c.page, c.heading, c.index)
 		assertEqual(t, fixture(t, c.fixture), block,

@@ -28,15 +28,46 @@ func snapshotDir(t *testing.T) (*machine, string) {
 	return m, m.boardDir(t)
 }
 
-// restoreInto restores a snapshot into a new directory from a project that
-// has no board of its own, which is how the specification's own example
-// does it.
+// restoreInto restores a snapshot from a machine with a set of roots of its
+// own, which is how a snapshot is really restored: somewhere the identity it
+// carries is not taken yet, and from a project with no board of its own.
+//
+// Restoring it beside the board it came from is not this: that is the
+// duplicate identity error of the case table of docs/spec/cmd/init.md, and
+// TestRestoreRefusesAnIdentityTheMachineAlreadyHas is its test.
 func (m *machine) restoreInto(t *testing.T, from, into string, extra ...string) call {
 	t.Helper()
+	elsewhere := newMachine(t)
+	elsewhere.env["BISO_ME"] = "@claude"
+	argv := append([]string{"init", "--at", into, "--from", from}, extra...)
+	return elsewhere.run(t, argv...)
+}
+
+// TestRestoreRefusesAnIdentityTheMachineAlreadyHas is the row of the case
+// table of docs/spec/cmd/init.md about a `--from` whose marker names an
+// identity that already lives in one of this machine's roots: it is the
+// duplicate identity error and never a silent adoption, and --at pointing
+// somewhere outside the roots does not change that, because what would end
+// up duplicated is the identity and not the directory.
+func TestRestoreRefusesAnIdentityTheMachineAlreadyHas(t *testing.T) {
+	m, dir := snapshotDir(t)
+	into := filepath.Join(m.home, "second-copy")
+
 	elsewhere := filepath.Join(m.home, "elsewhere")
 	m.mkdir(t, elsewhere)
-	argv := append([]string{"init", "--at", into, "--from", from}, extra...)
-	return m.at(elsewhere).run(t, argv...)
+	got := m.at(elsewhere).run(t, "init", "--at", into, "--from", dir)
+
+	if got.code != 22 {
+		t.Errorf("restoring an identity this machine already has exited %d and not 22:\n%s",
+			got.code, got.stderr)
+	}
+	if !strings.Contains(got.stderr, board.MarkerID(dir)) ||
+		!strings.Contains(got.stderr, dir) {
+		t.Errorf("the refusal does not name the board that is already here:\n%s", got.stderr)
+	}
+	if _, err := os.Stat(into); err == nil {
+		t.Errorf("the refused restore left %s behind", into)
+	}
 }
 
 func TestRestoreBringsTheVocabularyTheSnapshotCarries(t *testing.T) {

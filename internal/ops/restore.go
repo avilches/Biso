@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"biso/internal/board"
@@ -147,13 +148,12 @@ func restore(env Env, p InitParams, facts board.Searched, target string) (*InitR
 			id = destination
 		}
 	}
-	if _, err := board.FindID(env.Machine, id); err != nil {
-		return nil, err
-	}
-
 	dir := target
 	if dir == "" {
 		dir = filepath.Join(env.Machine.BoardsRoot, FolderName(snap.Config.ProjectName, id))
+	}
+	if err := checkIdentityIsFree(env, id, dir); err != nil {
+		return nil, err
 	}
 	// A restore always creates a new board and never rewrites one that is
 	// already there, so a destination that is still a whole board is the
@@ -219,6 +219,56 @@ func restore(env Env, p InitParams, facts board.Searched, target string) (*InitR
 	}
 	result.PointerWritten = written
 	return result, nil
+}
+
+// checkIdentityIsFree is the row of the case table of
+// docs/spec/cmd/init.md that says a `--from` whose marker names an identity
+// this machine already has is the duplicate identity error and never a
+// silent adoption.
+//
+// The one directory that does not count is the destination itself, which is
+// the board being rebuilt in place: its marker carries that identity
+// because it is that board, so finding it is not finding a second one.
+// Anywhere else is, and the restore would leave the same identity in two
+// directories, which is what
+// docs/spec/resolucion-del-tablero.md#el-mismo-id-en-dos-sitios refuses to
+// let happen rather than refusing to choose afterwards.
+func checkIdentityIsFree(env Env, id, dir string) *model.Error {
+	hits, err := board.FindID(env.Machine, id)
+	if err != nil {
+		if e, ok := err.(*model.Error); ok {
+			return e
+		}
+		return &model.Error{ExitCode: 8, Code: "io_error", Message: err.Error()}
+	}
+	var elsewhere []string
+	for _, hit := range hits {
+		if filepath.Clean(hit) == filepath.Clean(dir) {
+			continue
+		}
+		elsewhere = append(elsewhere, hit)
+	}
+	if len(elsewhere) == 0 {
+		return nil
+	}
+	sort.Strings(elsewhere)
+	detail := make([]string, 0, len(elsewhere))
+	for _, hit := range elsewhere {
+		detail = append(detail, "        "+hit)
+	}
+	return &model.Error{
+		ExitCode: 22,
+		Code:     "ambiguous_board_id",
+		Message: fmt.Sprintf(
+			"board %s is already on this machine, and restoring it into %s would put it in %s",
+			id, dir, plural(len(elsewhere)+1, "place")),
+		Detail: detail,
+		Hints: []string{
+			"restore where the roots of the machine do not already hold that board",
+		},
+		Field: "from",
+		Given: id,
+	}
 }
 
 func isAre(n int) string {

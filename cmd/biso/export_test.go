@@ -163,3 +163,53 @@ func TestExportCannotWriteWhereItWasTold(t *testing.T) {
 
 	m.run(t, "export", "-o", filepath.Join(closed, "backup.ndjson")).assertCode(t, 8)
 }
+
+// everyFieldOfTheFormat is a task with every key of the interchange format
+// carrying a value: no scalar left null, no list left empty, the lease, the
+// open question, the three kinds of date, criteria with a gap in their keys
+// and comments with keys and instants of their own. The first line is there
+// so that the second one can have a parent and a dependency.
+const everyFieldOfTheFormat = `{"id":"MYP-1","title":"The parser"}
+{"id":"MYP-2","title":"Normalize CRLF in the diff","type":"bug","priority":"high",` +
+	`"status":"In Progress","parent":"MYP-1","assignees":["@sara"],"author":"@avilches",` +
+	`"labels":["parser","urgent"],"dependencies":["MYP-1"],` +
+	`"references":["docs/bugs/BUG-02.md"],"documentation":["docs/parser.md"],` +
+	`"modifiedFiles":["parser.go"],"due":"2026-01-31","ordinal":7,` +
+	`"ext":{"trello.card":"5f2a8c1e"},"description":"A long description\nover two lines",` +
+	`"plan":"1. Read it","notes":"It was the CRLF","summary":"Done and tested",` +
+	`"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},` +
+	`{"key":3,"text":"There is a test","checked":false}],` +
+	`"comments":[{"key":1,"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"},` +
+	`{"key":4,"author":"@sara","createdAt":"2026-08-15T09:00:00Z","body":"Fixed"}],` +
+	`"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},` +
+	`"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z",` +
+	`"leaseExpiresAt":"2126-09-08T14:00:00Z","leaseHolder":"@sara","archived":false}
+`
+
+// TestExportWritesEveryFieldOfTheFormat compares one exported line, letter
+// for letter, against testdata/export-line.txt, which is written by hand
+// and by hand is the point: it is the one check of this format that shares
+// no code with the encoder.
+//
+// The two symmetry tests cannot do this job on their own. They compare one
+// board with another, and both sides are written by the same encoder, so a
+// key it stops writing goes missing on both sides at once and they stay
+// green. A fixture does not change when the code does, so a key that
+// disappears from the format, or a value that starts coming out differently,
+// shows here (docs/spec/cmd/export.md#la-garantía-de-simetría).
+func TestExportWritesEveryFieldOfTheFormat(t *testing.T) {
+	m := newMachine(t)
+	m.env["BISO_ME"] = "@claude"
+	m.run(t, "init", "My project", "--prefix", "MYP",
+		"--extensions", "trello.card").assertCode(t, 0)
+	path := filepath.Join(m.dir, "tasks.ndjson")
+	m.write(t, path, everyFieldOfTheFormat)
+	m.run(t, "new", "--from", path).assertCode(t, 0)
+
+	// The filter leaves the plain first task out, so what is compared is
+	// the one line that carries everything.
+	got := m.run(t, "export", "-s", "In Progress").assertCode(t, 0)
+
+	assertEqual(t, got.stdout, fixture(t, "export-line.txt"),
+		"the exported line of a task with every field of the format")
+}
