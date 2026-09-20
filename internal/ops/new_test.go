@@ -379,3 +379,60 @@ func TestNewDryRunStillEmitsTheWarningsTheRealCallWould(t *testing.T) {
 		t.Errorf("a preview said less than the call it simulates: %v", result.Warnings)
 	}
 }
+
+// TestNewNamesTheTaskInTheWarningsOfArrivingAtTheTerminalStatus is the
+// literal text of the three warnings of
+// docs/spec/salida-y-terminal.md#notas-y-avisos, which all carry the
+// identifier, and the ban on the empty string of
+// docs/spec/contrato-json.md#números-fechas-y-ausencias, which their `task`
+// field would break. A task created straight into the terminal status has
+// arrived at it, so it earns them, and it can only earn them once it has an
+// identifier to be named by.
+func TestNewNamesTheTaskInTheWarningsOfArrivingAtTheTerminalStatus(t *testing.T) {
+	h := newHarness(t)
+
+	result, err := NewOn(h.b, h.env, NewParams{
+		Title: "A task", HasTitle: true,
+		Changes: []Change{
+			scalar("status", "Done"),
+			add("add-ac", "Something nobody checked"),
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	id := result.Tasks[0].ID
+	for _, code := range []string{"terminal_ac_unchecked", "terminal_no_summary"} {
+		w := warningOf(result, code)
+		if w == nil {
+			t.Fatalf("the warning %s was not emitted: %v", code, result.Warnings)
+		}
+		if !strings.Contains(w.Message, id) {
+			t.Errorf("%s says %q, and it has to name %s", code, w.Message, id)
+		}
+		if w.Fields["task"] != id {
+			t.Errorf("%s carries task = %v, want %s", code, w.Fields["task"], id)
+		}
+	}
+}
+
+// TestNewDryRunDoesNotWarnAboutTheTerminalStatus is the other half of that
+// rule, and the reason is the one docs/spec/cmd/new.md gives for the
+// identifier of a preview: there is none, and these three warnings name the
+// task.
+func TestNewDryRunDoesNotWarnAboutTheTerminalStatus(t *testing.T) {
+	h := newHarness(t)
+
+	result, err := NewOn(h.b, h.env, NewParams{
+		Title: "A task", HasTitle: true, DryRun: true,
+		Changes: []Change{scalar("status", "Done")},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if warned(result, "terminal_no_summary") {
+		t.Errorf("a preview warned about a task that has no identifier: %v", result.Warnings)
+	}
+}

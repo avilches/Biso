@@ -81,9 +81,6 @@ func NewOn(b *board.Board, env Env, p NewParams) (*WriteResult, error) {
 	if p.Start {
 		w.warnAboutUnresolvedDependencies(task, byID)
 	}
-	// A task created straight into the terminal status has arrived at it,
-	// so it earns the same warnings any other arrival does.
-	w.warnAboutTerminal(task, "")
 
 	result := &WriteResult{DryRun: p.DryRun, Created: true}
 	if p.DryRun {
@@ -101,6 +98,15 @@ func NewOn(b *board.Board, env Env, p NewParams) (*WriteResult, error) {
 	if err := b.Tasks.Create(task); err != nil {
 		return w.partial(), err
 	}
+	// A task created straight into the terminal status has arrived at it,
+	// so it earns the same warnings any other arrival does. They are built
+	// here, and not before the creation, because all three name the task
+	// and the identifier is minted by the line above: building them any
+	// earlier interpolated an empty string
+	// (docs/spec/salida-y-terminal.md#notas-y-avisos, and the ban on
+	// the empty string of
+	// docs/spec/contrato-json.md#números-fechas-y-ausencias).
+	w.warnAboutTerminal(task, "")
 	summary, err := w.summarize(task, changedFields(&model.Task{}, task), byID)
 	if err != nil {
 		return w.partial(), err

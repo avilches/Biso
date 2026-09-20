@@ -63,8 +63,10 @@ MYP-101
 `biso new` es el único comando de escritura cuya salida por defecto es distinta de la línea de estado
 de la sección ["`biso set`"](set.md), y así está dicho en el mensaje de arranque.
 
-Con `--print`, después de la línea del identificador viene la ficha completa en el formato de
-`biso get`. Con `--quiet`, solo el identificador y ninguna nota.
+Con `--print`, la ficha completa en el formato de `biso get` **sustituye** esa línea del
+identificador en vez de venir debajo de ella, que es la regla general del flag
+(["Flags globales"](flags-globales.md)): el identificador es la primera cosa que imprime la ficha, así que
+imprimir las dos cosas lo repetiría. Con `--quiet`, solo el identificador y ninguna nota.
 
 **`biso new` no anuncia la clave de un `--add-ac` creado al mismo tiempo que la
 tarea, a diferencia de la línea de estado de `biso set` (["`biso set`"](set.md#salida)).** Una tarea nace sin ningún
@@ -88,6 +90,17 @@ la misma del lote en singular:
 Con `--json`, el sobre es el de siempre y su `data.tasks` es una lista vacía, por el mismo motivo:
 no hay ninguna tarea creada a la que nombrar. La línea de arriba se sigue imprimiendo por stderr,
 porque no es una nota y no la lleva ningún sobre.
+
+**Una vista previa emite los mismos avisos que emitiría la llamada real, con una excepción: los tres
+de llegar a un estado terminal** (`terminal_ac_unchecked`, `terminal_no_summary` y
+`open_question_on_terminal`, ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Los tres nombran la tarea, en su frase y en su
+campo `task`, y aquí no hay ninguna que nombrar: el identificador no se ha gastado. Escribirlos con
+el hueco vacío daría una frase con dos espacios seguidos y un `task` con la cadena vacía, que es justo
+lo que prohíbe ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), y es el mismo motivo por el que el aviso
+`imported_dod_merged` del lote nombra la línea del fichero en vez de la tarea. Los demás avisos, que
+no nombran ninguna tarea, salen igual con `--dry-run` que sin él: `due_in_past`, `clear_on_new_task`,
+`duplicate_flag_value` y el resto. Crear la tarea de verdad en un estado terminal sí emite los tres,
+porque entonces el identificador ya existe.
 
 **Y si no está bien, el código nunca es el 7: es el código específico del fallo.** Una sola tarea no
 puede producir más de un fallo a la vez, y cualquiera de los que puede producir es atribuible a un

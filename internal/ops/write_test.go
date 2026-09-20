@@ -148,3 +148,15 @@ func assertLabels(t *testing.T, task *model.Task, want ...string) {
 		t.Errorf("labels = %v, want %v", task.Labels, want)
 	}
 }
+
+// warningOf is the warning with that code, or nil. It is the other half of
+// warned, for the tests that check the text and the fields and not only the
+// presence.
+func warningOf(r *WriteResult, code string) *Warning {
+	for i, w := range r.Warnings {
+		if w.Code == code {
+			return &r.Warnings[i]
+		}
+	}
+	return nil
+}
