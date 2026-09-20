@@ -85,6 +85,10 @@ la misma del lote en singular:
 1 task would be created, nothing was written (--dry-run)
 ```
 
+Con `--json`, el sobre es el de siempre y su `data.tasks` es una lista vacía, por el mismo motivo:
+no hay ninguna tarea creada a la que nombrar. La línea de arriba se sigue imprimiendo por stderr,
+porque no es una nota y no la lleva ningún sobre.
+
 **Y si no está bien, el código nunca es el 7: es el código específico del fallo.** Una sola tarea no
 puede producir más de un fallo a la vez, y cualquiera de los que puede producir es atribuible a un
 elemento señalable, así que conserva su propio código igual que lo conservaría sin `--dry-run`: 2 para
