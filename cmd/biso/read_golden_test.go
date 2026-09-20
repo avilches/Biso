@@ -468,6 +468,60 @@ func TestGetSectionCutsTheEnvelopeToWhatWasAsked(t *testing.T) {
 	}
 }
 
+// TestEveryNumberOfTheUrgencyWritesItsDecimal is the rule of
+// docs/spec/contrato-json.md#números-fechas-y-ausencias: the urgency and
+// every term of its breakdown are decimals with one digit after the point.
+// It reads the raw text and not the decoded document on purpose, because
+// decoding is exactly what loses the difference between 6 and 6.0, and a
+// consumer that reads the output as text sees it.
+func TestEveryNumberOfTheUrgencyWritesItsDecimal(t *testing.T) {
+	m := cardBoard(t)
+
+	got := m.run(t, "get", "MYP-11", "--explain-urgency", "--json").assertCode(t, 0)
+
+	for _, fragment := range []string{
+		`"urgency": 19.0`,
+		`"priority": 6.0`,
+		`"value": 4.0`,
+		`"blocking": 8.0`,
+		`"blocked": 0.0`,
+		`"due": 0.0`,
+		`"criteria": 1.0`,
+		`"age": 0.0`,
+	} {
+		if !strings.Contains(got.stdout, fragment) {
+			t.Errorf("the envelope does not carry %s:\n%s", fragment, got.stdout)
+		}
+	}
+}
+
+// TestTheBreakdownOfATerminalTaskIsSevenZerosWithTheirDecimal is the
+// paragraph of docs/spec/cmd/get.md that fixes the shape of the explanation
+// of a task whose urgency is zero by definition: seven terms at 0.0 and the
+// reason saying why.
+func TestTheBreakdownOfATerminalTaskIsSevenZerosWithTheirDecimal(t *testing.T) {
+	m := cardBoard(t)
+	m.run(t, "set", "MYP-11", "--status", "Done").assertCode(t, 0)
+
+	got := m.run(t, "get", "MYP-11", "--explain-urgency", "--json").assertCode(t, 0)
+
+	for _, fragment := range []string{
+		`"urgency": 0.0`,
+		`"priority": 0.0`,
+		`"value": 0.0`,
+		`"reason": "not_active"`,
+		`"blocking": 0.0`,
+		`"blocked": 0.0`,
+		`"due": 0.0`,
+		`"criteria": 0.0`,
+		`"age": 0.0`,
+	} {
+		if !strings.Contains(got.stdout, fragment) {
+			t.Errorf("the envelope does not carry %s:\n%s", fragment, got.stdout)
+		}
+	}
+}
+
 func envelopeOf(t *testing.T, text string) map[string]any {
 	t.Helper()
 	var envelope map[string]any

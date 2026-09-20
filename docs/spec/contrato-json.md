@@ -192,7 +192,11 @@ anterior a esta rama.
 
 - Las fechas son ISO 8601 en UTC terminadas en `Z`, con precisión de segundo. Nunca hora local, nunca
   sin zona. `due` es la excepción, porque es un día y no un instante, y viaja como `YYYY-MM-DD`.
-- `urgency` es un decimal con un solo dígito tras el punto.
+- `urgency` es un decimal con un solo dígito tras el punto, **y también lo es cada uno de los siete
+  términos de `urgencyBreakdown`**, incluido `urgencyBreakdown.active.value`
+  (["`biso get`"](cmd/get.md#el-esquema-json)). Los términos son los sumandos de ese mismo número, así que se escriben
+  igual que él: `6.0` y no `6`, y los siete ceros de una tarea en estado terminal son `0.0` y no `0`.
+  Decirlo solo de `urgency` fue lo que dejó que el desglose se serializara como entero.
 - Un campo sin valor es `null`, nunca la cadena vacía ni la ausencia de la clave. **Ninguna clave va ni
   viene según los datos**: la que está documentada para un `kind` aparece siempre que se emite ese
   `kind`, valga lo que valga, para que nadie tenga que distinguir entre "no está" y "no tiene valor".

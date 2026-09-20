@@ -334,6 +334,41 @@ func TestTheOrderOfApplicationDoesNotDependOnTheCommandLine(t *testing.T) {
 		}
 	})
 
+	t.Run("step 2 before step 3: what --replace-labels puts, --rm-labels can take away", func(t *testing.T) {
+		h := newHarness(t)
+		id := h.create("A task", add("add-labels", "cli"))
+
+		h.set(id, remove("rm-labels", "parser"),
+			replace("replace-labels", "parser"), replace("replace-labels", "ui"))
+
+		// Step 2 emptied the list and put the two new labels in it, and
+		// only then did step 3 take one of them out. Obeying the command
+		// line would have removed a label that was not there yet and left
+		// both.
+		assertLabels(t, h.load(id), "ui")
+	})
+
+	t.Run("step 2 before step 4: --replace-labels does not wipe out an --add-labels", func(t *testing.T) {
+		h := newHarness(t)
+		id := h.create("A task", add("add-labels", "cli"))
+
+		h.set(id, add("add-labels", "urgent"), replace("replace-labels", "parser"))
+
+		// The replacement threw away "cli", the only label of before the
+		// call, and the addition of the same call survived it. Obeying the
+		// command line would have left "parser" alone.
+		assertLabels(t, h.load(id), "parser", "urgent")
+	})
+
+	t.Run("step 1 before step 2: --clear-labels does not undo a --replace-labels", func(t *testing.T) {
+		h := newHarness(t)
+		id := h.create("A task", add("add-labels", "cli"))
+
+		h.set(id, replace("replace-labels", "parser"), clear("clear-labels"))
+
+		assertLabels(t, h.load(id), "parser")
+	})
+
 	t.Run("step 1 before step 5: --ext survives a --clear-ext of the same call", func(t *testing.T) {
 		h := newHarness(t)
 		id := h.create("A task", ext("trello.card", "old"))

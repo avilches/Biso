@@ -121,20 +121,32 @@ func getObject(r *ops.GetResult) map[string]any {
 // docs/spec/cmd/get.md#el-esquema-json: one number per term, which is the
 // product that enters the sum, and `active` the one term that is an object
 // because it also says why it contributed nothing.
+//
+// Every term goes through the same serializer as the urgency itself, so it
+// writes one digit after the point: they are the addends of that very
+// number, and the schema writes all seven of them as decimals, the seven
+// zeros of a terminal task included
+// (docs/spec/contrato-json.md#números-fechas-y-ausencias).
 func breakdownObject(b *model.UrgencyBreakdown) map[string]any {
-	active := map[string]any{"value": noNegativeZero(b.Active.Value), "reason": nil}
+	active := map[string]any{"value": urgencyTerm(b.Active.Value), "reason": nil}
 	if b.ActiveReason != model.ActiveContributes {
 		active["reason"] = b.ActiveReason
 	}
 	return map[string]any{
-		"priority": noNegativeZero(b.Priority.Value),
+		"priority": urgencyTerm(b.Priority.Value),
 		"active":   active,
-		"blocking": noNegativeZero(b.Blocking.Value),
-		"blocked":  noNegativeZero(b.Blocked.Value),
-		"due":      noNegativeZero(b.Due.Value),
-		"criteria": noNegativeZero(b.Criteria.Value),
-		"age":      noNegativeZero(b.Age.Value),
+		"blocking": urgencyTerm(b.Blocking.Value),
+		"blocked":  urgencyTerm(b.Blocked.Value),
+		"due":      urgencyTerm(b.Due.Value),
+		"criteria": urgencyTerm(b.Criteria.Value),
+		"age":      urgencyTerm(b.Age.Value),
 	}
+}
+
+// urgencyTerm is one addend of the urgency, ready to be marshalled: a minus
+// zero turned into a zero and the one decimal the contract asks for.
+func urgencyTerm(value float64) urgency {
+	return urgency(noNegativeZero(value))
 }
 
 func criteriaObject(criteria []model.Criterion) []map[string]any {
