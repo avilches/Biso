@@ -185,7 +185,15 @@ Las reglas del lote, todas obligatorias:
   `askedAt` es opcional y, si falta, se pone el instante de la importación, igual que `createdAt` en
   `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.
 - **`id`, `createdAt` y `updatedAt` se aceptan aquí y solo aquí.** Un `id` ya ocupado es un fallo de
-  validación; un `id` libre se reserva y el tablero no lo volverá a asignar.
+  validación; un `id` libre se reserva y el tablero no lo volverá a asignar. **Estar ocupado tiene
+  dos formas distintas y el mensaje las distingue**, porque en la segunda el tablero no tiene nada
+  que ver: lo puede tener ya el tablero de destino, o lo puede haber tomado una línea anterior de
+  este mismo fichero, y entonces el mensaje nombra esa línea y no el tablero. Las dos llevan el mismo
+  `code` `id_taken` (["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)):
+  ```
+  line 7: id "MYP-11" is already taken on this board
+  line 9: id "MYP-12" is already taken by line 3 of this file
+  ```
 - **`leaseExpiresAt` y `leaseHolder` se aceptan aquí con el valor que traiga el fichero**, que es lo
   que hace cierta la garantía de simetría de ["`biso export`"](export.md) para ellos dos. La invariante de ["El vaciado"](../lease.md#el-vaciado) de `lease.md` se
   comprueba en la validación, en sus dos mitades, y cada una es un fallo que nombra la línea y el campo.
@@ -222,6 +230,37 @@ Las reglas del lote, todas obligatorias:
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de
   la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables).
 - Un lote no admite `--start` ni ningún flag de campo: todo va en el fichero.
+- **Un lote no emite los avisos de llegar a un estado terminal**
+  (`terminal_ac_unchecked`, `terminal_no_summary` y `open_question_on_terminal`). Todos hablan de
+  llegar, y una tarea importada no llega a ninguna parte: ya estaba donde el fichero la pone, igual
+  que una escritura sobre una tarea que ya estaba en el estado terminal tampoco los repite
+  (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). El único aviso propio del lote es
+  `imported_dod_merged`.
+- **`--print` es error 2 en un lote**, con el mensaje `--print does not apply to a batch, which
+  affects no task that existed before`. Es la misma razón por la que lo es en
+  [`biso init --from`](init.md): un lote crea de cero todas las tareas del fichero, así que no hay
+  ninguna tarea anterior cuya ficha enseñar, e imprimir doscientas fichas recién creadas no informa
+  de nada que no diga ya `biso ls`.
+- **El fichero es UTF-8**, como cualquier otra entrada del programa: un byte que no lo sea es error 3
+  con la clave `invalid_encoding`, señalando su posición
+  (["Codificación y texto"](../salida-y-terminal.md#codificación-y-texto)).
+- **El autor de una tarea importada es el que traiga la línea, y nunca la identidad de quien
+  importa.** Una línea sin `author` deja la tarea sin autor, a diferencia de `biso new "X"`, que
+  pone el de quien llama (["El autor"](../modelo-de-datos/autor.md)): el lote describe tareas que ya
+  existían en otra parte, así que firmarlas con quien las trae sería inventarse un dato. Lo mismo
+  vale para el autor de un comentario y para el de la pregunta abierta.
+- **`parent` y `dependencies` son identificadores y nunca un texto que buscar.** La gramática de
+  ["Cómo se resuelve una referencia a una tarea"](../referencias.md) no se aplica aquí: un fichero lo
+  escribe un programa y no una persona, y resolver texto haría que la misma línea significara tareas
+  distintas según lo que el tablero tuviera ese día. Cada uno se comprueba contra las tareas del
+  tablero **y contra las del propio fichero**, así que una línea puede depender de otra que una línea
+  posterior crea; un identificador que no está en ninguno de los dos sitios es un fallo de validación
+  con el código 4, el mismo que `--add-deps` a una tarea que no existe. Los ciclos, de dependencia y
+  de padres, se comprueban también sobre el resultado.
+- **Una línea aporta un solo fallo al informe**, el primero que se encuentra al leerla en el orden de
+  esta lista. Si además tiene claves desconocidas, se nombra la primera en orden alfabético y no la
+  primera escrita, para que el mismo fichero dé siempre el mismo mensaje. Lo que el informe no hace
+  nunca es pararse: las demás líneas se siguen leyendo, y el código 7 llega con todas.
 
 Salida del lote, una línea por tarea, en el orden del fichero:
 
@@ -240,12 +279,19 @@ Salida de `--dry-run` cuando todo está bien, por stderr y con código 0:
 Y cuando no, por stderr y con código 7, **con todos los fallos, no solo el primero**:
 
 ```
-error: 4 of 242 lines are invalid, nothing was written
+error: 5 of 242 lines are invalid, nothing was written
   line 12: id "OTHER-5" does not match this board's task prefix "MYP"
   line 47: unknown status: "Pendiente" (valid: To Do, In Progress, Done)
   line 88: unknown key: "trelloCard"
+  line 130: parent names "MYP-900", which is not on this board and not in this file
   line 201: title cannot be empty
 ```
+
+**Los fallos salen siempre en orden ascendente de línea**, sea cual sea el momento en que se
+descubren. No es una consecuencia gratuita de leer el fichero de arriba abajo: el `parent` y las
+`dependencies` de una línea no se pueden juzgar hasta haber leído el fichero entero, porque pueden
+nombrar una tarea que crea una línea posterior, así que esos dos fallos se encuentran en una segunda
+pasada. La línea 130 del bloque de arriba es justo uno de ellos, y aun así sale entre la 88 y la 201.
 
 ## Códigos de salida
 

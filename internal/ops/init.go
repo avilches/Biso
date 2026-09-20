@@ -122,6 +122,12 @@ type InitResult struct {
 	// of the preview names.
 	DryRun     bool
 	DryRunPath string
+	// Restored marks a board rebuilt with --from, and RestoredTasks is how
+	// many tasks its snapshot.ndjson brought. A preview of a restore counts
+	// those instead of naming the board, because there it is the import that
+	// was being checked (docs/spec/cmd/init.md).
+	Restored      bool
+	RestoredTasks int
 }
 
 // Init creates a board with its configuration, and writes the project
@@ -132,9 +138,6 @@ type InitResult struct {
 func Init(env Env, p InitParams) (*InitResult, error) {
 	env = env.WithDefaults()
 
-	if p.HasFrom {
-		return nil, notImplementedFrom()
-	}
 	cfgFlags, err := readVocabularyFlags(p)
 	if err != nil {
 		return nil, err
@@ -178,6 +181,9 @@ func Init(env Env, p InitParams) (*InitResult, error) {
 		if target == "" {
 			target = loc.Dir
 		}
+	}
+	if p.HasFrom {
+		return restore(env, p, facts, target)
 	}
 	return create(env, p, cfgFlags, facts, target)
 }
@@ -777,19 +783,6 @@ func dryRunPath(p InitParams, dir string) string {
 		return p.At
 	}
 	return dir
-}
-
-// notImplementedFrom is the one branch of this command that step 4 of the
-// implementation does not cover: restoring a snapshot needs the interchange
-// format, which arrives with `biso export` and `biso new --from`
-// (docs/spec/estado-de-implementacion.md).
-func notImplementedFrom() *model.Error {
-	return &model.Error{
-		ExitCode: 1,
-		Code:     "internal",
-		Message:  "biso init --from is not implemented yet",
-		Hints:    []string{"it arrives with `biso export` and `biso snapshot`"},
-	}
 }
 
 func contains(values []string, value string) bool {

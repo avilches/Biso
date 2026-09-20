@@ -3,6 +3,9 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"os"
 	"strconv"
 	"strings"
 
@@ -17,6 +20,9 @@ import (
 // docs/spec/contrato-json.md.
 
 func runNew(s Streams, p *Parsed, env ops.Env) int {
+	if p.Has("from") {
+		return runNewBatch(s, p, env)
+	}
 	asJSON := p.Has("json")
 	params, err := newParams(p)
 	if err != nil {
@@ -57,6 +63,120 @@ func runNew(s Streams, p *Parsed, env ops.Env) int {
 		printNote(s, p, note)
 	}
 	return 0
+}
+
+// runNewBatch is `biso new --from`: the same command fed from NDJSON
+// instead of from flags (docs/spec/cmd/new.md#el-modo-lote).
+func runNewBatch(s Streams, p *Parsed, env ops.Env) int {
+	asJSON := p.Has("json")
+	if len(p.Positionals) > 0 {
+		// The table of docs/spec/cmd/new.md declares --from incompatible
+		// with the title, which is a positional argument and therefore not
+		// a row of the flag table the parser walks.
+		return fail(s, asJSON, &model.Error{
+			ExitCode: 2,
+			Code:     "incompatible_flags",
+			Message:  "--from and a title cannot be used together",
+			Hints:    []string{"in a batch every field of every task travels in the file"},
+		}, warningsOf(p))
+	}
+	if p.Has("print") {
+		// A batch creates every task of the file from scratch in a board
+		// that may have none, so there is no task that existed before to
+		// print a card of, which is the same reason --print is a usage
+		// error in `biso init --from` (docs/spec/cmd/new.md#el-modo-lote).
+		return fail(s, asJSON, &model.Error{
+			ExitCode: 2,
+			Code:     "read_only_flag",
+			Message:  "--print does not apply to a batch, which affects no task that existed before",
+			Field:    "print",
+		}, warningsOf(p))
+	}
+	from, _ := p.Value("from")
+	content, err := readBatchSource(s, from)
+	if err != nil {
+		return fail(s, asJSON, err, warningsOf(p))
+	}
+	result, err := ops.NewBatch(env, ops.BatchParams{
+		Content: content, DryRun: p.Has("dry-run"),
+	})
+	if err != nil {
+		return failWrite(s, p, asJSON, err, result)
+	}
+	printWriteWarnings(s, p, result)
+
+	if asJSON {
+		writeEnvelope(s, env, "task.write", writeData(result))
+	} else {
+		for _, t := range result.Tasks {
+			fmt.Fprintln(s.Stdout, t.ID)
+		}
+	}
+	if result.DryRun {
+		fmt.Fprintf(s.Stderr, "%s would be created, nothing was written (--dry-run)\n",
+			plural(result.Previewed, "task", "tasks"))
+	}
+	for _, note := range result.Notes {
+		printNote(s, p, note)
+	}
+	return 0
+}
+
+// readBatchSource reads what --from names: a file, or standard input when
+// it is "-". It is not the @file of a text flag
+// (docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo):
+// here the value is the path itself, so a file called @notes.ndjson is read
+// by its own name.
+func readBatchSource(s Streams, from string) (string, error) {
+	if from == "-" {
+		b, err := io.ReadAll(s.Stdin)
+		if err != nil {
+			return "", &model.Error{
+				ExitCode: 8,
+				Code:     "io_error",
+				Message:  "--from: stdin cannot be read: " + err.Error(),
+				Field:    "from",
+				Given:    "-",
+			}
+		}
+		return checkedUTF8(string(b), "-")
+	}
+	b, err := os.ReadFile(from)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", &model.Error{
+				ExitCode: 4,
+				Code:     "file_not_found",
+				Message:  "--from: file not found: " + from,
+				Field:    "from",
+				Given:    from,
+			}
+		}
+		return "", &model.Error{
+			ExitCode: 8,
+			Code:     "file_unreadable",
+			Message:  "--from: file cannot be read: " + from,
+			Field:    "from",
+			Given:    from,
+		}
+	}
+	return checkedUTF8(string(b), from)
+}
+
+// checkedUTF8 applies to a batch the rule every input of the program
+// follows: the input is UTF-8 always, and a byte that is not is exit code 3
+// pointing at it (docs/spec/salida-y-terminal.md#codificación-y-texto).
+func checkedUTF8(content, given string) (string, error) {
+	if offset := invalidUTF8At(content); offset >= 0 {
+		return "", &model.Error{
+			ExitCode: 3,
+			Code:     "invalid_encoding",
+			Message:  fmt.Sprintf("--from: invalid UTF-8 at byte %d", offset),
+			Field:    "from",
+			Given:    given,
+		}
+	}
+	return content, nil
 }
 
 func runSet(s Streams, p *Parsed, env ops.Env) int {

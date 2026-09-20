@@ -147,10 +147,10 @@ func TestOverwriteConfigNeverTouchesATask(t *testing.T) {
 	}
 }
 
-func TestInitFromIsNotImplementedYetAndSaysSo(t *testing.T) {
+func TestInitFromNamesTheFilesAHalfSnapshotIsMissing(t *testing.T) {
 	env, _ := project(t)
-	_, err := Init(env, InitParams{From: "/tmp/snapshot", HasFrom: true})
-	assertSpec(t, err, 1, "internal")
+	_, err := Init(env, InitParams{From: t.TempDir(), HasFrom: true})
+	assertSpec(t, err, 4, "file_not_found")
 }
 
 func TestWhereCountsTheArchivedApart(t *testing.T) {

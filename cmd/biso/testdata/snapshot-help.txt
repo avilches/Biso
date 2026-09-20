@@ -1,0 +1,46 @@
+Usage: biso snapshot [options]
+
+Write snapshot.ndjson and board.json into the board's own directory, then
+record them with the version control system this machine is configured for
+(the vcs key, git by default). Those two files and the <id>.id marker are
+what `biso init --from` reads back to rebuild a board whole: its tasks, in
+the same shape `biso export` writes, its configuration, in the same shape
+`biso config list --json` prints, and its identity.
+
+Where the revision lands follows the board's directory. If it is a
+repository of its own, there. If it sits inside another repository that does
+not ignore it, in that one, beside the code, which is what makes the
+snapshot travel to other machines on its own. Otherwise this command creates
+the board its own repository, lazily, the first time it runs there.
+
+biso snapshot is the only command that ever runs another program, and the
+only one that creates a repository. Invoking version control costs about
+12ms, more than the 25ms startup budget for biso ls and biso prime allows on
+the hot path.
+
+Options:
+      --vcs <mode>   none, commit or push (default commit)
+  -h, --help         show this help
+
+The two files are always written, whatever version control does. If it is
+not installed, or creating the repository fails, the commit is skipped with
+a note: it is optional, and its absence never fails this command. A commit
+that fails once it is really attempted is an error, nothing is lost, and
+running this command again after fixing the reason is all it takes.
+
+Whatever those commands print is forwarded on stderr, prefixed with the
+system name, and never suppressed. There is no timeout: interrupting a
+half-written revision is not safe, and nothing is lost by killing this
+command, since both files are on disk before the first one runs.
+
+Exit codes:
+  0  written, and recorded if that applied
+  2  bad usage, or --vcs push with no publish command configured
+  6  some task was skipped, unreadable
+  8  cannot write there, or the commit or the push failed
+  20 no board here
+
+Examples:
+  biso snapshot
+  biso snapshot --vcs none
+  biso snapshot --vcs push

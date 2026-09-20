@@ -1,0 +1,6 @@
+error: 5 of 242 lines are invalid, nothing was written
+  line 12: id "OTHER-5" does not match this board's task prefix "MYP"
+  line 47: unknown status: "Pendiente" (valid: To Do, In Progress, Done)
+  line 88: unknown key: "trelloCard"
+  line 130: parent names "MYP-900", which is not on this board and not in this file
+  line 201: title cannot be empty

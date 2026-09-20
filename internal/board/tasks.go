@@ -79,6 +79,75 @@ func (r *Tasks) Create(task *model.Task) error {
 	})
 }
 
+// CreateAll writes a whole batch of new tasks inside one transaction,
+// which is what makes the all-or-nothing promise of
+// docs/spec/cmd/new.md#el-modo-lote real: a file of two hundred lines
+// either leaves two hundred tasks or leaves none.
+//
+// A task that already carries an identifier keeps it, and the board's
+// counter is moved above the highest one imported, so the board never
+// hands out an identifier the batch has just reserved. A task without one
+// is allocated the next number, after that move, which is why an explicit
+// identifier and an implicit one can never collide inside the same call.
+//
+// Whether an identifier is free is the caller's question and not this
+// one's: the batch judges the whole file before anything is written, and
+// answering it again here would answer it a second time with a worse
+// message.
+func (r *Tasks) CreateAll(tasks []*model.Task) error {
+	nums := make([]int, len(tasks))
+	highest := 0
+	for i, task := range tasks {
+		if err := r.validate(task); err != nil {
+			return err
+		}
+		if task.ID == "" {
+			continue
+		}
+		num, err := r.number(task.ID)
+		if err != nil {
+			return err
+		}
+		nums[i] = num
+		if num > highest {
+			highest = num
+		}
+	}
+
+	now := time.Now().UTC().Truncate(time.Second)
+	for _, task := range tasks {
+		if task.CreatedAt.IsZero() {
+			task.CreatedAt = now
+		}
+		if task.UpdatedAt.IsZero() {
+			task.UpdatedAt = now
+		}
+	}
+
+	return r.store.WithTx(func(tx *sql.Tx) error {
+		if _, err := tx.Exec(
+			"UPDATE board_counter SET last_task_num = ? WHERE id = 1 AND last_task_num < ?",
+			highest, highest,
+		); err != nil {
+			return err
+		}
+		for i, task := range tasks {
+			if task.ID == "" {
+				num, err := allocate(tx)
+				if err != nil {
+					return err
+				}
+				task.ID = fmt.Sprintf("%s-%d", r.prefix, num)
+				nums[i] = num
+			}
+			if err := writeTask(tx, task, nums[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // Save writes an existing task over itself.
 //
 // It enforces the two immutabilities of

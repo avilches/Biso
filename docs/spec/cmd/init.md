@@ -227,6 +227,41 @@ permitido, y lo hace `biso new --from`; lo que no existe es la copia paralela. S
 el mismo Error 2 de "ya hay uno accesible desde aquí", y no hace falta `--overwrite-config` para
 distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno existente.
 
+**"Un identificador que ya existe en esta máquina" son las raíces y solo las raíces, y basta con
+que esté en una.** La fila de abajo que da el error de identidad duplicada se mide igual que en
+cualquier otro comando, recorriendo las raíces de
+["Configuración de máquina"](../invocacion.md#configuración-de-máquina) y no el disco entero. Lo que
+la hace saltar es que el `id` del marcador de la instantánea ya viva en alguna de ellas: restaurar
+dejaría ese mismo `id` en un segundo directorio, y dos almacenes con la misma identidad es
+exactamente lo que esta persistencia no admite, así que se rechaza antes de escribir nada en vez de
+descubrirlo después (es el error 22 de ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-mismo-id-en-dos-sitios)).
+**Un `--at` que caiga fuera de todas las raíces no cambia la respuesta**, porque lo que quedaría
+duplicado es la identidad y no la carpeta. El único directorio que no cuenta es el propio destino
+cuando ya lleva ese marcador, que es el tablero que se está reconstruyendo en su sitio: encontrarlo
+ahí no es encontrar un segundo. Y restaurar encima de un tablero íntegro no llega a plantear la
+pregunta: eso es el Error 2 de que ya hay uno, visto desde el lado del destino, porque `--from`
+siempre crea un tablero nuevo.
+
+Este es el mensaje, con código 22 y la clave `code` `ambiguous_board_id`. Nombra el directorio que ya
+tiene esa identidad, porque es el dato que hace falta para decidir qué hacer:
+
+```
+error: board 3f9a2b1c is already on this machine, and restoring it into /tmp/tablero-nuevo would put it in 2 places
+        /Users/avilches/.biso/boards/my-project-3f9a2b1c
+hint: restore where the roots of the machine do not already hold that board
+```
+
+**Por eso restaurar una instantánea en la misma máquina que la escribió pide un conjunto de raíces
+distinto**, que es lo que hace el ejemplo de la garantía de simetría de
+["`biso export`"](export.md): en la máquina a la que de verdad viaja una instantánea, su `id` está
+libre.
+
+**La identidad que `--from` adopta es la del marcador de la instantánea, salvo que el destino ya
+tenga uno propio, y entonces manda el del destino.** Los dos casos no compiten en la práctica, porque
+el único destino que trae marcador es el tablero que se está reconstruyendo en su sitio, y ahí los
+dos marcadores llevan el mismo `id`; la regla se escribe de todas formas para que la reconstrucción
+en el sitio no dependa de que la instantánea que se le pase sea la suya.
+
 **El error de que ya hay un tablero es el más probable de este comando, y este es su mensaje**, con
 código 2 y la clave `code` `board_exists`. Nombra el tablero y su ruta, porque lo que quien llama
 necesita saber es cuál se ha encontrado, y remite a los dos caminos que hay desde ahí:

@@ -379,3 +379,87 @@ const getHelp = "Usage: biso get <ref> [options]\n" +
 	"  biso get 11 --section ac\n" +
 	"  biso get \"CRLF\"\n" +
 	"  biso get MYP-11 --explain-urgency\n"
+
+// exportHelp is `biso export --help` (docs/spec/cmd/export.md).
+const exportHelp = "Usage: biso export [options]\n" +
+	"\n" +
+	"Write the board as NDJSON, one task per line, in exactly the shape that\n" +
+	"`biso new --from` reads back. Round-tripping every non-derived field is a\n" +
+	"tested guarantee: ids, dates, criterion and comment keys, and checkmarks\n" +
+	"included.\n" +
+	"\n" +
+	"With no filters it exports everything, the finished and the archived included.\n" +
+	"It never inherits the default limit or the default status filter of `biso ls`.\n" +
+	"If a task cannot be read, the rest is still written and the exit code is 6,\n" +
+	"not 0: this is the one command whose purpose is to lose nothing.\n" +
+	"\n" +
+	"Options:\n" +
+	"  -o, --out <file|->   where to write (default: stdout)\n" +
+	"      --no-archived    leave the archived tasks out\n" +
+	"  -h, --help           show this help\n" +
+	"\n" +
+	"Every filter of `biso ls` works here except --archived and --only-archived,\n" +
+	"which do not apply because archived tasks are already included by default.\n" +
+	"Its shaping flags (--sort, --limit, --all, --ids, --count) do not apply either.\n" +
+	"--json is rejected with code 2: this output is already one JSON object per\n" +
+	"line, while --json means the single envelope every other command prints.\n" +
+	"\n" +
+	"Derived fields are never written: urgency, acDone, acTotal, commentCount,\n" +
+	"blocks, blocked, waiting, leaseExpired.\n" +
+	"\n" +
+	"Exit codes:\n" +
+	"  0  exported       3  a filter value does not exist here\n" +
+	"  2  bad usage      6  some task was skipped, unreadable\n" +
+	"  8  cannot write there                20 no board here\n" +
+	"\n" +
+	"Examples:\n" +
+	"  biso export -o backup.ndjson\n" +
+	"  biso export -s Done --no-archived -o done.ndjson\n"
+
+// snapshotHelp is `biso snapshot --help` (docs/spec/cmd/snapshot.md).
+const snapshotHelp = "Usage: biso snapshot [options]\n" +
+	"\n" +
+	"Write snapshot.ndjson and board.json into the board's own directory, then\n" +
+	"record them with the version control system this machine is configured for\n" +
+	"(the vcs key, git by default). Those two files and the <id>.id marker are\n" +
+	"what `biso init --from` reads back to rebuild a board whole: its tasks, in\n" +
+	"the same shape `biso export` writes, its configuration, in the same shape\n" +
+	"`biso config list --json` prints, and its identity.\n" +
+	"\n" +
+	"Where the revision lands follows the board's directory. If it is a\n" +
+	"repository of its own, there. If it sits inside another repository that does\n" +
+	"not ignore it, in that one, beside the code, which is what makes the\n" +
+	"snapshot travel to other machines on its own. Otherwise this command creates\n" +
+	"the board its own repository, lazily, the first time it runs there.\n" +
+	"\n" +
+	"biso snapshot is the only command that ever runs another program, and the\n" +
+	"only one that creates a repository. Invoking version control costs about\n" +
+	"12ms, more than the 25ms startup budget for biso ls and biso prime allows on\n" +
+	"the hot path.\n" +
+	"\n" +
+	"Options:\n" +
+	"      --vcs <mode>   none, commit or push (default commit)\n" +
+	"  -h, --help         show this help\n" +
+	"\n" +
+	"The two files are always written, whatever version control does. If it is\n" +
+	"not installed, or creating the repository fails, the commit is skipped with\n" +
+	"a note: it is optional, and its absence never fails this command. A commit\n" +
+	"that fails once it is really attempted is an error, nothing is lost, and\n" +
+	"running this command again after fixing the reason is all it takes.\n" +
+	"\n" +
+	"Whatever those commands print is forwarded on stderr, prefixed with the\n" +
+	"system name, and never suppressed. There is no timeout: interrupting a\n" +
+	"half-written revision is not safe, and nothing is lost by killing this\n" +
+	"command, since both files are on disk before the first one runs.\n" +
+	"\n" +
+	"Exit codes:\n" +
+	"  0  written, and recorded if that applied\n" +
+	"  2  bad usage, or --vcs push with no publish command configured\n" +
+	"  6  some task was skipped, unreadable\n" +
+	"  8  cannot write there, or the commit or the push failed\n" +
+	"  20 no board here\n" +
+	"\n" +
+	"Examples:\n" +
+	"  biso snapshot\n" +
+	"  biso snapshot --vcs none\n" +
+	"  biso snapshot --vcs push\n"

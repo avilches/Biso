@@ -24,6 +24,7 @@ func Commands() []CommandSpec {
 		startCommand(), noteCommand(), commentCommand(),
 		finishCommand(), askCommand(), answerCommand(),
 		archiveCommand(), configCommand(), doctorCommand(), helpCommand(),
+		exportCommand(), snapshotCommand(),
 	}
 }
 
@@ -136,21 +137,57 @@ func primeCommand() CommandSpec {
 }
 
 // newCommand is the table of docs/spec/cmd/new.md: the field flags, plus
-// --start. The batch of --from belongs to a later step and is not here yet
-// (docs/spec/estado-de-implementacion.md).
+// --start and the --from of the batch.
+//
+// --from names every one of the others and every one of the others names
+// --from, because a batch takes no field flag at all: everything it writes
+// travels in the file (docs/spec/cmd/new.md#el-modo-lote). The pair is
+// declared on both sides because the parser judges it when it reads the
+// second of the two, so declaring it once would accept the call written the
+// other way round.
 func newCommand() CommandSpec {
 	flags := fieldFlags()
+	names := make([]string, 0, len(flags)+1)
 	for i := range flags {
 		if flags[i].Name == "status" {
 			// The two say different things about the status of a task
-			// being created, so writing both is a usage error. The pair
-			// is declared on both sides because the parser judges it when
-			// it reads the second of the two.
+			// being created, so writing both is a usage error.
 			flags[i].Conflicts = append(flags[i].Conflicts, "start")
 		}
+		flags[i].Conflicts = append(flags[i].Conflicts, "from")
+		names = append(names, flags[i].Name)
 	}
-	flags = append(flags, FlagSpec{Name: "start", Conflicts: []string{"status"}})
+	names = append(names, "start")
+	flags = append(flags,
+		FlagSpec{Name: "start", Conflicts: []string{"status", "from"}},
+		FlagSpec{Name: "from", Value: PlainValue, Conflicts: names},
+	)
 	return CommandSpec{Name: "new", Flags: flags}
+}
+
+// exportCommand is the table of docs/spec/cmd/export.md: every filter of
+// `biso ls` and none of its shaping flags, because a dump has no shape to
+// choose, plus the two of its own.
+//
+// --archived and --only-archived are not here either, and their absence is
+// not an oversight: archived tasks come out by default, so the only flag
+// this command has about the archive is --no-archived.
+func exportCommand() CommandSpec {
+	flags := append(filterFlags(),
+		FlagSpec{Name: "out", Short: "o", Value: PlainValue},
+		FlagSpec{Name: "no-archived"},
+	)
+	return CommandSpec{Name: "export", ReadOnly: true, AffectsNoTask: true, Flags: flags}
+}
+
+// snapshotCommand is the table of docs/spec/cmd/snapshot.md. The value of
+// --vcs is not closed here but in internal/vcs, which is the one place that
+// knows the three modes and the message that rejects a fourth.
+func snapshotCommand() CommandSpec {
+	return CommandSpec{
+		Name: "snapshot", ReadOnly: true, AffectsNoTask: true,
+		Flags: []FlagSpec{{Name: "vcs", Value: PlainValue}},
+	}
 }
 
 // setCommand is the table of docs/spec/cmd/set.md: the field flags, plus the
@@ -251,6 +288,33 @@ func withoutCommentAuthor(flags []FlagSpec) []FlagSpec {
 // None of the filters is a field flag: `biso ls` writes nothing, so every
 // one of them is a switch or a value that belongs to this command alone.
 func listCommand() CommandSpec {
+	flags := append(filterFlags(),
+		FlagSpec{Name: "archived", Conflicts: []string{"only-archived"}},
+		FlagSpec{Name: "only-archived", Conflicts: []string{"archived"}},
+	)
+	flags = append(flags,
+		FlagSpec{
+			Name: "sort", Value: PlainValue,
+			Domain: sortFields, DomainCode: "unknown_sort_field",
+		},
+		FlagSpec{Name: "reverse"},
+		FlagSpec{Name: "limit", Value: PlainValue, Conflicts: []string{"all"}},
+		FlagSpec{Name: "all", Conflicts: []string{"limit"}},
+		FlagSpec{Name: "ids", Conflicts: []string{"count"}},
+		FlagSpec{Name: "count", Conflicts: []string{"ids"}},
+	)
+	return CommandSpec{Name: "ls", ReadOnly: true, Flags: flags}
+}
+
+// filterFlags are the filters of docs/spec/cmd/ls.md, the ones that narrow
+// a listing instead of shaping it. They live apart from listCommand because
+// `biso export` takes exactly these and none of the others
+// (docs/spec/cmd/export.md), so writing them twice is what would let the
+// two lists drift apart.
+//
+// --archived and --only-archived are not among them: they are the two that
+// `export` does not take, so each command adds its own.
+func filterFlags() []FlagSpec {
 	// A filter that repeats accumulates values and admits a list separated
 	// by commas, which is what the head of its table says
 	// ("repeat or comma-separate").
@@ -282,8 +346,6 @@ func listCommand() CommandSpec {
 		vocabulary("status", "s", "any-status"),
 		vocabulary("not-status", "", "any-status"),
 		{Name: "any-status", Conflicts: []string{"status", "not-status"}},
-		{Name: "archived", Conflicts: []string{"only-archived"}},
-		{Name: "only-archived", Conflicts: []string{"archived"}},
 		vocabulary("type", ""),
 		vocabulary("priority", ""),
 		filter("label", "l"),
@@ -296,22 +358,12 @@ func listCommand() CommandSpec {
 	flags = append(flags, opposites("blocked", "not-blocked")...)
 	flags = append(flags, opposites("waiting", "not-waiting")...)
 	flags = append(flags, opposites("active", "not-active")...)
-	flags = append(flags,
+	return append(flags,
 		FlagSpec{Name: "overdue"},
 		FlagSpec{Name: "due-before", Value: PlainValue, Field: "dueBefore"},
 		FlagSpec{Name: "search", Value: TextValue},
 		FlagSpec{Name: "unchecked"},
-		FlagSpec{
-			Name: "sort", Value: PlainValue,
-			Domain: sortFields, DomainCode: "unknown_sort_field",
-		},
-		FlagSpec{Name: "reverse"},
-		FlagSpec{Name: "limit", Value: PlainValue, Conflicts: []string{"all"}},
-		FlagSpec{Name: "all", Conflicts: []string{"limit"}},
-		FlagSpec{Name: "ids", Conflicts: []string{"count"}},
-		FlagSpec{Name: "count", Conflicts: []string{"ids"}},
 	)
-	return CommandSpec{Name: "ls", ReadOnly: true, Flags: flags}
 }
 
 // getCommand is the table of docs/spec/cmd/get.md: the two flags that force
