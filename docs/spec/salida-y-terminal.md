@@ -24,6 +24,24 @@ y por eso `--color` siempre prevalece sobre `NO_COLOR`, como fija la precedencia
 El color se decide por separado para stdout y para stderr, cada uno según su propio destino. Los
 códigos de color nunca cambian el texto: quitarlos deja exactamente las líneas documentadas aquí.
 
+**Y en la versión 1.0 no hay ninguno que quitar: ninguna salida de `biso` lleva color.** `--color` y
+`NO_COLOR` se aceptan y se validan como dice esta página, y un valor fuera del dominio de `--color`
+sigue siendo el error 2 de siempre (["Los mensajes del análisis"](valores-de-entrada.md#los-mensajes-del-análisis)),
+pero hoy ninguna de las dos cosas cambia un solo byte de lo que se imprime: `biso ls --color always`
+dentro de un terminal escribe exactamente lo mismo que `biso ls > fichero`. La tabla de arriba es el
+contrato de cuándo habría color, no la promesa de que lo haya, y está aquí porque una versión
+posterior que pinte algo tendrá que respetarla sin reinterpretar la precedencia.
+
+**No es un olvido, es que esta especificación no dice qué se pinta.** Ninguna página de `docs/spec/`
+asigna un color a un campo, a una columna, a un estado ni a una prioridad, y ningún bloque de salida
+literal lleva un código de escape. Inventar un esquema en el código sería decidir por libre lo que la
+especificación tiene que decidir primero: qué se pinta, con qué color, y cómo se comprueba
+carácter a carácter que la salida sin color sigue siendo la documentada. Mientras eso no exista, la
+respuesta honesta es que no hay color, y no un color elegido a ojo que después haya que cambiar.
+**Que la salida de hoy no lleve ninguno no la hace incompatible con la de mañana**, porque esa
+compatibilidad ya está prometida en la frase de arriba: los códigos de color nunca cambian el texto,
+así que añadirlos no romperá a nadie que lea estas líneas.
+
 ## stdout, stderr y qué va en cada uno
 
 La regla es fija y no tiene excepciones:

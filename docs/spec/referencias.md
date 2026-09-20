@@ -91,9 +91,12 @@ son tres cosas y solo tres: el orden, el límite de treinta y el aviso de recort
 
 ## Los tres mensajes de "no la encuentro"
 
-**Identificador mal formado**, código 2, `code` igual a `malformed_id`:
+**Identificador mal formado**, código 2, `code` igual a `malformed_id`. Este es el desenlace de
+`--id`, y hace falta escribirlo: sin ese flag, la tabla de ["La gramática"](#la-gramática) manda
+`MYP-1.1` a la búsqueda por texto, que es otra cosa y termina en otro código.
 
 ```
+$ biso get MYP-1.1 --id
 error: malformed task id: "MYP-1.1"
 hint: ids look like MYP-11 or 11. A subtask is an ordinary task with --parent MYP-1
 ```
@@ -102,6 +105,7 @@ hint: ids look like MYP-11 or 11. A subtask is an ordinary task with --parent MY
 `never_allocated`:
 
 ```
+$ biso get MYP-999
 error: MYP-999 has never existed on this board
 note: the highest id ever assigned here is MYP-90
 ```
@@ -110,6 +114,7 @@ note: the highest id ever assigned here is MYP-90
 `not_found`:
 
 ```
+$ biso get MYP-53
 error: MYP-53 is not on this board
 note: MYP-53 was assigned at some point, but this board's current data does not have it
 hint: this only happens when something outside biso touched the data, such as a

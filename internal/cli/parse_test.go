@@ -2,6 +2,7 @@ package cli
 
 import (
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1079,5 +1080,40 @@ func TestValueAccessors(t *testing.T) {
 	}
 	if got := strings.Join(p.Values("add-labels"), ","); got != "a,b" {
 		t.Errorf("Values is %q", got)
+	}
+}
+
+// countingReader is standard input that remembers whether anybody read it,
+// which is the whole question of the test below.
+type countingReader struct {
+	reads int
+}
+
+func (r *countingReader) Read(p []byte) (int, error) {
+	r.reads++
+	return 0, io.EOF
+}
+
+// TestTwoStdinIsAnsweredBeforeAnythingIsRead is the other half of the rule
+// above: the refusal comes from reading the command line and not from
+// finding the stream exhausted, so the call that is going to be refused
+// never reads it at all, and therefore never earns a warning about what it
+// read (docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
+func TestTwoStdinIsAnsweredBeforeAnythingIsRead(t *testing.T) {
+	for _, argv := range [][]string{
+		{"set", "MYP-1", "--append-desc", "-", "--append-plan", "-"},
+		{"set", "MYP-1", "--append-desc", "-", "--append-desc", "-"},
+	} {
+		stdin := &countingReader{}
+		p, err := Parse(argv, testCommands(), Env{Stdin: stdin})
+		wantError(t, err, 2, "two_stdin")
+		if stdin.reads != 0 {
+			t.Errorf("%v read standard input %d time(s) before refusing the call",
+				argv, stdin.reads)
+		}
+		if len(p.Warnings) != 0 {
+			t.Errorf("%v produced the warnings %v before refusing the call",
+				argv, p.Warnings)
+		}
 	}
 }

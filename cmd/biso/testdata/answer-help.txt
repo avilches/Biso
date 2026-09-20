@@ -20,9 +20,9 @@ comment keeps its original author and time. This command does not take
 --comment-author.
 
 Exit codes:
-  0  answered       4  not found        7  --dry-run did not pass
-  2  bad usage      5  ambiguous        8  could not be written
-  3  empty answer, or unreadable        20 no board here
+  0  answered       4  not found        8  could not be written
+  2  bad usage      5  ambiguous        20 no board here
+  3  empty answer, or unreadable
   6  no open question
 
 Examples:

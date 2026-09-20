@@ -5,6 +5,12 @@ package cli
 // (docs/spec/salida-y-terminal.md#interactividad-terminal-y-color). The
 // output of every command is identical byte for byte with a terminal and
 // without one, save the color codes, so nothing else may ask this question.
+//
+// In the 1.0 there are no color codes to save: no output carries any, and
+// that page says so and says why, which is that the specification fixes
+// when there would be color and never what gets painted. Nothing calls
+// UseColor for that reason, and not because it was forgotten: it is the
+// answer already written down for whoever paints the first thing.
 
 // ColorWhen is the value of the --color flag.
 type ColorWhen string

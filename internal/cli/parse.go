@@ -163,6 +163,15 @@ func (st *parser) run(argv []string) error {
 			return errInvalidEncodingArgument(i+1, at, arg)
 		}
 	}
+	// And the rule of one standard input per invocation is answered next,
+	// over the whole command line and before a single value is read. It
+	// cannot wait until the second "-" is resolved, because by then the
+	// first one has already drained the stream and earned whatever
+	// warnings its value deserved, on a call that was never going to run
+	// (docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
+	if err := st.refuseTwoStdin(argv); err != nil {
+		return err
+	}
 	afterDashDash := false
 	for i := 0; i < len(argv); i++ {
 		tok := argv[i]
@@ -219,14 +228,121 @@ func (st *parser) run(argv []string) error {
 	return st.finish()
 }
 
-func (st *parser) command(name string) error {
-	for i := range st.commands {
-		if st.commands[i].Name == name {
-			st.cmd = &st.commands[i]
-			st.p.Command = name
-			st.p.cmd = st.cmd
+// refuseTwoStdin walks the command line looking only for the flags and the
+// positional arguments that ask for standard input with "-", and answers the
+// error of two of them before anything has been read. It resolves no value,
+// records no occurrence and emits no warning: everything it finds, the main
+// walk finds again.
+//
+// Anything it cannot resolve, such as a flag or a command that does not
+// exist, ends the scan without an answer, because that is an error the main
+// walk gives at the same token and it has to be the one that comes out.
+func (st *parser) refuseTwoStdin(argv []string) error {
+	var cmd *CommandSpec
+	var first *FlagSpec
+	positionals, posClosed, afterDashDash := 0, false, false
+
+	asks := func(f *FlagSpec) error {
+		if first == nil {
+			first = f
 			return nil
 		}
+		if first == f {
+			// One flag repeated is not two flags fighting over the
+			// stream, exactly as it is not when the value is read.
+			return errStdinTwiceInOneFlag(f)
+		}
+		return errTwoStdin(first, f)
+	}
+	positional := func(tok string) error {
+		defer func() { positionals++ }()
+		if cmd == nil || cmd.TextPositionalsFrom <= 0 ||
+			positionals < cmd.TextPositionalsFrom || tok != "-" {
+			return nil
+		}
+		return asks(&textPositional)
+	}
+
+	for i := 0; i < len(argv); i++ {
+		tok := argv[i]
+		switch {
+		case afterDashDash:
+			if err := positional(tok); err != nil {
+				return err
+			}
+		case tok == "--":
+			afterDashDash = true
+		case strings.HasPrefix(tok, "-") && len(tok) > 1:
+			var f *FlagSpec
+			if strings.HasPrefix(tok, "--") && len(tok) > 2 {
+				name, _, _ := strings.Cut(tok[2:], "=")
+				f = lookupLong(cmd, name)
+			} else {
+				name, _, _ := strings.Cut(tok[1:], "=")
+				f = lookupShort(cmd, name)
+			}
+			if f == nil {
+				return nil
+			}
+			if cmd != nil {
+				posClosed = true
+			}
+			if f.Name == "help" || f.Name == "version" {
+				// The call ends as soon as one of the two is read, so
+				// nothing behind it is part of it.
+				return nil
+			}
+			if f.Value == NoValue {
+				continue
+			}
+			raw, hasInline := "", false
+			if _, inline, ok := strings.Cut(tok, "="); ok {
+				raw, hasInline = inline, true
+			}
+			if !hasInline {
+				if i+1 >= len(argv) {
+					return nil
+				}
+				raw = argv[i+1]
+				i++
+			}
+			if f.Value == TextValue && raw == "-" {
+				if err := asks(f); err != nil {
+					return err
+				}
+			}
+		case cmd == nil:
+			cmd = lookupCommand(st.commands, tok)
+			if cmd == nil {
+				return nil
+			}
+		case posClosed:
+			return nil
+		default:
+			if err := positional(tok); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// lookupCommand answers the specification of a command by its name, or nil.
+func lookupCommand(commands []CommandSpec, name string) *CommandSpec {
+	for i := range commands {
+		if commands[i].Name == name {
+			return &commands[i]
+		}
+	}
+	return nil
+}
+
+func (st *parser) command(name string) error {
+	if cmd := lookupCommand(st.commands, name); cmd != nil {
+		st.cmd = cmd
+		st.p.Command = name
+		st.p.cmd = cmd
+		return nil
 	}
 	if err := errNoDeleteCommand(name); err != nil {
 		// The absence of a delete command is specified, so the three

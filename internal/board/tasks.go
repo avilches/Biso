@@ -362,9 +362,15 @@ func (r *Tasks) missing(id string, num, last int) *model.Error {
 		Notes: []string{fmt.Sprintf(
 			"%s was assigned at some point, but this board's current data does not have it", id,
 		)},
+		// The three display lines of
+		// docs/spec/referencias.md#los-tres-mensajes-de-no-la-encuentro.
+		// Where this hint breaks is fixed text and not a width, like
+		// every other multi-line note and hint of the specification, and
+		// whoever writes to stderr aligns the second and the third under
+		// the first.
 		Hints: []string{
-			"this only happens when something outside biso touched the data, such as a " +
-				"snapshot restored over a newer one or a database edited by hand; " +
+			"this only happens when something outside biso touched the data, such as a\n" +
+				"snapshot restored over a newer one or a database edited by hand;\n" +
 				"`biso doctor` diagnoses damage to the board",
 		},
 	}

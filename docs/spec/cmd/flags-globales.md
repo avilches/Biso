@@ -20,7 +20,7 @@ termina el programa con código 0 en cuanto se lee, sin más.
 | `--json` | | Toda la salida de datos es JSON, en el sobre de la sección ["El sobre"](../contrato-json.md#el-sobre) |
 | `--quiet` | `-q` | Reduce la salida a lo mínimo. Ver más abajo |
 | `--print` | | Después de escribir, imprime la ficha completa de cada tarea afectada |
-| `--dry-run` | | Valida todo, no escribe nada. Sale 0 si habría funcionado y 7 si no |
+| `--dry-run` | | Valida todo, no escribe nada. Sale 0 si habría funcionado, y si no, el código del fallo |
 | `--version` | `-V` | Imprime `biso 1.0.0` y sale con 0 |
 | `--help` | `-h` | Imprime la ayuda del comando y sale con 0 |
 
@@ -39,10 +39,20 @@ Reglas de aplicación, que hay que implementar tal cual:
   `--fix` es un comando de escritura y el flag se comporta como en cualquier otro (["`biso doctor`"](doctor.md)).
   `snapshot` (["`biso snapshot`"](snapshot.md)) entra en la lista por el mismo motivo que `export`, que escriben ficheros y no
   tocan ninguna tarea.
+- **El código de un `--dry-run` que no pasa es el del fallo, y nunca uno propio de la vista previa.**
+  Una vista previa contesta lo mismo que contestaría la llamada que simula: 2 para un título vacío,
+  3 para un valor fuera de un vocabulario, 4 para una referencia que no existe, y 7 solo donde el 7
+  ya vivía sin `--dry-run`, que es la validación de conjunto de un lote
+  (["El código 7 garantiza que no se ha escrito nada, y el código específico siempre gana sobre
+  él"](../codigos-de-salida.md#el-código-7-garantiza-que-no-se-ha-escrito-nada-y-el-código-específico-siempre-gana-sobre-él)).
+  Que la escritura no se haya llegado a intentar no cambia a quién es atribuible el fallo, y un
+  código propio de "la vista previa no pasó" obligaría a leer la prosa del mensaje para saber qué
+  falló, que es justo lo que un código específico existe para evitar.
 - **`--dry-run` sí vale en `biso init` y en `biso config set`**, que escriben sin tocar ninguna tarea
   existente y tienen los dos algo que validar antes: `init --from` valida la instantánea entera contra
-  el vocabulario que ella misma trae, y sale 0 si habría funcionado y 7 si no, que es exactamente lo
-  que la definición del flag promete; `config set` valida el valor contra el tablero. Validar en
+  el vocabulario que ella misma trae, y sale 0 si habría funcionado y 7 si el lote no es válido, que
+  es el mismo 7 del lote de `biso new --from`; `config set` valida el valor contra el tablero y
+  contesta el código de ese valor. Validar en
   seco la restauración de un tablero de doscientas tareas sin crear nada es el caso donde más vale, así
   que dejarla fuera de `init` sería perder lo mejor que tiene.
 - **`--dry-run` emite los mismos avisos que emitiría la escritura real**, por stderr y con el mismo
@@ -51,10 +61,10 @@ Reglas de aplicación, que hay que implementar tal cual:
   vista previa diciendo menos que la llamada que simula. Los avisos que dependen de datos que solo
   existen tras escribir, como el identificador que recibe una tarea nueva, se emiten igualmente
   nombrando lo que sí existe en ese momento, que es la línea del fichero de entrada.
-- **`biso doctor --fix --dry-run` es la única excepción al código 7 de `--dry-run` en un comando de
-  escritura.** `doctor` nunca tuvo código 7 en su propia tabla de códigos, así que su vista previa
-  devuelve el código que daría la llamada real que le sigue (0 o 6), nunca un 7 que esa tabla no tiene;
-  el razonamiento completo está en ["El informe en seco de `--fix --dry-run`"](doctor.md#el-informe-en-seco-de---fix---dry-run).
+- **`biso doctor --fix --dry-run` no contesta el código de un hallazgo suelto, sino el de su informe
+  entero.** Su vista previa devuelve el código que daría la llamada real que le sigue, 0 o 6, que es
+  lo que dice su propia tabla de códigos; el razonamiento completo está en
+  ["El informe en seco de `--fix --dry-run`"](doctor.md#el-informe-en-seco-de---fix---dry-run).
 - **La ficha que imprime `--print` es la de ["`biso get`"](get.md), entera y sin `--section`, y sustituye la
   salida por defecto del comando en vez de añadirse debajo.** Los tres datos de la línea de estado de
   ["`biso set`"](set.md) (el estado, el avance de los criterios y la urgencia) están ya dentro de esa ficha, así que

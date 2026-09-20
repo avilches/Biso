@@ -147,10 +147,14 @@ haya `--json` (["Los errores en JSON"](contrato-json.md#los-errores-en-json)); y
 imprimiendo como texto con `--json`, porque ningún sobre la lleva
 (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)).
 
-De los transversales, el paso 4 no ejerce todavía **el color** de
-["Terminal, flujos de salida y codificación"](salida-y-terminal.md): la decisión está implementada y
-probada contra su tabla, pero ninguna salida de `init` ni de `where` lleva color, así que nada la usa
-hasta que lleguen `ls` y `prime`. De ["El contrato JSON"](contrato-json.md) están el sobre, los dos
+De los transversales, el paso 4 no ejerce **el color** de
+["Terminal, flujos de salida y codificación"](salida-y-terminal.md), y ningún paso posterior lo
+ejerce tampoco: la decisión está implementada y probada contra su tabla, y nada la llama, porque
+ninguna salida de la versión 1.0 lleva color. No es una deuda de este paso ni de `ls` y `prime`, que
+ya están: la especificación fija cuándo habría color y no dice en ningún sitio qué se pinta, así
+que esa página lo declara ahora como el comportamiento de la versión y no como algo pendiente
+(["Interactividad, terminal y color"](salida-y-terminal.md#interactividad-terminal-y-color)).
+`--color` y `NO_COLOR` se aceptan y se validan, y una prueba comprueba que no cambian un byte. De ["El contrato JSON"](contrato-json.md) están el sobre, los dos
 esquemas de estos comandos y el sobre de error con sus claves de detalle, `warnings` incluida; falta
 el resto de los `kind`. Y de ["Flags globales"](cmd/flags-globales.md) están todos salvo `--print` en
 un comando que sí afecta a alguna tarea, que no existe todavía.
@@ -490,6 +494,14 @@ en Windows nunca levanta ese aviso. Eso es lo correcto mientras no exista: el av
 sondeo corrió y algo falló, y llamar inseguro a lo que no se ha medido sería peor que callar. Es el
 motivo, con `board`, de que la fila del paso 9 diga "hecho con matices".
 
+**Y no está el color**, que no es de este paso sino de todos: la tabla de decisión de
+["Interactividad, terminal y color"](salida-y-terminal.md#interactividad-terminal-y-color) está
+implementada y probada, y no la llama nadie, porque ninguna salida lleva códigos de escape. A
+diferencia de las dos de arriba, esto ya no es un hueco pendiente: la especificación dice desde esta
+revisión que la versión 1.0 no emite color, y una prueba comprueba que `--color always` y
+`NO_COLOR` dan la misma salida byte a byte. Lo que faltaría para pintar algo no es código, es la
+decisión de qué se pinta, que ninguna página toma.
+
 Lo que la especificación no decidía, o decidía mal, y se corrigió en el mismo cambio:
 
 - **`--print` es error 2 también en `biso doctor --fix`.** La página decía que ahí "no añade nada",
@@ -577,6 +589,37 @@ que un tablero sin marcador tiene que poder abrirse para que `biso doctor --fix`
 de la primera vía, la del directorio de trabajo, y no de las dos. El puntero sigue exigiendo el
 marcador aunque su `path` resuelva, porque ahí manda el `id`, y esa única puerta basta para que el
 arreglo tenga algo que arreglar.
+
+### Qué cerró la auditoría de la especificación contra el binario
+
+Con los nueve pasos ya mezclados, una auditoría recorrió `docs/spec/` entera comparando cada ancla
+con lo que hace el programa. Encontró nueve divergencias, y estas son las que cambiaron algo:
+
+- **El límite de filas configurable no existía.** `biso ls` usaba siempre treinta, y la clave
+  `default_limit` se leía del fichero de máquina, se validaba y se tiraba. Ahora la precedencia
+  entera está implementada, con prueba de sus cuatro escalones, y `BISO_LIMIT` se valida como se
+  valida esa clave (["Variables de entorno"](invocacion.md#variables-de-entorno)).
+- **El color no se emite, y ahora la especificación lo dice.** Ver el párrafo del paso 9 de más
+  arriba.
+- **`dry_run_failed` no lo producía ningún camino**, y solo vivía en un comentario. Un `--dry-run`
+  que no pasa contesta el código de su fallo, que es la decisión deliberada del paso 5, y el único
+  7 que existe es el del lote. El identificador se ha quitado de
+  ["El contrato JSON"](contrato-json.md), y con él las filas del 7 de las tablas de códigos y de
+  las ayudas de `set`, `archive` y los seis verbos del ciclo, que prometían un desenlace inalcanzable.
+- **Una instantánea que fallaba al publicar se tragaba lo que sí había pasado.** Ahora imprime la
+  línea de los ficheros escritos y las notas que le tocaban, con el error detrás
+  (["`biso snapshot`"](cmd/snapshot.md#salida)).
+- **La regla de una sola entrada estándar se comprobaba después de leerla.** El primer `-` vaciaba el
+  flujo y emitía su aviso antes de que la llamada fuera rechazada; la cuenta se hace ahora sobre la
+  línea entera y antes de leer ningún valor
+  (["Tres formas de pasar un valor largo"](valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo)).
+- **Tres arreglos pequeños de texto y de forma**: la pista de un identificador que el tablero ya no
+  tiene sale partida en sus tres líneas, como la imprime su página; el ejemplo del identificador mal
+  formado de ["Cómo se resuelve una referencia a una tarea"](referencias.md) lleva ahora el `--id`
+  que hace falta para llegar a él, porque sin él la gramática de esa misma página manda la cadena a
+  la búsqueda por texto; y los dos fallos del arrendamiento de un lote ya no llevan una clave `given`
+  vacía, que es una segunda excepción declarada de
+  ["Los errores en JSON"](contrato-json.md#los-errores-en-json).
 
 ## Antes de empezar un paso
 

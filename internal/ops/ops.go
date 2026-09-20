@@ -36,6 +36,14 @@ type Env struct {
 	// machine's `me` key, and empty when neither is set
 	// (docs/spec/invocacion.md#variables-de-entorno).
 	Me string
+	// ListLimit is how many rows `biso ls` prints when the call writes no
+	// --limit: what BISO_LIMIT said, and otherwise the machine's
+	// `default_limit` key, which is already thirty when the file does not
+	// set it. It is a pointer so that an Env built by hand, in a test or
+	// in a caller that has no machine configuration, still answers the
+	// built-in thirty instead of a limit of zero rows
+	// (docs/spec/invocacion.md#variables-de-entorno).
+	ListLimit *int
 	// Now is the clock, and NewID the source of board identifiers.
 	Now   func() time.Time
 	NewID func() (string, error)
@@ -61,6 +69,10 @@ type Call struct {
 	// Me is what BISO_ME said, and empty when it said nothing, in which
 	// case the machine's `me` key answers instead.
 	Me string
+	// Limit is what BISO_LIMIT said, already read as a whole number of
+	// rows, and nil when it said nothing, in which case the machine's
+	// `default_limit` key answers instead.
+	Limit *int
 
 	Now   func() time.Time
 	NewID func() (string, error)
@@ -77,8 +89,19 @@ func NewEnv(c Call) (Env, error) {
 	if c.Me != "" {
 		me = c.Me
 	}
+	// The variable wins over the key, and the key is already filled in
+	// with the built-in thirty when the file does not set it, so this one
+	// assignment is the whole of the last two rungs of the precedence of
+	// docs/spec/invocacion.md#variables-de-entorno. The first, --limit,
+	// belongs to the call and not to the environment, so it is read where
+	// the command line is.
+	limit := machine.DefaultLimit
+	if c.Limit != nil {
+		limit = *c.Limit
+	}
 	return Env{
-		Dir: c.Dir, Machine: machine, Me: me, Now: c.Now, NewID: c.NewID,
+		Dir: c.Dir, Machine: machine, Me: me, ListLimit: &limit,
+		Now: c.Now, NewID: c.NewID,
 	}.WithDefaults(), nil
 }
 

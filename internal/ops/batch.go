@@ -354,6 +354,11 @@ func checkImportedLease(d *decoded, activeStatus string) *model.Error {
 			Code:     "invalid_lease",
 			Message:  field + " on a task that is not both active and assigned",
 			Field:    field,
+			// The fault is not the value of the key but the state of
+			// the task it came on, so there is nothing to quote and
+			// `given` does not travel
+			// (docs/spec/contrato-json.md#los-errores-en-json).
+			NoGiven: true,
 		}
 	}
 	if d.hasLeaseExpiresAt != d.hasLeaseHolder {
@@ -366,6 +371,10 @@ func checkImportedLease(d *decoded, activeStatus string) *model.Error {
 			Code:     "invalid_lease",
 			Message:  field + " given without " + missing + "; the two go together",
 			Field:    field,
+			// The fault is the key that is missing, not the value of
+			// the one that came, so this one carries no `given`
+			// either.
+			NoGiven: true,
 		}
 	}
 	return nil

@@ -22,9 +22,8 @@ Every field flag of `biso set --help` works here too.
 
 Exit codes:
   0  finished       3  unknown value    6  --strict and something is missing
-  2  bad usage      4  not found        7  --dry-run did not pass
-                    5  ambiguous        8  the board could not be written
-                                        20 no board here
+  2  bad usage      4  not found        8  the board could not be written
+                    5  ambiguous        20 no board here
 
 Examples:
   biso finish MYP-11 --check-ac all --append-summary "Normalizes CRLF"
