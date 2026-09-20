@@ -135,11 +135,20 @@ regla de cuándo acompañan:
 | `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió **la orden que falló**, no las de las que fueron bien antes, que sí están todas en `data.vcsOutput` cuando la llamada acaba bien (["`biso snapshot`"](cmd/snapshot.md)) |
 | `warnings` | Al mismo nivel que `error`, no dentro de él, en cualquier `code` cuya llamada haya producido al menos un aviso antes de fallar, con la misma forma que `data.warnings` (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)) |
 
-**La única excepción a la fila de `field` y `given` es `incompatible_flags`, que no lleva ninguna de
-las dos.** Nombra un par de flags, y ninguno de los dos es más culpable que el otro, así que elegir
-uno para `field` sería inventarse una atribución que la llamada no tiene. Los demás errores del
-código 2 que nombran un flag sí las llevan, `read_only_flag` incluido, que nombra uno solo
-(["Los flags globales"](cmd/flags-globales.md)).
+**La fila de `field` y `given` tiene dos excepciones, y son de signo distinto.** La primera es
+`incompatible_flags`, que **no lleva ninguna de las dos**: nombra un par de flags, y ninguno de los
+dos es más culpable que el otro, así que elegir uno para `field` sería inventarse una atribución que
+la llamada no tiene. Los demás errores del código 2 que nombran un flag sí las llevan,
+`read_only_flag` incluido, que nombra uno solo (["Los flags globales"](cmd/flags-globales.md)).
+
+La segunda es `invalid_lease`, que **lleva `field` y no lleva `given`**. Sus dos mitades
+(["`biso new`"](cmd/new.md#el-modo-lote)) no reprochan ningún valor: la primera reprocha el estado
+de la tarea sobre la que llegó la clave, y la segunda que falte la otra clave de la pareja. No hay
+nada que citar, así que la clave no viaja, en vez de viajar vacía: una `given` de cadena vacía
+significa "el valor que llegó estaba vacío", que es lo que contesta `--rm-labels ""`, y no "no había
+ningún valor". Es la misma regla que ["Números, fechas y ausencias"](#números-fechas-y-ausencias)
+aplica a una salida de datos, aquí aplicada a la única clave de un error que puede faltar sin que
+falte también su pareja.
 
 Las cinco de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
 comprobable: quien ramifica sobre `unknown_status` sabe que va a tener `field`, `given` y `valid`, y

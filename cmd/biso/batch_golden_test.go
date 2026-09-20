@@ -229,3 +229,44 @@ func TestBatchEnvelopeCarriesTheUrgencyAndWhatChanged(t *testing.T) {
 		}
 	}
 }
+
+// TestTheTwoLeaseFailuresCarryNoGiven is the rule of
+// docs/spec/contrato-json.md#los-errores-en-json for an error that names a
+// field and has no value to quote: `given` does not travel, instead of
+// travelling empty. Neither half of the lease invariant is about a value
+// that was written wrong; both are about which of the two keys the line
+// brought, which is why their sentences do not quote anything either.
+func TestTheTwoLeaseFailuresCarryNoGiven(t *testing.T) {
+	m := batchBoard(t)
+	path := filepath.Join(m.dir, "tasks.ndjson")
+	m.write(t, path, `{"title":"Not active","leaseHolder":"@claude",`+
+		`"leaseExpiresAt":"2026-09-08T14:00:00Z"}`+"\n"+
+		`{"title":"Half a lease","status":"In Progress",`+
+		`"assignees":["@claude"],"leaseHolder":"@claude"}`+"\n")
+
+	got := m.run(t, "new", "--from", path, "--json").assertCode(t, 7)
+
+	var envelope struct {
+		Error struct {
+			Details []map[string]any `json:"details"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal([]byte(got.stderr), &envelope); err != nil {
+		t.Fatalf("the envelope is not JSON: %v\n%s", err, got.stderr)
+	}
+	if len(envelope.Error.Details) != 2 {
+		t.Fatalf("the envelope carries %d failures and not two", len(envelope.Error.Details))
+	}
+	for _, detail := range envelope.Error.Details {
+		if detail["code"] != "invalid_lease" {
+			t.Errorf("the failure is %q and not invalid_lease", detail["code"])
+		}
+		if detail["field"] != "leaseHolder" {
+			t.Errorf("the failure names %q and not leaseHolder", detail["field"])
+		}
+		if _, ok := detail["given"]; ok {
+			t.Errorf("the failure carries a given of %#v, and there is none to quote",
+				detail["given"])
+		}
+	}
+}

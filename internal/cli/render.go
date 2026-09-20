@@ -273,16 +273,10 @@ func writeErrorEnvelope(s Streams, e *model.Error, warnings []Warning) {
 		Message:  e.Message,
 		Valid:    e.Valid,
 	}
-	if e.Field != "" {
-		field, given := e.Field, e.Given
-		obj.Field, obj.Given = &field, &given
-	}
+	fill(obj, e)
 	for _, d := range e.Details {
 		detail := &errorObject{ExitCode: d.ExitCode, Code: d.Code, Message: d.Message, Valid: d.Valid}
-		if d.Field != "" {
-			field, given := d.Field, d.Given
-			detail.Field, detail.Given = &field, &given
-		}
+		fill(detail, d)
 		obj.Details = append(obj.Details, detail)
 	}
 	obj.VCSOutput = e.VCSOutput
@@ -294,6 +288,24 @@ func writeErrorEnvelope(s Streams, e *model.Error, warnings []Warning) {
 		Error:         obj,
 		Warnings:      warningObjects(warnings),
 	})
+}
+
+// fill writes the field and given of one error into its JSON object, with
+// the two exceptions of the row of
+// docs/spec/contrato-json.md#los-errores-en-json: an error that names no
+// field carries neither key, and one that names a field with no value to
+// quote carries the field alone.
+func fill(obj *errorObject, e *model.Error) {
+	if e.Field == "" {
+		return
+	}
+	field := e.Field
+	obj.Field = &field
+	if e.NoGiven {
+		return
+	}
+	given := e.Given
+	obj.Given = &given
 }
 
 // warningObjects is one warning as data.warnings carries it

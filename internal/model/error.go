@@ -47,8 +47,14 @@ type Error struct {
 	Notes    []string // the "note: " lines that follow those, in order, empty when the case has none
 	Hints    []string // the "hint: " lines that follow those, in order, empty when the case has none
 
-	Field     string   // on exit code 3, and exit code 2 errors that name a flag
-	Given     string   // always accompanies Field
+	Field string // on exit code 3, and exit code 2 errors that name a flag
+	Given string // accompanies Field, unless NoGiven says there is nothing to quote
+	// NoGiven is the second exception of the field-and-given row of
+	// docs/spec/contrato-json.md#los-errores-en-json: an error that names a
+	// field whose fault is not any value it was given, so there is nothing
+	// to quote and the key does not travel at all. An empty Given without
+	// this is still a given, which is what `--rm-labels ""` answers.
+	NoGiven   bool
 	Valid     []string // on errors that reject a value against a known set
 	Details   []*Error // only on batch_invalid and dry_run_failed, same shape, one per failure
 	VCSOutput []string // only on vcs_commit_failed and vcs_push_failed
