@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -29,6 +30,12 @@ func runNew(s Streams, p *Parsed, env ops.Env) int {
 	switch {
 	case asJSON:
 		writeEnvelope(s, env, "task.write", writeData(result))
+	case p.Has("print"):
+		// --print replaces the default output with the whole card of
+		// every task the call affected, and never adds it under the
+		// line: the three data of that line are inside the card already
+		// (docs/spec/cmd/flags-globales.md).
+		printCards(s, result.Views)
 	default:
 		// The default output of `biso new` is one line per task created,
 		// with the identifier and nothing else: it is the one writing
@@ -59,7 +66,7 @@ func runSet(s Streams, p *Parsed, env ops.Env) int {
 	}
 	result, err := ops.Set(env, params)
 	if err != nil {
-		return failWrite(s, p, asJSON, err, result)
+		return failWriteWithCandidates(s, p, env, asJSON, err, result)
 	}
 	printWriteWarnings(s, p, result)
 
@@ -72,6 +79,11 @@ func runSet(s Streams, p *Parsed, env ops.Env) int {
 		for _, t := range result.Tasks {
 			fmt.Fprintln(s.Stdout, t.ID)
 		}
+	case p.Has("print"):
+		if result.DryRun {
+			fmt.Fprintln(s.Stdout, dryRunHeader(len(result.Tasks)))
+		}
+		printCards(s, result.Views)
 	default:
 		if result.DryRun {
 			fmt.Fprintln(s.Stdout, dryRunHeader(len(result.Tasks)))
@@ -84,6 +96,20 @@ func runSet(s Streams, p *Parsed, env ops.Env) int {
 		printNote(s, p, note)
 	}
 	return 0
+}
+
+// printCards writes the whole card of every task a write affected, which
+// is what --print asks for. The cards are separated by a blank line, so
+// that a call over several tasks does not run two of them together.
+func printCards(s Streams, views []ops.TaskView) {
+	for i, v := range views {
+		if i > 0 {
+			fmt.Fprintln(s.Stdout)
+		}
+		fmt.Fprint(s.Stdout, renderCard(&ops.GetResult{
+			Task: v, Sections: ops.Sections, WholeCard: true,
+		}))
+	}
 }
 
 // dryRunHeader is the line that marks the status lines under it as
@@ -134,6 +160,7 @@ func newParams(p *Parsed) (ops.NewParams, error) {
 		Start:   p.Has("start"),
 		Changes: changesOf(p),
 		DryRun:  p.Has("dry-run"),
+		Print:   p.Has("print"),
 	}
 	if len(p.Positionals) == 1 {
 		params.Title, params.HasTitle = p.Positionals[0], true
@@ -147,6 +174,7 @@ func setParams(p *Parsed) (ops.SetParams, error) {
 		Refs:    p.Positionals,
 		Changes: changesOf(p),
 		DryRun:  p.Has("dry-run"),
+		Print:   p.Has("print"),
 	}
 	switch {
 	case p.Has("id"):
@@ -199,6 +227,18 @@ func printWriteWarnings(s Streams, p *Parsed, result *ops.WriteResult) {
 			fmt.Fprint(s.Stderr, prefixed("hint: ", hint))
 		}
 	}
+}
+
+// failWriteWithCandidates is failWrite for a command that resolved a
+// reference: the candidates of an ambiguous one are printed the way
+// `biso ls` prints a listing (docs/spec/referencias.md).
+func failWriteWithCandidates(s Streams, p *Parsed, env ops.Env, asJSON bool,
+	err error, result *ops.WriteResult) int {
+	var ambiguous *ops.AmbiguousRef
+	if errors.As(err, &ambiguous) {
+		return failWithCandidates(s, p, env, asJSON, err)
+	}
+	return failWrite(s, p, asJSON, err, result)
 }
 
 // failWrite is fail with the warnings a failed write had already produced,

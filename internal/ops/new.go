@@ -19,6 +19,8 @@ type NewParams struct {
 	Start   bool
 	Changes []Change
 	DryRun  bool
+	// Print asks for the card of the task that was created.
+	Print bool
 }
 
 // New creates one task and answers its identifier (docs/spec/cmd/new.md).
@@ -104,6 +106,12 @@ func NewOn(b *board.Board, env Env, p NewParams) (*WriteResult, error) {
 		return w.partial(), err
 	}
 	result.Tasks = append(result.Tasks, summary)
+	if p.Print {
+		byID[task.ID] = task
+		if result.Views, err = w.views([]*model.Task{task}, byID); err != nil {
+			return w.partial(), err
+		}
+	}
 	result.Warnings, result.Notes = w.warnings, w.notes
 	return result, nil
 }

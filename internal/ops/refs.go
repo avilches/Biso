@@ -46,6 +46,12 @@ const (
 type AmbiguousRef struct {
 	Err        *model.Error
 	Candidates []*model.Task
+	// Listing is the candidates as `biso ls` would print them: the same
+	// order, the same limit of thirty and the same truncation warning. The
+	// command that resolved the reference fills it in, because the order
+	// of that listing needs the board's configuration and this function
+	// does not have it.
+	Listing *ListResult
 }
 
 func (a *AmbiguousRef) Error() string { return a.Err.Error() }
@@ -71,12 +77,21 @@ type Resolved struct {
 // resolveRef resolves one reference to one task, exactly as
 // docs/spec/referencias.md says and with no variant per command.
 func resolveRef(b *board.Board, ref string, mode RefMode) (*Resolved, error) {
+	return resolveRefWith(b, nil, ref, mode)
+}
+
+// resolveRefWith is resolveRef over a board whose tasks the caller has
+// already read. Every command that resolves a reference reads the whole
+// board anyway, for the derived fields or for the cycles, so handing that
+// list in keeps the text search from running the same five queries twice.
+// A nil list means the search reads them itself.
+func resolveRefWith(b *board.Board, all []*model.Task, ref string, mode RefMode) (*Resolved, error) {
 	num, wellFormed := parseTaskRef(b.Config.TaskPrefix, ref)
 	switch {
 	case mode == RefID && !wellFormed:
 		return nil, malformedIDError(ref)
 	case mode == RefText:
-		return searchForRef(b, ref)
+		return searchForRef(b, all, ref)
 	case wellFormed:
 		task, err := b.Tasks.Load(fmt.Sprintf("%s-%d", b.Config.TaskPrefix, num))
 		if err != nil {
@@ -84,7 +99,7 @@ func resolveRef(b *board.Board, ref string, mode RefMode) (*Resolved, error) {
 		}
 		return &Resolved{Task: task}, nil
 	}
-	return searchForRef(b, ref)
+	return searchForRef(b, all, ref)
 }
 
 // parseTaskRef reads the three shapes of an identifier of
@@ -139,10 +154,12 @@ func malformedIDError(ref string) *model.Error {
 // docs/spec/referencias.md#la-búsqueda-por-texto laid on top: it looks only
 // at tasks that are not archived, a hit in the title beats a hit anywhere
 // else, and the three counts end differently.
-func searchForRef(b *board.Board, query string) (*Resolved, error) {
-	all, _, err := b.Tasks.All()
-	if err != nil {
-		return nil, err
+func searchForRef(b *board.Board, all []*model.Task, query string) (*Resolved, error) {
+	if all == nil {
+		var err error
+		if all, _, err = b.Tasks.All(); err != nil {
+			return nil, err
+		}
 	}
 	var titles, anywhere []*model.Task
 	for _, t := range all {

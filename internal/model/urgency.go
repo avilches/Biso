@@ -82,47 +82,123 @@ type UrgencyContext struct {
 // unreadable whatever its status, and hiding it behind a zero would be the
 // silence the rule is there to prevent.
 func (t *Task) Urgency(ctx UrgencyContext) (float64, *Error) {
+	breakdown, err := t.UrgencyBreakdown(ctx)
+	if err != nil {
+		return 0.0, err
+	}
+	return breakdown.Total, nil
+}
+
+// UrgencyTerm is one line of the formula: the coefficient the board
+// configures, the factor the task contributes, and the product of the two,
+// which is what enters the sum.
+type UrgencyTerm struct {
+	Coefficient float64
+	Factor      float64
+	Value       float64
+}
+
+// The three values of UrgencyBreakdown.ActiveReason, which say why the
+// `active` term contributed nothing. They are the two strings
+// docs/spec/cmd/get.md#el-esquema-json fixes for the `reason` key, plus the
+// empty string for a term that did contribute.
+const (
+	ActiveContributes = ""
+	NotActive         = "not_active"
+	ActiveButWaiting  = "waiting"
+)
+
+// UrgencyBreakdown is the formula term by term, which is what
+// `biso get --explain-urgency` prints and what the `urgencyBreakdown` key
+// of docs/spec/cmd/get.md#el-esquema-json carries.
+//
+// Terminal marks the one task whose urgency is zero with no term computed
+// (docs/spec/modelo-de-datos/urgencia.md): its terms are all zero, and the
+// output that explains it prints one line instead of the eight.
+type UrgencyBreakdown struct {
+	Terminal bool
+
+	Priority     UrgencyTerm
+	PriorityName string
+	Active       UrgencyTerm
+	ActiveReason string
+	Blocking     UrgencyTerm
+	Blocked      UrgencyTerm
+	Due          UrgencyTerm
+	Criteria     UrgencyTerm
+	Age          UrgencyTerm
+	// AgeDays is the whole number of calendar days the age term divides by
+	// thirty, which the explanation names in its label.
+	AgeDays int
+
+	// Sum is the formula's result before rounding, and Total the derived
+	// field itself, rounded to one decimal.
+	Sum   float64
+	Total float64
+}
+
+// UrgencyBreakdown computes the formula and keeps every term, exactly as
+// docs/spec/modelo-de-datos/urgencia.md writes it. Urgency is this same
+// computation with only its result kept, so there is one implementation of
+// the formula and not two that could drift apart.
+func (t *Task) UrgencyBreakdown(ctx UrgencyContext) (*UrgencyBreakdown, *Error) {
 	weight, ok := priorityWeight(t.Priority, ctx.Priorities)
 	if !ok {
-		return 0.0, t.unknownPriority(ctx.Priorities)
+		return nil, t.unknownPriority(ctx.Priorities)
 	}
+	b := &UrgencyBreakdown{PriorityName: t.Priority}
 	if t.Status == ctx.TerminalStatus {
-		return 0.0, nil
+		b.Terminal = true
+		b.ActiveReason = NotActive
+		return b, nil
 	}
 
 	c := ctx.Coefficients
 	today := ctx.Today.UTC()
 
+	switch {
+	case t.Status != ctx.ActiveStatus:
+		b.ActiveReason = NotActive
+	case t.Question != nil:
+		b.ActiveReason = ActiveButWaiting
+	}
 	active := 0.0
-	if t.Status == ctx.ActiveStatus && t.Question == nil {
+	if b.ActiveReason == ActiveContributes {
 		active = 1.0
-	}
-	blocking := 0.0
-	if ctx.Blocking {
-		blocking = 1.0
-	}
-	blocked := 0.0
-	if ctx.Blocked {
-		blocked = 1.0
 	}
 	criteria := 0.0
 	if len(t.AcceptanceCriteria) > 0 {
 		criteria = 1.0
 	}
-	age := float64(ageInDays(t.CreatedAt, today)) / 30.0
+	b.AgeDays = ageInDays(t.CreatedAt, today)
+	age := float64(b.AgeDays) / 30.0
 	if age > 4.0 {
 		age = 4.0
 	}
 
-	sum := c.Priority*weight +
-		c.Active*active +
-		c.Blocking*blocking +
-		c.Blocked*blocked +
-		c.Due*proximity(t.Due, today) +
-		c.Criteria*criteria +
-		c.Age*age
+	b.Priority = term(c.Priority, weight)
+	b.Active = term(c.Active, active)
+	b.Blocking = term(c.Blocking, boolFactor(ctx.Blocking))
+	b.Blocked = term(c.Blocked, boolFactor(ctx.Blocked))
+	b.Due = term(c.Due, proximity(t.Due, today))
+	b.Criteria = term(c.Criteria, criteria)
+	b.Age = term(c.Age, age)
 
-	return roundToOneDecimal(sum), nil
+	b.Sum = b.Priority.Value + b.Active.Value + b.Blocking.Value +
+		b.Blocked.Value + b.Due.Value + b.Criteria.Value + b.Age.Value
+	b.Total = roundToOneDecimal(b.Sum)
+	return b, nil
+}
+
+func term(coefficient, factor float64) UrgencyTerm {
+	return UrgencyTerm{Coefficient: coefficient, Factor: factor, Value: coefficient * factor}
+}
+
+func boolFactor(b bool) float64 {
+	if b {
+		return 1.0
+	}
+	return 0.0
 }
 
 // priorityWeight is the priority rule of

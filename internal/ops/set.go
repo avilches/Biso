@@ -17,6 +17,9 @@ type SetParams struct {
 	// docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura.
 	Changes []Change
 	DryRun  bool
+	// Print asks for the card of every task the call affected
+	// (docs/spec/cmd/flags-globales.md).
+	Print bool
 }
 
 // Set changes any field of one or more tasks, all or nothing
@@ -101,6 +104,11 @@ func SetOn(b *board.Board, env Env, p SetParams) (*WriteResult, error) {
 			return w.partial(), err
 		}
 	}
+	if p.Print {
+		if result.Views, err = w.views(tasks, byID); err != nil {
+			return w.partial(), err
+		}
+	}
 	result.Warnings, result.Notes = w.warnings, w.notes
 	return result, nil
 }
@@ -116,9 +124,16 @@ func (w *writer) resolveAll(refs []string, mode RefMode) ([]*model.Task, error) 
 	var tasks []*model.Task
 	seen := map[string]bool{}
 	for _, ref := range refs {
-		resolved, err := resolveRef(w.b, ref, mode)
+		all, readErr := w.tasks()
+		if readErr != nil {
+			return nil, readErr
+		}
+		resolved, err := resolveRefWith(w.b, all, ref, mode)
 		if err != nil {
-			return nil, err
+			// The candidates of an ambiguous reference are printed the
+			// way `biso ls` prints a listing, in every command that
+			// resolves one (docs/spec/referencias.md).
+			return nil, withCandidates(w.b, w.env, all, err)
 		}
 		if resolved.Note != "" {
 			w.note(resolved.Note)

@@ -82,7 +82,11 @@ type TaskWrite struct {
 
 // WriteResult is what every command of kind task.write answers.
 type WriteResult struct {
-	Tasks    []TaskWrite
+	Tasks []TaskWrite
+	// Views are the cards --print asks for: the tasks the write affected,
+	// as `biso get` would show them (docs/spec/cmd/flags-globales.md). It
+	// is empty unless the call wrote that flag.
+	Views    []TaskView
 	Warnings []Warning
 	Notes    []string
 	DryRun   bool
@@ -534,18 +538,27 @@ func appendProse(field *string, value string) {
 // parseDueDate reads the one calendar day of the model. It is a day and not
 // an instant, so its layout is YYYY-MM-DD and the message says so.
 func parseDueDate(value string) (time.Time, *model.Error) {
-	due, err := time.ParseInLocation(model.DateLayout, value, time.UTC)
+	return ParseCalendarDay("due", value)
+}
+
+// ParseCalendarDay reads a YYYY-MM-DD written after a flag, and answers the
+// same message for every flag that takes one: --due when a task is written
+// and --due-before when a listing is filtered
+// (docs/spec/cmd/ls.md#códigos-de-salida puts a malformed date of that
+// filter among the usage errors, exactly like --due).
+func ParseCalendarDay(flag, value string) (time.Time, *model.Error) {
+	day, err := time.ParseInLocation(model.DateLayout, value, time.UTC)
 	if err != nil {
 		return time.Time{}, &model.Error{
 			ExitCode: 2,
 			Code:     "invalid_date",
-			Message:  fmt.Sprintf("--due: invalid date: %q", value),
+			Message:  fmt.Sprintf("--%s: invalid date: %q", flag, value),
 			Hints:    []string{"a due date is written YYYY-MM-DD"},
-			Field:    "due",
+			Field:    flag,
 			Given:    value,
 		}
 	}
-	return due, nil
+	return day, nil
 }
 
 // removeCriteria is --rm-ac, at step 3. Its selector is resolved against the

@@ -110,6 +110,10 @@ func Run(argv []string, s Streams) int {
 		return runWhere(s, p, env)
 	case "new":
 		return runNew(s, p, env)
+	case "ls":
+		return runList(s, p, env)
+	case "get":
+		return runGet(s, p, env)
 	case "set":
 		return runSet(s, p, env)
 	}
@@ -274,6 +278,10 @@ func helpOf(command string) string {
 		return whereHelp
 	case "new":
 		return newHelp
+	case "ls":
+		return lsHelp
+	case "get":
+		return getHelp
 	case "set":
 		return setHelp
 	}
@@ -443,6 +451,13 @@ func validValuesLine(e *model.Error) string {
 		what = "valid priorities on this board"
 	case "unknown_extension_key":
 		what = "declared keys on this board"
+	case "unknown_section":
+		// The two closed domains of the reading commands are not the
+		// board's vocabulary: they are the same everywhere, so the line
+		// does not say "on this board".
+		what = "valid sections"
+	case "unknown_sort_field":
+		what = "valid sort fields"
 	default:
 		return ""
 	}

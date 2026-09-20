@@ -1,0 +1,5 @@
+MYP-60  Confirm the retry budget for the upload endpoint
+
+## Open Question
+@claude, 2026-09-06 09:30
+Should the retry budget be shared with the download endpoint or kept separate?

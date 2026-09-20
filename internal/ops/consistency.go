@@ -3,6 +3,7 @@ package ops
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -377,4 +378,30 @@ func (w *writer) blocked(t *model.Task, byID map[string]*model.Task) bool {
 		}
 	}
 	return false
+}
+
+// views is the cards of the tasks a write affected, which is what --print
+// prints (docs/spec/cmd/flags-globales.md). They are built over the board
+// as this call leaves it, so the card shows what was just written and not
+// what was there a moment ago.
+func (w *writer) views(tasks []*model.Task, byID map[string]*model.Task) ([]TaskView, error) {
+	r := newReader(w.b, w.env)
+	r.byID = byID
+	r.all = make([]*model.Task, 0, len(byID))
+	for _, t := range byID {
+		r.all = append(r.all, t)
+	}
+	sort.Slice(r.all, func(i, j int) bool {
+		return taskNumber(r.all[i].ID) < taskNumber(r.all[j].ID)
+	})
+
+	out := make([]TaskView, 0, len(tasks))
+	for _, t := range tasks {
+		v, err := r.view(t, false)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	return out, nil
 }

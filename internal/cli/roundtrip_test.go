@@ -245,6 +245,17 @@ func realInvocations() [][]string {
 		{"set", "MYP-11", "--uncheck-ac", "all", "--add-refs", `notes/a\,b.md`},
 		{"init", "--at", "../boards/mine", "--dry-run"},
 		{"where"},
+		{"ls"},
+		{"ls", "-s", "In Progress", "--mine"},
+		{"ls", "--type", "bug", "--priority", "high", "--limit", "10"},
+		{"ls", "--not-blocked", "--not-waiting", "--ids"},
+		{"ls", "--any-status", "--archived", "--all"},
+		{"ls", "-l", "parser", "--label-or", "ui,cli", "--search", "CRLF"},
+		{"ls", "--sort", "urgency", "--reverse", "--due-before", "2026-09-20"},
+		{"get", "MYP-11"},
+		{"get", "11", "--section", "ac"},
+		{"get", "CRLF", "--match", "--explain-urgency"},
+		{"get", "MYP-11", "--section", "plan,notes", "--id"},
 	}
 }
 
