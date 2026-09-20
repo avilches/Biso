@@ -263,14 +263,8 @@ func openQuestionOnTerminalWarning(t *model.Task, status string) *Warning {
 // does not mistake it for a live one
 // (docs/spec/cmd/verbos-del-ciclo.md#biso-finish).
 func (w *writer) unfinishedSubtasks(t *model.Task, byID map[string]*model.Task) *Warning {
-	ids := make([]string, 0, len(byID))
-	for id := range byID {
-		ids = append(ids, id)
-	}
-	sort.Slice(ids, func(i, j int) bool { return taskNumber(ids[i]) < taskNumber(ids[j]) })
-
 	var listed, plain []string
-	for _, id := range ids {
+	for _, id := range sortedIDs(byID) {
 		child := byID[id]
 		if child.Parent != t.ID || child.Status == w.b.Config.TerminalStatus {
 			continue
@@ -291,6 +285,18 @@ func (w *writer) unfinishedSubtasks(t *model.Task, byID map[string]*model.Task) 
 			t.ID, strings.Join(listed, ", ")),
 		Fields: map[string]any{"task": t.ID, "subtasks": plain},
 	}
+}
+
+// sortedIDs is the identifiers of a board, in ascending numeric order,
+// which is the order every list of tasks of a message is written in: the
+// order of the number and not of the text, so MYP-9 comes before MYP-10.
+func sortedIDs(byID map[string]*model.Task) []string {
+	ids := make([]string, 0, len(byID))
+	for id := range byID {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return taskNumber(ids[i]) < taskNumber(ids[j]) })
+	return ids
 }
 
 // warnAboutOpenQuestionOnStart is the warning of taking a task that is

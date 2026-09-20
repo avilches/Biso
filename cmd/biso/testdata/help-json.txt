@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "kind": "help",
+  "generatedAt": "2026-09-06T09:12:04Z",
+  "data": {
+    "commands": [
+      { "name": "prime", "summary": "print the session briefing" },
+      { "name": "new", "summary": "create a task" }
+    ]
+  }
+}

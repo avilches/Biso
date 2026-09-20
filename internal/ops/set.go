@@ -73,6 +73,12 @@ type verb struct {
 	// already closed or not, and because --strict turns them into an
 	// error and --no-checks silences them.
 	ownTerminalWarnings bool
+	// ownStateNotes says whether the two notes the loop writes about the
+	// task's own state, "unchanged" and "is archived", are this verb's
+	// business instead. `biso archive` is the one verb they belong to,
+	// because it is the command that asks for that state
+	// (docs/spec/cmd/archive.md).
+	ownStateNotes bool
 }
 
 // SetOn is Set over a board that is already open.
@@ -148,7 +154,7 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 		changed := changedFields(before, t)
 		if len(changed) > 0 {
 			t.UpdatedAt = w.now
-		} else {
+		} else if !v.ownStateNotes {
 			// The note speaks of the fields of the task, and none of them
 			// changed; the lease is settled below and renews all the same
 			// (docs/spec/lease.md#la-renovación).
@@ -161,7 +167,7 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 		if v.settled != nil {
 			v.settled(w, t, before)
 		}
-		if t.Archived {
+		if t.Archived && !v.ownStateNotes {
 			w.note(t.ID + " is archived")
 		}
 		summary, err := w.summarize(t, changed, byID)

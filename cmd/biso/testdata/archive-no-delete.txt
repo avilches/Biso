@@ -1,0 +1,4 @@
+error: there is no delete command, on purpose
+hint: `biso archive <ref>` takes it off the board and keeps the history
+      an archived task still exists: `biso ls --archived` lists them, and the
+      id is never reused

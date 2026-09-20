@@ -1,0 +1,3 @@
+$ biso help fnish
+error: no such command: "fnish"
+hint: did you mean: finish, init?

@@ -1,0 +1,10 @@
+Administration:
+  init               create a board for this project
+  where              say which board is in use and why
+  archive <ref>      take a task off the board (there is no delete)
+  export             dump the board as NDJSON that `biso new --from` reads back
+  config             read and change the board configuration
+  doctor             check the board, and repair what can be repaired
+  board              open the interactive board
+  help [cmd|all]     this
+  snapshot           write snapshot.ndjson and board.json, then record them

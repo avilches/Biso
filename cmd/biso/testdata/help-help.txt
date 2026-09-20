@@ -1,0 +1,33 @@
+Usage: biso help [command...|all]
+
+Print the top-level help, the help of one or more commands, or the top-level
+help plus the nine administrative commands with `all`. Works without a board.
+
+Given more than one command name, prints the full help of each one, in the
+order given, in the same call, as if `biso <cmd> --help` had been called once
+per name, with a blank line between one command's help and the next. A name
+that does not exist fails the whole call before anything is printed, even the
+help of the names that do exist earlier in the list. `all` is not a command
+name and does not combine with one.
+
+With --json this prints the command list and its one-line summaries, never
+the prose help: a help text is written to be read, and the list is the part
+that is data. Given several names, `commands` carries one element per name,
+in the same order.
+
+Arguments:
+  command        one or more command names, or `all` on its own
+
+Options:
+      --json     machine-readable envelope with the command list
+
+Exit codes:
+  0  help printed
+  2  usage error, such as `all` combined with a command name
+  4  no such command
+
+Examples:
+  biso help
+  biso help finish
+  biso help finish note
+  biso help all

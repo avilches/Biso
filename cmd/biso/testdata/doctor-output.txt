@@ -1,0 +1,7 @@
+2 errors found, 1 warning found
+Errors:
+  MYP-40  dependency MYP-99 does not exist
+Warnings:
+  extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)
+1 error fixed
+  the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52

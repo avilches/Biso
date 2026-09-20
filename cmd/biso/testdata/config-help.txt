@@ -1,0 +1,49 @@
+Usage: biso config get <key>
+       biso config set <key> <value>
+       biso config list [--json]
+
+Read and change the board configuration. List values are comma-separated.
+No configuration change ever touches a task.
+
+Keys:
+  project_name       board name; changing it never moves anything on disk,
+                     the board folder keeps whatever name it has
+  statuses           the board statuses, in order
+  initial_status     status of a new task           (one of statuses)
+  active_status      what `biso start` sets         (one of statuses)
+  terminal_status    what `biso finish` sets        (one of statuses)
+  types              configured task types
+  priorities         configured priorities
+  labels             labels that filters accept on top of the ones in use
+  assignees          assignees that filters accept on top of the ones in use
+  extensions         declared external field keys, such as trello.card
+  task_prefix        id prefix, letters only (default: derived from
+                     project_name); immutable once the board has a task
+  finish_strict      make `biso finish` refuse an incomplete task
+  lease_minutes      lease duration in minutes (default 240); free to change
+                     at any time, it only affects future renewals
+  urgency.priority, urgency.active, urgency.blocking, urgency.blocked,
+  urgency.due, urgency.criteria, urgency.age
+                     the seven urgency coefficients; see `biso get --explain-urgency`
+
+The three special statuses are stored as explicit values. Changing `statuses`
+never moves them; if a change would remove one of them, it fails and says so.
+
+Removing any configured value that a task still uses is refused, never applied
+silently.
+
+Options:
+      --json         machine-readable output, `list` only
+  -h, --help         show this help
+
+Exit codes:
+  0  done            4  no such key
+  2  bad usage       6  the change would leave the board inconsistent
+  3  bad value       8  the configuration could not be written
+                     20 no board here
+
+Examples:
+  biso config get active_status
+  biso config set statuses "To Do,In Progress,Done"
+  biso config set finish_strict true
+  biso config list --json

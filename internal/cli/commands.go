@@ -23,6 +23,7 @@ func Commands() []CommandSpec {
 		listCommand(), getCommand(), setCommand(), primeCommand(),
 		startCommand(), noteCommand(), commentCommand(),
 		finishCommand(), askCommand(), answerCommand(),
+		archiveCommand(), configCommand(), doctorCommand(), helpCommand(),
 	}
 }
 
@@ -67,6 +68,45 @@ func initCommand() CommandSpec {
 			{Name: "from", Value: PlainValue, Conflicts: vocabularyFlagNames},
 		},
 	}
+}
+
+// archiveCommand is the table of docs/spec/cmd/archive.md: the field flags,
+// the pair that forces how a <ref> is read, and its own switch.
+func archiveCommand() CommandSpec {
+	flags := append(fieldFlags(), resolution()...)
+	flags = append(flags, FlagSpec{Name: "unarchive"})
+	return CommandSpec{Name: "archive", Flags: flags}
+}
+
+// configCommand is the table of docs/spec/cmd/config.md. Its three
+// subcommands are positional arguments and not flags, so the table carries
+// none of its own; --json is global and this command judges where it
+// applies itself, because only `config list` takes it.
+//
+// AffectsNoTask is true because `config set` writes without touching any
+// task that existed before, which is what makes --print a usage error
+// (docs/spec/cmd/flags-globales.md). ReadOnly is false for the same reason
+// it is false in `init`: --dry-run does apply, and `config get` and
+// `config list` reject it themselves, where the subcommand is known.
+func configCommand() CommandSpec {
+	return CommandSpec{Name: "config", AffectsNoTask: true}
+}
+
+// doctorCommand is the table of docs/spec/cmd/doctor.md: one switch, which
+// is also the flag that turns a read-only command into a writing one.
+func doctorCommand() CommandSpec {
+	return CommandSpec{
+		Name:       "doctor",
+		ReadOnly:   true,
+		WriteFlags: []string{"fix"},
+		Flags:      []FlagSpec{{Name: "fix"}},
+	}
+}
+
+// helpCommand is the table of docs/spec/cmd/help.md. Its arguments are
+// command names, which are positional, so it declares no flag of its own.
+func helpCommand() CommandSpec {
+	return CommandSpec{Name: "help", ReadOnly: true}
 }
 
 func whereCommand() CommandSpec {
