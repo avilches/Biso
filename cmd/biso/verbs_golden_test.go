@@ -1,11 +1,8 @@
 package main
 
 import (
-	"path/filepath"
 	"strings"
 	"testing"
-
-	"biso/internal/board"
 )
 
 // These are the golden tests of the six verbs of the cycle: the compiled
@@ -90,6 +87,36 @@ func TestNoteWithNoTextPrintsTheErrorOfTheSpecification(t *testing.T) {
 
 	assertEqual(t, got.stderr, fixture(t, "note-missing-text.txt"),
 		"the refusal of a biso note with nothing to append")
+}
+
+// The same refusal in the two verbs whose text is a question and an answer,
+// each one with the noun its own page wrote.
+func TestAskAndAnswerWithNoTextPrintTheErrorsOfTheSpecification(t *testing.T) {
+	m := exampleBoard(t)
+
+	ask := m.run(t, "ask", "MYP-11").assertCode(t, 2)
+	assertEqual(t, ask.stderr, fixture(t, "ask-missing-text.txt"),
+		"the refusal of a biso ask with no question")
+
+	answer := m.run(t, "answer", "MYP-11").assertCode(t, 2)
+	assertEqual(t, answer.stderr, fixture(t, "answer-missing-text.txt"),
+		"the refusal of a biso answer with no answer")
+}
+
+// --comment-author signs a comment, it does not write one, so a call that
+// carries nothing else is the refusal above and not a write that says
+// nothing (docs/spec/cmd/verbos-del-ciclo.md#biso-comment).
+func TestCommentWithItsAuthorAloneIsTheRefusalOfACallWithNoText(t *testing.T) {
+	m := exampleBoard(t)
+
+	got := m.run(t, "comment", "MYP-11", "--comment-author", "@trello:juan").assertCode(t, 2)
+
+	if !strings.HasPrefix(got.stderr, "error: biso comment needs a text to append\n") {
+		t.Errorf("stderr = %q, want the refusal of the specification", got.stderr)
+	}
+	if got.stdout != "" {
+		t.Errorf("stdout = %q, and nothing was written", got.stdout)
+	}
 }
 
 func TestCommentRefusesASecondIdentifierWithItsOwnMessage(t *testing.T) {
@@ -316,14 +343,7 @@ func TestTheThreeCallsOfTheCycleOfTheSpecification(t *testing.T) {
 // use of the program, so it is written straight into the database.
 func archive(t *testing.T, m *machine, id string) {
 	t.Helper()
-	dirs, err := filepath.Glob(filepath.Join(m.home, ".biso", "boards", "*"))
-	if err != nil || len(dirs) != 1 {
-		t.Fatalf("the machine has %d boards, and it should have one: %v", len(dirs), err)
-	}
-	b, err := board.Open(&board.Location{Dir: dirs[0], ID: board.MarkerID(dirs[0])}, board.Machine{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	b := openTheBoard(t, m)
 	defer b.Close()
 	if _, err := b.Store.Exec("UPDATE task SET archived = 1 WHERE id = ?", id); err != nil {
 		t.Fatal(err)

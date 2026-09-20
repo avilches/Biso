@@ -1,0 +1,2 @@
+error: biso ask needs a question
+hint: biso ask MYP-11 "..."

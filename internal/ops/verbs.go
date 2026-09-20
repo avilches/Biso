@@ -214,7 +214,7 @@ func Note(env Env, p NoteParams) (*WriteResult, error) {
 
 // NoteOn is Note over a board that is already open.
 func NoteOn(b *board.Board, env Env, p NoteParams) (*WriteResult, error) {
-	if len(p.Texts) == 0 && len(p.Changes) == 0 {
+	if len(p.Texts) == 0 && !writesAnyField(p.Changes) {
 		return nil, missingText("note", "a text to append",
 			`biso note MYP-11 "The parser already normalized LF, CRLF was missing"`)
 	}
@@ -235,7 +235,7 @@ func Comment(env Env, p CommentParams) (*WriteResult, error) {
 
 // CommentOn is Comment over a board that is already open.
 func CommentOn(b *board.Board, env Env, p CommentParams) (*WriteResult, error) {
-	if len(p.Texts) == 0 && len(p.Changes) == 0 {
+	if len(p.Texts) == 0 && !writesAnyField(p.Changes) {
 		return nil, missingText("comment", "a text to append",
 			`biso comment MYP-11 "A user with a Windows clone reported this"`)
 	}
@@ -276,7 +276,7 @@ func Ask(env Env, p AskParams) (*WriteResult, error) {
 
 // AskOn is Ask over a board that is already open.
 func AskOn(b *board.Board, env Env, p AskParams) (*WriteResult, error) {
-	body, err := questionBody(b, env, "ask", "question", p)
+	body, err := questionBody(b, env, "ask", "a question", "question", p)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +324,7 @@ func Answer(env Env, p AnswerParams) (*WriteResult, error) {
 
 // AnswerOn is Answer over a board that is already open.
 func AnswerOn(b *board.Board, env Env, p AnswerParams) (*WriteResult, error) {
-	body, err := questionBody(b, env, "answer", "answer", p)
+	body, err := questionBody(b, env, "answer", "an answer", "answer", p)
 	if err != nil {
 		return nil, err
 	}
@@ -423,6 +423,14 @@ func FinishOn(b *board.Board, env Env, p FinishParams) (*WriteResult, error) {
 // The open question is the one that warns and never refuses, not even with
 // --strict: refusing would only push the caller into `biso set`.
 func (w *writer) finishChecks(t *model.Task, byID map[string]*model.Task, strict bool) error {
+	if t.Status != w.b.Config.TerminalStatus {
+		// These are the checks of arriving at a terminal status, and -s
+		// named another one: nothing is being closed here, so there is
+		// nothing to warn about and nothing for --strict to refuse
+		// (docs/spec/salida-y-terminal.md#notas-y-avisos). The rest of
+		// the write, the lease included, happens all the same.
+		return nil
+	}
 	blocking := []*Warning{
 		acUncheckedWarning(t, t.Status),
 		noSummaryWarning(t),
@@ -520,7 +528,12 @@ func textChanges(b *board.Board, command, flag string, step Step,
 // questionBody is the text of `biso ask` and of `biso answer`: one paragraph
 // per positional, the identity they both need, and the three ways the call
 // can be wrong before any task is read.
-func questionBody(b *board.Board, env Env, command, noun string, p NoteParams) (string, error) {
+//
+// what is the noun with the article the page wrote in front of it, "a
+// question" and "an answer", because the two messages are literal text of
+// docs/spec/cmd/verbos-del-ciclo.md and neither one is built out of the
+// other.
+func questionBody(b *board.Board, env Env, command, what, noun string, p NoteParams) (string, error) {
 	var paragraphs []string
 	for _, text := range p.Texts {
 		if err := rejectIDLike(b, command, p.Ref, text, literalTextHint); err != nil {
@@ -529,7 +542,7 @@ func questionBody(b *board.Board, env Env, command, noun string, p NoteParams) (
 		paragraphs = append(paragraphs, text.Value)
 	}
 	if len(paragraphs) == 0 {
-		return "", missingText(command, "a "+noun,
+		return "", missingText(command, what,
 			fmt.Sprintf("biso %s MYP-11 \"...\"", command))
 	}
 	if env.Me == "" {
@@ -611,14 +624,37 @@ func alignedHint(firstLabel, firstCommand, secondLabel, secondCommand string) st
 }
 
 // missingText is the error 2 of a verb called with no text at all.
+//
+// It carries neither `field` nor `given`: those two belong to the errors
+// that name a flag, a configuration key or a concrete value
+// (docs/spec/contrato-json.md#los-errores-en-json), and an argument that was
+// never written is none of the three, exactly like the reference that does
+// not exist.
 func missingText(command, what, example string) *model.Error {
 	return &model.Error{
 		ExitCode: 2,
 		Code:     "missing_text",
 		Message:  fmt.Sprintf("biso %s needs %s", command, what),
 		Hints:    []string{example},
-		Field:    "text",
 	}
+}
+
+// writesAnyField answers whether the call carries a field flag of
+// docs/spec/familias-de-flags.md, which is the other half of the refusal of
+// a verb called with no text at all.
+//
+// --comment-author is the one flag those verbs take that writes no field of
+// its own: it only says who signs a comment that another flag writes. A
+// `biso comment` that carries nothing but the author can produce no comment
+// at all, so it is the same refusal as a call with nothing
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-comment).
+func writesAnyField(changes []Change) bool {
+	for _, c := range changes {
+		if c.Flag != "comment-author" {
+			return true
+		}
+	}
+	return false
 }
 
 // writesFlag answers whether the call already wrote that field flag, which

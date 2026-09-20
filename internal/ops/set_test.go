@@ -665,3 +665,34 @@ func TestArrivingAtTheTerminalStatusWithAnOpenQuestionOnlyWarns(t *testing.T) {
 		t.Errorf("the warning stopped the write, and it only warns")
 	}
 }
+
+// A preview runs every check the real write runs, the model's validation
+// included: a --dry-run that answered 0 where the write answers 3 would be a
+// preview that lies about what the call would do
+// (docs/spec/cmd/flags-globales.md).
+func TestSetDryRunRefusesWhatTheRealWriteRefuses(t *testing.T) {
+	for _, c := range []struct {
+		name    string
+		change  Change
+		code    int
+		problem string
+	}{
+		{"an extension key the board does not declare", ext("trello.board", "42"), 3, "unknown_extension_key"},
+		{"an ordinal that is not a positive number", scalar("ordinal", "-5"), 2, "invalid_number"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			h := newHarness(t)
+			id := h.create("A task")
+
+			_, preview := SetOn(h.b, h.env, SetParams{
+				Refs: []string{id}, Changes: []Change{c.change}, DryRun: true,
+			})
+			_, real := SetOn(h.b, h.env, SetParams{
+				Refs: []string{id}, Changes: []Change{c.change},
+			})
+
+			assertSpec(t, preview, c.code, c.problem)
+			assertSpec(t, real, c.code, c.problem)
+		})
+	}
+}

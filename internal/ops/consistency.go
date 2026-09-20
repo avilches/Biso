@@ -208,8 +208,10 @@ func (w *writer) warnAboutTerminal(t *model.Task, previousStatus string) {
 // of any of them.
 //
 // status is the one the message names, which is the status the write leaves
-// the task in and not always the board's terminal one: `biso finish -s` is
-// allowed to name another.
+// the task in. It is always the board's terminal one, in both callers,
+// because these are the warnings of arriving there: a `biso finish -s` that
+// names another status closes nothing and asks none of them
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-finish).
 
 func acUncheckedWarning(t *model.Task, status string) *Warning {
 	unchecked := t.AcTotal() - t.AcDone()

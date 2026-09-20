@@ -288,6 +288,24 @@ nombrado de una vez, el del posicional que parece un identificador en `biso comm
 llamada sin texto, que estrena la clave `missing_text`. Las tres cosas que la página no decidía y hubo
 que decidir son esas mismas: qué dice cada uno de esos errores.
 
+La revisión del paso corrigió cuatro cosas más, tres de ellas también en la especificación:
+
+- **Los avisos de cierre de `biso finish` son los de llegar a un estado terminal**, así que con `-s`
+  hacia otro estado no sale ninguno, ni siquiera convertido en el error 6 de `--strict`. La página
+  del verbo no tenía fila para ese caso y ahora la tiene (["`biso finish`"](cmd/verbos-del-ciclo.md#biso-finish)).
+- **La llamada sin ningún texto de `biso ask` y de `biso answer` tiene su bloque literal**, como ya lo
+  tenía la de `biso note`, y el de `answer` dice `needs an answer` y no `needs a answer`.
+- **El error `missing_text` no lleva `field` ni `given`.** Esas dos claves son de los errores que
+  nombran un flag, una clave de configuración o un valor concreto, y un posicional que nadie escribió
+  no es ninguno de los tres (["Los errores en JSON"](contrato-json.md#los-errores-en-json)).
+- **`biso comment` con solo `--comment-author` es esa misma llamada sin texto**, porque ese flag firma
+  un comentario pero no escribe ninguno.
+
+Y una quinta que venía del paso 5 y se arregló aquí, por ser el mismo camino de código: **`--dry-run`
+ejecuta también la última capa de validación**, la del modelo. Una vista previa ya no puede salir con
+0 donde la escritura de verdad sale con 3, que es lo que prometen ["Flags globales"](cmd/flags-globales.md)
+y la sección de salida de ["`biso set`"](cmd/set.md#salida).
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según

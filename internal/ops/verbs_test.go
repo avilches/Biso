@@ -418,6 +418,27 @@ func TestNoteWithNoTextAndNoFieldFlagIsAUsageError(t *testing.T) {
 	_, err := NoteOn(h.b, h.env, NoteParams{Ref: id})
 
 	assertSpec(t, err, 2, "missing_text")
+	assertMissingText(t, err, "biso note needs a text to append")
+}
+
+// assertMissingText is the whole of that refusal: its literal message, and
+// the two detail keys it does not carry. `field` and `given` belong to the
+// errors that name a flag, a configuration key or a concrete value
+// (docs/spec/contrato-json.md#los-errores-en-json), and a positional that
+// was never written names none of the three, exactly like the reference
+// that does not exist.
+func assertMissingText(t *testing.T, err error, message string) {
+	t.Helper()
+	e := specError(t, err)
+	if e.Message != message {
+		t.Errorf("message = %q, want %q", e.Message, message)
+	}
+	if e.Field != "" || e.Given != "" {
+		t.Errorf("field = %q and given = %q, and this error names no value", e.Field, e.Given)
+	}
+	if len(e.Hints) != 1 {
+		t.Errorf("hints = %v, want the example of the call that would have worked", e.Hints)
+	}
 }
 
 func TestNoteOverAnArchivedTaskIsDoneWithANote(t *testing.T) {
@@ -501,6 +522,27 @@ func TestCommentWithoutAnAuthorAndWithoutAnIdentityIsAUsageError(t *testing.T) {
 	}
 	if e.Message != "--comment-author is required, no identity is configured" {
 		t.Errorf("message = %q", e.Message)
+	}
+}
+
+// --comment-author is not a text to append and it is not a field flag
+// either: it only says who signs a comment that some other flag writes, so
+// a call that carries nothing else has nothing to append and is the same
+// refusal as a call with nothing at all
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-comment).
+func TestCommentWithItsAuthorAloneHasNothingToAppend(t *testing.T) {
+	h := newHarness(t)
+	id := h.create("Normalize CRLF")
+
+	_, err := CommentOn(h.b, h.env, CommentParams{
+		Ref:     id,
+		Changes: []Change{{Flag: "comment-author", Value: "@trello:juan"}},
+	})
+
+	assertSpec(t, err, 2, "missing_text")
+	assertMissingText(t, err, "biso comment needs a text to append")
+	if len(h.load(id).Comments) != 0 {
+		t.Errorf("a call that could write no comment wrote one")
 	}
 }
 
@@ -776,6 +818,36 @@ func TestFinishToAStatusThatIsNotTheTerminalOneEmptiesTheLeaseAllTheSame(t *test
 	}
 }
 
+// The four checks of this verb are the checks of arriving at the terminal
+// status, so a -s that names another status has no close to check: neither
+// the warnings nor the error 6 of --strict come out
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-finish).
+func TestFinishToAStatusThatIsNotTheTerminalOneChecksNothing(t *testing.T) {
+	h := newHarness(t)
+	id := h.active("Normalize CRLF", add("add-ac", "The parser accepts CRLF"))
+
+	result, err := FinishOn(h.b, h.env, FinishParams{
+		Refs: []string{id}, Changes: []Change{scalar("status", "To Do")},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Warnings) != 0 {
+		t.Errorf("warnings = %v, and the task arrived at no terminal status", result.Warnings)
+	}
+
+	// And the hard policy says the same thing: there is nothing to be
+	// strict about when nothing is being closed.
+	if _, err := FinishOn(h.b, h.env, FinishParams{
+		Refs: []string{id}, Strict: true, Changes: []Change{scalar("status", "To Do")},
+	}); err != nil {
+		t.Errorf("biso finish -s --strict = %v, and it closed nothing to refuse", err)
+	}
+	if h.load(id).Status != "To Do" {
+		t.Errorf("status = %q, want the one -s named", h.load(id).Status)
+	}
+}
+
 func TestFinishOverSeveralTasksIsAllOrNothing(t *testing.T) {
 	h := newHarness(t)
 	first := h.active("First")
@@ -910,6 +982,7 @@ func TestAskWithNoTextAtAllIsAUsageError(t *testing.T) {
 	_, err := AskOn(h.b, h.env, AskParams{Ref: id})
 
 	assertSpec(t, err, 2, "missing_text")
+	assertMissingText(t, err, "biso ask needs a question")
 }
 
 // `biso answer`
@@ -1022,6 +1095,7 @@ func TestAnswerWithNoTextAndWithAnEmptyOneAreTwoDifferentErrors(t *testing.T) {
 
 	_, missing := AnswerOn(h.b, h.env, AnswerParams{Ref: id})
 	assertSpec(t, missing, 2, "missing_text")
+	assertMissingText(t, missing, "biso answer needs an answer")
 
 	_, empty := AnswerOn(h.b, h.env, AnswerParams{Ref: id, Texts: texts("  ")})
 	e := specError(t, empty)

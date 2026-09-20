@@ -171,6 +171,18 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 		result.Tasks = append(result.Tasks, summary)
 	}
 
+	// The model's own validation, which the store runs again before it
+	// writes, asked here too and in the same order, because a preview that
+	// answered 0 where the real write answers 3 would be a preview that
+	// lies: --dry-run promises the outcome of the call and not the outcome
+	// of everything except the last check
+	// (docs/spec/cmd/flags-globales.md).
+	for _, t := range tasks {
+		if err := t.Validate(b.Config.Extensions); err != nil {
+			return w.partial(), err
+		}
+	}
+
 	if !p.DryRun {
 		// One transaction for every task the call named, which is what
 		// makes the all-or-nothing of

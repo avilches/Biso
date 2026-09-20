@@ -406,6 +406,7 @@ terminal, todo en una escritura.
 | La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. Solo `start` queda bloqueado sobre una tarea archivada |
 | La tarea tiene el arrendamiento vivo de otra identidad | Se cierra igual, con el aviso de ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) de que era de otra persona, y `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura. La invariante gana sobre el "no tocar los campos" de una escritura ajena, porque una tarea terminada con arrendamiento vivo es un tablero que su propia importación rechazaría (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 | La tarea tiene el arrendamiento y `-s` la lleva a otro estado que tampoco es el activo | Los campos se vacían igual: lo que los sostiene es estar en el estado activo, no llegar al terminal |
+| `-s` lleva a un estado que no es el terminal | No se emite ninguno de los avisos de esta tabla, ni con `--strict`. Los avisos de cierre son los de llegar a un estado terminal, según ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos), y una llamada que no cierra nada no tiene nada que comprobar. El resto de la escritura se aplica igual, el vaciado del arrendamiento de la fila anterior incluido |
 | `--no-checks` | Se salta todas las comprobaciones y no emite ninguno de esos avisos, incluido el de la pregunta abierta |
 | Varias referencias | Todo o nada |
 
@@ -578,6 +579,13 @@ error: MYP-11 is already Done
 hint: reopen it first with `biso start MYP-11 --reopen`
 ```
 
+Y la llamada sin ningún texto nombra lo que falta y la forma de la que sí habría funcionado:
+
+```
+error: biso ask needs a question
+hint: biso ask MYP-11 "..."
+```
+
 ### Salida
 
 ```
@@ -713,6 +721,13 @@ tarea terminada cerraría esa única vía.
 ```
 error: MYP-11 has no open question
 hint: use `biso comment` to add a comment
+```
+
+Y la llamada sin ningún texto, que es la de arriba de la tabla:
+
+```
+error: biso answer needs an answer
+hint: biso answer MYP-11 "..."
 ```
 
 ### Salida
