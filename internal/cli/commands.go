@@ -94,12 +94,19 @@ func configCommand() CommandSpec {
 
 // doctorCommand is the table of docs/spec/cmd/doctor.md: one switch, which
 // is also the flag that turns a read-only command into a writing one.
+//
+// AffectsNoTask is true in both halves of that: what --fix repairs is a
+// lease that no task justifies, a counter and a marker file, and none of
+// them is a task to print a record of, so --print has nothing to do here
+// with --fix or without it and is a usage error either way
+// (docs/spec/cmd/flags-globales.md#flags-globales).
 func doctorCommand() CommandSpec {
 	return CommandSpec{
-		Name:       "doctor",
-		ReadOnly:   true,
-		WriteFlags: []string{"fix"},
-		Flags:      []FlagSpec{{Name: "fix"}},
+		Name:          "doctor",
+		ReadOnly:      true,
+		WriteFlags:    []string{"fix"},
+		AffectsNoTask: true,
+		Flags:         []FlagSpec{{Name: "fix"}},
 	}
 }
 

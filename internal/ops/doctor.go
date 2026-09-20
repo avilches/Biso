@@ -143,7 +143,9 @@ func (d *doctor) check() error {
 	if err := d.checkHighestID(tasks); err != nil {
 		return err
 	}
-	d.checkMarker()
+	if err := d.checkMarker(); err != nil {
+		return err
+	}
 	d.checkExtraRoots()
 	d.checkFilesystem()
 	d.checkIgnoreFile()
@@ -378,9 +380,16 @@ func (d *doctor) checkHighestID(tasks []*model.Task) error {
 // in the file system, so --fix writes it. One that names another identifier
 // has two readings and loses something either way, so it is decided by hand
 // (docs/spec/cmd/doctor.md#qué-comprueba).
-func (d *doctor) checkMarker() {
+// The identifier the two are compared against is the one the database
+// holds, read here on purpose: the one of the location may have been taken
+// off the marker itself, which would make the mismatch invisible by
+// comparing the marker with a copy of itself.
+func (d *doctor) checkMarker() error {
 	dir := d.b.Location.Dir
-	id := d.b.Location.ID
+	id, err := board.ReadIdentity(d.b.Store)
+	if err != nil {
+		return err
+	}
 	found := board.MarkerID(dir)
 	switch {
 	case found == id:
@@ -393,6 +402,7 @@ func (d *doctor) checkMarker() {
 		d.problem("", "marker_id_mismatch", fmt.Sprintf(
 			"marker file names id %q, the database says id is %q", found, id))
 	}
+	return nil
 }
 
 // checkExtraRoots is the warning of a further boards root the machine
