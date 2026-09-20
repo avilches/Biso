@@ -1141,3 +1141,50 @@ func TestSetWithNoReferenceKeepsTheHintOfItsOwnPage(t *testing.T) {
 		t.Errorf("hints = %v", e.Hints)
 	}
 }
+
+// Only `biso start` refuses over an archived task, because only `biso start`
+// claims a lease (docs/spec/lease.md#el-vaciado). The other five write over
+// it like over any other, saying so on stderr exactly as `biso get` does.
+func TestTheFiveVerbsThatClaimNoLeaseWriteOverAnArchivedTask(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		run  func(h *harness, id string) (*WriteResult, error)
+	}{
+		{"note", func(h *harness, id string) (*WriteResult, error) {
+			return NoteOn(h.b, h.env, NoteParams{Ref: id, Texts: texts("A finding")})
+		}},
+		{"comment", func(h *harness, id string) (*WriteResult, error) {
+			return CommentOn(h.b, h.env, CommentParams{Ref: id, Texts: texts("Something")})
+		}},
+		{"finish", func(h *harness, id string) (*WriteResult, error) {
+			return FinishOn(h.b, h.env, FinishParams{Refs: []string{id}, NoChecks: true})
+		}},
+		{"ask", func(h *harness, id string) (*WriteResult, error) {
+			return AskOn(h.b, h.env, AskParams{Ref: id, Texts: texts("Binary too?")})
+		}},
+		{"answer", func(h *harness, id string) (*WriteResult, error) {
+			if _, err := AskOn(h.b, h.env, AskParams{Ref: id, Texts: texts("Binary too?")}); err != nil {
+				return nil, err
+			}
+			return AnswerOn(h.b, h.env, AnswerParams{Ref: id, Texts: texts("Only text.")})
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			h := newHarness(t)
+			id := h.active("Normalize CRLF")
+			task := h.load(id)
+			task.Archived = true
+			if err := h.b.Tasks.Save(task); err != nil {
+				t.Fatal(err)
+			}
+
+			result, err := c.run(h, id)
+			if err != nil {
+				t.Fatalf("biso %s over an archived task: %v", c.name, err)
+			}
+			if !noted(result, id+" is archived") {
+				t.Errorf("notes = %v, want the archived one", result.Notes)
+			}
+		})
+	}
+}
