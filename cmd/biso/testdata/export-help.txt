@@ -1,0 +1,34 @@
+Usage: biso export [options]
+
+Write the board as NDJSON, one task per line, in exactly the shape that
+`biso new --from` reads back. Round-tripping every non-derived field is a
+tested guarantee: ids, dates, criterion and comment keys, and checkmarks
+included.
+
+With no filters it exports everything, the finished and the archived included.
+It never inherits the default limit or the default status filter of `biso ls`.
+If a task cannot be read, the rest is still written and the exit code is 6,
+not 0: this is the one command whose purpose is to lose nothing.
+
+Options:
+  -o, --out <file|->   where to write (default: stdout)
+      --no-archived    leave the archived tasks out
+  -h, --help           show this help
+
+Every filter of `biso ls` works here except --archived and --only-archived,
+which do not apply because archived tasks are already included by default.
+Its shaping flags (--sort, --limit, --all, --ids, --count) do not apply either.
+--json is rejected with code 2: this output is already one JSON object per
+line, while --json means the single envelope every other command prints.
+
+Derived fields are never written: urgency, acDone, acTotal, commentCount,
+blocks, blocked, waiting, leaseExpired.
+
+Exit codes:
+  0  exported       3  a filter value does not exist here
+  2  bad usage      6  some task was skipped, unreadable
+  8  cannot write there                20 no board here
+
+Examples:
+  biso export -o backup.ndjson
+  biso export -s Done --no-archived -o done.ndjson

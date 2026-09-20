@@ -1,0 +1,124 @@
+package main
+
+import (
+	"fmt"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+// These are the golden tests of the batch of docs/spec/cmd/new.md#el-modo-lote.
+// Its two blocks speak of a file of two hundred and forty two lines, four of
+// them invalid for four different reasons and at four given line numbers, so
+// the file the tests build is exactly that file: the numbers of the message
+// are not adjusted to whatever came out.
+
+// batchBoard is a board with the prefix and the extension key the examples
+// of the batch use.
+func batchBoard(t *testing.T) *machine {
+	t.Helper()
+	m := newMachine(t)
+	m.env["BISO_ME"] = "@claude"
+	m.run(t, "init", "My project", "--prefix", "MYP",
+		"--extensions", "trello.card").assertCode(t, 0)
+	return m
+}
+
+// twoHundredAndFortyTwoLines writes the file of the examples: two hundred
+// and forty two tasks, with the four the failing example names replaced by
+// the four bad lines it shows, each one at its own line number.
+func twoHundredAndFortyTwoLines(bad map[int]string) string {
+	var b strings.Builder
+	for line := 1; line <= 242; line++ {
+		if text, ok := bad[line]; ok {
+			b.WriteString(text + "\n")
+			continue
+		}
+		fmt.Fprintf(&b, "{\"title\":\"Task %d\"}\n", line)
+	}
+	return b.String()
+}
+
+func TestBatchDryRunPrintsTheCountOfTheSpecification(t *testing.T) {
+	m := batchBoard(t)
+	path := filepath.Join(m.dir, "tasks.ndjson")
+	m.write(t, path, twoHundredAndFortyTwoLines(nil))
+
+	got := m.run(t, "new", "--from", path, "--dry-run").assertCode(t, 0)
+
+	assertEqual(t, got.stderr, fixture(t, "new-batch-dry-run.txt"),
+		"the preview line of biso new --from")
+	assertEqual(t, got.stdout, "", "the standard output of a preview, which creates nothing")
+	// A preview writes nothing, and the board is the proof.
+	assertEqual(t, m.run(t, "ls", "--count").assertCode(t, 0).stdout, "0\n",
+		"the tasks a preview left behind")
+}
+
+func TestBatchListsEveryInvalidLineOfTheSpecification(t *testing.T) {
+	m := batchBoard(t)
+	path := filepath.Join(m.dir, "tasks.ndjson")
+	m.write(t, path, twoHundredAndFortyTwoLines(map[int]string{
+		12:  `{"id":"OTHER-5","title":"From another board"}`,
+		47:  `{"title":"Wrong status","status":"Pendiente"}`,
+		88:  `{"title":"Unknown key","trelloCard":"5f2a8c1e"}`,
+		201: `{"title":"   "}`,
+	}))
+
+	got := m.run(t, "new", "--from", path).assertCode(t, 7)
+
+	assertEqual(t, got.stderr, fixture(t, "new-batch-invalid.txt"),
+		"the failures of an invalid batch")
+	assertEqual(t, m.run(t, "ls", "--count").assertCode(t, 0).stdout, "0\n",
+		"the tasks an invalid batch left behind")
+}
+
+func TestBatchPrintsOneIdentifierPerTask(t *testing.T) {
+	m := batchBoard(t)
+	path := filepath.Join(m.dir, "tasks.ndjson")
+	m.write(t, path, strings.Join([]string{
+		`# a comment line, which is ignored`,
+		``,
+		`{"id":"MYP-101","title":"One"}`,
+		`{"id":"MYP-102","title":"Two"}`,
+		`{"id":"MYP-103","title":"Three"}`,
+		``,
+	}, "\n"))
+
+	got := m.run(t, "new", "--from", path).assertCode(t, 0)
+
+	assertEqual(t, got.stdout, fixture(t, "new-batch-ids.txt"),
+		"the identifiers of a batch")
+	// The counter ends above the highest identifier the batch reserved, so
+	// the next task created by hand never collides with one of them.
+	assertEqual(t, m.run(t, "new", "Next").assertCode(t, 0).stdout, "MYP-104\n",
+		"the identifier after a batch that reserved up to MYP-103")
+}
+
+func TestBatchRefusesTheTwoHalvesOfALeaseSeparately(t *testing.T) {
+	m := batchBoard(t)
+	path := filepath.Join(m.dir, "tasks.ndjson")
+	var lines []string
+	for i := 1; i <= 31; i++ {
+		switch i {
+		case 14:
+			lines = append(lines, `{"title":"Not active","leaseHolder":"@claude",`+
+				`"leaseExpiresAt":"2026-09-08T14:00:00Z"}`)
+		case 31:
+			lines = append(lines, `{"title":"Half a lease","status":"In Progress",`+
+				`"assignees":["@claude"],"leaseHolder":"@claude"}`)
+		default:
+			lines = append(lines, fmt.Sprintf(`{"title":"Task %d"}`, i))
+		}
+	}
+	m.write(t, path, strings.Join(lines, "\n")+"\n")
+
+	got := m.run(t, "new", "--from", path).assertCode(t, 7)
+
+	// The two sentences of the block of the specification, each one on the
+	// line of the file it belongs to.
+	for _, want := range strings.Split(strings.TrimRight(fixture(t, "new-batch-lease.txt"), "\n"), "\n") {
+		if !strings.Contains(got.stderr, want) {
+			t.Errorf("the failures do not carry %q:\n%s", want, got.stderr)
+		}
+	}
+}

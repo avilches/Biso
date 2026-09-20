@@ -52,24 +52,7 @@ func listParams(p *Parsed) (ops.ListParams, error) {
 		return ops.ListParams{}, errUnexpectedArgument(p.Positionals[0])
 	}
 	params := ops.ListParams{
-		Filters: ops.Filters{
-			Status:       p.Values("status"),
-			NotStatus:    p.Values("not-status"),
-			AnyStatus:    p.Has("any-status"),
-			Archived:     p.Has("archived"),
-			OnlyArchived: p.Has("only-archived"),
-			Type:         p.Values("type"),
-			Priority:     p.Values("priority"),
-			Label:        p.Values("label"),
-			LabelOr:      p.Values("label-or"),
-			Assignee:     p.Values("assignee"),
-			Unassigned:   p.Has("unassigned"),
-			Blocked:      either(p, "blocked", "not-blocked"),
-			Waiting:      either(p, "waiting", "not-waiting"),
-			Active:       either(p, "active", "not-active"),
-			Overdue:      p.Has("overdue"),
-			Unchecked:    p.Has("unchecked"),
-		},
+		Filters:   filtersOf(p),
 		HasStatus: p.Has("status"),
 		Mine:      p.Has("mine"),
 		Reverse:   p.Has("reverse"),
@@ -77,12 +60,8 @@ func listParams(p *Parsed) (ops.ListParams, error) {
 		IDs:       p.Has("ids"),
 		Count:     p.Has("count"),
 	}
-	if v, ok := p.Value("parent"); ok {
-		params.Parent = &v
-	}
-	if v, ok := p.Value("search"); ok {
-		params.Search = &v
-	}
+	params.Archived = p.Has("archived")
+	params.OnlyArchived = p.Has("only-archived")
 	if v, ok := p.Value("sort"); ok {
 		params.Sort = v
 	}
@@ -107,6 +86,36 @@ func listParams(p *Parsed) (ops.ListParams, error) {
 		params.Limit, params.HasLimit = limit, true
 	}
 	return params, nil
+}
+
+// filtersOf reads the filters of docs/spec/cmd/ls.md off the analyzed call.
+// `biso export` takes the same ones, so they are read in one place: the two
+// about the archive are not here, because each of the two commands has its
+// own (docs/spec/cmd/export.md).
+func filtersOf(p *Parsed) ops.Filters {
+	f := ops.Filters{
+		Status:     p.Values("status"),
+		NotStatus:  p.Values("not-status"),
+		AnyStatus:  p.Has("any-status"),
+		Type:       p.Values("type"),
+		Priority:   p.Values("priority"),
+		Label:      p.Values("label"),
+		LabelOr:    p.Values("label-or"),
+		Assignee:   p.Values("assignee"),
+		Unassigned: p.Has("unassigned"),
+		Blocked:    either(p, "blocked", "not-blocked"),
+		Waiting:    either(p, "waiting", "not-waiting"),
+		Active:     either(p, "active", "not-active"),
+		Overdue:    p.Has("overdue"),
+		Unchecked:  p.Has("unchecked"),
+	}
+	if v, ok := p.Value("parent"); ok {
+		f.Parent = &v
+	}
+	if v, ok := p.Value("search"); ok {
+		f.Search = &v
+	}
+	return f
 }
 
 // either resolves a pair of opposite switches into the three values of

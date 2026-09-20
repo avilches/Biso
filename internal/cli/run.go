@@ -116,6 +116,10 @@ func Run(argv []string, s Streams) int {
 		return runGet(s, p, env)
 	case "set":
 		return runSet(s, p, env)
+	case "export":
+		return runExport(s, p, env)
+	case "snapshot":
+		return runSnapshot(s, p, env)
 	}
 	// Parse only ever answers a command of the table, so this is
 	// unreachable; answering the internal error keeps it honest.
@@ -193,6 +197,10 @@ func runInit(s Streams, p *Parsed, env ops.Env) int {
 	}
 	for _, note := range notesOf(result) {
 		printNote(s, p, note)
+	}
+	if result.DryRun && result.Restored {
+		fmt.Fprintf(s.Stderr, "%s would be created, nothing was written (--dry-run)\n",
+			plural(result.RestoredTasks, "task"))
 	}
 	return 0
 }
@@ -284,6 +292,10 @@ func helpOf(command string) string {
 		return getHelp
 	case "set":
 		return setHelp
+	case "export":
+		return exportHelp
+	case "snapshot":
+		return snapshotHelp
 	}
 	return topLevelHelp
 }
@@ -299,6 +311,12 @@ func notesOf(result *ops.InitResult) []string {
 	notes := append([]string(nil), result.Notes...)
 	switch {
 	case !result.DryRun:
+	case result.Restored:
+		// A preview of --from counts the tasks of the snapshot instead of
+		// naming the board, and it does not repeat the note of the board
+		// besides, so that nothing says twice that nothing was written
+		// (docs/spec/cmd/init.md). The sentence itself is not a note, so
+		// runInit prints it apart.
 	case result.Action == ops.Rewrote:
 		notes = append(notes, fmt.Sprintf(
 			"the configuration of board %s at %s\n"+

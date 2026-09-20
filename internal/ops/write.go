@@ -94,6 +94,11 @@ type WriteResult struct {
 	// identifier alone and not the status line
 	// (docs/spec/cmd/new.md#salida).
 	Created bool
+	// Batch marks the result of the --from of `biso new`, whose preview
+	// counts the lines of the file instead of saying "1 task", and
+	// Previewed is that count (docs/spec/cmd/new.md#el-modo-lote).
+	Batch     bool
+	Previewed int
 }
 
 // writer is one writing invocation while it is being applied.

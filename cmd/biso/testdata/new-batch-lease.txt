@@ -1,0 +1,2 @@
+line 14: leaseHolder on a task that is not both active and assigned
+line 31: leaseHolder given without leaseExpiresAt; the two go together
