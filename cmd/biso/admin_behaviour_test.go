@@ -484,3 +484,24 @@ func TestDoctorIsReadOnlyWithoutFix(t *testing.T) {
 	m.run(t, "doctor", "--fix", "--dry-run").assertCode(t, 0)
 	m.run(t, "doctor", "--fix", "--print").assertCode(t, 2)
 }
+
+// TestArchivingATaskSomebodyElseHoldsWarnsAndClearsTheLease is the row of
+// the case table about a live lease of another identity: the warning of
+// docs/spec/salida-y-terminal.md#notas-y-avisos comes out, and the two
+// fields are emptied in that same write whoever they belonged to
+// (docs/spec/lease.md#el-vaciado).
+func TestArchivingATaskSomebodyElseHoldsWarnsAndClearsTheLease(t *testing.T) {
+	m := oneTaskBoard(t)
+	m.env["BISO_ME"] = "@sara"
+	m.run(t, "start", "MYP-1").assertCode(t, 0)
+	m.env["BISO_ME"] = "@claude"
+
+	got := m.run(t, "archive", "MYP-1").assertCode(t, 0)
+
+	if !strings.Contains(got.stderr, "warning: MYP-1's lease is held by @sara until ") {
+		t.Errorf("archiving a task somebody else holds said %q", got.stderr)
+	}
+	if holder := taskField(t, m, "MYP-1", "leaseHolder"); holder != nil {
+		t.Errorf("the lease of another identity survived archiving: %v", holder)
+	}
+}

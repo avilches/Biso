@@ -306,6 +306,12 @@ func TestDoctorPrintsTheReportOfTheSpecification(t *testing.T) {
 	assertEqual(t, got.stdout, m.substituted(fixture(t, "doctor-output.txt")),
 		"the report of biso doctor --fix")
 	assertEqual(t, got.stderr, "", "the standard error of biso doctor")
+
+	// The repair really landed: the next identifier the board hands out is
+	// the one after the highest task, and not the one after the counter it
+	// had before.
+	assertEqual(t, m.run(t, "new", "A task after the repair").assertCode(t, 0).stdout,
+		"MYP-53\n", "the identifier handed out after the counter was repaired")
 }
 
 // TestDoctorDryRunReportsWhatItWouldFixAndWritesNothing is the pure preview:
