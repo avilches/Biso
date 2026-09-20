@@ -187,7 +187,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 
 - **Un flag largo se escribe `--nombre`, `--nombre=valor` o `--nombre valor`**, y uno corto `-x`,
   `-x=valor` o `-x valor`. **Los flags cortos no se agrupan ni se pegan a su valor**: `-qV` y
-  `-lparser` no son un par de flags ni un flag con su valor, son un flag desconocido, porque una
+  `-Cdir` no son un par de flags ni un flag con su valor, son un flag desconocido, porque una
   línea que se puede leer de más de una forma deja de ser predecible.
 - **Un flag que no lleva valor rechaza el que se le pegue.** `--json=true` es error 2, con el `code`
   `unexpected_argument`.
@@ -213,8 +213,8 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
   lo mismo, porque las formas de ["Tres formas de pasar un valor largo"](#tres-formas-de-pasar-un-valor-largo)
   hablan del valor y no de cómo se pegó al flag.
 - **Un mensaje nombra siempre el flag por su forma larga**, aunque se haya escrito la corta, para que
-  el texto de un error no dependa de cómo se tecleó la llamada: `--add-labels 'urgent!'` falla nombrando
-  `--add-labels`.
+  el texto de un error no dependa de cómo se tecleó la llamada: `-C ""` falla nombrando
+  `--cwd`, con `error: --cwd cannot be empty`.
 - **Un valor vacío en un flag que no añade, no sustituye y no es un escalar de tarea de
   ["El valor vacío"](#el-valor-vacío)**, por ejemplo `--rm-labels ""`, `--cwd ""` o `--ext k=`, es
   **error 2** con el `code` `unexpected_argument`: donde la especificación no documenta un valor
