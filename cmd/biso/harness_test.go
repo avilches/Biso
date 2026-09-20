@@ -86,7 +86,7 @@ func (m *machine) run(t *testing.T, argv ...string) call {
 // alignment of the columns included, is compared as the specification wrote
 // it: a temporary home is the one thing a test cannot help changing.
 func (m *machine) substituted(fixture string) string {
-	fixture = strings.ReplaceAll(fixture, "/Volumes/work", filepath.Join(m.home, "Volumes", "work"))
+	fixture = strings.ReplaceAll(fixture, "/Volumes/", filepath.Join(m.home, "Volumes")+"/")
 	return strings.ReplaceAll(fixture, "/Users/avilches", m.home)
 }
 
