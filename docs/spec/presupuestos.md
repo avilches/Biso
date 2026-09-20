@@ -92,7 +92,11 @@ fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 `N more not shown: 'biso ls --active'`, y para `NEEDS ANSWER` es
 `N more not shown: 'biso ls --waiting'`.
 
-Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre.
+Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre. Lo que se ve en el
+texto al aplicarla, y las dos cosas que el recorte no toca (el bloque `BOARD` y la salida de
+`--json`), están en ["El recorte en cascada"](cmd/prime.md#el-recorte-en-cascada). **El tope se mide
+sobre el mensaje sin `--full`**, que es ayuda para quien aprende la herramienta y no parte del
+arranque.
 
 El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.039 bytes** con el tablero del ejemplo: **3.550** de
 parte fija y **1.489** de resumen. Las dos partes caben dentro de su tope.

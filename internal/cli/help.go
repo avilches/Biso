@@ -322,6 +322,30 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"  biso ls --not-blocked --not-waiting --ids\n" +
 	"  biso ls --any-status --archived --all\n"
 
+// primeHelp is the help block of docs/spec/cmd/prime.md.
+const primeHelp = "Usage: biso prime [options]\n" +
+	"\n" +
+	"Print everything needed to start working on this board: the commands, the field\n" +
+	"flags, the rules that are not guessable, the board vocabulary and what is in\n" +
+	"flight. Run it once at the start of a session. It writes nothing.\n" +
+	"\n" +
+	"Options:\n" +
+	"  --full          also list every flag of `biso new` and `biso set` in detail\n" +
+	"  --limit <n>     rows shown across ASSIGNED TO YOU and NEXT UP together\n" +
+	"                  (default 5, 0 hides both)\n" +
+	"  --json          machine-readable envelope instead of the message\n" +
+	"  -h, --help      show this help\n" +
+	"\n" +
+	"Exit codes:\n" +
+	"  0  message printed\n" +
+	"  2  bad usage\n" +
+	"  20 no board here\n" +
+	"\n" +
+	"Examples:\n" +
+	"  biso prime\n" +
+	"  biso prime --limit 10\n" +
+	"  biso -C ~/work/my-project prime\n"
+
 // getHelp is the help block of docs/spec/cmd/get.md.
 const getHelp = "Usage: biso get <ref> [options]\n" +
 	"\n" +

@@ -112,6 +112,8 @@ func Run(argv []string, s Streams) int {
 		return runNew(s, p, env)
 	case "ls":
 		return runList(s, p, env)
+	case "prime":
+		return runPrime(s, p, env)
 	case "get":
 		return runGet(s, p, env)
 	case "set":
@@ -292,6 +294,8 @@ func helpOf(command string) string {
 		return newHelp
 	case "ls":
 		return lsHelp
+	case "prime":
+		return primeHelp
 	case "get":
 		return getHelp
 	case "set":

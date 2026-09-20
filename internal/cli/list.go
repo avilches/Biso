@@ -93,20 +93,31 @@ func listParams(p *Parsed) (ops.ListParams, error) {
 		params.DueBefore = &v
 	}
 	if v, ok := p.Value("limit"); ok {
-		limit, err := strconv.Atoi(v)
-		if err != nil || limit < 0 {
-			return ops.ListParams{}, &model.Error{
-				ExitCode: 2,
-				Code:     "invalid_number",
-				Message:  fmt.Sprintf("--limit: not a whole number of rows: %q", v),
-				Hints:    []string{"a limit is zero or more"},
-				Field:    "limit",
-				Given:    v,
-			}
+		limit, err := parseLimit(v)
+		if err != nil {
+			return ops.ListParams{}, err
 		}
 		params.Limit, params.HasLimit = limit, true
 	}
 	return params, nil
+}
+
+// parseLimit reads the value of --limit. `biso ls` and `biso prime` take
+// the flag with the same meaning, so a negative or malformed value answers
+// the same error in both (docs/spec/cmd/prime.md#qué-hace-caso-a-caso).
+func parseLimit(v string) (int, error) {
+	limit, err := strconv.Atoi(v)
+	if err != nil || limit < 0 {
+		return 0, &model.Error{
+			ExitCode: 2,
+			Code:     "invalid_number",
+			Message:  fmt.Sprintf("--limit: not a whole number of rows: %q", v),
+			Hints:    []string{"a limit is zero or more"},
+			Field:    "limit",
+			Given:    v,
+		}
+	}
+	return limit, nil
 }
 
 // either resolves a pair of opposite switches into the three values of
@@ -136,6 +147,22 @@ func renderList(views []ops.TaskView) string {
 	for _, v := range views {
 		rows = append(rows, listRow(v))
 	}
+	widths := columnWidths(rows)
+
+	var b strings.Builder
+	for _, row := range rows {
+		b.WriteString(renderRow(row, widths))
+		b.WriteString("\n")
+	}
+	return b.String()
+}
+
+// columnWidths is step 2 of that algorithm: each column padded to the
+// widest value it holds among the rows given. `biso prime` computes them
+// over the rows of its four blocks together, which is why this is a
+// function of a set of rows and not of one listing
+// (docs/spec/cmd/prime.md#la-salida-literal).
+func columnWidths(rows [][]string) []int {
 	widths := make([]int, columns)
 	for _, row := range rows {
 		// Column 8 is never padded, because it is the last one and there
@@ -146,19 +173,21 @@ func renderList(views []ops.TaskView) string {
 			}
 		}
 	}
+	return widths
+}
 
+// renderRow writes one row padded to those widths, with no line break of
+// its own.
+func renderRow(row []string, widths []int) string {
 	var b strings.Builder
-	for _, row := range rows {
-		for i, cell := range row {
-			if i > 0 {
-				b.WriteString(columnGap)
-			}
-			b.WriteString(cell)
-			if i < columns-1 {
-				b.WriteString(strings.Repeat(" ", widths[i]-cells(cell)))
-			}
+	for i, cell := range row {
+		if i > 0 {
+			b.WriteString(columnGap)
 		}
-		b.WriteString("\n")
+		b.WriteString(cell)
+		if i < columns-1 {
+			b.WriteString(strings.Repeat(" ", widths[i]-cells(cell)))
+		}
 	}
 	return b.String()
 }

@@ -20,7 +20,7 @@ const Version = "1.0.0"
 func Commands() []CommandSpec {
 	return []CommandSpec{
 		initCommand(), whereCommand(), newCommand(),
-		listCommand(), getCommand(), setCommand(),
+		listCommand(), getCommand(), setCommand(), primeCommand(),
 		startCommand(), noteCommand(), commentCommand(),
 		finishCommand(), askCommand(), answerCommand(),
 	}
@@ -71,6 +71,21 @@ func initCommand() CommandSpec {
 
 func whereCommand() CommandSpec {
 	return CommandSpec{Name: "where", ReadOnly: true}
+}
+
+// primeCommand is the table of docs/spec/cmd/prime.md. It does not declare
+// --full incompatible with --json, although they are: that pair has a
+// message of its own, plain text on stderr even with --json, and the
+// generic rejection of the parser would print the wrong one.
+func primeCommand() CommandSpec {
+	return CommandSpec{
+		Name:     "prime",
+		ReadOnly: true,
+		Flags: []FlagSpec{
+			{Name: "full"},
+			{Name: "limit", Value: PlainValue},
+		},
+	}
 }
 
 // newCommand is the table of docs/spec/cmd/new.md: the field flags, plus

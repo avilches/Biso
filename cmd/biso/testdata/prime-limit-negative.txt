@@ -1,0 +1,2 @@
+error: --limit: not a whole number of rows: "-1"
+hint: a limit is zero or more

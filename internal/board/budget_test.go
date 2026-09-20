@@ -26,10 +26,11 @@ const budgetTasks = 300
 // than it did: five queries and the whole assembly of a task, instead of
 // one scan of one table.
 //
-// It is still not the measurement of the budget, which is over `biso ls`
-// and `biso prime` on the compiled binary and belongs to TASK-15 (step 7
-// of TASK-55). It is the floor of it: whatever those two commands end up
-// costing, they cannot cost less than this.
+// It is not the measurement of the budget: that one runs `biso ls` and
+// `biso prime` as processes and lives in cmd/biso/budget_test.go. This is
+// its floor, and it is worth keeping separate, because a regression here
+// is a regression of the store and says so, while the same regression seen
+// from the process could have come from anywhere along the way.
 //
 // The figures on the development machine, so that a change that makes it
 // slower is recognizable: around 2.7ms without the race detector and

@@ -55,6 +55,15 @@ biso prime [--full] [--limit <n>] [--json]
 `biso prime` **no escribe nada, nunca**, y no necesita acceso exclusivo. Es seguro llamarlo en
 paralelo desde varias sesiones y mientras otro proceso escribe.
 
+Un `--limit` negativo es el mismo error que el de ["`biso ls`"](ls.md), con el mismo identificador
+`invalid_number`, porque es el mismo flag con el mismo valor mal escrito y no tendría sentido que
+`biso ls` y `biso prime` contestaran cosas distintas a `--limit -1`:
+
+```
+error: --limit: not a whole number of rows: "-1"
+hint: a limit is zero or more
+```
+
 ## Qué entra en el mensaje y qué se relega a `--help`
 
 El criterio es uno solo: **entra lo que no se puede adivinar y hace falta para la primera acción; se
@@ -191,6 +200,12 @@ Cómo se calcula el resumen, para que la implementación sea única:
 - La línea de recuento del bloque `BOARD` tiene **un número por cada estado configurado**, en el
   orden en que están configurados, y cuenta las tareas no archivadas de ese estado. No hay ninguna
   categoría inventada como "abiertas" que no se corresponda con un estado del tablero.
+- Las líneas `types` y `priorities` escriben el vocabulario configurado separado por coma y espacio.
+  **Un vocabulario vacío escribe `(none)`**, que es un hecho sobre el tablero y no un renglón a
+  medias: un tablero sin tipos configurados no admite `--type` en ninguna llamada, y quien lea el
+  arranque tiene que enterarse ahí. Los estados no pueden quedarse vacíos, porque un tablero
+  configura tres como mínimo (["`biso init`"](init.md)), y las extensiones no salen en el texto:
+  viajan solo en el esquema JSON, porque son un campo para otro programa y no para quien arranca.
 - Los cuatro bloques `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU` y `NEXT UP` se reparten
   el tablero por esta precedencia, y cada tarea cae en el primero que la acepte:
     1. `NEEDS ANSWER`, si tiene una pregunta abierta.
@@ -217,7 +232,8 @@ Cómo se calcula el resumen, para que la implementación sea única:
   receta que cabe en una línea de arranque. La línea ocupa 59 bytes
   con su salto de línea, frente a los 22 de `you are     @claude`, y cabe en el resumen de ["El presupuesto de tamaño"](../presupuestos.md#el-presupuesto-de-tamaño). Con `--json`
   no hay pista: el campo `board.me` vale `null`.
-- **Si alguna tarea no se pudo leer, el bloque `BOARD` añade una línea más**, con el mismo aviso que
+- **Si alguna tarea no se pudo leer, el bloque `BOARD` añade una línea más**, la última del bloque,
+  debajo de `you are`, con el mismo aviso que
   cualquier otra lectura de conjunto (["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)), literalmente:
 
   ```
@@ -267,6 +283,53 @@ Cómo se calcula el resumen, para que la implementación sea única:
   forma `N more not shown: 'biso ls --not-active --not-waiting'`, y su clave en el esquema JSON del
   apartado ["El esquema JSON"](#el-esquema-json) es `hiddenCount`.
 
+## Lo que no depende del tablero
+
+Los bloques `COMMANDS`, `FIELD FLAGS`, `RULES` y el párrafo final se imprimen carácter a carácter
+como los escribe la sección ["La salida literal"](#la-salida-literal), sea cual sea la configuración
+del tablero. Lo único de esa parte que cambia es la cadena de versión de la primera línea.
+
+Eso vale también para los ejemplos que esas reglas usan: el `MYP-12` de la regla 2, el `-s Pending`
+y el `To Do` de la regla 3 y el `Done` de la regla 4 ilustran la forma de un identificador, la de un
+valor que no existe y la de un estado terminal, y no afirman nada sobre este tablero en concreto. El
+vocabulario de verdad ya está dos bloques más arriba, en `BOARD`, con el estado inicial, el activo y
+el terminal nombrados uno a uno, y los identificadores de verdad están en los cuatro bloques de
+tareas, así que nadie tiene que deducirlos de una regla.
+
+Es además lo que hace exacta la aritmética de ["El presupuesto de tamaño"](../presupuestos.md#el-presupuesto-de-tamaño):
+la parte fija mide siempre lo mismo, así que el margen que queda hasta el tope es entero para el
+resumen y no depende de lo largos que sean los nombres que un tablero se haya puesto.
+
+## El recorte en cascada
+
+Cuando el resumen no cabe en su mitad del presupuesto, se recorta en el orden que fija
+["El presupuesto de tamaño"](../presupuestos.md#el-presupuesto-de-tamaño). Esto es lo que se ve en el
+texto:
+
+- Un bloque al que el recorte le quitó filas imprime, debajo de las que le quedan, su propia línea de
+  recuento, con la misma forma que la de `NEXT UP` y con el filtro de `biso ls` que devuelve ese
+  bloque entero:
+
+  ```
+    12 more not shown: `biso ls --active`
+    4 more not shown: `biso ls --waiting`
+  ```
+
+- **Un bloque que se quedó sin ninguna fila no imprime su encabezado**, igual que un bloque que no
+  tiene ninguna tarea: se queda en su sola línea de recuento, que es el quinto escalón del recorte.
+  Es también lo que pasa con `ASSIGNED TO YOU` y `NEXT UP` cuando `--limit 0` los deja a los dos sin
+  filas: la línea de recuento que comparten se imprime sola, con su sangría de dos espacios, en el
+  sitio donde habrían ido los dos bloques.
+- **El bloque `BOARD` no se recorta nunca.** Es el suelo del resumen, porque es lo único que describe
+  el tablero en vez de listar sus tareas, y perder una línea suya no ahorra lo que cuesta.
+- **El recorte es del mensaje de texto y de nada más.** Con `--json` no hay cascada: `assignedToYou`
+  y `nextUp` llevan lo que `--limit` deja, `inProgress` y `needsAnswer` llevan todas sus tareas, y el
+  tamaño del sobre no está acotado. El presupuesto protege el mensaje que lee una persona o un
+  agente al arrancar, y quien pide `--json` es un programa que ya sabe recortar lo que no mira.
+- **El tope se mide sobre el mensaje sin `--full`.** El bloque de `--full` es ayuda para quien está
+  aprendiendo la herramienta y no forma parte del arranque de un agente, así que no entra ni en la
+  parte fija ni en el resumen.
+
 ## Tablero vacío
 
 Cuando no hay ninguna tarea, los cuatro bloques de tareas de la sección ["La salida literal"](#la-salida-literal) se sustituyen por esto, sin imprimir
@@ -277,6 +340,53 @@ THE BOARD IS EMPTY
   Create the first one:
   biso new "Title" -d "What and why" --add-ac "How we will know it works"
 ```
+
+**Vacío quiere decir que el tablero no guarda ninguna tarea**, archivadas incluidas. Un tablero que
+sí las tiene pero las tiene todas terminadas o archivadas no está vacío y no imprime este bloque:
+los cuatro bloques de tareas excluyen esas tareas, así que no se imprime ninguno de los cuatro y no
+hay nada que los sustituya, mientras la línea de recuento de `BOARD` sigue diciendo cuántas hay en
+cada estado. El mensaje de arriba invita a crear la primera tarea, y ahí no sería la primera.
+
+## `--full`
+
+`--full` añade al final del mensaje, después del párrafo de cierre y separado por una línea en
+blanco, la lista completa de los flags de campo. No sustituye a la rejilla `FIELD FLAGS`, que
+seguirá estando donde estaba: la rejilla da los nombres en trece líneas para que quepan en el
+arranque, y esto los agrupa **por el campo que escriben y en el orden en que una escritura los
+aplica** (["Orden de aplicación dentro de una escritura"](../garantias.md#orden-de-aplicación-dentro-de-una-escritura)),
+que es lo que la rejilla no puede decir sin ocupar el triple.
+
+```
+ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies them)
+  labels              --clear-labels --replace-labels --rm-labels -l --add-labels
+  assignees           --clear-assignees --replace-assignees --rm-assignees -a --add-assignees
+  references          --clear-refs --replace-refs --rm-refs --add-refs
+  documentation       --clear-docs --replace-docs --rm-docs --add-docs
+  dependencies        --clear-deps --replace-deps --rm-deps --add-deps
+  modifiedFiles       --clear-files --replace-files --rm-files --add-files
+  acceptanceCriteria  --clear-acs --rm-ac --add-ac --check-ac --uncheck-ac
+  description         --clear-desc -d --append-desc
+  plan                --clear-plan --append-plan
+  notes               --clear-notes --append-note
+  summary             --clear-summary --append-summary
+  ext                 --clear-ext --rm-ext --ext
+  title               -t --title
+  status              -s --status
+  type                --clear-type --type
+  priority            --clear-priority --priority
+  parent              --clear-parent -p --parent
+  due                 --clear-due --due
+  ordinal             --clear-ordinal --ordinal
+  author              --clear-author --author
+  comments            --rm-comment --set-comment-date --comment --comment-author
+
+  `biso new` adds --start, and `biso set` adds --id and --match.
+```
+
+El nombre de la izquierda es el del campo en el esquema JSON (["El contrato JSON"](../contrato-json.md))
+y no el del flag, porque es justamente lo que un flag no dice: `--add-files` y `modifiedFiles` son la
+misma cosa escrita de dos maneras, y quien lee el sobre necesita el puente. Un flag con nombre corto
+lo lleva pegado delante, como en la rejilla `FIELD FLAGS`.
 
 ## El esquema JSON
 
