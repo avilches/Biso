@@ -1,0 +1,30 @@
+Usage: biso answer <ref> <text>... [options]
+
+Answer the open question of ONE task and unpark it. In a single write this
+moves the question into the comments with its original author and time, adds
+your answer behind it, and clears the question.
+
+Arguments:
+  ref                one task: an id, a bare number or free text
+  text               the answer; @file and - work too
+
+Options:
+      --id / --match force <ref> to be an id, or free text
+  -h, --help         show this help
+
+Every field flag of `biso set --help` works here too, so you can answer and
+refine in one call.
+
+Only the answer comment is signed with your configured identity; the question
+comment keeps its original author and time. This command does not take
+--comment-author.
+
+Exit codes:
+  0  answered       4  not found        7  --dry-run did not pass
+  2  bad usage      5  ambiguous        8  could not be written
+  3  empty answer, or unreadable        20 no board here
+  6  no open question
+
+Examples:
+  biso answer MYP-11 "Only text files. Binary ones are skipped entirely."
+  biso answer 11 "Yes" --add-ac "A binary file is never touched"

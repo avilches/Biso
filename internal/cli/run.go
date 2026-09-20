@@ -116,6 +116,18 @@ func Run(argv []string, s Streams) int {
 		return runGet(s, p, env)
 	case "set":
 		return runSet(s, p, env)
+	case "start":
+		return runStart(s, p, env)
+	case "note":
+		return runNote(s, p, env)
+	case "comment":
+		return runComment(s, p, env)
+	case "finish":
+		return runFinish(s, p, env)
+	case "ask":
+		return runAsk(s, p, env)
+	case "answer":
+		return runAnswer(s, p, env)
 	}
 	// Parse only ever answers a command of the table, so this is
 	// unreachable; answering the internal error keeps it honest.
@@ -284,6 +296,18 @@ func helpOf(command string) string {
 		return getHelp
 	case "set":
 		return setHelp
+	case "start":
+		return startHelp
+	case "note":
+		return noteHelp
+	case "comment":
+		return commentHelp
+	case "finish":
+		return finishHelp
+	case "ask":
+		return askHelp
+	case "answer":
+		return answerHelp
 	}
 	return topLevelHelp
 }
@@ -329,10 +353,19 @@ func printNote(s Streams, p *Parsed, note string) {
 // one is the caller's business, with 2>/dev/null.
 func printWarnings(s Streams, p *Parsed) {
 	for _, w := range warningsOf(p) {
-		fmt.Fprint(s.Stderr, prefixed("warning: ", w.Message))
-		for _, hint := range w.Hints {
-			fmt.Fprint(s.Stderr, prefixed("hint: ", hint))
-		}
+		printWarning(s, w)
+	}
+}
+
+// printWarning writes one: the message behind "warning: ", the display
+// lines of the case that has any, and then its hints.
+func printWarning(s Streams, w Warning) {
+	fmt.Fprint(s.Stderr, prefixed("warning: ", w.Message))
+	for _, line := range w.Detail {
+		fmt.Fprintln(s.Stderr, line)
+	}
+	for _, hint := range w.Hints {
+		fmt.Fprint(s.Stderr, prefixed("hint: ", hint))
 	}
 }
 
@@ -371,10 +404,7 @@ func fail(s Streams, asJSON bool, err error, warnings []Warning) int {
 		return e.ExitCode
 	}
 	for _, w := range warnings {
-		fmt.Fprint(s.Stderr, prefixed("warning: ", w.Message))
-		for _, hint := range w.Hints {
-			fmt.Fprint(s.Stderr, prefixed("hint: ", hint))
-		}
+		printWarning(s, w)
 	}
 	fmt.Fprint(s.Stderr, prefixed("error: ", e.Message))
 	if line := validValuesLine(e); line != "" {

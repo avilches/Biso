@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"biso/internal/model"
 	"biso/internal/ops"
 )
 
@@ -59,12 +60,81 @@ func runNew(s Streams, p *Parsed, env ops.Env) int {
 }
 
 func runSet(s Streams, p *Parsed, env ops.Env) int {
+	return runWrite(s, p, env, func() (*ops.WriteResult, error) {
+		return ops.Set(env, setParams(p))
+	})
+}
+
+// The six verbs of the cycle. Each one is the same three lines: the
+// analyzed call into its typed parameters, the call into internal/ops, and
+// the shared printing of runWrite, because all seven writing commands over
+// an existing task print the status line of docs/spec/cmd/set.md#salida.
+
+func runStart(s Streams, p *Parsed, env ops.Env) int {
+	return runWrite(s, p, env, func() (*ops.WriteResult, error) {
+		return ops.Start(env, ops.StartParams{
+			Refs: p.Positionals, Mode: refMode(p), Reopen: p.Has("reopen"),
+			Changes: changesOf(p), DryRun: p.Has("dry-run"), Print: p.Has("print"),
+		})
+	})
+}
+
+func runNote(s Streams, p *Parsed, env ops.Env) int {
+	return runWrite(s, p, env, func() (*ops.WriteResult, error) {
+		params, err := oneRefParams(p, "note")
+		if err != nil {
+			return nil, err
+		}
+		return ops.Note(env, params)
+	})
+}
+
+func runComment(s Streams, p *Parsed, env ops.Env) int {
+	return runWrite(s, p, env, func() (*ops.WriteResult, error) {
+		params, err := oneRefParams(p, "comment")
+		if err != nil {
+			return nil, err
+		}
+		return ops.Comment(env, params)
+	})
+}
+
+func runAsk(s Streams, p *Parsed, env ops.Env) int {
+	return runWrite(s, p, env, func() (*ops.WriteResult, error) {
+		params, err := oneRefParams(p, "ask")
+		if err != nil {
+			return nil, err
+		}
+		return ops.Ask(env, params)
+	})
+}
+
+func runAnswer(s Streams, p *Parsed, env ops.Env) int {
+	return runWrite(s, p, env, func() (*ops.WriteResult, error) {
+		params, err := oneRefParams(p, "answer")
+		if err != nil {
+			return nil, err
+		}
+		return ops.Answer(env, params)
+	})
+}
+
+func runFinish(s Streams, p *Parsed, env ops.Env) int {
+	return runWrite(s, p, env, func() (*ops.WriteResult, error) {
+		return ops.Finish(env, ops.FinishParams{
+			Refs: p.Positionals, Mode: refMode(p),
+			Strict: p.Has("strict"), NoChecks: p.Has("no-checks"),
+			Changes: changesOf(p), DryRun: p.Has("dry-run"), Print: p.Has("print"),
+		})
+	})
+}
+
+// runWrite is the printing every writing command over an existing task
+// shares: the warnings, then the status line or whatever --json, --quiet and
+// --print ask for instead, then the notes.
+func runWrite(s Streams, p *Parsed, env ops.Env, run func() (*ops.WriteResult, error)) int {
 	asJSON := p.Has("json")
-	params, err := setParams(p)
-	if err != nil {
-		return fail(s, asJSON, err, warningsOf(p))
-	}
-	result, err := ops.Set(env, params)
+	result, err := run()
 	if err != nil {
 		return failWriteWithCandidates(s, p, env, asJSON, err, result)
 	}
@@ -96,6 +166,40 @@ func runSet(s Streams, p *Parsed, env ops.Env) int {
 		printNote(s, p, note)
 	}
 	return 0
+}
+
+// oneRefParams is the shape of the four verbs that take exactly one
+// reference and read the rest of the positionals as text
+// (docs/spec/cmd/verbos-del-ciclo.md).
+func oneRefParams(p *Parsed, command string) (ops.NoteParams, error) {
+	if len(p.Positionals) == 0 {
+		return ops.NoteParams{}, &model.Error{
+			ExitCode: 2,
+			Code:     "missing_ref",
+			Message:  "biso " + command + " needs one task reference",
+			Hints:    []string{"biso " + command + " MYP-11 \"...\""},
+		}
+	}
+	texts := make([]ops.Text, 0, len(p.Texts))
+	for _, t := range p.Texts {
+		texts = append(texts, ops.Text{Typed: t.Typed, Value: t.Value})
+	}
+	return ops.NoteParams{
+		Ref: p.Positionals[0], Mode: refMode(p), Texts: texts,
+		Changes: changesOf(p), DryRun: p.Has("dry-run"), Print: p.Has("print"),
+	}, nil
+}
+
+// refMode is --id and --match, the two flags that force how a positional
+// reference is read (docs/spec/referencias.md#la-gramática).
+func refMode(p *Parsed) ops.RefMode {
+	switch {
+	case p.Has("id"):
+		return ops.RefID
+	case p.Has("match"):
+		return ops.RefText
+	}
+	return ops.RefAuto
 }
 
 // printCards writes the whole card of every task a write affected, which
@@ -169,20 +273,14 @@ func newParams(p *Parsed) (ops.NewParams, error) {
 }
 
 // setParams turns the analyzed call into the parameters of `biso set`.
-func setParams(p *Parsed) (ops.SetParams, error) {
-	params := ops.SetParams{
+func setParams(p *Parsed) ops.SetParams {
+	return ops.SetParams{
 		Refs:    p.Positionals,
+		Mode:    refMode(p),
 		Changes: changesOf(p),
 		DryRun:  p.Has("dry-run"),
 		Print:   p.Has("print"),
 	}
-	switch {
-	case p.Has("id"):
-		params.Mode = ops.RefID
-	case p.Has("match"):
-		params.Mode = ops.RefText
-	}
-	return params, nil
 }
 
 // changesOf turns the values the parser classified into the changes the
@@ -222,10 +320,16 @@ func printWriteWarnings(s Streams, p *Parsed, result *ops.WriteResult) {
 		return
 	}
 	for _, w := range result.Warnings {
-		fmt.Fprint(s.Stderr, prefixed("warning: ", w.Message))
-		for _, hint := range w.Hints {
-			fmt.Fprint(s.Stderr, prefixed("hint: ", hint))
-		}
+		printWarning(s, cliWarning(w))
+	}
+}
+
+// cliWarning is one warning of internal/ops as this layer prints it and
+// folds it into an envelope.
+func cliWarning(w ops.Warning) Warning {
+	return Warning{
+		Code: w.Code, Message: w.Message, Hints: w.Hints,
+		Fields: w.Fields, Detail: w.Detail,
 	}
 }
 
@@ -248,9 +352,7 @@ func failWrite(s Streams, p *Parsed, asJSON bool, err error, result *ops.WriteRe
 	warnings := warningsOf(p)
 	if result != nil {
 		for _, w := range result.Warnings {
-			warnings = append(warnings, Warning{
-				Code: w.Code, Message: w.Message, Hints: w.Hints, Fields: w.Fields,
-			})
+			warnings = append(warnings, cliWarning(w))
 		}
 	}
 	return fail(s, asJSON, err, warnings)

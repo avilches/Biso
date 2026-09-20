@@ -1,0 +1,33 @@
+Usage: biso start <ref>... [options]
+
+Take one or more tasks: move them to the active status, claim the lease for
+you, assign them to you if nobody has them, and record a plan. One call.
+
+Options:
+      --append-plan <text>       add to the implementation plan; repeatable,
+                                 and takes @file and - like every text option
+  -a, --add-assignees <@who>     add an assignee (--replace-assignees replaces
+                                 the list)
+  -s, --status <value>           use another status instead of the active one;
+                                 no lease is claimed then, a lease only exists
+                                 on an active task
+      --reopen           allow starting a task that is already finished
+      --id / --match     force <ref> to be an id, or free text
+  -h, --help             show this help
+
+Every field flag of `biso set --help` works here too.
+
+Unresolved dependencies produce a warning, not an error: you decide. Taking
+over a live lease held by someone else is the same: it warns, it does not
+refuse. An archived task refuses instead: `biso archive --unarchive` it first.
+
+Exit codes:
+  0  started        4  not found        7  --dry-run did not pass
+  2  bad usage      5  ambiguous        8  the board could not be written
+  3  unknown value  6  already finished, or archived
+                    20 no board here
+
+Examples:
+  biso start MYP-11 --append-plan "1. Read the parser. 2. Add the CRLF case."
+  biso start 11
+  biso start MYP-11 MYP-12

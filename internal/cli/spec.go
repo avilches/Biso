@@ -111,6 +111,12 @@ type FlagSpec struct {
 	Name  string
 	Short string
 
+	// Label is how a message names this entry when it is not a flag at
+	// all: the positional text of `biso note` goes through the same value
+	// rules as a flag of kind TextValue, and a message about it has to
+	// read "text: file not found" and never "--text: file not found".
+	Label string
+
 	Value ValueKind
 
 	// Repeatable says the flag accumulates a value on each appearance
@@ -191,6 +197,15 @@ func (f *FlagSpec) field() string {
 	return f.Name
 }
 
+// named is how a message names this entry: its long form, or its label when
+// it is a positional and has no long form.
+func (f *FlagSpec) named() string {
+	if f.Label != "" {
+		return f.Label
+	}
+	return f.long()
+}
+
 // long is how every message names this flag, whichever spelling was typed.
 // Naming it always by its long form keeps a message from depending on how the
 // call happened to be written.
@@ -203,7 +218,7 @@ func (f *FlagSpec) shortest() string {
 	if f.Short != "" {
 		return "-" + f.Short
 	}
-	return f.long()
+	return f.named()
 }
 
 // CommandSpec is a command's own table: its name, its own flags, and the three
@@ -231,6 +246,16 @@ type CommandSpec struct {
 	// which is what makes --print a usage error. init and config set are
 	// the two that write without touching any existing task.
 	AffectsNoTask bool
+
+	// TextPositionalsFrom is the index from which this command's
+	// positional arguments are long text values, and therefore go through
+	// the three forms of
+	// docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo
+	// exactly as a flag of kind TextValue does. It is zero for every
+	// command whose positionals are not texts, and 1 for the four verbs of
+	// the cycle whose first positional is the reference and whose rest are
+	// the text (docs/spec/cmd/verbos-del-ciclo.md).
+	TextPositionalsFrom int
 }
 
 // lookupLong finds a flag by its long name, the command's own first and the

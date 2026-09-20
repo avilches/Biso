@@ -182,37 +182,129 @@ func (w *writer) claimLease(t *model.Task) {
 
 // warnAboutTerminal is the three warnings of arriving at the terminal
 // status. They speak of arriving, so a write over a task that was already
-// there does not repeat them.
+// there does not repeat them. `biso finish` is the one command that does not
+// go through here: it asks the same three questions of the task as this
+// write leaves it, whether it arrived now or was already closed
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-finish).
 func (w *writer) warnAboutTerminal(t *model.Task, previousStatus string) {
 	terminal := w.b.Config.TerminalStatus
 	if t.Status != terminal || previousStatus == terminal {
 		return
 	}
-	if unchecked := t.AcTotal() - t.AcDone(); unchecked > 0 {
-		w.warn(Warning{
-			Code: "terminal_ac_unchecked",
-			Message: fmt.Sprintf("%s moved to %s with %d of %d acceptance criteria unchecked",
-				t.ID, terminal, unchecked, t.AcTotal()),
-			Fields: map[string]any{
-				"task": t.ID, "unchecked": unchecked, "total": t.AcTotal(),
-			},
-		})
+	for _, warning := range []*Warning{
+		acUncheckedWarning(t, terminal),
+		noSummaryWarning(t),
+		openQuestionOnTerminalWarning(t, terminal),
+	} {
+		if warning != nil {
+			w.warn(*warning)
+		}
 	}
-	if t.Summary == "" {
-		w.warn(Warning{
-			Code:    "terminal_no_summary",
-			Message: fmt.Sprintf("%s finished without a final summary", t.ID),
-			Fields:  map[string]any{"task": t.ID},
-		})
+}
+
+// The three warnings above, one function each, so that `biso finish` can ask
+// for the same three in its own order, turn them into the error 6 of
+// --strict or drop them all with --no-checks, with no second implementation
+// of any of them.
+//
+// status is the one the message names, which is the status the write leaves
+// the task in and not always the board's terminal one: `biso finish -s` is
+// allowed to name another.
+
+func acUncheckedWarning(t *model.Task, status string) *Warning {
+	unchecked := t.AcTotal() - t.AcDone()
+	if unchecked == 0 {
+		return nil
 	}
-	if t.Question != nil {
-		w.warn(Warning{
-			Code: "open_question_on_terminal",
-			Message: fmt.Sprintf("%s moved to %s with an open question, asked by %s",
-				t.ID, terminal, t.Question.Author),
-			Fields: map[string]any{"task": t.ID, "author": t.Question.Author},
-		})
+	warning := &Warning{
+		Code: "terminal_ac_unchecked",
+		Message: fmt.Sprintf("%s moved to %s with %d of %d acceptance criteria unchecked",
+			t.ID, status, unchecked, t.AcTotal()),
+		Fields: map[string]any{
+			"task": t.ID, "unchecked": unchecked, "total": t.AcTotal(),
+		},
 	}
+	for _, c := range t.AcceptanceCriteria {
+		if !c.Checked {
+			warning.Detail = append(warning.Detail, fmt.Sprintf("  #%d %s", c.Key, c.Text))
+		}
+	}
+	return warning
+}
+
+func noSummaryWarning(t *model.Task) *Warning {
+	if t.Summary != "" {
+		return nil
+	}
+	return &Warning{
+		Code:    "terminal_no_summary",
+		Message: fmt.Sprintf("%s finished without a final summary", t.ID),
+		Fields:  map[string]any{"task": t.ID},
+	}
+}
+
+func openQuestionOnTerminalWarning(t *model.Task, status string) *Warning {
+	if t.Question == nil {
+		return nil
+	}
+	return &Warning{
+		Code: "open_question_on_terminal",
+		Message: fmt.Sprintf("%s moved to %s with an open question, asked by %s",
+			t.ID, status, t.Question.Author),
+		Fields: map[string]any{"task": t.ID, "author": t.Question.Author},
+	}
+}
+
+// unfinishedSubtasks is the warning of closing a parent whose
+// children are not closed. An archived subtask that never reached the
+// terminal status is still unfinished, and it is marked so that a caller
+// does not mistake it for a live one
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-finish).
+func (w *writer) unfinishedSubtasks(t *model.Task, byID map[string]*model.Task) *Warning {
+	ids := make([]string, 0, len(byID))
+	for id := range byID {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return taskNumber(ids[i]) < taskNumber(ids[j]) })
+
+	var listed, plain []string
+	for _, id := range ids {
+		child := byID[id]
+		if child.Parent != t.ID || child.Status == w.b.Config.TerminalStatus {
+			continue
+		}
+		plain = append(plain, child.ID)
+		if child.Archived {
+			listed = append(listed, child.ID+" (archived)")
+			continue
+		}
+		listed = append(listed, child.ID)
+	}
+	if len(listed) == 0 {
+		return nil
+	}
+	return &Warning{
+		Code: "unfinished_subtasks",
+		Message: fmt.Sprintf("%s has unfinished subtasks: %s",
+			t.ID, strings.Join(listed, ", ")),
+		Fields: map[string]any{"task": t.ID, "subtasks": plain},
+	}
+}
+
+// warnAboutOpenQuestionOnStart is the warning of taking a task that is
+// waiting for somebody's answer. It warns and never refuses, for the same
+// reason unresolved dependencies do
+// (docs/spec/cmd/verbos-del-ciclo.md#biso-start).
+func (w *writer) warnAboutOpenQuestionOnStart(t *model.Task) {
+	if t.Question == nil {
+		return
+	}
+	w.warn(Warning{
+		Code: "open_question_on_start",
+		Message: fmt.Sprintf("%s has an open question, asked by %s",
+			t.ID, t.Question.Author),
+		Fields: map[string]any{"task": t.ID, "author": t.Question.Author},
+	})
 }
 
 // warnAboutUnresolvedDependencies is the warning of starting a blocked task,

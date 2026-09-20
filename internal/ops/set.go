@@ -20,6 +20,15 @@ type SetParams struct {
 	// Print asks for the card of every task the call affected
 	// (docs/spec/cmd/flags-globales.md).
 	Print bool
+	// Warnings are the ones the caller had already earned before the
+	// write began, which the six verbs of the cycle use for the empty
+	// positional text of `biso note` and `biso comment`.
+	Warnings []Warning
+	// AllowNoChanges lets a call through that writes no field. `biso set`
+	// never does, because a call of its own with no field flag has nothing
+	// to say; a verb of the cycle does, because what it writes may be the
+	// question, or nothing at all with a warning.
+	AllowNoChanges bool
 }
 
 // Set changes any field of one or more tasks, all or nothing
@@ -33,17 +42,60 @@ func Set(env Env, p SetParams) (*WriteResult, error) {
 	return SetOn(b, env, p)
 }
 
+// verb is what the six verbs of the cycle add on top of `biso set`: three
+// moments of the one write loop below, and nothing else. None of them opens
+// a transaction, resolves a reference or writes a field flag, because all of
+// that is already here; what a verb contributes is its refusals, its
+// defaults and its own effects
+// (docs/spec/cmd/verbos-del-ciclo.md).
+type verb struct {
+	// name is the command the messages of the shared loop name, empty for
+	// `biso set` itself.
+	name string
+	// before runs over the task exactly as it was read, ahead of every
+	// field flag. It is where a verb refuses: `biso start` over an
+	// archived task, `biso ask` over one that already has a question.
+	before func(w *writer, t *model.Task) error
+	// after runs once the nine steps of
+	// docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura
+	// have been applied, and before anything derived from the result is
+	// computed: the status this verb sets, the identity it assigns, the
+	// question it fills or empties, and the checks `biso finish` reads off
+	// the task as this write leaves it.
+	after func(w *writer, t, before *model.Task, byID map[string]*model.Task) error
+	// settled runs after docs/spec/lease.md has been applied, which is
+	// where `biso start` claims: the warning of somebody else's live lease
+	// has to be emitted before the lease changes hands.
+	settled func(w *writer, t, before *model.Task)
+	// terminalWarnings says whether the warnings of arriving at the
+	// terminal status are this verb's business. `biso finish` emits its
+	// own, because it reads them off the result whether the task was
+	// already closed or not, and because --strict turns them into an
+	// error and --no-checks silences them.
+	ownTerminalWarnings bool
+}
+
 // SetOn is Set over a board that is already open.
 func SetOn(b *board.Board, env Env, p SetParams) (*WriteResult, error) {
+	return writeOn(b, env, p, verb{})
+}
+
+// writeOn is the one write loop of the program: `biso set` with no verb on
+// top, and each of the six verbs of the cycle with its own.
+func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error) {
+	command := "set"
+	if v.name != "" {
+		command = v.name
+	}
 	if len(p.Refs) == 0 {
 		return nil, &model.Error{
 			ExitCode: 2,
 			Code:     "missing_ref",
-			Message:  "biso set needs at least one task reference",
+			Message:  "biso " + command + " needs at least one task reference",
 			Hints:    []string{"biso set MYP-11 --priority high"},
 		}
 	}
-	if len(p.Changes) == 0 {
+	if len(p.Changes) == 0 && !p.AllowNoChanges {
 		return nil, &model.Error{
 			ExitCode: 2,
 			Code:     "nothing_to_change",
@@ -54,6 +106,7 @@ func SetOn(b *board.Board, env Env, p SetParams) (*WriteResult, error) {
 
 	w := newWriter(b, env, p.Changes)
 	w.manyTasks = len(p.Refs) > 1
+	w.warnings = append(w.warnings, p.Warnings...)
 
 	tasks, err := w.resolveAll(p.Refs, p.Mode)
 	if err != nil {
@@ -68,8 +121,18 @@ func SetOn(b *board.Board, env Env, p SetParams) (*WriteResult, error) {
 	result := &WriteResult{DryRun: p.DryRun}
 	for _, t := range tasks {
 		before := cloneTask(t)
+		if v.before != nil {
+			if err := v.before(w, t); err != nil {
+				return w.partial(), err
+			}
+		}
 		if err := w.apply(t); err != nil {
 			return w.partial(), err
+		}
+		if v.after != nil {
+			if err := v.after(w, t, before, byID); err != nil {
+				return w.partial(), err
+			}
 		}
 		if err := w.checkGraph(t, byID); err != nil {
 			return w.partial(), err
@@ -83,8 +146,13 @@ func SetOn(b *board.Board, env Env, p SetParams) (*WriteResult, error) {
 			// (docs/spec/lease.md#la-renovación).
 			w.note(t.ID + " unchanged")
 		}
-		w.warnAboutTerminal(t, before.Status)
+		if !v.ownTerminalWarnings {
+			w.warnAboutTerminal(t, before.Status)
+		}
 		w.settleLease(t)
+		if v.settled != nil {
+			v.settled(w, t, before)
+		}
 		if t.Archived {
 			w.note(t.ID + " is archived")
 		}
@@ -100,7 +168,7 @@ func SetOn(b *board.Board, env Env, p SetParams) (*WriteResult, error) {
 		// makes the all-or-nothing of
 		// docs/spec/garantias.md#concurrencia-atomicidad-y-garantías-observables
 		// observable and not just intended.
-		if err := b.Tasks.SaveAll(tasks); err != nil {
+		if err := b.Tasks.SaveAll(tasks, w.claims...); err != nil {
 			return w.partial(), err
 		}
 	}
