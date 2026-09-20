@@ -305,7 +305,8 @@ type CommandEntry struct {
 // commandCatalog is every command of biso, in the order the help prints
 // them: the one to start with, the daily ones, and then the administrative
 // ones. The summaries are the ones of the top-level help and of the block
-// above, word for word; a test of this package checks that they still are.
+// above, word for word, which help_admin_test.go walks in both directions
+// so that neither copy can be reworded on its own.
 var commandCatalog = []CommandEntry{
 	{"prime", "everything you need to work on this board, in one message"},
 	{"ls", "list tasks, most urgent first"},
@@ -327,13 +328,6 @@ var commandCatalog = []CommandEntry{
 	{"board", "open the interactive board"},
 	{"help", "this"},
 	{"snapshot", "write snapshot.ndjson and board.json, then record them"},
-}
-
-// Catalog answers a copy of it, for a test that walks it.
-func Catalog() []CommandEntry {
-	out := make([]CommandEntry, len(commandCatalog))
-	copy(out, commandCatalog)
-	return out
 }
 
 // catalogNames is the names alone, in the same order, which is what the
