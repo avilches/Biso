@@ -249,8 +249,17 @@ func CommentOn(b *board.Board, env Env, p CommentParams) (*WriteResult, error) {
 			// The key the comment just took is the one --rm-comment and
 			// --set-comment-date accept afterwards, so it is worth a
 			// note (docs/spec/cmd/verbos-del-ciclo.md#biso-comment).
-			for _, c := range t.Comments[len(before.Comments):] {
-				w.note(fmt.Sprintf("comment #%d by %s", c.Key, c.Author))
+			//
+			// Which ones are new is asked of the keys and not of the
+			// length of the list, because the same call may have removed
+			// some with --rm-comment. The counter only grows, so a key
+			// the task had not handed out yet is a comment of this call
+			// (docs/spec/modelo-de-datos/comentarios.md).
+			first := before.NextCommentKey
+			for _, c := range t.Comments {
+				if c.Key >= first {
+					w.note(fmt.Sprintf("comment #%d by %s", c.Key, c.Author))
+				}
 			}
 			return nil
 		},

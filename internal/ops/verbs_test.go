@@ -1068,3 +1068,76 @@ func TestEveryVerbPreviewsWithDryRunAndWritesNothing(t *testing.T) {
 		t.Errorf("the preview wrote the note after all")
 	}
 }
+
+func TestCommentAppendsOneCommentPerTextInOrder(t *testing.T) {
+	h := newHarness(t)
+	id := h.create("Normalize CRLF")
+
+	result, err := CommentOn(h.b, h.env, CommentParams{
+		Ref: id, Texts: texts("First thing", "Second thing"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var bodies []string
+	for _, c := range h.load(id).Comments {
+		bodies = append(bodies, c.Body)
+	}
+	if strings.Join(bodies, "|") != "First thing|Second thing" {
+		t.Errorf("comments = %v, want one per text, in order", bodies)
+	}
+	for _, key := range []string{"comment #1 by @claude", "comment #2 by @claude"} {
+		if !noted(result, key) {
+			t.Errorf("notes = %v, want %q among them", result.Notes, key)
+		}
+	}
+}
+
+// Which comments are new is asked of the keys, so a call that removes two
+// and adds one names the one it added instead of walking off the list.
+func TestCommentNamesOnlyTheCommentsItAddedWhenTheCallAlsoRemovesSome(t *testing.T) {
+	h := newHarness(t)
+	id := h.create("Normalize CRLF")
+	h.set(id, comment("One"), comment("Two"), comment("Three"))
+
+	result, err := CommentOn(h.b, h.env, CommentParams{
+		Ref: id, Texts: texts("The new one"),
+		Changes: []Change{remove("rm-comment", "1"), remove("rm-comment", "2")},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(result.Notes) != 1 || !noted(result, "comment #4 by @claude") {
+		t.Errorf("notes = %v, want only the comment this call added", result.Notes)
+	}
+}
+
+// The verbs of the cycle need no field flag to have something to do, so
+// their message about a missing reference does not point at one.
+func TestAVerbWithNoReferenceNamesItselfAndNotBisoSet(t *testing.T) {
+	h := newHarness(t)
+
+	_, err := h.start(nil, StartParams{})
+
+	e := specError(t, err)
+	if e.Message != "biso start needs at least one task reference" {
+		t.Errorf("message = %q", e.Message)
+	}
+	if len(e.Hints) != 1 || e.Hints[0] != "biso start MYP-11" {
+		t.Errorf("hints = %v", e.Hints)
+	}
+}
+
+// And `biso set` keeps the one docs/spec/cmd/set.md prints.
+func TestSetWithNoReferenceKeepsTheHintOfItsOwnPage(t *testing.T) {
+	h := newHarness(t)
+
+	_, err := SetOn(h.b, h.env, SetParams{Changes: []Change{add("add-labels", "parser")}})
+
+	e := specError(t, err)
+	if len(e.Hints) != 1 || e.Hints[0] != "biso set MYP-11 --priority high" {
+		t.Errorf("hints = %v", e.Hints)
+	}
+}

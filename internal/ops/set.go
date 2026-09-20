@@ -88,11 +88,19 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 		command = v.name
 	}
 	if len(p.Refs) == 0 {
+		// The hint of `biso set` is the one docs/spec/cmd/set.md prints,
+		// which names a flag because a call of that command with no flag
+		// has nothing to do either; a verb of the cycle needs no flag, so
+		// its hint is the call alone.
+		hint := "biso " + command + " MYP-11"
+		if v.name == "" {
+			hint = "biso set MYP-11 --priority high"
+		}
 		return nil, &model.Error{
 			ExitCode: 2,
 			Code:     "missing_ref",
 			Message:  "biso " + command + " needs at least one task reference",
-			Hints:    []string{"biso set MYP-11 --priority high"},
+			Hints:    []string{hint},
 		}
 	}
 	if len(p.Changes) == 0 && !p.AllowNoChanges {
