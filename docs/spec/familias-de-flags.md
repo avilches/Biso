@@ -135,10 +135,14 @@ error: --parent would close a parent cycle: MYP-11 -> MYP-4 -> MYP-11
 ```
 
 Sus `code` son `self_dependency`, `dependency_cycle` y `parent_cycle`
-(["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)). En `biso new`
-ninguno de los cuatro puede llegar a darse, porque una tarea que todavía no existe no tiene
-identificador y nada puede apuntar a ella; las comprobaciones se hacen igual, con la misma función,
-y simplemente no encuentran nada.
+(["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)). **En una sola
+tarea de `biso new` ninguno de los cuatro puede llegar a darse**, porque una tarea que todavía no
+existe no tiene identificador y nada puede apuntar a ella; las comprobaciones se hacen igual, con la
+misma función, y simplemente no encuentran nada. **El lote de `biso new --from` sí los produce**, y
+ahí no salen con el código 2 sino con el 7 del informe del lote, porque cada uno se atribuye a una
+línea del fichero y el fichero puede traer varios: una línea puede nombrar como `parent` o como
+dependencia a una tarea que otra línea del mismo fichero crea, así que el ciclo existe en cuanto el
+fichero se lee entero (["El modo lote"](cmd/new.md#el-modo-lote)).
 
 **Añadir un valor que la lista ya tiene, o quitar uno que no tiene, avisa pero nunca falla.** Ninguna
 de las dos operaciones exige leer la tarea primero para no fallar, que es justo lo que este diseño

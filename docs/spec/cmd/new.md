@@ -42,8 +42,8 @@ hace nada y avisa. Las que se usan de verdad al crear son
 | Título repetido | Se acepta sin aviso. Dos tareas pueden llamarse igual, para eso está el identificador |
 | Valor fuera de un vocabulario cerrado | Error 3, con la lista de válidos |
 | `--add-deps` a una tarea inexistente | Error 4. **Las dependencias se validan al escribirlas** |
-| `--add-deps` a la propia tarea, o que cerraría un ciclo | Error 2 |
-| `--parent` inexistente, o que cerraría un ciclo | Error 4 y error 2 respectivamente |
+| `--add-deps` a la propia tarea | Error 2. Un ciclo, en cambio, no puede darse al crear una sola tarea: no tiene identificador todavía y nada puede apuntar a ella (["Las familias de flags"](../familias-de-flags.md#campos-de-lista-que-admiten-coma)) |
+| `--parent` inexistente | Error 4. Un ciclo de padres tampoco puede darse aquí, por el mismo motivo |
 | `--ext` con una clave no declarada | Error 3 |
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
 | `--due` en el pasado | Se acepta, con aviso |
@@ -105,7 +105,7 @@ porque entonces el identificador ya existe.
 **Y si no está bien, el código nunca es el 7: es el código específico del fallo.** Una sola tarea no
 puede producir más de un fallo a la vez, y cualquiera de los que puede producir es atribuible a un
 elemento señalable, así que conserva su propio código igual que lo conservaría sin `--dry-run`: 2 para
-un título vacío o un ciclo, 3 para un valor fuera de un vocabulario, 4 para un `--parent` que no
+un título vacío, 3 para un valor fuera de un vocabulario, 4 para un `--parent` que no
 existe, 5 para una referencia de texto con varias coincidencias. Es la regla general de
 ["El código 7 garantiza que no se ha escrito nada, y el código específico siempre gana sobre
 él"](../codigos-de-salida.md#el-código-7-garantiza-que-no-se-ha-escrito-nada-y-el-código-específico-siempre-gana-sobre-él),
@@ -299,7 +299,7 @@ pasada. La línea 130 del bloque de arriba es justo uno de ellos, y aun así sal
 |---|---:|
 | Tarea o lote creado | 0 |
 | `--dry-run` que habría funcionado | 0 |
-| Falta el título, flags incompatibles, fecha mal formada, ciclo de dependencias o de padres | 2 |
+| Falta el título, flags incompatibles, fecha mal formada | 2 |
 | Valor fuera de un vocabulario, clave de extensión no declarada, entrada no interpretable | 3 |
 | `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
 | `--add-deps` o `--parent` por texto con varias coincidencias | 5 |
