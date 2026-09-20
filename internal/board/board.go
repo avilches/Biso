@@ -41,14 +41,14 @@ func Open(loc *Location, m Machine) (*Board, error) {
 		id, err := ReadIdentity(s)
 		if err != nil {
 			s.Close()
-			return nil, err
+			return nil, s.Classify(err)
 		}
 		loc.ID = id
 	}
 	cfg, err := ReadConfig(s)
 	if err != nil {
 		s.Close()
-		return nil, err
+		return nil, s.Classify(err)
 	}
 	return &Board{
 		Location: loc,
@@ -210,7 +210,7 @@ func (b *Board) Counts() (Counts, error) {
 	for rows.Next() {
 		var archived, n int
 		if err := rows.Scan(&archived, &n); err != nil {
-			return Counts{}, err
+			return Counts{}, b.Store.Classify(err)
 		}
 		if archived == 0 {
 			c.NotArchived = n
@@ -219,7 +219,7 @@ func (b *Board) Counts() (Counts, error) {
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return Counts{}, err
+		return Counts{}, b.Store.Classify(err)
 	}
 	last, err := b.Tasks.LastAllocated()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

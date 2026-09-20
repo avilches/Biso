@@ -63,11 +63,14 @@ Reglas de aplicación, que hay que implementar tal cual:
   vista previa, porque la ficha describe cómo quedaría la tarea. La excepción es `biso new --dry-run`,
   que no imprime ninguna: una tarea que no se ha creado no tiene identificador, y la ficha empieza
   por él (["`biso new`"](new.md#--dry-run-sobre-una-sola-tarea)).
-- **`--print` es error 2 en todos esos comandos y también en `biso init` y `biso config set`**, con el
-  mensaje `error: --print does not apply to a command that affects no task`. Ninguno de los dos afecta
-  a ninguna tarea que existiera antes: `config set` no toca ninguna nunca, e `init --from` las crea de
-  cero en un tablero que acaba de nacer, así que imprimir doscientas fichas recién importadas no
-  informa de nada que no diga ya `biso ls`.
+- **`--print` es error 2 en todos esos comandos y también en `biso init`, `biso config set` y
+  `biso doctor --fix`**, con el mensaje `error: --print does not apply to a command that affects no
+  task`. Ninguno de los tres afecta a ninguna tarea que existiera antes: `config set` no toca ninguna
+  nunca, `init --from` las crea de cero en un tablero que acaba de nacer, así que imprimir doscientas
+  fichas recién importadas no informa de nada que no diga ya `biso ls`, y lo que repara
+  `doctor --fix` no es ninguna tarea (["`biso doctor`"](doctor.md)). `doctor --fix` es el único de
+  los tres que sí es un comando de escritura, y aun así `--print` no tiene ahí nada que imprimir: el
+  flag está definido sobre las tareas que una escritura afecta, no sobre el hecho de escribir.
 - **`--json` es incompatible con `--quiet`** y con `--print`, porque los tres piden formas distintas
   de la misma salida. Cualquier pareja de las tres da código 2.
 - **`--quiet` reduce stdout a los identificadores afectados**, uno por línea, y además suprime las

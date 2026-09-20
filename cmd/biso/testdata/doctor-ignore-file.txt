@@ -1,0 +1,1 @@
+  .gitignore does not match the configured vcs "none" (left over from git, biso does not rewrite it automatically)

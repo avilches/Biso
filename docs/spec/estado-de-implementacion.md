@@ -35,7 +35,8 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 6 | [Los verbos del ciclo](cmd/verbos-del-ciclo.md) | hecho | TASK-14 |
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | hecho | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | pendiente | TASK-16 |
-| 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`board`](cmd/board.md), [`help`](cmd/help.md) | pendiente | TASK-17 |
+| 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`help`](cmd/help.md) | hecho con matices | TASK-17 |
+| | [`board`](cmd/board.md) | fuera de alcance de 1.0 | sin tarea |
 
 ## Los documentos transversales
 
@@ -50,10 +51,10 @@ cerradas.
 | [Códigos de salida](codigos-de-salida.md) | todos los que devuelven un código de error | en curso |
 | [Flags globales](cmd/flags-globales.md) | pasos 4 a 9 | en curso |
 | [Entorno y configuración de máquina](invocacion.md) | pasos 4 a 9 | en curso |
-| [Cómo se elige el tablero](resolucion-del-tablero.md) | paso 4 | hecho |
+| [Cómo se elige el tablero](resolucion-del-tablero.md) | pasos 4 y 9 | hecho |
 | [Terminal, flujos de salida y codificación](salida-y-terminal.md) | pasos 4, 5 y 7 | en curso |
 | [Cómo se pasa un valor](valores-de-entrada.md) | pasos 2 y 4 a 9 | en curso |
-| [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5 y 8 | en curso |
+| [Orden de escritura, concurrencia y datos dañados](garantias.md) | pasos 1, 2, 4, 5, 8 y 9 | en curso |
 | [El arrendamiento de una tarea](lease.md) | pasos 2, 5 y 6 | hecho |
 | [Los presupuestos de arranque y de tamaño](presupuestos.md) | pasos 1 y 7 | hecho |
 | [Cómo se resuelve una referencia a una tarea](referencias.md) | pasos 5 a 9 | en curso |
@@ -335,12 +336,10 @@ esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
   suelo de esta, útil porque una regresión ahí señala el almacén y no un punto cualquiera del
   camino.
 
-**El mensaje ofrece hoy un comando que no existe.** Su bloque `COMMANDS` empieza por
-`` `biso help <cmd>...` for the detail of any ``, y [`biso help`](cmd/help.md) es del paso 9: hoy
-contesta `unknown command: "help"` con código 2. El texto es literal por especificación y no se
-toca, pero conviene saberlo, porque `biso prime` es justo lo que lee un agente al empezar y es el
-único sitio donde la herramienta ofrece algo que todavía no puede dar. Lo que sí funciona mientras
-tanto es `biso <cmd> --help`, que es el mismo texto por otra puerta.
+**El mensaje ofrecía un comando que no existía, y ya existe.** Su bloque `COMMANDS` empieza por
+`` `biso help <cmd>...` for the detail of any ``, y [`biso help`](cmd/help.md) era del paso 9, que
+lo cerró: hasta entonces esa línea contestaba `unknown command: "help"` con código 2, y hoy
+contesta la ayuda de los comandos que se le nombren, varios en la misma llamada.
 
 Cuatro cosas que la especificación no decidía y hubo que decidir, todas escritas en su página antes
 de escribir el código:
@@ -378,6 +377,140 @@ cierra lo único suyo que nombra un número, el tope de tamaño del mensaje de `
 documento congela además la simetría entre `biso export` y `biso new --from` y la de `biso snapshot`
 con `biso init --from`, que son del paso 8 y todavía no existen. La fila decía "paso 7, hecho" y
 afirmaba de más.
+
+### Qué dejó hecho el paso 9
+
+Los comandos del último paso están enteros: `biso archive`, `biso config`, `biso doctor` y
+`biso help`. Con ellos, el mensaje de `biso prime` deja de ofrecer nada que no exista, y la única
+página de comando que sigue siendo solo texto es [`biso board`](cmd/board.md), fuera de alcance de
+la versión 1.0 por decisión explícita de `TASK-55`.
+
+Lo que conviene saber de cómo quedaron:
+
+- **`biso archive` no tiene ruta de escritura propia**, como los seis verbos del paso 6: es el mismo
+  bucle compartido con un campo que ningún flag escribe, sus dos notas idempotentes y el aviso por
+  cada tarea viva que dependía de la archivada. Vaciar el arrendamiento ya lo hacía el motor.
+- **`biso config` valida en dos mitades**, que es como su tabla de casos los separa: primero si
+  el valor es un valor de su clave, que es el código 3 y no lee ninguna tarea, y después si el
+  tablero seguiría entero con él, que es el código 6 y las lee todas. La segunda mitad es la misma
+  pregunta que [`biso doctor`](cmd/doctor.md) hace al revés: lo que este comando no deja que pase es
+  lo que aquel reporta cuando pasó de todas formas.
+- **`biso help` resuelve contra un catálogo**, que es la lista de todos los comandos con el resumen
+  de una línea que imprime la ayuda de primer nivel. Un nombre está en el catálogo aunque esta
+  compilación no lleve todavía la lógica detrás, así que `biso help board`, `biso help export` y
+  `biso help snapshot` contestan su texto: la ayuda de un comando es parte de la interfaz que fija la
+  especificación, y `biso help all` ya imprime esos nombres.
+- **`biso doctor` no ejecuta la comprobación de integridad al abrir**, sino dentro del comando, por
+  la razón por la que existe el presupuesto de arranque: recorre el fichero entero.
+
+**El sondeo del sistema de ficheros estaba especificado de una forma que no podía funcionar, y la
+página se corrigió.** Su paso 2 pedía comprobar que un bloqueo por rango de bytes se hace cumplir
+tomándolo desde un descriptor y pidiéndolo desde un segundo, los dos del mismo proceso; pero un
+bloqueo de registro de POSIX pertenece al proceso y no al descriptor, así que el segundo se concede
+siempre, por definición, y el sondeo llamaba inseguro a cualquier disco local. Ahora esa mitad se
+pregunta con `F_OFD_SETLK`, el mismo bloqueo ligado al descriptor abierto, en Linux y en macOS, y se
+salta en un Unix que no lo tenga. Vive en un paquete propio, `internal/walprobe`, con pruebas que
+afirman lo que un sondeo roto no dice: que un directorio local corriente es seguro y que el fichero
+de prueba no se queda atrás.
+
+**De ahí sale la única dependencia externa nueva**, `golang.org/x/sys`, que ahora es directa y no
+heredada del controlador de SQLite. La autoriza la propia página de
+[`biso doctor`](cmd/doctor.md#el-sondeo-del-sistema-de-ficheros), que la nombra por el mismo motivo
+por el que el controlador no usa `cgo`: es Go puro y compila de forma cruzada.
+
+**Lo que no está**, además de `biso board`: **el sondeo no tiene mitad de Windows**. La página
+describe `LockFileEx` y `CreateFileMapping`, y ahí hoy no hay sondeo ninguno, así que `biso doctor`
+en Windows nunca levanta ese aviso. Eso es lo correcto mientras no exista: el aviso dice que el
+sondeo corrió y algo falló, y llamar inseguro a lo que no se ha medido sería peor que callar. Es el
+motivo, con `board`, de que la fila del paso 9 diga "hecho con matices".
+
+Lo que la especificación no decidía, o decidía mal, y se corrigió en el mismo cambio:
+
+- **`--print` es error 2 también en `biso doctor --fix`.** La página decía que ahí "no añade nada",
+  que se podía leer como que se acepta y no hace nada; la regla general de
+  ["Flags globales"](cmd/flags-globales.md#flags-globales) dice que ni `--print` ni `--dry-run` se
+  ignoran nunca en silencio, así que se acepta esa y se dice explícito en los dos sitios.
+- **`no_such_command` es una clave nueva** de
+  ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), con código 4: es
+  lo que contesta `biso help` ante un nombre que no existe, y no el `unknown_command` de código 2 del
+  analizador, porque ahí la llamada está bien formada y lo que no existe es su argumento. En la misma
+  lista se dejó dicho que `doctor_problems` no viaja nunca en un sobre de error.
+- **El ejemplo JSON de [`biso help`](cmd/help.md#el-esquema-json) llevaba unos resúmenes** que no
+  eran los que imprime la ayuda de primer nivel, cuando el párrafo de al lado decía que son los
+  mismos. Ahora lo son, y una prueba dorada los compara.
+- **La nota de vaciar una lista de configuración** dejaba un espacio suelto detrás del igual, donde
+  `config list` y `config get` no lo dejan; y su vista previa habría dicho "would be set to " sin
+  nada detrás, así que dice "would be emptied" (["`biso config`"](cmd/config.md#comportamiento-caso-a-caso)).
+- **`biso archive --unarchive` con una referencia de texto no podía funcionar.** La búsqueda de
+  ["Cómo se resuelve una referencia a una tarea"](referencias.md#la-búsqueda-por-texto) mira solo
+  las tareas no archivadas, y lo que esa llamada nombra está archivado por definición, así que
+  contestaba siempre que el texto no encaja con ninguna tarea. Es ahora la única excepción de esa
+  regla, y mira el tablero entero para que nombrar por texto una tarea que ya está en el tablero dé
+  la misma nota idempotente que nombrarla por su identificador
+  (["La referencia de `--unarchive`"](cmd/archive.md#la-referencia-de---unarchive)).
+
+Y dos arreglos de código que la revisión del paso no habría visto desde fuera:
+
+- **`biso doctor` comparaba el marcador `<id>.id` con una copia de sí mismo.** Cuando el tablero se
+  abre desde dentro de su propio directorio, el `id` de la localización sale del marcador, así que la
+  fila del marcador discrepante no se disparaba nunca. Ahora lee el `id` de la base de datos, que es
+  contra lo que esa fila compara.
+- **La prueba de `biso prime` que comprueba el `(none)` de un vocabulario vacío** escribía la lista
+  vacía directamente en la tabla de configuración, porque `biso config set types ""` no existía. Ya
+  existe, y ahora la prueba pasa por ahí, que era la única puerta a ese estado. Lo mismo con el
+  ayudante que archivaba una tarea a golpe de `UPDATE` en las pruebas de los verbos del ciclo.
+
+### Qué cerró la revisión del paso 9
+
+La revisión del paso encontró dos fallos que no eran de los comandos de ese paso sino de capas de abajo, y
+que se habían escapado precisamente porque eran de todos y de ninguno. Los dos están arreglados en la
+capa donde viven, `internal/store`, y probados desde varios comandos a la vez:
+
+- **Un fallo de escritura por permisos salía con código 1 y el mensaje crudo del controlador.** El
+  almacén solo clasificaba el tablero ocupado, la base de datos corrupta y el fichero que no es una
+  base de datos; el fichero de solo lectura, el disco lleno y el fallo de entrada/salida caían al error
+  genérico. Ahora son el código 8 con la clave `io_error`, que es lo que
+  ["Códigos de salida"](codigos-de-salida.md) promete para un entorno que falla, y la
+  especificación estrena la sección que fija su mensaje
+  (["Qué pasa cuando el almacén no se puede escribir"](garantias.md#qué-pasa-cuando-el-almacén-no-se-puede-escribir)).
+  La otra mitad del mismo camino, un directorio de tablero sin permiso de escritura, salía con 21 y un
+  hueco donde iría el `id`, porque el modo WAL necesita escribir para abrirse y ahí todavía no hay `id`
+  que leer: sale también con 8, y el mensaje nombra el fichero, que siempre se conoce.
+- **Un daño que solo se ve al leer una página salía con código 1.** Un fichero que no es una base de
+  datos falla al abrirse y siempre dio 21, pero uno cuya cabecera está intacta y cuyas páginas no
+  falla a mitad de una consulta, y ese error subía sin clasificar. La garantía de
+  ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)
+  es de todos los comandos, así que la clasificación está ahora en el almacén y alcanza también a lo
+  que falla recorriendo filas ya obtenidas.
+
+De `biso doctor` cerró lo que le faltaba de red y de texto:
+
+- **Las comprobaciones que `--fix` repara tienen sus dos formas escritas**, la de encontrado y la de
+  reparado, en la tabla normativa y con prueba de fichero dorado cada una
+  (["Las dos formas de un mensaje reparable"](cmd/doctor.md#las-dos-formas-de-un-mensaje-reparable)). Dos de las tres decían
+  algo que la especificación no recogía.
+- **Dos casos de borde que la especificación no cubría**: un contador a cero no es el identificador
+  `MYP-0` y el mensaje ya no se lo inventa, y una lista de vocabulario vacía ya no se cita con unas
+  comillas sin nada dentro.
+- **El informe sale en el orden de la tabla de comprobaciones**, que es lo que su comentario ya
+  prometía y lo que ahora fija la especificación
+  (["El orden en que sale el informe"](cmd/doctor.md#el-orden-en-que-sale-el-informe)). Las comprobaciones no corren en ese orden,
+  porque las que miran una tarea se hacen en una sola pasada.
+- **Las comprobaciones que no tenían ninguna prueba ya la tienen**: la clave de extensión no
+  declarada, los dos papeles de estado, el ciclo de dependencias, el de tarea padre y el aviso del
+  sistema de ficheros inseguro, que era el único que nadie había visto dispararse nunca. Y la sección
+  de atomicidad de una reparación con varios arreglos, la única que existe solo por este comando,
+  tiene ahora una prueba que la ejerce entera: la transacción de datos queda aplicada, la escritura
+  del marcador falla, el comando sale con 8 y el marcador vuelve a aparecer como error.
+
+Las que siguen sin prueba son las que el esquema de hoy contesta por construcción,
+los identificadores duplicados y las claves de criterio repetidas, y el código lo dice donde están.
+
+Y **["Cómo se elige el tablero"](resolucion-del-tablero.md) acota a qué vía se refiere** cuando dice
+que un tablero sin marcador tiene que poder abrirse para que `biso doctor --fix` se lo devuelva: habla
+de la primera vía, la del directorio de trabajo, y no de las dos. El puntero sigue exigiendo el
+marcador aunque su `path` resuelva, porque ahí manda el `id`, y esa única puerta basta para que el
+arreglo tenga algo que arreglar.
 
 ## Antes de empezar un paso
 

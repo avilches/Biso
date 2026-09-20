@@ -1,0 +1,2 @@
+error: help: "all" cannot be combined with a command name
+hint: run `biso help all` on its own, or list only command names

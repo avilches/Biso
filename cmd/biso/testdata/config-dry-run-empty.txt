@@ -1,0 +1,2 @@
+$ biso config set types "" --dry-run
+note: types would be emptied (--dry-run)

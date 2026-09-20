@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "doctor",
+  "generatedAt": "2026-09-06T09:12:04Z",
+  "data": {
+    "problems": [
+      { "task": "MYP-40", "code": "dependency_not_found", "message": "dependency MYP-99 does not exist" }
+    ],
+    "warnings": [
+      { "task": null, "code": "extra_root_unreadable", "message": "extra board root \"/Volumes/disco/boards\" cannot be read (skipped when looking up boards by id)" }
+    ],
+    "fixed": [
+      { "code": "highest_id_behind", "message": "the highest recorded id was MYP-40 and tasks go up to MYP-52; recorded MYP-52" }
+    ]
+  }
+}

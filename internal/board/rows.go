@@ -233,7 +233,7 @@ func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, map
 			&questionAuthor, &questionAskedAt, &questionBody,
 			&task.NextCriterionKey, &task.NextCommentKey,
 		); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, r.store.Classify(err)
 		}
 
 		// Every date of the row is decoded before the task counts as read.
@@ -276,7 +276,7 @@ func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, map
 		tasks = append(tasks, &task)
 		byID[task.ID] = &task
 	}
-	return tasks, byID, bad, rows.Err()
+	return tasks, byID, bad, r.store.Classify(rows.Err())
 }
 
 // parseAnyDate reads either shape of date a task row carries: `due` is a
@@ -301,7 +301,7 @@ func (r *Tasks) readListItems(id string, byID map[string]*model.Task, bad map[st
 	for rows.Next() {
 		var taskID, field, value string
 		if err := rows.Scan(&taskID, &field, &value); err != nil {
-			return err
+			return r.store.Classify(err)
 		}
 		task := byID[taskID]
 		if task == nil {
@@ -319,7 +319,7 @@ func (r *Tasks) readListItems(id string, byID map[string]*model.Task, bad map[st
 			bad[taskID] = undecodable(taskID, field, err)
 		}
 	}
-	return rows.Err()
+	return r.store.Classify(rows.Err())
 }
 
 func (r *Tasks) readExt(id string, byID map[string]*model.Task, bad map[string]*model.Error) error {
@@ -332,7 +332,7 @@ func (r *Tasks) readExt(id string, byID map[string]*model.Task, bad map[string]*
 	for rows.Next() {
 		var taskID, key, value string
 		if err := rows.Scan(&taskID, &key, &value); err != nil {
-			return err
+			return r.store.Classify(err)
 		}
 		task := byID[taskID]
 		if task == nil {
@@ -343,7 +343,7 @@ func (r *Tasks) readExt(id string, byID map[string]*model.Task, bad map[string]*
 		}
 		task.Ext[key] = value
 	}
-	return rows.Err()
+	return r.store.Classify(rows.Err())
 }
 
 func (r *Tasks) readCriteria(id string, byID map[string]*model.Task, bad map[string]*model.Error) error {
@@ -360,13 +360,13 @@ func (r *Tasks) readCriteria(id string, byID map[string]*model.Task, bad map[str
 		var taskID string
 		var c model.Criterion
 		if err := rows.Scan(&taskID, &c.Key, &c.Text, &c.Checked); err != nil {
-			return err
+			return r.store.Classify(err)
 		}
 		if task := byID[taskID]; task != nil {
 			task.AcceptanceCriteria = append(task.AcceptanceCriteria, c)
 		}
 	}
-	return rows.Err()
+	return r.store.Classify(rows.Err())
 }
 
 func (r *Tasks) readComments(id string, byID map[string]*model.Task, bad map[string]*model.Error) error {
@@ -383,7 +383,7 @@ func (r *Tasks) readComments(id string, byID map[string]*model.Task, bad map[str
 		var taskID, createdAt string
 		var c model.Comment
 		if err := rows.Scan(&taskID, &c.Key, &c.Author, &createdAt, &c.Body); err != nil {
-			return err
+			return r.store.Classify(err)
 		}
 		at, err := parseInstant(createdAt)
 		if err != nil {
@@ -395,7 +395,7 @@ func (r *Tasks) readComments(id string, byID map[string]*model.Task, bad map[str
 			task.Comments = append(task.Comments, c)
 		}
 	}
-	return rows.Err()
+	return r.store.Classify(rows.Err())
 }
 
 // formatInstant writes an instant the way

@@ -1,0 +1,3 @@
+$ biso archive MYP-11 --dry-run
+1 task would be affected (--dry-run)
+MYP-11  Done  ac 2/2  urgency 0.0  archived

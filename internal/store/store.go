@@ -12,6 +12,8 @@ import (
 	"time"
 
 	_ "modernc.org/sqlite"
+
+	"biso/internal/model"
 )
 
 // busyTimeoutMillis is the limit from guarantee 5 of
@@ -34,9 +36,14 @@ const busyTimeoutMillis = 5000
 // transaction can give back: forever, with no error and no timeout. Every
 // access through the handle checks this first and fails with
 // ErrTxInProgress instead.
+//
+// path is the file the store was opened over, which is what the error of an
+// environment that refuses to write names: that failure can happen before
+// anything has read the id, so the path is the only thing it can name.
 type Store struct {
 	db   *sql.DB
 	id   string
+	path string
 	inTx atomic.Bool
 }
 
@@ -68,7 +75,7 @@ func openAt(id, path string, busyTimeoutMs int, scripts []string) (*Store, error
 	// with no end.
 	db.SetMaxOpenConns(1)
 
-	s := &Store{db: db, id: id}
+	s := &Store{db: db, id: id, path: path}
 
 	version, err := s.initialVersion(busyTimeoutMs)
 	if err != nil {
@@ -109,10 +116,16 @@ const (
 // Guarantee 5 of docs/spec/garantias.md promises a wait of the configured
 // time before exit code 8, and it does not exempt the command that creates
 // the board, so this retries until that time is up and only then answers
-// the busy error. Anything that is not the write lock is not retried: it
-// means the process could not read the database's header, which is the
-// second case of
+// the busy error. Anything that is not the write lock is not retried, and
+// it splits in two: an environment that refuses the file answers the
+// cannot-write error of exit code 8
+// (docs/spec/garantias.md#qué-pasa-cuando-el-almacén-no-se-puede-escribir),
+// and anything else means the process could not read the database's header,
+// which is the second case of
 // docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar.
+// Opening WAL mode needs to write, so a read-only directory fails here and
+// not later, which is why this one place cannot settle for "it could not be
+// read".
 func (s *Store) initialVersion(busyTimeoutMs int) (int, error) {
 	deadline := time.Now().Add(time.Duration(busyTimeoutMs) * time.Millisecond)
 	wait := retryFloor
@@ -122,8 +135,16 @@ func (s *Store) initialVersion(busyTimeoutMs int) (int, error) {
 		if err == nil {
 			return version, nil
 		}
-		if code := primaryResultCode(err); code != sqliteBusy && code != sqliteLocked {
+		// scanOne already classified what the driver said. The busy
+		// error is the one this loop waits for; any other one it
+		// recognized is final, and anything it did not recognize means
+		// the header could not be read.
+		classified, ok := err.(*model.Error)
+		if !ok {
 			return 0, s.newUnreadableError()
+		}
+		if classified.Code != "busy" {
+			return 0, classified
 		}
 		if !time.Now().Add(wait).Before(deadline) {
 			return 0, newBusyError()
@@ -180,7 +201,11 @@ func (s *Store) Query(query string, args ...any) (*sql.Rows, error) {
 	if s.inTx.Load() {
 		return nil, fmt.Errorf("query: %w", ErrTxInProgress)
 	}
-	return s.db.Query(query, args...)
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, s.Classify(err)
+	}
+	return rows, nil
 }
 
 // Exec runs a statement through the store's handle, outside any
@@ -190,7 +215,11 @@ func (s *Store) Exec(query string, args ...any) (sql.Result, error) {
 	if s.inTx.Load() {
 		return nil, fmt.Errorf("exec: %w", ErrTxInProgress)
 	}
-	return s.db.Exec(query, args...)
+	result, err := s.db.Exec(query, args...)
+	if err != nil {
+		return nil, s.Classify(err)
+	}
+	return result, nil
 }
 
 // scanOne reads the single value of a single row into dest, with the same
@@ -199,7 +228,7 @@ func (s *Store) scanOne(dest any, query string, args ...any) error {
 	if s.inTx.Load() {
 		return fmt.Errorf("query: %w", ErrTxInProgress)
 	}
-	return s.db.QueryRow(query, args...).Scan(dest)
+	return s.Classify(s.db.QueryRow(query, args...).Scan(dest))
 }
 
 // CheckIntegrity runs SQLite's own integrity check over the whole file. A

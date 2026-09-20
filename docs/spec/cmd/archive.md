@@ -38,6 +38,25 @@ impide avanzar a nadie; el aviso de `finish` habla del alcance del padre, y una 
 desapareció del tablero activo sin haberse marcado nunca hecha es justo lo que ese aviso existe para
 sacar a la luz.
 
+## La referencia de `--unarchive`
+
+**Con `--unarchive`, una referencia de texto mira el tablero entero, archivadas incluidas.** Es la
+única excepción a la regla de ["La búsqueda por texto"](../referencias.md#la-búsqueda-por-texto), que
+para cualquier otra referencia de cualquier otro comando mira solo las tareas que no están
+archivadas, y la excepción se explica sola: lo que `--unarchive` nombra está archivado por
+definición, así que buscarlo entre las que no lo están no podría encontrarlo nunca. Sin esto,
+`biso archive "the parser" --unarchive` contestaría siempre que no encaja con ninguna tarea, que
+además es falso.
+
+**Mira el tablero entero y no solo la mitad archivada**, para que nombrar por texto una tarea que ya
+está en el tablero siga dando el código 0 y el `note: MYP-11 was not archived` de la tabla de arriba,
+igual que si se hubiera nombrado por su identificador: la idempotencia de esa fila no puede depender
+de cómo se escribió la referencia. Y si el texto encaja a la vez con una tarea archivada y con una
+viva, eso es una ambigüedad de verdad y sale el código 5 con sus candidatas, como cualquier otra.
+
+Una referencia por identificador no cambia aquí ni en ningún sitio: siempre llega a cualquier tarea
+del tablero, archivada o no.
+
 ## `biso delete` no existe, y su ausencia está especificada
 
 Cualquier invocación de `biso delete`, `biso rm` o `biso remove` termina con código 2 y este mensaje

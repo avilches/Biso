@@ -1,0 +1,24 @@
+$ biso config get statuses
+To Do,In Progress,Done
+
+$ biso config list
+project_name = My project
+statuses = To Do,In Progress,Done
+initial_status = To Do
+active_status = In Progress
+terminal_status = Done
+types = idea,memory,task,bug,docs
+priorities = high,medium,low
+labels =
+assignees =
+extensions = trello.card
+task_prefix = TASK
+finish_strict = false
+lease_minutes = 240
+urgency.priority = 6.0
+urgency.active = 4.0
+urgency.blocking = 8.0
+urgency.blocked = -5.0
+urgency.due = 12.0
+urgency.criteria = 1.0
+urgency.age = 0.5

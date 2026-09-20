@@ -83,8 +83,8 @@ Administration:
   "generatedAt": "2026-09-06T09:12:04Z",
   "data": {
     "commands": [
-      { "name": "prime", "summary": "print the session briefing" },
-      { "name": "new", "summary": "create a task" }
+      { "name": "prime", "summary": "everything you need to work on this board, in one message" },
+      { "name": "new", "summary": "create a task and print its id" }
     ]
   }
 }

@@ -1,0 +1,2 @@
+$ biso config set lease_minutes 45 --dry-run
+note: lease_minutes would be set to 45 (--dry-run)

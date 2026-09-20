@@ -39,6 +39,26 @@ func errUnknownCommand(name string, known []string) *model.Error {
 	return e
 }
 
+// errNoDeleteCommand is the refusal of docs/spec/cmd/archive.md: `biso
+// delete`, `biso rm` and `biso remove` are not commands that are missing,
+// they are commands biso does not have on purpose, so they answer what to
+// do instead of the generic list of what exists.
+func errNoDeleteCommand(name string) *model.Error {
+	switch name {
+	case "delete", "rm", "remove":
+	default:
+		return nil
+	}
+	e := usage("delete_not_supported", "there is no delete command, on purpose")
+	e.Given = name
+	e.Hints = []string{
+		"`biso archive <ref>` takes it off the board and keeps the history\n" +
+			"an archived task still exists: `biso ls --archived` lists them, and the\n" +
+			"id is never reused",
+	}
+	return e
+}
+
 func errUnknownFlag(spelling string) *model.Error {
 	e := usage("unknown_flag", "unknown flag: "+spelling)
 	e.Given = spelling

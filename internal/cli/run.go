@@ -130,6 +130,14 @@ func Run(argv []string, s Streams) int {
 		return runAsk(s, p, env)
 	case "answer":
 		return runAnswer(s, p, env)
+	case "archive":
+		return runArchive(s, p, env)
+	case "config":
+		return runConfig(s, p, env)
+	case "doctor":
+		return runDoctor(s, p, env)
+	case "help":
+		return runHelp(s, p, env)
 	}
 	// Parse only ever answers a command of the table, so this is
 	// unreachable; answering the internal error keeps it honest.
@@ -312,6 +320,20 @@ func helpOf(command string) string {
 		return askHelp
 	case "answer":
 		return answerHelp
+	case "archive":
+		return archiveHelp
+	case "config":
+		return configHelp
+	case "doctor":
+		return doctorHelp
+	case "help":
+		return helpHelp
+	case "board":
+		return boardHelp
+	case "export":
+		return exportHelp
+	case "snapshot":
+		return snapshotHelp
 	}
 	return topLevelHelp
 }

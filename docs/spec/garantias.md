@@ -125,3 +125,30 @@ directorio cuya base de datos no abre no cuenta como tablero accesible para `bis
 `id` que nombra el marcador de la instantánea, de modo que el puntero commiteado del proyecto sigue
 valiendo. Es también lo que necesita un clon recién traído a otra máquina, que llega con el directorio
 del tablero versionado y sin base de datos dentro.
+
+## Qué pasa cuando el almacén no se puede escribir
+
+Hay un tercer motivo por el que una llamada no llega a su fin, y no es ninguno de los dos de arriba:
+el tablero está donde tiene que estar y su base de datos está perfectamente sana, pero el entorno se
+niega a dejar escribir en ella. El fichero o su directorio no tienen permiso de escritura, están en un
+montaje de solo lectura, el disco está lleno, o el sistema operativo falla la operación. **Eso no es un
+dato que no se pueda interpretar, así que no es el código 21**: es el entorno fallando y no la
+petición, que es exactamente lo que nombra el código 8 (`ENVIRONMENT`, ver ["Códigos de salida"](codigos-de-salida.md)).
+La clave `code` del sobre JSON es `io_error`, la misma que ya usa cualquier otra escritura de fichero
+que el sistema rechaza.
+
+```
+error: /Users/avilches/.biso/boards/my-project-3f9a2b1c/board.db cannot be written: attempt to write a readonly database (8)
+hint: check its permissions and the free space of its directory; nothing was written
+```
+
+**El mensaje nombra el fichero y no el tablero**, y esa elección es deliberada. El modo WAL necesita
+escribir para abrirse, así que este fallo puede ocurrir al abrir, antes de que nadie haya leído el `id`
+que la base de datos guarda dentro; un mensaje que nombrara el tablero saldría con un hueco donde
+debería ir el identificador, mientras que la ruta del fichero es siempre conocida y es además lo único
+que hay que mirar para arreglarlo.
+
+**Vale para cualquier comando y para cualquier momento**, no solo para las escrituras declaradas: un
+`biso ls` sobre un directorio de tablero sin permiso de escritura falla igual, y con el mismo código,
+porque abrir en modo WAL ya es escribir. Y vale también para `biso doctor --fix`, cuya tabla de códigos
+de salida ya prometía el 8 para "no se puede escribir al reparar" (["`biso doctor`"](cmd/doctor.md#códigos-de-salida)).

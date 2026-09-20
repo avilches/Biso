@@ -1,0 +1,1 @@
+extra board root "/Volumes/disco/boards" cannot be read (skipped when looking up boards by id)

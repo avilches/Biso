@@ -1,0 +1,41 @@
+Usage: biso doctor [options]
+
+Check the board for duplicate ids, unreadable tasks, undeclared extension keys,
+values that are no longer configured, a broken status-role invariant, broken
+dependencies, dependency cycles, parent cycles, repeated criterion keys, a lease
+on a task that is not both active and assigned, a recorded highest id that has
+fallen behind, a database that fails its integrity check, a missing or
+mismatched <id>.id marker, an extra board root that cannot be read, an exclusion
+file that no longer matches the configured vcs, and a board directory on a
+filesystem where SQLite's WAL mode is not safe.
+
+Options:
+      --fix      repair what can be repaired without a decision
+  -h, --help     show this help
+
+Without --fix this is a read-only command: --print and --dry-run are bad usage
+here, same as in any other read-only command. With --fix, --dry-run reports
+what would be fixed without fixing it, same report as a real run, same exit
+code too: 6 if an error would remain unfixed, 0 otherwise. Never its own 7,
+doctor has none.
+
+Findings come in two levels: errors, which leave the board inconsistent or
+unreliable, and warnings, which are true and worth knowing but fix nothing.
+Only remaining errors produce exit code 6.
+
+An unreadable task is reported and skipped, never a reason to stop. A database
+that cannot be opened, or that fails its integrity check, is not a finding: the
+whole command fails instead, with exit code 21.
+Gaps in the id sequence are normal and are not reported.
+
+Exit codes:
+  0  nothing wrong, or every error found was fixed
+  2  bad usage
+  6  errors remain
+  8  cannot write while fixing
+  20 no board here
+  21 its database could not be read
+
+Examples:
+  biso doctor
+  biso doctor --fix

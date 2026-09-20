@@ -337,15 +337,11 @@ func TestTheThreeCallsOfTheCycleOfTheSpecification(t *testing.T) {
 	}
 }
 
-// archive flips the one field no command of this step writes: `biso archive`
-// belongs to the last step of the implementation, and three of these
-// examples speak of an archived task. It is a fixture of the board and not a
-// use of the program, so it is written straight into the database.
+// archive takes a task off the board for the three examples of this page
+// that speak of an archived one. Until step 9 it wrote the field straight
+// into the database, because `biso archive` did not exist; now it is the
+// command, which is also how these examples reach that state in real life.
 func archive(t *testing.T, m *machine, id string) {
 	t.Helper()
-	b := openTheBoard(t, m)
-	defer b.Close()
-	if _, err := b.Store.Exec("UPDATE task SET archived = 1 WHERE id = ?", id); err != nil {
-		t.Fatal(err)
-	}
+	m.run(t, "archive", id).assertCode(t, 0)
 }

@@ -228,6 +228,13 @@ func (st *parser) command(name string) error {
 			return nil
 		}
 	}
+	if err := errNoDeleteCommand(name); err != nil {
+		// The absence of a delete command is specified, so the three
+		// names somebody would reach for answer what to do instead of
+		// dumping the list of commands
+		// (docs/spec/cmd/archive.md#biso-delete-no-existe-y-su-ausencia-está-especificada).
+		return err
+	}
 	return errUnknownCommand(name, commandNames(st.commands))
 }
 

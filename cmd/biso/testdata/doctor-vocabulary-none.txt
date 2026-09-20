@@ -1,0 +1,1 @@
+  type "bug" is not one of the configured types, and the board configures none
