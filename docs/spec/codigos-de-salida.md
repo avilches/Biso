@@ -29,14 +29,20 @@ Si un comando termina con 7, el tablero está exactamente como estaba antes, per
 código general de "una validación falló dentro de un lote": un fallo que ya tiene su propio código
 (3, 4, 5...) lo conserva sea cual sea el tamaño del lote. `biso set A B C` donde `C` no existe
 devuelve 4, tanto si `C` es la única referencia como si hay cien. El 7 queda reservado en exclusiva
-a los fallos que no se pueden atribuir a un elemento señalable, que son los dos que ya tienen su
-propio identificador en la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error): `batch_invalid`
-(una validación de conjunto que no apunta a un elemento concreto, como un `--dry-run` sobre `new
---from` con varias líneas inválidas por motivos distintos) y `dry_run_failed` (un `--dry-run` que no
-habría pasado la validación). En los dos casos el 7 llega con el detalle de **todos** los fallos
-encontrados, no solo del primero. Si un programa que llama a `biso` quisiera tratar todo lote fallido
-igual, tendría que analizar `error.details` de todas formas, que es justo lo que un código
-específico existe para evitar.
+a los fallos que no se pueden atribuir a un elemento señalable, y en la versión 1.0 hay uno solo,
+con su propio identificador en la sección ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error):
+`batch_invalid`, la validación de conjunto de un lote que no apunta a un elemento concreto, como un
+`new --from` con varias líneas inválidas por motivos distintos. El 7 llega entonces con el detalle
+de **todos** los fallos encontrados, no solo del primero. Si un programa que llama a `biso` quisiera
+tratar todo lote fallido igual, tendría que analizar `error.details` de todas formas, que es justo lo
+que un código específico existe para evitar.
+
+**`--dry-run` no tiene código propio, y por eso no hay ningún `dry_run_failed`.** Una vista previa
+contesta lo que contestaría la llamada que simula, con el código del fallo que encontró
+(["Los flags globales"](cmd/flags-globales.md)), así que el único `--dry-run` que sale con 7 es el
+de un lote, que ya salía con 7 sin él. Los comandos que escriben sobre tareas y no tienen lote
+(`set`, `archive` y los seis verbos del ciclo) no llevan, por tanto, ninguna fila del 7 en su tabla
+de códigos: no hay forma de llegar a él desde ahí.
 
 ## Un listado vacío es siempre 0
 

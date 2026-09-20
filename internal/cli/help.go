@@ -249,10 +249,9 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"\n" +
 	"Exit codes:\n" +
 	"  0  done                    5  something matched more than one thing\n" +
-	"  2  bad usage               7  --dry-run did not pass\n" +
-	"  3  unknown value           8  the board could not be written\n" +
+	"  2  bad usage               8  the board could not be written\n" +
+	"  3  unknown value           20 no board here\n" +
 	"  4  a task, criterion or comment was not found\n" +
-	"                             20 no board here\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso set MYP-11 --priority high --add-labels parser\n" +

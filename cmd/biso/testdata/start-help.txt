@@ -22,10 +22,9 @@ over a live lease held by someone else is the same: it warns, it does not
 refuse. An archived task refuses instead: `biso archive --unarchive` it first.
 
 Exit codes:
-  0  started        4  not found        7  --dry-run did not pass
-  2  bad usage      5  ambiguous        8  the board could not be written
+  0  started        4  not found        8  the board could not be written
+  2  bad usage      5  ambiguous        20 no board here
   3  unknown value  6  already finished, or archived
-                    20 no board here
 
 Examples:
   biso start MYP-11 --append-plan "1. Read the parser. 2. Add the CRLF case."

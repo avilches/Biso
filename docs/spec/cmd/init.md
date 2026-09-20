@@ -274,7 +274,8 @@ hint: --overwrite-config rewrites its configuration and never touches its tasks
 
 **`--dry-run` vale en este comando** (sección ["Flags globales"](flags-globales.md#flags-globales)), y es donde más sirve: valida los argumentos y, con
 `--from`, la instantánea entera contra el vocabulario que ella misma trae, sin crear ni escribir nada,
-y sale 0 si habría funcionado y 7 si no. `--print`, en cambio, es error 2, porque ninguna tarea que
+y sale 0 si habría funcionado, y si no, el código del fallo, que con `--from` es el 7 del lote
+inválido. `--print`, en cambio, es error 2, porque ninguna tarea que
 existiera antes queda afectada.
 
 **Sin `--from`, la frase de `--dry-run` es una sola nota por stderr**, porque no hay ninguna tarea que

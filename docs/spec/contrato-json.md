@@ -131,7 +131,7 @@ regla de cuándo acompañan:
 | `exitCode`, `code`, `message` | En todos, siempre |
 | `field` y `given` | En los que nombran un flag, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran un flag |
 | `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs`. En `ambiguous_vocabulary` no es el conjunto entero, sino **solo los valores configurados que empatan**, que es lo que hay que desambiguar (["Cuando el tablero tiene dos valores que se normalizan igual"](vocabularios.md#cuando-el-tablero-tiene-dos-valores-que-se-normalizan-igual)) |
-| `details` | Solo en `batch_invalid` y en `dry_run_failed`, y es una lista de objetos de esta misma forma, uno por fallo |
+| `details` | Solo en `batch_invalid`, y es una lista de objetos de esta misma forma, uno por fallo |
 | `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió **la orden que falló**, no las de las que fueron bien antes, que sí están todas en `data.vcsOutput` cuando la llamada acaba bien (["`biso snapshot`"](cmd/snapshot.md)) |
 | `warnings` | Al mismo nivel que `error`, no dentro de él, en cualquier `code` cuya llamada haya producido al menos un aviso antes de fallar, con la misma forma que `data.warnings` (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)) |
 
@@ -169,7 +169,7 @@ agrupada por el código de salida con el que sale cada uno:
 | 4 | `not_found`, `never_allocated`, `no_such_command`, `unknown_config_key`, `criterion_not_found`, `comment_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous`, `comment_ambiguous` |
 | 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity` |
-| 7 | `batch_invalid`, `dry_run_failed` |
+| 7 | `batch_invalid` |
 | 8 | `busy`, `io_error`, `file_unreadable`, `lease_lost`, `no_terminal`, `port_in_use`, `vcs_commit_failed`, `vcs_push_failed` |
 | 20 | `no_board`, `pointer_unresolved` |
 | 21 | `database_unreadable` |

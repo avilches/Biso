@@ -29,9 +29,9 @@ const archiveHelp = "Usage: biso archive <ref>... [options]\n" +
 	"There is no delete command. Archiving is the way.\n" +
 	"\n" +
 	"Exit codes:\n" +
-	"  0  archived       3  the task could not be read     7  --dry-run did not pass\n" +
-	"  2  bad usage      4  not found                      8  could not be written\n" +
-	"                    5  ambiguous                     20  no board here\n" +
+	"  0  archived       3  the task could not be read      8  could not be written\n" +
+	"  2  bad usage      4  not found                      20  no board here\n" +
+	"                    5  ambiguous\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso archive MYP-11\n" +

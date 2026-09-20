@@ -56,7 +56,7 @@ type Error struct {
 	// this is still a given, which is what `--rm-labels ""` answers.
 	NoGiven   bool
 	Valid     []string // on errors that reject a value against a known set
-	Details   []*Error // only on batch_invalid and dry_run_failed, same shape, one per failure
+	Details   []*Error // only on batch_invalid, same shape, one per failure
 	VCSOutput []string // only on vcs_commit_failed and vcs_push_failed
 }
 

@@ -509,12 +509,11 @@ con `fixed` llevando lo que se repararía en vez de lo que se reparó; no hay ni
 un informe en seco de uno real, porque las tres listas (`problems`, `warnings`, `fixed`) ya dicen todo
 lo que hace falta y el propio `--dry-run` de la llamada ya lo dice quien la hizo.
 
-Esto no es una excepción nueva al contrato genérico de `--dry-run` de la sección ["Flags globales"](flags-globales.md#flags-globales):
-ese contrato ya dice 0 si habría funcionado y 7 si no para el resto de comandos, pero `doctor` nunca
-tuvo código 7 (tabla de códigos de más abajo), así que su `--dry-run` nunca pudo devolverlo. `--fix
---dry-run` es sencillamente el mismo caso llevado a sus últimas consecuencias: una vista previa pura del
-código que daría la llamada real que le sigue, tomado de la propia tabla de códigos de `doctor`
-(0, 6, 2, 8, 20 o 21), nunca un 7 que esta tabla no tiene.
+Esto no es una excepción al contrato genérico de `--dry-run` de la sección ["Flags globales"](flags-globales.md#flags-globales),
+sino ese contrato aplicado aquí: una vista previa contesta el código que daría la llamada real que le
+sigue, y el de esta llamada es el de la propia tabla de códigos de `doctor` (0, 6, 2, 8, 20 o 21).
+Lo único particular de `doctor` es de dónde sale ese código: no de un hallazgo suelto, sino del
+informe entero tal y como quedaría después de la reparación.
 
 ## El esquema JSON
 
@@ -557,7 +556,7 @@ texto, en vez de a uno menor.
 
 **Esta misma tabla vale para `--fix --dry-run`**, sección ["El informe en seco de `--fix
 --dry-run`"](#el-informe-en-seco-de---fix---dry-run): es una vista previa del código que daría la
-llamada real que le sigue, nunca un 7 propio, porque `doctor` no tiene código 7.
+llamada real que le sigue, y `doctor` no tiene fila del 7 en ella.
 
 ## `biso doctor --help`
 

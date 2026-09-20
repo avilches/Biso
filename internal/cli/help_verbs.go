@@ -31,10 +31,9 @@ const startHelp = "Usage: biso start <ref>... [options]\n" +
 	"refuse. An archived task refuses instead: `biso archive --unarchive` it first.\n" +
 	"\n" +
 	"Exit codes:\n" +
-	"  0  started        4  not found        7  --dry-run did not pass\n" +
-	"  2  bad usage      5  ambiguous        8  the board could not be written\n" +
+	"  0  started        4  not found        8  the board could not be written\n" +
+	"  2  bad usage      5  ambiguous        20 no board here\n" +
 	"  3  unknown value  6  already finished, or archived\n" +
-	"                    20 no board here\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso start MYP-11 --append-plan \"1. Read the parser. 2. Add the CRLF case.\"\n" +
@@ -62,9 +61,9 @@ const noteHelp = "Usage: biso note <ref> <text>... [options]\n" +
 	"To note the same thing on several tasks, use `biso set A B --append-note \"...\"`.\n" +
 	"\n" +
 	"Exit codes:\n" +
-	"  0  appended       3  the task could not be read     7  --dry-run did not pass\n" +
-	"  2  bad usage      4  not found                      8  could not be written\n" +
-	"                    5  ambiguous                     20  no board here\n" +
+	"  0  appended       3  the task could not be read      8  could not be written\n" +
+	"  2  bad usage      4  not found                      20  no board here\n" +
+	"                    5  ambiguous\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso note MYP-11 \"The parser already normalized LF, CRLF was missing\"\n" +
@@ -96,9 +95,9 @@ const commentHelp = "Usage: biso comment <ref> <text>... [options]\n" +
 	"--set-comment-date, both in `biso set --help`.\n" +
 	"\n" +
 	"Exit codes:\n" +
-	"  0  appended       3  the task could not be read     7  --dry-run did not pass\n" +
-	"  2  bad usage      4  not found                      8  could not be written\n" +
-	"                    5  ambiguous                     20  no board here\n" +
+	"  0  appended       3  the task could not be read      8  could not be written\n" +
+	"  2  bad usage      4  not found                      20  no board here\n" +
+	"                    5  ambiguous\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso comment MYP-11 \"A user with a Windows clone reported this\"\n" +
@@ -129,9 +128,8 @@ const finishHelp = "Usage: biso finish <ref>... [options]\n" +
 	"\n" +
 	"Exit codes:\n" +
 	"  0  finished       3  unknown value    6  --strict and something is missing\n" +
-	"  2  bad usage      4  not found        7  --dry-run did not pass\n" +
-	"                    5  ambiguous        8  the board could not be written\n" +
-	"                                        20 no board here\n" +
+	"  2  bad usage      4  not found        8  the board could not be written\n" +
+	"                    5  ambiguous        20 no board here\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso finish MYP-11 --check-ac all --append-summary \"Normalizes CRLF\"\n" +
@@ -159,9 +157,9 @@ const askHelp = "Usage: biso ask <ref> <text>... [options]\n" +
 	"A task holds one open question at a time. Answer it before asking another.\n" +
 	"\n" +
 	"Exit codes:\n" +
-	"  0  asked          4  not found        7  --dry-run did not pass\n" +
-	"  2  bad usage      5  ambiguous        8  could not be written\n" +
-	"  3  empty question, or unreadable      20 no board here\n" +
+	"  0  asked          4  not found        8  could not be written\n" +
+	"  2  bad usage      5  ambiguous        20 no board here\n" +
+	"  3  empty question, or unreadable\n" +
 	"  6  already asking, or already finished\n" +
 	"\n" +
 	"Examples:\n" +
@@ -191,9 +189,9 @@ const answerHelp = "Usage: biso answer <ref> <text>... [options]\n" +
 	"--comment-author.\n" +
 	"\n" +
 	"Exit codes:\n" +
-	"  0  answered       4  not found        7  --dry-run did not pass\n" +
-	"  2  bad usage      5  ambiguous        8  could not be written\n" +
-	"  3  empty answer, or unreadable        20 no board here\n" +
+	"  0  answered       4  not found        8  could not be written\n" +
+	"  2  bad usage      5  ambiguous        20 no board here\n" +
+	"  3  empty answer, or unreadable\n" +
 	"  6  no open question\n" +
 	"\n" +
 	"Examples:\n" +
