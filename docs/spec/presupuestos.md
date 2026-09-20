@@ -85,6 +85,11 @@ definir:
 3. Si no basta, el de `NEEDS ANSWER`.
 4. Si no basta, el de `IN PROGRESS`.
 5. Si aun así no cupiera, cada uno de los cuatro bloques se reduce a su sola línea de recuento.
+6. Si aun así no cupiera, se recorta también el bloque `BOARD`, que hasta aquí no se había tocado:
+   sus tres líneas de lista pierden elementos, primero `priorities`, luego `types` y por último la
+   línea de recuento por estado, y cada una dice cuántos elementos no enseña.
+7. Y si ni con las tres listas vacías cupiera, el bloque `BOARD` se corta en seco a lo que quede,
+   con el mismo sufijo `...` con el que se recorta un título.
 
 `ASSIGNED TO YOU` y `NEXT UP` comparten la línea de recuento que ya define la sección ["La salida literal"](cmd/prime.md#la-salida-literal). `IN PROGRESS` y
 `NEEDS ANSWER` llevan cada uno la suya, con el mismo patrón: cuántas tareas del bloque quedan
@@ -92,9 +97,12 @@ fuera por el recorte y el comando para verlas completas. Para `IN PROGRESS` es
 `N more not shown: 'biso ls --active'`, y para `NEEDS ANSWER` es
 `N more not shown: 'biso ls --waiting'`.
 
-Con esa lista el tope deja de ser una aspiración y pasa a ser alcanzable siempre. Lo que se ve en el
-texto al aplicarla, y las dos cosas que el recorte no toca (el bloque `BOARD` y la salida de
-`--json`), están en ["El recorte en cascada"](cmd/prime.md#el-recorte-en-cascada). **El tope se mide
+**Con esos siete escalones el tope deja de ser una aspiración y pasa a cumplirse siempre**, sin
+ninguna excepción y para cualquier configuración de tablero: los dos últimos existen justamente para
+que no la haya, porque los cuatro primeros solo tocan las tareas y un tablero sin ninguna tarea puede
+tener cuarenta estados de nombre largo. Lo que se ve en el texto al aplicarlos, y lo único que el
+recorte no toca nunca (la salida de `--json`), está en
+["El recorte en cascada"](cmd/prime.md#el-recorte-en-cascada). **El tope se mide
 sobre el mensaje sin `--full`**, que es ayuda para quien aprende la herramienta y no parte del
 arranque.
 

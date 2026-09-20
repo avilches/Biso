@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"biso/internal/model"
 	"biso/internal/ops"
@@ -89,12 +90,15 @@ func primeParams(p *Parsed) (ops.PrimeParams, error) {
 	return params, nil
 }
 
-// primeCut is how many rows of each block the message prints. The four
-// numbers are what the cascade of
-// docs/spec/presupuestos.md#el-presupuesto-de-tamaño reduces, and nothing
-// else about the message changes with them.
+// primeCut is how much of each part of the summary the message prints: how
+// many rows of each of the four blocks of tasks, and how many elements of
+// each of the three lists of the BOARD block. Those seven numbers are what
+// the cascade of docs/spec/presupuestos.md#el-presupuesto-de-tamaño
+// reduces, in that order, and nothing else about the message changes with
+// them.
 type primeCut struct {
 	inProgress, needsAnswer, assigned, nextUp int
+	priorities, types, statuses               int
 }
 
 // renderPrime is the whole message. The fixed part never changes, so the
@@ -104,8 +108,11 @@ func renderPrime(r *ops.PrimeResult, version string, full bool) string {
 	// The two pieces of the summary are not next to each other in the
 	// message: the BOARD block goes above the fixed part and the four
 	// blocks of tasks below it. They are built and measured together,
-	// because both are what changes with the board, and split here.
-	board, blocks := splitSummary(primeSummary(r, primeCutThatFits(r)))
+	// because both are what changes with the board.
+	board, blocks := primeSummary(r, primeCutThatFits(r))
+	// The floor of the cascade, which is what makes the cap hold for every
+	// board there can be and not only for every board that has tasks.
+	board = primeBoardWithinItsRoom(board, primeSummaryBudget-len(blocks))
 	message := primeTitle(version) + "\n" + board +
 		primeCommands + "\n" + primeFieldFlags + "\n" + primeRules + "\n" +
 		blocks + primeClosing
@@ -115,20 +122,12 @@ func renderPrime(r *ops.PrimeResult, version string, full bool) string {
 	return message
 }
 
-// splitSummary cuts the summary in its two pieces
+// primeSummary is the half of the message that depends on the board, in its
+// two pieces: the BOARD block with the blank line that follows it, and then
+// the blocks of tasks, each one with its own
 // (docs/spec/presupuestos.md#el-presupuesto-de-tamaño).
-func splitSummary(summary string) (board, blocks string) {
-	// The BOARD block ends at the blank line that belongs to it, which is
-	// the first one of the summary.
-	at := strings.Index(summary, "\n\n")
-	return summary[:at+2], summary[at+2:]
-}
-
-// primeSummary is the half of the message that depends on the board: the
-// BOARD block with the blank line that follows it, and then the blocks of
-// tasks, each one with its own.
-func primeSummary(r *ops.PrimeResult, cut primeCut) string {
-	return primeBoardBlock(r) + "\n" + primeBlocks(r, cut)
+func primeSummary(r *ops.PrimeResult, cut primeCut) (board, blocks string) {
+	return primeBoardBlock(r, cut) + "\n", primeBlocks(r, cut)
 }
 
 // primeCutThatFits is the cascade of
@@ -136,48 +135,98 @@ func primeSummary(r *ops.PrimeResult, cut primeCut) string {
 // whole, and when it does not fit the rows of NEXT UP go first, then those
 // of ASSIGNED TO YOU, then NEEDS ANSWER, then IN PROGRESS. A block that
 // ends with no row at all is left as its single count line, which is the
-// fifth step of that list and the floor of the whole thing.
+// fifth step of that list.
 //
-// Each block is searched and not walked one row at a time: the summary
-// only grows when a block gains a row, so the largest number of rows that
-// fits can be found by halving. It matters, because this runs inside the
-// startup budget of docs/spec/presupuestos.md#el-presupuesto-de-arranque
-// and a board can have hundreds of tasks in flight.
+// The sixth step is the BOARD block, and it comes last because it is the
+// only thing in the summary that describes the board instead of listing its
+// tasks: its three lists lose elements, priorities first, then types, then
+// the counts line. It is not an ornament of the cascade but the only step
+// that reaches a board with no task at all, whose whole summary is that
+// block.
+//
+// Each of the seven numbers is searched and not walked one step at a time:
+// the summary only grows when a block gains a row or a list gains an
+// element, so the largest number that fits can be found by halving. It
+// matters, because this runs inside the startup budget of
+// docs/spec/presupuestos.md#el-presupuesto-de-arranque and a board can have
+// hundreds of tasks in flight.
 func primeCutThatFits(r *ops.PrimeResult) primeCut {
 	cut := primeCut{
 		inProgress:  len(r.InProgress),
 		needsAnswer: len(r.NeedsAnswer),
 		assigned:    len(r.AssignedToYou),
 		nextUp:      len(r.NextUp),
+		priorities:  len(r.Board.Priorities),
+		types:       len(r.Board.Types),
+		statuses:    len(r.Board.Statuses),
 	}
 	fits := func() bool {
-		return len(primeSummary(r, cut)) <= primeSummaryBudget
+		board, blocks := primeSummary(r, cut)
+		return len(board)+len(blocks) <= primeSummaryBudget
 	}
-	for _, rows := range []*int{
+	for _, shown := range []*int{
 		&cut.nextUp, &cut.assigned, &cut.needsAnswer, &cut.inProgress,
+		&cut.priorities, &cut.types, &cut.statuses,
 	} {
 		if fits() {
 			return cut
 		}
-		low, high, best := 0, *rows, 0
+		low, high, best := 0, *shown, 0
 		for low <= high {
 			middle := (low + high) / 2
-			*rows = middle
+			*shown = middle
 			if fits() {
 				best, low = middle, middle+1
 			} else {
 				high = middle - 1
 			}
 		}
-		*rows = best
+		*shown = best
 	}
 	return cut
+}
+
+// primeBoardWithinItsRoom is the seventh and last step of that cascade: a
+// BOARD block that does not fit even with its three lists empty is cut
+// where it is and closed with the three dots a title gets.
+//
+// It is the one place in the message where text is cut in the middle of a
+// sentence, and it exists so that the cap has no exception at all: a board
+// name is free text of any length, so no amount of dropping elements can
+// bound this block on its own.
+func primeBoardWithinItsRoom(board string, room int) string {
+	if len(board) <= room {
+		return board
+	}
+	// The tail carries the blank line that separates the block from what
+	// follows it, which belongs to the summary like the block itself.
+	const tail = ellipsis + "\n\n"
+	keep := room - len(tail)
+	if keep < 0 {
+		keep = 0
+	}
+	return cutBytes(board, keep) + tail
+}
+
+// cutBytes is s cut to at most n bytes, never in the middle of a rune: the
+// message is UTF-8 and half a rune is not text.
+func cutBytes(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
 
 // primeBoardBlock is the BOARD block: what the board is, what its
 // vocabulary is, who is calling, and the one line that says a task could
 // not be read.
-func primeBoardBlock(r *ops.PrimeResult) string {
+//
+// Its three lists are printed as far as cut says, which is what the sixth
+// step of the cascade reduces (docs/spec/cmd/prime.md#el-recorte-en-cascada).
+func primeBoardBlock(r *ops.PrimeResult, cut primeCut) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "BOARD  %s\n", r.Board.Name)
 
@@ -185,15 +234,15 @@ func primeBoardBlock(r *ops.PrimeResult) string {
 	for _, status := range r.Board.Statuses {
 		counts = append(counts, fmt.Sprintf("%s %d", status, r.Board.CountByStatus[status]))
 	}
-	fmt.Fprintf(&b, "  %s\n", strings.Join(counts, " | "))
+	fmt.Fprintf(&b, "  %s\n", shortenedList(counts, cut.statuses, " | "))
 	fmt.Fprintf(&b, "  new tasks start in %s; `biso start` moves to %s; `biso finish` to %s\n",
 		r.Board.InitialStatus, r.Board.ActiveStatus, r.Board.TerminalStatus)
 
 	row := func(label, value string) {
 		fmt.Fprintf(&b, "  %-12s%s\n", label, value)
 	}
-	row("types", vocabulary(r.Board.Types))
-	row("priorities", vocabulary(r.Board.Priorities))
+	row("types", vocabulary(r.Board.Types, cut.types))
+	row("priorities", vocabulary(r.Board.Priorities, cut.priorities))
 	// identityOrNotice is the same sentence `biso where` prints for a
 	// caller with no identity, and it travels inside the message because
 	// biso prime writes nothing on stderr at all.
@@ -207,11 +256,29 @@ func primeBoardBlock(r *ops.PrimeResult) string {
 // vocabulary writes a configured list, and says so when it is empty: a
 // board with no types configured takes no --type at all, and whoever is
 // starting has to learn that here (docs/spec/cmd/prime.md#la-salida-literal).
-func vocabulary(values []string) string {
+// That state is reachable: `biso config set types ""` empties the list when
+// no task uses one of its values (docs/spec/cmd/config.md#comportamiento-caso-a-caso).
+func vocabulary(values []string, shown int) string {
 	if len(values) == 0 {
 		return "(none)"
 	}
-	return strings.Join(values, ", ")
+	return shortenedList(values, shown, ", ")
+}
+
+// shortenedList joins the first `shown` values and says how many it left
+// out, which is what the sixth step of the cascade does to the three lists
+// of the BOARD block. The `+N more` carries no command, unlike the count
+// line of a block of tasks, because no call of `biso ls` answers with the
+// rest of a vocabulary (docs/spec/cmd/prime.md#el-recorte-en-cascada).
+func shortenedList(values []string, shown int, separator string) string {
+	if shown >= len(values) {
+		return strings.Join(values, separator)
+	}
+	rest := fmt.Sprintf("+%d more", len(values)-shown)
+	if shown <= 0 {
+		return rest
+	}
+	return strings.Join(values[:shown], separator) + separator + rest
 }
 
 func skippedSentence(n int) string {
@@ -326,12 +393,25 @@ func leaseLine(v ops.TaskView) string {
 // questionLine is the second line of every task of NEEDS ANSWER: the body
 // of the question on one line, cut to a hundred cells by the same rule the
 // column algorithm applies to a title.
+//
+// Only the line breaks become a space, and no other run of whitespace is
+// touched: the line is the question somebody wrote, not a normalized
+// version of it (docs/spec/cmd/prime.md#la-salida-literal).
 func questionLine(v ops.TaskView) string {
 	if v.Task.Question == nil {
 		return ""
 	}
-	body := strings.Join(strings.Fields(strings.ReplaceAll(v.Task.Question.Body, "\n", " ")), " ")
-	return "    " + cutTitle(body) + "\n"
+	return "    " + cutTitle(oneLine(v.Task.Question.Body)) + "\n"
+}
+
+// oneLine turns every line break of a body into a single space. A `\r\n` is
+// one break and not two, and a lone `\r` is a break as well, which is the
+// pair the rest of the specification treats alike
+// (docs/spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string).
+func oneLine(body string) string {
+	body = strings.ReplaceAll(body, "\r\n", " ")
+	body = strings.ReplaceAll(body, "\r", " ")
+	return strings.ReplaceAll(body, "\n", " ")
 }
 
 // primeData is the `prime` envelope of docs/spec/cmd/prime.md#el-esquema-json.

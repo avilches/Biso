@@ -113,6 +113,7 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Dar a un papel (`initial_status`, `active_status` o `terminal_status`) el mismo estado que otro papel ya tiene | Error 6, con los dos papeles y el estado que comparten |
 | Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
+| Vaciar `types` o `priorities` del todo (`biso config set types ""`), sin ningún valor en uso | No es un error: ninguna de las dos tiene mínimo en la tabla de claves, al contrario que `statuses`, y `labels`, `assignees` y `extensions` ya nacen vacías. El tablero queda sin ese vocabulario, así que deja de admitir `--type` (o `--priority`) en cualquier llamada, y ["`biso prime`"](prime.md#la-salida-literal) lo dice en su línea `types` con un `(none)` |
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
 | Cambiar `project_name` a un valor vacío, o a uno cuyo slug (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) quede vacío tras derivarlo | Error 3, en los dos casos |
 | Cambiar `project_name` al mismo valor que ya tiene | El `set` se completa igual, con su `note:` |

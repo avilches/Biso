@@ -30,8 +30,8 @@ const budgetMillis = 25
 // the verdict and a program that really got slower still does.
 const budgetRuns = 5
 
-// TestTheStartupBudgetOfLsAndPrime is the prueba de la suite that section
-// asks for, and not an aspiration.
+// TestTheStartupBudgetOfLsAndPrime is the suite test that section asks
+// for, and not an aspiration.
 //
 // The composition of the board is not fixed by the specification, which
 // says so and why: no command branches on what a task holds. This one has

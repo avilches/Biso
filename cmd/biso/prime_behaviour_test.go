@@ -554,3 +554,28 @@ func TestPrimeCutsTheQuestionAtAHundredCells(t *testing.T) {
 	want := "    " + strings.Repeat("a", 60) + " " + strings.Repeat("b", 36) + "..."
 	assertEqual(t, lines[1], want, "the question of a parked task")
 }
+
+// TestPrimeKeepsTheSpacesOfAQuestion is the other half of that rule: the
+// line breaks become a space and nothing else is touched, so a question
+// written with two spaces after a full stop, or with an indented second
+// line, reaches the message as its author typed it
+// (docs/spec/cmd/prime.md#la-salida-literal).
+func TestPrimeKeepsTheSpacesOfAQuestion(t *testing.T) {
+	m := newMachine(t)
+	m.env["BISO_ME"] = "@claude"
+	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "board").assertCode(t, 0)
+	m.run(t, "new", "A parked task", "--start").assertCode(t, 0)
+	m.run(t, "ask", "MYP-1", "Two  spaces here.  And a tab\there.\n    An indented line.").
+		assertCode(t, 0)
+
+	got := m.run(t, "prime").assertCode(t, 0)
+
+	lines := blockOf(got.stdout, "NEEDS ANSWER")
+	if len(lines) != 2 {
+		t.Fatalf("NEEDS ANSWER printed %d lines and not a row plus its question:\n%s",
+			len(lines), got.stdout)
+	}
+	assertEqual(t, lines[1],
+		"    Two  spaces here.  And a tab\there.     An indented line.",
+		"the question of a parked task")
+}

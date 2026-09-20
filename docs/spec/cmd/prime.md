@@ -262,7 +262,11 @@ Cómo se calcula el resumen, para que la implementación sea única:
   ocupa **dos líneas**: la fila de siempre, con las ocho columnas del algoritmo de `biso ls`, y debajo
   una línea indentada con la pregunta recortada a **100 celdas**, con la misma regla exacta que el
   algoritmo aplica a los títulos. Los saltos de línea reales del cuerpo se sustituyen por un espacio
-  antes de recortar, y el recorte usa el mismo sufijo `...` que la sección ["`biso ls`"](ls.md) usa para los títulos. Va en línea
+  antes de recortar, contando como un solo salto el `\r\n` y como salto también el `\r` suelto, que
+  es el mismo par que el resto de la especificación trata igual (["El salto de línea en un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)).
+  **Ningún otro espacio se toca**: dos espacios seguidos del cuerpo salen como dos espacios, porque
+  la línea es la pregunta que alguien escribió y no una versión normalizada de ella.
+  El recorte usa el mismo sufijo `...` que la sección ["`biso ls`"](ls.md) usa para los títulos. Va en línea
   propia y no en una novena columna, porque el algoritmo tiene ocho exactas y una regla que dice que
   la octava nunca se rellena.
 - `ASSIGNED TO YOU` lista las tareas asignadas a la identidad configurada que no estén ya en
@@ -320,8 +324,31 @@ texto:
   Es también lo que pasa con `ASSIGNED TO YOU` y `NEXT UP` cuando `--limit 0` los deja a los dos sin
   filas: la línea de recuento que comparten se imprime sola, con su sangría de dos espacios, en el
   sitio donde habrían ido los dos bloques.
-- **El bloque `BOARD` no se recorta nunca.** Es el suelo del resumen, porque es lo único que describe
-  el tablero en vez de listar sus tareas, y perder una línea suya no ahorra lo que cuesta.
+- **El bloque `BOARD` se recorta el último, y solo cuando los cuatro bloques de tareas ya están en su
+  sola línea de recuento.** Es el sexto escalón de ["El presupuesto de tamaño"](../presupuestos.md#el-presupuesto-de-tamaño),
+  y llega tarde a propósito: es lo único que describe el tablero en vez de listar sus tareas. Lo que
+  pierde son elementos de sus tres líneas de lista, en este orden: primero `priorities`, luego
+  `types` y por último la línea de recuento por estado. Una lista recortada dice cuántos elementos
+  no enseña, con la misma aritmética que un bloque de tareas, pero con la forma `+N more` pegada al
+  final de su propia línea, porque ahí no hay un comando de `biso ls` que devuelva el resto:
+
+    ```
+      To Do 54 | In Progress 4 | +37 more
+      types       idea, memory, +3 more
+      priorities  +3 more
+    ```
+
+    Las demás líneas del bloque no tienen elementos que quitar y no se tocan: el nombre del tablero,
+    la línea que nombra los tres estados especiales, `you are` y `unreadable` son una sola cosa cada
+    una.
+
+- **El suelo es un corte en seco, y es lo que hace que el tope no tenga ninguna excepción.** Si ni
+  siquiera con las tres listas vacías cabe el bloque `BOARD`, porque el tablero se llama con
+  diez mil caracteres, el bloque se corta a lo que quede de presupuesto y se cierra con los mismos
+  tres puntos con los que se recorta un título. Es el único sitio del mensaje donde el texto se parte
+  por la mitad, y existe para que la afirmación de ["El presupuesto de tamaño"](../presupuestos.md#el-presupuesto-de-tamaño)
+  sea literal: no hay ninguna configuración de tablero con la que `biso prime` imprima más de 5.504
+  bytes.
 - **El recorte es del mensaje de texto y de nada más.** Con `--json` no hay cascada: `assignedToYou`
   y `nextUp` llevan lo que `--limit` deja, `inProgress` y `needsAnswer` llevan todas sus tareas, y el
   tamaño del sobre no está acotado. El presupuesto protege el mensaje que lee una persona o un
