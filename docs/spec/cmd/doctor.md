@@ -14,8 +14,11 @@ biso doctor [--fix]
 igual que en cualquier otro comando de lectura. **Con `--fix` es un comando de escritura**: ahí
 `--dry-run` es una vista previa pura de lo que haría la llamada real que le sigue, con el mismo informe
 y el mismo código de salida de la tabla de más abajo (nunca un 7 propio, que `doctor` no tiene, sección
-["Flags globales"](flags-globales.md#flags-globales)), sin reparar nada; y `--print` no añade nada,
-porque `doctor` no imprime fichas de tareas.
+["Flags globales"](flags-globales.md#flags-globales)), sin reparar nada; y `--print` sigue siendo
+error 2, con `--fix` y sin él, porque `doctor` no imprime fichas de tareas y lo que `--fix` repara
+(un arrendamiento que ninguna tarea justifica, un contador y un fichero de marcador) no es ninguna
+tarea de la que imprimir una. Es la regla general de que `--print` y `--dry-run` no se ignoran nunca
+en silencio, aplicada al único comando donde `--fix` podría hacer dudar.
 
 ## Para qué sirve `biso doctor`, y para qué no
 
