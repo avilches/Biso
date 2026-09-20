@@ -126,14 +126,19 @@ repositorio ni instalar nada en el Python del sistema: `uv` resuelve las depende
 caché propio y las descarta al terminar. El `Makefile` de la raíz envuelve los comandos largos
 (`make help` los lista):
 
-- `make` (sin argumentos): genera la documentación entera; es el alias de `docs-build`. El día que
-  exista código Go, este objetivo también lo compilará.
+- `make` (sin argumentos): compila el binario y genera la documentación entera; es el alias de
+  `build` más `docs-build`.
+- `make build`: compila el binario en `bin/biso` (ruta ignorada por git).
+- `make test`: ejecuta la suite de Go con el detector de carreras.
+- `make vet` y `make fmt-check`: `go vet` y la comprobación de `gofmt` sobre todo el código Go.
+- `make check`: **la comprobación final**, la que conviene lanzar antes de dar algo por terminado.
+  Encadena `build`, `vet`, `fmt-check`, `test` y `docs-doctor`.
 - `make docs-serve`: sirve el sitio en local con recarga automática al editar los `.md`.
 - `make docs-build`: regenera las páginas del tutorial, y construye el sitio
   estático en `site/` (no se versiona, ver `.gitignore`) con `mkdocs build --strict`.
 - `make docs-doctor`: lo mismo que `docs-build`, y antes ejecuta los tres comprobadores de
-  `docs/docs-tooling/tools/` (enlaces, recuentos y referencias por número). Es el que conviene
-  lanzar antes de dar algo por terminado.
+  `docs/docs-tooling/tools/` (enlaces, recuentos y referencias por número). Solo cubre la
+  documentación; para dar algo por terminado se usa `make check`.
 
 `docs/tutorial/*.md` es la única excepción a "los `.md` son la fuente de verdad": es producto
 generado a partir de los fixtures de `docs/docs-tooling/tutorial/escenarios/`, y no se edita a mano
