@@ -80,6 +80,18 @@ func runNewBatch(s Streams, p *Parsed, env ops.Env) int {
 			Hints:    []string{"in a batch every field of every task travels in the file"},
 		}, warningsOf(p))
 	}
+	if p.Has("print") {
+		// A batch creates every task of the file from scratch in a board
+		// that may have none, so there is no task that existed before to
+		// print a card of, which is the same reason --print is a usage
+		// error in `biso init --from` (docs/spec/cmd/new.md#el-modo-lote).
+		return fail(s, asJSON, &model.Error{
+			ExitCode: 2,
+			Code:     "read_only_flag",
+			Message:  "--print does not apply to a batch, which affects no task that existed before",
+			Field:    "print",
+		}, warningsOf(p))
+	}
 	from, _ := p.Value("from")
 	content, err := readBatchSource(s, from)
 	if err != nil {
@@ -127,7 +139,7 @@ func readBatchSource(s Streams, from string) (string, error) {
 				Given:    "-",
 			}
 		}
-		return string(b), nil
+		return checkedUTF8(string(b), "-")
 	}
 	b, err := os.ReadFile(from)
 	if err != nil {
@@ -148,7 +160,23 @@ func readBatchSource(s Streams, from string) (string, error) {
 			Given:    from,
 		}
 	}
-	return string(b), nil
+	return checkedUTF8(string(b), from)
+}
+
+// checkedUTF8 applies to a batch the rule every input of the program
+// follows: the input is UTF-8 always, and a byte that is not is exit code 3
+// pointing at it (docs/spec/salida-y-terminal.md#codificación-y-texto).
+func checkedUTF8(content, given string) (string, error) {
+	if offset := invalidUTF8At(content); offset >= 0 {
+		return "", &model.Error{
+			ExitCode: 3,
+			Code:     "invalid_encoding",
+			Message:  fmt.Sprintf("--from: invalid UTF-8 at byte %d", offset),
+			Field:    "from",
+			Given:    given,
+		}
+	}
+	return content, nil
 }
 
 func runSet(s Streams, p *Parsed, env ops.Env) int {

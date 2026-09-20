@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -121,4 +124,47 @@ func TestBatchRefusesTheTwoHalvesOfALeaseSeparately(t *testing.T) {
 			t.Errorf("the failures do not carry %q:\n%s", want, got.stderr)
 		}
 	}
+}
+
+// runWithStdin runs the compiled program with something on its standard
+// input, which is what `--from -` reads.
+func runWithStdin(t *testing.T, m *machine, stdin string, argv ...string) call {
+	t.Helper()
+	cmd := exec.Command(binary(t), argv...)
+	cmd.Dir = m.dir
+	cmd.Env = append(os.Environ(), "HOME="+m.home)
+	for name, value := range m.env {
+		cmd.Env = append(cmd.Env, name+"="+value)
+	}
+	cmd.Stdin = strings.NewReader(stdin)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	err := cmd.Run()
+	code := 0
+	if exit, ok := err.(*exec.ExitError); ok {
+		code = exit.ExitCode()
+	} else if err != nil {
+		t.Fatalf("biso %s: %v", strings.Join(argv, " "), err)
+	}
+	return call{code: code, stdout: stdout.String(), stderr: stderr.String()}
+}
+
+func TestBatchReadsStandardInput(t *testing.T) {
+	m := batchBoard(t)
+
+	got := runWithStdin(t, m, "{\"title\":\"From a pipe\"}\n", "new", "--from", "-")
+
+	got.assertCode(t, 0)
+	assertEqual(t, got.stdout, "MYP-1\n", "the identifier of a task read from stdin")
+}
+
+func TestBatchRefusesPrintAndAFileThatIsNotUTF8(t *testing.T) {
+	m := batchBoard(t)
+	path := filepath.Join(m.dir, "tasks.ndjson")
+	m.write(t, path, `{"title":"One"}`+"\n")
+	m.run(t, "new", "--from", path, "--print").assertCode(t, 2)
+
+	broken := filepath.Join(m.dir, "broken.ndjson")
+	m.write(t, broken, "{\"title\":\"\xff\"}\n")
+	m.run(t, "new", "--from", broken).assertCode(t, 3)
 }

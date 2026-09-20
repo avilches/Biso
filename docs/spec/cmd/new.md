@@ -222,6 +222,14 @@ Las reglas del lote, todas obligatorias:
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de
   la sección ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables).
 - Un lote no admite `--start` ni ningún flag de campo: todo va en el fichero.
+- **`--print` es error 2 en un lote**, con el mensaje `--print does not apply to a batch, which
+  affects no task that existed before`. Es la misma razón por la que lo es en
+  [`biso init --from`](init.md): un lote crea de cero todas las tareas del fichero, así que no hay
+  ninguna tarea anterior cuya ficha enseñar, e imprimir doscientas fichas recién creadas no informa
+  de nada que no diga ya `biso ls`.
+- **El fichero es UTF-8**, como cualquier otra entrada del programa: un byte que no lo sea es error 3
+  con la clave `invalid_encoding`, señalando su posición
+  (["Codificación y texto"](../salida-y-terminal.md#codificación-y-texto)).
 - **El autor de una tarea importada es el que traiga la línea, y nunca la identidad de quien
   importa.** Una línea sin `author` deja la tarea sin autor, a diferencia de `biso new "X"`, que
   pone el de quien llama (["El autor"](../modelo-de-datos/autor.md)): el lote describe tareas que ya
