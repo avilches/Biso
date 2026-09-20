@@ -318,6 +318,19 @@ git: [main a1b2c3d] biso snapshot: 248 tasks
 git:  3 files changed, 12 insertions(+), 4 deletions(-)
 ```
 
+**Una llamada que acaba en error 8 imprime igualmente lo que sí llegó a pasar**, con las mismas
+líneas y las mismas notas que imprimiría sin el fallo, y la línea de error detrás. Los dos ficheros
+se escriben antes de ejecutar nada, así que en cualquiera de los dos errores 8 de la tabla de casos
+ya están en el disco, y en `vcs_push_failed` la revisión además está guardada: callarlo dejaría una
+llamada que escribió dos ficheros con el mismo aspecto que una que no escribió ninguno. Una
+publicación que falla sobre un tablero sin nada nuevo que guardar imprime, por tanto, las tres
+cosas: la línea de los ficheros por stdout, la nota de que no había nada que guardar por stderr, y
+el error. La única excepción es `--json`: ahí la llamada que falla contesta el sobre de error y
+nada más por stdout, porque no hay sobre de datos que pueda llevar esa línea
+(["Los errores en JSON"](../contrato-json.md#los-errores-en-json)); las notas siguen saliendo como
+texto, como en cualquier otra llamada con `--json`
+(["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)).
+
 ## El esquema JSON
 
 ```json

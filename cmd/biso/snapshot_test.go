@@ -343,3 +343,50 @@ func revision(t *testing.T, dir string) string {
 	}
 	return strings.TrimSpace(string(out))
 }
+
+// TestSnapshotThatCannotPublishStillSaysWhatItWrote is the row of
+// docs/spec/cmd/snapshot.md#comportamiento-caso-a-caso that says the files
+// are already written when the publication fails, and the one that says the
+// note of having nothing to commit comes out as it always does. A failed
+// push is a failure of the last step alone, so what the steps before it did
+// is reported exactly as it would be without the flag.
+func TestSnapshotThatCannotPublishStillSaysWhatItWrote(t *testing.T) {
+	m, _ := snapshotBoard(t)
+	// The first call creates the board's own repository and records the
+	// first revision, so the second has nothing new to save.
+	m.run(t, "snapshot").assertCode(t, 0)
+
+	got := m.run(t, "snapshot", "--vcs", "push").assertCode(t, 8)
+
+	assertEqual(t, got.stdout,
+		"Snapshot written: snapshot.ndjson, board.json (3 tasks)\n",
+		"the output of a snapshot whose publication failed")
+	if !strings.Contains(got.stderr,
+		"note: nothing to commit, snapshot.ndjson and board.json are unchanged since the last snapshot") {
+		t.Errorf("the note of having nothing to commit is not there:\n%s", got.stderr)
+	}
+	if !strings.Contains(got.stderr, "error: the push failed, the revision is recorded") {
+		t.Errorf("the error of the failed push is not there:\n%s", got.stderr)
+	}
+}
+
+// TestSnapshotThatCannotPublishAnswersOnlyTheErrorEnvelopeInJSON is the
+// other half: with --json a failed call answers the error envelope and
+// nothing else on stdout, because there is no data envelope to carry the
+// line above (docs/spec/contrato-json.md#los-errores-en-json). The note
+// still travels as text, like every other note under --json
+// (docs/spec/salida-y-terminal.md#notas-y-avisos).
+func TestSnapshotThatCannotPublishAnswersOnlyTheErrorEnvelopeInJSON(t *testing.T) {
+	m, _ := snapshotBoard(t)
+	m.run(t, "snapshot").assertCode(t, 0)
+
+	got := m.run(t, "snapshot", "--vcs", "push", "--json").assertCode(t, 8)
+
+	assertEqual(t, got.stdout, "", "the standard output of a failed biso snapshot --json")
+	if !strings.Contains(got.stderr, "note: nothing to commit,") {
+		t.Errorf("the note is not there:\n%s", got.stderr)
+	}
+	if !strings.Contains(got.stderr, `"code": "vcs_push_failed"`) {
+		t.Errorf("the error envelope is not there:\n%s", got.stderr)
+	}
+}

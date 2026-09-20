@@ -26,12 +26,31 @@ func runSnapshot(s Streams, p *Parsed, env ops.Env) int {
 
 	result, err := ops.Snapshot(env, ops.SnapshotParams{Mode: mode})
 	if err != nil {
+		// A result at all means the two files are already on disk: every
+		// failure before that answers none
+		// (docs/spec/cmd/snapshot.md#comportamiento-caso-a-caso). So the
+		// steps that did work are reported exactly as they would be
+		// without the failure, and only the line of the step that broke
+		// is missing. Saying nothing would leave a call that did write
+		// two files looking like one that wrote none.
 		if result != nil && !asJSON {
 			// Whatever the orders wrote comes out before the error line,
 			// which is the order docs/spec/cmd/snapshot.md prints them in.
 			printVCSOutput(s, result)
+			fmt.Fprint(s.Stdout, renderSnapshot(result))
 		}
-		return fail(s, asJSON, err, opsWarnings(vcsWarnings(result)))
+		code := fail(s, asJSON, err, opsWarnings(vcsWarnings(result)))
+		if result != nil {
+			// The notes go after the error for the same reason they go
+			// after the output of a call that works: they are the last
+			// thing said about what happened. A note is text on stderr
+			// with --json too, because no envelope carries one
+			// (docs/spec/salida-y-terminal.md#notas-y-avisos).
+			for _, note := range result.Notes {
+				printNote(s, p, note)
+			}
+		}
+		return code
 	}
 	printWarnings(s, p)
 	printOpsWarnings(s, result.Warnings)
