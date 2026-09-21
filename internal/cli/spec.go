@@ -183,8 +183,13 @@ type FlagSpec struct {
 
 	// Domain closes the set of values a flag accepts, such as the three of
 	// --color, and DomainCode is the error code that rejecting one produces.
-	Domain     []string
-	DomainCode string
+	// DomainHints are the lines printed under that refusal, for the flag
+	// whose domain needs saying what to write instead: --ordinal, whose
+	// answer to a number is the two flags that place a task next to another
+	// (docs/spec/familias-de-flags.md#el-orden-manual).
+	Domain      []string
+	DomainCode  string
+	DomainHints []string
 
 	// Conflicts and Requires are the last two columns of a command's table
 	// of parameters: the long names this flag cannot share a call with, and

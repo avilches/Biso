@@ -25,8 +25,12 @@ import (
 //     and clearing a field is a flag of its own. So "" and "no value"
 //     cannot be told apart by anything observable, and carrying the
 //     difference into SQL would only mean scanning every column through a
-//     nullable type. The one exception is task.ordinal, where 0 is a value
-//     a caller can legitimately give (int >= 0), so absence needs NULL.
+//     nullable type. There is no exception: task.ordinal holds the ordinal
+//     key of docs/spec/modelo-de-datos/orden-manual.md, whose alphabet
+//     cannot spell the empty string, so the empty string is the absence of
+//     a key there too. Its CHECK is that same rule written in SQL, the
+//     symbols 0-9a-z and never a 0 at the end, so a key the model would
+//     refuse cannot reach the file by another route either.
 //   - **The four list<string> fields share one table**, task_list_item,
 //     keyed by the field's name, instead of one table each. They have the
 //     same shape (ordered values with no structure of their own,
@@ -58,7 +62,9 @@ var migrations = []string{
 		parent             TEXT    NOT NULL,
 		author             TEXT    NOT NULL,
 		due                TEXT    NOT NULL,
-		ordinal            INTEGER,
+		ordinal            TEXT    NOT NULL CHECK (
+			ordinal = '' OR (ordinal NOT GLOB '*[^0-9a-z]*' AND ordinal NOT GLOB '*0')
+		),
 		description        TEXT    NOT NULL,
 		plan               TEXT    NOT NULL,
 		notes              TEXT    NOT NULL,

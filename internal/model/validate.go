@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"unicode"
 )
@@ -182,16 +181,15 @@ func (t *Task) Validate() error {
 			return err
 		}
 	}
-	// docs/spec/modelo-de-datos/index.md types `ordinal` as int >= 0, and a
-	// negative one is a number the field does not admit, which is the
-	// invalid_number of docs/spec/contrato-json.md#los-identificadores-de-error.
-	if t.Ordinal != nil && *t.Ordinal < 0 {
-		return &Error{
-			ExitCode: 2,
-			Code:     "invalid_number",
-			Message:  fmt.Sprintf("ordinal cannot be negative: %d", *t.Ordinal),
-			Field:    "ordinal",
-			Given:    strconv.Itoa(*t.Ordinal),
+	// docs/spec/modelo-de-datos/index.md types `ordinal` as the ordinal key
+	// of docs/spec/modelo-de-datos/orden-manual.md, so a value that is not
+	// one is malformed_ordinal. Asking it here is what makes the rule hold
+	// wherever a task is written, and in practice it is the batch of
+	// `biso new --from` that it catches: every other key is built by
+	// KeyBetween and cannot be anything else.
+	if t.Ordinal != "" {
+		if err := ValidateOrdinal(t.Ordinal); err != nil {
+			return err
 		}
 	}
 	if err := t.validateCriteria(); err != nil {

@@ -101,7 +101,6 @@ func TestCreateFillsTheDatesItDoesNotReceiveAndKeepsTheOnesItDoes(t *testing.T) 
 // docs/spec/modelo-de-datos/index.md at a non-zero value, so that a round
 // trip that drops one is visible.
 func sampleTask() *model.Task {
-	ordinal := 7
 	task := &model.Task{
 		Title:          "Normalize CRLF in the diff",
 		Status:         "In Progress",
@@ -114,7 +113,7 @@ func sampleTask() *model.Task {
 		Dependencies:   []string{"MYP-4", "MYP-5"},
 		References:     []string{"docs/bugs/BUG-02.md", "internal/diff/diff.go"},
 		Due:            time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
-		Ordinal:        &ordinal,
+		Ordinal:        "m8",
 		Description:    "The diff compares byte by byte...",
 		Plan:           "1. Read the parser.\n2. Add the CRLF case.",
 		Notes:          "The parser already normalized LF.",
@@ -407,8 +406,8 @@ func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if got.Ordinal != nil {
-		t.Fatalf("ordinal = %v, want nil", *got.Ordinal)
+	if got.Ordinal != "" {
+		t.Fatalf("ordinal = %q, want no key", got.Ordinal)
 	}
 	if !got.Due.IsZero() || !got.LeaseExpiresAt.IsZero() {
 		t.Fatalf("an unset date came back set: %v / %v", got.Due, got.LeaseExpiresAt)
@@ -421,25 +420,26 @@ func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	}
 }
 
-func TestOrdinalZeroIsAValueAndNotAnAbsence(t *testing.T) {
+// TestAnOrdinalKeyComesBackExactly is the round trip the symmetry of
+// `biso export` rests on: a key is stored as text and read back character
+// for character, whatever its length and whichever end of the alphabet it
+// sits at (docs/spec/modelo-de-datos/orden-manual.md).
+func TestAnOrdinalKeyComesBackExactly(t *testing.T) {
 	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
 	defer done()
 
-	zero := 0
-	task := &model.Task{Title: "First in the list", Status: "To Do", Ordinal: &zero}
-	if err := tasks.Create(task); err != nil {
-		t.Fatalf("Create: %v", err)
-	}
-
-	got, err := tasks.Load(task.ID)
-	if err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-	if got.Ordinal == nil {
-		t.Fatalf("ordinal came back absent, but 0 is a value a caller can give")
-	}
-	if *got.Ordinal != 0 {
-		t.Fatalf("ordinal = %d, want 0", *got.Ordinal)
+	for _, key := range []string{"i", "00i", "zzzzz1", "m8"} {
+		task := &model.Task{Title: "Placed by hand", Status: "To Do", Ordinal: key}
+		if err := tasks.Create(task); err != nil {
+			t.Fatalf("Create with the key %q: %v", key, err)
+		}
+		got, err := tasks.Load(task.ID)
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		if got.Ordinal != key {
+			t.Fatalf("ordinal = %q, want %q", got.Ordinal, key)
+		}
 	}
 }
 
@@ -514,8 +514,8 @@ func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
 			task: &model.Task{Title: "A task", Status: "To Do", Assignees: []string{"sara smith"}},
 		},
 		{
-			name: "a negative ordinal",
-			task: &model.Task{Title: "A task", Status: "To Do", Ordinal: negative()},
+			name: "an ordinal key outside its alphabet",
+			task: &model.Task{Title: "A task", Status: "To Do", Ordinal: "3000"},
 		},
 		{
 			name: "a criterion with a key the program never assigns",
@@ -562,13 +562,6 @@ func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
 			}
 		})
 	}
-}
-
-// negative is the one ordinal the field table of
-// docs/spec/modelo-de-datos/index.md does not admit.
-func negative() *int {
-	value := -1
-	return &value
 }
 
 // TestSaveRefusesAnInvalidTaskAndLeavesTheStoredOneAlone is the same rule

@@ -497,6 +497,15 @@ func (st *parser) empty(f *FlagSpec, v string) error {
 		// Replacing with nothing is emptying, and that is explicit.
 		st.p.emptied[f.Name] = true
 		return nil
+	case f.Category == Scalar && len(f.Domain) > 0:
+		// A scalar whose domain the program owns judges the empty value
+		// itself, and the answer is the same one any other value outside
+		// that domain gets: a command line that is wrong, and not a value
+		// the board does not have
+		// (docs/spec/valores-de-entrada.md#el-valor-vacío). What is quoted
+		// is the empty string and not the spaces that were typed, exactly
+		// as in the case below.
+		return errOutsideDomain(f, "")
 	case f.ClosedVocabulary:
 		// The board's vocabulary is what judges this value, so it travels
 		// down and internal/match answers with the code of an unknown

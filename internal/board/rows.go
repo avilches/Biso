@@ -17,7 +17,8 @@ import (
 // with no value is stored, since no caller can ever store a real empty
 // string (docs/spec/valores-de-entrada.md#el-valor-vacío), and the zero
 // time is how a date field with no value is stored, for the same reason.
-// Ordinal is the one field that needs a real NULL, because 0 is a value.
+// Ordinal is one more string of that first rule: an ordinal key can never
+// be the empty string, so the empty string is a task with no key.
 
 // taskColumns is the task row, in the order both directions use.
 const taskColumns = `id, num, title, status, type, priority, parent, author, due, ordinal,
@@ -54,10 +55,6 @@ func writeTask(tx *sql.Tx, task *model.Task, num int) error {
 	task.NextCriterionKey = atLeastOne(task.NextCriterionKey)
 	task.NextCommentKey = atLeastOne(task.NextCommentKey)
 
-	var ordinal any
-	if task.Ordinal != nil {
-		ordinal = *task.Ordinal
-	}
 	var questionAuthor, questionAskedAt, questionBody string
 	if task.Question != nil {
 		questionAuthor = task.Question.Author
@@ -68,7 +65,7 @@ func writeTask(tx *sql.Tx, task *model.Task, num int) error {
 	_, err := tx.Exec(`INSERT INTO task (`+taskColumns+`)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		task.ID, num, task.Title, task.Status, task.Type, task.Priority, task.Parent,
-		task.Author, formatDate(task.Due), ordinal,
+		task.Author, formatDate(task.Due), task.Ordinal,
 		task.Description, task.Plan, task.Notes, task.Summary,
 		formatInstant(task.CreatedAt), formatInstant(task.UpdatedAt), task.Archived,
 		formatInstant(task.LeaseExpiresAt), task.LeaseHolder,
@@ -235,13 +232,12 @@ func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, map
 			task                                      model.Task
 			num                                       int
 			due, createdAt, updatedAt, leaseExpiresAt string
-			ordinal                                   sql.NullInt64
 			questionAuthor, questionAskedAt           string
 			questionBody                              string
 		)
 		if err := rows.Scan(
 			&task.ID, &num, &task.Title, &task.Status, &task.Type, &task.Priority,
-			&task.Parent, &task.Author, &due, &ordinal,
+			&task.Parent, &task.Author, &due, &task.Ordinal,
 			&task.Description, &task.Plan, &task.Notes, &task.Summary,
 			&createdAt, &updatedAt, &task.Archived,
 			&leaseExpiresAt, &task.LeaseHolder,
@@ -272,9 +268,14 @@ func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, map
 			}
 			*date.into = parsed
 		}
-		if ordinal.Valid {
-			value := int(ordinal.Int64)
-			task.Ordinal = &value
+		// A stored key that does not keep its form is a datum the program
+		// cannot interpret, and the rule for one of those is the general
+		// one: the task is left out of the read and named in the second
+		// list, never a reason to fail
+		// (docs/spec/modelo-de-datos/orden-manual.md#una-clave-guardada-que-no-cumple-la-regla).
+		if task.Ordinal != "" && !model.ValidOrdinal(task.Ordinal) {
+			bad[task.ID] = undecodable(task.ID, "ordinal",
+				fmt.Errorf("%q is not an ordinal key: %s", task.Ordinal, model.OrdinalHint))
 		}
 		if questionAskedAt != "" || questionAuthor != "" || questionBody != "" {
 			askedAt, err := parseInstant(questionAskedAt)

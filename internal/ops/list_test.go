@@ -39,8 +39,8 @@ func TestTheDefaultOrderIsTheTupleOfTheSpecification(t *testing.T) {
 	h := newHarness(t)
 	h.create("No ordinal, low", scalar("priority", "low"))
 	h.create("No ordinal, high", scalar("priority", "high"))
-	h.create("Ordinal 5", scalar("ordinal", "5"))
-	h.create("Ordinal 1", scalar("ordinal", "1"))
+	h.create("Placed second", scalar("ordinal", "last"))
+	h.create("Placed first", scalar("ordinal", "first"))
 	// Two tasks that tie at exactly the same urgency, so that the
 	// tie-break by identifier is what decides between them.
 	h.create("Tie a", scalar("priority", "low"))

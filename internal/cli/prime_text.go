@@ -33,7 +33,8 @@ const primeCommands = "COMMANDS  (`biso help <cmd>...` for the detail of any, se
 // they write, and neither block replaces the other.
 const primeFieldFlags = "FIELD FLAGS  (same names, same meaning, in every command above that writes)\n" +
 	"  --title  --status  --type --clear-type  --priority --clear-priority\n" +
-	"  --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author\n" +
+	"  --parent --clear-parent  --due --clear-due  --author --clear-author\n" +
+	"  --ordinal first|last  --above <ref> --below <ref>  --clear-ordinal\n" +
 	"  --add-labels --rm-labels --clear-labels --replace-labels\n" +
 	"  --add-assignees --rm-assignees --clear-assignees --replace-assignees\n" +
 	"  --add-refs --rm-refs --clear-refs --replace-refs\n" +

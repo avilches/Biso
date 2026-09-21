@@ -49,7 +49,7 @@ type wireTask struct {
 	Dependencies       []string        `json:"dependencies"`
 	References         []string        `json:"references"`
 	Due                *string         `json:"due"`
-	Ordinal            *int            `json:"ordinal"`
+	Ordinal            *string         `json:"ordinal"`
 	Description        *string         `json:"description"`
 	Plan               *string         `json:"plan"`
 	Notes              *string         `json:"notes"`
@@ -285,7 +285,7 @@ func encodeTask(t *model.Task) ([]byte, error) {
 		Dependencies:       listOrEmpty(t.Dependencies),
 		References:         listOrEmpty(t.References),
 		Due:                dayOrNil(t.Due),
-		Ordinal:            t.Ordinal,
+		Ordinal:            orNil(t.Ordinal),
 		Description:        orNil(t.Description),
 		Plan:               orNil(t.Plan),
 		Notes:              orNil(t.Notes),
@@ -396,7 +396,7 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		Labels:       in.Labels,
 		Dependencies: in.Dependencies,
 		References:   in.References,
-		Ordinal:      in.Ordinal,
+		Ordinal:      value(in.Ordinal),
 		Description:  value(in.Description),
 		Plan:         value(in.Plan),
 		Notes:        value(in.Notes),

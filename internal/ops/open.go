@@ -38,10 +38,6 @@ func cloneTask(t *model.Task) *model.Task {
 	clone.References = append([]string(nil), t.References...)
 	clone.AcceptanceCriteria = append([]model.Criterion(nil), t.AcceptanceCriteria...)
 	clone.Comments = append([]model.Comment(nil), t.Comments...)
-	if t.Ordinal != nil {
-		ordinal := *t.Ordinal
-		clone.Ordinal = &ordinal
-	}
 	if t.Question != nil {
 		question := *t.Question
 		clone.Question = &question

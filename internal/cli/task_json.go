@@ -197,11 +197,15 @@ func list(values []string) []string {
 	return values
 }
 
+// ordinal is the one field of the envelope that is a string or null and
+// never a number: it is the ordinal key of
+// docs/spec/modelo-de-datos/orden-manual.md, and it travels exactly as it
+// is stored (docs/spec/contrato-json.md#números-fechas-y-ausencias).
 func ordinal(t *model.Task) any {
-	if t.Ordinal == nil {
+	if t.Ordinal == "" {
 		return nil
 	}
-	return *t.Ordinal
+	return t.Ordinal
 }
 
 // instantOrNull is a date field that names an instant: ISO 8601 in UTC, to

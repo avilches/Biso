@@ -263,6 +263,7 @@ func errOutsideDomain(f *FlagSpec, given string) *model.Error {
 	e := flagUsage(f.DomainCode, f, given, fmt.Sprintf(
 		"%s: unknown value: %q", f.long(), given))
 	e.Valid = f.Domain
+	e.Hints = f.DomainHints
 	return e
 }
 

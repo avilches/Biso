@@ -514,7 +514,7 @@ func blockBoard(t *testing.T, sizes blockSizes) *machine {
 		SELECT 'MYP-' || i, i,
 			'A task with a title about as long as a real one gets, the one numbered ' || i,
 			'To Do', 'task', 'medium', '', '', '',
-			NULL, '', '', '', '', ?, ?, 0, '', '', '', '', '', 1, 1
+			'', '', '', '', '', ?, ?, 0, '', '', '', '', '', 1, 1
 		FROM n`, blockBoardTasks, now, now)
 	m.execOnBoard(t, dir, `UPDATE board_counter SET last_task_num = ?`, blockBoardTasks)
 

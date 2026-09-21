@@ -621,14 +621,17 @@ func (r *reader) sortTasks(views []TaskView, p ListParams) {
 func lessBySort(a, b TaskView, field string) (bool, bool) {
 	switch field {
 	case "":
-		// The default order: the tasks that have an ordinal come first,
-		// ascending; the ones that do not come after, by urgency
-		// descending.
-		if (a.Task.Ordinal != nil) != (b.Task.Ordinal != nil) {
-			return a.Task.Ordinal != nil, true
+		// The default order: the tasks that have an ordinal key come
+		// first, ascending; the ones that do not come after, by urgency
+		// descending. Two keys compare by their code points, like every
+		// other text comparison of this rule, which for that alphabet is
+		// the comparison Go's < already makes
+		// (docs/spec/modelo-de-datos/orden-manual.md).
+		if (a.Task.Ordinal != "") != (b.Task.Ordinal != "") {
+			return a.Task.Ordinal != "", true
 		}
-		if a.Task.Ordinal != nil {
-			return *a.Task.Ordinal < *b.Task.Ordinal, *a.Task.Ordinal != *b.Task.Ordinal
+		if a.Task.Ordinal != "" {
+			return a.Task.Ordinal < b.Task.Ordinal, a.Task.Ordinal != b.Task.Ordinal
 		}
 		return a.Urgency > b.Urgency, a.Urgency != b.Urgency
 	case "urgency":
@@ -637,13 +640,16 @@ func lessBySort(a, b TaskView, field string) (bool, bool) {
 	case "id":
 		return false, false
 	case "ordinal":
-		if (a.Task.Ordinal != nil) != (b.Task.Ordinal != nil) {
-			return a.Task.Ordinal != nil, true
+		// The default order without its step of urgency: the tasks with no
+		// key go last, in a block, ordered among themselves by identifier
+		// alone (docs/spec/cmd/ls.md#la-regla-de-orden-completa).
+		if (a.Task.Ordinal != "") != (b.Task.Ordinal != "") {
+			return a.Task.Ordinal != "", true
 		}
-		if a.Task.Ordinal == nil {
+		if a.Task.Ordinal == "" {
 			return false, false
 		}
-		return *a.Task.Ordinal < *b.Task.Ordinal, *a.Task.Ordinal != *b.Task.Ordinal
+		return a.Task.Ordinal < b.Task.Ordinal, a.Task.Ordinal != b.Task.Ordinal
 	case "due":
 		if a.Task.Due.IsZero() != b.Task.Due.IsZero() {
 			return !a.Task.Due.IsZero(), true

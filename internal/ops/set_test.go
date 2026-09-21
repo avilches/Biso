@@ -690,7 +690,7 @@ func TestSetDryRunRefusesWhatTheRealWriteRefuses(t *testing.T) {
 		code    int
 		problem string
 	}{
-		{"an ordinal that is not a positive number", scalar("ordinal", "-5"), 2, "invalid_number"},
+		{"a newline in a one-line field", scalar("title", "first line\nsecond line"), 2, "malformed_string_value"},
 		{"a status outside the closed vocabulary", scalar("status", "Pending"), 3, "unknown_status"},
 	} {
 		t.Run(c.name, func(t *testing.T) {

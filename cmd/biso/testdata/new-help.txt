@@ -41,9 +41,10 @@ Batch:
 Any text option also takes @file to read a file, or - to read stdin.
 
 Exit codes:
-  0  created            4  a referenced task or file does not exist
-  2  bad usage          5  a text reference matched several tasks
+  0  created            5  a text reference matched several tasks
+  2  bad usage          6  --above or --below on a task with no place
   3  unknown value      8  the board could not be written
+  4  a referenced task or file does not exist
   7  batch or --dry-run validation failed, nothing was written
                         20 no board here
 

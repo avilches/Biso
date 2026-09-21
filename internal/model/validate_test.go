@@ -171,22 +171,29 @@ func TestValidateRejectsALabelAndAnAssigneeOutsideTheirAlphabet(t *testing.T) {
 	}
 }
 
-// TestValidateRejectsANegativeOrdinal is the `int (>= 0)` of the field
-// table of docs/spec/modelo-de-datos/index.md. Zero is a value and not an
-// absence, which is why Ordinal is a pointer, so it has to pass.
-func TestValidateRejectsANegativeOrdinal(t *testing.T) {
-	negative := -1
-	task := validTask()
-	task.Ordinal = &negative
-	specErr := assertSpecError(t, task.Validate(), 2, "invalid_number", "ordinal")
-	if specErr.Message != "ordinal cannot be negative: -1" {
-		t.Fatalf("message = %q", specErr.Message)
+// TestValidateRejectsAnOrdinalThatIsNotAKey is the type of `ordinal` in the
+// field table of docs/spec/modelo-de-datos/index.md: the ordinal key of
+// docs/spec/modelo-de-datos/orden-manual.md and nothing else. The batch of
+// `biso new --from` is the one route by which a value that is not one can
+// reach a task, which is why the model refuses it here and not the parser.
+func TestValidateRejectsAnOrdinalThatIsNotAKey(t *testing.T) {
+	for _, key := range []string{"3000", "m0", "M8", "m 8", "m-8"} {
+		task := validTask()
+		task.Ordinal = key
+		specErr := assertSpecError(t, task.Validate(), 2, "malformed_ordinal", "ordinal")
+		want := `malformed ordinal: "` + key +
+			`" (an ordinal key is made of 0-9 and a-z, and never ends in 0)`
+		if specErr.Message != want {
+			t.Errorf("message = %q, want %q", specErr.Message, want)
+		}
 	}
 
-	zero := 0
-	task.Ordinal = &zero
-	if err := task.Validate(); err != nil {
-		t.Fatalf("Validate rejected ordinal 0, which the field table admits: %v", err)
+	for _, key := range []string{"", "i", "00i", "m8", "zzzz1"} {
+		task := validTask()
+		task.Ordinal = key
+		if err := task.Validate(); err != nil {
+			t.Errorf("Validate refused the key %q: %v", key, err)
+		}
 	}
 }
 
