@@ -19,9 +19,10 @@ import (
 //
 // The board it runs over is a board of the shape an older binary left
 // behind, which is the one way this really happens: back when `ordinal` was
-// an integer the column carried no CHECK, and SQLite's text affinity hands
-// those integers back as text, so a 0 or a 3000 arrives here as a string
-// that is not a key (docs/spec/estado-de-implementacion.md#el-orden-manual).
+// an integer the column carried no CHECK, SQLite hands those integers back
+// as the integers they are, and database/sql turns each one into a string
+// on the way into the field, so a 0 or a 3000 arrives here as a string that
+// is not a key (docs/spec/estado-de-implementacion.md#el-orden-manual).
 
 // ordinalColumn matches the whole declaration of the ordinal column, from
 // its type to the comma that closes it, however its CHECK is written.

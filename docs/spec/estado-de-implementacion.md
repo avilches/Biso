@@ -913,8 +913,10 @@ las retiradas anteriores porque `biso` no se ha publicado, así que `PRAGMA user
 un tablero escrito por un binario anterior conserva su columna de entonces, sin la comprobación de
 forma. Lo que pasa al abrirlo es esto, y por eso hay que recrearlo:
 
-- **Los enteros se reinterpretan como claves de texto**, porque SQLite los devuelve como texto en esa
-  columna. El entero `7` se lee como la clave `7` y el `12` como la clave `12`.
+- **Los enteros se reinterpretan como claves de texto.** SQLite los devuelve como enteros, porque la
+  columna de entonces era `INTEGER` y los valores siguen guardados así; quien los convierte a texto
+  es `database/sql`, al leerlos sobre un campo que ahora es una cadena. El entero `7` se lee como la
+  clave `7` y el `12` como la clave `12`.
 - **El orden manual deja de ser el que era**, porque las claves se comparan por puntos de código y no
   por valor numérico: `12` va antes que `7`.
 - **Las tareas cuyo entero no tiene forma de clave se quedan fuera del listado**, con el aviso que

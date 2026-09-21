@@ -430,8 +430,9 @@ func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 // Getting the bad key in takes SQL with the column's CHECK turned off,
 // because that CHECK is what keeps this program from ever writing one. The
 // case is real all the same: a board written by an older binary holds
-// integers in that column, and SQLite's text affinity hands them back as
-// text, so the ones that are not keys arrive here.
+// integers in that column, SQLite hands them back as the integers they are,
+// and database/sql turns each one into a string on the way into the field,
+// so the ones that are not keys arrive here.
 func TestAStoredOrdinalThatIsNotAKeyMakesTheTaskUnreadable(t *testing.T) {
 	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
 	defer done()
