@@ -288,6 +288,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
 			}
 		}
 
+		// documentation and modifiedFiles are retired fields, kept on purpose so
+		// the board keeps the same rows and size as the measured one (see README.md).
 		for _, kind := range []string{"references", "documentation", "modifiedFiles"} {
 			for pos, n := 0, rnd.Intn(3); pos < n; pos++ {
 				if _, err := insText.Exec(i, kind, pos, fmt.Sprintf("docs/%s/%s-%02d.md", kind, types[rnd.Intn(len(types))], pos)); err != nil {

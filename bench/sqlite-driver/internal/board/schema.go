@@ -94,6 +94,8 @@ CREATE TABLE textlist (
   PRIMARY KEY (task_id, kind, pos)
 ) WITHOUT ROWID;
 
+-- Frozen on purpose: biso retired ext, and the textlist kinds documentation and
+-- modifiedFiles, after these figures were measured. See README.md.
 CREATE TABLE ext (
   task_id INTEGER NOT NULL REFERENCES task(id) ON DELETE CASCADE,
   key     TEXT    NOT NULL,
