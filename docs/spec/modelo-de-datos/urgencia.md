@@ -102,4 +102,5 @@ finish`](../cmd/verbos-del-ciclo.md#biso-finish), que sí sigue contando una sub
 sin terminar; el porqué de la diferencia está en [`biso archive`](../cmd/archive.md).
 
 **El `ordinal` no forma parte de la urgencia.** Es un orden manual que se aplica aparte, según la
-regla de orden completa de la sección [`biso ls`](../cmd/ls.md).
+regla de orden completa de la sección [`biso ls`](../cmd/ls.md), y es una clave de texto y no un
+número (["El orden manual y su clave"](orden-manual.md)), así que tampoco podría entrar en una suma.
