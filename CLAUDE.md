@@ -150,10 +150,14 @@ caché propio y las descarta al terminar. El `Makefile` de la raíz envuelve los
 - `make` (sin argumentos): compila el binario y genera la documentación entera; es el alias de
   `build` más `docs-build`.
 - `make build`: compila el binario en `bin/biso` (ruta ignorada por git).
-- `make test`: ejecuta la suite de Go con el detector de carreras.
+- `make test`: ejecuta la suite de Go con el detector de carreras. Bajo el detector la prueba del
+  presupuesto de arranque se salta declarándolo, así que este objetivo no la mide.
+- `make test-budget`: ejecuta solo `TestTheStartupBudgetOfLsAndPrime`, sin detector de carreras y con
+  `-count=1`, que es la única forma de que mida de verdad el presupuesto de
+  ["El presupuesto de arranque"](docs/spec/presupuestos.md#el-presupuesto-de-arranque).
 - `make vet` y `make fmt-check`: `go vet` y la comprobación de `gofmt` sobre todo el código Go.
 - `make check`: **la comprobación final**, la que conviene lanzar antes de dar algo por terminado.
-  Encadena `build`, `vet`, `fmt-check`, `test` y `docs-doctor`.
+  Encadena `build`, `vet`, `fmt-check`, `test`, `test-budget` y `docs-doctor`.
 - `make docs-serve`: sirve el sitio en local con recarga automática al editar los `.md`.
 - `make docs-build`: regenera las páginas del tutorial, y construye el sitio
   estático en `site/` (no se versiona, ver `.gitignore`) con `mkdocs build --strict`.
