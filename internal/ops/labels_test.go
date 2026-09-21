@@ -118,9 +118,10 @@ func TestWritingAKeyWithOneColonOverAnExclusiveOneIsRefused(t *testing.T) {
 	assertLabels(t, h.load(id), "size::s")
 }
 
-// TestTheSameValueWithTheOtherSeparatorIsStillARefusal is the "incluso si x
-// es el mismo v" of that row: the separator asserts the cardinality and not
-// only the value.
+// TestTheSameValueWithTheOtherSeparatorIsStillARefusal is the half of that
+// row that covers the value already being there: the separator asserts the
+// cardinality and not only the value, so `k:v` over a stored `k::v` is
+// refused like any other.
 func TestTheSameValueWithTheOtherSeparatorIsStillARefusal(t *testing.T) {
 	h := newHarness(t)
 	id := h.create("A task", add("add-labels", "size::s"))
@@ -155,8 +156,9 @@ func TestTheTwoSeparatorsOfOneKeyInOneCallAreAUsageError(t *testing.T) {
 	}
 }
 
-// TestTheOrderTheTwoSeparatorsWereWrittenInDoesNotMatter is the "en
-// cualquier orden" of that same row.
+// TestTheOrderTheTwoSeparatorsWereWrittenInDoesNotMatter is the half of
+// that same row that says the refusal does not look at which of the two
+// came first on the command line.
 func TestTheOrderTheTwoSeparatorsWereWrittenInDoesNotMatter(t *testing.T) {
 	h := newHarness(t)
 	id := h.create("A task")
@@ -168,6 +170,57 @@ func TestTheOrderTheTwoSeparatorsWereWrittenInDoesNotMatter(t *testing.T) {
 	}
 	if want := `"size::b" and "size:a" mix the two separators of the key "size"`; e.Message != want {
 		t.Errorf("the message is %q, want %q", e.Message, want)
+	}
+}
+
+// TestTheTwoSeparatorsSplitBetweenTwoFlagsAreTheSameRefusal is the rest of
+// that row, which admits the two values spread over --add-labels and
+// --replace-labels however the caller likes. The message names them in the
+// order the write would apply them, replacing before adding, and not in the
+// order they were typed, because it blames neither
+// (docs/spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito).
+func TestTheTwoSeparatorsSplitBetweenTwoFlagsAreTheSameRefusal(t *testing.T) {
+	want := `"zz::b" and "zz:a" mix the two separators of the key "zz"`
+	for _, typed := range [][]Change{
+		{add("add-labels", "zz:a"), replace("replace-labels", "zz::b")},
+		{replace("replace-labels", "zz::b"), add("add-labels", "zz:a")},
+	} {
+		h := newHarness(t)
+		id := h.create("A task")
+
+		e := h.setFails(id, typed...)
+
+		if e.ExitCode != 2 || e.Code != "mixed_label_separators" {
+			t.Fatalf("error = %d/%s, want 2/mixed_label_separators", e.ExitCode, e.Code)
+		}
+		if e.Message != want {
+			t.Errorf("the message is %q, want %q", e.Message, want)
+		}
+	}
+}
+
+// TestBetweenTwoFlagsTheOrderOfTheStepsDecidesWhichExclusiveStays is the
+// paragraph that follows: within one flag the last value of the command line
+// wins, and between --add-labels and --replace-labels the order of the steps
+// does, because replacing comes before adding. What comes out is then the
+// warning of the replacement and not the one of the last value, which is
+// what really happened.
+func TestBetweenTwoFlagsTheOrderOfTheStepsDecidesWhichExclusiveStays(t *testing.T) {
+	h := newHarness(t)
+	id := h.create("A task")
+
+	result := h.set(id, add("add-labels", "g::AA"), replace("replace-labels", "g::BB"))
+
+	assertLabels(t, h.load(id), "g::AA")
+	w := warningOf(result, "exclusive_label_replaced")
+	if w == nil {
+		t.Fatalf("warnings = %v, want an exclusive_label_replaced", result.Warnings)
+	}
+	if want := `--add-labels: "g::AA" replaced g::BB on ` + id; w.Message != want {
+		t.Errorf("the warning says %q, want %q", w.Message, want)
+	}
+	if warned(result, "exclusive_label_last_wins") {
+		t.Errorf("the two came from two flags and it said one of them lost: %v", result.Warnings)
 	}
 }
 
@@ -593,6 +646,28 @@ func TestAKeyTheBoardDoesNotHaveIsAnUnknownLabelKey(t *testing.T) {
 	}
 }
 
+// TestTheGivenOfAnUnknownKeyIsTheFilterAlreadyNormalized is the rest of that
+// paragraph: `given` is the filter that travels in data.filters.label, with
+// one colon however it was typed and with the spelling of the key kept
+// (docs/spec/vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito).
+func TestTheGivenOfAnUnknownKeyIsTheFilterAlreadyNormalized(t *testing.T) {
+	h := newHarness(t)
+	h.create("One", add("add-labels", "milestone::m1"))
+
+	_, err := ListOn(h.b, h.env, ListParams{Filters: Filters{Label: []string{"Milestne::"}}})
+
+	e := specError(t, err)
+	if e.Code != "unknown_label_key" {
+		t.Fatalf("error = %d/%s, want an unknown_label_key", e.ExitCode, e.Code)
+	}
+	if e.Given != "Milestne:" {
+		t.Errorf("given = %q, want the filter with one colon and the key as typed", e.Given)
+	}
+	if want := `unknown label key: "Milestne"`; e.Message != want {
+		t.Errorf("the message is %q, want %q", e.Message, want)
+	}
+}
+
 // TestADeclaredKeyCountsAsKnownWithNoTaskUsingIt is what makes declaring a
 // key useful before anything carries it.
 func TestADeclaredKeyCountsAsKnownWithNoTaskUsingIt(t *testing.T) {
@@ -829,6 +904,28 @@ func TestABatchNamesEveryLabelFailureTheSpecificationPrints(t *testing.T) {
 		if d.Message != "line 1: "+c.message {
 			t.Errorf("%s: message = %q, want %q", c.labels, d.Message, "line 1: "+c.message)
 		}
+		// A `code` carries the same keys inside a batch as outside it, or a
+		// caller could not branch on it
+		// (docs/spec/contrato-json.md#los-errores-en-json). The one of exit
+		// code 6 carries neither, because the table promises `field` and
+		// `given` to the errors of 3 and to the ones of 2 that name a flag.
+		if c.exitCode == 6 && (d.Field != "" || d.Given != "") {
+			t.Errorf("%s: the 6 carries field %q and given %q, and it carries neither outside a batch",
+				c.labels, d.Field, d.Given)
+		}
+	}
+}
+
+// TestTheExclusivityOfALineCarriesTheSameKeysAsOutsideALine is the other
+// half of that check, over the error the write itself answers.
+func TestTheExclusivityOfALineCarriesTheSameKeysAsOutsideALine(t *testing.T) {
+	h := newHarness(t)
+	id := h.create("A task", add("add-labels", "size::s"))
+
+	e := h.setFails(id, add("add-labels", "size:m"))
+
+	if e.Field != "" || e.Given != "" {
+		t.Errorf("exclusive_label_conflict carries field %q and given %q", e.Field, e.Given)
 	}
 }
 
