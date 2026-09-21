@@ -102,6 +102,14 @@ uno es un elemento de la lista. Un campo sin valor es un guion, como en las colu
 hasta el minuto, `YYYY-MM-DD HH:MM`, que es la precisión que se lee: el segundo está en `--json`,
 que es donde lo lee un programa.
 
+**`ordinal` es el único valor del bloque que no se imprime tal cual está guardado.** Lo que guarda es
+una clave de texto que no se puede teclear y que no dice nada que quien la lee pueda usar
+(["El orden manual y su clave"](../modelo-de-datos/orden-manual.md)), así que la ficha imprime
+`manual` cuando la tarea tiene una y el guion de siempre cuando no. Lo que de verdad hace falta saber
+de ese campo es si la tarea tiene un sitio decidido a mano, que es lo que permite nombrarla como
+vecina de un `--above` o de un `--below`; la clave en crudo está en `--json`, que es donde la lee un
+programa.
+
 **La línea `lease` sale solo cuando la tarea tiene arrendamiento**, y entonces sale con sus campos:
 `lease` es `leaseExpiresAt`, con el mismo formato de instante que `created` y `updated`, y `holder` es
 `leaseHolder` (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Los dos aparecen y desaparecen juntos, porque esa misma regla no admite uno sin
@@ -238,6 +246,11 @@ con la otra cosa que `biso get` hace con sus flags: recortar `data.task` con `--
 entra en la suma, el producto del coeficiente por el factor, igual que en los demás términos.
 `reason` vale `null` cuando el término contribuye, y cuando contribuye `0.0` dice por qué:
 `"not_active"` si el estado no es el activo, y `"waiting"` si lo es pero hay una pregunta abierta.
+
+**`ordinal` es una cadena o `null`**, y este sobre es el único sitio de `biso get` donde se puede
+leer la clave en crudo, porque la ficha de texto imprime `manual` en su lugar. La tarea del ejemplo
+no tiene ninguna; una que la tuviera traería, por ejemplo, `"ordinal": "m"`. Pertenece al bloque de
+metadatos, así que la trae `--section meta`, como el resto de las claves de ese bloque.
 
 Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas. **Una sección
 pedida que esté vacía sigue trayendo su clave, con el valor `null` o la lista vacía que le

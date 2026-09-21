@@ -49,6 +49,12 @@ de fuera.
 **Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md).** `question` sale en `export` y
 entra de vuelta con `new --from`, con sus tres partes completas.
 
+**La clave de orden manual sale tal cual está guardada.** `ordinal` es una cadena, no un número
+(["El orden manual y su clave"](../modelo-de-datos/orden-manual.md)), y `export` la escribe sin
+recalcular nada: `biso new --from` la vuelve a guardar igual, así que las tareas del tablero de
+destino quedan en el mismo orden manual que las del de origen. Es justamente lo que un decimal no
+podía prometer sin fijar cuántos dígitos se escriben.
+
 **Un escalar opcional sin valor sale como `null`; una lista o un mapa sin elementos sale como `[]` o
 `{}`, nunca como `null`.** Es la misma regla de coerción de ["El modo lote"](new.md#el-modo-lote) de
 `biso new`, en el sentido contrario, la que hace que reimportar la salida reproduzca la tarea exacta.
