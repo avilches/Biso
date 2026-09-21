@@ -125,6 +125,9 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	w := newWriter(b, env, p.Changes)
 	w.manyTasks = len(p.Refs) > 1
 	w.warnings = append(w.warnings, p.Warnings...)
+	if err := w.prepareLabels(); err != nil {
+		return w.partial(), err
+	}
 
 	tasks, err := w.resolveAll(p.Refs, p.Mode, v.scope)
 	if err != nil {

@@ -162,6 +162,111 @@ func newWriter(b *board.Board, env Env, changes []Change) *writer {
 
 func (w *writer) warn(warning Warning) { w.warnings = append(w.warnings, warning) }
 
+// prepareLabels is everything about the scoped labels of one call that is
+// decided before a single task is touched, in the order
+// docs/spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito fixes:
+// what the `labels` list of the configuration refuses, which comes first of
+// all; the same key written with the two separators, which is exit code 2;
+// and the same `::` key written more than once, where the last value of the
+// command line wins and the warning says which one stayed.
+//
+// The three are questions about the call and not about a task, which is why
+// they are asked once here and not inside the loop that writes: a call that
+// names four tasks does not earn the same warning four times, and the
+// warning of the last value carries no task for exactly that reason
+// (docs/spec/salida-y-terminal.md#notas-y-avisos).
+func (w *writer) prepareLabels() error {
+	rules, err := readLabelRules(w.b.Config.Labels)
+	if err != nil {
+		return err
+	}
+	var written []string
+	for _, c := range w.changes {
+		if !writesALabel(c) {
+			continue
+		}
+		if rule := rules.allows(c.Value); rule != nil {
+			return rule.refuse(c.Value)
+		}
+		written = append(written, c.Value)
+	}
+	if pair := mixedSeparators(written); pair != nil {
+		return mixedSeparatorsError(fmt.Sprintf(
+			"%q and %q mix the two separators of the key %q",
+			pair[0].Raw, pair[1].Raw, pair[0].Key))
+	}
+	w.changes = w.keepTheLastExclusive(w.changes)
+	return nil
+}
+
+// writesALabel answers whether one change puts a label on a task, which is
+// what --add-labels and --replace-labels do and --rm-labels and
+// --clear-labels do not: the values of the two that take a label off do not
+// count for any of the rules above, because they write nothing and are
+// precisely what makes room for the value that is added.
+func writesALabel(c Change) bool {
+	field, op, ok := listFlag(c.Flag)
+	return ok && field == model.FieldLabels && c.Value != "" &&
+		(op == opAdd || op == opReplace)
+}
+
+// keepTheLastExclusive drops every value of a `::` key but the last one the
+// command line wrote for that flag, and warns once per key that had more
+// than one. Resolving it here and not while writing is what makes the answer
+// the same however many tasks the call names.
+func (w *writer) keepTheLastExclusive(changes []Change) []Change {
+	// last remembers, per flag and folded key, the position of the value
+	// that stays and how many were written for it.
+	type occurrence struct{ at, times int }
+	last := map[string]*occurrence{}
+	var order []string
+	for i, c := range changes {
+		if !writesALabel(c) {
+			continue
+		}
+		l := model.SplitLabel(c.Value)
+		if !l.Exclusive() {
+			continue
+		}
+		key := c.Flag + "\x00" + foldKey(l.Key)
+		if seen, known := last[key]; known {
+			seen.at, seen.times = i, seen.times+1
+			continue
+		}
+		last[key] = &occurrence{at: i, times: 1}
+		order = append(order, key)
+	}
+	dropped := map[int]bool{}
+	for _, key := range order {
+		seen := last[key]
+		if seen.times < 2 {
+			continue
+		}
+		kept := changes[seen.at]
+		w.warn(exclusiveLabelLastWins(kept.Flag,
+			model.SplitLabel(kept.Value).Key, kept.Value, seen.times))
+		for i, c := range changes {
+			if i == seen.at || !writesALabel(c) || c.Flag != kept.Flag {
+				continue
+			}
+			l := model.SplitLabel(c.Value)
+			if l.Exclusive() && foldKey(l.Key) == foldKey(model.SplitLabel(kept.Value).Key) {
+				dropped[i] = true
+			}
+		}
+	}
+	if len(dropped) == 0 {
+		return changes
+	}
+	out := make([]Change, 0, len(changes)-len(dropped))
+	for i, c := range changes {
+		if !dropped[i] {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
 // partial is what a failed write answers beside its error: the warnings it
 // had already earned, which never disappear with the failure
 // (docs/spec/salida-y-terminal.md#notas-y-avisos). The layer that prints
@@ -456,7 +561,7 @@ func (w *writer) applyList(t *model.Task, c Change, field model.ListField, op li
 		kept := make([]string, 0, len(values))
 		found := false
 		for _, v := range values {
-			if v == c.Value {
+			if removesValue(field, v, c.Value) {
 				found = true
 				continue
 			}
@@ -469,6 +574,17 @@ func (w *writer) applyList(t *model.Task, c Change, field model.ListField, op li
 		return t.SetListField(field, kept)
 	}
 	return w.addValue(t, c, field, values)
+}
+
+// removesValue is the comparison a --rm-* of this family removes by: the
+// value exactly as it is stored, with the one exception a scoped label has,
+// whose separator does not count and whose key is compared folded
+// (docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito).
+func removesValue(field model.ListField, stored, wanted string) bool {
+	if field == model.FieldLabels {
+		return labelRemoves(stored, wanted)
+	}
+	return stored == wanted
 }
 
 // addValue adds one value to a list field, with the two rules every list of
@@ -487,6 +603,13 @@ func (w *writer) addValue(t *model.Task, c Change, field model.ListField, values
 		}
 		value = resolved.Task.ID
 	}
+	if field == model.FieldLabels {
+		kept, err := w.scopedLabelAdd(t, c, values)
+		if err != nil {
+			return err
+		}
+		values = kept
+	}
 	for _, v := range values {
 		if v == value {
 			w.warn(Warning{
@@ -494,10 +617,53 @@ func (w *writer) addValue(t *model.Task, c Change, field model.ListField, values
 				Message: fmt.Sprintf("--%s: %q already present, kept once", c.Flag, value),
 				Fields:  map[string]any{"flag": "--" + c.Flag, "value": value, "task": t.ID},
 			})
-			return nil
+			return t.SetListField(field, values)
 		}
 	}
 	return t.SetListField(field, append(values, value))
+}
+
+// scopedLabelAdd is what the separator of a scoped label decides at the
+// moment one is written
+// (docs/spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito), and it
+// answers the list the value is then added to.
+//
+// A key written `::` leaves that value as the only one of its key, taking
+// out whatever else the task kept of it and naming each one in the warning.
+// A key written `:` over a task that keeps a `::` value of it is refused
+// with exit code 6 and nothing is written, because the stored state says
+// that key takes one value and `k:v` asks for one that takes several.
+//
+// It runs at step 4, so what it looks at is what the task keeps after every
+// --clear-*, --replace-* and --rm-* of the same call has been applied, which
+// is what makes `--rm-labels k::1 --add-labels k:2` work in one call.
+func (w *writer) scopedLabelAdd(t *model.Task, c Change, values []string) ([]string, error) {
+	written := model.SplitLabel(c.Value)
+	if !written.Scoped() {
+		return values, nil
+	}
+	if !written.Exclusive() {
+		for _, stored := range values {
+			if sameKey(model.SplitLabel(stored), written) &&
+				model.SplitLabel(stored).Exclusive() {
+				return nil, exclusiveConflict(t.ID, stored, c.Value)
+			}
+		}
+		return values, nil
+	}
+	kept := make([]string, 0, len(values))
+	var replaced []string
+	for _, stored := range values {
+		if stored != c.Value && sameKey(model.SplitLabel(stored), written) {
+			replaced = append(replaced, stored)
+			continue
+		}
+		kept = append(kept, stored)
+	}
+	if len(replaced) > 0 {
+		w.warn(exclusiveLabelReplaced(c.Flag, c.Value, t.ID, replaced))
+	}
+	return kept, nil
 }
 
 // warnNotPresent is the tolerant half of every flag that removes: taking out
