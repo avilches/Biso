@@ -123,7 +123,8 @@ respuestas.
 
 Cinco sitios de la especificación prometen, en su mensaje de error, una lista de los valores
 más parecidos a lo que se tecleó: `--label` y `--label-or` (hasta cinco etiquetas, más abajo en
-esta misma sección), `--assignee` (hasta cinco personas, igual), `biso config` con una clave
+esta misma sección; y hasta cinco claves, cuando lo que se consulta es una clave con la forma
+`clave:` de ["Consultar por la clave de una etiqueta con ámbito"](#consultar-por-la-clave-de-una-etiqueta-con-ámbito)), `--assignee` (hasta cinco personas, igual), `biso config` con una clave
 inexistente (hasta tres claves, sección ["`biso config`"](cmd/config.md#comportamiento-caso-a-caso)) y `biso help` con uno o
 varios nombres de comando, si alguno no existe (hasta tres nombres, sección ["La ayuda"](cmd/help.md)). Estos casos
 comparten un solo algoritmo, con el mismo espíritu que `coincidir()`: una sola regla, y solo
@@ -209,6 +210,7 @@ necesita la frase que la envuelve.
 |---|---|---|
 | `--status`, `--type`, `--priority` | el vocabulario configurado | error 3 |
 | `--label` y `--label-or` | el conjunto de etiquetas del tablero, definido abajo | error 3, con hasta cinco de las más parecidas (las que pasen el umbral de ["El algoritmo de sugerencias más parecidas"](#el-algoritmo-de-sugerencias-más-parecidas)) |
+| `--label` y `--label-or` con la forma `clave:` | el conjunto de claves del tablero, definido en ["Consultar por la clave de una etiqueta con ámbito"](#consultar-por-la-clave-de-una-etiqueta-con-ámbito) | error 3, con hasta cinco de las claves más parecidas |
 | `--assignee` | el conjunto de personas del tablero, definido abajo | error 3, con hasta cinco de las más parecidas (mismo algoritmo) |
 | `--parent` | la resolución de referencias de la sección ["Cómo se resuelve una referencia a una tarea"](referencias.md) | error 2, 4 o 5 |
 | `--search` | nada, es texto libre | nunca falla |
@@ -241,6 +243,46 @@ Está el flag `--unchecked` de `biso ls` y `biso export`, que apaga **las compro
 estos conjuntos, las de etiquetas y personas, y ninguna otra**: los vocabularios configurados de
 `--status`, `--type` y `--priority` siguen validando, y `--parent` sigue resolviendo su referencia.
 El flag no cambia ninguna otra cosa.
+
+### Consultar por la clave de una etiqueta con ámbito
+
+**`--label clave:` significa cualquier etiqueta de esa clave, con cualquier valor y con cualquiera de
+los separadores.** `--label clave::` es exactamente el mismo filtro, porque el separador no distingue
+nada al leer (["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito)), y las dos
+formas se aceptan igual en `--label-or`. Un filtro por la clave se combina con los demás como
+cualquier otro valor de su flag: con `y` en `--label` y con `o` en `--label-or`
+(["`biso ls`"](cmd/ls.md#parámetros)).
+
+Un filtro que nombra la etiqueta entera sigue validando contra el conjunto de etiquetas de arriba, y
+tampoco ahí cuenta el separador: `--label milestone:m1` encuentra también las tareas etiquetadas
+`milestone::m1`.
+
+**El conjunto de claves del tablero** son las claves de las etiquetas declaradas en la clave `labels`
+de la configuración y las claves de las etiquetas que lleva cualquier tarea, **archivadas y
+terminadas incluidas**, con la misma regla que el conjunto de etiquetas. Una clave declarada cuenta
+como conocida aunque ninguna tarea la use todavía, que es justo lo que hace útil declararla. Las
+claves se comparan plegadas, así que `--label Milestone:` y `--label milestone:` son el mismo filtro.
+
+Una clave que el tablero no tiene es error 3, con hasta cinco de las más parecidas:
+
+```
+$ biso ls --label milestne:
+error: unknown label key: "milestne"
+hint: did you mean: milestone?
+```
+
+Su `code` es `unknown_label_key`, con `field` igual a `label`, `given` igual al filtro tal como se
+escribió (`milestne:`) y `valid` con las claves del tablero
+(["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)).
+
+**`--unchecked` apaga también esta comprobación**, igual que las de etiquetas y personas y ninguna
+más: con él, `--label milestne:` se acepta y probablemente no devuelve nada.
+
+**El JSON de una tarea no lleva ningún campo derivado por clave**, ni en `task.get`, ni en
+`task.list`, ni en la exportación: quien necesite el valor de una clave parte `labels` por los
+primeros dos puntos, con la regla de análisis de
+["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito). El porqué está en
+["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito).
 
 ---
 
