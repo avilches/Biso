@@ -70,6 +70,85 @@ func TestSortPutsTheTasksWithoutThatFieldAtTheEnd(t *testing.T) {
 	}
 }
 
+// TestSortOrdinalIsTheDefaultOrderWithoutItsStepOfUrgency is the sentence
+// of docs/spec/cmd/ls.md#la-regla-de-orden-completa that tells --sort
+// ordinal from the default order: the tasks with a key come first and
+// ascending in both, and what changes is that the ones without a key are
+// ordered among themselves by identifier and not by urgency.
+func TestSortOrdinalIsTheDefaultOrderWithoutItsStepOfUrgency(t *testing.T) {
+	h := newHarness(t)
+	// The most urgent of the tasks with no key is the last identifier, so
+	// an order that still looked at the urgency would put it in front.
+	h.create("No key, low", scalar("priority", "low"))
+	h.create("Placed second", scalar("ordinal", "last"))
+	h.create("No key, high", scalar("priority", "high"))
+	h.create("Placed first", scalar("ordinal", "first"))
+
+	got := ids(h.list(ListParams{Sort: "ordinal"}))
+
+	want := []string{"MYP-4", "MYP-2", "MYP-1", "MYP-3"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("--sort ordinal answered %v and not %v", got, want)
+	}
+
+	// --reverse flips the whole thing, so the tasks with no key come first.
+	flipped := ids(h.list(ListParams{Sort: "ordinal", Reverse: true}))
+	wantFlipped := []string{"MYP-3", "MYP-1", "MYP-2", "MYP-4"}
+	if !reflect.DeepEqual(flipped, wantFlipped) {
+		t.Errorf("--sort ordinal --reverse answered %v and not %v", flipped, wantFlipped)
+	}
+}
+
+// TestTheOrderOfTwoKeysIsByCodePoint is the comparison of
+// docs/spec/modelo-de-datos/orden-manual.md: code point by code point, so a
+// digit comes before a letter and a longer key comes after the prefix it
+// extends. Written by hand onto the board, because a key cannot be typed.
+func TestTheOrderOfTwoKeysIsByCodePoint(t *testing.T) {
+	h := newHarness(t)
+	for _, c := range []struct{ title, key string }{
+		{"Fourth", "b"},
+		{"Second", "a"},
+		{"First", "9"},
+		{"Third", "ai"},
+	} {
+		id := h.create(c.title)
+		task := h.load(id)
+		task.Ordinal = c.key
+		if err := h.b.Tasks.Save(task); err != nil {
+			t.Fatalf("writing the key %q: %v", c.key, err)
+		}
+	}
+
+	got := ids(h.list(ListParams{Sort: "ordinal"}))
+
+	want := []string{"MYP-3", "MYP-2", "MYP-4", "MYP-1"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("the keys 9, a, ai and b came out as %v and not %v", got, want)
+	}
+}
+
+// TestTwoTasksWithTheSameKeyAreBrokenByIdentifier is the last step of the
+// order rule applied where two keys tie, which a batch can perfectly well
+// produce (docs/spec/cmd/ls.md#la-regla-de-orden-completa).
+func TestTwoTasksWithTheSameKeyAreBrokenByIdentifier(t *testing.T) {
+	h := newHarness(t)
+	for _, title := range []string{"The second", "The first"} {
+		id := h.create(title)
+		task := h.load(id)
+		task.Ordinal = "m"
+		if err := h.b.Tasks.Save(task); err != nil {
+			t.Fatalf("writing a key by hand: %v", err)
+		}
+	}
+
+	got := ids(h.list(ListParams{Sort: "ordinal"}))
+
+	want := []string{"MYP-1", "MYP-2"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("two tasks sharing a key came out as %v and not %v", got, want)
+	}
+}
+
 // TestReverseFlipsTheWholeOrderIncludingTheTieBreak is the other half of
 // that rule.
 func TestReverseFlipsTheWholeOrderIncludingTheTieBreak(t *testing.T) {
