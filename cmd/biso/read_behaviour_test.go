@@ -220,6 +220,22 @@ func TestListSkipsATaskItCannotReadAndSaysSo(t *testing.T) {
 	}
 }
 
+// TestListNamesEveryUnreadableTaskWithThePluralOfTheWarning is the same row
+// with two tasks left out: the sentence agrees in number all the way, "were"
+// and not "was" (docs/spec/salida-y-terminal.md and docs/spec/garantias.md).
+func TestListNamesEveryUnreadableTaskWithThePluralOfTheWarning(t *testing.T) {
+	m := smallBoard(t)
+	m.execOnBoard(t, m.boardDir(t),
+		`UPDATE task SET priority = 'urgent' WHERE id IN ('MYP-2', 'MYP-3')`)
+
+	got := m.run(t, "ls", "--ids").assertCode(t, 0)
+
+	assertEqual(t, got.stdout, "MYP-1\nMYP-4\n", "the rest of the listing")
+	assertEqual(t, got.stderr,
+		"warning: 2 tasks could not be read and were skipped: MYP-2, MYP-3\n",
+		"the warning of two skipped tasks")
+}
+
 // TestGetOfAnUnreadableTaskIsExitCodeThree is the other half of that rule:
 // a targeted read of the same task fails, because there is nothing else to
 // answer with.
