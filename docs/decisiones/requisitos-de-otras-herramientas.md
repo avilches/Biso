@@ -6,8 +6,8 @@ cada uno.
 **Ningún campo desconocido se acepta ni se descarta en silencio.** Las dos herramientas lo hacen mal:
 Backlog.md borra el campo sin avisar en la siguiente reescritura del fichero, y Taskwarrior, ante un
 atributo personalizado no declarado, en el peor caso se come la descripción entera de la tarea. La
-regla correcta es rechazar con un error explícito, y de ahí salen las claves declaradas de `ext` y la
-regla de que una tarea con una clave no declarada falla en una lectura dirigida en vez de perderse.
+regla correcta es rechazar con un error explícito, y de ahí sale la regla de que una tarea con un valor
+que la configuración no reconoce falla en una lectura dirigida en vez de perderse.
 
 **Cualquier fecha se puede fijar al importar.** Ninguna de las dos lo permite desde su interfaz
 pública. Backlog.md no tiene un solo parámetro de fecha, ni para la de creación ni para el instante de

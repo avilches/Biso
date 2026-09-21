@@ -34,10 +34,6 @@ las descarta.
   le falte. Lo que queda, y sigue siendo independiente del almacenamiento, son los tres mensajes
   distintos de ["no la encuentro"](../spec/referencias.md#los-tres-mensajes-de-no-la-encuentro) y la garantía de que ninguna lectura de
   conjunto aborta por una tarea que no se puede leer.
-- **La sincronización con sistemas externos.** No está, pero sí están las cuatro piezas que la hacen
-  posible, y esa es la única razón por la que existen: las claves declaradas de `ext` para guardar la
-  identidad de la tarea en el otro sistema, el autor libre en los comentarios, las fechas fijables al
-  importar y la simetría de `export` con `new --from`.
 - **La clave de configuración `default_assignee`.** Habría asignado una persona a toda tarea creada
   sin `--add-assignees`. Se descarta porque en un tablero que la usara, absolutamente todo nacería asignado, y la
   asignación dejaría de significar que alguien decidió encargarte justo esa tarea: la consulta de
