@@ -351,10 +351,17 @@ esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
   ejecuta el binario compilado, `biso ls` y `biso prime`, sobre un tablero real de 300 tareas con
   los cuatro bloques poblados, y mide de la llamada al código de salida, arranque del proceso
   incluido. En la máquina de desarrollo da unos **13 ms** para cada uno de los dos, entre 12 y 14
-  según la ejecución, frente al tope de 25. Se queda con la mediana de cinco ejecuciones tras una de
-  calentamiento, y **bajo el detector de carreras se salta declarándolo**, igual que la medida del
-  paso 1: el proceso que se mide no lleva el detector, porque `go build` lo compila sin él, pero sí
-  lo lleva todo lo que corre alrededor, y esa no es la máquina ociosa de la que habla la cifra. La
+  según la ejecución, frente al tope de 25. El veredicto es la ejecución más rápida de hasta 100
+  por comando, tras una de calentamiento: se para en cuanto una baja de 25 ms, solo falla si
+  ninguna lo consigue, cada ejecución tiene que salir con código 0 y el mensaje de fallo da el
+  mínimo, la mediana y el máximo (la decisión y sus medidas están en
+  ["El presupuesto de arranque se mide con la muestra más rápida"](../decisiones/lenguaje-y-rendimiento.md#el-presupuesto-de-arranque-se-mide-con-la-muestra-más-rápida)).
+  La lógica del veredicto vive en funciones con pruebas propias que no dependen del reloj
+  (`cmd/biso/budget_verdict_test.go`). **Bajo el detector de carreras se salta declarándolo**, igual
+  que la medida del paso 1: el proceso que se mide no lleva el detector, porque `go build` lo compila
+  sin él, pero sí lo lleva todo lo que corre alrededor, y esa no es la máquina ociosa de la que habla
+  la cifra. Por eso `make test`, que corre bajo el detector, no la mide, y la mide `make check` a
+  través del objetivo `test-budget`, que ejecuta solo esa prueba sin el detector. La
   medida sintética del paso 1 sigue donde estaba, en `internal/board`, y ahora dice lo que es: el
   suelo de esta, útil porque una regresión ahí señala el almacén y no un punto cualquiera del
   camino.
