@@ -232,6 +232,14 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 `init --from` no emite los avisos `imported_documentation_merged` ni `imported_modified_files_merged`,
 porque una restauración no tiene un lote que comentar línea a línea.
 
+**Y tampoco avisa de lo que descarta.** Un elemento vacío o de solo espacios en una lista de la
+instantánea se descarta con la misma regla del lote de `biso new --from` (["El valor vacío"](../valores-de-entrada.md#un-elemento-vacío-en-un-lote)),
+y `init --from` no emite `imported_empty_dropped`, por la misma razón: la salida de una restauración
+no lleva avisos. Una instantánea que escribió `biso snapshot` nunca trae un elemento vacío, porque
+ningún camino del programa lo guarda, así que esto solo importa con un fichero editado a mano o
+escrito por otro programa. Un `null` que ocupa el sitio de un elemento sigue siendo un fallo de
+validación de la línea, con el código 7 del lote.
+
 **"Un identificador que ya existe en esta máquina" son las raíces y solo las raíces, y basta con
 que esté en una.** La fila de abajo que da el error de identidad duplicada se mide igual que en
 cualquier otro comando, recorriendo las raíces de

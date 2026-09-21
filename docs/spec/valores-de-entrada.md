@@ -47,6 +47,7 @@ como si llega de un fichero vacío o de una entrada estándar vacía. La regla e
 | En un flag que sustituye (`--replace-labels`) | Deja el campo vacío, igual que `--clear-labels`. Sustituir por nada es vaciar, y eso sí es explícito |
 | En un campo escalar (`--type ""`, `--priority ""`) | Error 3. **La cadena vacía nunca es la forma de borrar un escalar**; para eso está `--clear-type` |
 | En el título, al crear | Error 2: `error: title cannot be empty` |
+| En un elemento de una lista de un lote (`biso new --from`, `biso init --from`) | Se descarta y no se guarda nada, como en un flag que añade. `biso new --from` lo avisa una vez por línea y por lista, y `biso init --from` no avisa. Ver ["Un elemento vacío en un lote"](#un-elemento-vacío-en-un-lote) |
 
 **El `code` de un escalar vacío depende de si el campo tiene vocabulario cerrado.** Para `status`,
 `type` y `priority`, una cadena vacía es un valor que no coincide con nada configurado, así
@@ -55,6 +56,30 @@ que sigue la regla del ["algoritmo de coincidencia"](vocabularios.md#el-algoritm
 ["El mismo texto vale lo mismo en los dos sentidos"](vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos)).
 Para los demás escalares (`--author ""`, `--ordinal ""`, `--due ""`), que no
 tienen vocabulario, el `code` es `empty_scalar_value`.
+
+## Un elemento vacío en un lote
+
+**Un lote lee cada elemento de una lista con la regla del flag que añade.** Un elemento vacío, o de
+solo espacios, no es un valor: no se guarda, y la tarea queda como si esa posición no existiera. Lo
+mismo da que venga de una lista de texto libre (`references`, y el texto de un criterio de
+`acceptanceCriteria`), de una lista de tokens (`labels`, `assignees`) o de identificadores
+(`dependencies`), y de las tres claves ajenas que se convierten al importar (`definitionOfDone`,
+`documentation` y `modifiedFiles`): un elemento vacío ni es una etiqueta mal formada, ni una
+dependencia que no existe, ni una referencia en blanco. Los elementos que no están vacíos se guardan
+como llegan, sin recortar los espacios, igual que en el flag.
+
+**Lo que sí es un error es un `null` en lugar de un elemento.** Un elemento de una lista tiene que
+ser texto, y `null` no lo es, igual que un número tampoco lo es. Es el fallo de validación que ya
+describe ["El modo lote"](cmd/new.md#el-modo-lote) para un `null` que ocupa el sitio de una lista
+entera, extendido a lo que ocupa el sitio de un elemento. Un elemento que es texto vacío, en cambio,
+sí tiene forma de valor y por eso se descarta con la regla de arriba.
+
+**`biso new --from` avisa de lo que descartó y `biso init --from` no.** El aviso es
+`imported_empty_dropped`, uno por cada línea y cada lista de la que se descartó algo, con la cuenta
+(["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)). Una restauración no emite avisos, igual
+que no emite los de lo que funde (["`biso init`"](cmd/init.md)). La regla y la razón, con las
+alternativas que se descartaron, están en
+["Un elemento vacío de un lote se descarta y avisa"](../decisiones/detalles.md#un-elemento-vacío-de-un-lote-se-descarta-y-avisa).
 
 ## Valores que empiezan por guion
 
@@ -76,6 +101,8 @@ Para todo flag marcado como repetible:
 - Repetirlo acumula: `--add-labels a --add-labels b` deja dos etiquetas.
 - Si además acepta lista, separar por comas acumula igual: `--add-labels a,b` deja las mismas dos.
 - Las dos formas se pueden mezclar.
+- **Un elemento vacío entre dos comas es un valor vacío.** `--add-labels a,,b` añade `a` y `b`, y avisa una vez
+  por el elemento que sobra, según ["El valor vacío"](#el-valor-vacío); `--add-labels ,` no añade nada y avisa dos veces.
 - **Una coma dentro de un valor se escapa con `\,`.** Es la única forma de meter una coma en una
   referencia. Una etiqueta o una persona asignada
   nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
@@ -135,6 +162,10 @@ hint: an assignee may contain letters, digits, and - _ . : @
 de que existiera esta regla o porque llegó por una vía que no pasa por esta validación, no es un error
 nuevo distinto: es un dato que el programa no puede interpretar, y se trata con la regla general de
 ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar).
+
+**Un token vacío no llega a ser un carácter fuera del alfabeto.** Ni en un flag que añade ni en un
+lote se juzga contra el alfabeto: se descarta antes, con el aviso de ["El valor vacío"](#el-valor-vacío)
+y de ["Un elemento vacío en un lote"](#un-elemento-vacío-en-un-lote).
 
 Los `code` correspondientes, `malformed_label` y `malformed_assignee`,
 están en la tabla de ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error).

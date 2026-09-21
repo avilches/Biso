@@ -53,6 +53,12 @@ entra de vuelta con `new --from`, con sus tres partes completas.
 `{}`, nunca como `null`.** Es la misma regla de coerción de ["El modo lote"](new.md#el-modo-lote) de
 `biso new`, en el sentido contrario, la que hace que reimportar la salida reproduzca la tarea exacta.
 
+**Y una lista nunca lleva un elemento vacío.** Ningún camino del programa guarda una cadena vacía, ni
+una de solo espacios, como elemento de una lista, porque un flag que añade no la guarda y un lote la
+descarta (["Un elemento vacío en un lote"](../valores-de-entrada.md#un-elemento-vacío-en-un-lote)),
+así que `export` no la escribe nunca y reimportar la salida no descarta nada. Es lo que mantiene
+cierta la garantía de la ida y vuelta para las listas de texto libre.
+
 `export` solo lleva las tareas: reconstruir un tablero entero, con su vocabulario y no solo con sus
 datos, es lo que hace [`biso snapshot`](snapshot.md), cuyo `snapshot.ndjson` tiene exactamente esta misma forma
 y se lee de vuelta con el `--from` de [`biso init`](init.md), no con el de `biso new`.
