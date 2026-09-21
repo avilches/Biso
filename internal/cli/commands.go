@@ -333,6 +333,14 @@ func filterFlags() []FlagSpec {
 		f.ClosedVocabulary = true
 		return f
 	}
+	// The two label filters go through the parsing rule of a scoped label
+	// in the reading that accepts the key form, which is how they ask for
+	// any value of a key (docs/spec/vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito).
+	labelFilter := func(name string) FlagSpec {
+		f := filter(name)
+		f.Labels = LabelFilter
+		return f
+	}
 	// The two halves of a pair of opposites each name the other, because
 	// the parser judges a pair when it reads the second of the two.
 	opposites := func(yes, no string) []FlagSpec {
@@ -347,8 +355,8 @@ func filterFlags() []FlagSpec {
 		{Name: "any-status", Conflicts: []string{"status", "not-status"}},
 		vocabulary("type"),
 		vocabulary("priority"),
-		filter("label"),
-		filter("label-or"),
+		labelFilter("label"),
+		labelFilter("label-or"),
 		filter("assignee", "mine", "unassigned"),
 		{Name: "mine", Conflicts: []string{"assignee", "unassigned"}},
 		{Name: "unassigned", Conflicts: []string{"assignee", "mine"}},
