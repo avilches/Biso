@@ -882,9 +882,12 @@ es texto con la forma de la clave escrita como `CHECK`.
   cerrado, `first` y `last`, con el `valid` y el remedio en la ayuda del error; la cadena vacía cae
   ahí y no en `empty_scalar_value`.
 - **Los cuatro `code` nuevos existen con sus mensajes literales**: `invalid_ordinal_value` y
-  `self_ordinal_neighbour` los emite la llamada, `malformed_ordinal` la validación del modelo, que es
-  por donde pasa la clave escrita de una línea de lote, y `neighbour_without_ordinal` es el único que
-  sale con el código 6, con sus dos `hint`.
+  `self_ordinal_neighbour` los emite la llamada, y `neighbour_without_ordinal` es el único que sale
+  con el código 6, con sus dos `hint`. `malformed_ordinal` lo emite el lote, que es el único sitio
+  donde una clave llega escrita, en dos puntos del mismo recorrido: al leer la línea, que es donde
+  todavía se distingue una clave escrita como `""` de una clave que no venía, y en la validación del
+  modelo para todo lo demás. Dentro de una tarea la cadena vacía ya significa "sin clave", así que
+  esa distinción no sobrevive a la decodificación y hay que hacerla antes.
 - **La lectura compara por puntos de código y deja al final las tareas sin clave**, tanto en el orden
   por defecto como en `--sort ordinal`, y el empate lo rompe el identificador
   (["La regla de orden, completa"](cmd/ls.md#la-regla-de-orden-completa)). La ficha de texto de
