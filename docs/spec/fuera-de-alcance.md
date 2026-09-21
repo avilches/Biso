@@ -7,8 +7,8 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   una lista de textos, y una decisión de diseño no tiene comando propio: vive en la documentación del
   proyecto, no en el tablero.
 - **No hay campo de hito ni de proyecto en la tarea.** Hubo un campo `milestone` y un campo `project`,
-  y los dos se retiraron: la agrupación real se resuelve con `parent` (una tarea con hijas, de
-  cualquier `type`) y con `type` (una partición plana), sin ningún campo dedicado solo a agrupar. El
+  y los dos se retiraron: la agrupación real se resuelve con `parent` (["Las relaciones entre tareas"](modelo-de-datos/relaciones.md):
+  una tarea con hijas, de cualquier `type`) y con `type` (una partición plana), sin ningún campo dedicado solo a agrupar. El
   porqué, con las alternativas descartadas, está en
   ["Se retiran `project` y `milestone`"](../decisiones/detalles.md#se-retiran-project-y-milestone).
 - **No hay definición de hecho.** Una tarea tiene una sola lista de comprobación, la de criterios de

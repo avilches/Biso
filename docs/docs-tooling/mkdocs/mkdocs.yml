@@ -122,6 +122,7 @@ nav:
     - El modelo de datos de una tarea:
       - spec/modelo-de-datos/index.md
       - Identificador de tarea: spec/modelo-de-datos/identificadores.md
+      - Las relaciones entre tareas: spec/modelo-de-datos/relaciones.md
       - Las fechas: spec/modelo-de-datos/fechas.md
       - La urgencia: spec/modelo-de-datos/urgencia.md
       - El autor de una tarea: spec/modelo-de-datos/autor.md

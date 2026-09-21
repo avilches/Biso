@@ -115,7 +115,7 @@ tocado sí pueden, y entonces la coma se escapa con `\,`
 (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
 `--add-refs 'notes/a\,b.md'` añade una sola referencia, `notes/a,b.md`.
 
-**Las dependencias se validan al escribirlas, y solo al escribirlas.** `--add-deps` y
+**Las dependencias se validan al escribirlas, y solo al escribirlas.** Lo que significa una dependencia, y hacia dónde apunta, está en ["Las relaciones entre tareas"](modelo-de-datos/relaciones.md); aquí solo está lo que pasa al escribirla. `--add-deps` y
 `--replace-deps` resuelven cada valor con la rutina de ["Cómo se resuelve una referencia a una
 tarea"](referencias.md) y guardan el identificador al que resuelve, así que `--add-deps "CRLF"`
 deja guardado `MYP-11` y no el texto que se tecleó, y una referencia que no existe o que encaja con
