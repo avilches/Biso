@@ -105,7 +105,7 @@ de llegar a un estado terminal** (`terminal_ac_unchecked`, `terminal_no_summary`
 campo `task`, y aquí no hay ninguna que nombrar: el identificador no se ha gastado. Escribirlos con
 el hueco vacío daría una frase con dos espacios seguidos y un `task` con la cadena vacía, que es justo
 lo que prohíbe ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), y es el mismo motivo por el que los avisos
-`imported_dod_merged` e `imported_documentation_merged` del lote nombran la línea del fichero en vez de la tarea. Los demás avisos, que
+`imported_dod_merged`, `imported_documentation_merged` e `imported_modified_files_merged` del lote nombran la línea del fichero en vez de la tarea. Los demás avisos, que
 no nombran ninguna tarea, salen igual con `--dry-run` que sin él: `due_in_past`, `clear_on_new_task`,
 `duplicate_flag_value` y el resto. Crear la tarea de verdad en un estado terminal sí emite los tres,
 porque entonces el identificador ya existe.
@@ -147,9 +147,9 @@ Las reglas del lote, todas obligatorias:
 - **El contador de claves se sitúa por encima de la clave mayor que tenga la tarea al acabar de
   importarla**, de modo que un criterio añadido después nunca choca con uno importado. El contador no
   es una clave del formato: se deduce.
-- **`definitionOfDone` se acepta, se convierte en criterios de aceptación y avisa.** Es una de las dos
-  claves ajenas al modelo que no son un fallo de validación (la otra es `documentation`, que sigue a
-  esta regla), y existe por una razón concreta: la definición de
+- **`definitionOfDone` se acepta, se convierte en criterios de aceptación y avisa.** Es una de las tres
+  claves ajenas al modelo que no son un fallo de validación (las otras dos, `documentation` y
+  `modifiedFiles`, siguen a esta regla), y existe por una razón concreta: la definición de
   hecho estuvo en `biso` y sigue estando en Backlog.md, de donde viene la mayoría de los lotes de
   importación (["Se retira la definición de hecho"](../../decisiones/detalles.md#se-retira-la-definición-de-hecho)).
   Acepta las mismas dos formas que `acceptanceCriteria`, la cadena y el objeto. La conversión es un
@@ -176,8 +176,8 @@ Las reglas del lote, todas obligatorias:
   {"title":"Normalize CRLF","acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":2,"text":"Reviewed","checked":false}]}
   ```
   La primera avisa y la segunda no, y las dos dejan la misma tarea.
-- **`documentation` se acepta, se funde en `references` y avisa.** Es la otra clave ajena al modelo
-  que no es un fallo de validación, y existe por la misma razón que `definitionOfDone`: el campo
+- **`documentation` se acepta, se funde en `references` y avisa.** Es la segunda de las tres claves
+  ajenas al modelo que no son un fallo de validación, y existe por la misma razón que `definitionOfDone`: el campo
   estuvo en `biso` y sigue estando en Backlog.md, de donde viene la mayoría de los lotes de
   importación (["Se retira `documentation` y `references` queda como único campo de punteros"](../../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)).
   Es una lista de textos como `references`, con las mismas reglas que ella, y la fusión es un
@@ -200,6 +200,24 @@ Las reglas del lote, todas obligatorias:
   ```json
   {"title":"Normalize CRLF","references":["docs/bugs/BUG-02.md"],"documentation":["docs/parser.md"]}
   {"title":"Normalize CRLF","references":["docs/bugs/BUG-02.md","docs/parser.md"]}
+  ```
+  La primera avisa y la segunda no, y las dos dejan la misma tarea.
+- **`modifiedFiles` se acepta, se funde en `references` y avisa, con la misma regla que
+  `documentation`.** Es la tercera clave ajena al modelo que no es un fallo de validación, y existe
+  por la misma razón: el campo estuvo en `biso` y sigue estando en Backlog.md
+  (["Se retira `modifiedFiles`"](../../decisiones/detalles.md#se-retira-modifiedfiles)). Sus elementos
+  se funden en `references` con el mismo procedimiento de tres pasos, y el aviso se llama
+  `imported_modified_files_merged` (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)).
+  **Si una línea trae las dos claves, el orden es fijo y no depende del orden en que estén escritas en
+  el fichero:** primero `references`, luego los elementos de `documentation` y por último los de
+  `modifiedFiles`. Un valor que ya estaba se guarda una sola vez, donde apareció por primera vez, y
+  la línea emite ambos avisos, el de `documentation` primero. Cada aviso cuenta los elementos que
+  trajo su propia clave, aunque alguno se haya guardado una sola vez por repetido. `modifiedFiles: null`
+  equivale a que la clave no viniera, por la misma razón que `documentation: null`. Estas dos
+  líneas importan la misma tarea:
+  ```json
+  {"title":"Normalize CRLF","references":["docs/bugs/BUG-02.md"],"modifiedFiles":["internal/diff/diff.go"]}
+  {"title":"Normalize CRLF","references":["docs/bugs/BUG-02.md","internal/diff/diff.go"]}
   ```
   La primera avisa y la segunda no, y las dos dejan la misma tarea.
 - **Las claves que la conversión crea son lo único que `biso new` sí anuncia.** La salida de `new` no
@@ -253,13 +271,13 @@ Las reglas del lote, todas obligatorias:
   archivar se hace con `biso archive`.
 - **`null` explícito en un escalar opcional (`due`, `ordinal`, `parent`) equivale a que la clave no
   viniera.** En una lista o un mapa (`labels`, `references`, `dependencies`,
-  `modifiedFiles`, `ext`, `acceptanceCriteria`, `comments`), en cambio, `null` es
+  `ext`, `acceptanceCriteria`, `comments`), en cambio, `null` es
   un fallo de validación: su forma de estar vacío es `[]` o `{}`, nunca `null`, la misma regla que
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
   órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta.
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
-  escriben, y el mensaje dice la línea y la clave. Las únicas excepciones son `definitionOfDone` y
-  `documentation`, con cualquiera de sus valores admitidos, que se convierten con la regla de más
+  escriben, y el mensaje dice la línea y la clave. Las únicas excepciones son `definitionOfDone`,
+  `documentation` y `modifiedFiles`, con cualquiera de sus valores admitidos, que se convierten con la regla de más
   arriba en vez de fallar.
 - **Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) no se aceptan.** En la entrada son claves desconocidas y
   por tanto un fallo de validación.
@@ -271,7 +289,7 @@ Las reglas del lote, todas obligatorias:
   llegar, y una tarea importada no llega a ninguna parte: ya estaba donde el fichero la pone, igual
   que una escritura sobre una tarea que ya estaba en el estado terminal tampoco los repite
   (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Los únicos avisos propios del lote son
-  `imported_dod_merged` e `imported_documentation_merged`.
+  `imported_dod_merged`, `imported_documentation_merged` e `imported_modified_files_merged`.
 - **`--print` es error 2 en un lote**, con el mensaje `--print does not apply to a batch, which
   affects no task that existed before`. Es la misma razón por la que lo es en
   [`biso init --from`](init.md): un lote crea de cero todas las tareas del fichero, así que no hay

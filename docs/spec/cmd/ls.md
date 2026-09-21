@@ -233,7 +233,6 @@ igual que las demás.
         "parent": null,
         "dependencies": [],
         "references": ["docs/bugs/BUG-02.md"],
-        "modifiedFiles": [],
         "due": null,
         "ordinal": null,
         "createdAt": "2026-09-06T09:12:04Z",

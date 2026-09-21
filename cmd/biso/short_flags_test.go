@@ -115,3 +115,30 @@ func TestNoHelpTextNamesARetiredShortForm(t *testing.T) {
 		}
 	}
 }
+
+// TestTheFlagsOfTheRetiredFilesFieldAreUnknownFlags is the acceptance of
+// docs/decisiones/detalles.md#se-retira-modifiedfiles: the four flags of the
+// modified files family, and the one `biso finish` used to announce, fail the
+// way any flag that does not exist fails, in every command that writes.
+func TestTheFlagsOfTheRetiredFilesFieldAreUnknownFlags(t *testing.T) {
+	m := exportBoard(t)
+
+	for _, argv := range [][]string{
+		{"set", "MYP-2", "--add-files", "a.go"},
+		{"set", "MYP-2", "--rm-files", "a.go"},
+		{"set", "MYP-2", "--clear-files"},
+		{"set", "MYP-2", "--replace-files", "a.go"},
+		{"new", "A task", "--add-files", "a.go"},
+		{"finish", "MYP-2", "--add-files", "a.go"},
+	} {
+		t.Run(strings.Join(argv, " "), func(t *testing.T) {
+			flag := argv[len(argv)-1]
+			if strings.HasPrefix(flag, "--") == false {
+				flag = argv[len(argv)-2]
+			}
+			got := m.run(t, argv...).assertCode(t, 2)
+
+			assertEqual(t, got.stderr, "error: unknown flag: "+flag+"\n", "the message")
+		})
+	}
+}

@@ -237,7 +237,6 @@ func TestEveryFieldFlagOfTheSpecificationIsInTheTable(t *testing.T) {
 		"add-assignees", "rm-assignees", "clear-assignees", "replace-assignees",
 		"add-refs", "rm-refs", "clear-refs", "replace-refs",
 		"add-deps", "rm-deps", "clear-deps", "replace-deps",
-		"add-files", "rm-files", "clear-files", "replace-files",
 		"add-ac", "rm-ac", "clear-acs", "check-ac", "uncheck-ac",
 		"append-desc", "append-plan", "append-note", "append-summary",
 		"clear-desc", "clear-plan", "clear-notes", "clear-summary",

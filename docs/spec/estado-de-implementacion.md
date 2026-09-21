@@ -340,10 +340,10 @@ esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
   prioridades de nombre largo, y un tablero cuyo nombre son diez mil caracteres. Los dos últimos son
   los que hacen cierta la palabra "siempre": los cuatro primeros escalones solo recortan tareas, así
   que un tablero sin ninguna se escapaba del tope por el bloque `BOARD` (imprimía 8.465 bytes) hasta
-  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.038 bytes** de
-  los 5.504, **3.549** de parte fija y **1.489** de resumen, que es exactamente lo que dice
+  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **4.983 bytes** de
+  los 5.504, **3.494** de parte fija y **1.489** de resumen, que es exactamente lo que dice
   ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño); con el de los vocabularios
-  largos, **5.185**, y con el del nombre kilométrico, **5.213**.
+  largos, **5.130**, y con el del nombre kilométrico, **5.158**.
 - **La medida del presupuesto de arranque ya es la de verdad**, en `cmd/biso/budget_test.go`:
   ejecuta el binario compilado, `biso ls` y `biso prime`, sobre un tablero real de 300 tareas con
   los cuatro bloques poblados, y mide de la llamada al código de salida, arranque del proceso
@@ -659,7 +659,9 @@ al programa y a la especificación:
   antes, porque sus flags se escriben enteros
   (["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño)). Esa cifra ya no es la
   vigente: la retirada de `documentation` la bajó a 5.038
-  (["Qué dejó hecha la fusión de `documentation` en `references`"](#qué-dejó-hecha-la-fusión-de-documentation-en-references)).
+  (["Qué dejó hecha la fusión de `documentation` en `references`"](#qué-dejó-hecha-la-fusión-de-documentation-en-references))
+  y la de `modifiedFiles` a 4.983
+  (["Qué dejó hecha la retirada de `modifiedFiles`"](#qué-dejó-hecha-la-retirada-de-modifiedfiles)).
 
 ### Qué dejó hecha la fusión de `documentation` en `references`
 
@@ -681,10 +683,44 @@ de `biso set` y `biso prime`, el mensaje de arranque, el modo lote de `biso new`
   cuenta los elementos (["`biso new`"](cmd/new.md#el-modo-lote)). Decisión propia de la
   implementación, anotada en la especificación: un valor que ya estaba en `references` se guarda una
   sola vez. Las pruebas están en `internal/ops/batch_test.go`.
-- **El mensaje de arranque mide ahora 5.038 bytes** con el tablero del ejemplo, 51 menos que antes: la
-  parte fija pasa de 3.600 a **3.549** y el resumen sigue en **1.489**. La rejilla `FIELD FLAGS` pasa de
-  trece líneas a doce. El tope total de 5.504 no cambia y el margen de la parte fija sube de 240 a 291 bytes.
+- **El mensaje de arranque medía entonces 5.038 bytes** con el tablero del ejemplo, 51 menos que antes: la
+  parte fija pasaba de 3.600 a **3.549** y el resumen seguía en **1.489**. La rejilla `FIELD FLAGS` pasó de
+  trece líneas a doce. Esa cifra tampoco es ya la vigente: la retirada de `modifiedFiles` la bajó a 4.983.
 - **La cobertura de `compatibilidad-de-modelos.md` se recalculó** sin el campo retirado, y el porcentaje de cada sistema cambió en consecuencia.
+
+### Qué dejó hecha la retirada de `modifiedFiles`
+
+La tarea `TASK-80` aplicó
+["Se retira `modifiedFiles`"](../decisiones/detalles.md#se-retira-modifiedfiles)
+al programa y a la especificación. Las anclas que cubre son el modelo de datos, las familias de
+flags, los valores de entrada, el contrato JSON de `get`, `ls` y `export`, la ficha de `biso get`, las
+ayudas de `biso set`, `biso finish` y `biso prime`, el mensaje de arranque, el modo lote de `biso new`,
+el formato de `biso export`, la tabla de avisos y la fuera de alcance:
+
+- **El campo `modifiedFiles` ya no existe en ningún sitio.** Ni en el modelo, ni en la lista de
+  campos permitidos de las listas del almacén, ni en el JSON de `get`, `ls` y `export`, ni en la
+  ficha, ni en los flags `--add-files`, `--rm-files`, `--clear-files` y `--replace-files`, que ahora
+  son un error 2 con el `code` `unknown_flag` como cualquier flag que no existe. `biso finish` deja
+  de anunciar `--add-files` en su firma, su ayuda y su descripción: quien cierre una tarea y quiera
+  dejar una ruta usa `--add-refs`, que ya funcionaba ahí como todo flag de campo. Como `biso` no se ha
+  publicado, se ha editado el primer script de migración en vez de añadir uno.
+- **`biso new --from` acepta `modifiedFiles` y lo funde en `references`**, con el aviso
+  `imported_modified_files_merged`, con el mismo patrón que `documentation`: la clave no cuenta como
+  desconocida, `null` equivale a ausente, la lista vacía no avisa, y el aviso nombra la línea y cuenta
+  los elementos (["`biso new`"](cmd/new.md#el-modo-lote)). Decisión propia de la implementación, anotada
+  en la especificación: si una línea trae `documentation` y `modifiedFiles` a la vez, el orden en
+  `references` es fijo, primero lo que ya había, luego `documentation` y por último `modifiedFiles`,
+  con ambos avisos en ese mismo orden. Las pruebas están en `internal/ops/batch_test.go`.
+- **La simetría entre `biso export` y `biso new --from` sigue pasando sin el campo.** Las dos
+  pruebas que llevaban un `modifiedFiles` en su tablero (`symmetry_test.go` y `export_test.go`) lo
+  sustituyen por un segundo valor de `references`, para que la lista siga teniendo más de un elemento.
+- **El mensaje de arranque mide ahora 4.983 bytes** con el tablero del ejemplo, 55 menos que antes: la
+  parte fija pasa de 3.549 a **3.494** y el resumen sigue en **1.489**. La rejilla `FIELD FLAGS` pasa de
+  doce líneas a once, y es la línea entera de los flags del campo lo que se libera. El tope total de 5.504
+  no cambia y el margen de la parte fija sube de 291 a 346 bytes.
+- **La cobertura de `compatibilidad-de-modelos.md` se recalculó** sin el campo retirado: un campo menos en el total sobre el que se calcula cada porcentaje.
+- **La familia de los campos de lista queda en cuatro**: `labels`, `assignees`, `references` y
+  `dependencies`.
 
 ## Antes de empezar un paso
 

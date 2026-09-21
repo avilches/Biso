@@ -60,6 +60,9 @@ con la que hay que ser coherente.
 para las páginas y las rutas de documentos: la distinción no la sostenía ningún uso ni ninguna
 regla, y por qué se retiró está en
 ["Se retira `documentation` y `references` queda como único campo de punteros"](../../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros).
+Tampoco hay un campo para los ficheros que tocó el trabajo: una ruta que valga la pena señalar es
+una referencia más, y por qué se retiró está en
+["Se retira `modifiedFiles`"](../../decisiones/detalles.md#se-retira-modifiedfiles).
 
 Son texto libre, sin el alfabeto cerrado que sí tienen las etiquetas y las personas
 (["El juego de caracteres de un token"](../valores-de-entrada.md#el-juego-de-caracteres-de-un-token)).
