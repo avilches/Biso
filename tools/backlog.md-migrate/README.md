@@ -9,6 +9,10 @@ backlog.md-migrate import <backlog-dir> --project <dir> [--out <file>] [--biso <
 backlog.md-migrate export ...        # por diseñar, ver TASK-7
 ```
 
+**Estado: sin implementar.** La especificación y las decisiones son un borrador que se está
+repasando, y la implementación está bloqueada por un cambio en `biso` (los ids de subtarea con punto). Ver
+[`docs/pendientes.md`](docs/pendientes.md).
+
 Es un proyecto aparte, con su propia especificación y sus propias decisiones. Vive dentro del
 repositorio de `biso` por comodidad, pero no cuelga de él: ver [`CLAUDE.md`](CLAUDE.md).
 

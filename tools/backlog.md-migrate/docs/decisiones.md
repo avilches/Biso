@@ -1,5 +1,9 @@
 # Decisiones de diseño
 
+> **Provisional.** Ninguna de estas decisiones está cerrada: son propuestas que se van a repasar una
+> por una, y varias dependen de un cambio en `biso` (TASK-73). La lista completa de lo que
+> falta revisar está en [`pendientes.md`](pendientes.md).
+
 Cada entrada dice primero la decisión vigente, en un párrafo que se puede citar sin más contexto. Las
 alternativas que se consideraron van después, marcadas como **descartadas** y con la razón. Si una
 decisión nueva deja obsoleta una anterior, la vieja se corrige aquí mismo.
@@ -35,7 +39,11 @@ filtra con `--label` y se ve en `biso ls`.
 
 **Descartado: un campo de extensión (`ext`).** Su clave es un identificador en otro sistema y no está
 claro que se pueda filtrar como una etiqueta. **Descartado: asumir la pérdida.** Se perdería la
-agrupación por hitos de casi todo el tablero.
+agrupación por hitos de los tableros que la usan.
+
+**El campo `project` de Backlog.md sigue la misma regla**, con la etiqueta `project:<slug>`. Es otro
+dato de agrupación que `biso` no modela y que Backlog.md guarda como un texto en cada tarea, y darle un
+trato distinto al del milestone no tendría justificación.
 
 ## Los identificadores conservan su número y cambian de prefijo
 
@@ -44,10 +52,16 @@ lee de `biso`. Cada id de origen conserva su número con el prefijo del destino.
 ya existe en el destino cambian de número, con el siguiente libre por encima del mayor que haya entre
 origen y destino, y las menciones de esos ids se reescriben en todo el texto, títulos incluidos. Ninguna
 tarea que no choque se desplaza. Así el destino puede tener el prefijo que quiera y no tiene por qué
-estar vacío. **Una excepción: una tarea que ya está en el destino no se vuelve a importar.** Si el id
-existe allí con el mismo título y la misma fecha de creación, es la misma tarea de una importación
-anterior y se salta con un hallazgo. Sin esto, ejecutar `import` dos veces duplicaría el tablero: `biso`
-rechazaría el lote por ids ocupados, pero el convertidor lo evitaría reasignando todos los ids.
+estar vacío. **Una excepción: una tarea que ya está en el destino no se vuelve a importar.** Si el
+destino tiene una tarea con el mismo título y la misma fecha de creación, sea cual sea su id, es la
+misma tarea de una importación anterior y se salta con un hallazgo. Sin esto, ejecutar `import` dos
+veces duplicaría el tablero: `biso` rechazaría el lote por ids ocupados, pero el convertidor lo evitaría
+reasignando todos los ids.
+
+**Las subtareas siempre reciben un número nuevo.** Backlog.md da a una subtarea un id con punto
+(`XYZ-001.01`, `ABC-1.2`), y un id de `biso` es siempre `<PREFIJO>-<n>`. No hay forma de conservarlo, así
+que se le asigna un número libre y se reescriben sus menciones. El parentesco no se pierde: va en
+`parent`. Por eso la regla de la tarea ya importada no compara los ids, sino el título y la fecha.
 
 **La coincidencia de menciones distingue mayúsculas y no toca lo que va pegado a otras palabras.** En el
 tablero medido hay cinco menciones en minúsculas que son nombres de ramas y de worktrees
@@ -82,6 +96,26 @@ omite de la línea y se informa, en lugar de corregirlo por su cuenta.
 **Descartado: declarar en el destino los cinco estados de Backlog.md por defecto.** Sirve para el
 tablero de este proyecto, pero una utilidad general no puede suponer los estados de un tablero ajeno.
 
+## Los espacios de una etiqueta o un asignado se convierten en guiones
+
+**La decisión.** Backlog.md admite espacios dentro de una etiqueta (`with space`) y de un asignado
+(`Sara Smith`), y `biso` no los admite en ninguno de los dos. Al importar, el convertidor transforma
+cada tramo de espacios en un guion normal (`with-space`, `Sara-Smith`), quita los del principio y del
+final, y avisa de cada conversión. Los demás caracteres que `biso` no admite (`a/b`, `c!`) siguen
+quitando el valor, con aviso. La conversión no se deshace al exportar: `with-space` se queda así.
+
+**La pega.** Exportar un tablero importado no devuelve el texto original de esas etiquetas, y dos
+etiquetas que solo se diferencian por un espacio o un guion (`a b` y `a-b`) se funden en una.
+
+**Descartado: hacer que `biso` admita espacios en una etiqueta** (era TASK-72, ya descartada). Cambiaba el
+modelo de `biso` y reabría su decisión sobre el alfabeto de un token solo para servir a una utilidad de
+migración. **Descartado: quitar la etiqueta con aviso.** Perdía un dato que se puede conservar con una
+transformación evidente.
+
+**Se aplica también a los asignados.** El encargo hablaba de las etiquetas, pero los asignados tienen el
+mismo alfabeto y el mismo problema, y darles un trato distinto no tendría justificación. Pendiente de
+confirmar.
+
 ## `documentation` y `references` van tal cual
 
 **La decisión.** En `biso` los campos `documentation` y `references` son texto libre, sin restricción de
@@ -106,6 +140,20 @@ Se acepta porque es un sufijo muy poco probable en un criterio real.
 deja huella para volver, y el objetivo es que exportar e importar de nuevo conserve todo.
 **Descartado: perder la distinción.** Que los tableros con los que se midió no usen la definición de
 hecho no dice nada de otros tableros, y la utilidad es general.
+
+## El formato de Backlog.md se mide con su CLI, no con un tablero
+
+**La decisión.** Lo que la especificación dice de cómo guarda Backlog.md sus campos, sus secciones y sus
+ids se ha comprobado creando un proyecto de prueba con el propio CLI de Backlog.md 1.52.0 y usando todas
+las opciones de `backlog task create`, `edit`, `archive` y `complete`, y leyendo los ficheros que
+resultan. Los ficheros de prueba de la suite se generan igual, con el CLI, y no se escriben a mano. Es
+lo que ha descubierto cosas que ningún tablero real habría enseñado: las subtareas con id con punto, el
+campo `project`, los comentarios, la definición de hecho por defecto que se copia a cada tarea, la
+configuración que puede vivir fuera de la carpeta de datos y el prefijo cuya capitalización de la
+configuración no coincide con la de los ids.
+
+**Descartado: deducir el formato del tablero de este proyecto.** Es una muestra de una sola
+configuración y de las opciones que alguien usó, y la herramienta es general.
 
 ## Nada se pierde en silencio
 
