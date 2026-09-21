@@ -151,13 +151,19 @@ var checkRank = map[string]int{
 	"dependency_cycle":        7,
 	"parent_cycle":            8,
 	"duplicate_criterion_key": 9,
-	"lease_invariant":         10,
-	"highest_id_behind":       11,
-	"marker_missing":          12,
-	"marker_id_mismatch":      13,
-	"extra_root_unreadable":   14,
-	"unsafe_wal_filesystem":   15,
-	"ignore_file_mismatch":    16,
+	// The three checks of the scoped labels sit where the table of
+	// docs/spec/cmd/doctor.md#qué-comprueba puts them, between the repeated
+	// criterion keys and the lease.
+	"label_not_declared":         10,
+	"label_exclusive_violated":   11,
+	"label_key_mixed_separators": 12,
+	"lease_invariant":            13,
+	"highest_id_behind":          14,
+	"marker_missing":             15,
+	"marker_id_mismatch":         16,
+	"extra_root_unreadable":      17,
+	"unsafe_wal_filesystem":      18,
+	"ignore_file_mismatch":       19,
 }
 
 // inTableOrder sorts the findings the way the table lists the checks. The
@@ -303,6 +309,14 @@ func (d *doctor) checkTasks(tasks []*model.Task) error {
 	cfg := d.b.Config
 	reportedDependency := map[string]bool{}
 	reportedParent := map[string]bool{}
+	// A `labels` list that contradicts itself is not reported here: it is
+	// refused when it is written, and a board that somehow holds one has a
+	// configuration biso cannot read, which is the error every other
+	// unreadable configuration value already is.
+	rules, rulesErr := readLabelRules(cfg.Labels)
+	if rulesErr != nil {
+		return rulesErr
+	}
 
 	for _, t := range tasks {
 		d.checkVocabulary(t, "status", t.Status, cfg.Statuses)
@@ -323,9 +337,93 @@ func (d *doctor) checkTasks(tasks []*model.Task) error {
 				}
 				return []string{x.Parent}
 			})
+		d.checkLabels(t, rules)
 		d.checkLease(t)
 	}
+	d.checkMixedLabelKeys(tasks)
 	return d.checkDuplicateCriterionKeys()
+}
+
+// checkLabels is the two errors about the labels of one task
+// (docs/spec/cmd/doctor.md#qué-comprueba): a label the `labels` list does
+// not allow, by its value or by its separator, and a key that carries more
+// than one value while one of them was written with the separator that
+// admits at most one.
+//
+// Neither is repairable with --fix, and both report external damage:
+// `biso config set labels` refuses to declare a list that would forbid
+// something already stored, and every write checks what it puts, so a board
+// that reaches either state had its database written from outside. Choosing
+// which value was meant, or which of the stored ones is the spare, is
+// exactly the kind of decision that destroys information when it is taken
+// alone.
+func (d *doctor) checkLabels(t *model.Task, rules *labelRules) {
+	for _, raw := range t.Labels {
+		rule := rules.allows(raw)
+		if rule == nil {
+			continue
+		}
+		if rule.open {
+			d.problem(t.ID, "label_not_declared", fmt.Sprintf(
+				"label %q uses %s, and the key %q is declared with %s",
+				raw, model.SplitLabel(raw).Separator, rule.key, rule.separator))
+			continue
+		}
+		d.problem(t.ID, "label_not_declared", fmt.Sprintf(
+			"label %q is not one of the values the key %q declares: %s",
+			raw, rule.key, rule.declares()))
+	}
+	for _, of := range exclusiveKeyViolations(t.Labels) {
+		d.problem(t.ID, "label_exclusive_violated", fmt.Sprintf(
+			"the label key %q has %d values on this task, and :: allows at most one: %s",
+			model.SplitLabel(of[0]).Key, len(of), strings.Join(of, ", ")))
+	}
+}
+
+// checkMixedLabelKeys is the warning of a key the board writes with the two
+// separators in different tasks. It denounces no damage but an ambiguity:
+// the writes that produced it were each legitimate, because the exclusivity
+// is checked inside one task and never over the whole board, and while
+// nobody decides, that key does not say whether it takes one value per task
+// or several. It is a finding of the board and not of any one task, so it
+// carries no identifier (docs/spec/cmd/doctor.md#qué-comprueba).
+func (d *doctor) checkMixedLabelKeys(tasks []*model.Task) {
+	several := map[string]int{}
+	exclusive := map[string]int{}
+	spelling := map[string]string{}
+	var order []string
+	for _, t := range tasks {
+		for _, key := range labelKeys(t.Labels) {
+			folded := foldKey(key)
+			if _, known := spelling[folded]; !known {
+				spelling[folded] = key
+				order = append(order, folded)
+			}
+			withSeveral, withExclusive := false, false
+			for _, raw := range labelsOfKey(t.Labels, key) {
+				if model.SplitLabel(raw).Exclusive() {
+					withExclusive = true
+				} else {
+					withSeveral = true
+				}
+			}
+			if withSeveral {
+				several[folded]++
+			}
+			if withExclusive {
+				exclusive[folded]++
+			}
+		}
+	}
+	sortStrings(order)
+	for _, folded := range order {
+		if several[folded] == 0 || exclusive[folded] == 0 {
+			continue
+		}
+		d.warning("", "label_key_mixed_separators", fmt.Sprintf(
+			"label key %q is used with both separators, %s with : and %d with ::",
+			spelling[folded], plural(several[folded], "task"), exclusive[folded]))
+	}
 }
 
 // checkVocabulary is the row about a value the board no longer configures.

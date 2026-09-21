@@ -40,6 +40,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | hecho | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | hecho | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`help`](cmd/help.md) | hecho con matices | TASK-17 |
+| | Las etiquetas con ámbito ([abajo](#las-etiquetas-con-ámbito)) | hecho con matices | sin tarea |
 | | El orden manual ([abajo](#el-orden-manual-especificado-y-todavía-no-implementado)) | especificado, no implementado | sin tarea |
 | | [`board`](cmd/board.md) | fuera de alcance de 1.0 | sin tarea |
 
@@ -803,6 +804,47 @@ y el contrato JSON:
   ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño).
 - **La simetría entre `biso export` y `biso new --from` sigue pasando.** Las pruebas que llevaban un `ext`
   en su tablero lo dejan de llevar, y se eliminan las que solo ejercían `ext`.
+
+### Las etiquetas con ámbito
+
+La decisión ["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito) se
+escribió entera en la especificación antes de tocar código, y después se llevó al programa. El
+matiz es uno solo y está en el último punto de esta lista: **el eje de agrupación por la clave de
+una etiqueta no existe en código**, porque ["`biso board`"](cmd/board.md) entero queda fuera de la
+versión 1.0 y el programa no tiene todavía ningún comando `board`. Todo lo demás está implementado.
+Las anclas que cubre son la regla de análisis, la escritura, la consulta, la lista `labels` de la
+configuración, `biso doctor` y el contrato JSON:
+
+- **La regla de análisis vive en un sitio**, `internal/model/label.go`, y la ejercen los cuatro
+  lugares donde aparece una etiqueta: el valor de un flag, la línea de un lote, una entrada de la
+  configuración y una etiqueta ya guardada, porque la validación del modelo la pide sobre cada
+  etiqueta de la tarea antes de escribirla. De las dos lecturas que tiene, una acepta la forma
+  `clave:` y la otra no, y es la única diferencia entre ellas
+  (["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito)).
+- **La forma de una etiqueta se juzga al analizar la línea de comandos**, antes de abrir el tablero,
+  que es lo que hace que `--unchecked` no pueda apagarla
+  (["`biso ls`"](cmd/ls.md#comportamiento-caso-a-caso)).
+- **Lo que una llamada decide antes de tocar ninguna tarea** es lo que la lista `labels` rechaza, la
+  clave escrita con los dos separadores y la clave `::` repetida, en ese orden. Por eso una llamada
+  que nombra cuatro tareas no gana cuatro veces el mismo aviso, y por eso el aviso del último valor
+  no lleva tarea (["Escribir una etiqueta con ámbito"](familias-de-flags.md#escribir-una-etiqueta-con-ámbito)).
+- **La exclusividad se comprueba en el paso cuarto de la escritura**, con lo que la tarea conserva
+  tras vaciar, sustituir y quitar, que es lo que hace que
+  `--rm-labels k::1 --add-labels k:2` funcione en una sola llamada.
+- **Quitar una etiqueta sigue comparando el valor tal como está guardado**, con las dos diferencias
+  que la especificación le da a una etiqueta con ámbito: el separador no cuenta y la clave se compara
+  plegada.
+- **`biso doctor` gana las comprobaciones sobre etiquetas de su tabla**, ninguna reparable con
+  `--fix`, y su informe las saca entre las claves de criterio repetidas y el arrendamiento, que es
+  donde esa tabla las pone (["Qué comprueba"](cmd/doctor.md#qué-comprueba)).
+- **El eje de agrupación por la clave de una etiqueta no existe en código**, porque
+  ["`biso board`"](cmd/board.md) entero queda fuera de la versión 1.0 y no hay ningún comando `board`
+  todavía.
+
+**El mensaje de arranque no cambia ni un byte**, y una prueba comprueba que el bloque `BOARD` no
+lista la clave `labels` ni con una lista larga declarada, así que las cifras de
+["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño) siguen siendo las que están
+escritas ahí.
 
 ### El orden manual: especificado y todavía no implementado
 

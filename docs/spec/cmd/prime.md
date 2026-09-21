@@ -208,6 +208,16 @@ Cómo se calcula el resumen, para que la implementación sea única:
   medias: un tablero sin tipos configurados no admite `--type` en ninguna llamada, y quien lea el
   arranque tiene que enterarse ahí. Los estados no pueden quedarse vacíos, porque un tablero
   configura tres como mínimo (["`biso init`"](init.md)).
+- **El bloque `BOARD` no lista la clave `labels` de la configuración**, ni siquiera cuando tiene
+  entradas y restringe alguna clave (["La lista `labels`"](config.md#la-lista-labels)). Las líneas
+  `types` y `priorities` están porque sin ellas no se puede escribir un `--type` ni un `--priority`
+  válido, y ahí el tablero no admite nada que no esté escrito; las etiquetas no son así: se pueden
+  escribir sin declararlas, la lista puede ser larga, y el error de una clave restringida ya dice qué
+  valores admite esa clave en el momento exacto en que hace falta saberlo
+  (["La lista `labels`"](config.md#la-lista-labels)). Un agente que quiera verla entera tiene
+  `biso config get labels`. Es el criterio de ["Qué entra en el mensaje y qué se relega a
+  `--help`"](#qué-entra-en-el-mensaje-y-qué-se-relega-a---help) aplicado a esta clave, y el porqué
+  completo está en ["Las etiquetas con ámbito"](../../decisiones/detalles.md#las-etiquetas-con-ámbito).
 - Los cuatro bloques `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU` y `NEXT UP` se reparten
   el tablero por esta precedencia, y cada tarea cae en el primero que la acepte:
     1. `NEEDS ANSWER`, si tiene una pregunta abierta.

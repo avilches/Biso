@@ -124,6 +124,9 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Ciclos de dependencias | error | no |
 | Ciclos de tarea padre | error | no |
 | Claves de criterio repetidas dentro de una tarea | error | no |
+| Una etiqueta guardada que la lista `labels` de la configuración no admite, por su valor o por su separador (["La lista `labels`"](config.md#la-lista-labels)) | error | no, hay que decidir a mano qué valor se quiso decir |
+| Una tarea con más de un valor de una clave escrita con `::`, o con los dos separadores de una misma clave | error | no, por lo mismo |
+| Una clave de etiqueta que el tablero usa con los dos separadores, en tareas distintas | aviso | no, las dos escrituras eran legítimas |
 | `leaseExpiresAt` o `leaseHolder` con valor en una tarea que no está a la vez en el estado activo y asignada, o uno de los dos con valor y el otro vacío | error | sí, vaciando los dos |
 | El identificador más alto que el tablero recuerda haber asignado (["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) es menor que el identificador más alto de una tarea existente | error | sí |
 | Falta el marcador `<id>.id` en el directorio del tablero (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) | error | sí, escribiéndolo con el `id` que lleva la base de datos |
@@ -288,6 +291,26 @@ que la fila del marcador `<id>.id` discrepante. Sale bajo `Warnings:`:
 Su `code` en el JSON es `ignore_file_mismatch`, con `task` a `null`, porque es un hallazgo del tablero
 y no de ninguna tarea, igual que la raíz adicional que no se puede leer.
 
+**Las comprobaciones de etiquetas se reparten entre los dos casos de arriba, y ninguna es
+reparable.** Las primeras son daño externo: ninguna escritura de `biso` puede dejar guardada una
+etiqueta que la lista `labels` prohíbe, porque `biso config set labels` se niega a declarar una lista
+que prohibiría algo que ya está escrito (["La lista `labels`"](config.md#la-lista-labels)) y cada
+escritura valida lo que pone; y ninguna puede dejar dos valores de una clave exclusiva en la misma
+tarea, por la regla de
+["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito). Si un
+tablero llega a cualquiera de esos estados es porque alguien escribió su base de datos por fuera. Y
+`--fix` no las toca porque elegir qué valor se quiso decir, o cuál de los guardados sobra, es
+exactamente la clase de decisión que destruye información al tomarla sola.
+
+La última es distinta: **la clave usada con los dos separadores no denuncia ningún daño, sino una
+ambigüedad**, y las escrituras que la produjeron eran legítimas una por una, porque la exclusividad se
+comprueba dentro de una tarea y nunca sobre el tablero entero. Mientras nadie lo decida, esa clave no
+dice si admite uno o varios valores por tarea, aunque quien filtre por ella los encuentre todos igual
+(["Consultar por la clave de una etiqueta con ámbito"](../vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito)).
+Eso es verdad, merece la pena saberlo y no rompe nada, que es la definición de aviso de esta página. El
+remedio, cuando se quiera, es declarar la clave en la lista `labels` y reescribir las etiquetas que
+sobren, y eso tampoco lo puede decidir `--fix`.
+
 Con esto, todas las filas de la tabla son un problema real salvo los huecos en la numeración, que no
 lo son y no se reportan nunca. Y de las que sí lo son, solo la comprobación de integridad de la base de
 datos no llega a aparecer nunca como una línea del informe, por la razón de arriba.
@@ -313,6 +336,9 @@ concreto, el mismo criterio que ya usan `extra_root_unreadable` e `ignore_file_m
 | Ciclos de dependencias | `dependency_cycle` | una tarea del ciclo | `MYP-11 is part of a dependency cycle: MYP-11 -> MYP-12 -> MYP-11` |
 | Ciclos de tarea padre | `parent_cycle` | una tarea del ciclo | `MYP-11 is part of a parent cycle: MYP-11 -> MYP-12 -> MYP-11` |
 | Claves de criterio repetidas dentro de una tarea | `duplicate_criterion_key` | la tarea | `acceptance criterion key #3 is used by 2 criteria, keys must be unique within a task` |
+| Etiqueta que la lista `labels` no admite | `label_not_declared` | la tarea | `label "size::xl" is not one of the values the key "size" declares: size::s, size::m, size::l`, o, cuando lo que falla es el separador, `label "milestone:m1" uses :, and the key "milestone" is declared with ::` |
+| Exclusividad rota dentro de una tarea | `label_exclusive_violated` | la tarea | `the label key "size" has 2 values on this task, and :: allows at most one: size::a, size::b` |
+| Clave usada con los dos separadores | `label_key_mixed_separators` | `null` | `label key "milestone" is used with both separators, 2 tasks with : and 1 with ::` |
 | Arrendamiento sin tarea activa y asignada | `lease_invariant` | la tarea | `has a lease but is not both active and assigned` |
 | Identificador más alto por detrás | `highest_id_behind` | `null` | `the highest recorded id was MYP-40 and tasks go up to MYP-52` |
 | Falta el marcador `<id>.id` | `marker_missing` | `null` | `board directory has no <id>.id marker, the database says id is "3f9a2b1c"` |
@@ -558,12 +584,14 @@ Usage: biso doctor [options]
 
 Check the board for duplicate ids, unreadable tasks, values that are no longer
 configured, a broken status-role invariant, broken dependencies, dependency
-cycles, parent cycles, repeated criterion keys, a lease on a task that is not
-both active and assigned, a recorded highest id that has fallen behind, a
-database that fails its integrity check, a missing or mismatched <id>.id marker,
-an extra board root that cannot be read, an exclusion file that no longer
-matches the configured vcs, and a board directory on a filesystem where SQLite's
-WAL mode is not safe.
+cycles, parent cycles, repeated criterion keys, a stored label the labels list
+does not allow, a task with more than one value of a :: label key, a label key
+used with both separators, a lease on a task that is not both active and
+assigned, a recorded highest id that has fallen behind, a database that fails
+its integrity check, a missing or mismatched <id>.id marker, an extra board
+root that cannot be read, an exclusion file that no longer matches the
+configured vcs, and a board directory on a filesystem where SQLite's WAL mode
+is not safe.
 
 Options:
       --fix      repair what can be repaired without a decision

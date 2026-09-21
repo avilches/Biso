@@ -146,6 +146,92 @@ nuevo distinto: es un dato que el programa no puede interpretar, y se trata con 
 Los `code` correspondientes, `malformed_label` y `malformed_assignee`,
 están en la tabla de ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error).
 
+## Las etiquetas con ámbito
+
+**Una etiqueta que lleva `:` es una etiqueta con ámbito**, y esos dos puntos la parten en una clave y
+un valor. Es la única estructura que el programa lee dentro de un token, y existe para agrupar tareas
+sueltas y para que una clave admita como mucho un valor por tarea sin ningún campo nuevo; el
+razonamiento está en ["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito).
+Una etiqueta sin ningún `:` es una etiqueta plana: no tiene clave, y nada de esta sección la toca.
+
+**La regla de análisis es una sola, y vale igual al escribir, al quitar y al consultar:**
+
+1. La **clave** es el texto anterior a los primeros dos puntos.
+2. El **separador** es el grupo de dos puntos que viene justo detrás de la clave, tomado tan largo
+   como se pueda hasta un máximo de dos: en `size::m` el separador es `::` y no `:`.
+3. El **valor** es todo lo que queda detrás del separador, dos puntos incluidos: el valor de
+   `trello:card:42` es `card:42`.
+4. **El separador dice cuántos valores de esa clave admite una tarea**: `clave:valor` admite varios y
+   `clave::valor` admite como mucho uno. Lo que hace cada uno al escribir está en
+   ["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma).
+
+| Etiqueta | Clave | Separador | Valor |
+|---|---|---|---|
+| `urgent` | no tiene | | |
+| `milestone:m1` | `milestone` | `:` | `m1` |
+| `milestone::m1` | `milestone` | `::` | `m1` |
+| `trello:card:42` | `trello` | `:` | `card:42` |
+
+### Las formas mal formadas
+
+**La clave y el valor no pueden estar vacíos, y el valor no puede empezar ni terminar en `:`.**
+Cualquier otra forma con dos puntos es **error 2 (`USAGE`)**, con el mismo `code` `malformed_label`
+que un carácter fuera del alfabeto, porque es el mismo tipo de fallo: la forma del token, y no el
+vocabulario del tablero.
+
+| Etiqueta | Qué le pasa | Código |
+|---|---|---:|
+| `size:` | el valor está vacío | 2 |
+| `size::` | el valor está vacío | 2 |
+| `:m` | la clave está vacía | 2 |
+| `::` | las dos partes están vacías | 2 |
+| `size:::m` | el valor, `:m`, empieza por dos puntos | 2 |
+| `size::m:` | el valor, `m:`, termina en dos puntos | 2 |
+
+Hay un mensaje por cada mitad de la regla, y los dos llevan el mismo `code`:
+
+```
+error: malformed label: "size:"
+hint: a scoped label is key:value or key::value, and neither side can be empty
+
+error: malformed label: "size:::m"
+hint: the value of a scoped label cannot start or end with a colon
+```
+
+**La forma `clave:` sin valor es, en cambio, la sintaxis con la que un filtro pregunta por una
+clave** (["Qué valida cada filtro, y contra qué"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué)),
+y ahí no es un error. Las dos no chocan justamente porque `size:` y `size::` no son etiquetas
+guardables: la forma queda libre para el filtro sin quitarle a nadie ninguna etiqueta real.
+
+### La clave se compara plegada, y el separador no cuenta al comparar valores
+
+**Dos claves que solo se diferencian en mayúsculas son la misma clave**, en todas partes: al escribir,
+al quitar y al consultar. La comparación es el plegado de mayúsculas y minúsculas de Unicode (el
+*case folding*), sin tocar acentos, la misma que fija ["Campos de lista que admiten
+coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma) para una etiqueta entera al filtrar. Así,
+`Milestone::a` y `milestone::b` son dos valores de la misma clave, y no dos claves distintas que se
+saltan la exclusividad tecleando una mayúscula. El valor sigue la regla general de una etiqueta: se
+guarda como se escribió y se compara plegado al leer.
+
+**Y el separador no cuenta al comparar dos etiquetas por su valor**, así que `milestone:m1` y
+`milestone::m1` son la misma etiqueta al consultar y al quitar: `--label milestone:m1` encuentra las
+dos y `--rm-labels milestone:m1` quita cualquiera de las dos. Al añadir sí cuenta, porque ahí el
+separador no describe el valor sino cuántos admite la clave
+(["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma)).
+
+**Al quitar, lo que se pliega es la clave y no el valor.** `--rm-labels` compara el valor tal como
+está guardado, letra por letra, igual que cualquier otro `--rm-*` de una lista de tokens, así que
+`--rm-labels colour:red` no quita un `colour::Red` guardado, aunque sí quitaría un `colour::red`. El
+plegado del que habla el párrafo anterior es el de las lecturas, y quitar es una escritura.
+
+**Esta regla se aplica al escribir**, igual que el alfabeto de la sección anterior, y por la misma
+razón: es lo que impide que una etiqueta que no se puede analizar llegue a guardarse. Al leer no se
+vuelve a aplicar, así que una etiqueta guardada de otra manera, por una edición directa de la base de
+datos, se lee y se imprime tal cual, y ninguna comprobación de
+["`biso doctor`"](cmd/doctor.md#qué-comprueba) la señala. Es el mismo trato que ya tenía una etiqueta
+guardada fuera del alfabeto, y no hace falta más: no hay ningún camino por dentro del programa que
+deje una ahí.
+
 ## El salto de línea en un campo `string`
 
 `title`, `author` de tarea/comentario/pregunta y `Criterion.text` de `acceptanceCriteria`

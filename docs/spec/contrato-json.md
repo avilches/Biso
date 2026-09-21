@@ -72,6 +72,16 @@ Precisiones:
   persona que se pueda meter en esa lista.
 - **`parent` es el identificador ya resuelto** (`MYP-11`), nunca el texto de búsqueda que se haya
   tecleado tras `--parent` (["Cómo se resuelve una referencia a una tarea"](referencias.md)).
+- **Un filtro por la clave de una etiqueta viaja en `label` y en `labelOr` con un solo dos puntos**,
+  `milestone:`, aunque se escribiera `milestone::`, porque las dos formas son el mismo filtro
+  (["Consultar por la clave de una etiqueta con ámbito"](vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito)).
+  Lo que sí conserva es la grafía de la clave tal como se tecleó: se compara plegada y no hay ninguna
+  grafía configurada a la que resolverla, al contrario de lo que pasa con un `status`.
+- **Ninguna tarea trae un campo derivado por clave de etiqueta**, en ningún `kind`: `labels` es la
+  lista entera, y quien quiera el valor de una clave la parte por los primeros dos puntos con la
+  regla de ["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito). Añadir ese
+  campo después sería un cambio compatible; quitarlo, no, y por eso no entra en la versión 1.0
+  (["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito)).
 - **`blocked`, `waiting` y `active` son los tres únicos filtros con un opuesto explícito que compite
   por el mismo bit.** `null` es "no se pidió ninguno de los dos", la misma convención que usa el resto
   de este contrato para "sin valor" (["Números, fechas y ausencias"](#números-fechas-y-ausencias)), y
@@ -130,18 +140,18 @@ regla de cuándo acompañan:
 |---|---|
 | `exitCode`, `code`, `message` | En todos, siempre |
 | `field` y `given` | En los que nombran un flag, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran un flag |
-| `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs`. En `ambiguous_vocabulary` no es el conjunto entero, sino **solo los valores configurados que empatan**, que es lo que hay que desambiguar (["Cuando el tablero tiene dos valores que se normalizan igual"](vocabularios.md#cuando-el-tablero-tiene-dos-valores-que-se-normalizan-igual)) |
+| `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs`. En `ambiguous_vocabulary` no es el conjunto entero, sino **solo los valores configurados que empatan**, que es lo que hay que desambiguar (["Cuando el tablero tiene dos valores que se normalizan igual"](vocabularios.md#cuando-el-tablero-tiene-dos-valores-que-se-normalizan-igual)). `wrong_label_separator` no lo lleva, porque lo que rechaza no es un valor contra un conjunto sino un separador contra el que la clave declara, y una clave abierta no tiene ningún valor que ofrecer (["La lista `labels`"](cmd/config.md#la-lista-labels)) |
 | `details` | Solo en `batch_invalid`, y es una lista de objetos de esta misma forma, uno por fallo |
 | `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió **la orden que falló**, no las de las que fueron bien antes, que sí están todas en `data.vcsOutput` cuando la llamada acaba bien (["`biso snapshot`"](cmd/snapshot.md)) |
 | `warnings` | Al mismo nivel que `error`, no dentro de él, en cualquier `code` cuya llamada haya producido al menos un aviso antes de fallar, con la misma forma que `data.warnings` (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)) |
 
-**La fila de `field` y `given` tiene dos excepciones, y son de signo distinto.** La primera es
-`incompatible_flags`, que **no lleva ninguna de las dos**: nombra un par de flags, y ninguno de los
-dos es más culpable que el otro, así que elegir uno para `field` sería inventarse una atribución que
-la llamada no tiene. Los demás errores del código 2 que nombran un flag sí las llevan,
+**La fila de `field` y `given` tiene excepciones declaradas, y no son todas del mismo signo.** La
+primera es `incompatible_flags`, que **no lleva ninguna de las dos**: nombra un par de flags, y
+ninguno de los dos es más culpable que el otro, así que elegir uno para `field` sería inventarse una
+atribución que la llamada no tiene. Los demás errores del código 2 que nombran un flag sí las llevan,
 `read_only_flag` incluido, que nombra uno solo (["Los flags globales"](cmd/flags-globales.md)).
 
-La segunda es `invalid_lease`, que **lleva `field` y no lleva `given`**. Sus dos mitades
+La siguiente es `invalid_lease`, que **lleva `field` y no lleva `given`**. Sus dos mitades
 (["`biso new`"](cmd/new.md#el-modo-lote)) no reprochan ningún valor: la primera reprocha el estado
 de la tarea sobre la que llegó la clave, y la segunda que falte la otra clave de la pareja. No hay
 nada que citar, así que la clave no viaja, en vez de viajar vacía: una `given` de cadena vacía
@@ -149,6 +159,15 @@ significa "el valor que llegó estaba vacío", que es lo que contesta `--rm-labe
 ningún valor". Es la misma regla que ["Números, fechas y ausencias"](#números-fechas-y-ausencias)
 aplica a una salida de datos, aquí aplicada a la única clave de un error que puede faltar sin que
 falte también su pareja.
+
+Y la última es `mixed_label_separators`, que **lleva `field` igual a `labels` y tampoco lleva
+`given`**, por la misma razón que `incompatible_flags` no elige flag: su mensaje cita dos etiquetas
+que se contradicen entre sí (["Escribir una etiqueta con ámbito"](familias-de-flags.md#escribir-una-etiqueta-con-ámbito))
+y ninguna de las dos es la culpable, así que copiar una en `given` diría que el problema es esa y no
+la pareja. `field` sí se puede nombrar sin inventar nada, porque el campo en discordia es uno solo.
+`exclusive_label_conflict`, en cambio, no lleva ninguna de las dos claves y no es ninguna excepción:
+sale con el código 6, y la fila de arriba solo se las promete a los del 3 y a los del 2 que nombran
+un flag.
 
 Las cinco de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
 comprobable: quien ramifica sobre `unknown_status` sabe que va a tener `field`, `given` y `valid`, y
@@ -164,11 +183,11 @@ agrupada por el código de salida con el que sale cada uno:
 | Código de salida | `code` |
 |---:|---|
 | 1 | `internal` |
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_string_value`, `malformed_ordinal`, `id_like_positional`, `missing_text`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `self_ordinal_neighbour`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_ordinal_value`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_snapshot_id`, `unknown_key`, `id_taken`, `invalid_lease`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
-| 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_assignee`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_line`, `invalid_encoding` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_string_value`, `malformed_ordinal`, `mixed_label_separators`, `id_like_positional`, `missing_text`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `self_ordinal_neighbour`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_ordinal_value`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_snapshot_id`, `unknown_key`, `id_taken`, `invalid_lease`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
+| 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_label_key`, `unknown_label_value`, `wrong_label_separator`, `unknown_assignee`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_line`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `no_such_command`, `unknown_config_key`, `criterion_not_found`, `comment_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous`, `comment_ambiguous` |
-| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity`, `neighbour_without_ordinal` |
+| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity`, `exclusive_label_conflict`, `neighbour_without_ordinal` |
 | 7 | `batch_invalid` |
 | 8 | `busy`, `io_error`, `file_unreadable`, `lease_lost`, `no_terminal`, `port_in_use`, `vcs_commit_failed`, `vcs_push_failed` |
 | 20 | `no_board`, `pointer_unresolved` |

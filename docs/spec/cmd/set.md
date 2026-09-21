@@ -44,6 +44,9 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Varias referencias y `--check-ac all` | Válido |
 | Una de varias referencias no existe | Error 4, y **no se escribe ninguna**, ni siquiera las buenas |
 | Un `--replace-*` sustituye una lista no vacía | Se hace, con el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) diciendo cuántos elementos ha reemplazado |
+| `--add-labels k::v` sobre una tarea que conserva otras etiquetas de la clave `k` | Se hace: `k::v` queda como única etiqueta de esa clave y el aviso nombra las que quitó (["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito)) |
+| `--add-labels k:v` sobre una tarea que conserva un `k::x` | Error 6 con el `code` `exclusive_label_conflict`, y no se escribe nada, ni en esa tarea ni en las demás de la llamada |
+| `k:a` y `k::b` de la misma clave en la misma llamada | Error 2 con el `code` `mixed_label_separators`, sin mirar el orden en que se escribieron |
 | Paso a un estado terminal con criterios sin marcar | Se hace, con aviso |
 | Paso a un estado terminal con una pregunta abierta (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)) | Se hace, con aviso, igual que en `biso finish` (["`biso finish`"](verbos-del-ciclo.md#biso-finish)) y como atribuye la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) a cualquier llegada al estado terminal |
 | Todos los flags dejan la tarea igual | Código 0, con `note: MYP-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (["La renovación"](../lease.md#la-renovación) de `lease.md`) |
@@ -151,6 +154,7 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 | Valor fuera de un vocabulario, tarea ilegible | 3 |
 | Alguna referencia no existe, o un selector de texto no encaja con ningún criterio o comentario | 4 |
 | Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios o comentarios | 5 |
+| Una etiqueta con ámbito escrita con `:` sobre una clave que la tarea conserva con `::` (["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito)) | 6 |
 | La vecina de `--above` o de `--below` no tiene clave de orden | 6 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 8 |
 | No hay tablero | 20 |
@@ -178,6 +182,11 @@ field that breaks them:
   --add-labels X      add one or more       --replace-labels X   replace the whole list
   --rm-labels X       remove one or more    --clear-labels       empty the list
 The same works for --assignees, --refs and --deps.
+
+A label with a colon is scoped: key:value allows several values of that key
+on a task, key::value at most one, and writing key::value drops the other
+values of that key and says on stderr which ones it dropped. Filter with
+`biso ls --label key:` to get any value of a key.
 
 Criteria have three, because a criterion's text can contain a comma and so is
 never split on one. There is no whole-list replace; do it by clearing and
@@ -245,9 +254,10 @@ replaced.
 
 Exit codes:
   0  done                    5  something matched more than one thing
-  2  bad usage               6  --above or --below on a task with no place
-  3  unknown value           8  the board could not be written
+  2  bad usage               6  a scoped label already has its one value,
+  3  unknown value              or --above/--below on a task with no place
   4  a task, criterion or comment was not found
+                             8  the board could not be written
                              20 no board here
 
 Examples:

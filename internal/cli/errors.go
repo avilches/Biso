@@ -124,6 +124,33 @@ func errMalformedToken(f *FlagSpec, given string) *model.Error {
 	return e
 }
 
+// checkLabelSyntax is the rule of
+// docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito applied to one
+// value of a flag that takes labels, in the reading that flag declares: the
+// flags that write a label refuse the key form, and the two filters accept
+// it because it is how they ask for any value of a key.
+//
+// It answers exit code 2, before the board is even opened, which is what
+// makes it something --unchecked cannot turn off: what it refuses is the
+// shape of the token and not a check against this board
+// (docs/spec/cmd/ls.md#comportamiento-caso-a-caso).
+func checkLabelSyntax(f *FlagSpec, value string) *model.Error {
+	var err *model.Error
+	switch f.Labels {
+	case LabelWritten:
+		_, err = model.ParseLabel(value)
+	case LabelFilter:
+		_, err = model.ParseLabelKeyOrLabel(value)
+	default:
+		return nil
+	}
+	if err == nil {
+		return nil
+	}
+	err.Field = f.field()
+	return err
+}
+
 // errMalformedString is the error of
 // docs/spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string, for a
 // one-line field that arrives carrying a newline or a carriage return.

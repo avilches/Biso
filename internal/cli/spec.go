@@ -79,6 +79,19 @@ func (a Alphabet) symbols() string {
 	return ""
 }
 
+// LabelSyntax is which reading of the scoped-label rule a flag's values go
+// through. The difference between the two is one form: `milestone:` with
+// nothing behind the separator, which is how a filter asks for any value of
+// a key and which no task can ever carry
+// (docs/spec/valores-de-entrada.md#las-formas-mal-formadas).
+type LabelSyntax int
+
+const (
+	NotALabel LabelSyntax = iota
+	LabelWritten
+	LabelFilter
+)
+
 // PairKind says whether a value is a pair of the form "<left>=<right>", and
 // which "=" separates the two halves. The only flag that takes a pair is
 // --set-comment-date, which has to cut at the last "=" because its left half
@@ -140,6 +153,13 @@ type FlagSpec struct {
 	// underscores.
 	Alphabet Alphabet
 	Noun     string
+
+	// Labels marks a flag whose values go through the parsing rule of
+	// docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito, and says
+	// which of its two readings applies. It is checked here, on the command
+	// line, so that a malformed label is refused before the board is
+	// opened and whatever --unchecked turns off cannot reach it.
+	Labels LabelSyntax
 
 	// SingleLine marks a field of type string, one line of text, which
 	// admits no carriage return and no newline

@@ -297,6 +297,27 @@ Las reglas del lote, todas obligatorias:
   un fallo de validación: su forma de estar vacío es `[]`, nunca `null`, la misma regla que
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
   órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta.
+- **`labels` se valida línea a línea con la regla de las etiquetas con ámbito.** Una etiqueta mal
+  formada, una clave escrita con `::` que recibe más de un valor, una clave con los dos separadores
+  en la misma línea, o un valor o un separador que la lista `labels` de la configuración no admite,
+  son fallos de validación de esa línea
+  (["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito) y
+  ["La lista `labels`"](config.md#la-lista-labels)). **Aquí una clave con `::` repetida no se queda con
+  el último valor**, a diferencia de lo que hace esa misma pareja escrita en dos `--add-labels`: en una
+  línea de comandos los flags son una secuencia y el último es la intención más reciente, mientras que
+  la lista `labels` de una línea describe el estado guardado de una tarea, y quedarse con uno de los
+  valores en silencio perdería un dato que el fichero afirmaba. Los mensajes, con la forma de línea
+  del informe del lote:
+  ```
+  line 7: malformed label: "size:"
+  line 9: labels mix the two separators of the key "size": "size:a" and "size::b"
+  line 12: labels give the key "size" more than one value, and :: allows at most one: "size::a" and "size::b"
+  line 14: unknown label value: "size::xl" (valid: size::s, size::m, size::l)
+  line 18: wrong separator for the label key "milestone": "milestone:m1"
+  ```
+  Sus `code`, dentro de `details`, son los mismos que fuera del lote: `malformed_label`,
+  `mixed_label_separators`, `exclusive_label_conflict`, `unknown_label_value` y
+  `wrong_label_separator` (["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)).
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
   escriben, y el mensaje dice la línea y la clave. Las únicas excepciones son `definitionOfDone`,
   `documentation` y `modifiedFiles`, con cualquiera de sus valores admitidos, que se convierten con la regla de más

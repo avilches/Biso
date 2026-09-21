@@ -165,6 +165,84 @@ filtro de lectura, en cambio, no distingue: `biso ls --label parser` encuentra l
 prosa, y no comparten la regla de acentos de los selectores de texto de la sección
 ["Selectores de criterios"](#selectores-de-criterios).
 
+### Escribir una etiqueta con ámbito
+
+Una etiqueta que lleva `:` se analiza con la regla de
+["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito), que fija cuál es su clave,
+cuál su valor y qué forma es mal formada. Lo que añade esta sección es lo único que el separador
+decide al escribir: **una clave escrita con `::` deja como mucho una etiqueta suya en la tarea, y una
+clave escrita con `:` admite todas las que se le pongan.**
+
+**La exclusividad se comprueba sobre la lista que queda al final de la escritura**, no sobre la que
+la tarea tenía al empezar. Con el orden fijo de
+["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura),
+eso significa que los pasos que vacían, sustituyen y quitan ya se han aplicado cuando se juzga lo que
+se añade, así que `biso set MYP-11 --rm-labels milestone::m1 --add-labels milestone:m2` funciona en
+una sola llamada aunque la tarea empezara con una etiqueta exclusiva de esa clave. La comprobación
+es de la fase de validación, así que cuando falla no se escribe nada.
+
+| Caso | Qué pasa | Código |
+|---|---|---:|
+| `--add-labels k::v` sobre una tarea que conserva otras etiquetas de la clave `k` | `k::v` queda como única etiqueta de `k`: las demás se quitan, sean `k:x` o `k::y`, y el aviso las nombra una a una | 0 |
+| `--add-labels k:v` sobre una tarea que conserva un `k::x`, incluso si `x` es el mismo `v` | Error 6, y no se escribe nada. El separador no es un detalle del valor: escribir `k:v` pide que la clave admita varios, y la tarea dice que admite uno | 6 |
+| `k:a` y `k::b` de la misma clave en la misma llamada, en cualquier orden y repartidas como sea entre `--add-labels` y `--replace-labels` | Error 2. Los valores de `--rm-labels` no cuentan aquí, porque no escriben ninguna etiqueta: son justamente lo que deja sitio a la que se añade | 2 |
+| `k::a` y `k::b` en el mismo flag | Gana la última escrita en la línea de comandos, con aviso. Repartidas entre `--add-labels` y `--replace-labels`, quien manda es el orden de los pasos y no la línea de comandos, más abajo | 0 |
+| `--rm-labels k:v` | Quita la etiqueta de esa clave y ese valor, sea `k:v` o `k::v`: al quitar, el separador no cuenta | 0 |
+| `--rm-labels k:` o `--rm-labels k::` | Error 2, etiqueta mal formada: la forma sin valor es sintaxis de filtro y no de escritura, y para vaciar la lista entera está `--clear-labels` | 2 |
+
+Los avisos de esos casos, con su `code` en ["Notas y avisos"](salida-y-terminal.md#notas-y-avisos):
+
+```
+warning: --add-labels: "size::m" replaced size::s, size:l on MYP-11
+warning: --add-labels: key "size" given twice with ::, kept "size::b"
+```
+
+El primero nombra lo que quitó en el orden en que la tarea lo tenía guardado, porque las listas nunca
+se ordenan solas. El segundo cuenta las apariciones cuando son más de dos, igual que
+`duplicate_flag_value`: `key "size" given 3 times with ::, kept "size::c"`.
+
+Y los mensajes que rechazan la escritura:
+
+```
+error: MYP-11 already has "size::s", and :: allows at most one value of the key "size"
+hint: drop it first, as in --rm-labels size::s --add-labels size:m
+
+error: "size:a" and "size::b" mix the two separators of the key "size"
+hint: a key takes either several values with :, or at most one with ::
+```
+
+Sus `code` son `exclusive_label_conflict` (código 6) y `mixed_label_separators` (código 2), los dos en
+["Los identificadores de error"](contrato-json.md#los-identificadores-de-error). El segundo **no culpa
+a ninguno de los dos valores**, porque ninguno lo es más que el otro, y por eso los nombra en el orden
+en que la escritura los aplicaría, el de ["Orden de aplicación dentro de una
+escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura): el de `--replace-labels`, que
+sustituye, antes que el de `--add-labels`, que añade. Dentro de un mismo flag ese orden es el de la
+línea de comandos. Qué claves lleva su objeto de error está en
+["Los errores en JSON"](contrato-json.md#los-errores-en-json).
+
+**Nada de esto es propio de `--add-labels`.** `--replace-labels` deja la lista que se le da y la misma
+regla la juzga entera, así que `--replace-labels k:a,k::b` es el mismo error 2 y
+`--replace-labels k::a,k::b` deja `k::b` con el mismo aviso. Lo que sí cambia con `--replace-labels`
+y con `--clear-labels` es que la tarea no conserva nada de antes, así que una etiqueta exclusiva que
+estuviera guardada no puede entrar en conflicto con nada: se fue en su propio paso.
+
+**Entre `--add-labels` y `--replace-labels`, en cambio, no decide la línea de comandos sino el orden
+de los pasos**, porque sustituir va antes que añadir
+(["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)).
+Así, `--add-labels g::AA --replace-labels g::BB` deja `g::AA` aunque se escribiera primero: la
+sustitución pone `g::BB` y la adición la reemplaza, que es lo que hace cualquier `::` sobre una clave
+que la tarea conserva. El aviso que sale es entonces el de la sustitución,
+`warning: --add-labels: "g::AA" replaced g::BB on MYP-11`, y no el del último valor, porque lo que
+pasó es que una etiqueta ya escrita en esta misma llamada se fue.
+
+**Y la misma regla vale para cada línea de un lote de `biso new --from`**, donde no hay flags sino la
+lista `labels` de la línea, con una diferencia declarada en ["El modo lote"](cmd/new.md#el-modo-lote):
+ahí dos valores `::` de la misma clave son un fallo de validación en vez de quedarse con el último.
+
+**Si la lista `labels` de la configuración restringe la clave**, escribir un valor que no declara, o
+la clave con el otro separador, es error 3, y esa comprobación va antes que todo lo de arriba
+(["La lista `labels`"](cmd/config.md#la-lista-labels)).
+
 ## Campos de lista sin coma (criterios)
 
 | Campo | Añade | Quita (selector) | Vacía |
@@ -540,6 +618,7 @@ una tarea nueva no hace nada y avisa con `clear_on_new_task`, como cualquier otr
 | `--rm-labels`, `--rm-deps` o cualquier otro `--rm-*` de lista de tokens, sobre un valor que la tarea no tiene | Sin efecto, con `warning: --rm-labels: "urgent" not present, nothing removed` | 0 |
 | Mayúsculas en una etiqueta o una persona asignada, por ejemplo `--add-labels Parser --add-labels parser` | Quedan como dos valores distintos al guardar; un filtro de lectura como `ls --label parser` encuentra los dos | 0 |
 | Mayúsculas y acentos en el selector de texto de un criterio o de un comentario | Se pliegan las mayúsculas y se descartan los acentos antes de comparar (normalización NFKD, sin marcas combinantes); no cambia si el resultado es 0, 4 o 5, solo qué encuentra | sin cambio |
+| Una etiqueta con ámbito en cualquiera de los flags de etiquetas | Lo decide ["Escribir una etiqueta con ámbito"](#escribir-una-etiqueta-con-ámbito), según el separador y según lo que la tarea conserve tras los `--rm-labels` de la misma llamada | 0, 2, 3 o 6 |
 | `--ordinal` con un valor que no es `first` ni `last`, la cadena vacía incluida | Error con el `code` `invalid_ordinal_value` (["El orden manual"](#el-orden-manual)) | 2 |
 | `--above` o `--below` nombrando una de las tareas que la propia llamada mueve | Error con el `code` `self_ordinal_neighbour` | 2 |
 | `--above` o `--below` sobre una tarea que no tiene clave de orden | Error con el `code` `neighbour_without_ordinal`, y no se escribe ninguna de las tareas de la llamada | 6 |
