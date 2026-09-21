@@ -248,11 +248,27 @@ func (r *reader) resolveFilters(p ListParams) (Filters, error) {
 		f.Status = r.everyStatus(f.AnyStatus)
 	}
 
-	if !f.Unchecked {
-		if err := r.checkKnown("label", f.Label, r.labelsOfTheBoard()); err != nil {
+	// The form of a label filter is judged before the board is looked at,
+	// and --unchecked does not turn it off: a malformed label is the shape
+	// of the token and not a check against this board
+	// (docs/spec/cmd/ls.md#comportamiento-caso-a-caso). Judging it here is
+	// also what lets the key form travel on in one spelling below.
+	for _, field := range []struct {
+		name   string
+		values *[]string
+	}{{"label", &f.Label}, {"labelOr", &f.LabelOr}} {
+		normalized, err := labelFilterValues(field.name, *field.values)
+		if err != nil {
 			return f, err
 		}
-		if err := r.checkKnown("labelOr", f.LabelOr, r.labelsOfTheBoard()); err != nil {
+		*field.values = normalized
+	}
+
+	if !f.Unchecked {
+		if err := r.checkLabelFilter("label", f.Label); err != nil {
+			return f, err
+		}
+		if err := r.checkLabelFilter("labelOr", f.LabelOr); err != nil {
 			return f, err
 		}
 		if err := r.checkKnown("assignee", f.Assignee, r.assigneesOfTheBoard()); err != nil {
@@ -374,6 +390,109 @@ func (r *reader) labelsOfTheBoard() []string {
 	return r.setOf(r.b.Config.Labels, func(t *model.Task) []string { return t.Labels })
 }
 
+// labelKeysOfTheBoard is the other set of that table, the one the key form
+// of a filter validates against: the keys of the labels the configuration
+// declares and of the ones any task carries, archived and finished included
+// (docs/spec/vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito).
+// A declared key counts as known although no task uses it yet, which is
+// exactly what makes declaring it useful.
+func (r *reader) labelKeysOfTheBoard() []string {
+	return sortedCopy(labelKeys(r.labelsOfTheBoard()))
+}
+
+// labelFilterValues judges the form of every value of --label or --label-or
+// and answers them in the spelling the effective filter carries. The key
+// form travels with a single colon however it was typed, because the two
+// spellings are the same filter, and the key keeps the spelling it was
+// typed in, because there is no configured one to resolve it to
+// (docs/spec/contrato-json.md#los-filtros-de-biso-ls).
+func labelFilterValues(field string, values []string) ([]string, *model.Error) {
+	if len(values) == 0 {
+		return values, nil
+	}
+	out := make([]string, 0, len(values))
+	for _, v := range values {
+		l, err := model.ParseLabelKeyOrLabel(v)
+		if err != nil {
+			err.Field = field
+			return nil, err
+		}
+		if l.IsKey() {
+			out = append(out, l.Key+model.LabelSeparatorSeveral)
+			continue
+		}
+		out = append(out, v)
+	}
+	return out, nil
+}
+
+// checkLabelFilter is checkKnown for the two label filters, which validate
+// against one of two sets depending on the form of the value: the key form
+// against the keys of the board, and everything else against its labels,
+// where the separator does not count, so --label milestone:m1 finds a task
+// labelled milestone::m1
+// (docs/spec/vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito).
+func (r *reader) checkLabelFilter(field string, values []string) *model.Error {
+	if len(values) == 0 {
+		return nil
+	}
+	labels := r.labelsOfTheBoard()
+	keys := sortedCopy(labelKeys(labels))
+	for _, v := range values {
+		l := model.SplitLabel(v)
+		if l.IsKey() {
+			if containsFold(keys, l.Key) {
+				continue
+			}
+			return unknownLabelKey(field, v, l.Key, keys)
+		}
+		if anyLabelMatches(labels, v) {
+			continue
+		}
+		e := &model.Error{
+			ExitCode: 3,
+			Code:     "unknown_label",
+			Message:  fmt.Sprintf("unknown label: %q", v),
+			Field:    field,
+			Given:    v,
+		}
+		if closest := match.Suggest(v, labels, 5); len(closest) > 0 {
+			e.Hints = []string{"did you mean: " + strings.Join(closest, ", ") + "?"}
+		}
+		return e
+	}
+	return nil
+}
+
+// unknownLabelKey is the error of a key the board does not have, with up to
+// five of the closest ones. Its `given` is the filter as it was typed, and
+// its `valid` the keys of the board.
+func unknownLabelKey(field, given, key string, keys []string) *model.Error {
+	e := &model.Error{
+		ExitCode: 3,
+		Code:     "unknown_label_key",
+		Message:  fmt.Sprintf("unknown label key: %q", key),
+		Field:    field,
+		Given:    given,
+		Valid:    keys,
+	}
+	if closest := match.Suggest(key, keys, 5); len(closest) > 0 {
+		e.Hints = []string{"did you mean: " + strings.Join(closest, ", ") + "?"}
+	}
+	return e
+}
+
+// anyLabelMatches answers whether any label of a set is what one filter
+// value names, by the comparison of labelMatches.
+func anyLabelMatches(known []string, wanted string) bool {
+	for _, k := range known {
+		if labelMatches(k, wanted) {
+			return true
+		}
+	}
+	return false
+}
+
 // assigneesOfTheBoard is the set --assignee validates against. The authors
 // are not in it: there is no --author filter, so a person who only ever
 // wrote a task and never had one assigned does not belong to it.
@@ -427,11 +546,11 @@ func (r *reader) matches(t *model.Task, f Filters) bool {
 	// letter for letter and read without distinguishing
 	// (docs/spec/familias-de-flags.md#campos-de-lista-que-admiten-coma).
 	for _, label := range f.Label {
-		if !containsFold(t.Labels, label) {
+		if !anyLabelMatches(t.Labels, label) {
 			return false
 		}
 	}
-	if len(f.LabelOr) > 0 && !anyOfFold(t.Labels, f.LabelOr) {
+	if len(f.LabelOr) > 0 && !anyLabelOf(t.Labels, f.LabelOr) {
 		return false
 	}
 	if len(f.Assignee) > 0 && !anyOfFold(t.Assignees, f.Assignee) {
@@ -591,6 +710,17 @@ func containsFold(values []string, v string) bool {
 func anyOfFold(values, wanted []string) bool {
 	for _, w := range wanted {
 		if containsFold(values, w) {
+			return true
+		}
+	}
+	return false
+}
+
+// anyLabelOf is anyOfFold for the labels of a task, with the comparison a
+// scoped label brings: the OR of --label-or over the same rule --label uses.
+func anyLabelOf(labels, wanted []string) bool {
+	for _, w := range wanted {
+		if anyLabelMatches(labels, w) {
 			return true
 		}
 	}
