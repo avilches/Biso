@@ -231,6 +231,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | Un argumento suelto con el bloque ya cerrado | 2 | `unexpected_argument` | `error: unexpected argument: high` |
 | Un escalar repetido con valores distintos | 2 | `duplicate_scalar_flag` | `error: --status given twice with different values: "In Progress" and "Done"` |
 | La misma clave de `--set-comment-date` con dos instantes (["Comentarios"](familias-de-flags.md#comentarios)) | 2 | `duplicate_scalar_flag` | `error: --set-comment-date: key "3" given twice with different values: "2026-08-14T10:22:00Z" and "2026-08-15T10:22:00Z"` |
+| Un valor de pareja al que le falta su `=` | 2 | `unexpected_argument` | `error: --set-comment-date: expected <sel>=<instant>, got "trello"` |
 | Más de un flag pidiendo la entrada estándar | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc and --append-plan both read stdin` |
 | El mismo flag repetible pidiéndola dos veces | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc reads stdin twice` |
 | Un valor fuera del dominio de `--color` | 2 | `invalid_color_mode` | `error: --color: unknown value: "sometimes"` |
@@ -241,6 +242,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | `--dry-run` en un comando de lectura | 2 | `read_only_flag` | `error: --dry-run does not apply to a read-only command` |
 | `--print` donde no afecta a ninguna tarea | 2 | `read_only_flag` | `error: --print does not apply to a command that affects no task` |
 | Un valor vacío donde no se documenta ninguno | 2 | `unexpected_argument` | `error: --rm-labels cannot be empty` |
+| El valor vacío de una pareja | 2 | `unexpected_argument` | `error: --set-comment-date: the value of key "3" cannot be empty` |
 | Un salto de línea en un campo de una línea (["El salto de línea en un campo `string`"](#el-salto-de-línea-en-un-campo-string)) | 2 | `malformed_string_value` | `error: malformed title: "first line\nsecond line"` |
 | Un escalar de tarea vacío sin vocabulario cerrado | 3 | `empty_scalar_value` | `error: --author cannot be empty`, con `hint: to clear it, use --clear-author` cuando el campo tiene un flag que lo vacía |
 | Un argumento que no es UTF-8 | 3 | `invalid_encoding` | `error: invalid UTF-8 in argument 4 at byte 2: "ok\xffbad"`, con `field` igual a `argument` |

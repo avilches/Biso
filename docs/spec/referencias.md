@@ -31,8 +31,7 @@ mayúsculas ni acentos, en:
 el título, la descripción, el plan, las notas, el resumen final, el texto de los criterios de
 aceptación, el cuerpo de los comentarios, el cuerpo de la pregunta abierta y las etiquetas.
 
-No busca en los identificadores, ni en las referencias, ni en los campos de
-extensión.
+No busca en los identificadores ni en las referencias.
 
 **Alcanzar el cuerpo de la pregunta abierta tiene dos consecuencias, y ambas se aceptan a
 propósito.** La primera es que la resolución de una referencia por texto también llega ahí, así que

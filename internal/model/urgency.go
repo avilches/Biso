@@ -72,10 +72,10 @@ type UrgencyContext struct {
 // one is an error whether it is being written or read, so there is no
 // number to give: such a task is the undecodable task of
 // docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar,
-// exactly like one carrying an extension key the configuration has
-// dropped. Which of the two things happens next, failing with exit code 3
-// on a targeted read or skipping the task with a warning on a set read, is
-// the caller's decision and not this function's.
+// exactly like a row the database returns corrupt. Which of the two things
+// happens next, failing with exit code 3 on a targeted read or skipping the
+// task with a warning on a set read, is the caller's decision and not this
+// function's.
 //
 // That check comes before the shortcut for a terminal task, whose urgency
 // is 0.0 with no term computed: a task the board cannot interpret is

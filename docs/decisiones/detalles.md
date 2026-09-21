@@ -253,7 +253,7 @@ ofrecerse, no para prohibir el resto.
 
 **Descartado: una clave de configuración nueva para declarar las claves de ámbito.** La lista `labels`
 ya existía, ya era el sitio de las etiquetas declaradas, y con esta decisión solo gana el papel de
-restringir por clave. Una clave nueva habría sido la vigésima primera, con su validación, su flag en
+restringir por clave. Una clave nueva habría sido la vigésima, con su validación, su flag en
 `biso init`, su presencia en `biso snapshot` y su superficie en `biso config`.
 
 **Descartado: dejar las claves sin declarar del todo, o declararlas siempre.** Sin ninguna declaración
@@ -519,10 +519,10 @@ imprimía en `biso get` y viajaba en la exportación. Costaba una tabla propia y
 consultas de una lectura completa del tablero, que es el camino caliente de `biso ls` y `biso prime`;
 uno de los nueve pasos del orden de aplicación de una escritura; una de las veinte claves de
 configuración, con su validación de vocabulario en uso, su flag en `biso init` y su presencia en la
-simetría de `biso snapshot` con `biso init --from`; cuatro identificadores de error; la única forma
-`clave=valor` de toda la línea de comandos, con una regla de corte contraria a la de
-`--set-comment-date`; uno de los dos alfabetos cerrados del programa; unas 158 líneas de Go fuera de
-pruebas y otras 155 dentro; quince páginas de la especificación que lo nombran; y 33 bytes de la parte
+simetría de `biso snapshot` con `biso init --from`; cuatro identificadores de error; una de las dos
+formas `clave=valor` de la línea de comandos, la que se cortaba por el primer `=`, con una regla
+contraria a la de `--set-comment-date`, que sigue existiendo y corta por el último; uno de los dos
+alfabetos cerrados del programa; unas 158 líneas de Go fuera de pruebas y otras 155 dentro; quince páginas de la especificación que lo nombran; y 33 bytes de la parte
 fija del mensaje de arranque. Una medición de 2026-09-21 sobre las 535 tareas de seis tableros de
 Backlog.md no encontró ni una vez la necesidad que el campo decía cubrir. Backlog.md no tiene campo de
 extensión, así que ese cero no prueba nada por sí solo: lo que decide es que el campo cuesta todo lo

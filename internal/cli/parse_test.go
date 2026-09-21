@@ -721,6 +721,11 @@ func TestMalformedStringValue(t *testing.T) {
 	if e.Field != "title" {
 		t.Errorf("field is %q", e.Field)
 	}
+
+	// The rule belongs to the field and not to one flag: --author is the
+	// other flag whose value is one line.
+	_, err = parse(t, "set", "MYP-1", "--author", "first\rsecond")
+	wantError(t, err, 2, "malformed_string_value")
 }
 
 func TestPairs(t *testing.T) {

@@ -163,20 +163,16 @@ func splitList(s string) []string {
 func isEmpty(s string) bool { return strings.TrimSpace(s) == "" }
 
 // allowed answers whether every character of a value is inside the alphabet
-// the field closes. Neither alphabet admits a space.
+// the field closes. The alphabet does not admit a space.
 func (a Alphabet) allowed(s string) bool {
 	if a == AnyText {
 		return true
-	}
-	symbols := "-_."
-	if a == TokenAlphabet {
-		symbols = "-_.:@"
 	}
 	for _, r := range s {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			continue
 		}
-		if strings.ContainsRune(symbols, r) {
+		if strings.ContainsRune("-_.:@", r) {
 			continue
 		}
 		return false

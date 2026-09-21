@@ -68,9 +68,8 @@ variante del primero.
 
 ### El primer caso: una tarea ilegible
 
-Una tarea puede resultar ilegible: la base de datos devuelve algo corrupto para esa fila, o la tarea
-lleva una clave de extensión que la configuración ya no declara. El resto del tablero sigue legible, y
-la regla depende del tipo de lectura:
+Una tarea puede resultar ilegible: la base de datos devuelve algo corrupto para esa fila. El resto del
+tablero sigue legible, y la regla depende del tipo de lectura:
 
 | Tipo de lectura | Qué pasa |
 |---|---|

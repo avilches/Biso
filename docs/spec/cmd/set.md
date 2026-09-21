@@ -144,7 +144,7 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 |---|---:|
 | Cambio aplicado, o nada que cambiar | 0 |
 | Sin flags de cambio, flags incompatibles, selector por clave con varias tareas, solape | 2 |
-| Valor fuera de un vocabulario, clave de extensión no declarada, tarea ilegible | 3 |
+| Valor fuera de un vocabulario, tarea ilegible | 3 |
 | Alguna referencia no existe, o un selector de texto no encaja con ningún criterio o comentario | 4 |
 | Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios o comentarios | 5 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 8 |
