@@ -223,6 +223,38 @@ func TestRestoreRefusesTasksThatDoNotFitTheirOwnVocabulary(t *testing.T) {
 	}
 }
 
+// TestRestoreMergesTheRetiredPointerFieldsWithoutWarnings is the row of
+// docs/spec/cmd/init.md that says a snapshot written by a version that still
+// had `documentation` or `modifiedFiles` is restored with the merge rules of
+// `new --from`, and that `init --from` says nothing about it: the elements
+// end up at the end of `references` in the order references, documentation,
+// modifiedFiles, a value seen before is kept once, no warning is emitted and
+// the restored board passes `biso doctor`.
+func TestRestoreMergesTheRetiredPointerFieldsWithoutWarnings(t *testing.T) {
+	m, dir := snapshotDir(t)
+	old := filepath.Join(m.home, "old-snapshot")
+	copySnapshot(t, m, dir, old)
+	m.write(t, filepath.Join(old, board.SnapshotTasksFile),
+		`{"title":"Old","references":["r1"],"modifiedFiles":["f1","d1"],`+
+			`"documentation":["d1","d2"]}`+"\n")
+	into := filepath.Join(m.home, "restored-old")
+
+	got := m.restoreInto(t, old, into).assertCode(t, 0)
+
+	if strings.Contains(got.stderr, "imported_") || strings.Contains(got.stderr, "warning") {
+		t.Errorf("the restore warned about a merge it should do silently:\n%s", got.stderr)
+	}
+	restored := m.at(into)
+	refs := ""
+	for _, line := range strings.Split(restored.run(t, "get", "MYP-1").assertCode(t, 0).stdout, "\n") {
+		if strings.HasPrefix(line, "refs ") {
+			refs = strings.TrimSpace(strings.TrimPrefix(line, "refs"))
+		}
+	}
+	assertEqual(t, refs, "r1, d1, d2, f1", "the references of the restored task")
+	restored.run(t, "doctor").assertCode(t, 0)
+}
+
 func TestRestorePreviewCountsTheTasksAndCreatesNothing(t *testing.T) {
 	m, dir := snapshotDir(t)
 	into := filepath.Join(m.home, "previewed")
