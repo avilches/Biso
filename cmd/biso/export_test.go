@@ -173,7 +173,7 @@ const everyFieldOfTheFormat = `{"id":"MYP-1","title":"The parser"}
 {"id":"MYP-2","title":"Normalize CRLF in the diff","type":"bug","priority":"high",` +
 	`"status":"In Progress","parent":"MYP-1","assignees":["@sara"],"author":"@avilches",` +
 	`"labels":["parser","urgent"],"dependencies":["MYP-1"],` +
-	`"references":["docs/bugs/BUG-02.md"],"documentation":["docs/parser.md"],` +
+	`"references":["docs/bugs/BUG-02.md"],` +
 	`"modifiedFiles":["parser.go"],"due":"2026-01-31","ordinal":7,` +
 	`"ext":{"trello.card":"5f2a8c1e"},"description":"A long description\nover two lines",` +
 	`"plan":"1. Read it","notes":"It was the CRLF","summary":"Done and tested",` +

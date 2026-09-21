@@ -340,10 +340,10 @@ esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
   prioridades de nombre largo, y un tablero cuyo nombre son diez mil caracteres. Los dos últimos son
   los que hacen cierta la palabra "siempre": los cuatro primeros escalones solo recortan tareas, así
   que un tablero sin ninguna se escapaba del tope por el bloque `BOARD` (imprimía 8.465 bytes) hasta
-  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.089 bytes** de
-  los 5.504, **3.600** de parte fija y **1.489** de resumen, que es exactamente lo que dice
+  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.038 bytes** de
+  los 5.504, **3.549** de parte fija y **1.489** de resumen, que es exactamente lo que dice
   ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño); con el de los vocabularios
-  largos, **5.236**, y con el del nombre kilométrico, **5.264**.
+  largos, **5.185**, y con el del nombre kilométrico, **5.213**.
 - **La medida del presupuesto de arranque ya es la de verdad**, en `cmd/biso/budget_test.go`:
   ejecuta el binario compilado, `biso ls` y `biso prime`, sobre un tablero real de 300 tareas con
   los cuatro bloques poblados, y mide de la llamada al código de salida, arranque del proceso
@@ -379,7 +379,7 @@ de escribir el código:
 - **El texto de `--full`** (["`--full`"](cmd/prime.md#--full)), que la especificación mencionaba sin escribir. Agrupa los
   flags por el campo que escriben y en el orden en que una escritura los aplica, y se genera desde
   la tabla única de `internal/cli/fields.go`, así que un flag nuevo aparece ahí sin que nadie tenga
-  que acordarse. La rejilla `FIELD FLAGS` del mensaje, en cambio, sí es texto literal: sus trece
+  que acordarse. La rejilla `FIELD FLAGS` del mensaje, en cambio, sí es texto literal: sus doce
   líneas son una disposición que la tabla no lleva dentro. Lo que la ata a la tabla es una prueba de
   `internal/cli` que compara las dos en los dos sentidos y se pone roja en cuanto un flag entra en
   una y no en la otra.
@@ -655,9 +655,36 @@ al programa y a la especificación:
 - **Las pruebas** están en `cmd/biso/short_flags_test.go`, que ejecuta el binario con cada forma
   retirada, con el choque de título y con la ayuda de `new`, y en `internal/cli/short_flags_test.go`,
   que recorre la tabla de todos los comandos y falla si una forma corta la reclama otro flag.
-- **El mensaje de arranque mide ahora 5.089 bytes** con el tablero del ejemplo, cincuenta más que
+- **El mensaje de arranque medía entonces 5.089 bytes** con el tablero del ejemplo, cincuenta más que
   antes, porque sus flags se escriben enteros
-  (["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño)).
+  (["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño)). Esa cifra ya no es la
+  vigente: la retirada de `documentation` la bajó a 5.038
+  (["Qué dejó hecha la fusión de `documentation` en `references`"](#qué-dejó-hecha-la-fusión-de-documentation-en-references)).
+
+### Qué dejó hecha la fusión de `documentation` en `references`
+
+La tarea `TASK-75` aplicó
+["Se retira `documentation` y `references` queda como único campo de punteros"](../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)
+al programa y a la especificación. Las anclas que cubre son el modelo de datos, las familias de
+flags, los valores de entrada, el contrato JSON de `get` y `ls`, la ficha de `biso get`, las ayudas
+de `biso set` y `biso prime`, el mensaje de arranque, el modo lote de `biso new` y el formato de
+`biso export`:
+
+- **El campo `documentation` ya no existe en ningún sitio.** Ni en el modelo, ni en la lista de
+  campos permitidos de las listas del almacén, ni en el JSON de `get`, `ls` y `export`, ni en la
+  ficha, ni en los flags `--add-docs`, `--rm-docs`, `--clear-docs` y `--replace-docs`, que ahora
+  son un error 2 con el `code` `unknown_flag` como cualquier flag que no existe. Como `biso` no se ha
+  publicado, se ha editado el primer script de migración en vez de añadir uno.
+- **`biso new --from` acepta `documentation` y lo funde en `references`**, con el aviso
+  `imported_documentation_merged`, con el mismo patrón que `definitionOfDone`: la clave no cuenta como
+  desconocida, `null` equivale a ausente, la lista vacía no avisa, y el aviso nombra la línea y
+  cuenta los elementos (["`biso new`"](cmd/new.md#el-modo-lote)). Decisión propia de la
+  implementación, anotada en la especificación: un valor que ya estaba en `references` se guarda una
+  sola vez. Las pruebas están en `internal/ops/batch_test.go`.
+- **El mensaje de arranque mide ahora 5.038 bytes** con el tablero del ejemplo, 51 menos que antes: la
+  parte fija pasa de 3.600 a **3.549** y el resumen sigue en **1.489**. La rejilla `FIELD FLAGS` pasa de
+  trece líneas a doce. El tope total de 5.504 no cambia y el margen de la parte fija sube de 240 a 291 bytes.
+- **La cobertura de `compatibilidad-de-modelos.md` se recalculó** sin el campo retirado, y el porcentaje de cada sistema cambió en consecuencia.
 
 ## Antes de empezar un paso
 

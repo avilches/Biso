@@ -39,11 +39,12 @@ en la forma de objeto que esa sección define para los criterios, los comentario
 abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
 y las claves estables de cada criterio **y de cada comentario** (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), ["Los comentarios"](../modelo-de-datos/comentarios.md#los-comentarios)).
 
-**El formato de entrada de `biso new --from` es un superconjunto del de salida, y la diferencia es
-una sola clave.** `new --from` acepta además `definitionOfDone`, que `export` no escribe nunca porque
-no es un campo del modelo, y la convierte en criterios de aceptación (["`biso new`"](new.md)). La
-garantía de la ida y vuelta no se resiente: lo que `export` escribe, `new --from` lo lee campo a
-campo, y esa clave solo aparece en lotes que vengan de fuera.
+**El formato de entrada de `biso new --from` es un superconjunto del de salida, y la diferencia son
+dos claves.** `new --from` acepta además `definitionOfDone`, que convierte en criterios de aceptación,
+y `documentation`, que funde en `references` (["`biso new`"](new.md)). `export` no escribe ninguna de
+las dos nunca, porque no son campos del modelo. La garantía de la ida y vuelta no se resiente: lo que
+`export` escribe, `new --from` lo lee campo a campo, y esas claves solo aparecen en lotes que vengan
+de fuera.
 
 **Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md).** `question` sale en `export` y
 entra de vuelta con `new --from`, con sus tres partes completas.

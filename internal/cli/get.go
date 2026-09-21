@@ -223,7 +223,6 @@ func metaBlock(v ops.TaskView) string {
 		pair("lease", minute(t.LeaseExpiresAt), "holder", orDash(t.LeaseHolder))
 	}
 	single("refs", joined(t.References))
-	single("docs", joined(t.Documentation))
 	single("files", joined(t.ModifiedFiles))
 	single("ext", extCell(t.Ext))
 	return b.String()

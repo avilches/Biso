@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -21,10 +22,11 @@ import (
 // drift away from this one without any test noticing, and then exporting a
 // board and importing it would stop reproducing it field for field.
 //
-// The only key the two directions do not share is `definitionOfDone`, which
-// `new --from` accepts and `export` never writes because it is not a field
-// of the model (docs/spec/cmd/new.md#el-modo-lote). It lives in wireInput,
-// which embeds wireTask, so even that difference is written once.
+// The only keys the two directions do not share are `definitionOfDone` and
+// `documentation`, which `new --from` accepts and `export` never writes
+// because neither is a field of the model
+// (docs/spec/cmd/new.md#el-modo-lote). They live in wireInput, which embeds
+// wireTask, so even that difference is written once.
 
 // wireTask is one task as a line of the interchange format. Every key is
 // always written: a scalar with no value goes as null and a list or a map
@@ -46,7 +48,6 @@ type wireTask struct {
 	Labels             []string          `json:"labels"`
 	Dependencies       []string          `json:"dependencies"`
 	References         []string          `json:"references"`
-	Documentation      []string          `json:"documentation"`
 	ModifiedFiles      []string          `json:"modifiedFiles"`
 	Due                *string           `json:"due"`
 	Ordinal            *int              `json:"ordinal"`
@@ -65,11 +66,12 @@ type wireTask struct {
 	Archived           bool              `json:"archived"`
 }
 
-// wireInput is a line of a batch: everything above plus the one key that
-// only the reading direction knows.
+// wireInput is a line of a batch: everything above plus the two keys that
+// only the reading direction knows, both of them from a foreign batch.
 type wireInput struct {
 	wireTask
 	DefinitionOfDone []wireCriterion `json:"definitionOfDone"`
+	Documentation    []string        `json:"documentation"`
 }
 
 // wireCriterion is one acceptance criterion on the wire. Reading it takes
@@ -226,8 +228,8 @@ var interchangeKeys = keysOf(reflect.TypeOf(wireInput{}))
 //
 // The shape it reads is wireTask and not wireInput, which is exactly the
 // rule: the lists of the model are the ones whose empty value is [] or {},
-// and definitionOfDone is not one of them, so null there means the key was
-// not written (docs/spec/cmd/new.md#el-modo-lote).
+// and definitionOfDone and documentation are not among them, so null there
+// means the key was not written (docs/spec/cmd/new.md#el-modo-lote).
 var listKeys = listKeysOf(reflect.TypeOf(wireTask{}))
 
 func keysOf(t reflect.Type) []string {
@@ -283,7 +285,6 @@ func encodeTask(t *model.Task) ([]byte, error) {
 		Labels:             listOrEmpty(t.Labels),
 		Dependencies:       listOrEmpty(t.Dependencies),
 		References:         listOrEmpty(t.References),
-		Documentation:      listOrEmpty(t.Documentation),
 		ModifiedFiles:      listOrEmpty(t.ModifiedFiles),
 		Due:                dayOrNil(t.Due),
 		Ordinal:            t.Ordinal,
@@ -340,6 +341,9 @@ type decoded struct {
 	// the order it created them. They are the one thing `biso new` ever
 	// announces about a key it assigned (docs/spec/cmd/new.md#el-modo-lote).
 	dodKeys []int
+	// docCount is how many elements of documentation the line carried and
+	// were merged into references, which the warning announces.
+	docCount int
 	// rawStatus, rawType and rawPriority are the values as the line wrote
 	// them, before the board's vocabulary has judged them.
 	rawStatus, rawType, rawPriority string
@@ -381,7 +385,6 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		Labels:        in.Labels,
 		Dependencies:  in.Dependencies,
 		References:    in.References,
-		Documentation: in.Documentation,
 		ModifiedFiles: in.ModifiedFiles,
 		Ordinal:       in.Ordinal,
 		Ext:           in.Ext,
@@ -441,6 +444,15 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		added := t.AddCriterion(c.Text)
 		added.Checked = c.Checked
 		d.dodKeys = append(d.dodKeys, added.Key)
+	}
+	// documentation is merged into references, after the ones the line
+	// already had and in the order it came. A value that references already
+	// holds is kept once, as any list keeps a value written twice.
+	for _, v := range in.Documentation {
+		d.docCount++
+		if !slices.Contains(t.References, v) {
+			t.References = append(t.References, v)
+		}
 	}
 	if err := readComments(t, in.Comments, now); err != nil {
 		return nil, err

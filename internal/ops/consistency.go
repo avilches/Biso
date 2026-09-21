@@ -358,7 +358,6 @@ func changedFields(before, after *model.Task) []string {
 		{"labels", func(t *model.Task) any { return t.Labels }},
 		{"dependencies", func(t *model.Task) any { return t.Dependencies }},
 		{"references", func(t *model.Task) any { return t.References }},
-		{"documentation", func(t *model.Task) any { return t.Documentation }},
 		{"modifiedFiles", func(t *model.Task) any { return t.ModifiedFiles }},
 		{"due", func(t *model.Task) any { return t.Due }},
 		{"ordinal", func(t *model.Task) any { return ordinalOf(t) }},

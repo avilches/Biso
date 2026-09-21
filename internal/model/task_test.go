@@ -179,8 +179,8 @@ func TestListFieldsCoversEveryListFieldOfTheModel(t *testing.T) {
 			t.Fatalf("%s = %v, want one value", f, got)
 		}
 	}
-	if len(ListFields()) != 6 {
-		t.Fatalf("ListFields() has %d entries, want the 6 of docs/spec/modelo-de-datos/index.md", len(ListFields()))
+	if len(ListFields()) != 5 {
+		t.Fatalf("ListFields() has %d entries, want the 5 of docs/spec/modelo-de-datos/index.md", len(ListFields()))
 	}
 }
 

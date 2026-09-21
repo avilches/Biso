@@ -203,7 +203,7 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"field that breaks them:\n" +
 	"  --add-labels X      add one or more       --replace-labels X   replace the whole list\n" +
 	"  --rm-labels X       remove one or more    --clear-labels       empty the list\n" +
-	"The same works for --assignees, --refs, --docs, --deps and --files.\n" +
+	"The same works for --assignees, --refs, --deps and --files.\n" +
 	"\n" +
 	"Criteria have three, because a criterion's text can contain a comma and so is\n" +
 	"never split on one. There is no whole-list replace; do it by clearing and\n" +

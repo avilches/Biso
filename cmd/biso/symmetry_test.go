@@ -51,7 +51,7 @@ import (
 const richBoard = `# every shape the format can carry
 {"id":"MYP-1","title":"Write the parser","type":"bug","priority":"high","status":"Done",` +
 	`"description":"A long description\nover two lines","labels":["parser","urgent"],` +
-	`"references":["docs/bugs/BUG-02.md"],"documentation":["docs/parser.md"],` +
+	`"references":["docs/bugs/BUG-02.md"],` +
 	`"modifiedFiles":["parser.go"],"ext":{"trello.card":"5f2a8c1e"},"author":"@sara",` +
 	`"due":"2026-01-31","ordinal":7,"plan":"1. Read it","notes":"It was the CRLF",` +
 	`"summary":"Done and tested",` +

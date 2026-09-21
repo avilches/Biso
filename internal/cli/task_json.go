@@ -34,7 +34,6 @@ func taskObject(v ops.TaskView) map[string]any {
 		"parent":         orNull(t.Parent),
 		"dependencies":   list(t.Dependencies),
 		"references":     list(t.References),
-		"documentation":  list(t.Documentation),
 		"modifiedFiles":  list(t.ModifiedFiles),
 		"due":            day(t.Due),
 		"ordinal":        ordinal(t),
