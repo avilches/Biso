@@ -17,10 +17,6 @@ avisar.
   especificación; la fila enlaza a la nota que la explica.
 - **guía, no verificable**: el documento fija vocabulario o principios, no un comportamiento que un
   test pueda comprobar.
-- **especificado, no implementado**: la especificación ya lo define entero, con sus mensajes
-  literales y sus códigos de salida, y no hay ni una línea de código que lo ejerza. Es el estado de
-  una decisión que se escribió en la especificación antes de implementarla, y el paso siguiente es
-  la tarea que la lleva al programa.
 - **fuera de alcance**: la propia especificación excluye este documento a propósito, así que nunca
   tendrá una fila "pendiente".
 
@@ -40,7 +36,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | hecho | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | hecho | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`help`](cmd/help.md) | hecho con matices | TASK-17 |
-| | Las etiquetas con ámbito ([abajo](#las-etiquetas-con-ámbito)) | hecho | sin tarea |
+| | Las etiquetas con ámbito ([abajo](#las-etiquetas-con-ámbito)) | hecho con matices | sin tarea |
 | | [`board`](cmd/board.md) | fuera de alcance de 1.0 | sin tarea |
 
 ## Los documentos transversales
@@ -807,8 +803,11 @@ y el contrato JSON:
 ### Las etiquetas con ámbito
 
 La decisión ["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito) se
-escribió entera en la especificación antes de tocar código, y después se llevó al programa. Las
-anclas que cubre son la regla de análisis, la escritura, la consulta, la lista `labels` de la
+escribió entera en la especificación antes de tocar código, y después se llevó al programa. El
+matiz es uno solo y está en el último punto de esta lista: **el eje de agrupación por la clave de
+una etiqueta no existe en código**, porque ["`biso board`"](cmd/board.md) entero queda fuera de la
+versión 1.0 y el programa no tiene todavía ningún comando `board`. Todo lo demás está implementado.
+Las anclas que cubre son la regla de análisis, la escritura, la consulta, la lista `labels` de la
 configuración, `biso doctor` y el contrato JSON:
 
 - **La regla de análisis vive en un sitio**, `internal/model/label.go`, y la ejercen los cuatro
