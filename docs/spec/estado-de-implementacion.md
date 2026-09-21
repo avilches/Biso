@@ -848,6 +848,49 @@ lista la clave `labels` ni con una lista larga declarada, así que las cifras de
 ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño) siguen siendo las que están
 escritas ahí.
 
+### Qué dejó hecho el descarte de un elemento vacío en un lote
+
+La tarea `TASK-88` aplicó
+["Un elemento vacío de un lote se descarta y avisa"](../decisiones/detalles.md#un-elemento-vacío-de-un-lote-se-descarta-y-avisa)
+al programa. Las anclas que cubre son
+["Un elemento vacío en un lote"](valores-de-entrada.md#un-elemento-vacío-en-un-lote), el modo lote de
+["`biso new`"](cmd/new.md#el-modo-lote), el párrafo de descarte de ["`biso init`"](cmd/init.md), la
+garantía de ["`biso export`"](cmd/export.md) y la fila de `imported_empty_dropped` de
+["Notas y avisos"](salida-y-terminal.md#notas-y-avisos):
+
+- **Un elemento vacío o de solo espacios se descarta en las ocho listas que acepta un lote**
+  (`assignees`, `labels`, `dependencies`, `references`, `acceptanceCriteria`, `definitionOfDone`,
+  `documentation` y `modifiedFiles`), antes de mirar nada más de él. Vive en `internal/ops/interchange.go`,
+  en `decodeTask`, y lo comparten `biso new --from` y `biso init --from`, que leen con la misma función. Un
+  criterio vacío no reserva su `key`: no cuenta para el fallo de una clave repetida ni sube el contador,
+  y los avisos de la fusión de `definitionOfDone`, `documentation` y `modifiedFiles` cuentan solo lo
+  que no estaba vacío.
+- **`null` en el sitio de un elemento es un fallo de validación de la línea**, un `invalid_line` con
+  código 3, con el mensaje `references.1: expected text, got null`. Se detecta sobre los elementos
+  sin decodificar, porque `encoding/json` decodifica un `null` como cadena vacía y sería
+  indistinguible del elemento vacío. Otros mensajes nacen de lo mismo y no los exige la
+  especificación: un criterio que no es ni texto ni objeto dice `acceptanceCriteria.0: expected text or
+  an object, got number`, que antes salía como un mensaje interno de Go, y un `text` que no es texto
+  dice `acceptanceCriteria.0.text: expected text, got null`.
+- **`biso new --from` avisa con `imported_empty_dropped`**, uno por cada línea y lista de la que se
+  descartó algo, con los campos `line`, `field` y `count`, también con `--dry-run`. En una línea salen
+  primero los de los vacíos, en el orden fijo de las listas y no en el de las claves del fichero, y
+  después los de la fusión. Un lote inválido no avisa de nada, porque los avisos se añaden solo
+  después de validar el fichero entero. `biso init --from` descarta igual y no avisa.
+- **La simetría se mantiene**: una prueba importa un lote con huecos en cada lista, comprueba que el
+  tablero es idéntico columna a columna al del mismo lote sin ellos, lo exporta, comprueba que ninguna
+  lista exportada trae un elemento vacío y reimporta la salida con el mismo resultado.
+- **Los índices de los bloques de `El modo lote` de `TestTheFixturesStillMatchTheSpecification`
+  cambiaron** al añadir la especificación tres bloques delante de los del lote: los cuatro
+  ficheros de referencia del lote (`new-batch-ids.txt`, `new-batch-dry-run.txt`, `new-batch-invalid.txt`
+  y `new-batch-invalid-one-line.txt`) apuntan ahora a los bloques 11 a 14, y tres ficheros nuevos
+  fijan el ejemplo de la línea con elementos vacíos, los avisos que recibe y el mensaje del `null`.
+  El mensaje de arranque y las ayudas no cambian ni un byte.
+- **Las pruebas** están en `internal/ops/batch_empty_items_test.go`, con una por regla, y en
+  `cmd/biso/batch_empty_items_test.go`, que recorre el binario: el literal de los avisos, su JSON, el
+  `--dry-run`, el lote inválido sin avisos, `init --from` con una instantánea escrita a mano y la
+  simetría.
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según
