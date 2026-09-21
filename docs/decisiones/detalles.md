@@ -812,3 +812,71 @@ los detecta ni los repara.
   versión publicada los escribió: solo un tablero de desarrollo los tiene y se limpia una vez con
   `export | new --from`, mientras que una comprobación nueva de `doctor` sería permanente para un caso
   que no puede darse en un tablero escrito con esta regla.
+
+---
+
+## La ficha escapa la coma y la barra invertida de una lista
+
+**La decisión.** La ficha de `biso get` escribe cada valor de una lista con la misma regla de escape
+que se usa al guardarlo, y ninguna otra: una coma dentro de un valor sale como `\,`, una barra
+invertida sale como `\\`, y el resto de los caracteres sale tal cual. Los valores de una línea siguen
+separados por coma y espacio, y el separador es siempre una coma sin escapar, así que las
+referencias `a,b` y `c.md` salen como `a\,b, c.md` y las referencias `a` y `b` como `a, b`. La regla es
+exactamente la inversa de la de entrada de
+["Repetición y listas separadas por comas"](../spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas):
+para cualquier valor posible, deshacer el escape de lo que imprime la ficha da el valor guardado.
+Vale para las cinco listas de la ficha (`assignees`, `labels`, `depends`, `blocks` y `refs`), pero solo
+`refs` admite una coma o una barra invertida, así que solo su línea puede cambiar. `--json` no cambia:
+cada valor es un elemento de la lista y nunca lleva escape. La regla está en
+["`biso get`"](../spec/cmd/get.md#salida).
+
+**Por qué se escapa también la barra invertida.** Escapar solo la coma no basta, porque entonces la
+línea deja de decir sin ambigüedad qué valores hay. Las referencias `a\` y `b` se imprimirían como
+`a\, b`, y la única referencia `a, b` se imprimiría igual, como `a\, b`: la barra final de la primera se
+comería el separador. Duplicar la barra es lo que la regla de entrada ya define para que un valor pueda
+terminar en barra invertida justo antes de una coma, así que no se inventa nada. La otra mitad de la
+regla de entrada, que una barra delante de cualquier otro carácter se guarda tal cual, no obliga a
+escribir esa barra sola en la salida: `C:\dir` se leería igual que `C:\\dir`, pero decidir cuándo
+basta la barra simple obliga a mirar el carácter siguiente y el final del valor. Duplicar siempre es
+una sola frase, sin excepciones, y se comprueba de un vistazo.
+
+**Por qué la ficha y la entrada son simétricas.** La ficha es la única salida de texto que lista las
+referencias de una tarea: `biso ls` y `biso prime` no las traen, y `biso export` y `biso snapshot`
+escriben JSON. Quien la lee, sea una persona o un agente, la usa para volver a escribir un valor, por
+ejemplo con `--rm-refs`, y si la ficha muestra `a,b` pero el flag necesita `a\,b`, copiar el valor
+falla: `--rm-refs 'a,b'` intenta quitar `a` y `b` y avisa de que ninguna está. Con la misma regla en
+los dos sentidos, lo que se ve es lo que se teclea, y un agente no tiene que aprender una notación
+para leer y otra para escribir.
+
+**Lo que no cambia.** Un aviso que cita un solo valor entre comillas (`warning: --rm-refs: "zz,y" not
+present, nothing removed`) no es una lista y sigue con su propia forma de citar. Una lista sin
+valores sigue siendo un guion. Una referencia que fuera literalmente `-` sigue imprimiéndose como el
+guion de una lista vacía, igual que antes, porque la regla de entrada no define ningún escape que la
+distinga y una referencia así no es un caso que valga añadir una notación nueva.
+
+**Alternativas descartadas, y por qué.**
+
+- **Conservar la regla anterior, sin escapar y con `--json` como lectura exacta**, se descarta porque
+  la ambigüedad no es cosmética. `a,b, c.md` se lee a simple vista como dos o como tres valores, y es
+  la única forma de ver las referencias sin `--json`. Que un lector con un programa disponga de la
+  lectura exacta no ayuda al que lee la ficha, y la ficha existe justo para ese lector. La ambigüedad
+  tampoco era un coste que compensara nada: la regla nueva no añade una segunda vía de lectura, solo
+  hace que la única sea inequívoca.
+- **Cambiar el separador de esa línea** (`;`, ` | ` o cualquier otro) se descarta porque una
+  referencia es texto libre, y una URL o una ruta puede llevar cualquiera de ellos, así que el problema
+  solo se mueve. Y dejaría a `refs` con un separador distinto del de las demás listas de la misma
+  ficha.
+- **Imprimir cada referencia en su propia línea** se descarta porque el último renglón del bloque de
+  metadatos pasaría de ser una línea fija a un número variable de ellas, con lo que el bloque
+  dejaría de tener la forma que esta especificación le fija, y quien lee la ficha con un programa
+  tendría que saber dónde termina la lista. Además no evita todo escape: una referencia con un
+  salto de línea seguiría rompiendo el formato.
+- **Entrecomillar cada valor** (`"a,b"`) se descarta porque obliga a definir un segundo escape, el de
+  la comilla, junto al de entrada, y a que el lector conozca las dos notaciones.
+- **Escapar la coma pero no la barra invertida** se descarta por lo dicho arriba: deja dos
+  listas distintas con la misma línea.
+- **Escapar la barra invertida solo donde hace falta** (delante de otra barra, delante de una coma o al
+  final de un valor) se descarta porque la regla depende de lo que rodea a cada barra, dos
+  implementaciones razonables pueden discrepar en un borde, y lo único que ahorra es una barra doble
+  en una ruta de Windows, un caso poco frecuente en una lista de referencias que casi siempre son rutas
+  con `/`, URLs o identificadores.

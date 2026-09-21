@@ -56,7 +56,7 @@ due        -                    ordinal    -
 created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     MYP-40
 lease      2026-09-06 15:40     holder     @claude
-refs       docs/bugs/BUG-02.md
+refs       docs/bugs/BUG-02.md, notes/a\,b.md
 
 ## Description
 The diff compares byte by byte and marks as different two lines that only
@@ -90,14 +90,25 @@ La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la secci�
 Los encabezados de esta salida son un formato de presentación, no un formato de almacenamiento.
 
 **Cómo se escribe cada valor de ese bloque.** Una lista (`assignees`, `labels`, `depends`, `blocks`,
-`refs`) va en una línea, con sus valores separados por coma y espacio. En `assignees`,
-`labels`, `depends` y `blocks` ningún valor admite una coma, así que el separador nunca se confunde con
-parte de un valor. `refs` sí la admite, escrita con `\,` al guardarla
-(["Repetición y listas separadas por comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)),
-y la ficha la imprime tal cual, **sin escapar**: una referencia `a,b` sale como `a,b`, pegada a la
-siguiente como `a,b, c.md`, y a simple vista no se distingue de dos referencias. La ficha es un formato
-de presentación, así que quien necesite los valores exactos de `refs` los lee en `--json`, donde cada
-uno es un elemento de la lista. Un campo sin valor es un guion, como en las columnas de
+`refs`) va en una línea, con sus valores separados por coma y espacio, y **cada valor se escribe con la
+misma regla de escape que se usa al guardarlo** (["Repetición y listas separadas por
+comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)): una coma dentro de un valor
+sale como `\,`, una barra invertida sale como `\\`, y ningún otro carácter se toca. Es exactamente la
+regla de entrada al revés, así que lo que se lee en la ficha es, valor a valor, lo que habría que teclear
+en `--add-refs` para guardarlo. Solo `refs` puede llevar esos dos caracteres: en `assignees`, `labels`,
+`depends` y `blocks` ningún valor los admite, y su línea sale sin cambios. El separador es siempre una
+coma **sin escapar** seguida de un espacio, y una coma escapada nunca separa. Por eso las referencias
+`a,b` y `c.md` salen como `a\,b, c.md`, y las referencias `a` y `b` salen como `a, b`; una ruta
+`C:\dir\notes.md` sale como `C:\\dir\\notes.md`, y una referencia que termina en barra invertida sale
+con la barra doble aunque le siga el separador (`a\\, b`). Los espacios de un valor se conservan tal
+cual, los de los extremos incluidos, porque quien separa es la coma y no el espacio. El ejemplo de arriba lo muestra: su línea `refs` lleva dos referencias, `docs/bugs/BUG-02.md` y
+`notes/a,b.md`. Para leer la línea
+de vuelta se parte por cada coma sin escapar, se descarta el espacio que la sigue y se deshace el escape.
+La ficha sigue siendo un formato de presentación, y quien lea los valores con un programa los lee en
+`--json`, donde cada uno es un elemento de la lista y nunca lleva escape. La razón de esta regla, y las
+salidas que se descartaron, están en
+["La ficha escapa la coma y la barra invertida de una lista"](../../decisiones/detalles.md#la-ficha-escapa-la-coma-y-la-barra-invertida-de-una-lista).
+Un campo sin valor es un guion, como en las columnas de
 ["`biso ls`"](ls.md). Los instantes (`created`, `updated`, `lease`) se escriben con el día y la hora
 hasta el minuto, `YYYY-MM-DD HH:MM`, que es la precisión que se lee: el segundo está en `--json`,
 que es donde lo lee un programa.
@@ -193,7 +204,7 @@ las repite todas para que sirva de esquema completo, verificable clave a clave:
       "labels": ["parser"],
       "parent": null,
       "dependencies": [],
-      "references": ["docs/bugs/BUG-02.md"],
+      "references": ["docs/bugs/BUG-02.md", "notes/a,b.md"],
       "due": null,
       "ordinal": null,
       "createdAt": "2026-09-06T09:12:04Z",
