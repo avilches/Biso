@@ -14,7 +14,7 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
   priority            --clear-priority --priority
   parent              --clear-parent --parent
   due                 --clear-due --due
-  ordinal             --clear-ordinal --ordinal
+  ordinal             --clear-ordinal --ordinal --above --below
   author              --clear-author --author
   comments            --rm-comment --set-comment-date --comment --comment-author
 

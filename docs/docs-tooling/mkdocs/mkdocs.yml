@@ -125,6 +125,7 @@ nav:
       - Las relaciones entre tareas: spec/modelo-de-datos/relaciones.md
       - Las fechas: spec/modelo-de-datos/fechas.md
       - La urgencia: spec/modelo-de-datos/urgencia.md
+      - El orden manual y su clave: spec/modelo-de-datos/orden-manual.md
       - El autor de una tarea: spec/modelo-de-datos/autor.md
       - Los criterios y sus claves estables: spec/modelo-de-datos/criterios.md
       - La pregunta abierta: spec/modelo-de-datos/pregunta-abierta.md

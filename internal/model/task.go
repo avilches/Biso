@@ -34,9 +34,10 @@ const InstantLayout = "2006-01-02T15:04:05Z"
 //   - **A zero time.Time is the absence of a date**, for the same reason:
 //     no date field can hold the zero instant.
 //
-// Ordinal is the one field that needs a pointer, because 0 is a value a
-// caller can legitimately give it (docs/spec/modelo-de-datos/index.md says
-// int >= 0), so it cannot double as the absence of one.
+// Ordinal follows the first of the two without an exception: it is the
+// ordinal key of docs/spec/modelo-de-datos/orden-manual.md, a text whose
+// alphabet cannot produce the empty string, so the empty string is how a
+// task with no place in the manual order carries it.
 //
 // The derived fields of docs/spec/modelo-de-datos/index.md#los-campos-derivados
 // are not fields here: none of them is stored, so they are methods
@@ -63,7 +64,7 @@ type Task struct {
 	Dependencies []string
 	References   []string
 	Due          time.Time // a calendar day at UTC midnight, zero when unset
-	Ordinal      *int
+	Ordinal      string    // the ordinal key, empty when the task has none
 	Description  string
 	Plan         string
 	Notes        string

@@ -51,6 +51,10 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Paso a un estado terminal con una pregunta abierta (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)) | Se hace, con aviso, igual que en `biso finish` (["`biso finish`"](verbos-del-ciclo.md#biso-finish)) y como atribuye la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) a cualquier llegada al estado terminal |
 | Todos los flags dejan la tarea igual | Código 0, con `note: MYP-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (["La renovación"](../lease.md#la-renovación) de `lease.md`) |
 | `--status` a un estado que no es el activo, `--clear-assignees` o `--rm-assignees` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
+| `--above` o `--below` con varias referencias | Válido, y es la forma de mover un bloque: las tareas caen en el hueco en el orden en que se escribieron (["El orden manual"](../familias-de-flags.md#el-orden-manual)) |
+| `--above` o `--below` nombrando a una de las tareas que se están moviendo | Error 2, con el `code` `self_ordinal_neighbour`: `error: --below: MYP-11 cannot be its own neighbour` |
+| `--above` o `--below` sobre una tarea sin clave de orden | Error 6, con el `code` `neighbour_without_ordinal`, y **no se escribe ninguna** de las tareas de la llamada |
+| Dos de `--ordinal`, `--above`, `--below` y `--clear-ordinal` en la misma llamada | Error 2, con el `code` `incompatible_flags`: los cuatro escriben el mismo campo |
 | `--comment-author` sin `--comment` | Error 2 |
 | `--comment` sin `--comment-author` y sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | Error 2 |
 | La tarea no se puede leer | Error 3, y no se escribe nada |
@@ -151,6 +155,7 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 | Alguna referencia no existe, o un selector de texto no encaja con ningún criterio o comentario | 4 |
 | Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios o comentarios | 5 |
 | Una etiqueta con ámbito escrita con `:` sobre una clave que la tarea conserva con `::` (["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito)) | 6 |
+| La vecina de `--above` o de `--below` no tiene clave de orden | 6 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 8 |
 | No hay tablero | 20 |
 
@@ -203,8 +208,19 @@ Replace by clearing and appending in the same call.
       --clear-desc / --clear-plan / --clear-notes / --clear-summary
 
 Scalars just take a value: --title, --status, --type, --priority,
---parent, --due, --ordinal, --author. Each has a --clear-<field>. An
-empty string is never a way to clear anything.
+--parent, --due, --author. Each has a --clear-<field>. An empty string
+is never a way to clear anything.
+
+Manual order is the one scalar you never type. You write where the task
+goes, and biso writes the key:
+      --ordinal first|last   before or after every task that has a place
+      --above <ref>          just above that task
+      --below <ref>          just below it
+      --clear-ordinal        out of the manual order
+Several tasks in one call land in the order you wrote them, so
+`biso set MYP-7 MYP-19 --below MYP-40` leaves MYP-40, MYP-7, MYP-19. A
+task with no place cannot be a neighbour: give it one first with
+`biso set <ref> --ordinal last`.
 
 Relations point from the task you name in <ref> to other tasks:
       --parent <ref>         the task this one is part of; at most one
@@ -238,9 +254,10 @@ replaced.
 
 Exit codes:
   0  done                    5  something matched more than one thing
-  2  bad usage               6  a scoped label already has its one value
-  3  unknown value           8  the board could not be written
+  2  bad usage               6  a scoped label already has its one value,
+  3  unknown value              or --above/--below on a task with no place
   4  a task, criterion or comment was not found
+                             8  the board could not be written
                              20 no board here
 
 Examples:

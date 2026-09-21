@@ -174,7 +174,7 @@ const everyFieldOfTheFormat = `{"id":"MYP-1","title":"The parser"}
 	`"status":"In Progress","parent":"MYP-1","assignees":["@sara"],"author":"@avilches",` +
 	`"labels":["parser","urgent"],"dependencies":["MYP-1"],` +
 	`"references":["docs/bugs/BUG-02.md","parser.go"],` +
-	`"due":"2026-01-31","ordinal":7,` +
+	`"due":"2026-01-31","ordinal":"m8",` +
 	`"description":"A long description\nover two lines",` +
 	`"plan":"1. Read it","notes":"It was the CRLF","summary":"Done and tested",` +
 	`"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},` +

@@ -37,6 +37,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | hecho | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`help`](cmd/help.md) | hecho con matices | TASK-17 |
 | | Las etiquetas con ámbito ([abajo](#las-etiquetas-con-ámbito)) | hecho con matices | sin tarea |
+| | El orden manual ([abajo](#el-orden-manual)) | hecho con matices | sin tarea |
 | | [`board`](cmd/board.md) | fuera de alcance de 1.0 | sin tarea |
 
 ## Los documentos transversales
@@ -121,9 +122,11 @@ configurado antes de rendirse, y lo prueban veinte intentos de cuatro conexiones
 **Del modelo de datos**, el paso 2 hace cumplir al escribir el título obligatorio (código 2,
 `missing_title`), la distinción entre un campo `string` de una línea y un campo `text` (código 2,
 `malformed_string_value`, sobre `title`, `author` y el texto de un criterio),
-el alfabeto de las etiquetas y las personas (`malformed_label` y `malformed_assignee`), el
-`ordinal` no negativo (`invalid_number`) y las claves de los criterios. Todo eso se comprueba antes
-de abrir la transacción, así que una tarea rechazada no gasta identificador.
+el alfabeto de las etiquetas y las personas (`malformed_label` y `malformed_assignee`), la forma de
+la clave del orden manual (`malformed_ordinal`, que era el `invalid_number` del entero hasta que
+`ordinal` pasó a ser una clave de texto, [abajo](#el-orden-manual)) y las claves de los criterios.
+Todo eso se comprueba antes de abrir la transacción, así que una tarea rechazada no gasta
+identificador.
 
 **De [`presupuestos.md`](presupuestos.md)**, la medida vive desde el paso 2 en `internal/board` y ya
 es sobre el esquema real: abrir el tablero y leer sus 300 tareas enteras, con sus listas, sus
@@ -339,10 +342,11 @@ esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
   prioridades de nombre largo, y un tablero cuyo nombre son diez mil caracteres. Los dos últimos son
   los que hacen cierta la palabra "siempre": los cuatro primeros escalones solo recortan tareas, así
   que un tablero sin ninguna se escapaba del tope por el bloque `BOARD` (imprimía 8.465 bytes) hasta
-  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.070 bytes** de
-  los 5.504, **3.581** de parte fija y **1.489** de resumen, que es exactamente lo que dice
+  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.112 bytes** de
+  los 5.504, **3.623** de parte fija y **1.489** de resumen, que es exactamente lo que dice
   ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño); con el de los vocabularios
-  largos, **5.217**, y con el del nombre kilométrico, **5.245**.
+  largos, **5.259**, y con el del nombre kilométrico, **5.287**. Las tres cifras subieron 42 bytes al
+  implementar el orden manual, que es lo que cuesta su línea en la rejilla `FIELD FLAGS`.
 - **La medida del presupuesto de arranque ya es la de verdad**, en `cmd/biso/budget_test.go`:
   ejecuta el binario compilado, `biso ls` y `biso prime`, sobre un tablero real de 300 tareas con
   los cuatro bloques poblados, y mide de la llamada al código de salida, arranque del proceso
@@ -848,6 +852,84 @@ lista la clave `labels` ni con una lista larga declarada, así que las cifras de
 ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño) siguen siendo las que están
 escritas ahí.
 
+### El orden manual
+
+La decisión
+["El orden manual es una clave de texto"](../decisiones/detalles.md#el-orden-manual-es-una-clave-de-texto)
+se escribió entera en la especificación antes de tocar código, y después se llevó al programa. El
+matiz es el mismo que el de las etiquetas con ámbito y está en el último punto de esta lista: **el
+arrastre de [`biso board`](cmd/board.md#qué-escribe-un-arrastre) no existe en código**, porque
+`biso board` entero queda fuera de la versión 1.0 y el programa no tiene todavía ningún comando
+`board`. Todo lo demás está implementado, y con ello `ordinal` deja de ser un entero: ya no se puede
+teclear `--ordinal 3000`, ya no existe el `invalid_number` sobre ese campo, y la columna del esquema
+es texto con la forma de la clave escrita como `CHECK`.
+
+- **El algoritmo del punto medio vive en un sitio**, `internal/model/ordinal.go`, y es el único
+  lugar del programa que construye una clave. Sus pruebas son la tabla de casos literales de
+  ["El algoritmo del punto medio"](modelo-de-datos/orden-manual.md#el-algoritmo-del-punto-medio), las
+  tres promesas de esa página (entre dos claves cabe otra, siempre hay una menor que la menor y una
+  mayor que la mayor, y ninguna acaba en `0`) y una prueba de inserciones en posiciones aleatorias
+  con semilla fija, con un tramo largo que insiste siempre en el mismo hueco, que es el caso peor.
+- **El hueco se calcula una vez por llamada y antes de escribir nada**, en `internal/ops/ordinal.go`:
+  la vecina se busca contra el tablero de antes de la escritura, sobre el tablero entero con las
+  archivadas y las terminadas incluidas, y descontando las claves de las tareas que la propia llamada
+  mueve (["El hueco de cada colocación"](modelo-de-datos/orden-manual.md#el-hueco-de-cada-colocación)).
+  Dentro de ese hueco las claves se reparten por punto medio repetido, en el orden en que se
+  escribieron las referencias, que es lo que hace que `biso set A B --below C` deje `C`, `A`, `B`.
+- **Los flags de la familia están en la tabla de campos** de `internal/cli/fields.go`, así que valen en
+  `biso new`, en `biso set` y en los verbos del ciclo por la misma vía que cualquier otro flag de
+  campo, y son incompatibles entre sí porque todos escriben `ordinal`. `--ordinal` lleva su dominio
+  cerrado, `first` y `last`, con el `valid` y el remedio en la ayuda del error; la cadena vacía cae
+  ahí y no en `empty_scalar_value`.
+- **Los cuatro `code` nuevos existen con sus mensajes literales**: `invalid_ordinal_value` y
+  `self_ordinal_neighbour` los emite la llamada, y `neighbour_without_ordinal` es el único que sale
+  con el código 6, con sus dos `hint`. `malformed_ordinal` lo emite el lote, que es el único sitio
+  donde una clave llega escrita, en dos puntos del mismo recorrido: al leer la línea, que es donde
+  todavía se distingue una clave escrita como `""` de una clave que no venía, y en la validación del
+  modelo para todo lo demás. Dentro de una tarea la cadena vacía ya significa "sin clave", así que
+  esa distinción no sobrevive a la decodificación y hay que hacerla antes.
+- **La lectura compara por puntos de código y deja al final las tareas sin clave**, tanto en el orden
+  por defecto como en `--sort ordinal`, y el empate lo rompe el identificador
+  (["La regla de orden, completa"](cmd/ls.md#la-regla-de-orden-completa)). La ficha de texto de
+  `biso get` imprime `manual` o el guion y nunca la clave; el sobre JSON la trae entera, como cadena
+  o `null`.
+- **La ida y vuelta es exacta**: `biso export` escribe la clave tal cual está guardada y
+  `biso new --from` la vuelve a guardar igual, sin recalcular nada, y la prueba de simetría lleva
+  claves de orden en tres de sus cuatro tareas, incluidas la más baja posible y una larga.
+- **El arrastre de [`biso board`](cmd/board.md#qué-escribe-un-arrastre) no lo ejerce nadie**, porque
+  ese comando queda fuera de la versión 1.0.
+
+**El mensaje de arranque creció 42 bytes**, que es lo que cuesta la línea propia del orden manual en
+la rejilla `FIELD FLAGS`, y la medida del proceso confirmó la estimación de la especificación sin
+corregir ninguna cifra: con el tablero del ejemplo mide **5.112 bytes**, **3.623** de parte fija y
+**1.489** de resumen, dentro de los topes de 5.504 y 3.840
+(["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño)). La lista de `--full` ganó
+`--above` y `--below` en su línea de `ordinal` sin que nadie los escribiera ahí, porque se genera
+desde la tabla de campos.
+
+**Los tableros de desarrollo hay que recrearlos, y el motivo no es que no se abran.** Se abren. El
+primer script de migración se editó en su sitio en vez de añadir uno, que es la misma salida que en
+las retiradas anteriores porque `biso` no se ha publicado, así que `PRAGMA user_version` no cambia y
+un tablero escrito por un binario anterior conserva su columna de entonces, sin la comprobación de
+forma. Lo que pasa al abrirlo es esto, y por eso hay que recrearlo:
+
+- **Los enteros se reinterpretan como claves de texto.** SQLite los devuelve como enteros, porque la
+  columna de entonces era `INTEGER` y los valores siguen guardados así; quien los convierte a texto
+  es `database/sql`, al leerlos sobre un campo que ahora es una cadena. El entero `7` se lee como la
+  clave `7` y el `12` como la clave `12`.
+- **El orden manual deja de ser el que era**, porque las claves se comparan por puntos de código y no
+  por valor numérico: `12` va antes que `7`.
+- **Las tareas cuyo entero no tiene forma de clave se quedan fuera del listado**, con el aviso que
+  las nombra, y `biso doctor` las saca una a una con su motivo. Es la regla general de
+  ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)
+  aplicada a ["Una clave guardada que no cumple la
+  regla"](modelo-de-datos/orden-manual.md#una-clave-guardada-que-no-cumple-la-regla). Le pasa al `0`,
+  que acaba en cero, y a cualquier múltiplo de mil como el `3000` que usaba Backlog.md.
+
+Escribir en un tablero así sigue funcionando y guarda claves de verdad, lo que deja el tablero medio
+convertido. **No se añade una migración**: no la habría para decidir qué clave le toca a cada entero
+sin inventarse un orden, y un tablero de desarrollo se recrea en un segundo.
+
 ### Qué dejó hecho el descarte de un elemento vacío en un lote
 
 La tarea `TASK-88` aplicó
@@ -883,7 +965,7 @@ garantía de ["`biso export`"](cmd/export.md) y la fila de `imported_empty_dropp
 - **Los índices de los bloques de `El modo lote` de `TestTheFixturesStillMatchTheSpecification`
   cambiaron** al añadir la especificación tres bloques delante de los del lote: los cuatro
   ficheros de referencia del lote (`new-batch-ids.txt`, `new-batch-dry-run.txt`, `new-batch-invalid.txt`
-  y `new-batch-invalid-one-line.txt`) apuntan ahora a los bloques 11 a 14, y tres ficheros nuevos
+  y `new-batch-invalid-one-line.txt`) apuntan ahora a los bloques 12 a 15, y tres ficheros nuevos
   fijan el ejemplo de la línea con elementos vacíos, los avisos que recibe y el mensaje del `null`.
   El mensaje de arranque y las ayudas no cambian ni un byte.
 - **Las pruebas** están en `internal/ops/batch_empty_items_test.go`, con una por regla, y en

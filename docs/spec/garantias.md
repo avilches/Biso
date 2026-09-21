@@ -20,6 +20,17 @@ Con este orden, `--clear-labels --add-labels urgent` deja exactamente una etique
 de la línea de comandos: `--add-labels b --add-labels a` deja `b` antes que `a`. Las listas nunca se
 ordenan solas.
 
+**El orden manual no añade ningún paso: cae en el 5, con los demás escalares.** `--ordinal first`,
+`--ordinal last`, `--above` y `--below` escriben el campo `ordinal` igual que `--due` escribe el
+suyo, y `--clear-ordinal` es un `--clear-*` corriente del paso 1; por eso los cuatro primeros son
+incompatibles con él y entre sí, y no hace falta ninguna regla de orden que los combine
+(["El orden manual"](familias-de-flags.md#el-orden-manual)). Lo que sí hay que fijar es **contra qué
+tablero se busca la vecina: contra el de antes de la escritura**, igual que los selectores de
+comentarios de más abajo. Una llamada que mueve varias tareas no se estorba a sí misma, porque el
+hueco se calcula una sola vez y descontando las claves de las tareas que ella misma mueve, y dentro
+de ese hueco las claves se escriben en el orden en que se escribieron las referencias
+(["Varias tareas en la misma llamada"](modelo-de-datos/orden-manual.md#varias-tareas-en-la-misma-llamada)).
+
 **`--rm-comment` y `--set-comment-date` solo pueden señalar un comentario que ya existiera al empezar
 la llamada.** Como `--comment` va en el último paso, un comentario que la propia llamada añade nunca
 es un objetivo válido de las otras dos: su clave se resuelve contra la lista de antes de que

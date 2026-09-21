@@ -49,7 +49,7 @@ type wireTask struct {
 	Dependencies       []string        `json:"dependencies"`
 	References         []string        `json:"references"`
 	Due                *string         `json:"due"`
-	Ordinal            *int            `json:"ordinal"`
+	Ordinal            *string         `json:"ordinal"`
 	Description        *string         `json:"description"`
 	Plan               *string         `json:"plan"`
 	Notes              *string         `json:"notes"`
@@ -285,7 +285,7 @@ func encodeTask(t *model.Task) ([]byte, error) {
 		Dependencies:       listOrEmpty(t.Dependencies),
 		References:         listOrEmpty(t.References),
 		Due:                dayOrNil(t.Due),
-		Ordinal:            t.Ordinal,
+		Ordinal:            orNil(t.Ordinal),
 		Description:        orNil(t.Description),
 		Plan:               orNil(t.Plan),
 		Notes:              orNil(t.Notes),
@@ -572,7 +572,7 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		Labels:       in.Labels,
 		Dependencies: in.Dependencies,
 		References:   in.References,
-		Ordinal:      in.Ordinal,
+		Ordinal:      value(in.Ordinal),
 		Description:  value(in.Description),
 		Plan:         value(in.Plan),
 		Notes:        value(in.Notes),
@@ -592,6 +592,22 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		emptyDropped:      emptyDropped,
 	}
 	t.ID = in.ID
+
+	// The ordinal key is judged here and not by the model's validation,
+	// because this is the last place where a key written as "" can still be
+	// told from a key that was not written at all: inside a task the empty
+	// string already means "no key". A line that writes one is writing a
+	// value that is not a key, and the rule of
+	// docs/spec/cmd/new.md#el-modo-lote is that a key of the wrong shape is
+	// malformed_ordinal (the empty key of
+	// docs/spec/modelo-de-datos/orden-manual.md#qué-es-una-clave-de-orden).
+	// An explicit null, like a missing key, is a task with no place, which
+	// is why only a value that really came through is asked.
+	if in.Ordinal != nil {
+		if e := model.ValidateOrdinal(*in.Ordinal); e != nil {
+			return nil, e
+		}
+	}
 
 	for _, f := range []struct {
 		key   string

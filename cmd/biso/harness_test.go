@@ -143,7 +143,7 @@ func (m *machine) buildBoard(t *testing.T, dir, id, name, prefix string, notArch
 			question_asked_at, question_body, next_criterion_key, next_comment_key
 		)
 		SELECT ? || '-' || i, i, 'Task ' || i, ?, 'task', 'medium', '', '', '',
-			i, '', '', '', '', '2026-09-06T09:12:04Z', '2026-09-06T09:12:04Z',
+			'', '', '', '', '', '2026-09-06T09:12:04Z', '2026-09-06T09:12:04Z',
 			CASE WHEN i > ? THEN 1 ELSE 0 END, '', '', '', '', '', 1, 1
 		FROM n`,
 		notArchived+archived, prefix, board.DefaultConfig(name, prefix).InitialStatus,

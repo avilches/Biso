@@ -37,8 +37,19 @@ Replace by clearing and appending in the same call.
       --clear-desc / --clear-plan / --clear-notes / --clear-summary
 
 Scalars just take a value: --title, --status, --type, --priority,
---parent, --due, --ordinal, --author. Each has a --clear-<field>. An
-empty string is never a way to clear anything.
+--parent, --due, --author. Each has a --clear-<field>. An empty string
+is never a way to clear anything.
+
+Manual order is the one scalar you never type. You write where the task
+goes, and biso writes the key:
+      --ordinal first|last   before or after every task that has a place
+      --above <ref>          just above that task
+      --below <ref>          just below it
+      --clear-ordinal        out of the manual order
+Several tasks in one call land in the order you wrote them, so
+`biso set MYP-7 MYP-19 --below MYP-40` leaves MYP-40, MYP-7, MYP-19. A
+task with no place cannot be a neighbour: give it one first with
+`biso set <ref> --ordinal last`.
 
 Relations point from the task you name in <ref> to other tasks:
       --parent <ref>         the task this one is part of; at most one
@@ -72,9 +83,10 @@ replaced.
 
 Exit codes:
   0  done                    5  something matched more than one thing
-  2  bad usage               6  a scoped label already has its one value
-  3  unknown value           8  the board could not be written
+  2  bad usage               6  a scoped label already has its one value,
+  3  unknown value              or --above/--below on a task with no place
   4  a task, criterion or comment was not found
+                             8  the board could not be written
                              20 no board here
 
 Examples:

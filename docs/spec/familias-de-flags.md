@@ -508,7 +508,7 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 | prioridad | `--priority` | `--clear-priority` |
 | tarea padre | `--parent` | `--clear-parent` |
 | fecha límite | `--due` | `--clear-due` |
-| orden manual | `--ordinal` | `--clear-ordinal` |
+| orden manual | `--ordinal first`, `--ordinal last`, `--above <ref>`, `--below <ref>` (["El orden manual"](#el-orden-manual)) | `--clear-ordinal` |
 | autor de la tarea | `--author` | `--clear-author` |
 
 **Un escalar guarda un único valor, así que fijarlo con su propio nombre nunca es ambiguo con
@@ -518,20 +518,97 @@ regla aplicada a una forma de dato que solo admite una operación de escritura.
 
 Un escalar **nunca** se borra pasándole la cadena vacía, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
 
-**Dos de estos escalares no son texto libre y rechazan lo que no cumple su forma**, los dos con
-código 2:
+**`--due` no es texto libre y rechaza lo que no cumple su forma**, con código 2 y el `code`
+`invalid_date`, el mismo que lleva la fecha mal formada de ["El modelo de datos de una
+tarea"](modelo-de-datos/index.md):
 
 ```
 error: --due: invalid date: "20/09/2026"
 hint: a due date is written YYYY-MM-DD
-
-error: --ordinal: not a whole number: "first"
 ```
 
-Su `code` es `invalid_date` y `invalid_number` respectivamente, los mismos que ya llevan la fecha mal
-formada y el `ordinal` negativo de ["El modelo de datos de una tarea"](modelo-de-datos/index.md).
 `--due` con una fecha ya pasada, en cambio, no es un error: se acepta con el aviso `due_in_past`
 (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)).
+
+**El orden manual es la otra fila de la tabla que no acepta cualquier valor**, y además es la única
+cuyo valor no se teclea: tiene su propia sección, ["El orden manual"](#el-orden-manual).
+
+## El orden manual
+
+El campo `ordinal` es una clave de texto que quien llama nunca escribe
+(["El orden manual y su clave"](modelo-de-datos/orden-manual.md)). Lo que se escribe es **dónde va la
+tarea**, con estos flags, ninguno repetible:
+
+| Flag | Dónde deja la tarea |
+|---|---|
+| `--ordinal first` | delante de todas las tareas que tienen clave |
+| `--ordinal last` | detrás de todas las tareas que tienen clave |
+| `--above <ref>` | justo por encima de la tarea que nombra la referencia |
+| `--below <ref>` | justo por debajo de ella |
+| `--clear-ordinal` | sin clave, es decir fuera del orden manual |
+
+**`--above` y `--below` no llevan el nombre del campo, y aun así cumplen ["La regla"](#la-regla) de
+esta sección.** Lo que un flag de escritura tiene que decir en su nombre es qué hace, y estos dos lo
+dicen entero: dejan la tarea encima o debajo de la que se nombre. El nombre del campo no ayudaría a
+nadie, porque la clave no se teclea; un `--ordinal <clave>` diría el campo y escondería la operación,
+que es justo el nombre desnudo que esta sección no admite.
+
+**Todos los flags de esa tabla escriben el mismo campo, así que son incompatibles entre sí**, con el
+`code` `incompatible_flags` y código 2:
+
+```
+error: --above and --below cannot be used together
+```
+
+**`--ordinal` solo acepta `first` y `last`.** Cualquier otro valor, la cadena vacía incluida, es
+código 2 con el `code` `invalid_ordinal_value` y el `valid` de la tabla de ["Los errores en
+JSON"](contrato-json.md#los-errores-en-json):
+
+```
+error: --ordinal: unknown value: "3"
+hint: --ordinal takes first or last; to place a task next to another one, use --above or --below
+```
+
+**La referencia de `--above` y de `--below` se resuelve como cualquier otra**
+(["Cómo se resuelve una referencia a una tarea"](referencias.md)), así que una vecina que no existe
+es código 4 y un texto que encaja con varias tareas es código 5, con sus candidatas.
+
+**Una tarea no puede ser su propia vecina.** Si la referencia resuelve a una de las tareas que la
+misma llamada está moviendo, es código 2 con el `code` `self_ordinal_neighbour`:
+
+```
+error: --below: MYP-11 cannot be its own neighbour
+```
+
+**Una vecina sin clave es código 6**, con el `code` `neighbour_without_ordinal`, y el mensaje trae el
+remedio entero porque son dos llamadas y no una:
+
+```
+error: --above: MYP-19 has no ordinal
+hint: a task without one has no place in the manual order, so there is nothing to write above
+hint: `biso set MYP-19 --ordinal last` gives it one, and then --above MYP-19 works
+```
+
+Es código 6 y no 2 porque la llamada está bien escrita y lo que no la admite es el estado del tablero
+(["Códigos de salida"](codigos-de-salida.md)): la misma llamada funciona en cuanto la vecina tenga
+clave. Y no se arregla sola escribiéndole una clave a la vecina, porque eso sería escribir en una
+tarea que nadie nombró como destino de la escritura, ni se hace algo distinto de lo pedido avisando
+después; las dos salidas están descartadas en la decisión.
+
+**Los extremos no son un error.** `--above` sobre la tarea de clave menor y `--below` sobre la de
+clave mayor funcionan siempre, porque siempre hay una clave menor que la menor y otra mayor que la
+mayor (["El algoritmo del punto medio"](modelo-de-datos/orden-manual.md#el-algoritmo-del-punto-medio)).
+
+**Varias tareas en una llamada caen en el hueco en el orden en que se escribieron**, así que
+`biso set MYP-7 MYP-19 --below MYP-40` deja `MYP-40`, `MYP-7`, `MYP-19`, y con `--above MYP-40` deja
+`MYP-7`, `MYP-19`, `MYP-40`. La regla completa, con el hueco de cada flag y las claves que salen,
+está en ["Varias tareas en la misma
+llamada"](modelo-de-datos/orden-manual.md#varias-tareas-en-la-misma-llamada).
+
+**Todos valen en `biso new` como en cualquier otro comando de escritura.** Una tarea recién
+creada puede nacer colocada (`biso new "Fix the parser" --below MYP-11`), y `--clear-ordinal` sobre
+una tarea nueva no hace nada y avisa con `clear_on_new_task`, como cualquier otro `--clear-*` de
+`biso new` (["`biso new`"](cmd/new.md#parámetros-propios)).
 
 ## Casos límite de añadir, quitar y fijar
 
@@ -542,5 +619,9 @@ formada y el `ordinal` negativo de ["El modelo de datos de una tarea"](modelo-de
 | Mayúsculas en una etiqueta o una persona asignada, por ejemplo `--add-labels Parser --add-labels parser` | Quedan como dos valores distintos al guardar; un filtro de lectura como `ls --label parser` encuentra los dos | 0 |
 | Mayúsculas y acentos en el selector de texto de un criterio o de un comentario | Se pliegan las mayúsculas y se descartan los acentos antes de comparar (normalización NFKD, sin marcas combinantes); no cambia si el resultado es 0, 4 o 5, solo qué encuentra | sin cambio |
 | Una etiqueta con ámbito en cualquiera de los flags de etiquetas | Lo decide ["Escribir una etiqueta con ámbito"](#escribir-una-etiqueta-con-ámbito), según el separador y según lo que la tarea conserve tras los `--rm-labels` de la misma llamada | 0, 2, 3 o 6 |
+| `--ordinal` con un valor que no es `first` ni `last`, la cadena vacía incluida | Error con el `code` `invalid_ordinal_value` (["El orden manual"](#el-orden-manual)) | 2 |
+| `--above` o `--below` nombrando una de las tareas que la propia llamada mueve | Error con el `code` `self_ordinal_neighbour` | 2 |
+| `--above` o `--below` sobre una tarea que no tiene clave de orden | Error con el `code` `neighbour_without_ordinal`, y no se escribe ninguna de las tareas de la llamada | 6 |
+| `--above` sobre la tarea de clave menor, o `--below` sobre la de clave mayor | Se coloca, sin aviso: siempre hay sitio en los extremos | 0 |
 
 ---
