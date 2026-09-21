@@ -129,7 +129,8 @@ COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
   --title  --status  --type --clear-type  --priority --clear-priority
-  --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author
+  --parent --clear-parent  --due --clear-due  --author --clear-author
+  --ordinal first|last  --above <ref> --below <ref>  --clear-ordinal
   --add-labels --rm-labels --clear-labels --replace-labels
   --add-assignees --rm-assignees --clear-assignees --replace-assignees
   --add-refs --rm-refs --clear-refs --replace-refs
@@ -380,7 +381,7 @@ cada estado. El mensaje de arriba invita a crear la primera tarea, y ahí no ser
 
 `--full` añade al final del mensaje, después del párrafo de cierre y separado por una línea en
 blanco, la lista completa de los flags de campo. No sustituye a la rejilla `FIELD FLAGS`, que
-seguirá estando donde estaba: la rejilla da los nombres en diez líneas para que quepan en el
+seguirá estando donde estaba: la rejilla da los nombres apretados para que quepan en el
 arranque, y esto los agrupa **por el campo que escriben y en el orden en que una escritura los
 aplica** (["Orden de aplicación dentro de una escritura"](../garantias.md#orden-de-aplicación-dentro-de-una-escritura)),
 que es lo que la rejilla no puede decir sin ocupar el triple.
@@ -402,7 +403,7 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
   priority            --clear-priority --priority
   parent              --clear-parent --parent
   due                 --clear-due --due
-  ordinal             --clear-ordinal --ordinal
+  ordinal             --clear-ordinal --ordinal --above --below
   author              --clear-author --author
   comments            --rm-comment --set-comment-date --comment --comment-author
 
