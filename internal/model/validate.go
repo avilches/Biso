@@ -18,9 +18,33 @@ const tokenSymbols = "-_.:@"
 // problem of form, not of the board not recognizing the value, so the exit
 // code is 2 and not the 3 of an unknown vocabulary value: neither labels
 // nor assignees have a closed vocabulary when written.
+//
+// The alphabet admits the colon, so a label that carries one goes on
+// through the rule of docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito
+// as well: the two refusals share the `code` because they are the same kind
+// of failure, and asking both here is what makes the rule hold wherever a
+// task is written, from a flag or from a line of a batch.
 func ValidateLabel(label string) *Error {
-	return validateToken(label, tokenSymbols, "label", "malformed_label", "labels",
-		"a label may contain letters, digits, and - _ . : @")
+	if err := validateToken(label, tokenSymbols, "label", "malformed_label", "labels",
+		"a label may contain letters, digits, and - _ . : @"); err != nil {
+		return err
+	}
+	_, err := ParseLabel(label)
+	return err
+}
+
+// ValidateLabelEntry is ValidateLabel for an entry of the `labels` list of
+// the configuration, which is the one place where the key form `milestone::`
+// is a declaration and not a malformed label
+// (docs/spec/cmd/config.md#la-lista-labels). Everything else it refuses is
+// the same, with the same `code` and the same exit code.
+func ValidateLabelEntry(entry string) *Error {
+	if err := validateToken(entry, tokenSymbols, "label", "malformed_label", "labels",
+		"a label may contain letters, digits, and - _ . : @"); err != nil {
+		return err
+	}
+	_, err := ParseLabelKeyOrLabel(entry)
+	return err
 }
 
 // ValidateAssignee is ValidateLabel for an assignee, with the same
