@@ -12,6 +12,11 @@ field that breaks them:
   --rm-labels X       remove one or more    --clear-labels       empty the list
 The same works for --assignees, --refs and --deps.
 
+A label with a colon is scoped: key:value allows several values of that key
+on a task, key::value at most one, and writing key::value drops the other
+values of that key and says on stderr which ones it dropped. Filter with
+`biso ls --label key:` to get any value of a key.
+
 Criteria have three, because a criterion's text can contain a comma and so is
 never split on one. There is no whole-list replace; do it by clearing and
 adding in the same call.
@@ -67,9 +72,10 @@ replaced.
 
 Exit codes:
   0  done                    5  something matched more than one thing
-  2  bad usage               8  the board could not be written
-  3  unknown value           20 no board here
+  2  bad usage               6  a scoped label already has its one value
+  3  unknown value           8  the board could not be written
   4  a task, criterion or comment was not found
+                             20 no board here
 
 Examples:
   biso set MYP-11 --priority high --add-labels parser
