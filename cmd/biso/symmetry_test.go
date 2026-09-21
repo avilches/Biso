@@ -50,7 +50,12 @@ import (
 // their own anywhere else.
 const richBoard = `# every shape the format can carry
 {"id":"MYP-1","title":"Write the parser","type":"bug","priority":"high","status":"Done",` +
-	`"description":"A long description\nover two lines","labels":["parser","urgent"],` +
+	// The labels carry one of each shape of
+	// docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito: a plain
+	// one, a key that admits several values, one that admits at most one,
+	// and a value with a colon of its own.
+	`"description":"A long description\nover two lines",` +
+	`"labels":["parser","urgent","size::m","area:store","area:cli","trello:card:42"],` +
 	`"references":["docs/bugs/BUG-02.md","parser.go"],` +
 	`"author":"@sara",` +
 	`"due":"2026-01-31","ordinal":7,"plan":"1. Read it","notes":"It was the CRLF",` +

@@ -52,6 +52,9 @@ func NewOn(b *board.Board, env Env, p NewParams) (*WriteResult, error) {
 
 	w := newWriter(b, env, p.Changes)
 	w.newTask = true
+	if err := w.prepareLabels(); err != nil {
+		return w.partial(), err
+	}
 
 	task := &model.Task{
 		Title:  p.Title,

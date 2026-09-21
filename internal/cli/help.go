@@ -212,6 +212,11 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"  --rm-labels X       remove one or more    --clear-labels       empty the list\n" +
 	"The same works for --assignees, --refs and --deps.\n" +
 	"\n" +
+	"A label with a colon is scoped: key:value allows several values of that key\n" +
+	"on a task, key::value at most one, and writing key::value drops the other\n" +
+	"values of that key and says on stderr which ones it dropped. Filter with\n" +
+	"`biso ls --label key:` to get any value of a key.\n" +
+	"\n" +
 	"Criteria have three, because a criterion's text can contain a comma and so is\n" +
 	"never split on one. There is no whole-list replace; do it by clearing and\n" +
 	"adding in the same call.\n" +
@@ -267,9 +272,10 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"\n" +
 	"Exit codes:\n" +
 	"  0  done                    5  something matched more than one thing\n" +
-	"  2  bad usage               8  the board could not be written\n" +
-	"  3  unknown value           20 no board here\n" +
+	"  2  bad usage               6  a scoped label already has its one value\n" +
+	"  3  unknown value           8  the board could not be written\n" +
 	"  4  a task, criterion or comment was not found\n" +
+	"                             20 no board here\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso set MYP-11 --priority high --add-labels parser\n" +
@@ -292,8 +298,9 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"      --only-archived        only archived tasks\n" +
 	"      --type <value>         configured type\n" +
 	"      --priority <value>     configured priority\n" +
-	"      --label <value>        label; several labels are ANDed\n" +
-	"      --label-or <value>     label; several are ORed\n" +
+	"      --label <value>        label; several labels are ANDed. The form key:\n" +
+	"                             matches any value of that scoped-label key\n" +
+	"      --label-or <value>     label; several are ORed; takes key: too\n" +
 	"      --assignee <@who>      assignee\n" +
 	"      --mine                 assigned to you\n" +
 	"      --unassigned           assigned to nobody\n" +

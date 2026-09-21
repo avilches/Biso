@@ -55,6 +55,13 @@ Reglas de combinación de filtros:
   `--label-or`.
 - **`--label` es la única que se combina con `y`.** `--label frontend --label bug` son las que llevan las
   dos. Para el `o` está `--label-or`, que valida igual.
+- **`--label clave:` es cualquier etiqueta de esa clave**, con cualquier valor y con cualquiera de los
+  separadores, y `--label clave::` es el mismo filtro
+  (["Consultar por la clave de una etiqueta con ámbito"](../vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito)).
+  Se combina como cualquier otro valor de su flag, así que `--label milestone: --label bug` son las
+  tareas que tienen algún `milestone` **y** la etiqueta `bug`, y `--label-or milestone:`
+  se suma con `o` a los demás valores de `--label-or`. Un filtro que nombra la etiqueta entera
+  tampoco distingue el separador: `--label milestone:m1` encuentra las tareas con `milestone::m1`.
 - **`--unchecked` apaga la comprobación de existencia de `--label`, `--label-or` y `--assignee`, y ninguna otra.**
   No cambia cómo se combinan ni afecta a ningún otro filtro. Los vocabularios configurados siguen
   validando, y `--parent` sigue resolviendo su referencia.
@@ -117,7 +124,9 @@ que ["Los principios"](../principios.md) no admite. Para un título mal ordenado
 |---|---|
 | Filtro con un valor fuera del vocabulario | Error 3, con la lista de válidos |
 | `--label` con una etiqueta o `--assignee` con una persona que el tablero no tiene | Error 3, con hasta cinco de las más parecidas, igual que en la sección ["Qué valida cada filtro, y contra qué"](../vocabularios.md#qué-valida-cada-filtro-y-contra-qué) |
-| Lo mismo con `--unchecked` | Se acepta, y probablemente no devuelve nada |
+| `--label clave:` con una clave que el tablero no tiene | Error 3 con el `code` `unknown_label_key`, y hasta cinco de las claves más parecidas: `error: unknown label key: "milestne"` con `hint: did you mean: milestone?` |
+| Lo mismo con `--unchecked`, en cualquiera de los tres casos anteriores | Se acepta, y probablemente no devuelve nada |
+| `--label` con una etiqueta mal formada, por ejemplo `--label ":m"` | Error 2 con el `code` `malformed_label`, antes de mirar el tablero. Ni `--unchecked` lo apaga: no es una comprobación contra el tablero, es la forma del token (["Las etiquetas con ámbito"](../valores-de-entrada.md#las-etiquetas-con-ámbito)) |
 | Filtro válido sin resultados | Ninguna línea por stdout, `note: no tasks match` por stderr, código **0** |
 | Hay más resultados que el límite | Se imprimen los primeros y sale el aviso de recorte |
 | `--limit 0` | No imprime ninguna fila, solo el aviso de recorte con el total. Es la forma de contar sin `--count` |
@@ -328,8 +337,9 @@ Filters (repeat or comma-separate; same field is OR, different fields are AND):
       --only-archived        only archived tasks
       --type <value>         configured type
       --priority <value>     configured priority
-      --label <value>        label; several labels are ANDed
-      --label-or <value>     label; several are ORed
+      --label <value>        label; several labels are ANDed. The form key:
+                             matches any value of that scoped-label key
+      --label-or <value>     label; several are ORed; takes key: too
       --assignee <@who>      assignee
       --mine                 assigned to you
       --unassigned           assigned to nobody

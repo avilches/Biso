@@ -55,7 +55,9 @@ const configHelp = "Usage: biso config get <key>\n" +
 	"  terminal_status    what `biso finish` sets        (one of statuses)\n" +
 	"  types              configured task types\n" +
 	"  priorities         configured priorities\n" +
-	"  labels             labels that filters accept on top of the ones in use\n" +
+	"  labels             labels that filters accept on top of the ones in use;\n" +
+	"                     a key::value or key:: entry also restricts what that key\n" +
+	"                     accepts, a plain one only offers itself\n" +
 	"  assignees          assignees that filters accept on top of the ones in use\n" +
 	"  task_prefix        id prefix, letters only (default: derived from\n" +
 	"                     project_name); immutable once the board has a task\n" +
@@ -93,12 +95,14 @@ const doctorHelp = "Usage: biso doctor [options]\n" +
 	"\n" +
 	"Check the board for duplicate ids, unreadable tasks, values that are no longer\n" +
 	"configured, a broken status-role invariant, broken dependencies, dependency\n" +
-	"cycles, parent cycles, repeated criterion keys, a lease on a task that is not\n" +
-	"both active and assigned, a recorded highest id that has fallen behind, a\n" +
-	"database that fails its integrity check, a missing or mismatched <id>.id marker,\n" +
-	"an extra board root that cannot be read, an exclusion file that no longer\n" +
-	"matches the configured vcs, and a board directory on a filesystem where SQLite's\n" +
-	"WAL mode is not safe.\n" +
+	"cycles, parent cycles, repeated criterion keys, a stored label the labels list\n" +
+	"does not allow, a task with more than one value of a :: label key, a label key\n" +
+	"used with both separators, a lease on a task that is not both active and\n" +
+	"assigned, a recorded highest id that has fallen behind, a database that fails\n" +
+	"its integrity check, a missing or mismatched <id>.id marker, an extra board\n" +
+	"root that cannot be read, an exclusion file that no longer matches the\n" +
+	"configured vcs, and a board directory on a filesystem where SQLite's WAL mode\n" +
+	"is not safe.\n" +
 	"\n" +
 	"Options:\n" +
 	"      --fix      repair what can be repaired without a decision\n" +

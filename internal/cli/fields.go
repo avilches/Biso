@@ -22,8 +22,9 @@ var listFieldFlags = []struct {
 	field    string
 	alphabet Alphabet
 	noun     string
+	labels   LabelSyntax
 }{
-	{suffix: "labels", field: "labels", alphabet: TokenAlphabet, noun: "label"},
+	{suffix: "labels", field: "labels", alphabet: TokenAlphabet, noun: "label", labels: LabelWritten},
 	{suffix: "assignees", field: "assignees", alphabet: TokenAlphabet, noun: "assignee"},
 	{suffix: "refs", field: "references"},
 	{suffix: "deps", field: "dependencies"},
@@ -78,7 +79,7 @@ func fieldFlags() []FlagSpec {
 			return FlagSpec{
 				Name: prefix + f.suffix, Value: PlainValue,
 				Repeatable: true, Comma: true, Category: category,
-				Alphabet: f.alphabet, Noun: f.noun, Field: f.field,
+				Alphabet: f.alphabet, Noun: f.noun, Labels: f.labels, Field: f.field,
 			}
 		}
 		flags = append(flags,

@@ -14,7 +14,9 @@ Keys:
   terminal_status    what `biso finish` sets        (one of statuses)
   types              configured task types
   priorities         configured priorities
-  labels             labels that filters accept on top of the ones in use
+  labels             labels that filters accept on top of the ones in use;
+                     a key::value or key:: entry also restricts what that key
+                     accepts, a plain one only offers itself
   assignees          assignees that filters accept on top of the ones in use
   task_prefix        id prefix, letters only (default: derived from
                      project_name); immutable once the board has a task

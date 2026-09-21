@@ -464,6 +464,11 @@ func (st *parser) element(f *FlagSpec, v string) error {
 	if !f.Alphabet.allowed(value) {
 		return errMalformedToken(f, value)
 	}
+	if key == "" {
+		if err := checkLabelSyntax(f, value); err != nil {
+			return err
+		}
+	}
 	if f.SingleLine && strings.ContainsAny(value, "\n\r") {
 		return errMalformedString(f, value)
 	}

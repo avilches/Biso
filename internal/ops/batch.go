@@ -334,6 +334,9 @@ func readBatchLine(cfg board.Config, line *batchLine, text string, now time.Time
 	if e := checkImportedLease(d, cfg.ActiveStatus); e != nil {
 		return e
 	}
+	if e := checkImportedLabels(cfg, t.Labels); e != nil {
+		return e
+	}
 	// The dates the line did not bring are the instant of the import, the
 	// same ones a task created by hand gets
 	// (docs/spec/modelo-de-datos/fechas.md).
@@ -424,6 +427,69 @@ func checkImportedLease(d *decoded, activeStatus string) *model.Error {
 		}
 	}
 	return nil
+}
+
+// checkImportedLabels is the rule of the scoped labels applied to the
+// `labels` list of one line (docs/spec/cmd/new.md#el-modo-lote), in the same
+// order a call of `biso set` asks it: the form of each label, then what the
+// `labels` list of the configuration refuses, then the same key with the two
+// separators, then the key that takes one value and was given several.
+//
+// The last one is the difference the specification declares between a line
+// and a command line: here two `::` values of one key are a failure of
+// validation instead of the last one winning, because the flags of a call
+// are a sequence whose last value is the most recent intention, while the
+// `labels` list of a line describes a state that was saved, and dropping one
+// of its values in silence would lose a fact the file asserted.
+func checkImportedLabels(cfg board.Config, labels []string) *model.Error {
+	for _, raw := range labels {
+		if _, e := model.ParseLabel(raw); e != nil {
+			return e
+		}
+	}
+	rules, e := readLabelRules(cfg.Labels)
+	if e != nil {
+		return e
+	}
+	for _, raw := range labels {
+		if rule := rules.allows(raw); rule != nil {
+			return rule.refuse(raw)
+		}
+	}
+	if pair := mixedSeparators(labels); pair != nil {
+		return mixedSeparatorsError(fmt.Sprintf(
+			"labels mix the two separators of the key %q: %s",
+			pair[0].Key, quotedList([]string{pair[0].Raw, pair[1].Raw})))
+	}
+	for _, of := range exclusiveKeyViolations(labels) {
+		// It carries neither `field` nor `given`, exactly as it does
+		// outside a batch: the table of
+		// docs/spec/contrato-json.md#los-errores-en-json promises those two
+		// keys to the errors of exit code 3 and to the ones of 2 that name
+		// a flag, and this one is a 6. A `code` that carried the key on one
+		// line and not on another would be one a caller cannot branch on.
+		return &model.Error{
+			ExitCode: 6,
+			Code:     "exclusive_label_conflict",
+			Message: fmt.Sprintf(
+				"labels give the key %q more than one value, and :: allows at most one: %s",
+				model.SplitLabel(of[0]).Key, quotedList(of)),
+		}
+	}
+	return nil
+}
+
+// quotedList writes the labels a message names, each one quoted and joined
+// with "and" when there are two, which is how both messages above read.
+func quotedList(values []string) string {
+	quoted := make([]string, 0, len(values))
+	for _, v := range values {
+		quoted = append(quoted, fmt.Sprintf("%q", v))
+	}
+	if len(quoted) == 2 {
+		return quoted[0] + " and " + quoted[1]
+	}
+	return strings.Join(quoted, ", ")
 }
 
 // checkBatchGraph is what `biso new` checks about a reference as it writes
