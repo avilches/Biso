@@ -35,10 +35,78 @@ func checkConfigConsistency(b *board.Board, cfg board.Config, key string) error 
 		return checkVocabularyInUse(b, key, "priority", cfg.Priorities, func(t *model.Task) []string {
 			return oneOrNone(t.Priority)
 		})
+	case board.KeyLabels:
+		return checkLabelsInUse(b, cfg)
 	case board.KeyTaskPrefix:
 		return checkPrefixChange(b, cfg)
 	}
 	return nil
+}
+
+// checkLabelsInUse is the refusal of declaring a `labels` list that would
+// forbid something already written
+// (docs/spec/cmd/config.md#la-lista-labels). It is the same rule that keeps
+// a status in use from being dropped: the configuration cannot leave stored
+// a value it declares impossible.
+//
+// It looks at every task of the board, archived and finished included, which
+// is the same set the filters validate against, and it reports one line per
+// offending label with the tasks that carry it in ascending order of
+// identifier. Taking a plain label out of the list never fails, because a
+// plain entry restricted nothing, and neither does taking a whole key out:
+// what stops being declared goes back to being free.
+func checkLabelsInUse(b *board.Board, cfg board.Config) error {
+	rules, e := readLabelRules(cfg.Labels)
+	if e != nil {
+		return e
+	}
+	tasks, _, err := b.Tasks.All()
+	if err != nil {
+		return err
+	}
+	// The order is the order of the board, so the report names the same
+	// labels in the same order whatever the map iteration did.
+	var offending []string
+	byLabel := map[string][]string{}
+	reason := map[string]string{}
+	for _, t := range tasks {
+		for _, raw := range t.Labels {
+			rule := rules.allows(raw)
+			if rule == nil {
+				continue
+			}
+			if _, seen := byLabel[raw]; !seen {
+				offending = append(offending, raw)
+				reason[raw] = rule.whyNot()
+			}
+			byLabel[raw] = append(byLabel[raw], t.ID)
+		}
+	}
+	if len(offending) == 0 {
+		return nil
+	}
+	affected := map[string]bool{}
+	detail := make([]string, 0, len(offending))
+	for _, raw := range offending {
+		for _, id := range byLabel[raw] {
+			affected[id] = true
+		}
+		detail = append(detail, fmt.Sprintf("  %q on %s: %s",
+			raw, strings.Join(byLabel[raw], ", "), reason[raw]))
+	}
+	e = inconsistent(board.KeyLabels, fmt.Sprintf(
+		"labels: %s a label the new list would not allow", usesOrUse(len(affected))))
+	e.Detail = detail
+	return e
+}
+
+// usesOrUse writes the subject of that first line with the verb that agrees
+// with it: one task uses, several tasks use.
+func usesOrUse(n int) string {
+	if n == 1 {
+		return "1 task uses"
+	}
+	return fmt.Sprintf("%d tasks use", n)
 }
 
 // checkStatuses is the three refusals of changing the list of statuses: too

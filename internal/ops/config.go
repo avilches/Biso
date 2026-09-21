@@ -235,6 +235,20 @@ func writeConfigKey(cfg *board.Config, p ConfigParams) *model.Error {
 		if err != nil {
 			return err
 		}
+		// An entry that is neither a well-formed label, nor an exact pair,
+		// nor an open key is exit code 2 and the `code` of a malformed
+		// label, the same one as anywhere else a label is written: what is
+		// wrong is the shape of the token and not the list's coherence,
+		// which is judged right after and is exit code 3
+		// (docs/spec/cmd/config.md#la-lista-labels).
+		for _, v := range values {
+			if e := model.ValidateLabelEntry(v); e != nil {
+				return e
+			}
+		}
+		if _, e := readLabelRules(values); e != nil {
+			return e
+		}
 		cfg.Labels = values
 	case board.KeyAssignees:
 		values, err := configList(p)
