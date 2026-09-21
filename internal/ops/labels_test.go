@@ -236,9 +236,9 @@ func TestTheValuesOfRmLabelsDoNotCountForTheMixedSeparators(t *testing.T) {
 	assertLabels(t, h.load(id), "size:m")
 }
 
-// TestTwoExclusiveValuesOfOneKeyKeepTheLastOne is the fourth row: the last
-// value of the command line wins, with a warning that carries no task,
-// because it is a fact about the call and not about any one task.
+// TestTwoExclusiveValuesOfOneKeyKeepTheLastOne is the fourth row: within one
+// flag the last value of the command line wins, with a warning that carries
+// no task, because it is a fact about the call and not about any one task.
 func TestTwoExclusiveValuesOfOneKeyKeepTheLastOne(t *testing.T) {
 	h := newHarness(t)
 	id := h.create("A task")

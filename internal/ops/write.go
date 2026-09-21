@@ -167,8 +167,11 @@ func (w *writer) warn(warning Warning) { w.warnings = append(w.warnings, warning
 // docs/spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito fixes:
 // what the `labels` list of the configuration refuses, which comes first of
 // all; the same key written with the two separators, which is exit code 2;
-// and the same `::` key written more than once, where the last value of the
-// command line wins and the warning says which one stayed.
+// and the same `::` key written more than once in one flag, where the last
+// value of that flag wins and the warning says which one stayed. Between two
+// flags nothing is dropped here: the order of the steps decides, because
+// replacing runs before adding, and what comes out is the warning of the
+// replacement.
 //
 // The three are questions about the call and not about a task, which is why
 // they are asked once here and not inside the loop that writes: a call that

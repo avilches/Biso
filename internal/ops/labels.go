@@ -295,8 +295,12 @@ func (rule *labelRule) whyNot() string {
 }
 
 // mixedSeparators answers the first two values of one key written with the
-// two separators, in the order they were written, and nil when there is no
-// such pair (docs/spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito).
+// two separators, and nil when there is no such pair
+// (docs/spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito).
+//
+// The two come out in the order the caller hands them over, which for a
+// write is the order the write would apply them: replacing before adding,
+// and the command line's own order inside each step.
 func mixedSeparators(values []string) []model.Label {
 	first := map[string]model.Label{}
 	for _, raw := range values {
@@ -317,10 +321,11 @@ func mixedSeparators(values []string) []model.Label {
 	return nil
 }
 
-// mixedSeparatorsError is the refusal that pair deserves. It names the two
-// values in the order they were written and blames neither, because neither
-// is more at fault than the other, which is why it carries `field` and no
-// `given` (docs/spec/contrato-json.md#los-errores-en-json).
+// mixedSeparatorsError is the refusal that pair deserves. It blames neither
+// of the two values, because neither is more at fault than the other, which
+// is why it carries `field` and no `given`
+// (docs/spec/contrato-json.md#los-errores-en-json) and why it names them in
+// the order the write applies them rather than picking one to go first.
 func mixedSeparatorsError(message string) *model.Error {
 	return &model.Error{
 		ExitCode: 2,
@@ -364,9 +369,9 @@ func exclusiveLabelReplaced(flag, value, taskID string, replaced []string) Warni
 }
 
 // exclusiveLabelLastWins is the other one: two or more values of the same
-// `::` key in one call, where the last one written is the intention and the
-// warning says which one stayed. It counts the appearances past two exactly
-// as `duplicate_flag_value` does.
+// `::` key in one flag, where the last one that flag wrote is the intention
+// and the warning says which one stayed. It counts the appearances past two
+// exactly as `duplicate_flag_value` does.
 func exclusiveLabelLastWins(flag, key, kept string, times int) Warning {
 	written := "twice"
 	if times != 2 {
