@@ -60,7 +60,6 @@ Precisiones:
 | `labels` | `list<string>` | |
 | `dependencies` | `list<string>` (referencias a tareas); ver ["Las relaciones entre tareas"](relaciones.md) | |
 | `references` | `list<string>`; ver ["Las relaciones entre tareas"](relaciones.md) | el único campo de punteros: un documento es una referencia más |
-| `modifiedFiles` | `list<string>` | |
 | `due` | `date` (`YYYY-MM-DD`) | |
 | `ordinal` | `int` (>= 0) | |
 | `ext` | `map<string,string>` | |

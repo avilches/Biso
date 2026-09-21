@@ -61,7 +61,7 @@ const (
 
 // Alphabet is the closed character set of a token field, from
 // docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token. Fields
-// that are free text (references, touched files) use AnyText,
+// that are free text (references) use AnyText,
 // because a URL or a path cannot have its alphabet closed without leaving
 // legitimate values out.
 type Alphabet int

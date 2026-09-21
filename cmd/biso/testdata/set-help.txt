@@ -9,7 +9,7 @@ List fields that take comma-separated values have four shapes, and there is no
 field that breaks them:
   --add-labels X      add one or more       --replace-labels X   replace the whole list
   --rm-labels X       remove one or more    --clear-labels       empty the list
-The same works for --assignees, --refs, --deps and --files.
+The same works for --assignees, --refs and --deps.
 
 Criteria have three, because a criterion's text can contain a comma and so is
 never split on one. There is no whole-list replace; do it by clearing and

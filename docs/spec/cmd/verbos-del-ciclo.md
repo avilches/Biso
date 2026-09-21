@@ -373,7 +373,7 @@ Examples:
 
 ```
 biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]...
-            [--append-note <text>]... [--add-files <path>]... [--status <v>] [--strict] [--no-checks]
+            [--append-note <text>]... [--status <v>] [--strict] [--no-checks]
             [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
@@ -388,12 +388,12 @@ biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]...
 | `--id` | no | booleano | falso | no | no | `--match` |
 | `--match` | no | booleano | falso | no | no | `--id` |
 
-`--append-summary`, `--check-ac`, `--append-note` y `--add-files` son los flags de
+`--append-summary`, `--check-ac` y `--append-note` son los flags de
 campo de siempre.
 
 ### Qué hace
 
-Marca criterios, escribe la última nota y el resumen, apunta los ficheros tocados y mueve al estado
+Marca criterios, escribe la última nota y el resumen y mueve al estado
 terminal, todo en una escritura.
 
 | Caso | Qué pasa |
@@ -494,7 +494,6 @@ Options:
       --check-ac <sel>         check criteria: all, 3, 1-4, 1,3,7 or the text.
                                With several tasks the selector has to be `all`
       --append-note <text>     one last implementation note; repeatable
-      --add-files <path>       record a modified file; repeatable
       --status <value>         use another status instead of the terminal one
       --strict           refuse to finish with unchecked criteria, unfinished
                          subtasks or no summary

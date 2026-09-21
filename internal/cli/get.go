@@ -182,7 +182,7 @@ func prose(text string) string {
 }
 
 // The layout of the block of metadata: a label of eleven cells, a value of
-// twenty one, and then the second pair. The last four rows carry one field
+// twenty one, and then the second pair. The last rows carry one field
 // and pad nothing after it.
 const (
 	metaLabelWidth = 11
@@ -223,7 +223,6 @@ func metaBlock(v ops.TaskView) string {
 		pair("lease", minute(t.LeaseExpiresAt), "holder", orDash(t.LeaseHolder))
 	}
 	single("refs", joined(t.References))
-	single("files", joined(t.ModifiedFiles))
 	single("ext", extCell(t.Ext))
 	return b.String()
 }

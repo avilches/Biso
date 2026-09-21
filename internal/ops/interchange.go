@@ -22,9 +22,9 @@ import (
 // drift away from this one without any test noticing, and then exporting a
 // board and importing it would stop reproducing it field for field.
 //
-// The only keys the two directions do not share are `definitionOfDone` and
-// `documentation`, which `new --from` accepts and `export` never writes
-// because neither is a field of the model
+// The only keys the two directions do not share are `definitionOfDone`,
+// `documentation` and `modifiedFiles`, which `new --from` accepts and
+// `export` never writes because none is a field of the model
 // (docs/spec/cmd/new.md#el-modo-lote). They live in wireInput, which embeds
 // wireTask, so even that difference is written once.
 
@@ -48,7 +48,6 @@ type wireTask struct {
 	Labels             []string          `json:"labels"`
 	Dependencies       []string          `json:"dependencies"`
 	References         []string          `json:"references"`
-	ModifiedFiles      []string          `json:"modifiedFiles"`
 	Due                *string           `json:"due"`
 	Ordinal            *int              `json:"ordinal"`
 	Ext                map[string]string `json:"ext"`
@@ -66,12 +65,13 @@ type wireTask struct {
 	Archived           bool              `json:"archived"`
 }
 
-// wireInput is a line of a batch: everything above plus the two keys that
-// only the reading direction knows, both of them from a foreign batch.
+// wireInput is a line of a batch: everything above plus the three keys that
+// only the reading direction knows, all of them from a foreign batch.
 type wireInput struct {
 	wireTask
 	DefinitionOfDone []wireCriterion `json:"definitionOfDone"`
 	Documentation    []string        `json:"documentation"`
+	ModifiedFiles    []string        `json:"modifiedFiles"`
 }
 
 // wireCriterion is one acceptance criterion on the wire. Reading it takes
@@ -228,8 +228,8 @@ var interchangeKeys = keysOf(reflect.TypeOf(wireInput{}))
 //
 // The shape it reads is wireTask and not wireInput, which is exactly the
 // rule: the lists of the model are the ones whose empty value is [] or {},
-// and definitionOfDone and documentation are not among them, so null there
-// means the key was not written (docs/spec/cmd/new.md#el-modo-lote).
+// and definitionOfDone, documentation and modifiedFiles are not among them,
+// so null there means the key was not written (docs/spec/cmd/new.md#el-modo-lote).
 var listKeys = listKeysOf(reflect.TypeOf(wireTask{}))
 
 func keysOf(t reflect.Type) []string {
@@ -285,7 +285,6 @@ func encodeTask(t *model.Task) ([]byte, error) {
 		Labels:             listOrEmpty(t.Labels),
 		Dependencies:       listOrEmpty(t.Dependencies),
 		References:         listOrEmpty(t.References),
-		ModifiedFiles:      listOrEmpty(t.ModifiedFiles),
 		Due:                dayOrNil(t.Due),
 		Ordinal:            t.Ordinal,
 		Ext:                mapOrEmpty(t.Ext),
@@ -344,10 +343,24 @@ type decoded struct {
 	// docCount is how many elements of documentation the line carried and
 	// were merged into references, which the warning announces.
 	docCount int
+	// fileCount is the same for the elements of modifiedFiles.
+	fileCount int
 	// rawStatus, rawType and rawPriority are the values as the line wrote
 	// them, before the board's vocabulary has judged them.
 	rawStatus, rawType, rawPriority string
 	hasStatus                       bool
+}
+
+// mergeIntoReferences appends each value to the references of t unless they
+// already hold it, and answers how many values there were, which is what the
+// warning of the batch counts, repeated ones included.
+func mergeIntoReferences(t *model.Task, values []string) int {
+	for _, v := range values {
+		if !slices.Contains(t.References, v) {
+			t.References = append(t.References, v)
+		}
+	}
+	return len(values)
 }
 
 // decodeTask reads one line of the interchange format into a task.
@@ -376,24 +389,23 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 	}
 
 	t := &model.Task{
-		Title:         in.Title,
-		Type:          value(in.Type),
-		Priority:      value(in.Priority),
-		Parent:        value(in.Parent),
-		Assignees:     in.Assignees,
-		Author:        value(in.Author),
-		Labels:        in.Labels,
-		Dependencies:  in.Dependencies,
-		References:    in.References,
-		ModifiedFiles: in.ModifiedFiles,
-		Ordinal:       in.Ordinal,
-		Ext:           in.Ext,
-		Description:   value(in.Description),
-		Plan:          value(in.Plan),
-		Notes:         value(in.Notes),
-		Summary:       value(in.Summary),
-		LeaseHolder:   value(in.LeaseHolder),
-		Archived:      in.Archived,
+		Title:        in.Title,
+		Type:         value(in.Type),
+		Priority:     value(in.Priority),
+		Parent:       value(in.Parent),
+		Assignees:    in.Assignees,
+		Author:       value(in.Author),
+		Labels:       in.Labels,
+		Dependencies: in.Dependencies,
+		References:   in.References,
+		Ordinal:      in.Ordinal,
+		Ext:          in.Ext,
+		Description:  value(in.Description),
+		Plan:         value(in.Plan),
+		Notes:        value(in.Notes),
+		Summary:      value(in.Summary),
+		LeaseHolder:  value(in.LeaseHolder),
+		Archived:     in.Archived,
 	}
 	d := &decoded{
 		task:              t,
@@ -445,15 +457,12 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		added.Checked = c.Checked
 		d.dodKeys = append(d.dodKeys, added.Key)
 	}
-	// documentation is merged into references, after the ones the line
-	// already had and in the order it came. A value that references already
-	// holds is kept once, as any list keeps a value written twice.
-	for _, v := range in.Documentation {
-		d.docCount++
-		if !slices.Contains(t.References, v) {
-			t.References = append(t.References, v)
-		}
-	}
+	// documentation and then modifiedFiles are merged into references, after
+	// the ones the line already had and in the order they came, whatever
+	// order the keys were written in. A value that references already holds
+	// is kept once, as any list keeps a value written twice.
+	d.docCount = mergeIntoReferences(t, in.Documentation)
+	d.fileCount = mergeIntoReferences(t, in.ModifiedFiles)
 	if err := readComments(t, in.Comments, now); err != nil {
 		return nil, err
 	}

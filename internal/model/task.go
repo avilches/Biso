@@ -52,24 +52,23 @@ type Task struct {
 	LeaseHolder    string
 
 	// The fields the caller sets.
-	Title         string
-	Status        string
-	Type          string
-	Priority      string
-	Parent        string
-	Assignees     []string
-	Author        string
-	Labels        []string
-	Dependencies  []string
-	References    []string
-	ModifiedFiles []string
-	Due           time.Time // a calendar day at UTC midnight, zero when unset
-	Ordinal       *int
-	Ext           map[string]string
-	Description   string
-	Plan          string
-	Notes         string
-	Summary       string
+	Title        string
+	Status       string
+	Type         string
+	Priority     string
+	Parent       string
+	Assignees    []string
+	Author       string
+	Labels       []string
+	Dependencies []string
+	References   []string
+	Due          time.Time // a calendar day at UTC midnight, zero when unset
+	Ordinal      *int
+	Ext          map[string]string
+	Description  string
+	Plan         string
+	Notes        string
+	Summary      string
 
 	AcceptanceCriteria []Criterion
 	Comments           []Comment
@@ -117,21 +116,20 @@ type Question struct {
 	Body    string
 }
 
-// ListField names one of the five list<string> fields of
+// ListField names one of the four list<string> fields of
 // docs/spec/modelo-de-datos/index.md. It is a closed vocabulary: ListField
 // and SetListField reject any other name instead of answering an empty
 // list, per the rule of the project's CLAUDE.md that a value that does not
 // exist is an error whether it is being written or read.
 type ListField string
 
-// The five list<string> fields. The names are the ones the JSON contract
+// The four list<string> fields. The names are the ones the JSON contract
 // uses, so the same constant serves the model, the storage and the wire.
 const (
-	FieldAssignees     ListField = "assignees"
-	FieldLabels        ListField = "labels"
-	FieldDependencies  ListField = "dependencies"
-	FieldReferences    ListField = "references"
-	FieldModifiedFiles ListField = "modifiedFiles"
+	FieldAssignees    ListField = "assignees"
+	FieldLabels       ListField = "labels"
+	FieldDependencies ListField = "dependencies"
+	FieldReferences   ListField = "references"
 )
 
 // listFields is the closed vocabulary itself, in the order of the table of
@@ -141,10 +139,9 @@ var listFields = []ListField{
 	FieldLabels,
 	FieldDependencies,
 	FieldReferences,
-	FieldModifiedFiles,
 }
 
-// ListFields answers the five list<string> field names, in the order of the
+// ListFields answers the four list<string> field names, in the order of the
 // specification's table. The caller gets a copy: the vocabulary is closed
 // and nobody outside this package extends it.
 func ListFields() []ListField {
@@ -154,7 +151,7 @@ func ListFields() []ListField {
 }
 
 // ErrUnknownListField is what ListField and SetListField answer for a name
-// that is not one of the five. It is not a *Error of the specification:
+// that is not one of the four. It is not a *Error of the specification:
 // no command lets a caller name a list field freely, so reaching it means
 // the program asked for a field that does not exist, which is a bug and
 // not a case of docs/spec/codigos-de-salida.md.
@@ -165,7 +162,7 @@ func (e ErrUnknownListField) Error() string {
 	return fmt.Sprintf("unknown list field %q", string(e))
 }
 
-// ListField answers the values of one of the five list fields.
+// ListField answers the values of one of the four list fields.
 func (t *Task) ListField(f ListField) ([]string, error) {
 	switch f {
 	case FieldAssignees:
@@ -176,13 +173,11 @@ func (t *Task) ListField(f ListField) ([]string, error) {
 		return t.Dependencies, nil
 	case FieldReferences:
 		return t.References, nil
-	case FieldModifiedFiles:
-		return t.ModifiedFiles, nil
 	}
 	return nil, ErrUnknownListField(f)
 }
 
-// SetListField replaces the values of one of the five list fields, in the
+// SetListField replaces the values of one of the four list fields, in the
 // order given. Lists are never sorted on their own
 // (docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura).
 func (t *Task) SetListField(f ListField, values []string) error {
@@ -195,8 +190,6 @@ func (t *Task) SetListField(f ListField, values []string) error {
 		t.Dependencies = values
 	case FieldReferences:
 		t.References = values
-	case FieldModifiedFiles:
-		t.ModifiedFiles = values
 	default:
 		return ErrUnknownListField(f)
 	}

@@ -76,7 +76,7 @@ Entra:
 
 - Las diez órdenes del ciclo de trabajo con su forma de uso. Quien no sabe que existe `biso finish`
   no va a escribir `biso finish --help`.
-- **Los nombres de todos los flags de campo**, en una rejilla de doce líneas.
+- **Los nombres de todos los flags de campo**, en una rejilla de once líneas.
 - El vocabulario real de este tablero, con **el recuento por estado** y con la marca de cuál es el
   estado de las tareas nuevas, cuál el activo y cuál el terminal.
 - Las reglas que no son adivinables.
@@ -134,7 +134,6 @@ FIELD FLAGS  (same names, same meaning, in every command above that writes)
   --add-assignees --rm-assignees --clear-assignees --replace-assignees
   --add-refs --rm-refs --clear-refs --replace-refs
   --add-deps --rm-deps --clear-deps --replace-deps
-  --add-files --rm-files --clear-files --replace-files
   --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac
   --append-desc --clear-desc  --append-plan --clear-plan
   --append-note --clear-notes  --append-summary --clear-summary
@@ -380,7 +379,7 @@ cada estado. El mensaje de arriba invita a crear la primera tarea, y ahí no ser
 
 `--full` añade al final del mensaje, después del párrafo de cierre y separado por una línea en
 blanco, la lista completa de los flags de campo. No sustituye a la rejilla `FIELD FLAGS`, que
-seguirá estando donde estaba: la rejilla da los nombres en doce líneas para que quepan en el
+seguirá estando donde estaba: la rejilla da los nombres en once líneas para que quepan en el
 arranque, y esto los agrupa **por el campo que escriben y en el orden en que una escritura los
 aplica** (["Orden de aplicación dentro de una escritura"](../garantias.md#orden-de-aplicación-dentro-de-una-escritura)),
 que es lo que la rejilla no puede decir sin ocupar el triple.
@@ -391,7 +390,6 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
   assignees           --clear-assignees --replace-assignees --rm-assignees --add-assignees
   references          --clear-refs --replace-refs --rm-refs --add-refs
   dependencies        --clear-deps --replace-deps --rm-deps --add-deps
-  modifiedFiles       --clear-files --replace-files --rm-files --add-files
   acceptanceCriteria  --clear-acs --rm-ac --add-ac --check-ac --uncheck-ac
   description         --clear-desc --append-desc
   plan                --clear-plan --append-plan
@@ -412,7 +410,7 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
 ```
 
 El nombre de la izquierda es el del campo en el esquema JSON (["El contrato JSON"](../contrato-json.md))
-y no el del flag, porque es justamente lo que un flag no dice: `--add-files` y `modifiedFiles` son la
+y no el del flag, porque es justamente lo que un flag no dice: `--add-refs` y `references` son la
 misma cosa escrita de dos maneras, y quien lee el sobre necesita el puente.
 
 ## El esquema JSON

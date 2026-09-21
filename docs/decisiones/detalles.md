@@ -25,14 +25,15 @@ web, así que cada etiqueta con espacio sería una comilla que ese agente tendr�
 siempre, para ganar exactamente lo mismo que ya ofrecen `-` y `_`. Y olvidar la comilla no siempre
 falla alto: según qué flags haya alrededor, la palabra suelta puede convertirse en un argumento
 inesperado (el caso bueno, error 2) o colarse donde no tocaba. Cerrar el alfabeto quita el problema de
-raíz en vez de pedir disciplina. `references`, `dependencies` y `modifiedFiles` no
+raíz en vez de pedir disciplina. `references` y `dependencies` no
 llevan esta restricción, y una clave de `ext` lleva un tercer alfabeto distinto; el porqué de cada una
 está más abajo.
 
 **El problema que la motiva.** La especificación no restringía ningún carácter en `labels`,
 `assignees`, `references`, `documentation`, `dependencies`, `modifiedFiles` ni en una clave de `ext`
-(`documentation` era entonces un campo distinto de `references` y ya no existe, ver
-["Se retira `documentation` y `references` queda como único campo de punteros"](#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)):
+(`documentation` y `modifiedFiles` eran entonces campos distintos de `references` y ya no existen, ver
+["Se retira `documentation` y `references` queda como único campo de punteros"](#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)
+y ["Se retira `modifiedFiles`"](#se-retira-modifiedfiles)):
 la única regla escrita era que una coma dentro de un valor se escapa con `\,`, lo que de hecho dejaba
 pasar espacios, saltos de línea y cualquier símbolo. `labels` y `assignees` se imprimen en las columnas
 de ancho fijo de `biso ls` y `biso prime`, así que un espacio o un salto de línea dentro de uno de esos
@@ -54,17 +55,17 @@ una línea de comandos, que es exactamente la situación de biso:
 Cerrar el alfabeto de estos dos campos tiene una consecuencia que también hay que anotar: **el escape
 de coma deja de aplicarles**. La única razón para escapar una coma es poder meterla como contenido
 literal de un valor, y una coma no está en el alfabeto cerrado de `labels` ni de `assignees`, así que
-ahí nunca hay una coma legítima que escapar. El escape sigue haciendo falta para `references` y
-`modifiedFiles`, que siguen siendo texto libre.
+ahí nunca hay una coma legítima que escapar. El escape sigue haciendo falta para `references`,
+que sigue siendo texto libre.
 
-**Por qué `references`, `dependencies` y `modifiedFiles` quedan fuera.** De los
-campos de lista con coma que no son `labels` ni `assignees`, dos (`references` y `modifiedFiles`)
-guardan contenido cuyo alfabeto no lo decide biso: una referencia puede ser una URL, y un fichero
-tocado es una ruta del sistema de ficheros. Cerrarles el alfabeto dejaría fuera casos legítimos
-(`/`, `?`, `#` de una URL; `/` de una ruta) a cambio de nada, porque ninguno de los dos se imprime en
+**Por qué `references` y `dependencies` quedan fuera.** De los
+campos de lista con coma que no son `labels` ni `assignees`, uno (`references`)
+guarda contenido cuyo alfabeto no lo decide biso: una referencia puede ser una URL o la ruta del
+sistema de ficheros de un documento o de un fichero de código. Cerrarle el alfabeto dejaría fuera
+casos legítimos (`/`, `?`, `#` de una URL; `/` de una ruta) a cambio de nada, porque no se imprime en
 una columna de ancho fijo con otros de su misma clase de la forma en que lo hacen las etiquetas. El
-tercero, `dependencies`, no guarda ni una URL ni una ruta y no necesita esta razón: no necesita
-ninguna regla nueva porque ya tiene la suya, distinta de la de los otros dos. Cada elemento es un `<ref>` y lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](../spec/referencias.md), que ya distingue un identificador
+otro, `dependencies`, no guarda ni una URL ni una ruta y no necesita esta razón: no necesita
+ninguna regla nueva porque ya tiene la suya, distinta de la de `references`. Cada elemento es un `<ref>` y lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](../spec/referencias.md), que ya distingue un identificador
 mal formado de una consulta de texto libre.
 
 **Por qué la clave de `ext` es un tercer alfabeto y no el mismo que `labels`.** Una clave de `ext`
@@ -333,6 +334,77 @@ era cada puntero, así que el conversor que reconstruya el formato de Backlog.md
 `ext` de qué campo venía cada valor si quiere la ida y vuelta exacta, igual que se propuso para los
 identificadores con punto. Se hace ahora porque `biso` todavía no se ha publicado: no hay ningún
 tablero ajeno con el campo escrito que migrar.
+
+---
+
+## Se retira `modifiedFiles`
+
+**La decisión.** Una tarea no tiene un campo de ficheros tocados. El campo `modifiedFiles` no existe,
+ni sus flags (`--add-files`, `--rm-files`, `--clear-files`, `--replace-files`, y con ellos el
+`--add-files` que anunciaba `biso finish`), ni su línea `files` en la ficha de `biso get`, ni su
+clave en el JSON, ni su línea en la rejilla `FIELD FLAGS` del mensaje de arranque. Una ruta que valga
+la pena señalar es una referencia más, en `references`, y la pregunta de qué código tocó un trabajo la
+contesta el control de versiones. La única huella que queda es de entrada: un lote de
+`biso new --from` que traiga `modifiedFiles` no falla, sino que añade cada elemento al final de
+`references`, detrás de los de `documentation` si la misma línea también los trae, y avisa con
+`imported_modified_files_merged` (sección [`biso new`](../spec/cmd/new.md)).
+
+**Las tres medidas que lo deciden.**
+
+1. **Uso real: 0 de 535.** El 2026-09-21 se contaron las tareas de los seis tableros de Backlog.md de
+   esta máquina: 94 en Biso, 271 en Kex, 56 en HubApp, 43 en LedgerDashboard, 38 en Health y 33 en
+   dotfiles. Ninguna tiene `modified_files`. No es un cero de imposibilidad: el CLI de Backlog.md
+   1.52.0 ofrece `--modified-file`, así que quien quiso rellenarlo pudo. Es la misma clase de medida,
+   sobre una base mayor, con la que se retiró la definición de hecho
+   (["Se retira la definición de hecho"](#se-retira-la-definición-de-hecho)).
+2. **Una sola de siete herramientas.** De las siete de
+   ["Estado del arte"](../estado-del-arte/index.md), solo Backlog.md tiene el campo. La nota de
+   GitHub Issues es la que más dice: allí los ficheros cambiados son una propiedad del objeto Pull
+   Request y no del Issue, es decir, de la revisión del código y no de la tarea que la motivó
+   (["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)).
+3. **Solape con `references`, una vez fundido `documentation`.** Con `documentation` ya dentro de
+   `references` (["Se retira `documentation` y `references` queda como único campo de punteros"](#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)),
+   `references` y `modifiedFiles` eran las dos únicas listas de texto libre sin validación de ninguna
+   clase: el mismo tipo, la misma ausencia de restricción de caracteres, la misma regla de escape de la
+   coma, la misma exclusión de la búsqueda de texto, el mismo destino en la exportación y en la ficha.
+   `dependencies` queda aparte porque sí se valida y porque entra en dos términos de la urgencia. Lo
+   único que distinguía a las dos era la etiqueta que imprime la ficha, `refs` frente a `files`, y dos
+   nombres para el mismo concepto es justo lo que prohíbe el principio 2 de la especificación
+   (["Los principios"](../spec/principios.md)). En el código eran trece apariciones fuera de las
+   pruebas y todas de transporte: sin filtro, sin cálculo, sin validación propia y sin aviso.
+
+**Alternativa descartada: conservarlo porque es el único campo que contesta qué código tocó este
+trabajo.** Es el caso en contra más serio, porque esa pregunta es propia del público al que apunta
+`biso`: agentes que trabajan sobre un repositorio. Se descarta porque ninguna parte del programa hace
+cumplir esa distinción. Nada valida que una entrada de `modifiedFiles` sea una ruta, ni impide que sea
+una URL o una frase, así que el campo era una convención, y una convención no necesita un campo del
+esquema, un valor en un `CHECK` de SQL, una familia de flags y una línea del mensaje de arranque. Quien quiera
+la convención la sigue con `--add-refs` y una ruta, y ni siquiera hace falta que la respete el resto del
+equipo, porque el campo tampoco lo garantizaba. Y la respuesta fiable a esa pregunta no está en la
+tarea sino en `git diff --name-only` sobre las ramas del trabajo, que no se queda desfasada cuando
+alguien olvida apuntar un fichero.
+
+**Alternativa descartada: conservarlo y fundir `references` en él.** Habría dejado un campo llamado
+`modifiedFiles` que guarda URLs e identificadores de otras tareas. Es el problema que ya se resolvió
+para `documentation`, con la palabra estrecha ganando sobre la ancha.
+
+**Alternativa descartada: hacer `modifiedFiles` un campo validado**, que exija rutas relativas al
+repositorio y compruebe que existen. Convertiría un campo que nadie rellena en el único de la tarea que
+depende del sistema de ficheros de quien escribe, y un tablero que se lee desde otra máquina o desde
+otra rama daría avisos por ficheros que en esa copia no están.
+
+**Qué cuesta, y qué se libera.** La retirada quita de la rejilla `FIELD FLAGS` del mensaje de arranque
+la línea entera de los flags del campo, 55 bytes. Con el tablero del ejemplo el mensaje pasa de 5.038 a
+4.983 bytes, todos de la parte fija, que baja de 3.549 a 3.494 de los 3.840 que tiene asignados
+(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)). Los campos de lista
+pasan de cinco a cuatro. La tabla de correspondencia con otros modelos se recalcula con un campo menos en el
+total (["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Y hay la
+misma pérdida que se aceptó con `documentation`: al importar desde Backlog.md ya no queda constancia de
+cuál de las tres listas era cada puntero, así que el conversor que reconstruya el formato de Backlog.md
+tendrá que guardar en `ext` de qué campo venía cada valor si quiere la ida y vuelta exacta. Se hace
+ahora porque el contrato de estabilidad (["El contrato de estabilidad"](../spec/estabilidad.md)) obliga a
+partir de la versión 1.0, que no se ha publicado: no hay ningún tablero ajeno con el campo escrito que
+migrar.
 
 ---
 

@@ -410,14 +410,13 @@ const (
 )
 
 // listSuffixes maps the tail of a list flag to the field it writes. The four
-// prefixes and these five suffixes are the whole family: there is no field
+// prefixes and these four suffixes are the whole family: there is no field
 // that breaks the shape, which is what `biso set --help` promises.
 var listSuffixes = map[string]model.ListField{
 	"labels":    model.FieldLabels,
 	"assignees": model.FieldAssignees,
 	"refs":      model.FieldReferences,
 	"deps":      model.FieldDependencies,
-	"files":     model.FieldModifiedFiles,
 }
 
 func listFlag(flag string) (model.ListField, listOp, bool) {

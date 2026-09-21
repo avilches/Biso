@@ -22,6 +22,11 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   clave `documentation` de un lote ajeno y funde sus valores en `references`, avisando de ello
   (["`biso new`"](cmd/new.md)). El porqué, con la medida que lo decide, está en
   ["Se retira `documentation` y `references` queda como único campo de punteros"](../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros).
+- **No hay un campo de ficheros tocados.** Qué código tocó un trabajo lo dice el control de versiones,
+  y una ruta que valga la pena señalar es una referencia más. La importación de `biso new --from` sí
+  acepta la clave `modifiedFiles` de un lote ajeno y funde sus valores en `references`, avisando de
+  ello (["`biso new`"](cmd/new.md)). El porqué, con las medidas que lo deciden, está en
+  ["Se retira `modifiedFiles`"](../decisiones/detalles.md#se-retira-modifiedfiles).
 - **No hay contextos de sesión**, es decir, filtros por defecto guardados que cambien lo que devuelve
   una consulta sin que se vea en la línea de comandos.
 - **No hay recurrencia, ni seguimiento de tiempo, ni subtareas con numeración propia.** Una subtarea
