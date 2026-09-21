@@ -462,14 +462,18 @@ func checkImportedLabels(cfg board.Config, labels []string) *model.Error {
 			pair[0].Key, quotedList([]string{pair[0].Raw, pair[1].Raw})))
 	}
 	for _, of := range exclusiveKeyViolations(labels) {
+		// It carries neither `field` nor `given`, exactly as it does
+		// outside a batch: the table of
+		// docs/spec/contrato-json.md#los-errores-en-json promises those two
+		// keys to the errors of exit code 3 and to the ones of 2 that name
+		// a flag, and this one is a 6. A `code` that carried the key on one
+		// line and not on another would be one a caller cannot branch on.
 		return &model.Error{
 			ExitCode: 6,
 			Code:     "exclusive_label_conflict",
 			Message: fmt.Sprintf(
 				"labels give the key %q more than one value, and :: allows at most one: %s",
 				model.SplitLabel(of[0]).Key, quotedList(of)),
-			Field:   "labels",
-			NoGiven: true,
 		}
 	}
 	return nil
