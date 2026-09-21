@@ -2,10 +2,12 @@
 
 > **Este banco es una fotografía de un momento, no una herramienta mantenida.** Se midió el
 > 2026-09-10 con el modelo de datos de entonces, y desde entonces el programa retiró tres campos
-> que el banco todavía guarda: `ext`, `documentation` y `modifiedFiles` (su contenido, cuando lo hay,
-> vive ahora en `references`; ver ["Se retira `documentation` y `references` queda como único campo
-> de punteros"](../../docs/decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)
-> y ["Se retira `modifiedFiles`"](../../docs/decisiones/detalles.md#se-retira-modifiedfiles)). El esquema
+> que el banco todavía guarda: `ext`, `documentation` y `modifiedFiles`. El contenido de los dos
+> últimos, cuando lo hay, vive ahora en `references` (ver ["Se retira `documentation` y `references`
+> queda como único campo de
+> punteros"](../../docs/decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)
+> y ["Se retira `modifiedFiles`"](../../docs/decisiones/detalles.md#se-retira-modifiedfiles)); `ext`
+> no tiene sustituto directo (["Se retira `ext`"](../../docs/decisiones/detalles.md#se-retira-ext)). El esquema
 > y el generador de tableros los conservan a propósito, y las cifras de `RESULTADOS.md` y las que cita
 > ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go)
 > son las de ese modelo. La razón está en ["Por qué se deja como está"](#por-qué-se-deja-como-está).
@@ -27,8 +29,11 @@ todo. Esa es la regla para los tres campos retirados por igual (`ext`, `document
 esquema a la vez que se rehacen las cifras y su decisión, nunca solo lo primero.
 
 **Cuánto pesan esos campos en lo que se midió.** Se regeneró el tablero de 300 tareas con el
-generador sin tocar y salió idéntico al de `results/01-tableros.txt` (390 tareas, 1.441.792 bytes),
-así que el reparto es exacto:
+generador sin tocar y salió con las mismas filas y el mismo tamaño que el de
+`results/01-tableros.txt` (390 tareas, 1.441.792 bytes),
+así que los tamaños son los medidos. Los porcentajes son del orden de lo que pesan, no cifras
+exactas: el de las dos filas de abajo sale de repartir el tamaño de `textlist` en proporción al
+número de filas (804 de 1.197), porque una tabla no se parte por filas a nivel de página:
 
 | Contenido | Filas | Bytes en el fichero | Parte del tablero |
 |---|---|---|---|

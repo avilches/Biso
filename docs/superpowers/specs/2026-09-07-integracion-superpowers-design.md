@@ -2,19 +2,22 @@
 
 > **Superado en el modelo de datos y en los flags (nota del 2026-09-21).** Este documento es una
 > fotografía del análisis del 2026-09-07 y no se ha reescrito, porque lo que recoge es lo que se
-> pensó entonces. Dos cosas de las tablas de la sección "Problema 1" ya no son ciertas y no hay que
-> tomarlas como el modelo actual:
+> pensó entonces. Entre otras, hay cosas de las tablas y de la prosa de la sección "Problema 1" (en
+> particular bajo "Qué NO meter en la tarea") que ya no son ciertas y no hay que tomar como el modelo
+> actual:
 >
 > - Los campos `documentation` y `modifiedFiles` no existen. Una ruta o un documento que valga la
 >   pena señalar es una referencia más, en `references`, y la pregunta de qué ficheros tocó un
 >   trabajo la contesta git. Ver [Se retira `documentation` y `references` queda como único campo de
 >   punteros](../../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)
 >   y [Se retira `modifiedFiles`](../../decisiones/detalles.md#se-retira-modifiedfiles).
-> - La columna "Flag" de esas tablas es un boceto que no coincide con la sintaxis de la especificación.
->   En particular `--file` no existió jamás (los flags de `modifiedFiles` eran `--add-files` y
->   compañía, hoy también retirados) y los de referencias son `--add-refs`, `--rm-refs`,
->   `--clear-refs` y `--replace-refs`. Los flags vigentes están en
->   [Las familias de flags](../../spec/familias-de-flags.md).
+> - Tampoco existe `definitionOfDone`: ver [Se retira la definición de
+>   hecho](../../decisiones/detalles.md#se-retira-la-definición-de-hecho).
+> - Los flags de la columna "Flag" (`--doc`, `--file`, `--ref`, `--dod` y los demás) eran los de la
+>   especificación de entonces, y después se han renombrado o retirado. Por ejemplo, `--file` se
+>   renombró a `--add-files` el 2026-09-12 y ese flag se retiró luego con el campo, y los de
+>   referencias son hoy `--add-refs`, `--rm-refs`, `--clear-refs` y `--replace-refs`. Los flags
+>   vigentes están en [Las familias de flags](../../spec/familias-de-flags.md#campos-de-lista-que-admiten-coma).
 >
 > Sigue siendo un análisis, no una decisión: nada de lo que dice se ha adoptado por el mero hecho de
 > estar aquí.
