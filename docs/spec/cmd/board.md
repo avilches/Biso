@@ -44,6 +44,47 @@ estado. La agrupación es solo de esta interfaz: no existe ningún flag equivale
 en `biso prime`, aunque las dos ya permiten filtrar por `--parent` y por `--type`
 (secciones [`biso ls`](ls.md) y [`biso set`](set.md)).
 
+## Qué escribe un arrastre
+
+Mover una tarea con el ratón es una escritura del tablero como cualquier otra, y lo que escribe
+depende de adónde se la lleve. No hay ningún camino por el que la interfaz escriba algo que la línea
+de comandos no pueda escribir también:
+
+- **Dentro de la misma columna y el mismo grupo, un arrastre reordena**, y eso es escribir la clave
+  de orden manual de la tarea, la misma que escribirían `--above` y `--below`
+  (["El orden manual y su clave"](../modelo-de-datos/orden-manual.md)). Las vecinas son las que la
+  tarea tenga encima y debajo **en el sitio donde se suelta**, y la clave sale del hueco que dejan.
+- **Cruzar de una columna a otra escribe el `status`**, que es lo que significa la columna.
+- **Cruzar de un grupo a otro no reordena: edita el campo por el que se agrupa.** Con la agrupación
+  por padre, el `parent`; con la agrupación por tipo, el `type`. La clave de orden manual no se toca,
+  porque el grupo no es un orden sino un reparto de las mismas tareas.
+- **Un arrastre que hace las dos cosas a la vez**, porque se suelta la tarea en otra columna y dentro
+  de otro grupo, escribe los dos campos en la misma escritura, con la garantía de todo o nada de
+  ["Concurrencia, atomicidad y garantías observables"](../garantias.md#concurrencia-atomicidad-y-garantías-observables).
+
+**La clave que un arrastre escribe es global aunque la vista esté agrupada.** Cada tarea tiene una
+sola, así que reordenar dentro de un grupo puede mover la tarea también en la lista sin agrupar, y
+eso está aceptado a propósito: la alternativa, una clave por eje de agrupación, está descartada en
+["El orden manual es una clave de texto"](../../decisiones/detalles.md#el-orden-manual-es-una-clave-de-texto).
+
+**Un arrastre escribe la clave de la tarea que se suelta y nunca la de sus vecinas**, que es la misma
+regla que hace que `--above` sobre una tarea sin clave sea un error en vez de escribirle una. De ahí
+salen los tres sitios donde se puede soltar una tarea, y solo esos tres:
+
+- **Delante de todas las de la columna**, que es `--ordinal first`, y **detrás de todas**, que es
+  `--ordinal last`. Es la forma de meter la primera tarea de un tablero donde ninguna tiene clave
+  todavía.
+- **Entre dos tareas que tienen clave**, que es el hueco de siempre.
+- **Justo en la frontera entre las que tienen clave y las que no**, que es `--ordinal last`: las
+  tareas sin clave van detrás de todas las que la tienen (["La regla de orden,
+  completa"](ls.md#la-regla-de-orden-completa)), así que ese sitio y el final del orden manual son el
+  mismo sitio.
+
+**Soltar una tarea entre dos que no tienen clave no escribe nada**, y la interfaz lo dice en vez de
+dejar la tarea en otro sitio: ahí no hay ningún hueco que nombrar, porque el orden de esa parte de la
+lista lo decide la urgencia y no una clave. Quien quiera meterla ahí tiene que darle clave antes a
+alguna de las dos vecinas, exactamente lo mismo que le propone la línea de comandos.
+
 ## Salida
 
 ```
