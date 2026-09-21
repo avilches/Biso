@@ -116,9 +116,9 @@ mayúsculas con acentos, porque eso es lo que hace SQLite sin la biblioteca ICU.
 
 **La prueba del presupuesto de ["El presupuesto de arranque"](../spec/presupuestos.md#el-presupuesto-de-arranque) sigue midiendo reloj, el del proceso
 entero desde antes de lanzarlo hasta después de su salida, y su veredicto es la muestra más rápida de
-las que toma, no la mediana.** Ejecuta `biso ls` y `biso prime`, cada uno hasta 30 veces, sobre el tablero de
+las que toma, no la mediana.** Ejecuta `biso ls` y `biso prime`, cada uno hasta 100 veces, sobre el tablero de
 300 tareas y pasa en cuanto una sola de esas ejecuciones termina en menos de 25 milisegundos; solo
-falla si ninguna de las 30 lo consigue. Cada ejecución tiene además que terminar con código de salida
+falla si ninguna de las 100 lo consigue. Cada ejecución tiene además que terminar con código de salida
 0, y quien lee el fallo ve el mínimo, la mediana y el máximo de las muestras tomadas, para distinguir
 una regresión de una máquina desbordada. La cifra no cambia: siguen siendo 25 milisegundos de reloj,
 y lo que se precisa es qué muestra de reloj es la que se compara con ella.
@@ -152,17 +152,37 @@ doble de procesos que núcleos y con el cuádruple: el ruido lo desplaza, pero n
 `biso prime` que costara 12 milisegundos más de lo que cuesta hoy pondría el mínimo en reposo por
 encima de 25 y la prueba fallaría, con la máquina libre y con la máquina cargada.
 
-**Los 30 se eligen porque hacen falta muy pocos para que un mínimo sea fiable y porque solo se pagan
-cuando algo va mal.** En reposo la primera ejecución ya cabe y la prueba termina ahí. Si ninguna cabe
-son 30 ejecuciones de unos 20 a 40 milisegundos por comando, poco más de un segundo, un coste que solo
-se paga cuando la prueba va a fallar de todos modos.
+**Por qué 100 ejecuciones como máximo, y qué se paga por ellas.** Con la máquina en reposo la primera
+ejecución ya cabe y la prueba termina ahí, así que el máximo solo se paga cuando la prueba va a fallar
+de todos modos. Lo que decide el número es cuántas veces falla la prueba sin que el programa haya
+cambiado, con la máquina cargada. Una sonda de 3.000 muestras de `biso prime` con 32 procesos ocupando la
+CPU midió cuántas ventanas consecutivas de N muestras no contenían ninguna por debajo de 25 milisegundos:
+73 de 2.971 con ventanas de 30, 1 de 2.956 con ventanas de 45 y ninguna con ventanas de 60. La prueba
+real con 30 como máximo falló entre el 0 % y el 4 % de las veces con 32 y con 64 procesos, y con 100
+pasó 40 de 40 con 64 procesos y 30 de 30 tanto con 32 como con 64 al repetirla al cerrar la tarea. El
+coste de fallar es de unos 9 a 14 segundos por prueba con una espera inyectada de 12 o de 30
+milisegundos, que es lo que cuestan las 100 ejecuciones de unos 30 a 60 milisegundos de las dos
+órdenes, y solo se paga cuando hay una regresión o una máquina desbordada.
 
-**Lo que esta decisión no cubre, y se acepta.** Una máquina tan saturada que ninguna de las 30
+**Descartado: espaciar las ejecuciones con una pausa entre ellas.** La idea era esperar a que pase la
+ráfaga de carga. Empeora la probabilidad de que una ejecución quepa: al dormir, el proceso de la prueba
+cede el núcleo, y con la máquina ocupada eso juega en su contra, no a su favor. Ejecutar una tras otra
+sin pausa es lo que más baja el mínimo observado, y por eso el máximo se sube en lugar de espaciar.
+
+**Lo que esta decisión no cubre, y se acepta.** Una máquina tan saturada que ninguna de las 100
 ejecuciones cabe en 25 milisegundos hace fallar la prueba, y eso es correcto: en esa máquina y en ese
 momento el programa no arranca dentro del presupuesto, y el mensaje con el mínimo, la mediana y el
-máximo lo deja a la vista para que quien lo lee no tenga que adivinarlo. Y una regresión menor que el
-hueco que hay entre el mínimo en reposo y 25 milisegundos no se detecta, pero eso es propio de tener
-un presupuesto y no del estadístico: la cifra se vigila entera, no se vigila que no suba.
+máximo lo deja a la vista para que quien lo lee no tenga que adivinarlo. Con 2 a 4 veces más procesos
+ocupando la CPU que núcleos queda además un fallo residual pequeño: con 30 ejecuciones la prueba fallaba
+entre el 0 % y el 4 % de las veces sin que el programa hubiera cambiado, y con 100 no se ha visto ningún
+fallo en 100 ejecuciones de la prueba real (40 con 64 procesos, más 30 con 32 y 30 con 64 al cerrar
+esta tarea), pero eso no es cero: el mínimo baja con cada ejecución y no está garantizado que llegue a 25.
+Y una regresión menor que el hueco que hay entre el mínimo en reposo y 25 milisegundos no se detecta,
+pero eso es propio de tener un presupuesto y no del estadístico: la cifra se vigila entera, no se
+vigila que no suba. Con una espera inyectada de 12 milisegundos la prueba falla, en reposo (mínimo de
+26,4 milisegundos en `biso ls` y de 28,5 en `biso prime`) y con 32 procesos ocupando la CPU (28,9 y
+34,8), y con una de 30 milisegundos también (43,4 y 44,8 en reposo, 48,9 y 53,1 con carga); con una de 5
+pasa, porque no llega a 25.
 
 **Descartado: la mediana de pocas ejecuciones, que era lo que había.** Con cinco ejecuciones la mediana
 es la tercera más rápida, así que basta con que la carga afecte a tres para que dé el veredicto. Bajo

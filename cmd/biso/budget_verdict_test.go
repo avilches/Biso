@@ -58,19 +58,35 @@ func TestAFirstRunThatFitsIsTheOnlyOneTaken(t *testing.T) {
 	}
 }
 
+func TestARunOfExactlyTheBudgetDoesNotStopTheMeasurement(t *testing.T) {
+	sample, calls := sampled([]time.Duration{ms(25), ms(90), ms(90)}, nil)
+
+	got, err := takeSamples(3, verdictBudget, sample)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if *calls != 3 || len(got) != 3 {
+		t.Errorf("calls = %d, samples = %d, want 3 and 3: 25ms is not less than 25ms", *calls, len(got))
+	}
+	if summarize(got).fastestWithin(verdictBudget) {
+		t.Error("a fastest run of exactly 25ms was accepted")
+	}
+}
+
 func TestAllTheRunsBeingSlowFails(t *testing.T) {
-	times := make([]time.Duration, budgetRuns)
+	const runs = 30
+	times := make([]time.Duration, runs)
 	for i := range times {
 		times[i] = ms(26 + i)
 	}
 	sample, calls := sampled(times, nil)
 
-	got, err := takeSamples(budgetRuns, verdictBudget, sample)
+	got, err := takeSamples(runs, verdictBudget, sample)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if *calls != budgetRuns {
-		t.Errorf("calls = %d, want all %d before giving up", *calls, budgetRuns)
+	if *calls != runs {
+		t.Errorf("calls = %d, want all %d before giving up", *calls, runs)
 	}
 	s := summarize(got)
 	if s.fastestWithin(verdictBudget) {
@@ -82,9 +98,12 @@ func TestAllTheRunsBeingSlowFails(t *testing.T) {
 	}
 }
 
-func TestTheBudgetItselfIsWithinAndOneMoreMillisecondIsNot(t *testing.T) {
-	if !summarize([]time.Duration{verdictBudget}).fastestWithin(verdictBudget) {
-		t.Error("exactly 25ms was refused")
+func TestOnlyLessThanTheBudgetIsWithin(t *testing.T) {
+	if !summarize([]time.Duration{verdictBudget - time.Nanosecond}).fastestWithin(verdictBudget) {
+		t.Error("just under 25ms was refused")
+	}
+	if summarize([]time.Duration{verdictBudget}).fastestWithin(verdictBudget) {
+		t.Error("exactly 25ms was accepted, and the specification says less than 25")
 	}
 	if summarize([]time.Duration{verdictBudget + time.Millisecond}).fastestWithin(verdictBudget) {
 		t.Error("26ms was accepted")

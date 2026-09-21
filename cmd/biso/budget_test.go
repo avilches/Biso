@@ -30,7 +30,7 @@ const budgetMillis = 25
 // number of them. The verdict is the fastest run (see the test below), so
 // the measurement stops at the first run that fits the budget and only a
 // command that never fits pays for all of them.
-const budgetRuns = 30
+const budgetRuns = 100
 
 // TestTheStartupBudgetOfLsAndPrime is the suite test that section asks
 // for, and not an aspiration.
@@ -43,10 +43,9 @@ const budgetRuns = 30
 // away, so the fastest run is the best bound on what the program costs by
 // itself, and the only one that load cannot worsen while a single run
 // escapes it. A real regression raises the fastest run like any other,
-// because every run pays for the new code. The median of five runs, which
-// this used to be, measured the machine: under load it went over 25
-// milliseconds with no change to the program. The reasoning, the figures
-// and the discarded alternatives are in
+// because every run pays for the new code. The reasoning, the figures and
+// the discarded alternatives (the median, CPU time, spacing the runs out,
+// a looser limit) are in
 // docs/decisiones/lenguaje-y-rendimiento.md, section "El presupuesto de
 // arranque se mide con la muestra mas rapida". It is wall clock and not CPU
 // time on purpose: a wait (a sleep, a disk sync) spends clock and no CPU, so
@@ -56,30 +55,33 @@ const budgetRuns = 30
 // minimum, the median and the maximum of the runs taken, to tell a
 // regression (all of them over) from a machine overwhelmed (only some).
 //
-// How it was checked, which is acceptance criterion 2 of the task that
-// introduced this (the verdict functions have their own deterministic tests
-// in budget_verdict_test.go, and this is the check of the real thing), on the
-// development machine (16 cores, with its own security agent already busy):
+// How to check it again, which is what acceptance criterion 2 asks of this
+// test. The verdict functions have their own deterministic tests in
+// budget_verdict_test.go; the wiring of this test to them has no automatic
+// test of its own, and is checked by hand as follows. Compile the test
+// binary first (`go test -c -o /tmp/budget.test ./cmd/biso`) so that the load
+// does not slow the compiler down, and run it from cmd/biso.
 //
-//   - Under artificial load it passes. With 32 and with 64 processes
-//     spinning on `while :; do :; done`, the compiled test binary ran with
-//     -test.count=5 and then -test.count=20 for each of the two loads. Of 25
-//     runs under 32 loops one failed, on `biso prime`, whose 30 runs had a
-//     minimum of 25.04ms and a median of 36.0ms; the other 24 passed, and
-//     the 25 under 64 loops all passed. When it passes under load the fastest
-//     run is typically between 14ms and 25ms, so the margin there is
-//     thin, and a run that fails on a saturated machine says so in its
-//     message with the minimum, the median and the maximum.
+//   - It must pass under artificial load. Start 32 and then 64 processes
+//     running `while :; do :; done` (twice and four times the cores of a
+//     16 core machine), wait a second, run the binary with
+//     -test.run 'TestTheStartupBudgetOfLsAndPrime$' -test.count=20, and kill
+//     every loop afterwards (with a trap, and check with ps). Nearly every
+//     count passes: a machine so saturated that none of budgetRuns runs fits
+//     fails the test, which is correct, and its message says so with the
+//     minimum, the median and the maximum.
 //
-//   - With an injected wait it fails. A time.Sleep(30 * time.Millisecond) as
-//     the first statement of main(), reverted afterwards, made the test fail
-//     on the idle machine, with `biso ls` at min 43.4ms, median 50.1ms, max
-//     70.9ms and `biso prime` at min 44.8ms, median 49.2ms, max 87.4ms, in
-//     4.5 seconds; and again under 32 loops, with minimums of 45.4ms and
-//     50.3ms. Without the wait it passed again, on the first run of each
-//     command (12.9ms and 14.3ms). A wait of 5 milliseconds did not make it
-//     fail (fastest run 17.8ms to 23.4ms over five runs, all passing), which
-//     is expected: the budget is watched whole, not that it does not grow.
+//   - It must fail with an injected wait. The test builds biso from the
+//     source when it runs, so the wait goes in the source and not in the
+//     test binary: put `time.Sleep(30 * time.Millisecond)` as the first
+//     statement of main() in cmd/biso/main.go, run the test, and revert
+//     main.go. Every run is then over the budget and the test fails, on an
+//     idle machine and under load, with a minimum over 25ms in the message.
+//     A wait of 12 milliseconds must fail as well, on an idle machine and
+//     under load. A wait of 5 milliseconds does not fail, which is expected:
+//     the budget is watched whole, and not that it does not grow.
+//
+// The figures of those runs are in the decision above, not here.
 //
 // A build under the race detector skips it and says so. The process being
 // measured is not instrumented, because `go build` compiles it without the
@@ -116,14 +118,14 @@ func TestTheStartupBudgetOfLsAndPrime(t *testing.T) {
 		}
 
 		s := summarize(samples)
-		t.Logf("biso %s over %d tasks: fastest of %d runs took %s (budget %dms)",
-			command, blockBoardTasks, s.runs, s.min, budgetMillis)
+		t.Logf("biso %s over %d tasks: fastest run %s, after %d taken (budget under %dms)",
+			command, blockBoardTasks, s.min, s.runs, budgetMillis)
 		if raceDetector {
 			continue
 		}
 		if !s.fastestWithin(budget) {
 			t.Errorf(
-				"biso %s over %d tasks: none of %d runs took %s or less, %s "+
+				"biso %s over %d tasks: none of %d runs took under %s, %s "+
 					"(docs/spec/presupuestos.md#el-presupuesto-de-arranque)",
 				command, blockBoardTasks, s.runs, budget, s)
 		}
@@ -137,7 +139,7 @@ func TestTheStartupBudgetOfLsAndPrime(t *testing.T) {
 }
 
 // takeSamples calls sample up to limit times and answers how long each call
-// took, stopping as soon as one fits the budget: that run is the fastest
+// took, stopping as soon as one is under the budget: that run is the fastest
 // that matters and the verdict is already known. sample answers the elapsed
 // time and the exit code of the process, and a code other than 0 stops the
 // measurement with an error, because the time of a command that failed
@@ -150,7 +152,7 @@ func takeSamples(limit int, budget time.Duration, sample func() (time.Duration, 
 			return samples, fmt.Errorf("run %d exited with code %d, want 0", i+1, code)
 		}
 		samples = append(samples, elapsed)
-		if elapsed <= budget {
+		if elapsed < budget {
 			break
 		}
 	}
@@ -178,10 +180,11 @@ func summarize(samples []time.Duration) startupSummary {
 	}
 }
 
-// fastestWithin is the verdict: the fastest run is not over the budget.
+// fastestWithin is the verdict: the fastest run is under the budget, as the
+// specification says ("less than 25 milliseconds"), so exactly 25 fails.
 // Without a single run there is no verdict in favour.
 func (s startupSummary) fastestWithin(budget time.Duration) bool {
-	return s.runs > 0 && s.min <= budget
+	return s.runs > 0 && s.min < budget
 }
 
 func (s startupSummary) String() string {

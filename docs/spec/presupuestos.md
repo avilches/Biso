@@ -35,7 +35,9 @@ milisegundos, y se incumple cuando ninguna lo consigue. El ruido de una máquina
 añadir tiempo a una ejecución, nunca quitárselo, así que la más rápida es la que menos pesa de la
 máquina y más del código, y una regresión real sube también esa. La prueba sigue siendo de la máquina de
 referencia y sigue fallando ante una regresión real; lo que no hace es fallar porque otro proceso
-estuviera usando el núcleo en el instante en que se midió. El número de ejecuciones, las medidas que lo
+estuviera usando el núcleo en el instante en que se midió. `make test` no mide este presupuesto, porque corre bajo el detector de carreras y bajo él la prueba
+se salta declarándolo; lo mide `make check`, a través del objetivo `test-budget`, que ejecuta solo esa
+prueba sin el detector. El número de ejecuciones, las medidas que lo
 sostienen y las alternativas descartadas están en
 ["El presupuesto de arranque se mide con la muestra más rápida"](../decisiones/lenguaje-y-rendimiento.md#el-presupuesto-de-arranque-se-mide-con-la-muestra-más-rápida).
 
