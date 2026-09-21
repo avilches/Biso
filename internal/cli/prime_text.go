@@ -29,7 +29,8 @@ const primeCommands = "COMMANDS  (`biso help <cmd>...` for the detail of any, se
 	"  biso comment <ref> \"TEXT\" [--comment-author @who]\n"
 
 // primeFieldFlags is the FIELD FLAGS grid: the names of every field flag,
-// in eleven lines. `--full` prints the same flags grouped by the field
+// in the eleven lines docs/spec/cmd/prime.md#la-salida-literal counts,
+// under their heading. `--full` prints the same flags grouped by the field
 // they write, and neither block replaces the other.
 const primeFieldFlags = "FIELD FLAGS  (same names, same meaning, in every command above that writes)\n" +
 	"  --title  --status  --type --clear-type  --priority --clear-priority\n" +

@@ -76,7 +76,7 @@ Entra:
 
 - Las diez órdenes del ciclo de trabajo con su forma de uso. Quien no sabe que existe `biso finish`
   no va a escribir `biso finish --help`.
-- **Los nombres de todos los flags de campo**, en una rejilla de diez líneas.
+- **Los nombres de todos los flags de campo**, en una rejilla de once líneas.
 - El vocabulario real de este tablero, con **el recuento por estado** y con la marca de cuál es el
   estado de las tareas nuevas, cuál el activo y cuál el terminal.
 - Las reglas que no son adivinables.

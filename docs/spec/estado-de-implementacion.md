@@ -122,9 +122,11 @@ configurado antes de rendirse, y lo prueban veinte intentos de cuatro conexiones
 **Del modelo de datos**, el paso 2 hace cumplir al escribir el título obligatorio (código 2,
 `missing_title`), la distinción entre un campo `string` de una línea y un campo `text` (código 2,
 `malformed_string_value`, sobre `title`, `author` y el texto de un criterio),
-el alfabeto de las etiquetas y las personas (`malformed_label` y `malformed_assignee`), el
-`ordinal` no negativo (`invalid_number`) y las claves de los criterios. Todo eso se comprueba antes
-de abrir la transacción, así que una tarea rechazada no gasta identificador.
+el alfabeto de las etiquetas y las personas (`malformed_label` y `malformed_assignee`), la forma de
+la clave del orden manual (`malformed_ordinal`, que era el `invalid_number` del entero hasta que
+`ordinal` pasó a ser una clave de texto, [abajo](#el-orden-manual)) y las claves de los criterios.
+Todo eso se comprueba antes de abrir la transacción, así que una tarea rechazada no gasta
+identificador.
 
 **De [`presupuestos.md`](presupuestos.md)**, la medida vive desde el paso 2 en `internal/board` y ya
 es sobre el esquema real: abrir el tablero y leer sus 300 tareas enteras, con sus listas, sus
