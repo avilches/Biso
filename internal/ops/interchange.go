@@ -460,7 +460,8 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 	// documentation and then modifiedFiles are merged into references, after
 	// the ones the line already had and in the order they came, whatever
 	// order the keys were written in. A value that references already holds
-	// is kept once, as any list keeps a value written twice.
+	// is not added again. That is a rule of this merge only: a references list
+	// that already carries a repeated value keeps it repeated.
 	d.docCount = mergeIntoReferences(t, in.Documentation)
 	d.fileCount = mergeIntoReferences(t, in.ModifiedFiles)
 	if err := readComments(t, in.Comments, now); err != nil {

@@ -335,6 +335,12 @@ era cada puntero, así que el conversor que reconstruya el formato de Backlog.md
 identificadores con punto. Se hace ahora porque `biso` todavía no se ha publicado: no hay ningún
 tablero ajeno con el campo escrito que migrar.
 
+**Una consecuencia que sí existe: los tableros de desarrollo con datos en el campo retirado.** La migración
+inicial se editó en el sitio, sin subir `user_version`, así que un tablero creado con un binario anterior
+y con datos en `documentation` conserva su esquema viejo y queda parcialmente ilegible con el binario nuevo:
+`biso ls` avisa y salta esas tareas, `biso get` falla con el error 3, y `biso doctor` las cuenta como
+errores. No hay migración, porque `biso` no está publicado y el único remedio que se ofrece es recrear el tablero.
+
 ---
 
 ## Se retira `modifiedFiles`
@@ -370,8 +376,8 @@ contesta el control de versiones. La única huella que queda es de entrada: un l
    `dependencies` queda aparte porque sí se valida y porque entra en dos términos de la urgencia. Lo
    único que distinguía a las dos era la etiqueta que imprime la ficha, `refs` frente a `files`, y dos
    nombres para el mismo concepto es justo lo que prohíbe el principio 2 de la especificación
-   (["Los principios"](../spec/principios.md)). En el código eran trece apariciones fuera de las
-   pruebas y todas de transporte: sin filtro, sin cálculo, sin validación propia y sin aviso.
+   (["Los principios"](../spec/principios.md)). En el código eran diecisiete líneas en nueve ficheros,
+   sin contar las pruebas, y todas de transporte: sin filtro, sin cálculo, sin validación propia y sin aviso.
 
 **Alternativa descartada: conservarlo porque es el único campo que contesta qué código tocó este
 trabajo.** Es el caso en contra más serio, porque esa pregunta es propia del público al que apunta
@@ -386,7 +392,7 @@ alguien olvida apuntar un fichero.
 
 **Alternativa descartada: conservarlo y fundir `references` en él.** Habría dejado un campo llamado
 `modifiedFiles` que guarda URLs e identificadores de otras tareas. Es el problema que ya se resolvió
-para `documentation`, con la palabra estrecha ganando sobre la ancha.
+para `documentation`, donde se conservó `references`, la palabra que abarca el conjunto, y no la estrecha.
 
 **Alternativa descartada: hacer `modifiedFiles` un campo validado**, que exija rutas relativas al
 repositorio y compruebe que existen. Convertiría un campo que nadie rellena en el único de la tarea que
@@ -405,6 +411,12 @@ tendrá que guardar en `ext` de qué campo venía cada valor si quiere la ida y 
 ahora porque el contrato de estabilidad (["El contrato de estabilidad"](../spec/estabilidad.md)) obliga a
 partir de la versión 1.0, que no se ha publicado: no hay ningún tablero ajeno con el campo escrito que
 migrar.
+
+**Una consecuencia que sí existe: los tableros de desarrollo con datos en el campo retirado.** Igual que con
+`documentation`, la migración inicial se editó en el sitio sin subir `user_version`, así que un tablero
+creado con un binario anterior y con datos en `modifiedFiles` queda parcialmente ilegible: `biso ls` avisa y
+salta esas tareas, `biso get` falla con el error 3 y `biso doctor` las cuenta como errores. No hay
+migración, porque `biso` no está publicado, y el único remedio que se ofrece es recrear el tablero.
 
 ---
 

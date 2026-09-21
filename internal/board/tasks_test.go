@@ -781,7 +781,7 @@ func TestATargetedReadOfAnUndecodableTaskIsAnError(t *testing.T) {
 
 // TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow covers the other
 // way a row stops being a task: a name in task_list_item that is not one
-// of the five list fields. The schema's CHECK keeps biso itself from
+// of the four list fields. The schema's CHECK keeps biso itself from
 // writing one, so it can only arrive from outside, like the dates above.
 func TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "board.sqlite")
