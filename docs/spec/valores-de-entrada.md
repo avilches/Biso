@@ -142,6 +142,10 @@ Para todo flag marcado como repetible:
   `--add-refs 'C:\\dir\\,notes/b.md'` añade dos referencias, `C:\dir\` y `notes/b.md`. Una barra
   invertida delante de cualquier otro carácter no escapa nada y se guarda tal cual, así que una ruta
   de Windows o una expresión regular conservan lo que traen.
+- **La ficha de `biso get` escribe estos escapes al revés.** Al imprimir una lista, cada coma de un
+  valor sale como `\,` y cada barra invertida como `\\`, de modo que lo que se lee en la ficha es lo
+  que se teclearía aquí para guardar ese valor
+  (["`biso get`"](cmd/get.md#salida)).
 - Los campos de texto largo y los criterios **nunca** se parten por comas.
 - Un valor repetido dentro del mismo flag se guarda una vez y produce
   `warning: --add-labels: "urgent" given twice, kept once`. Con tres apariciones o más el aviso sigue

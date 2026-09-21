@@ -7,7 +7,7 @@ due        -                    ordinal    -
 created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     MYP-40
 lease      2026-09-06 15:40     holder     @claude
-refs       docs/bugs/BUG-02.md
+refs       docs/bugs/BUG-02.md, notes/a\,b.md
 
 ## Description
 The diff compares byte by byte and marks as different two lines that only
