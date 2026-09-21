@@ -245,7 +245,7 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"      --parent <ref>         the task this one is part of; at most one\n" +
 	"      --add-deps <ref>       tasks that must be done before this one, so each\n" +
 	"                             blocks it; checked to exist, no cycles\n" +
-	"      --add-refs X           a path, a URL or a task id to look at; free text,\n" +
+	"      --add-refs <text>      a path, a URL or a task id to look at; free text,\n" +
 	"                             never checked\n" +
 	"A dependency is written on the task that waits, never on the one that blocks.\n" +
 	"To say that MYP-4 blocks MYP-10:\n" +

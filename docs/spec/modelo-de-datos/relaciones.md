@@ -38,7 +38,7 @@ inversa y se calcula al leer, como el resto de
 ["Los campos derivados"](index.md#los-campos-derivados). La ayuda de
 ["`biso set`"](../cmd/set.md#biso-set---help) y la de
 ["`biso new`"](../cmd/new.md#biso-new---help) lo dicen con ese mismo ejemplo, porque escribirla al
-revés es válido y el programa no lo detecta
+revés es válido y el programa no lo detecta, y el mensaje de arranque lo repite en una regla
 (["La ayuda enseña la dirección de una dependencia"](../../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)).
 
 La prueba: **¿si hago esta primero, el trabajo se tira o se rehace?** Si la respuesta es sí, es una

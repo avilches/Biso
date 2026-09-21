@@ -43,7 +43,7 @@ Relations point from the task you name in <ref> to other tasks:
       --parent <ref>         the task this one is part of; at most one
       --add-deps <ref>       tasks that must be done before this one, so each
                              blocks it; checked to exist, no cycles
-      --add-refs X           a path, a URL or a task id to look at; free text,
+      --add-refs <text>      a path, a URL or a task id to look at; free text,
                              never checked
 A dependency is written on the task that waits, never on the one that blocks.
 To say that MYP-4 blocks MYP-10:

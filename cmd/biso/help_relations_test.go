@@ -21,12 +21,14 @@ func TestTheHelpOfSetAndNewSaysWhichWayADependencyPoints(t *testing.T) {
 			"biso set MYP-10 --add-deps MYP-4",
 			"written on the task that waits, never on the one that blocks",
 			"--parent <ref>",
-			"--add-refs X",
+			"tasks that must be done before this one, so each blocks it",
+			"--add-refs <text>",
 		}},
 		{"new", []string{
 			"means MYP-4 goes first and blocks it",
 			"biso set MYP-10 --add-deps <new id>",
 			"--parent <ref>",
+			"tasks that must be done first, so each blocks the new task",
 			"--add-refs <text>",
 		}},
 	} {

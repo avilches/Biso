@@ -154,7 +154,7 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 
 La ayuda glosa los campos de relación (`--parent`, `--add-deps`, `--add-refs`) y dice hacia dónde
 apunta una dependencia, con `biso set MYP-10 --add-deps MYP-4` como ejemplo de que `MYP-4` bloquea a
-`MYP-10`. Es lo único que enseña la dirección en el camino de escritura, y no puede deducirse del
+`MYP-10`. Junto con la regla 11 del mensaje de arranque (["La salida literal"](prime.md#la-salida-literal)), es lo que enseña la dirección, y no puede deducirse del
 nombre del flag: una dependencia escrita al revés es válida y el programa no la detecta. La
 decisión, y por qué no hay un flag inverso, está en
 ["La ayuda enseña la dirección de una dependencia"](../../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia).
@@ -205,7 +205,7 @@ Relations point from the task you name in <ref> to other tasks:
       --parent <ref>         the task this one is part of; at most one
       --add-deps <ref>       tasks that must be done before this one, so each
                              blocks it; checked to exist, no cycles
-      --add-refs X           a path, a URL or a task id to look at; free text,
+      --add-refs <text>      a path, a URL or a task id to look at; free text,
                              never checked
 A dependency is written on the task that waits, never on the one that blocks.
 To say that MYP-4 blocks MYP-10:

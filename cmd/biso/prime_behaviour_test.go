@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -64,7 +66,7 @@ func TestPrimeOnABoardWhoseTasksAreAllFinished(t *testing.T) {
 	if !strings.Contains(got.stdout, "  To Do 0 | In Progress 0 | Done 1\n") {
 		t.Errorf("the finished task is not in the counts line:\n%s", got.stdout)
 	}
-	if !strings.Contains(got.stdout, "decided you should do.\n\nPick one,") {
+	if !strings.Contains(got.stdout, lastRuleOfTheMessage+"Pick one,") {
 		t.Errorf("the blocks of tasks did not disappear cleanly:\n%s", got.stdout)
 	}
 }
@@ -415,10 +417,35 @@ func TestTheFixedPartOfTheMessageIsAlwaysTheSame(t *testing.T) {
 // of the message from drifting: the hard cap of 5,504 bytes is the only
 // number the stability contract freezes, and the fixed part is 3,840 of it
 // (docs/spec/presupuestos.md#el-presupuesto-de-tamaño). Raising either to
-// make room for a gloss would pass every other test in this file.
+// make room for a gloss would pass every other test in this file, so the
+// constants are compared with the numbers the page itself prints, and not
+// with literals repeated here.
 func TestTheBudgetConstantsAreTheNumbersOfTheSpecification(t *testing.T) {
-	assertEqual(t, fmt.Sprint(cli.PrimeBudget), "5504", "the hard cap of the startup message")
-	assertEqual(t, fmt.Sprint(cli.PrimeFixedBudget), "3840", "the cap of its fixed part")
+	page, err := os.ReadFile(filepath.Join("..", "..", "docs", "spec", "presupuestos.md"))
+	if err != nil {
+		t.Fatalf("read the budget page: %v", err)
+	}
+	for _, c := range []struct {
+		name     string
+		pattern  string
+		constant int
+	}{
+		{"the hard cap of the startup message", `tope duro de ([\d.]+) bytes`, cli.PrimeBudget},
+		{"the cap of its fixed part", `La parte fija no pasa de ([\d.]+) bytes`, cli.PrimeFixedBudget},
+	} {
+		m := regexp.MustCompile(c.pattern).FindSubmatch(page)
+		if m == nil {
+			t.Errorf("the budget page no longer has a sentence that matches %q", c.pattern)
+			continue
+		}
+		// The page writes 5.504, with the dot of a thousands separator.
+		want, err := strconv.Atoi(strings.ReplaceAll(string(m[1]), ".", ""))
+		if err != nil {
+			t.Errorf("%s: %q is not a number: %v", c.name, m[1], err)
+			continue
+		}
+		assertEqual(t, fmt.Sprint(c.constant), fmt.Sprint(want), c.name)
+	}
 }
 
 // blockSizes is how many tasks each of the first three blocks gets on a
@@ -507,7 +534,7 @@ const primeClosingParagraph = "Pick one, `biso start <ref> --append-plan \"...\"
 
 // lastRuleOfTheMessage is where the fixed part ends and the blocks of
 // tasks begin.
-const lastRuleOfTheMessage = "     assigned to you is one a person decided you should do.\n\n"
+const lastRuleOfTheMessage = "     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.\n\n"
 
 // blockOf answers the lines of one block of the message, its heading
 // excluded and its count line included, and nothing when that block did

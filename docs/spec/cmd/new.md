@@ -186,8 +186,10 @@ Las reglas del lote, todas obligatorias:
     1. Se importa `references` con sus propias reglas.
     2. Cada elemento de `documentation` se añade al final de esa lista, en el orden en que venía y
        conservando su texto. Un valor que la lista ya tenía, porque estaba en `references` o porque
-       `documentation` lo repetía, se guarda una sola vez, igual que se guarda una sola vez un valor
-       repetido en cualquier lista (["Repetición y listas separadas por comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)).
+       `documentation` lo repetía, no se añade otra vez. Es una regla propia de esta fusión, no la de
+       los flags (["Repetición y listas separadas por comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
+       el lote no deduplica nada más, y un `references` que ya trae un valor repetido lo guarda
+       repetido.
     3. Si la línea trajo **al menos un** elemento de `documentation`, la tarea emite el aviso
        `imported_documentation_merged` (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)),
        que cuenta los elementos que llegaron, aunque alguno se haya guardado una sola vez por

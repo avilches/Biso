@@ -106,7 +106,7 @@ recorte no toca nunca (la salida de `--json`), está en
 sobre el mensaje sin `--full`**, que es ayuda para quien aprende la herramienta y no parte del
 arranque.
 
-El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **4.983 bytes** con el tablero del ejemplo: **3.494** de
+El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.103 bytes** con el tablero del ejemplo: **3.614** de
 parte fija y **1.489** de resumen. Las dos partes caben dentro de su tope.
 
 **El número que congela el contrato de estabilidad de la sección ["El contrato de estabilidad"](estabilidad.md) es el total, 5.504 bytes**, porque

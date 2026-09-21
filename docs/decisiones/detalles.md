@@ -418,6 +418,12 @@ su cuenta, por ejemplo en etiquetas con ámbito, de qué campo venía cada valor
 exacta. Se hace ahora porque `biso` todavía no se ha publicado: no hay ningún
 tablero ajeno con el campo escrito que migrar.
 
+**Una consecuencia que sí existe: los tableros de desarrollo con datos en el campo retirado.** La migración
+inicial se editó en el sitio, sin subir `user_version`, así que un tablero creado con un binario anterior
+y con datos en `documentation` conserva su esquema viejo y queda parcialmente ilegible con el binario nuevo:
+`biso ls` avisa y salta esas tareas, `biso get` falla con el error 3, y `biso doctor` las cuenta como
+errores. No hay migración, porque `biso` no está publicado y el único remedio que se ofrece es recrear el tablero.
+
 ---
 
 ## Se retira `modifiedFiles`
@@ -453,8 +459,8 @@ contesta el control de versiones. La única huella que queda es de entrada: un l
    `dependencies` queda aparte porque sí se valida y porque entra en dos términos de la urgencia. Lo
    único que distinguía a las dos era la etiqueta que imprime la ficha, `refs` frente a `files`, y dos
    nombres para el mismo concepto es justo lo que prohíbe el principio 2 de la especificación
-   (["Los principios"](../spec/principios.md)). En el código eran trece apariciones fuera de las
-   pruebas y todas de transporte: sin filtro, sin cálculo, sin validación propia y sin aviso.
+   (["Los principios"](../spec/principios.md)). En el código eran diecisiete líneas en nueve ficheros,
+   sin contar las pruebas, y todas de transporte: sin filtro, sin cálculo, sin validación propia y sin aviso.
 
 **Alternativa descartada: conservarlo porque es el único campo que contesta qué código tocó este
 trabajo.** Es el caso en contra más serio, porque esa pregunta es propia del público al que apunta
@@ -469,7 +475,7 @@ alguien olvida apuntar un fichero.
 
 **Alternativa descartada: conservarlo y fundir `references` en él.** Habría dejado un campo llamado
 `modifiedFiles` que guarda URLs e identificadores de otras tareas. Es el problema que ya se resolvió
-para `documentation`, con la palabra estrecha ganando sobre la ancha.
+para `documentation`, donde se conservó `references`, la palabra que abarca el conjunto, y no la estrecha.
 
 **Alternativa descartada: hacer `modifiedFiles` un campo validado**, que exija rutas relativas al
 repositorio y compruebe que existen. Convertiría un campo que nadie rellena en el único de la tarea que
@@ -488,6 +494,12 @@ tendrá que guardarlo por su cuenta, por ejemplo en etiquetas con ámbito, si qu
 ahora porque el contrato de estabilidad (["El contrato de estabilidad"](../spec/estabilidad.md)) obliga a
 partir de la versión 1.0, que no se ha publicado: no hay ningún tablero ajeno con el campo escrito que
 migrar.
+
+**Una consecuencia que sí existe: los tableros de desarrollo con datos en el campo retirado.** Igual que con
+`documentation`, la migración inicial se editó en el sitio sin subir `user_version`, así que un tablero
+creado con un binario anterior y con datos en `modifiedFiles` queda parcialmente ilegible: `biso ls` avisa y
+salta esas tareas, `biso get` falla con el error 3 y `biso doctor` las cuenta como errores. No hay
+migración, porque `biso` no está publicado, y el único remedio que se ofrece es recrear el tablero.
 
 ---
 
@@ -629,9 +641,10 @@ que decía que ningún flag exigía aprender nada más allá de su nombre se cor
 para la forma de las listas y falsa para el significado de los campos de relación. La dirección
 en sí no cambia: es la de
 ["Las relaciones entre tareas"](../spec/modelo-de-datos/relaciones.md#dependencies-la-precedencia).
-El mensaje de arranque no lleva glosas: su parte fija tiene un tope propio
-(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)) y `FIELD FLAGS`
-sigue siendo una rejilla de nombres.
+El mensaje de arranque lleva la misma enseñanza en una sola regla, la 11 de `RULES`: "A dependency is
+written on the task that waits: `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.", con los
+identificadores de la ayuda. Sigue sin glosar los flags: `FIELD FLAGS` es una rejilla de nombres y no
+lleva ninguna explicación de lo que significan.
 
 **Por qué hace falta.** Es el único de los errores posibles al escribir una relación que el programa no
 puede detectar. Un `--parent` a una tarea que no existe, o una dependencia que cierra un ciclo, fallan
@@ -640,6 +653,22 @@ bloqueo y de urgencia queda invertido sin ningún aviso. Con `biso new` hay adem
 `--add-deps MYP-4` hace que `MYP-4` vaya antes de la tarea nueva, y para que la tarea nueva bloquee a
 una existente hay que crearla y luego escribir la arista con `biso set` en la existente, cosa que la
 ayuda de `biso new` dice.
+
+**Descartado: dejar el mensaje de arranque sin nada de esto.** Fue la primera versión de esta decisión, con
+el argumento de que la parte fija tiene un tope propio
+(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)) y de que el sitio natural
+es la ayuda de cada comando. Se descarta porque el mensaje de arranque es lo único que lee quien empieza
+a trabajar en un tablero, y ni sus reglas mencionan las dependencias ni `FIELD FLAGS` dice nada más que
+nombres: quien no pide la ayuda de `set` antes de escribir una arista no tiene ninguna pista de la
+dirección, y es justo el error que el programa no puede detectar. Cuesta 120 bytes: con el tablero del
+ejemplo el mensaje pasa de 4.983 a 5.103 bytes y la parte fija de 3.494 a 3.614, con un margen de 226
+sobre sus 3.840; los tres tableros de las pruebas de presupuesto quedan entre 5.103 y 5.278 de los 5.504.
+El contrato de estabilidad no lo impide: congela el tope de bytes y no el texto de `biso prime`
+(["El contrato de estabilidad"](../spec/estabilidad.md)).
+
+**Descartado: glosar `--add-deps` dentro de `FIELD FLAGS`.** Rompe la rejilla, que es una lista de nombres
+alineada para que se lea de un vistazo, y gastaría más bytes que una regla, porque habría que repetir la
+explicación en la línea de cada flag de relación que la necesite.
 
 **Descartado: un flag inverso, `--add-blocks`.** Habría sido la forma de decir "esta tarea bloquea a
 MYP-10" sin invertir la frase en la cabeza. Se descarta porque escribiría el campo `dependencies` de

@@ -227,6 +227,12 @@ permitido, y lo hace `biso new --from`; lo que no existe es la copia paralela. S
 el mismo Error 2 de "ya hay uno accesible desde aquí", y no hace falta `--overwrite-config` para
 distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno existente.
 
+**`--from` no avisa de lo que funde.** Una instantánea escrita por una versión que aún tenía
+`documentation` o `modifiedFiles` se restaura con las mismas reglas de fusión del lote de `biso new --from`
+(sección ["`biso new`"](new.md)): los elementos de esas claves acaban al final de `references`, pero
+`init --from` no emite los avisos `imported_documentation_merged` ni `imported_modified_files_merged`,
+porque una restauración no tiene un lote que comentar línea a línea.
+
 **"Un identificador que ya existe en esta máquina" son las raíces y solo las raíces, y basta con
 que esté en una.** La fila de abajo que da el error de identidad duplicada se mide igual que en
 cualquier otro comando, recorriendo las raíces de
