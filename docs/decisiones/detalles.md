@@ -215,7 +215,11 @@ sobre una tarea que lleva `k::x` es error 6, porque el estado guardado no lo per
 propone quitar primero la exclusiva. Dentro de una misma llamada, `k:a` junto a `k::b` es error 2 sin
 mirar el orden, y dos exclusivas de la misma clave dejan la última con un aviso. La comprobación se hace contra el estado que queda después de aplicar los
 quitar de esa llamada, así que `--rm-labels k::1 --add-labels k:2` en una sola línea funciona. La misma
-regla vale para cada línea de un lote de `biso new --from`. `--rm-labels k:v` quita `k::v` y al revés.
+regla vale para cada línea de un lote de `biso new --from`, con una salvedad: ahí dos exclusivas de la
+misma clave no dejan la última sino que son un fallo de validación de esa línea, porque la lista
+`labels` de una línea describe un estado guardado y quedarse con uno de los valores en silencio
+perdería un dato que el fichero afirmaba (["El modo lote"](../spec/cmd/new.md#el-modo-lote)).
+`--rm-labels k:v` quita `k::v` y al revés.
 
 **Consultar.** `--label k:` y `--label k::` significan cualquier etiqueta de la clave `k`, con cualquier
 valor y cualquier separador, y se unen con `y` a los demás `--label` como hoy. Como `a:` y `a::` nunca
