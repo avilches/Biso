@@ -75,7 +75,7 @@ la regla depende del tipo de lectura:
 | Tipo de lectura | Qué pasa |
 |---|---|
 | **Lectura dirigida** a esa tarea, es decir, `get`, o `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y `archive` con una referencia que resuelve a ella | Error 3, con el motivo exacto. No se escribe nada |
-| **Lectura de conjunto**, es decir, `ls`, `prime`, `export`, `snapshot`, la resolución de una referencia por texto y cualquier filtro | La tarea se salta, se cuenta, y al final se emite `warning: 1 task could not be read and was skipped` con sus identificadores, por stderr. El resto del resultado es válido y el código es 0, **salvo en `biso export` y en `biso snapshot`, que salen con 6, y salvo en `biso prime`, que integra el mismo aviso dentro de su propio mensaje por stdout en vez de emitirlo por stderr** (["`biso prime`"](cmd/prime.md#la-salida-literal)) |
+| **Lectura de conjunto**, es decir, `ls`, `prime`, `export`, `snapshot`, la resolución de una referencia por texto y cualquier filtro | La tarea se salta, se cuenta, y al final se emite `warning: 1 task could not be read and was skipped: MYP-2` con sus identificadores, por stderr, o, con más de una, `warning: 2 tasks could not be read and were skipped: MYP-2, MYP-7`. El resto del resultado es válido y el código es 0, **salvo en `biso export` y en `biso snapshot`, que salen con 6, y salvo en `biso prime`, que integra el mismo aviso dentro de su propio mensaje por stdout en vez de emitirlo por stderr** (["`biso prime`"](cmd/prime.md#la-salida-literal)) |
 | `biso doctor` | Se reporta como problema y se sigue con las demás. Nunca aborta |
 
 Una lectura de conjunto **nunca** aborta por una tarea mala, y **nunca** la esconde en silencio. Las

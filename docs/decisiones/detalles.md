@@ -407,8 +407,9 @@ naturaleza de un puntero, el sitio por donde entrar es este.
 
 **Qué cuesta, y qué se libera.** La retirada quita de la rejilla `FIELD FLAGS` del mensaje de arranque la línea de los flags
 de `documentation`. El mensaje tiene un tope duro de 5.504 bytes (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño))
-y con el tablero del ejemplo pasa de 5.089 a 5.038 bytes, 51 menos, todos de la parte fija, que baja
-de 3.600 a 3.549 de los 3.840 que tiene asignados. El campo deja además de contar entre los de lista,
+y con el tablero del ejemplo el mensaje medía entonces 5.089 bytes, y la retirada le quitó 51, todos de
+la parte fija, que pasó de 3.600 a 3.549 de los 3.840 que tiene asignados. Son medidas del momento de
+esta decisión, no las vigentes, que están en esa misma página del presupuesto. El campo deja además de contar entre los de lista,
 que pasan de seis a cinco. También toca la tabla de
 correspondencia con otros modelos, donde la cobertura se recalcula sin el campo retirado
 (["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Y hay una pérdida que
@@ -483,9 +484,10 @@ depende del sistema de ficheros de quien escribe, y un tablero que se lee desde 
 otra rama daría avisos por ficheros que en esa copia no están.
 
 **Qué cuesta, y qué se libera.** La retirada quita de la rejilla `FIELD FLAGS` del mensaje de arranque
-la línea entera de los flags del campo, 55 bytes. Con el tablero del ejemplo el mensaje pasa de 5.038 a
-4.983 bytes, todos de la parte fija, que baja de 3.549 a 3.494 de los 3.840 que tiene asignados
-(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)). Los campos de lista
+la línea entera de los flags del campo, 55 bytes. Con el tablero del ejemplo el mensaje medía entonces 5.038
+bytes, y la retirada le quitó 55, todos de la parte fija, que pasó de 3.549 a 3.494 de los 3.840 que tiene asignados.
+Son medidas del momento de esta decisión, no las vigentes, que están en
+["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño). Los campos de lista
 pasan de cinco a cuatro. La tabla de correspondencia con otros modelos se recalcula con un campo menos en el
 total (["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Y hay la
 misma pérdida que se aceptó con `documentation`: al importar desde Backlog.md ya no queda constancia de
@@ -658,9 +660,11 @@ fija tiene un tope propio
 es la ayuda de cada comando. Se descarta porque el mensaje de arranque es lo único que lee quien empieza
 a trabajar en un tablero, y ni sus reglas mencionan las dependencias ni `FIELD FLAGS` dice nada más que
 nombres: quien no pide la ayuda de `set` antes de escribir una arista no tiene ninguna pista de la
-dirección, y es justo el error que el programa no puede detectar. Cuesta 120 bytes: con el tablero del
-ejemplo el mensaje pasa de 4.983 a 5.103 bytes y la parte fija de 3.494 a 3.614, con un margen de 226
-sobre sus 3.840; los tres tableros de las pruebas de presupuesto quedan entre 5.103 y 5.278 de los 5.504.
+dirección, y es justo el error que el programa no puede detectar. Costó 120 bytes: con el tablero del
+ejemplo el mensaje medía entonces 4.983 bytes y pasó a 5.103, y la parte fija pasó de 3.494 a 3.614, con
+un margen de 226 sobre sus 3.840; los tres tableros de las pruebas de presupuesto quedaban entre 5.103 y
+5.278 de los 5.504. Son medidas del momento de esta decisión, no las vigentes: las de hoy están en
+["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño).
 El contrato de estabilidad no lo impide: congela el tope de bytes y no el texto de `biso prime`
 (["El contrato de estabilidad"](../spec/estabilidad.md)).
 
