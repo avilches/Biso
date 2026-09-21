@@ -34,7 +34,7 @@ func Commands() []CommandSpec {
 // (docs/spec/cmd/init.md).
 var vocabularyFlagNames = []string{
 	"statuses", "initial-status", "active-status", "terminal-status",
-	"types", "priorities", "extensions", "prefix", "overwrite-config",
+	"types", "priorities", "prefix", "overwrite-config",
 }
 
 func initCommand() CommandSpec {
@@ -63,7 +63,6 @@ func initCommand() CommandSpec {
 			{Name: "terminal-status", Value: PlainValue, Conflicts: conflictsWithFrom},
 			list("types"),
 			list("priorities"),
-			list("extensions"),
 			{Name: "prefix", Value: PlainValue, Conflicts: conflictsWithFrom},
 			{Name: "overwrite-config", Conflicts: conflictsWithFrom},
 			{Name: "from", Value: PlainValue, Conflicts: vocabularyFlagNames},

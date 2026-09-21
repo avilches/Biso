@@ -88,7 +88,7 @@ func NewOn(b *board.Board, env Env, p NewParams) (*WriteResult, error) {
 		// none to name the task by: the answer is the count and the
 		// warnings the real call would have produced
 		// (docs/spec/cmd/new.md#--dry-run-sobre-una-sola-tarea).
-		if err := task.Validate(b.Config.Extensions); err != nil {
+		if err := task.Validate(); err != nil {
 			return w.partial(), err
 		}
 		result.Warnings, result.Notes = w.warnings, w.notes

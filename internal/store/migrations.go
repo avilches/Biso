@@ -86,13 +86,6 @@ var migrations = []string{
 		PRIMARY KEY (task_id, field, position)
 	) WITHOUT ROWID;
 
-	CREATE TABLE task_ext (
-		task_id TEXT NOT NULL REFERENCES task(id) ON DELETE CASCADE,
-		key     TEXT NOT NULL,
-		value   TEXT NOT NULL,
-		PRIMARY KEY (task_id, key)
-	) WITHOUT ROWID;
-
 	CREATE TABLE task_criterion (
 		task_id  TEXT    NOT NULL REFERENCES task(id) ON DELETE CASCADE,
 		key      INTEGER NOT NULL,
@@ -120,7 +113,7 @@ var migrations = []string{
 	//
 	//   - **The board's id lives in a table of its own, in the single row
 	//     the CHECK allows**, and not as one more configuration key. It is
-	//     not configuration: docs/spec/cmd/config.md lists the twenty keys
+	//     not configuration: docs/spec/cmd/config.md lists the nineteen keys
 	//     `biso config list` prints and the id is not one of them, because
 	//     nothing can ever change it. Keeping it here is what lets
 	//     `biso doctor` compare it with the name of the <id>.id marker

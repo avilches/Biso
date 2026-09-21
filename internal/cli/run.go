@@ -301,8 +301,6 @@ func initParams(p *Parsed) (ops.InitParams, error) {
 		HasTypes:        p.Has("types"),
 		Priorities:      p.Values("priorities"),
 		HasPriorities:   p.Has("priorities"),
-		Extensions:      p.Values("extensions"),
-		HasExtensions:   p.Has("extensions"),
 		OverwriteConfig: p.Has("overwrite-config"),
 		DryRun:          p.Has("dry-run"),
 	}
@@ -540,11 +538,10 @@ func Terminal(f *os.File) bool {
 	return term.IsTerminal(int(f.Fd()))
 }
 
-// validValuesLine is the second line that two families of error print under
-// their message, aligned with it: the vocabulary a closed field configures
-// (docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos)
-// and the extension keys a board declares
-// (docs/spec/modelo-de-datos/campos-externos.md).
+// validValuesLine is the second line that the errors of a closed vocabulary
+// print under their message, aligned with it: the vocabulary a closed field
+// configures
+// (docs/spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos).
 //
 // It is built here and not carried inside the error because the list it
 // names already travels in `valid`, and the JSON envelope does not repeat
@@ -561,8 +558,6 @@ func validValuesLine(e *model.Error) string {
 		what = "valid types on this board"
 	case "unknown_priority":
 		what = "valid priorities on this board"
-	case "unknown_extension_key":
-		what = "declared keys on this board"
 	case "unknown_section":
 		// The two closed domains of the reading commands are not the
 		// board's vocabulary: they are the same everywhere, so the line

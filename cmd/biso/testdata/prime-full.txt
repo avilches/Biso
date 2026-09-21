@@ -8,7 +8,6 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
   plan                --clear-plan --append-plan
   notes               --clear-notes --append-note
   summary             --clear-summary --append-summary
-  ext                 --clear-ext --rm-ext --ext
   title               --title
   status              --status
   type                --clear-type --type

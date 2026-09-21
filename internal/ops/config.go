@@ -10,7 +10,7 @@ import (
 	"biso/internal/model"
 )
 
-// This file is `biso config` (docs/spec/cmd/config.md): the twenty keys of
+// This file is `biso config` (docs/spec/cmd/config.md): the nineteen keys of
 // a board's own configuration, read one by one, written one by one, or
 // listed whole.
 //
@@ -53,7 +53,7 @@ type ConfigEntry struct {
 
 // ConfigResult is what one call answers.
 type ConfigResult struct {
-	// Entries are the twenty keys in the order of the table of
+	// Entries are the nineteen keys in the order of the table of
 	// docs/spec/cmd/config.md#las-claves, filled by `list`.
 	Entries []ConfigEntry
 	// Value is what `get` answers.
@@ -80,7 +80,6 @@ type ConfigView struct {
 	Priorities     []string
 	Labels         []string
 	Assignees      []string
-	Extensions     []string
 	TaskPrefix     string
 	FinishStrict   bool
 	LeaseMinutes   int
@@ -243,12 +242,6 @@ func writeConfigKey(cfg *board.Config, p ConfigParams) *model.Error {
 			return err
 		}
 		cfg.Assignees = values
-	case board.KeyExtensions:
-		values, err := configList(p)
-		if err != nil {
-			return err
-		}
-		cfg.Extensions = values
 	case board.KeyTaskPrefix:
 		if p.Value == "" {
 			return emptyConfigValue(p.Key)
@@ -383,11 +376,10 @@ func cloneConfig(c board.Config) board.Config {
 	clone.Priorities = append([]string(nil), c.Priorities...)
 	clone.Labels = append([]string(nil), c.Labels...)
 	clone.Assignees = append([]string(nil), c.Assignees...)
-	clone.Extensions = append([]string(nil), c.Extensions...)
 	return clone
 }
 
-// configEntries is the twenty lines `biso config list` prints, in the order
+// configEntries is the nineteen lines `biso config list` prints, in the order
 // of the table of keys.
 func configEntries(c board.Config) []ConfigEntry {
 	entries := make([]ConfigEntry, 0, len(board.ConfigKeys))
@@ -419,8 +411,6 @@ func configValue(c board.Config, key string) string {
 		return strings.Join(c.Labels, ",")
 	case board.KeyAssignees:
 		return strings.Join(c.Assignees, ",")
-	case board.KeyExtensions:
-		return strings.Join(c.Extensions, ",")
 	case board.KeyTaskPrefix:
 		return c.TaskPrefix
 	case board.KeyFinishStrict:
@@ -465,7 +455,6 @@ func viewOf(c board.Config) ConfigView {
 		Priorities:     c.Priorities,
 		Labels:         c.Labels,
 		Assignees:      c.Assignees,
-		Extensions:     c.Extensions,
 		TaskPrefix:     c.TaskPrefix,
 		FinishStrict:   c.FinishStrict,
 		LeaseMinutes:   c.LeaseMinutes,

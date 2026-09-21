@@ -13,7 +13,6 @@
       "terminalStatus": "Done",
       "types": ["idea", "memory", "task", "bug", "docs"],
       "priorities": ["high", "medium", "low"],
-      "extensions": ["trello.card"],
       "countByStatus": { "To Do": 54, "In Progress": 4, "Done": 190 }
     },
     "inProgress": [

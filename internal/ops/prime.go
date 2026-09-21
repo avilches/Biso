@@ -31,7 +31,6 @@ type PrimeBoard struct {
 	TerminalStatus string
 	Types          []string
 	Priorities     []string
-	Extensions     []string
 	// CountByStatus counts the not archived tasks of each status, and has
 	// one entry per configured status even when it is zero.
 	CountByStatus map[string]int
@@ -95,7 +94,6 @@ func PrimeOn(b *board.Board, env Env, p PrimeParams) (*PrimeResult, error) {
 			TerminalStatus: b.Config.TerminalStatus,
 			Types:          append([]string(nil), b.Config.Types...),
 			Priorities:     append([]string(nil), b.Config.Priorities...),
-			Extensions:     append([]string(nil), b.Config.Extensions...),
 			CountByStatus:  map[string]int{},
 		},
 	}

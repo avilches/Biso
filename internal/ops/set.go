@@ -188,7 +188,7 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	// of everything except the last check
 	// (docs/spec/cmd/flags-globales.md).
 	for _, t := range tasks {
-		if err := t.Validate(b.Config.Extensions); err != nil {
+		if err := t.Validate(); err != nil {
 			return w.partial(), err
 		}
 	}

@@ -195,12 +195,11 @@ func configuredBoard(t *testing.T) *machine {
 	t.Helper()
 	m := newMachine(t)
 	m.run(t, "init", "My project", "--prefix", "TASK",
-		"--types", "idea,memory,task,bug,docs",
-		"--extensions", "trello.card").assertCode(t, 0)
+		"--types", "idea,memory,task,bug,docs").assertCode(t, 0)
 	return m
 }
 
-// TestConfigPrintsTheOutputOfTheSpecification is the twenty keys, always,
+// TestConfigPrintsTheOutputOfTheSpecification is the nineteen keys, always,
 // in the order of the table of keys, and the one value a `get` answers.
 func TestConfigPrintsTheOutputOfTheSpecification(t *testing.T) {
 	m := configuredBoard(t)

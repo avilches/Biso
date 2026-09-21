@@ -116,23 +116,6 @@ func fieldFlags() []FlagSpec {
 		)
 	}
 
-	// The external fields have three, and --ext is the one flag of the
-	// whole table with a step of its own, between the additions and the
-	// scalars (docs/spec/familias-de-flags.md#campos-externos).
-	flags = append(flags,
-		FlagSpec{Name: "clear-ext", Category: Clear, Field: "ext"},
-		FlagSpec{
-			Name: "rm-ext", Value: PlainValue, Repeatable: true, Category: Remove,
-			Alphabet: ExtKeyAlphabet, Noun: "extension key", Field: "ext",
-		},
-		FlagSpec{
-			Name: "ext", Value: PlainValue, Repeatable: true, Category: ExtKey,
-			Pair: PairAtFirstEquals, PairSyntax: "<key>=<value>",
-			Alphabet: ExtKeyAlphabet, Noun: "extension key",
-			SingleLine: true, LastKeyWins: true, Field: "ext",
-		},
-	)
-
 	for _, f := range scalarFields {
 		value := PlainValue
 		if f.text {

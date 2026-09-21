@@ -16,7 +16,6 @@ Keys:
   priorities         configured priorities
   labels             labels that filters accept on top of the ones in use
   assignees          assignees that filters accept on top of the ones in use
-  extensions         declared external field keys, such as trello.card
   task_prefix        id prefix, letters only (default: derived from
                      project_name); immutable once the board has a task
   finish_strict      make `biso finish` refuse an incomplete task

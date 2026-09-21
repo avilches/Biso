@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"sort"
 	"time"
 
 	"biso/internal/model"
@@ -49,7 +48,6 @@ func taskObject(v ops.TaskView) map[string]any {
 		"waiting":        v.Waiting,
 		"leaseExpired":   v.LeaseExpired,
 		"archived":       t.Archived,
-		"ext":            extObject(t.Ext),
 	}
 }
 
@@ -181,17 +179,6 @@ func questionObject(q *model.Question) any {
 	}
 }
 
-// extObject is the external fields, which are a map and therefore `{}` when
-// there are none, never null
-// (docs/spec/contrato-json.md#números-fechas-y-ausencias).
-func extObject(ext map[string]string) map[string]string {
-	out := make(map[string]string, len(ext))
-	for k, v := range ext {
-		out[k] = v
-	}
-	return out
-}
-
 // orNull is the convention of the contract for every string field: an empty
 // string is the absence of a value, and the absence of a value is null.
 func orNull(s string) any {
@@ -233,15 +220,4 @@ func day(at time.Time) any {
 		return nil
 	}
 	return at.UTC().Format(model.DateLayout)
-}
-
-// sortedKeys is how a map of external fields is written wherever the output
-// has to be the same twice: a map has no order of its own.
-func sortedKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }

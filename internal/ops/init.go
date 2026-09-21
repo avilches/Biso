@@ -42,9 +42,6 @@ type InitParams struct {
 	Priorities    []string
 	HasPriorities bool
 
-	Extensions    []string
-	HasExtensions bool
-
 	Prefix    string
 	HasPrefix bool
 
@@ -83,7 +80,6 @@ type BoardSummary struct {
 	TerminalStatus string
 	Types          []string
 	Priorities     []string
-	Extensions     []string
 	TaskPrefix     string
 }
 
@@ -96,7 +92,6 @@ func summaryOf(cfg board.Config) BoardSummary {
 		TerminalStatus: cfg.TerminalStatus,
 		Types:          cfg.Types,
 		Priorities:     cfg.Priorities,
-		Extensions:     cfg.Extensions,
 		TaskPrefix:     cfg.TaskPrefix,
 	}
 }
@@ -193,9 +188,9 @@ func Init(env Env, p InitParams) (*InitResult, error) {
 type vocabularyFlags struct {
 	statuses                             []string
 	initial, active, terminal            string
-	types, priorities, extensions        []string
+	types, priorities                    []string
 	hasStatuses, hasTypes, hasPriorities bool
-	hasExtensions, hasPrefix, hasName    bool
+	hasPrefix, hasName                   bool
 	prefix, name                         string
 	rolesGiven                           bool
 }
@@ -206,9 +201,9 @@ func readVocabularyFlags(p InitParams) (vocabularyFlags, *model.Error) {
 	v := vocabularyFlags{
 		statuses: p.Statuses, initial: p.InitialStatus, active: p.ActiveStatus,
 		terminal: p.TerminalStatus, types: p.Types, priorities: p.Priorities,
-		extensions: p.Extensions, hasStatuses: p.HasStatuses, hasTypes: p.HasTypes,
-		hasPriorities: p.HasPriorities, hasExtensions: p.HasExtensions,
-		hasPrefix: p.HasPrefix, prefix: p.Prefix, hasName: p.HasName, name: p.Name,
+		hasStatuses: p.HasStatuses, hasTypes: p.HasTypes,
+		hasPriorities: p.HasPriorities,
+		hasPrefix:     p.HasPrefix, prefix: p.Prefix, hasName: p.HasName, name: p.Name,
 	}
 	v.rolesGiven = p.HasInitialStatus || p.HasActiveStatus || p.HasTerminalStatus
 
@@ -358,9 +353,6 @@ func create(env Env, p InitParams, v vocabularyFlags, facts board.Searched, targ
 	}
 	if v.hasPriorities {
 		cfg.Priorities = v.priorities
-	}
-	if v.hasExtensions {
-		cfg.Extensions = v.extensions
 	}
 
 	// The identity: the one the marker of the destination already carries,
@@ -535,9 +527,6 @@ func rewrite(env Env, p InitParams, v vocabularyFlags, facts board.Searched, loc
 	if v.hasPriorities {
 		cfg.Priorities = v.priorities
 	}
-	if v.hasExtensions {
-		cfg.Extensions = v.extensions
-	}
 	if v.hasPrefix {
 		cfg.TaskPrefix = v.prefix
 	}
@@ -620,15 +609,12 @@ func checkNothingInUseIsRemoved(b *board.Board, cfg board.Config, v vocabularyFl
 	}
 
 	inUse := map[string]map[string][]string{
-		"statuses": {}, "types": {}, "priorities": {}, "extensions": {},
+		"statuses": {}, "types": {}, "priorities": {},
 	}
 	for _, t := range tasks {
 		inUse["statuses"][t.Status] = append(inUse["statuses"][t.Status], t.ID)
 		inUse["types"][t.Type] = append(inUse["types"][t.Type], t.ID)
 		inUse["priorities"][t.Priority] = append(inUse["priorities"][t.Priority], t.ID)
-		for key := range t.Ext {
-			inUse["extensions"][key] = append(inUse["extensions"][key], t.ID)
-		}
 	}
 	checks := []struct {
 		key     string
@@ -639,7 +625,6 @@ func checkNothingInUseIsRemoved(b *board.Board, cfg board.Config, v vocabularyFl
 		{"statuses", v.hasStatuses, cfg.Statuses, "status"},
 		{"types", v.hasTypes, cfg.Types, "type"},
 		{"priorities", v.hasPriorities, cfg.Priorities, "priority"},
-		{"extensions", v.hasExtensions, cfg.Extensions, "extension key"},
 	}
 	for _, c := range checks {
 		if !c.given {

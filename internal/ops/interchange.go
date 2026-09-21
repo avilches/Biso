@@ -37,32 +37,31 @@ import (
 // The field order is the order the keys come out in, because that is the
 // order encoding/json writes a struct in.
 type wireTask struct {
-	ID                 string            `json:"id"`
-	Title              string            `json:"title"`
-	Status             *string           `json:"status"`
-	Type               *string           `json:"type"`
-	Priority           *string           `json:"priority"`
-	Parent             *string           `json:"parent"`
-	Assignees          []string          `json:"assignees"`
-	Author             *string           `json:"author"`
-	Labels             []string          `json:"labels"`
-	Dependencies       []string          `json:"dependencies"`
-	References         []string          `json:"references"`
-	Due                *string           `json:"due"`
-	Ordinal            *int              `json:"ordinal"`
-	Ext                map[string]string `json:"ext"`
-	Description        *string           `json:"description"`
-	Plan               *string           `json:"plan"`
-	Notes              *string           `json:"notes"`
-	Summary            *string           `json:"summary"`
-	AcceptanceCriteria []wireCriterion   `json:"acceptanceCriteria"`
-	Comments           []wireComment     `json:"comments"`
-	Question           *wireQuestion     `json:"question"`
-	CreatedAt          *string           `json:"createdAt"`
-	UpdatedAt          *string           `json:"updatedAt"`
-	LeaseExpiresAt     *string           `json:"leaseExpiresAt"`
-	LeaseHolder        *string           `json:"leaseHolder"`
-	Archived           bool              `json:"archived"`
+	ID                 string          `json:"id"`
+	Title              string          `json:"title"`
+	Status             *string         `json:"status"`
+	Type               *string         `json:"type"`
+	Priority           *string         `json:"priority"`
+	Parent             *string         `json:"parent"`
+	Assignees          []string        `json:"assignees"`
+	Author             *string         `json:"author"`
+	Labels             []string        `json:"labels"`
+	Dependencies       []string        `json:"dependencies"`
+	References         []string        `json:"references"`
+	Due                *string         `json:"due"`
+	Ordinal            *int            `json:"ordinal"`
+	Description        *string         `json:"description"`
+	Plan               *string         `json:"plan"`
+	Notes              *string         `json:"notes"`
+	Summary            *string         `json:"summary"`
+	AcceptanceCriteria []wireCriterion `json:"acceptanceCriteria"`
+	Comments           []wireComment   `json:"comments"`
+	Question           *wireQuestion   `json:"question"`
+	CreatedAt          *string         `json:"createdAt"`
+	UpdatedAt          *string         `json:"updatedAt"`
+	LeaseExpiresAt     *string         `json:"leaseExpiresAt"`
+	LeaseHolder        *string         `json:"leaseHolder"`
+	Archived           bool            `json:"archived"`
 }
 
 // wireInput is a line of a batch: everything above plus the three keys that
@@ -287,7 +286,6 @@ func encodeTask(t *model.Task) ([]byte, error) {
 		References:         listOrEmpty(t.References),
 		Due:                dayOrNil(t.Due),
 		Ordinal:            t.Ordinal,
-		Ext:                mapOrEmpty(t.Ext),
 		Description:        orNil(t.Description),
 		Plan:               orNil(t.Plan),
 		Notes:              orNil(t.Notes),
@@ -399,7 +397,6 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		Dependencies: in.Dependencies,
 		References:   in.References,
 		Ordinal:      in.Ordinal,
-		Ext:          in.Ext,
 		Description:  value(in.Description),
 		Plan:         value(in.Plan),
 		Notes:        value(in.Notes),
@@ -610,13 +607,6 @@ func listOrEmpty(values []string) []string {
 		return []string{}
 	}
 	return values
-}
-
-func mapOrEmpty(m map[string]string) map[string]string {
-	if m == nil {
-		return map[string]string{}
-	}
-	return m
 }
 
 func instantOrNil(at time.Time) *string {

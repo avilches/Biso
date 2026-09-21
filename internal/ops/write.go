@@ -13,7 +13,7 @@ import (
 )
 
 // This file is the engine every writing command shares: it takes the field
-// flags of docs/spec/familias-de-flags.md, already classified into the nine
+// flags of docs/spec/familias-de-flags.md, already classified into the eight
 // fixed steps of
 // docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura, and
 // applies them to a task in that order, whatever order they were written in.
@@ -23,7 +23,7 @@ import (
 // on top, which is what makes the specification's promise true that a flag
 // means the same in every command that takes it.
 
-// Step is one of the nine steps of
+// Step is one of the eight steps of
 // docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura. The
 // numeric order is the order of that section, so sorting by it is the
 // specified order and nothing else has to know what that order is.
@@ -35,7 +35,6 @@ const (
 	StepReplace
 	StepRemove
 	StepAdd
-	StepExt
 	StepScalar
 	StepCheckAC
 	StepCommentDate
@@ -44,7 +43,7 @@ const (
 
 // Change is one value of one flag that writes a field: the flag's long name
 // without its dashes, the step it belongs to, and the value. Key is filled
-// only by the two flags whose value is a pair, --ext and --set-comment-date.
+// only by the flag whose value is a pair, --set-comment-date.
 //
 // It is a plain struct of strings and not the parser's own type because the
 // dependency rule runs one way: internal/cli knows this package, and this
@@ -224,7 +223,7 @@ func skippedWarning(skipped []board.Skipped) Warning {
 	}
 }
 
-// apply writes every change onto the task, in the nine steps of
+// apply writes every change onto the task, in the eight steps of
 // docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura.
 func (w *writer) apply(t *model.Task) error {
 	w.replaced = map[string]bool{}
@@ -232,7 +231,7 @@ func (w *writer) apply(t *model.Task) error {
 
 	// The two comment selectors are resolved here, against the list as it
 	// was before the write, and not each one in its own step: they fall in
-	// steps 3 and 8, so resolving them separately would let --rm-comment
+	// steps 3 and 7, so resolving them separately would let --rm-comment
 	// delete the comment before --set-comment-date could ever conflict
 	// with it (docs/spec/familias-de-flags.md#comentarios).
 	rmComments, commentDates, err := w.commentSelectors(t)
@@ -240,7 +239,7 @@ func (w *writer) apply(t *model.Task) error {
 		return err
 	}
 
-	for _, step := range []Step{StepClear, StepReplace, StepRemove, StepAdd, StepExt, StepScalar} {
+	for _, step := range []Step{StepClear, StepReplace, StepRemove, StepAdd, StepScalar} {
 		for _, c := range w.ofStep(step) {
 			if c.Flag == "rm-comment" {
 				continue
@@ -291,8 +290,6 @@ func (w *writer) applyOne(t *model.Task, c Change) error {
 		t.Summary = ""
 	case "clear-acs":
 		t.AcceptanceCriteria = nil
-	case "clear-ext":
-		t.Ext = nil
 	case "clear-type":
 		t.Type = ""
 	case "clear-priority":
@@ -317,17 +314,6 @@ func (w *writer) applyOne(t *model.Task, c Change) error {
 		w.acAdded = append(w.acAdded, t.AddCriterion(c.Value).Key)
 	case "rm-ac":
 		return w.removeCriteria(t, c)
-	case "ext":
-		if t.Ext == nil {
-			t.Ext = map[string]string{}
-		}
-		t.Ext[c.Key] = c.Value
-	case "rm-ext":
-		if _, ok := t.Ext[c.Value]; !ok {
-			w.warnNotPresent(t, c)
-			return nil
-		}
-		delete(t.Ext, c.Value)
 	case "title":
 		t.Title = c.Value
 	case "status":
@@ -599,7 +585,7 @@ func (w *writer) removeCriteria(t *model.Task, c Change) error {
 	return nil
 }
 
-// applyChecks is step 7, --check-ac and --uncheck-ac. The two are resolved
+// applyChecks is step 6, --check-ac and --uncheck-ac. The two are resolved
 // together, over the list as it stands after the additions of step 4, which
 // is what makes `--clear-acs --add-ac "A" --check-ac all` check the
 // criterion the same call just created
@@ -768,7 +754,7 @@ func (w *writer) applyCommentDates(t *model.Task, dates map[int]time.Time) {
 	}
 }
 
-// applyComments is step 9, the last one: a comment the call adds is never a
+// applyComments is step 8, the last one: a comment the call adds is never a
 // target of --rm-comment or --set-comment-date, because those two resolved
 // their selectors against the list of before.
 func (w *writer) applyComments(t *model.Task) error {

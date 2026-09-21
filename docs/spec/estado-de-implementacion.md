@@ -760,6 +760,40 @@ la página de relaciones entre tareas y el presupuesto de tamaño del mensaje de
   código, los ficheros de `cmd/biso/testdata/` y la especificación.
 - **No hay `--add-blocks`**, y la razón queda escrita en la decisión.
 
+### Qué dejó hecha la retirada de `ext`
+
+La tarea `TASK-87` aplicó ["Se retira `ext`"](../decisiones/detalles.md#se-retira-ext) al programa y a la
+especificación, en ese orden. Las anclas que cubre son el modelo de datos, las familias de flags, el orden
+de escritura, la configuración, `init`, `doctor`, el intercambio de `new` y `export`, `get`, `ls`, `prime`
+y el contrato JSON:
+
+- **El campo `ext` ya no existe en ningún sitio.** Ni en el modelo, ni en la tabla `task_ext`, ni en su
+  lectura, ni en el JSON de `get`, `ls` y `export`, ni en la ficha, ni en los flags `--ext`, `--rm-ext` y
+  `--clear-ext`, que ahora son un error 2 con el `code` `unknown_flag` como cualquier flag que no existe.
+  Un lote de `biso new --from` que traiga la clave `ext` falla como con cualquier clave desconocida. Como
+  `biso` no se ha publicado, se ha editado el primer script de migración en vez de añadir uno, igual que
+  en las retiradas anteriores.
+- **Los tableros creados antes del cambio dejan de abrirse.** Su configuración lleva una fila
+  `extensions` que el programa ya no conoce, y una clave desconocida es un dato que no se puede
+  interpretar, código 3. Solo afecta a tableros de ensayo de esta máquina, sin ningún dato real.
+- **El orden de aplicación de una escritura pasa de nueve pasos a ocho.** Desaparece el quinto, el de los
+  campos de mapa, y los escalares, los marcados de criterios, la corrección de fechas y los comentarios
+  suben un puesto. Lo comprueba `TestTheStepsOfBothLayersLineUp`.
+- **La configuración pasa de veinte claves a diecinueve.** `biso init` pierde `--extensions`, y `biso
+  config list` y `biso prime --json` dejan de llevar `extensions`.
+- **`biso doctor` pierde su comprobación de claves de extensión no declaradas**, con su `code`
+  `undeclared_extension_key`. La prueba del orden del informe usa ahora un tipo no configurado, que se
+  encuentra en la misma pasada sobre las tareas.
+- **La forma clave y valor deja de existir en la línea de comandos**, salvo en `--set-comment-date`, que
+  corta por el último `=`. El analizador pierde la categoría de paso de `ext`, su alfabeto y la regla de
+  que la última clave repetida gana, y con ella el aviso `duplicate_ext_key`.
+- **El mensaje de arranque mide ahora 5.070 bytes** con el tablero del ejemplo, 33 menos que antes: la parte
+  fija pasa de 3.614 a **3.581** y el resumen sigue en **1.489**. La rejilla `FIELD FLAGS` pierde la línea de
+  los flags del campo. El tope total de 5.504 no cambia y el margen de la parte fija sube de 226 a 259
+  bytes.
+- **La simetría entre `biso export` y `biso new --from` sigue pasando.** Las pruebas que llevaban un `ext`
+  en su tablero lo dejan de llevar, y se eliminan las que solo ejercían `ext`.
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según

@@ -2,22 +2,15 @@ package model
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
-// The two token alphabets of
-// docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token. Both
-// take Unicode letters and digits; they differ only in which symbols they
-// add. An extension key leaves out @ and :, which have no documented use
-// there, and =, which --ext <key>=<value> already spends on separating the
-// two halves.
-const (
-	tokenSymbols        = "-_.:@"
-	extensionKeySymbols = "-_."
-)
+// The token alphabet of
+// docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token: Unicode
+// letters and digits, plus these symbols.
+const tokenSymbols = "-_.:@"
 
 // ValidateLabel answers the error of
 // docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token when
@@ -37,18 +30,7 @@ func ValidateAssignee(assignee string) *Error {
 		"an assignee may contain letters, digits, and - _ . : @")
 }
 
-// ValidateExtensionKeySyntax answers the same kind of error for the key of
-// an extension field, whose alphabet is the narrower one
-// (docs/spec/modelo-de-datos/campos-externos.md). It says nothing about
-// whether the board declares that key: that is ValidateExtensionKey, and
-// the two are separate because they are different failures with different
-// exit codes.
-func ValidateExtensionKeySyntax(key string) *Error {
-	return validateToken(key, extensionKeySymbols, "extension key", "malformed_extension_key", "ext",
-		"an extension key may contain letters, digits, and - _ .")
-}
-
-// validateToken is the shared body of the three above.
+// validateToken is the shared body of the two above.
 func validateToken(value, symbols, noun, code, field, hint string) *Error {
 	if value != "" && allowedToken(value, symbols) {
 		return nil
@@ -78,7 +60,7 @@ func allowedToken(value, symbols string) bool {
 	return true
 }
 
-// The four values the `field` key takes on a malformed_string_value error,
+// The three values the `field` key takes on a malformed_string_value error,
 // per docs/spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string.
 // They name the field of the JSON envelope and not the flag that wrote it:
 // the same criterion text arrives through --add-ac and through an import,
@@ -87,18 +69,16 @@ const (
 	StringFieldTitle         = "title"
 	StringFieldAuthor        = "author"
 	StringFieldCriterionText = "criterion_text"
-	StringFieldExt           = "ext"
 )
 
-// stringFieldNouns is how each of those four names itself in the message.
+// stringFieldNouns is how each of those three names itself in the message.
 // The specification writes only the title one literally, `error: malformed
-// title: "first line\nsecond line"`, so the other three follow its shape
+// title: "first line\nsecond line"`, so the other two follow its shape
 // with the field's own name in prose.
 var stringFieldNouns = map[string]string{
 	StringFieldTitle:         "title",
 	StringFieldAuthor:        "author",
 	StringFieldCriterionText: "criterion text",
-	StringFieldExt:           "extension value",
 }
 
 // ValidateStringField answers the error of
@@ -107,7 +87,7 @@ var stringFieldNouns = map[string]string{
 //
 // The distinction it enforces is the one the type table of
 // docs/spec/modelo-de-datos/index.md draws: a `string` is text of one line
-// and a `text` is a block of prose. Only the four fields above are
+// and a `text` is a block of prose. Only the three fields above are
 // `string` and reachable from a value the caller writes, so only they pass
 // through here; description, plan, notes, summary, a comment's body and a
 // question's body are `text` and take line breaks without any restriction.
@@ -132,38 +112,6 @@ func ValidateStringField(field, value string) *Error {
 	}
 }
 
-// ValidateExtensionKey answers the error of
-// docs/spec/modelo-de-datos/campos-externos.md when a key is not one of
-// the ones the board declares in its `extensions` list, and nil when it
-// is. Writing an undeclared key is exit code 3.
-//
-// The second line the specification prints under the message,
-//
-//	error: unknown extension key: "jira.key"
-//	       declared keys on this board: trello.card, github.issue
-//
-// is the rendering of Valid, the same shape as the unknown-status error of
-// docs/spec/vocabularios.md, so it is not a hint and does not live here:
-// this builds the error, and the layer that writes to stderr writes both
-// lines from it.
-func ValidateExtensionKey(key string, declared []string) *Error {
-	for _, d := range declared {
-		if d == key {
-			return nil
-		}
-	}
-	valid := make([]string, len(declared))
-	copy(valid, declared)
-	return &Error{
-		ExitCode: 3,
-		Code:     "unknown_extension_key",
-		Message:  fmt.Sprintf("unknown extension key: %q", key),
-		Field:    "ext",
-		Given:    key,
-		Valid:    valid,
-	}
-}
-
 // Validate answers the first thing about the task that a board must not
 // store, or nil when there is nothing.
 //
@@ -172,12 +120,9 @@ func ValidateExtensionKey(key string, declared []string) *Error {
 // itself, not about SQLite: the same task validated the same way whether
 // it arrives from a flag, from an import or from a test.
 //
-// declaredExtensions is the board's `extensions` list, the one closed
-// vocabulary a task carries inside itself
-// (docs/spec/modelo-de-datos/campos-externos.md). The vocabularies a board
-// configures for status, type and priority are not checked here: they are
-// matched by internal/match against a configuration the model does not
-// see.
+// The vocabularies a board configures for status, type and priority are
+// not checked here: they are matched by internal/match against a
+// configuration the model does not see.
 //
 // Two kinds of failure come out of it. The rules of the specification
 // answer a *Error with its exit code and its code, ready to print. The
@@ -187,7 +132,7 @@ func ValidateExtensionKey(key string, declared []string) *Error {
 // code of their own. Both matter here for the same reason: without this
 // check the second one reached SQLite and came back as a raw constraint
 // failure naming a table.
-func (t *Task) Validate(declaredExtensions []string) error {
+func (t *Task) Validate() error {
 	if strings.TrimSpace(t.Title) == "" {
 		return &Error{
 			ExitCode: 2,
@@ -223,17 +168,6 @@ func (t *Task) Validate(declaredExtensions []string) error {
 			Message:  fmt.Sprintf("ordinal cannot be negative: %d", *t.Ordinal),
 			Field:    "ordinal",
 			Given:    strconv.Itoa(*t.Ordinal),
-		}
-	}
-	for _, key := range SortedExtKeys(t.Ext) {
-		if err := ValidateExtensionKeySyntax(key); err != nil {
-			return err
-		}
-		if err := ValidateExtensionKey(key, declaredExtensions); err != nil {
-			return err
-		}
-		if err := ValidateStringField(StringFieldExt, t.Ext[key]); err != nil {
-			return err
 		}
 	}
 	if err := t.validateCriteria(); err != nil {
@@ -294,15 +228,4 @@ func (t *Task) validatePeopleOfTheListsWithStructure() error {
 		}
 	}
 	return nil
-}
-
-// SortedExtKeys answers the keys of an extension map in a fixed order, so
-// that a task with two bad keys always fails on the same one.
-func SortedExtKeys(ext map[string]string) []string {
-	keys := make([]string, 0, len(ext))
-	for k := range ext {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }

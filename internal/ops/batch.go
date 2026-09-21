@@ -343,7 +343,7 @@ func readBatchLine(cfg board.Config, line *batchLine, text string, now time.Time
 	if t.UpdatedAt.IsZero() {
 		t.UpdatedAt = now
 	}
-	if validateErr := t.Validate(cfg.Extensions); validateErr != nil {
+	if validateErr := t.Validate(); validateErr != nil {
 		if e, ok := validateErr.(*model.Error); ok {
 			return e
 		}

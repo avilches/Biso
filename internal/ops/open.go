@@ -42,12 +42,6 @@ func cloneTask(t *model.Task) *model.Task {
 		ordinal := *t.Ordinal
 		clone.Ordinal = &ordinal
 	}
-	if t.Ext != nil {
-		clone.Ext = make(map[string]string, len(t.Ext))
-		for k, v := range t.Ext {
-			clone.Ext[k] = v
-		}
-	}
 	if t.Question != nil {
 		question := *t.Question
 		clone.Question = &question

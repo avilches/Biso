@@ -36,7 +36,7 @@ func TestInitPrintsTheOutputOfTheSpecification(t *testing.T) {
 	m := newMachine(t)
 
 	got := m.run(t, "init", "My project", "--prefix", "MYP",
-		"--at", "my-project-board", "--extensions", "trello.card").assertCode(t, 0)
+		"--at", "my-project-board").assertCode(t, 0)
 
 	assertEqual(t, got.stdout, fixture(t, "init-output.txt"), "the output of biso init")
 	assertEqual(t, got.stderr, fixture(t, "init-notes.txt"), "the notes of biso init")
@@ -46,7 +46,7 @@ func TestInitWritesThePointerOfTheSpecification(t *testing.T) {
 	m := newMachine(t)
 
 	m.run(t, "init", "My project", "--prefix", "MYP",
-		"--at", "my-project-board", "--extensions", "trello.card").assertCode(t, 0)
+		"--at", "my-project-board").assertCode(t, 0)
 
 	// docs/spec/cmd/init.md prints this pointer for this very call. The id
 	// is the one this run minted, because nothing can hand a real process
@@ -62,7 +62,7 @@ func TestInitEnvelopeMatchesTheSchemaOfTheSpecification(t *testing.T) {
 	m := newMachine(t)
 
 	got := m.run(t, "init", "My project", "--prefix", "MYP", "--at", "my-project-board",
-		"--extensions", "trello.card", "--json").assertCode(t, 0)
+		"--json").assertCode(t, 0)
 
 	assertSameJSON(t, got.stdout, fixture(t, "init-json.txt"))
 	// The notes keep travelling as text on stderr with --json, because no
@@ -294,10 +294,8 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 			"Las dos formas de un mensaje reparable", 3},
 		{"doctor-highest-none.txt", "cmd/doctor.md", "",
 			"Cuando el tablero no recuerda haber asignado ningún identificador", 0},
-		{"doctor-ext-none.txt", "cmd/doctor.md", "",
-			"Cuando la lista que el mensaje cita está vacía", 0},
 		{"doctor-vocabulary-none.txt", "cmd/doctor.md", "",
-			"Cuando la lista que el mensaje cita está vacía", 1},
+			"Cuando la lista que el mensaje cita está vacía", 0},
 		{"help-help.txt", "cmd/help.md", "", "`biso help --help`", 0},
 		{"help-all.txt", "cmd/help.md", "", "Salida de `biso help all`", 0},
 		{"help-unknown.txt", "cmd/help.md", "", "Varios comandos en una sola llamada", 0},
