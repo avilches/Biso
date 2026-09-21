@@ -26,6 +26,19 @@ sobre `biso`: debe leerlo como una afirmación sobre esa máquina. Un portátil 
 otro; lo que sí dice algo es que el número suba en la propia máquina de referencia de una versión a
 la siguiente, porque ahí el hardware no ha cambiado y lo único que puede haber cambiado es el código.
 
+**Qué se mide, y qué muestra decide.** Se mide reloj, no tiempo de CPU: el del proceso entero, desde
+antes de lanzarlo hasta después de que termine, porque el presupuesto es lo que espera quien ejecuta el
+comando y una espera (de disco, de sincronización, de lo que sea) gasta reloj sin gastar CPU. El
+veredicto no es una ejecución suelta ni su mediana, sino **la más rápida de varias**: el presupuesto se
+cumple si alguna de las ejecuciones que la prueba toma de cada comando termina en menos de 25
+milisegundos, y se incumple cuando ninguna lo consigue. El ruido de una máquina ocupada solo puede
+añadir tiempo a una ejecución, nunca quitárselo, así que la más rápida es la que menos pesa de la
+máquina y más del código, y una regresión real sube también esa. La prueba sigue siendo de la máquina de
+referencia y sigue fallando ante una regresión real; lo que no hace es fallar porque otro proceso
+estuviera usando el núcleo en el instante en que se midió. El número de ejecuciones, las medidas que lo
+sostienen y las alternativas descartadas están en
+["El presupuesto de arranque se mide con la muestra más rápida"](../decisiones/lenguaje-y-rendimiento.md#el-presupuesto-de-arranque-se-mide-con-la-muestra-más-rápida).
+
 **La composición del tablero de 300 tareas es indiferente, y por eso no se fija.** No importa cuántas
 estén en cada estado, ni si alguna tiene una pregunta abierta o un arrendamiento vencido: ninguno de
 los comandos se ramifica según el contenido de una tarea concreta, así que su coste crece de forma

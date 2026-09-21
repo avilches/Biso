@@ -111,3 +111,88 @@ mientras una primera tiene una escritura abierta, que es literalmente lo que pro
 ["La búsqueda por texto"](../spec/referencias.md#la-búsqueda-por-texto), viene
 puesta. Y un dato para cuando se implemente esa búsqueda: ningún controlador hace `LIKE` insensible a
 mayúsculas con acentos, porque eso es lo que hace SQLite sin la biblioteca ICU.
+
+## El presupuesto de arranque se mide con la muestra más rápida
+
+**La prueba del presupuesto de ["El presupuesto de arranque"](../spec/presupuestos.md#el-presupuesto-de-arranque) sigue midiendo reloj, el del proceso
+entero desde antes de lanzarlo hasta después de su salida, y su veredicto es la muestra más rápida de
+las que toma, no la mediana.** Ejecuta `biso ls` y `biso prime`, cada uno hasta 30 veces, sobre el tablero de
+300 tareas y pasa en cuanto una sola de esas ejecuciones termina en menos de 25 milisegundos; solo
+falla si ninguna de las 30 lo consigue. Cada ejecución tiene además que terminar con código de salida
+0, y quien lee el fallo ve el mínimo, la mediana y el máximo de las muestras tomadas, para distinguir
+una regresión de una máquina desbordada. La cifra no cambia: siguen siendo 25 milisegundos de reloj,
+y lo que se precisa es qué muestra de reloj es la que se compara con ella.
+
+**Por qué el mínimo y no otro estadístico.** El ruido de una máquina ocupada, ya sea otro proceso
+disputando el núcleo, el planificador o un agente de seguridad leyendo cada fichero que se abre, solo
+puede añadir tiempo a una ejecución, nunca quitárselo. Ninguna ejecución termina antes de lo que el
+programa necesita para hacer su trabajo, así que la más rápida es la mejor cota superior observable de
+lo que cuesta el programa por sí mismo, y es la única que la carga puntual no puede empeorar mientras
+haya una ejecución que se libre de ella. Una regresión real, en cambio, sube el mínimo igual que
+cualquier otra muestra, porque el código nuevo lo paga cada ejecución. Es la propiedad que hace falta:
+que la prueba dependa del código y no del estado de la máquina en ese instante. Salir en la primera
+ejecución que cabe no cambia el veredicto y hace que la prueba cueste una sola ejecución por comando
+cuando la máquina está en reposo.
+
+**Lo medido el 2026-09-21 en la máquina de desarrollo** (Apple M3 Max de 16 núcleos, macOS, 40
+ejecuciones por comando y por condición, tablero de 300 tareas con los cuatro bloques de `biso prime`
+poblados). La carga artificial fueron procesos que giran sin parar, el doble y el cuádruple que
+núcleos hay. Los milisegundos son de reloj y salen como mínimo, mediana y máximo:
+
+| Condición | `biso ls` | `biso prime` |
+|---|---|---|
+| En reposo | 11,3 / 12,0 / 39,2 | 13,5 / 14,6 / 41,3 |
+| 32 procesos ocupando la CPU | 13,8 / 19,2 / 30,3 | 19,1 / 27,5 / 89,5 |
+| 64 procesos ocupando la CPU | 13,4 / 20,2 / 48,6 | 18,3 / 23,8 / 63,3 |
+
+Aun en reposo hay ejecuciones sueltas a casi el triple de la mediana, y con carga la mediana de
+`biso prime` llega a 27,5 y supera el presupuesto sin que el binario haya cambiado, que es exactamente
+el fallo que motivó esta decisión. El mínimo de `biso prime`, en cambio, se queda entre 18 y 20 milisegundos con el
+doble de procesos que núcleos y con el cuádruple: el ruido lo desplaza, pero no lo lleva a la cifra. Un
+`biso prime` que costara 12 milisegundos más de lo que cuesta hoy pondría el mínimo en reposo por
+encima de 25 y la prueba fallaría, con la máquina libre y con la máquina cargada.
+
+**Los 30 se eligen porque hacen falta muy pocos para que un mínimo sea fiable y porque solo se pagan
+cuando algo va mal.** En reposo la primera ejecución ya cabe y la prueba termina ahí. Si ninguna cabe
+son 30 ejecuciones de unos 20 a 40 milisegundos por comando, poco más de un segundo, un coste que solo
+se paga cuando la prueba va a fallar de todos modos.
+
+**Lo que esta decisión no cubre, y se acepta.** Una máquina tan saturada que ninguna de las 30
+ejecuciones cabe en 25 milisegundos hace fallar la prueba, y eso es correcto: en esa máquina y en ese
+momento el programa no arranca dentro del presupuesto, y el mensaje con el mínimo, la mediana y el
+máximo lo deja a la vista para que quien lo lee no tenga que adivinarlo. Y una regresión menor que el
+hueco que hay entre el mínimo en reposo y 25 milisegundos no se detecta, pero eso es propio de tener
+un presupuesto y no del estadístico: la cifra se vigila entera, no se vigila que no suba.
+
+**Descartado: la mediana de pocas ejecuciones, que era lo que había.** Con cinco ejecuciones la mediana
+es la tercera más rápida, así que basta con que la carga afecte a tres para que dé el veredicto. Bajo
+carga mide la máquina, como enseña la tabla de arriba, y falla sin que haya cambiado una línea.
+
+**Descartado: el tiempo de CPU (usuario más sistema) en lugar del reloj, y también como condición
+añadida.** No ve las esperas: un `sleep`, una espera de disco, una sincronización a disco o una
+llamada de red gastan reloj y no gastan CPU, así que una regresión que añadiera una espera de 30
+milisegundos pasaría la prueba sin que nada la detectara, y el presupuesto existe justo para lo que
+espera quien lanza el comando. Tampoco es inmune a la carga: en las mismas medidas la mediana de CPU de
+`biso ls` pasó de 9,1 a 14,1 milisegundos por la contención de caché y de frecuencia. Y un proceso con
+varios hilos puede gastar más CPU que reloj, lo que no coincide con lo que dice la especificación.
+Como condición añadida exigiría además una segunda cifra que la especificación no tiene.
+
+**Descartado: subir el umbral de la prueba.** Una prueba con un límite distinto del de la
+especificación no comprueba la especificación, y un límite que nadie comprueba no es un límite. Es el
+mismo razonamiento por el que la prueba se salta entera bajo el detector de carreras en vez de tener
+un tope más holgado.
+
+**Descartado: repetir la prueba entera cuando falla.** Es el mínimo de varias muestras hecho a mano y a
+escondidas, con la diferencia de que entrena a quien la ve fallar a lanzarla otra vez hasta que pase y
+no deja constancia de qué ejecuciones se tomaron. El mínimo lo hace una sola vez, dentro de la propia
+prueba y con las muestras impresas.
+
+**Descartado: saltar la prueba cuando la máquina está cargada.** Exigiría leer la carga del sistema,
+que no se lee igual en todas las plataformas, y convertiría un fallo en un silencio: una máquina que
+siempre está cargada no comprobaría nunca el presupuesto. Solo el detector de carreras justifica un
+salto, porque ahí se conoce la causa y se declara.
+
+**Descartado: un percentil bajo, como el décimo, en lugar del mínimo.** Protegería de una muestra
+anormalmente baja, pero no existe: ninguna ejecución va más rápido de lo que el programa cuesta, y la
+ejecución de calentamiento ya quita el efecto de un fichero leído por primera vez. Exigiría además
+tomar todas las muestras siempre, sin poder salir en la primera que cabe.
