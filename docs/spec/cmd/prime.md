@@ -413,8 +413,8 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
 ```
 
 El nombre de la izquierda es el del campo en el esquema JSON (["El contrato JSON"](../contrato-json.md))
-y no el del flag, porque es justamente lo que un flag no dice: `--add-refs` y `references` son la
-misma cosa escrita de dos maneras, y quien lee el sobre necesita el puente.
+y no el del flag, porque es justamente lo que un flag no dice: `--add-ac` es la abreviatura de un
+campo que el sobre llama `acceptanceCriteria`, y quien lee el sobre necesita el puente.
 
 ## El esquema JSON
 

@@ -397,7 +397,7 @@ qué lado cae, para un dato que ni se valida ni se consulta.
 **Alternativa descartada: conservar `documentation` y retirar `references`.** Es la que más tareas de
 este tablero usan hoy, pero su palabra es más estrecha: un informe de bug, una dirección web o el
 identificador de otra tarea con la que hay que ser coherente no son documentación, y con ese nombre
-el campo pediría un segundo para todo lo demás, que es donde se empezó.
+el campo pediría un segundo para todo lo demás, que es justo el problema de tener dos campos.
 
 **Alternativa descartada: una lista de adjuntos con nombre, al estilo de `attachments`.** Es lo que
 tienen Linear y Trello, y resolvería de paso cualquier separación futura, pero es otro objeto con
@@ -634,11 +634,10 @@ de 1000, puede repartir claves uniformes en el mismo orden: 535 tareas caben en 
 **La decisión.** Hacia dónde apunta una dependencia se enseña en la ayuda de `biso set` y de
 `biso new`, con una frase y un ejemplo con identificadores del proyecto de ejemplo: la arista se
 escribe siempre en la tarea que espera, y `biso set MYP-10 --add-deps MYP-4` dice que `MYP-4` va
-primero y bloquea a `MYP-10`. La misma ayuda glosa `--parent` y `--add-refs`, que hasta entonces no
-tenían glosa en ningún comando de escritura (`--parent` solo la tenía como filtro de lectura en
-`biso ls`), y la frase de `biso set --help`
-que decía que ningún flag exigía aprender nada más allá de su nombre se corrige, porque era cierta
-para la forma de las listas y falsa para el significado de los campos de relación. La dirección
+primero y bloquea a `MYP-10`. La misma ayuda glosa `--parent` y `--add-refs`, que no tienen glosa en
+ningún otro comando de escritura (`--parent` solo la tiene como filtro de lectura en `biso ls`), y
+`biso set --help` no afirma que ningún flag exija aprender nada más allá de su nombre, porque eso es
+cierto para la forma de las listas y falso para el significado de los campos de relación. La dirección
 en sí no cambia: es la de
 ["Las relaciones entre tareas"](../spec/modelo-de-datos/relaciones.md#dependencies-la-precedencia).
 El mensaje de arranque lleva la misma enseñanza en una sola regla, la 11 de `RULES`: "A dependency is
@@ -654,9 +653,9 @@ bloqueo y de urgencia queda invertido sin ningún aviso. Con `biso new` hay adem
 una existente hay que crearla y luego escribir la arista con `biso set` en la existente, cosa que la
 ayuda de `biso new` dice.
 
-**Descartado: dejar el mensaje de arranque sin nada de esto.** Fue la primera versión de esta decisión, con
-el argumento de que la parte fija tiene un tope propio
-(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)) y de que el sitio natural
+**Descartado: dejar el mensaje de arranque sin nada de esto.** El argumento a favor es que la parte
+fija tiene un tope propio
+(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)) y que el sitio natural
 es la ayuda de cada comando. Se descarta porque el mensaje de arranque es lo único que lee quien empieza
 a trabajar en un tablero, y ni sus reglas mencionan las dependencias ni `FIELD FLAGS` dice nada más que
 nombres: quien no pide la ayuda de `set` antes de escribir una arista no tiene ninguna pista de la
