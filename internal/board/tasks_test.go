@@ -479,12 +479,12 @@ func TestAStoredOrdinalThatIsNotAKeyMakesTheTaskUnreadable(t *testing.T) {
 // written by something other than this program.
 func writeOrdinalPastTheCheck(t *testing.T, tasks *Tasks, id, key string) {
 	t.Helper()
-	if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = ON"); err != nil {
-		t.Fatalf("turning the checks off: %v", err)
+	if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = 1"); err != nil {
+		t.Fatalf("turn the check constraints off: %v", err)
 	}
 	defer func() {
-		if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = OFF"); err != nil {
-			t.Fatalf("turning the checks back on: %v", err)
+		if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = 0"); err != nil {
+			t.Fatalf("turn the check constraints back on: %v", err)
 		}
 	}()
 	if _, err := tasks.store.Exec("UPDATE task SET ordinal = ? WHERE id = ?", key, id); err != nil {
