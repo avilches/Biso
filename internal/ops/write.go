@@ -316,14 +316,14 @@ func skippedWarning(skipped []board.Skipped) Warning {
 	for _, s := range skipped {
 		ids = append(ids, s.ID)
 	}
-	noun := "tasks could"
+	subject, verb := "tasks could", "were"
 	if len(ids) == 1 {
-		noun = "task could"
+		subject, verb = "task could", "was"
 	}
 	return Warning{
 		Code: "task_skipped",
-		Message: fmt.Sprintf("%d %s not be read and was skipped: %s",
-			len(ids), noun, strings.Join(ids, ", ")),
+		Message: fmt.Sprintf("%d %s not be read and %s skipped: %s",
+			len(ids), subject, verb, strings.Join(ids, ", ")),
 		Fields: map[string]any{"count": len(ids), "tasks": ids},
 	}
 }

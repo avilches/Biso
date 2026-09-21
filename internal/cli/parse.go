@@ -443,17 +443,13 @@ func (st *parser) value(f *FlagSpec, raw string) error {
 // value: the empty one, the closed alphabet of a token field, the one line of
 // a string field, a domain of fixed values, and the rules of repetition. A
 // value of the form "<left>=<right>" is cut first and then the same rules
-// apply to each half, the alphabet to the key and the rest to the value, so
-// that none of them is unreachable for the flags that take a pair.
+// apply to its right half; the left half is free text and has no alphabet.
 func (st *parser) element(f *FlagSpec, v string) error {
 	key, value := "", v
 	if f.Pair != NotAPair {
 		var err error
 		if key, value, err = splitPair(f, v); err != nil {
 			return err
-		}
-		if !f.Alphabet.allowed(key) {
-			return errMalformedToken(f, key)
 		}
 	}
 	if isEmpty(value) {
@@ -465,7 +461,7 @@ func (st *parser) element(f *FlagSpec, v string) error {
 		}
 		return st.empty(f, value)
 	}
-	if key == "" && !f.Alphabet.allowed(value) {
+	if !f.Alphabet.allowed(value) {
 		return errMalformedToken(f, value)
 	}
 	if key == "" {

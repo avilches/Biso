@@ -28,9 +28,9 @@ estados, `ls` parte de todos menos el terminal.
 ## La garantía de simetría
 
 **Esta garantía asume un tablero destino con vocabulario compatible**: el mismo `task_prefix`, los
-mismos estados, tipos, prioridades y claves de extensión que el tablero de origen. Si no lo es, la
+mismos estados, tipos y prioridades que el tablero de origen. Si no lo es, la
 importación falla con los errores que ya define ["El modo lote"](new.md#el-modo-lote) de `biso new`
-(un `id` sin el prefijo correcto, una clave de extensión desconocida, un valor sin vocabulario), no es
+(un `id` sin el prefijo correcto, un valor sin vocabulario), no es
 un fallo de esta garantía. Reconstruir también el vocabulario, para un tablero destino que no lo
 declara de antemano, es lo que hace `snapshot` con `init --from`, más abajo.
 

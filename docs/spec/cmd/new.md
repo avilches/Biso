@@ -384,7 +384,7 @@ pasada. La línea 130 del bloque de arriba es justo uno de ellos, y aun así sal
 | Tarea o lote creado | 0 |
 | `--dry-run` que habría funcionado | 0 |
 | Falta el título, flags incompatibles, fecha mal formada | 2 |
-| Valor fuera de un vocabulario, clave de extensión no declarada, entrada no interpretable | 3 |
+| Valor fuera de un vocabulario, entrada no interpretable | 3 |
 | `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
 | `--add-deps` o `--parent` por texto con varias coincidencias | 5 |
 | Cualquier fallo de validación en el lote de `--from`, o un `--dry-run` de ese lote que no pasa. **Solo del lote**: un `--dry-run` sobre una sola tarea nunca da 7, sino el código específico de su fallo (["`--dry-run` sobre una sola tarea"](#--dry-run-sobre-una-sola-tarea)) | 7 |

@@ -76,7 +76,7 @@ Entra:
 
 - Las diez órdenes del ciclo de trabajo con su forma de uso. Quien no sabe que existe `biso finish`
   no va a escribir `biso finish --help`.
-- **Los nombres de todos los flags de campo**, en una rejilla de once líneas.
+- **Los nombres de todos los flags de campo**, en una rejilla de diez líneas.
 - El vocabulario real de este tablero, con **el recuento por estado** y con la marca de cuál es el
   estado de las tareas nuevas, cuál el activo y cuál el terminal.
 - Las reglas que no son adivinables.
@@ -390,7 +390,7 @@ cada estado. El mensaje de arriba invita a crear la primera tarea, y ahí no ser
 
 `--full` añade al final del mensaje, después del párrafo de cierre y separado por una línea en
 blanco, la lista completa de los flags de campo. No sustituye a la rejilla `FIELD FLAGS`, que
-seguirá estando donde estaba: la rejilla da los nombres en once líneas para que quepan en el
+seguirá estando donde estaba: la rejilla da los nombres en diez líneas para que quepan en el
 arranque, y esto los agrupa **por el campo que escriben y en el orden en que una escritura los
 aplica** (["Orden de aplicación dentro de una escritura"](../garantias.md#orden-de-aplicación-dentro-de-una-escritura)),
 que es lo que la rejilla no puede decir sin ocupar el triple.

@@ -253,7 +253,7 @@ ofrecerse, no para prohibir el resto.
 
 **Descartado: una clave de configuración nueva para declarar las claves de ámbito.** La lista `labels`
 ya existía, ya era el sitio de las etiquetas declaradas, y con esta decisión solo gana el papel de
-restringir por clave. Una clave nueva habría sido la vigésima primera, con su validación, su flag en
+restringir por clave. Una clave nueva habría sido la vigésima, con su validación, su flag en
 `biso init`, su presencia en `biso snapshot` y su superficie en `biso config`.
 
 **Descartado: dejar las claves sin declarar del todo, o declararlas siempre.** Sin ninguna declaración
@@ -407,8 +407,9 @@ naturaleza de un puntero, el sitio por donde entrar es este.
 
 **Qué cuesta, y qué se libera.** La retirada quita de la rejilla `FIELD FLAGS` del mensaje de arranque la línea de los flags
 de `documentation`. El mensaje tiene un tope duro de 5.504 bytes (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño))
-y con el tablero del ejemplo pasa de 5.089 a 5.038 bytes, 51 menos, todos de la parte fija, que baja
-de 3.600 a 3.549 de los 3.840 que tiene asignados. El campo deja además de contar entre los de lista,
+y con el tablero del ejemplo el mensaje medía entonces 5.089 bytes, y la retirada le quitó 51, todos de
+la parte fija, que pasó de 3.600 a 3.549 de los 3.840 que tiene asignados. Son medidas del momento de
+esta decisión, no las vigentes, que están en esa misma página del presupuesto. El campo deja además de contar entre los de lista,
 que pasan de seis a cinco. También toca la tabla de
 correspondencia con otros modelos, donde la cobertura se recalcula sin el campo retirado
 (["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Y hay una pérdida que
@@ -483,9 +484,10 @@ depende del sistema de ficheros de quien escribe, y un tablero que se lee desde 
 otra rama daría avisos por ficheros que en esa copia no están.
 
 **Qué cuesta, y qué se libera.** La retirada quita de la rejilla `FIELD FLAGS` del mensaje de arranque
-la línea entera de los flags del campo, 55 bytes. Con el tablero del ejemplo el mensaje pasa de 5.038 a
-4.983 bytes, todos de la parte fija, que baja de 3.549 a 3.494 de los 3.840 que tiene asignados
-(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)). Los campos de lista
+la línea entera de los flags del campo, 55 bytes. Con el tablero del ejemplo el mensaje medía entonces 5.038
+bytes, y la retirada le quitó 55, todos de la parte fija, que pasó de 3.549 a 3.494 de los 3.840 que tiene asignados.
+Son medidas del momento de esta decisión, no las vigentes, que están en
+["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño). Los campos de lista
 pasan de cinco a cuatro. La tabla de correspondencia con otros modelos se recalcula con un campo menos en el
 total (["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Y hay la
 misma pérdida que se aceptó con `documentation`: al importar desde Backlog.md ya no queda constancia de
@@ -519,10 +521,10 @@ imprimía en `biso get` y viajaba en la exportación. Costaba una tabla propia y
 consultas de una lectura completa del tablero, que es el camino caliente de `biso ls` y `biso prime`;
 uno de los nueve pasos del orden de aplicación de una escritura; una de las veinte claves de
 configuración, con su validación de vocabulario en uso, su flag en `biso init` y su presencia en la
-simetría de `biso snapshot` con `biso init --from`; cuatro identificadores de error; la única forma
-`clave=valor` de toda la línea de comandos, con una regla de corte contraria a la de
-`--set-comment-date`; uno de los dos alfabetos cerrados del programa; unas 158 líneas de Go fuera de
-pruebas y otras 155 dentro; quince páginas de la especificación que lo nombran; y 33 bytes de la parte
+simetría de `biso snapshot` con `biso init --from`; cuatro identificadores de error; una de las dos
+formas `clave=valor` de la línea de comandos, la que se cortaba por el primer `=`, con una regla
+contraria a la de `--set-comment-date`, que sigue existiendo y corta por el último; uno de los dos
+alfabetos cerrados del programa; unas 158 líneas de Go fuera de pruebas y otras 155 dentro; quince páginas de la especificación que lo nombran; y 33 bytes de la parte
 fija del mensaje de arranque. Una medición de 2026-09-21 sobre las 535 tareas de seis tableros de
 Backlog.md no encontró ni una vez la necesidad que el campo decía cubrir. Backlog.md no tiene campo de
 extensión, así que ese cero no prueba nada por sí solo: lo que decide es que el campo cuesta todo lo
@@ -658,9 +660,11 @@ fija tiene un tope propio
 es la ayuda de cada comando. Se descarta porque el mensaje de arranque es lo único que lee quien empieza
 a trabajar en un tablero, y ni sus reglas mencionan las dependencias ni `FIELD FLAGS` dice nada más que
 nombres: quien no pide la ayuda de `set` antes de escribir una arista no tiene ninguna pista de la
-dirección, y es justo el error que el programa no puede detectar. Cuesta 120 bytes: con el tablero del
-ejemplo el mensaje pasa de 4.983 a 5.103 bytes y la parte fija de 3.494 a 3.614, con un margen de 226
-sobre sus 3.840; los tres tableros de las pruebas de presupuesto quedan entre 5.103 y 5.278 de los 5.504.
+dirección, y es justo el error que el programa no puede detectar. Costó 120 bytes: con el tablero del
+ejemplo el mensaje medía entonces 4.983 bytes y pasó a 5.103, y la parte fija pasó de 3.494 a 3.614, con
+un margen de 226 sobre sus 3.840; los tres tableros de las pruebas de presupuesto quedaban entre 5.103 y
+5.278 de los 5.504. Son medidas del momento de esta decisión, no las vigentes: las de hoy están en
+["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño).
 El contrato de estabilidad no lo impide: congela el tope de bytes y no el texto de `biso prime`
 (["El contrato de estabilidad"](../spec/estabilidad.md)).
 

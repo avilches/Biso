@@ -112,7 +112,7 @@ lista que el modelo no conoce y una prioridad que la configuración ya no declar
 de llegar ahí que hay hoy, y las tres están probadas.
 
 La otra mitad, la que se ve desde fuera, la cerró el paso 8: el aviso
-`warning: 1 task could not be read and was skipped` con sus identificadores, y el código 6 de
+`warning: 1 task could not be read and was skipped: MYP-2` con sus identificadores (y, con más de una, la forma plural con `were`), y el código 6 de
 `biso export` y de `biso snapshot` cuando han saltado alguna, cada uno con su prueba. Del texto
 exacto del error de la lectura dirigida no queda nada pendiente de implementar, porque la
 especificación no lo fija: el código y la clave sí están.
@@ -343,10 +343,10 @@ esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
   prioridades de nombre largo, y un tablero cuyo nombre son diez mil caracteres. Los dos últimos son
   los que hacen cierta la palabra "siempre": los cuatro primeros escalones solo recortan tareas, así
   que un tablero sin ninguna se escapaba del tope por el bloque `BOARD` (imprimía 8.465 bytes) hasta
-  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.103 bytes** de
-  los 5.504, **3.614** de parte fija y **1.489** de resumen, que es exactamente lo que dice
+  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.070 bytes** de
+  los 5.504, **3.581** de parte fija y **1.489** de resumen, que es exactamente lo que dice
   ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño); con el de los vocabularios
-  largos, **5.250**, y con el del nombre kilométrico, **5.278**.
+  largos, **5.217**, y con el del nombre kilométrico, **5.245**.
 - **La medida del presupuesto de arranque ya es la de verdad**, en `cmd/biso/budget_test.go`:
   ejecuta el binario compilado, `biso ls` y `biso prime`, sobre un tablero real de 300 tareas con
   los cuatro bloques poblados, y mide de la llamada al código de salida, arranque del proceso
@@ -666,7 +666,9 @@ al programa y a la especificación:
   y la de `modifiedFiles` a 4.983
   (["Qué dejó hecha la retirada de `modifiedFiles`"](#qué-dejó-hecha-la-retirada-de-modifiedfiles)).
   La regla 11 del mensaje de arranque la subió después a 5.103
-  (["Qué dejó hecha la ayuda de la dirección de una dependencia"](#qué-dejó-hecha-la-ayuda-de-la-dirección-de-una-dependencia)).
+  (["Qué dejó hecha la ayuda de la dirección de una dependencia"](#qué-dejó-hecha-la-ayuda-de-la-dirección-de-una-dependencia)),
+  y la retirada de `ext` la bajó de nuevo. La cifra vigente es la de
+  ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño).
 
 ### Qué dejó hecha la fusión de `documentation` en `references`
 
@@ -723,7 +725,7 @@ el formato de `biso export`, la tabla de avisos y la fuera de alcance:
   parte fija pasaba de 3.549 a **3.494** y el resumen seguía en **1.489**. La rejilla `FIELD FLAGS` pasa de
   doce líneas a once, y es la línea entera de los flags del campo lo que se libera. El tope total de 5.504
   no cambia y el margen de la parte fija sube de 291 a 346 bytes. Esa cifra ya no es la vigente: la regla 11
-  la subió a 5.103.
+  la subió a 5.103, y la retirada de `ext` la bajó después.
 - **La cobertura de `compatibilidad-de-modelos.md` se recalculó** sin el campo retirado: un campo menos en el total sobre el que se calcula cada porcentaje.
 - **La familia de los campos de lista queda en cuatro**: `labels`, `assignees`, `references` y
   `dependencies`.
@@ -753,9 +755,11 @@ la página de relaciones entre tareas y el presupuesto de tamaño del mensaje de
   la ayuda de `set` y de `new`, y el mensaje seguía midiendo 4.983 bytes. Esa decisión ya no es la vigente:
   quien solo lee `biso prime` no tenía ninguna pista de la dirección de una dependencia, y la regla 11 de
   `RULES` la dice en dos líneas (["La ayuda enseña la dirección de una dependencia"](../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)).
-  Con el tablero del ejemplo el mensaje pasa a medir **5.103 bytes**, 120 más: **3.614** de parte fija,
+  Con el tablero del ejemplo el mensaje medía entonces **5.103 bytes**, 120 más: **3.614** de parte fija,
   con un margen de 226 bytes sobre los 3.840, y **1.489** de resumen. Con el de los vocabularios largos
-  mide 5.250 y con el del nombre kilométrico 5.278, los dos por debajo del tope de 5.504. La prueba de que
+  medía 5.250 y con el del nombre kilométrico 5.278, los dos por debajo del tope de 5.504. Esas cifras ya
+  no son las vigentes: la retirada de `ext` las bajó después, y las de hoy están en
+  ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño). La prueba de que
   la parte fija no pasa de 3.840 bytes y el total de 5.504 ya existía
   (`TestTheFixedPartOfTheMessageIsAlwaysTheSame` y `assertWithinBudget`), y
   `TestTheBudgetConstantsAreTheNumbersOfTheSpecification` compara las dos constantes con los números que
@@ -792,10 +796,11 @@ y el contrato JSON:
 - **La forma clave y valor deja de existir en la línea de comandos**, salvo en `--set-comment-date`, que
   corta por el último `=`. El analizador pierde la categoría de paso de `ext`, su alfabeto y la regla de
   que la última clave repetida gana, y con ella el aviso `duplicate_ext_key`.
-- **El mensaje de arranque mide ahora 5.070 bytes** con el tablero del ejemplo, 33 menos que antes: la parte
-  fija pasa de 3.614 a **3.581** y el resumen sigue en **1.489**. La rejilla `FIELD FLAGS` pierde la línea de
-  los flags del campo. El tope total de 5.504 no cambia y el margen de la parte fija sube de 226 a 259
-  bytes.
+- **El mensaje de arranque medía entonces 5.070 bytes** con el tablero del ejemplo, 33 menos que antes: la parte
+  fija pasaba de 3.614 a **3.581** y el resumen seguía en **1.489**. La rejilla `FIELD FLAGS` perdió la línea de
+  los flags del campo. El tope total de 5.504 no cambió y el margen de la parte fija subió de 226 a 259
+  bytes. Las cifras vigentes son siempre las de
+  ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño).
 - **La simetría entre `biso export` y `biso new --from` sigue pasando.** Las pruebas que llevaban un `ext`
   en su tablero lo dejan de llevar, y se eliminan las que solo ejercían `ext`.
 

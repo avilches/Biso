@@ -343,7 +343,7 @@ además de esa frase, para no decir dos veces que no se ha escrito nada.
 | `--from` cuyo `board.json` tiene el mismo problema que haría fallar con Error 2 al flag de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría ese flag |
 | `--from` cuyo `snapshot.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
 | `--from` cuyo `board.json` declara un vocabulario que ninguna tarea de `snapshot.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `board.json`, tenga tareas que lo usen entero o no |
-| `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `board.json` no hace válido | Error 7, la misma regla del lote de `biso new --from` (sección ["`biso new`"](new.md)), con el detalle de qué falta línea a línea |
+| `--from` cuyas tareas usan un valor o un `id` que `board.json` no hace válido | Error 7, la misma regla del lote de `biso new --from` (sección ["`biso new`"](new.md)), con el detalle de qué falta línea a línea |
 
 **Los tres estados especiales se guardan como valores explícitos en la configuración, no como
 posiciones.** Cambiar `statuses` después no los mueve nunca. Si al cambiar `statuses` uno de los tres

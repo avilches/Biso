@@ -568,12 +568,6 @@ func compareShape(t *testing.T, path string, got, want any) {
 			t.Errorf("%s is %T and the schema has an object there", path, got)
 			return
 		}
-		if strings.HasSuffix(path, ".ext") {
-			// The external fields are the one object of the contract
-			// whose keys are the board's and not the schema's
-			// (docs/spec/modelo-de-datos/campos-externos.md).
-			return
-		}
 		if a, b := keysOf(object), keysOf(expected); !reflect.DeepEqual(a, b) {
 			t.Errorf("%s has the keys %v and the schema has %v", path, a, b)
 			return

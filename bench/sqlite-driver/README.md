@@ -8,6 +8,12 @@ El resultado, con su tabla y su recomendación, está en
 Lo que se mide es el presupuesto de ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque): 25 milisegundos de reloj
 para `biso ls` sobre un tablero de 300 tareas.
 
+**Este banco está congelado.** Produjo las cifras que cita ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go), y no se
+mantiene al ritmo del modelo de datos del programa. Su esquema conserva a propósito una tabla `ext`
+(y el generador de tableros la llena), aunque `biso` ya retiró ese campo: quitarla cambiaría lo que
+se midió y dejaría esas cifras sin nada que las respalde. Si algún día hay que volver a medir, se
+actualiza el esquema a la vez que se rehacen las cifras y su decisión, nunca solo lo primero.
+
 ## Cómo se vuelve a ejecutar
 
 Dos órdenes, y ninguna necesita argumentos:

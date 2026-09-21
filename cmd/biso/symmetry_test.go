@@ -41,8 +41,8 @@ import (
 // richBoard is a board carrying one of everything the interchange format
 // can hold: the three kinds of date, an explicit identifier, criteria with
 // gaps in their keys and with one checked, comments with their own keys and
-// instants, an open question, a lease, an archived task, external fields,
-// a parent, a dependency and every list.
+// instants, an open question, a lease, an archived task, a parent, a
+// dependency and every list.
 //
 // Its tasks come in through the batch because that is the only way to write
 // some of them: an archived task, a created-at of last year and a lease

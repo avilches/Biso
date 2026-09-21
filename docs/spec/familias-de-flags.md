@@ -18,10 +18,11 @@ campo.** Se deriva del tipo concreto de ["El modelo de datos de una tarea"](mode
 efectos de qué flag tiene sentido ofrecer, da igual si un valor único es `string`, `enum(...)`,
 `date`, `int`, `float` o `bool`, porque a todos les basta con fijar y vaciar, así que esos tipos
 comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa"; y
-`list<Criterion>` / `list<Comment>` son "lista de objetos". **Una forma se reparte en más de una fila** cuando, dentro de la misma forma, hay más de
-un conjunto de operaciones posible: `acceptanceCriteria` y `comments` son los dos "lista de
-objetos", pero los criterios y los comentarios no comparten los mismos flags, así que la forma
-aparece dos veces, una por cada conjunto de operaciones.
+`list<Criterion>` / `list<Comment>` son "lista de objetos".
+**Una forma se reparte en más de una fila** cuando, dentro de la misma forma, hay más de un
+conjunto de operaciones posible: `acceptanceCriteria` y `comments` son los dos "lista de objetos",
+pero los criterios y los comentarios no comparten los mismos flags, así que la forma aparece dos
+veces, una por cada conjunto de operaciones.
 
 | Forma | Clase de campo | Variantes |
 |---|---|---|

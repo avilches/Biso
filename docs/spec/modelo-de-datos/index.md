@@ -9,9 +9,8 @@ Los tipos son `string` (texto de una línea; ningún `string` admite un salto de
 `text` (bloque de prosa, con saltos de línea),
 `enum(...)` (un vocabulario cerrado, entre paréntesis; dice "configurable" cuando el tablero puede
 ampliarlo), `date` (una fecha o un instante; el formato exacto se dice en la fila del campo), `int`,
-`float`, `bool`, `list<string>` (varios valores simples separados por coma al escribir,
-direccionables por su propio valor, nunca por posición), y `map<string,string>` (pares clave-valor
-con las claves declaradas de antemano, direccionables por su clave). Los campos con estructura
+`float`, `bool` y `list<string>` (varios valores simples separados por coma al escribir,
+direccionables por su propio valor, nunca por posición). Los campos con estructura
 propia usan tipos con nombre, cada uno definido en su propia página: `list<Criterion>`,
 `list<Comment>` y `Question` (esta última con un único valor, nunca una lista).
 

@@ -7,9 +7,9 @@ package cli
 // table is the only way of keeping.
 //
 // The four shapes of a list field, the three of the criteria, the two of a
-// prose field, the three of an external field and the pair of a scalar all
-// come out of the same four builders below, so a field that broke the shape
-// would be visible here as an entry that did not go through one of them.
+// prose field and the pair of a scalar all come out of the builders below,
+// so a field that broke the shape would be visible here as an entry that did
+// not go through one of them.
 
 // listFieldFlags are the four fields of
 // docs/spec/familias-de-flags.md#campos-de-lista-que-admiten-coma, each with
