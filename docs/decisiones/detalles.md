@@ -408,6 +408,40 @@ migrar.
 
 ---
 
+## La ayuda enseña la dirección de una dependencia
+
+**La decisión.** Hacia dónde apunta una dependencia se enseña en la ayuda de `biso set` y de
+`biso new`, con una frase y un ejemplo con identificadores del proyecto de ejemplo: la arista se
+escribe siempre en la tarea que espera, y `biso set MYP-10 --add-deps MYP-4` dice que `MYP-4` va
+primero y bloquea a `MYP-10`. La misma ayuda glosa `--parent` y `--add-refs`, que hasta entonces no
+tenían glosa en ningún comando de escritura (`--parent` solo la tenía como filtro de lectura en
+`biso ls`), y la frase de `biso set --help`
+que decía que ningún flag exigía aprender nada más allá de su nombre se corrige, porque era cierta
+para la forma de las listas y falsa para el significado de los campos de relación. La dirección
+en sí no cambia: es la de
+["Las relaciones entre tareas"](../spec/modelo-de-datos/relaciones.md#dependencies-la-precedencia).
+El mensaje de arranque no lleva glosas: su parte fija tiene un tope propio
+(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)) y `FIELD FLAGS`
+sigue siendo una rejilla de nombres.
+
+**Por qué hace falta.** Es el único de los errores posibles al escribir una relación que el programa no
+puede detectar. Un `--parent` a una tarea que no existe, o una dependencia que cierra un ciclo, fallan
+al escribirse; una dependencia escrita al revés es una dependencia válida, y todo el cálculo de
+bloqueo y de urgencia queda invertido sin ningún aviso. Con `biso new` hay además un caso propio:
+`--add-deps MYP-4` hace que `MYP-4` vaya antes de la tarea nueva, y para que la tarea nueva bloquee a
+una existente hay que crearla y luego escribir la arista con `biso set` en la existente, cosa que la
+ayuda de `biso new` dice.
+
+**Descartado: un flag inverso, `--add-blocks`.** Habría sido la forma de decir "esta tarea bloquea a
+MYP-10" sin invertir la frase en la cabeza. Se descarta porque escribiría el campo `dependencies` de
+una tarea que no es la nombrada en `<ref>`, y eso rompe la regla de que una escritura toca las tareas
+que se nombran y ninguna más. `blocks` sigue siendo solo un campo derivado que se calcula al leer
+(["Los campos derivados"](../spec/modelo-de-datos/index.md#los-campos-derivados)), y con un flag
+inverso habría además dos maneras de escribir la misma arista, con la pregunta añadida de cuál gana
+cuando se dan a la vez.
+
+---
+
 ## La identidad de quien llama
 
 **La decisión.** `me` y `default_limit` no son propiedades de un tablero, sino preferencias de quien lo

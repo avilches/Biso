@@ -722,6 +722,35 @@ el formato de `biso export`, la tabla de avisos y la fuera de alcance:
 - **La familia de los campos de lista queda en cuatro**: `labels`, `assignees`, `references` y
   `dependencies`.
 
+### Qué dejó hecha la ayuda de la dirección de una dependencia
+
+La tarea `TASK-77` aplicó
+["La ayuda enseña la dirección de una dependencia"](../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)
+al programa y a la especificación. Las anclas que cubre son la ayuda de `biso set`, la de `biso new`,
+la página de relaciones entre tareas y el presupuesto de tamaño del mensaje de arranque:
+
+- **La ayuda de `biso set` tiene un bloque `Relations`** que glosa `--parent`, `--add-deps` y
+  `--add-refs`, dice que una dependencia se escribe en la tarea que espera y da el ejemplo
+  `biso set MYP-10 --add-deps MYP-4` para "`MYP-4` bloquea a `MYP-10`", con la advertencia de que la
+  arista contraria es igual de válida y el programa no puede avisar de ella. La frase que decía que
+  ningún flag exigía aprender nada más allá de su nombre se reformula.
+- **La ayuda de `biso new` glosa `--add-deps`, `--parent` y `--add-refs`** en sus flags más usados,
+  dice que `--add-deps` nombra lo que va antes de la tarea nueva y explica cómo se consigue lo
+  contrario (crearla y luego `biso set MYP-10 --add-deps <new id>`). Lleva un ejemplo con `--parent` y
+  `--add-deps`.
+- **Las dos ayudas, la especificación y los ficheros de `cmd/biso/testdata/` llevan el mismo texto**,
+  y la comparación carácter a carácter que ya existía lo comprueba. La prueba nueva
+  `TestTheHelpOfSetAndNewSaysWhichWayADependencyPoints` comprueba además que las frases de la
+  dirección están, para que un retoque posterior de la ayuda no las pierda sin que falle nada.
+- **El mensaje de arranque no cambia**: sigue midiendo 4.983 bytes con el tablero del ejemplo, 3.494 de
+  parte fija y 1.489 de resumen, con un margen de 346 bytes en la parte fija. Decisión propia de la
+  implementación: no se añade ninguna glosa a `FIELD FLAGS` ni a `RULES`, porque la tarea decía que el
+  sitio natural es la ayuda de `set` y de `new`. La prueba de que la parte fija no pasa de 3.840 bytes
+  y el total de 5.504 ya existía (`TestTheFixedPartOfTheMessageIsAlwaysTheSame` y
+  `assertWithinBudget`); se añade `TestTheBudgetConstantsAreTheNumbersOfTheSpecification`, que fija
+  las dos constantes a los números de la especificación para que nadie suba el tope para hacer sitio.
+- **No hay `--add-blocks`**, y la razón queda escrita en la decisión.
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según

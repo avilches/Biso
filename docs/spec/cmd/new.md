@@ -371,6 +371,12 @@ pasada. La línea 130 del bloque de arriba es justo uno de ellos, y aun así sal
 
 ## `biso new --help`
 
+Además de los flags de uso más frecuente, la ayuda glosa `--add-deps`, `--parent` y `--add-refs`, y
+dice que `--add-deps` nombra lo que va antes de la tarea nueva. No hay un flag para que la tarea
+nueva bloquee a una existente: se crea y después se escribe la arista con `biso set` en la existente,
+como dice la ayuda
+(["La ayuda enseña la dirección de una dependencia"](../../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)).
+
 ```
 Usage: biso new <title> [options]
        biso new --title <text> [options]
@@ -390,7 +396,10 @@ Most used:
       --status <value>        configured status (default: the initial one)
       --add-labels <value>    add a label; repeatable or comma-separated
       --add-assignees <@who>  add an assignee; repeatable or comma-separated
-      --add-deps <ref>        add a dependency; validated, repeatable
+      --add-deps <ref>        tasks that must be done first, so each blocks the
+                              new task; repeatable, checked to exist
+      --parent <ref>          the task this one is part of; at most one
+      --add-refs <text>       a path, URL or task id to look at; repeatable
       --due <YYYY-MM-DD>      due date
       --comment <text>        add a discussion comment; repeatable
       --append-plan <text>    implementation plan
@@ -398,6 +407,10 @@ Most used:
                               to you, with the lease claimed for you
 
 Every other field flag of `biso set --help` is accepted too.
+
+Dependencies are written on the task that waits: `--add-deps MYP-4` means
+MYP-4 goes first and blocks it. There is no flag for the opposite, a new task
+that blocks MYP-10; create it, then run `biso set MYP-10 --add-deps <new id>`.
 
 Batch:
       --from <file|->        NDJSON, one task object per line. The only place
@@ -417,6 +430,7 @@ Exit codes:
 Examples:
   biso new "Normalize CRLF in the diff" --type bug --priority high
   biso new "Add OAuth" --add-ac "Login succeeds" --add-ac "Token refreshes"
+  biso new "Parse the header" --parent MYP-10 --add-deps MYP-4
   biso new "Rewrite the installer" --append-desc @docs/installer.md --start
   biso new --from tasks.ndjson --dry-run
 ```
