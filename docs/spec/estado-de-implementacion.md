@@ -340,10 +340,10 @@ esquema JSON. Lo que más conviene saber es cómo quedaron las dos cifras de
   prioridades de nombre largo, y un tablero cuyo nombre son diez mil caracteres. Los dos últimos son
   los que hacen cierta la palabra "siempre": los cuatro primeros escalones solo recortan tareas, así
   que un tablero sin ninguna se escapaba del tope por el bloque `BOARD` (imprimía 8.465 bytes) hasta
-  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **4.983 bytes** de
-  los 5.504, **3.494** de parte fija y **1.489** de resumen, que es exactamente lo que dice
+  que se añadieron los escalones 6 y 7. Con el tablero del ejemplo el mensaje mide **5.103 bytes** de
+  los 5.504, **3.614** de parte fija y **1.489** de resumen, que es exactamente lo que dice
   ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño); con el de los vocabularios
-  largos, **5.130**, y con el del nombre kilométrico, **5.158**.
+  largos, **5.250**, y con el del nombre kilométrico, **5.278**.
 - **La medida del presupuesto de arranque ya es la de verdad**, en `cmd/biso/budget_test.go`:
   ejecuta el binario compilado, `biso ls` y `biso prime`, sobre un tablero real de 300 tareas con
   los cuatro bloques poblados, y mide de la llamada al código de salida, arranque del proceso
@@ -662,6 +662,8 @@ al programa y a la especificación:
   (["Qué dejó hecha la fusión de `documentation` en `references`"](#qué-dejó-hecha-la-fusión-de-documentation-en-references))
   y la de `modifiedFiles` a 4.983
   (["Qué dejó hecha la retirada de `modifiedFiles`"](#qué-dejó-hecha-la-retirada-de-modifiedfiles)).
+  La regla 11 del mensaje de arranque la subió después a 5.103
+  (["Qué dejó hecha la ayuda de la dirección de una dependencia"](#qué-dejó-hecha-la-ayuda-de-la-dirección-de-una-dependencia)).
 
 ### Qué dejó hecha la fusión de `documentation` en `references`
 
@@ -714,10 +716,11 @@ el formato de `biso export`, la tabla de avisos y la fuera de alcance:
 - **La simetría entre `biso export` y `biso new --from` sigue pasando sin el campo.** Las dos
   pruebas que llevaban un `modifiedFiles` en su tablero (`symmetry_test.go` y `export_test.go`) lo
   sustituyen por un segundo valor de `references`, para que la lista siga teniendo más de un elemento.
-- **El mensaje de arranque mide ahora 4.983 bytes** con el tablero del ejemplo, 55 menos que antes: la
-  parte fija pasa de 3.549 a **3.494** y el resumen sigue en **1.489**. La rejilla `FIELD FLAGS` pasa de
+- **El mensaje de arranque medía entonces 4.983 bytes** con el tablero del ejemplo, 55 menos que antes: la
+  parte fija pasaba de 3.549 a **3.494** y el resumen seguía en **1.489**. La rejilla `FIELD FLAGS` pasa de
   doce líneas a once, y es la línea entera de los flags del campo lo que se libera. El tope total de 5.504
-  no cambia y el margen de la parte fija sube de 291 a 346 bytes.
+  no cambia y el margen de la parte fija sube de 291 a 346 bytes. Esa cifra ya no es la vigente: la regla 11
+  la subió a 5.103.
 - **La cobertura de `compatibilidad-de-modelos.md` se recalculó** sin el campo retirado: un campo menos en el total sobre el que se calcula cada porcentaje.
 - **La familia de los campos de lista queda en cuatro**: `labels`, `assignees`, `references` y
   `dependencies`.
@@ -742,13 +745,21 @@ la página de relaciones entre tareas y el presupuesto de tamaño del mensaje de
   y la comparación carácter a carácter que ya existía lo comprueba. La prueba nueva
   `TestTheHelpOfSetAndNewSaysWhichWayADependencyPoints` comprueba además que las frases de la
   dirección están, para que un retoque posterior de la ayuda no las pierda sin que falle nada.
-- **El mensaje de arranque no cambia**: sigue midiendo 4.983 bytes con el tablero del ejemplo, 3.494 de
-  parte fija y 1.489 de resumen, con un margen de 346 bytes en la parte fija. Decisión propia de la
-  implementación: no se añade ninguna glosa a `FIELD FLAGS` ni a `RULES`, porque la tarea decía que el
-  sitio natural es la ayuda de `set` y de `new`. La prueba de que la parte fija no pasa de 3.840 bytes
-  y el total de 5.504 ya existía (`TestTheFixedPartOfTheMessageIsAlwaysTheSame` y
-  `assertWithinBudget`); se añade `TestTheBudgetConstantsAreTheNumbersOfTheSpecification`, que fija
-  las dos constantes a los números de la especificación para que nadie suba el tope para hacer sitio.
+- **El mensaje de arranque no llevó nada de esto en la primera versión, y ahora lleva una regla.** La
+  implementación de la tarea no tocó `FIELD FLAGS` ni `RULES`, porque la tarea decía que el sitio natural es
+  la ayuda de `set` y de `new`, y el mensaje seguía midiendo 4.983 bytes. Esa decisión ya no es la vigente:
+  quien solo lee `biso prime` no tenía ninguna pista de la dirección de una dependencia, y la regla 11 de
+  `RULES` la dice en dos líneas (["La ayuda enseña la dirección de una dependencia"](../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)).
+  Con el tablero del ejemplo el mensaje pasa a medir **5.103 bytes**, 120 más: **3.614** de parte fija,
+  con un margen de 226 bytes sobre los 3.840, y **1.489** de resumen. Con el de los vocabularios largos
+  mide 5.250 y con el del nombre kilométrico 5.278, los dos por debajo del tope de 5.504. La prueba de que
+  la parte fija no pasa de 3.840 bytes y el total de 5.504 ya existía
+  (`TestTheFixedPartOfTheMessageIsAlwaysTheSame` y `assertWithinBudget`), y
+  `TestTheBudgetConstantsAreTheNumbersOfTheSpecification` compara las dos constantes con los números que
+  imprime `presupuestos.md`, para que nadie suba el tope para hacer sitio.
+- **La prueba de la ayuda comprueba también las glosas de `--add-deps`**, la de `set` (`so each blocks it`) y
+  la de `new` (`so each blocks the new task`), de modo que invertirlas falla aunque se edite a la vez el
+  código, los ficheros de `cmd/biso/testdata/` y la especificación.
 - **No hay `--add-blocks`**, y la razón queda escrita en la decisión.
 
 ## Antes de empezar un paso

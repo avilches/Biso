@@ -44,7 +44,7 @@ const primeFieldFlags = "FIELD FLAGS  (same names, same meaning, in every comman
 	"  --comment --rm-comment --set-comment-date\n" +
 	"  --ext K=V --rm-ext --clear-ext\n"
 
-// primeRules is the RULES block: the ten rules that cannot be guessed.
+// primeRules is the RULES block: the eleven rules that cannot be guessed.
 const primeRules = "RULES  (none of these are guessable; they are the whole learning curve)\n" +
 	"  1. Every write goes through biso. Nothing else touches the board.\n" +
 	"  2. <ref> is an id (MYP-12), a bare number (12) or free text (\"CRLF\"). Text\n" +
@@ -70,7 +70,9 @@ const primeRules = "RULES  (none of these are guessable; they are the whole lear
 	"     6 precondition not met, 7 nothing written, 8 environment, 20 no board here.\n" +
 	" 10. `biso ask <ref> \"...\"` parks a task on a question and `biso answer` unparks\n" +
 	"     it, writing both into the comments. Ask instead of guessing. A task\n" +
-	"     assigned to you is one a person decided you should do.\n"
+	"     assigned to you is one a person decided you should do.\n" +
+	" 11. A dependency is written on the task that waits:\n" +
+	"     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.\n"
 
 // primeClosing is the paragraph that closes the message.
 const primeClosing = "Pick one, `biso start <ref> --append-plan \"...\"`, work, `biso note <ref> \"...\"` as you go,\n" +

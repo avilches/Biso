@@ -66,7 +66,7 @@ func TestPrimeOnABoardWhoseTasksAreAllFinished(t *testing.T) {
 	if !strings.Contains(got.stdout, "  To Do 0 | In Progress 0 | Done 1\n") {
 		t.Errorf("the finished task is not in the counts line:\n%s", got.stdout)
 	}
-	if !strings.Contains(got.stdout, "decided you should do.\n\nPick one,") {
+	if !strings.Contains(got.stdout, lastRuleOfTheMessage+"Pick one,") {
 		t.Errorf("the blocks of tasks did not disappear cleanly:\n%s", got.stdout)
 	}
 }
@@ -534,7 +534,7 @@ const primeClosingParagraph = "Pick one, `biso start <ref> --append-plan \"...\"
 
 // lastRuleOfTheMessage is where the fixed part ends and the blocks of
 // tasks begin.
-const lastRuleOfTheMessage = "     assigned to you is one a person decided you should do.\n\n"
+const lastRuleOfTheMessage = "     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.\n\n"
 
 // blockOf answers the lines of one block of the message, its heading
 // excluded and its count line included, and nothing when that block did

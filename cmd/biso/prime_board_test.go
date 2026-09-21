@@ -154,7 +154,7 @@ func TestPrimeOnABoardWhoseOnlyTaskIsArchivedIsNotAnEmptyBoard(t *testing.T) {
 	if !strings.Contains(got.stdout, "  To Do 0 | In Progress 0 | Done 0\n") {
 		t.Errorf("the counts line counts the archived task:\n%s", got.stdout)
 	}
-	if !strings.Contains(got.stdout, "decided you should do.\n\nPick one,") {
+	if !strings.Contains(got.stdout, lastRuleOfTheMessage+"Pick one,") {
 		t.Errorf("the blocks of tasks did not disappear cleanly:\n%s", got.stdout)
 	}
 }

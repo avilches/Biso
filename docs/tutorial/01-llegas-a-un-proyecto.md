@@ -89,6 +89,8 @@ RULES  (none of these are guessable; they are the whole learning curve)
  10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
      it, writing both into the comments. Ask instead of guessing. A task
      assigned to you is one a person decided you should do.
+ 11. A dependency is written on the task that waits:
+     `biso set TASK-10 --add-deps TASK-4` means TASK-4 blocks TASK-10.
 
 IN PROGRESS
   TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
@@ -120,7 +122,7 @@ Exit code: `0`
 
 *(derived output, see [La salida literal](../spec/cmd/prime.md#la-salida-literal); not literal spec text)*
 
-*Note: This is the whole message, top to bottom, and there is no second screen after it. Every fixed part of it, the command list, the field flags and the rules, is copied from the specification; what changes here is the board summary, which is this tutorial's board, and the example id in rule 2, written with this board's prefix (see tutorial/lagunas/01-03.md). The BOARD block states the actual vocabulary of this board (the types, the priorities, the three states and their role) and who you are here. The four sections below split up the entire board without any task showing up in two places: what's in progress, what's waiting on an answer from you, what's yours, and what's next by urgency. No one writes that urgency by hand, it's recalculated every time you ask for it (you'll come back to this in scenario 3, "What now?"). With this alone you could already create a task, start it, work on it and close it without opening any other document: that's the standard this message is written to.*
+*Note: This is the whole message, top to bottom, and there is no second screen after it. Every fixed part of it, the command list, the field flags and the rules, is copied from the specification; what changes here is the board summary, which is this tutorial's board, and the example ids in rules 2 and 11, written with this board's prefix (see tutorial/lagunas/01-03.md). The BOARD block states the actual vocabulary of this board (the types, the priorities, the three states and their role) and who you are here. The four sections below split up the entire board without any task showing up in two places: what's in progress, what's waiting on an answer from you, what's yours, and what's next by urgency. No one writes that urgency by hand, it's recalculated every time you ask for it (you'll come back to this in scenario 3, "What now?"). With this alone you could already create a task, start it, work on it and close it without opening any other document: that's the standard this message is written to.*
 
 Even so, there's one doubt `prime` doesn't answer: this board, the one you just read,
 is it exactly the one you think it is? If you work with several copies of the project at

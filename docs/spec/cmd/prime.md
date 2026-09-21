@@ -166,6 +166,8 @@ RULES  (none of these are guessable; they are the whole learning curve)
  10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
      it, writing both into the comments. Ask instead of guessing. A task
      assigned to you is one a person decided you should do.
+ 11. A dependency is written on the task that waits:
+     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.
 
 IN PROGRESS
   MYP-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
@@ -295,8 +297,9 @@ como los escribe la sección ["La salida literal"](#la-salida-literal), sea cual
 del tablero. Lo único de esa parte que cambia es la cadena de versión de la primera línea.
 
 Eso vale también para los ejemplos que esas reglas usan: el `MYP-12` de la regla 2, el `--status Pending`
-y el `To Do` de la regla 3 y el `Done` de la regla 4 ilustran la forma de un identificador, la de un
-valor que no existe y la de un estado terminal, y no afirman nada sobre este tablero en concreto. El
+y el `To Do` de la regla 3, el `Done` de la regla 4 y el `MYP-10` y el `MYP-4` de la regla 11 ilustran la
+forma de un identificador, la de un valor que no existe, la de un estado terminal y la dirección de una
+dependencia, y no afirman nada sobre este tablero en concreto. El
 vocabulario de verdad ya está dos bloques más arriba, en `BOARD`, con el estado inicial, el activo y
 el terminal nombrados uno a uno, y los identificadores de verdad están en los cuatro bloques de
 tareas, así que nadie tiene que deducirlos de una regla.
