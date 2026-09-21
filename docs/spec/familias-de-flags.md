@@ -17,9 +17,8 @@ una más ni una menos:
 campo.** Se deriva del tipo concreto de ["El modelo de datos de una tarea"](modelo-de-datos/index.md): a
 efectos de qué flag tiene sentido ofrecer, da igual si un valor único es `string`, `enum(...)`,
 `date`, `int`, `float` o `bool`, porque a todos les basta con fijar y vaciar, así que esos tipos
-comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa";
-`map<string,string>` es "mapa de claves"; y `list<Criterion>` / `list<Comment>` son "lista de
-objetos". **Una forma se reparte en más de una fila** cuando, dentro de la misma forma, hay más de
+comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa"; y
+`list<Criterion>` / `list<Comment>` son "lista de objetos". **Una forma se reparte en más de una fila** cuando, dentro de la misma forma, hay más de
 un conjunto de operaciones posible: `acceptanceCriteria` y `comments` son los dos "lista de
 objetos", pero los criterios y los comentarios no comparten los mismos flags, así que la forma
 aparece dos veces, una por cada conjunto de operaciones.
@@ -29,7 +28,6 @@ aparece dos veces, una por cada conjunto de operaciones.
 | escalar | Escalar | fijar, vaciar |
 | lista de tokens | Lista de tokens | añadir, quitar, vaciar, sustituir entera |
 | bloque de prosa | Bloque de prosa | añadir al final, vaciar |
-| mapa de claves | Mapa de claves | fijar una clave, quitar una clave, vaciar |
 | lista de objetos | Criterios (`acceptanceCriteria`) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
 | lista de objetos | Comentarios (`comments`) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
 
@@ -395,17 +393,9 @@ de comentario que termine literalmente en algo con forma de instante detrás de 
 que esta regla no puede resolver por texto; para ese caso, la clave sigue siendo el selector que
 siempre funciona.
 
-**Esto no es la misma regla que `--ext <clave>=<valor>`, y no hace falta que lo sea.** `--ext` corta
-por el primer `=` porque puede: el alfabeto de una clave de `ext` ya excluye el propio `=`
-(["El juego de caracteres de un token"](valores-de-entrada.md#el-juego-de-caracteres-de-un-token)), así que el primer `=` de la cadena es siempre el único
-`=` que puede separar la clave del valor, y da igual por cuál de los dos extremos se busque. El
-selector de `--set-comment-date`, en cambio, puede ser un texto libre sin alfabeto cerrado, así que
-necesita su propia regla de corte, y esa regla es "por el último" precisamente porque aquí sí puede
-haber más de un `=` en la cadena.
-
 **El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguno de los
 dos, no durante el orden de escritura.** Caen en pasos distintos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)
-(`--rm-comment` en el 3, `--set-comment-date` en el 8), así que si se dejara que cada uno resolviera
+(`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada uno resolviera
 su selector en su propio paso, `--rm-comment` ya habría borrado el comentario para cuando
 `--set-comment-date` intentara corregirle la fecha, y el resultado sería un error 4 de "no existe" en
 vez de un conflicto. Para que la regla no dependa de ese orden, cada selector se resuelve contra la
@@ -464,67 +454,12 @@ formada y el `ordinal` negativo de ["El modelo de datos de una tarea"](modelo-de
 `--due` con una fecha ya pasada, en cambio, no es un error: se acepta con el aviso `due_in_past`
 (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)).
 
-## Campos externos
-
-| Operación | Flag | Repetible |
-|---|---|---|
-| fijar una clave | `--ext <clave>=<valor>` | sí |
-| quitar una clave | `--rm-ext <clave>` | sí |
-| vaciar el mapa entero | `--clear-ext` | no |
-
-**No existe `--replace-ext`.** Fijar una clave con `--ext` ya sustituye su valor, así que un segundo
-flag para lo mismo solo serviría para equivocarse. Vaciar el mapa entero es `--clear-ext`, y es la
-única forma de vaciarlo. Este campo ya era explícito antes del resto del rediseño de esta sección: no
-cambia nada aquí.
-
-**Fijar la misma clave dos veces en la misma llamada, con valores distintos, no es un error.**
-`--ext k=a --ext k=b` dentro de la misma llamada deja `k` con el último valor de la línea de comandos,
-`b`, con aviso:
-
-```
-warning: --ext: key "k" given twice, kept last value
-```
-
-Es el mismo estilo que el aviso ya existente de valor repetido en una lista
-(["Campos de lista que admiten coma"](#campos-de-lista-que-admiten-coma)), y no el error 2 de un escalar
-repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)): cada clave de
-`--ext` se comporta como un token más de un mapa, no como un escalar único de toda la tarea. Con tres
-apariciones de la misma clave o más, el aviso sigue siendo uno solo y las cuenta
-(`warning: --ext: key "k" given 3 times, kept last value`).
-
-**Es justo la regla contraria a la de `--set-comment-date`** (["Comentarios"](#comentarios)), y la
-diferencia es deliberada: la fecha de un comentario es un dato único de ese comentario, así que
-fijarla dos veces con instantes distintos es la contradicción de un escalar repetido y es error 2,
-mientras que una clave de `ext` es una entrada más de un mapa y la última gana.
-
-**El valor de una clave de `--ext` es texto de una línea y no puede estar vacío.** Un `\r` o un `\n`
-es error 2 con el `code` `malformed_string_value` y `field` igual a `ext`
-(["El salto de línea en un campo `string`"](valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)),
-y `--ext k=` también es error 2, porque vaciar no se dice así: una clave se quita con `--rm-ext` y el
-mapa entero se vacía con `--clear-ext`
-(["Cómo se lee la línea de comandos"](valores-de-entrada.md#cómo-se-lee-la-línea-de-comandos)).
-
-**Quitar con `--rm-ext` una clave que el mapa no tiene también avisa en vez de fallar,** con el mismo
-patrón tolerante que el resto de quitas de esta sección (["Campos de lista que admiten coma"](#campos-de-lista-que-admiten-coma)):
-
-```
-warning: --rm-ext: "priority_score" not present, nothing removed
-```
-
-**`--ext` tiene su propio paso en el orden de aplicación de una escritura, distinto del de
-`--clear-ext` y del de `--rm-ext`.** Los tres flags de esta sección no comparten paso:
-`--clear-ext` va en el paso 1, `--rm-ext` en el paso 3, y `--ext` en el paso nuevo entre los añadidos y
-los escalares (["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)).
-
 ## Casos límite de añadir, quitar y fijar
 
 | Caso límite | Resultado | Código |
 |---|---|---|
 | `--add-labels`, o cualquier otro `--add-*`/`--append-*` de lista de tokens, con un valor que la tarea ya tiene | Se queda igual, sin duplicar, con `warning: --add-labels: "urgent" already present, kept once` | 0 |
 | `--rm-labels`, `--rm-deps` o cualquier otro `--rm-*` de lista de tokens, sobre un valor que la tarea no tiene | Sin efecto, con `warning: --rm-labels: "urgent" not present, nothing removed` | 0 |
-| `--rm-ext` sobre una clave que el mapa no tiene | Sin efecto, con `warning: --rm-ext: "priority_score" not present, nothing removed` | 0 |
-| Paso de `--ext` y `--rm-ext` en el orden de aplicación | `--clear-ext` en el paso 1, `--rm-ext` en el paso 3, `--ext` en su propio paso 5, entre los añadidos (4) y los escalares (6) | no aplica |
-| `--ext k=a --ext k=b`, la misma clave dos veces con valores distintos | Gana el último valor de la línea de comandos, con `warning: --ext: key "k" given twice, kept last value` | 0 |
 | Mayúsculas en una etiqueta o una persona asignada, por ejemplo `--add-labels Parser --add-labels parser` | Quedan como dos valores distintos al guardar; un filtro de lectura como `ls --label parser` encuentra los dos | 0 |
 | Mayúsculas y acentos en el selector de texto de un criterio o de un comentario | Se pliegan las mayúsculas y se descartan los acentos antes de comparar (normalización NFKD, sin marcas combinantes); no cambia si el resultado es 0, 4 o 5, solo qué encuentra | sin cambio |
 

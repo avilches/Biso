@@ -104,9 +104,7 @@ una lectura de conjunto (`Tasks.All`) nunca aborta por una tarea mala, la deja f
 devuelve aparte con su motivo, y una lectura dirigida (`Tasks.Load`) de esa misma tarea falla con
 código 3 y la clave `undecodable_task`. Una fecha que el programa no escribió, un nombre de campo de
 lista que el modelo no conoce y una prioridad que la configuración ya no declara son las tres formas
-de llegar ahí que hay hoy, y las tres están probadas. El paso 2 rechaza además al escribir una clave
-de extensión que el tablero no declara (código 3, `unknown_extension_key`) y una clave fuera del
-alfabeto (código 2, `malformed_extension_key`).
+de llegar ahí que hay hoy, y las tres están probadas.
 
 La otra mitad, la que se ve desde fuera, la cerró el paso 8: el aviso
 `warning: 1 task could not be read and was skipped` con sus identificadores, y el código 6 de
@@ -121,7 +119,7 @@ configurado antes de rendirse, y lo prueban veinte intentos de cuatro conexiones
 
 **Del modelo de datos**, el paso 2 hace cumplir al escribir el título obligatorio (código 2,
 `missing_title`), la distinción entre un campo `string` de una línea y un campo `text` (código 2,
-`malformed_string_value`, sobre `title`, `author`, el texto de un criterio y los valores de `ext`),
+`malformed_string_value`, sobre `title`, `author` y el texto de un criterio),
 el alfabeto de las etiquetas y las personas (`malformed_label` y `malformed_assignee`), el
 `ordinal` no negativo (`invalid_number`) y las claves de los criterios. Todo eso se comprueba antes
 de abrir la transacción, así que una tarea rechazada no gasta identificador.
@@ -182,7 +180,7 @@ La primera mitad del paso 5 son los comandos que escriben, [`biso new`](cmd/new.
 escribirlos y que los demás comandos reusarán tal cual:
 
 - **[Las familias de flags](familias-de-flags.md) enteras**, en una sola tabla de `internal/cli` que
-  todo comando de escritura toma igual, y un solo motor en `internal/ops` que las aplica en los nueve
+  todo comando de escritura toma igual, y un solo motor en `internal/ops` que las aplica en los ocho
   pasos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura).
   Los seis verbos del ciclo y `biso archive` son ese mismo motor con un nombre y unos valores por
   defecto encima.
@@ -280,7 +278,7 @@ de ellas cambiaron la especificación:
 
 Los seis verbos del ciclo están enteros, y la forma en que lo están es lo que más conviene saber:
 **ninguno tiene ruta de escritura propia**. `biso set` se partió en un bucle compartido que recibe
-un `verb` con tres momentos (antes de aplicar las flags de campo, después de los nueve pasos de
+un `verb` con tres momentos (antes de aplicar las flags de campo, después de los ocho pasos de
 ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura),
 y después de arreglar el arrendamiento), más un cuarto que `biso answer` usa para meter sus dos
 comentarios por delante de cualquier `--comment` de la misma llamada. Los seis toman la misma tabla

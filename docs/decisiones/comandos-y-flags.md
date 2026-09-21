@@ -76,11 +76,6 @@ más abajo en este documento.
 **["Selectores de criterios"](../spec/familias-de-flags.md#selectores-de-criterios), por qué quitar un criterio de aceptación toma un selector y no un texto.** Porque quitarlo por
 su texto exacto es más frágil que quitarlo por su clave.
 
-**["Campos externos"](../spec/familias-de-flags.md#campos-externos), por qué no existe un flag que sustituya el mapa de campos externos entero.** Fijar una clave
-ya es sustituir su valor, así que un segundo flag para lo mismo solo serviría para equivocarse. Y
-una que sustituyese el mapa entero con la sintaxis `clave=valor` sería una forma silenciosa de borrar
-la identidad externa de una tarea al escribir otra.
-
 **["La salida literal"](../spec/cmd/prime.md#la-salida-literal), por qué el bloque de tareas en curso del mensaje de arranque no tiene límite.** Porque en un
 tablero sano son pocas.
 

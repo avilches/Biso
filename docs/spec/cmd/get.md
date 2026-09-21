@@ -57,7 +57,6 @@ created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     MYP-40
 lease      2026-09-06 15:40     holder     @claude
 refs       docs/bugs/BUG-02.md
-ext        trello.card=5f2a8c1e3b9d4a7f6e0c2b81
 
 ## Description
 The diff compares byte by byte and marks as different two lines that only
@@ -93,8 +92,7 @@ Los encabezados de esta salida son un formato de presentación, no un formato de
 **Cómo se escribe cada valor de ese bloque.** Una lista (`assignees`, `labels`, `depends`, `blocks`,
 `refs`) va en una línea, con sus valores separados por coma y espacio; ninguno de
 esos campos admite una coma dentro, así que el separador nunca se puede confundir con parte de un
-valor. `ext` se escribe igual, con sus pares `clave=valor` **ordenados por clave**, para que la misma
-tarea imprima siempre la misma ficha. Un campo sin valor es un guion, como en las columnas de
+valor. Un campo sin valor es un guion, como en las columnas de
 ["`biso ls`"](ls.md). Los instantes (`created`, `updated`, `lease`) se escriben con el día y la hora
 hasta el minuto, `YYYY-MM-DD HH:MM`, que es la precisión que se lee: el segundo está en `--json`,
 que es donde lo lee un programa.
@@ -206,7 +204,6 @@ las repite todas para que sirva de esquema completo, verificable clave a clave:
       "waiting": false,
       "leaseExpired": false,
       "archived": false,
-      "ext": { "trello.card": "5f2a8c1e3b9d4a7f6e0c2b81" },
       "description": "The diff compares byte by byte...",
       "acceptanceCriteria": [ { "key": 1, "text": "The diff ignores CRLF", "checked": true },
                               { "key": 3, "text": "There is a test that covers it", "checked": false } ],

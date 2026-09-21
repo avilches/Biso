@@ -66,8 +66,8 @@ biso snapshot
 HOME=/tmp/otra-maquina biso -C /tmp init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c
 # los dos tableros son identicos en todos los campos no derivados, incluidos
 # los identificadores, las fechas, las claves de los criterios y sus marcas,
-# las claves de los comentarios, y en toda su configuracion: estados, tipos,
-# extensiones y task_prefix. La unica salvedad son los dos contadores de
+# las claves de los comentarios, y en toda su configuracion: estados, tipos
+# y task_prefix. La unica salvedad son los dos contadores de
 # claves, que no son una clave del formato y se deducen al importar: ver
 # "El contador de claves no es una clave del formato", mas abajo
 ```

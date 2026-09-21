@@ -20,7 +20,7 @@ que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que 
 hace nada y avisa. Las que se usan de verdad al crear son
 `--append-desc`, `--add-ac`, `--type`, `--priority`, `--add-labels`,
 `--add-assignees`, `--add-refs`, `--add-deps`, `--parent`,
-`--due`, `--ordinal`, `--author`, `--ext`, `--append-plan`, `--append-note`,
+`--due`, `--ordinal`, `--author`, `--append-plan`, `--append-note`,
 `--append-summary` y `--comment`.
 
 - **El título llega por un sitio, y solo por uno.** Se escribe como argumento (`biso new "Fix the parser"`)
@@ -52,7 +52,6 @@ hace nada y avisa. Las que se usan de verdad al crear son
 | `--add-deps` a una tarea inexistente | Error 4. **Las dependencias se validan al escribirlas** |
 | `--add-deps` a la propia tarea | Error 2. Un ciclo, en cambio, no puede darse al crear una sola tarea: no tiene identificador todavía y nada puede apuntar a ella (["Las familias de flags"](../familias-de-flags.md#campos-de-lista-que-admiten-coma)) |
 | `--parent` inexistente | Error 4. Un ciclo de padres tampoco puede darse aquí, por el mismo motivo |
-| `--ext` con una clave no declarada | Error 3 |
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
 | `--due` en el pasado | Se acepta, con aviso |
 | `--append-desc @fichero` que no existe | Error 4 |
@@ -136,7 +135,7 @@ ignoran. Las claves son las del modelo de datos de la sección ["El modelo de da
 Ejemplo de una línea, con todos los tipos compuestos:
 
 ```json
-{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"comments":[{"key":1,"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
+{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"comments":[{"key":1,"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 ```
 
 Las reglas del lote, todas obligatorias:
@@ -272,9 +271,9 @@ Las reglas del lote, todas obligatorias:
   archivar. Ningún otro comando tiene un flag de campo para él: fuera de la importación,
   archivar se hace con `biso archive`.
 - **`null` explícito en un escalar opcional (`due`, `ordinal`, `parent`) equivale a que la clave no
-  viniera.** En una lista o un mapa (`labels`, `references`, `dependencies`,
-  `ext`, `acceptanceCriteria`, `comments`), en cambio, `null` es
-  un fallo de validación: su forma de estar vacío es `[]` o `{}`, nunca `null`, la misma regla que
+  viniera.** En una lista (`labels`, `references`, `dependencies`,
+  `acceptanceCriteria`, `comments`), en cambio, `null` es
+  un fallo de validación: su forma de estar vacío es `[]`, nunca `null`, la misma regla que
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
   órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta.
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se

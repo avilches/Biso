@@ -247,8 +247,7 @@ igual que las demás.
         "blocked": false,
         "waiting": false,
         "leaseExpired": false,
-        "archived": false,
-        "ext": { "trello.card": "5f2a8c1e3b9d4a7f6e0c2b81" }
+        "archived": false
       }
     ],
     "shown": 30,
