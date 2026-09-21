@@ -90,9 +90,14 @@ La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la secci�
 Los encabezados de esta salida son un formato de presentación, no un formato de almacenamiento.
 
 **Cómo se escribe cada valor de ese bloque.** Una lista (`assignees`, `labels`, `depends`, `blocks`,
-`refs`) va en una línea, con sus valores separados por coma y espacio; ninguno de
-esos campos admite una coma dentro, así que el separador nunca se puede confundir con parte de un
-valor. Un campo sin valor es un guion, como en las columnas de
+`refs`) va en una línea, con sus valores separados por coma y espacio. En `assignees`,
+`labels`, `depends` y `blocks` ningún valor admite una coma, así que el separador nunca se confunde con
+parte de un valor. `refs` sí la admite, escrita con `\,` al guardarla
+(["Repetición y listas separadas por comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)),
+y la ficha la imprime tal cual, **sin escapar**: una referencia `a,b` sale como `a,b`, pegada a la
+siguiente como `a,b, c.md`, y a simple vista no se distingue de dos referencias. La ficha es un formato
+de presentación, así que quien necesite los valores exactos de `refs` los lee en `--json`, donde cada
+uno es un elemento de la lista. Un campo sin valor es un guion, como en las columnas de
 ["`biso ls`"](ls.md). Los instantes (`created`, `updated`, `lease`) se escriben con el día y la hora
 hasta el minuto, `YYYY-MM-DD HH:MM`, que es la precisión que se lee: el segundo está en `--json`,
 que es donde lo lee un programa.

@@ -16,7 +16,14 @@ la que motivó la pregunta.
 Lo que queda vivo no es una correspondencia sino una regla de entrada: un lote de `biso new --from`
 que traiga esa clave, como el que saldría de un tablero de Backlog.md, convierte cada elemento en un
 criterio de aceptación conservando su texto y su marcado, y avisa de ello (["`biso new`"](../spec/cmd/new.md)).
-Las tablas de abajo, por tanto, tienen una fila menos que las versiones anteriores de este documento.
+Las tablas de abajo, por tanto, tienen una fila menos que las versiones anteriores de este documento por
+ese campo, y tampoco tienen fila propia para otros dos que también salieron del modelo. `documentation` se
+fundió en `references`, que quedó como único campo de punteros
+(["Se retira `documentation` y `references` queda como único campo de punteros"](../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)),
+y `modifiedFiles` se retiró sin sustituto, porque una ruta que valga la pena señalar es una referencia más
+(["Se retira `modifiedFiles`"](../decisiones/detalles.md#se-retira-modifiedfiles)). Lo que Backlog.md
+llama `documentation` y `modified_files` sigue cruzándose, pero como entrada de `references`, y por eso
+aparece en la fila de `references` y no en filas aparte.
 
 ## Método
 
