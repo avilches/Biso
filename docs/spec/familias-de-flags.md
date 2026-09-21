@@ -186,7 +186,7 @@ es de la fase de validación, así que cuando falla no se escribe nada.
 | `--add-labels k::v` sobre una tarea que conserva otras etiquetas de la clave `k` | `k::v` queda como única etiqueta de `k`: las demás se quitan, sean `k:x` o `k::y`, y el aviso las nombra una a una | 0 |
 | `--add-labels k:v` sobre una tarea que conserva un `k::x`, incluso si `x` es el mismo `v` | Error 6, y no se escribe nada. El separador no es un detalle del valor: escribir `k:v` pide que la clave admita varios, y la tarea dice que admite uno | 6 |
 | `k:a` y `k::b` de la misma clave en la misma llamada, en cualquier orden y repartidas como sea entre `--add-labels` y `--replace-labels` | Error 2. Los valores de `--rm-labels` no cuentan aquí, porque no escriben ninguna etiqueta: son justamente lo que deja sitio a la que se añade | 2 |
-| `k::a` y `k::b` en la misma llamada | Gana la última escrita en la línea de comandos, con aviso | 0 |
+| `k::a` y `k::b` en el mismo flag | Gana la última escrita en la línea de comandos, con aviso. Repartidas entre `--add-labels` y `--replace-labels`, quien manda es el orden de los pasos y no la línea de comandos, más abajo | 0 |
 | `--rm-labels k:v` | Quita la etiqueta de esa clave y ese valor, sea `k:v` o `k::v`: al quitar, el separador no cuenta | 0 |
 | `--rm-labels k:` o `--rm-labels k::` | Error 2, etiqueta mal formada: la forma sin valor es sintaxis de filtro y no de escritura, y para vaciar la lista entera está `--clear-labels` | 2 |
 
@@ -212,9 +212,12 @@ hint: a key takes either several values with :, or at most one with ::
 ```
 
 Sus `code` son `exclusive_label_conflict` (código 6) y `mixed_label_separators` (código 2), los dos en
-["Los identificadores de error"](contrato-json.md#los-identificadores-de-error). El segundo nombra los
-dos valores en el orden en que se escribieron en la línea de comandos y **no culpa a ninguno de los
-dos**, porque ninguno lo es más que el otro; qué claves lleva su objeto de error está en
+["Los identificadores de error"](contrato-json.md#los-identificadores-de-error). El segundo **no culpa
+a ninguno de los dos valores**, porque ninguno lo es más que el otro, y por eso los nombra en el orden
+en que la escritura los aplicaría, el de ["Orden de aplicación dentro de una
+escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura): el de `--replace-labels`, que
+sustituye, antes que el de `--add-labels`, que añade. Dentro de un mismo flag ese orden es el de la
+línea de comandos. Qué claves lleva su objeto de error está en
 ["Los errores en JSON"](contrato-json.md#los-errores-en-json).
 
 **Nada de esto es propio de `--add-labels`.** `--replace-labels` deja la lista que se le da y la misma
@@ -222,6 +225,15 @@ regla la juzga entera, así que `--replace-labels k:a,k::b` es el mismo error 2 
 `--replace-labels k::a,k::b` deja `k::b` con el mismo aviso. Lo que sí cambia con `--replace-labels`
 y con `--clear-labels` es que la tarea no conserva nada de antes, así que una etiqueta exclusiva que
 estuviera guardada no puede entrar en conflicto con nada: se fue en su propio paso.
+
+**Entre `--add-labels` y `--replace-labels`, en cambio, no decide la línea de comandos sino el orden
+de los pasos**, porque sustituir va antes que añadir
+(["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)).
+Así, `--add-labels g::AA --replace-labels g::BB` deja `g::AA` aunque se escribiera primero: la
+sustitución pone `g::BB` y la adición la reemplaza, que es lo que hace cualquier `::` sobre una clave
+que la tarea conserva. El aviso que sale es entonces el de la sustitución,
+`warning: --add-labels: "g::AA" replaced g::BB on MYP-11`, y no el del último valor, porque lo que
+pasó es que una etiqueta ya escrita en esta misma llamada se fue.
 
 **Y la misma regla vale para cada línea de un lote de `biso new --from`**, donde no hay flags sino la
 lista `labels` de la línea, con una diferencia declarada en ["El modo lote"](cmd/new.md#el-modo-lote):
