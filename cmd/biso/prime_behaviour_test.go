@@ -413,6 +413,38 @@ func TestTheFixedPartOfTheMessageIsAlwaysTheSame(t *testing.T) {
 	}
 }
 
+// TestTheBoardBlockNeverListsTheLabelsKey is the bullet of
+// docs/spec/cmd/prime.md#la-salida-literal that the scoped labels added:
+// `types` and `priorities` are there because a board that configures none
+// accepts no --type and no --priority, and the labels are not like that,
+// since they can be written without being declared and the error of a
+// restricted key already says what it admits, at the moment it is needed.
+//
+// The board it runs over declares a long `labels` list on purpose: with the
+// key listed, the message would grow with it, and both halves of this test
+// would fail at once.
+func TestTheBoardBlockNeverListsTheLabelsKey(t *testing.T) {
+	m := blockBoard(t, blockSizes{inProgress: 20, waiting: 10, assigned: 30})
+	m.run(t, "config", "set", "labels",
+		"milestone::,size::s,size::m,size::l,area::parser,area::store,area::cli,urgent").
+		assertCode(t, 0)
+
+	got := m.run(t, "prime").assertCode(t, 0)
+
+	board := strings.SplitN(got.stdout, "\n\n", 2)[0]
+	for _, absent := range []string{"labels", "milestone::", "size::s", "area::parser"} {
+		if strings.Contains(board, absent) {
+			t.Errorf("the BOARD block carries %q:\n%s", absent, board)
+		}
+	}
+	// And the whole message still fits, which is the other reason the key
+	// is not there (docs/spec/presupuestos.md#el-presupuesto-de-tamaño).
+	if len(got.stdout) > cli.PrimeBudget {
+		t.Errorf("the message measures %d bytes and the hard cap is %d",
+			len(got.stdout), cli.PrimeBudget)
+	}
+}
+
 // TestTheBudgetConstantsAreTheNumbersOfTheSpecification keeps the two caps
 // of the message from drifting: the hard cap of 5,504 bytes is the only
 // number the stability contract freezes, and the fixed part is 3,840 of it
