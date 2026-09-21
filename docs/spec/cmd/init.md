@@ -233,11 +233,12 @@ distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno 
 porque una restauración no tiene un lote que comentar línea a línea.
 
 **Y tampoco avisa de lo que descarta.** Un elemento vacío o de solo espacios en una lista de la
-instantánea se descarta con la misma regla del lote de `biso new --from` (["El valor vacío"](../valores-de-entrada.md#un-elemento-vacío-en-un-lote)),
+instantánea se descarta con la misma regla del lote de `biso new --from` (["Un elemento vacío en un lote"](../valores-de-entrada.md#un-elemento-vacío-en-un-lote)),
 y `init --from` no emite `imported_empty_dropped`, por la misma razón: la salida de una restauración
-no lleva avisos. Una instantánea que escribió `biso snapshot` nunca trae un elemento vacío, porque
-ningún camino del programa lo guarda, así que esto solo importa con un fichero editado a mano o
-escrito por otro programa. Un `null` que ocupa el sitio de un elemento sigue siendo un fallo de
+no lleva avisos. Una instantánea que escribió `biso snapshot` de un tablero escrito con esta regla
+nunca trae un elemento vacío, porque ningún camino del programa lo guarda, así que esto solo importa
+con un fichero editado a mano, escrito por otro programa o sacado de un tablero de desarrollo
+anterior a la regla. Un `null` que ocupa el sitio de un elemento sigue siendo un fallo de
 validación de la línea, con el código 7 del lote.
 
 **"Un identificador que ya existe en esta máquina" son las raíces y solo las raíces, y basta con

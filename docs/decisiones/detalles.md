@@ -743,6 +743,16 @@ guardan como llegan, sin recortar espacios, como hace el flag. La regla está en
 ["Un elemento vacío en un lote"](../spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote) y en
 ["El modo lote"](../spec/cmd/new.md#el-modo-lote).
 
+**Para `labels`, `assignees` y `dependencies` es una relajación deliberada.** Un elemento vacío en
+cualquiera de ellas era un fallo de la línea (una etiqueta mal formada, un asignado mal formado, una
+dependencia que no está en el tablero ni en el fichero) y pasa a descartarse con aviso. Es un cambio
+decidido, no un efecto secundario: un elemento vacío no dice nada, y lo que esas listas siguen
+rechazando es un elemento que sí dice algo y lo dice mal.
+
+**Los comentarios quedan fuera de esta decisión.** Esta regla cubre las listas de texto libre y de
+tokens; los comentarios son objetos con un cuerpo y se tratan aparte, así que un elemento de
+`comments` no se descarta por estar vacío ni cambia con esta entrada.
+
 **Por qué se descarta y no se rechaza.** La regla de que un valor que no existe es siempre un error
 protege a quien lee una lista de una lectura falsa: un filtro mal escrito que devolviera vacío se
 tomaría por un hecho sobre el tablero. Aquí no hay ningún valor que pudiera no existir, porque un
@@ -762,14 +772,21 @@ cuenta, bastan para encontrarlo. Nombra la línea y no la tarea por la misma raz
 conversión, que el identificador puede no existir todavía.
 
 **Por qué `init --from` no avisa.** Una restauración no emite avisos ni tiene un campo `warnings` en
-su salida, y la instantánea que escribe `biso snapshot` nunca trae un elemento vacío, porque ningún
-camino del programa lo guarda. El único caso es una instantánea editada a mano o escrita por otro
+su salida, y la instantánea que escribe `biso snapshot` de un tablero escrito con esta regla nunca
+trae un elemento vacío, porque ningún camino del programa lo guarda. El único caso es una instantánea editada a mano o escrita por otro
 programa, y ahí descartar un elemento que no dice nada es inocuo. Añadir un canal de avisos a la
-restauración para ese caso no compensa.
+restauración para ese caso no compensa. Lo de que `biso snapshot` no escribe nunca un elemento vacío
+vale para un tablero escrito con esta regla, según el apartado siguiente.
 
 **La simetría se mantiene.** Como el flag no guarda un elemento vacío y el lote lo descarta, ninguna
-lista de un tablero lo contiene, así que `biso export` no lo escribe nunca y reimportar la salida
-deja el mismo tablero campo a campo.
+lista de un tablero escrito con esta regla lo contiene, así que `biso export` no lo escribe nunca y
+reimportar la salida deja el mismo tablero campo a campo.
+
+**Un tablero con vacíos guardados antes de esta regla.** El programa no ha tenido una versión
+publicada que escribiera elementos vacíos, así que solo un tablero de desarrollo puede tenerlos
+guardados; ese tablero los sigue exportando y se limpia con `biso export | biso new --from` sobre un
+tablero vacío, o con `biso snapshot` y `biso init --from`, que los descartan al leer. `biso doctor` no
+los detecta ni los repara.
 
 **Alternativas descartadas, y por qué.**
 
@@ -791,3 +808,7 @@ deja el mismo tablero campo a campo.
   con miles de huecos inundaría stderr sin decir nada más que la cuenta y la línea.
 - **Que `init --from` también avise** se descarta por lo dicho arriba, y porque exigiría un canal de
   avisos que la restauración no tiene.
+- **Que `biso doctor` detecte y repare con `--fix` los vacíos ya guardados** se descarta porque ninguna
+  versión publicada los escribió: solo un tablero de desarrollo los tiene y se limpia una vez con
+  `export | new --from`, mientras que una comprobación nueva de `doctor` sería permanente para un caso
+  que no puede darse en un tablero escrito con esta regla.

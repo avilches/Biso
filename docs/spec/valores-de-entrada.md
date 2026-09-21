@@ -68,6 +68,19 @@ mismo da que venga de una lista de texto libre (`references`, y el texto de un c
 dependencia que no existe, ni una referencia en blanco. Los elementos que no están vacíos se guardan
 como llegan, sin recortar los espacios, igual que en el flag.
 
+**Qué cuenta como «solo espacios» es lo mismo que en el flag.** Son los caracteres de espacio en
+blanco de Unicode (la propiedad `White_Space`): el espacio, el tabulador, el salto de línea, el espacio
+duro (U+00A0) y los demás de esa propiedad. Un espacio de ancho cero (U+200B) no es uno de ellos, así que
+un elemento que solo lo contiene no está vacío y se guarda.
+
+**El flag avisa por elemento y el lote avisa por lista.** `--add-refs a,,b` avisa una vez por cada
+elemento vacío, porque una línea de comandos tiene pocos; un lote puede tener cientos de líneas, así
+que `biso new --from` avisa una vez por cada línea y cada lista, con la cuenta de lo descartado. La
+razón está en la decisión enlazada al final de esta sección.
+
+**Los comentarios no entran en esta regla.** Un comentario es un objeto con un cuerpo y se trata
+aparte de las listas de texto libre y de tokens (["El modo lote"](cmd/new.md#el-modo-lote)).
+
 **Lo que sí es un error es un `null` en lugar de un elemento.** Un elemento de una lista tiene que
 ser texto, y `null` no lo es, igual que un número tampoco lo es. Es el fallo de validación que ya
 describe ["El modo lote"](cmd/new.md#el-modo-lote) para un `null` que ocupa el sitio de una lista

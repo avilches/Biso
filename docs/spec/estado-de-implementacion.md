@@ -868,8 +868,8 @@ garantía de ["`biso export`"](cmd/export.md) y la fila de `imported_empty_dropp
 - **`null` en el sitio de un elemento es un fallo de validación de la línea**, un `invalid_line` con
   código 3, con el mensaje `references.1: expected text, got null`. Se detecta sobre los elementos
   sin decodificar, porque `encoding/json` decodifica un `null` como cadena vacía y sería
-  indistinguible del elemento vacío. Otros mensajes nacen de lo mismo y no los exige la
-  especificación: un criterio que no es ni texto ni objeto dice `acceptanceCriteria.0: expected text or
+  indistinguible del elemento vacío. Los mensajes de los criterios nacen de lo mismo y la
+  especificación los recoge en el modo lote: un criterio que no es ni texto ni objeto dice `acceptanceCriteria.0: expected text or
   an object, got number`, que antes salía como un mensaje interno de Go, y un `text` que no es texto
   dice `acceptanceCriteria.0.text: expected text, got null`.
 - **`biso new --from` avisa con `imported_empty_dropped`**, uno por cada línea y lista de la que se

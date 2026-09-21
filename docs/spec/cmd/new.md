@@ -313,15 +313,26 @@ Las reglas del lote, todas obligatorias:
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
   órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta. **Y un `null` que
   ocupa el sitio de un elemento de una lista es también un fallo de validación**, en cualquiera de
-  las listas del bullet de arriba, porque un elemento tiene que ser texto y `null` no lo es, como
+  las listas del bullet de arriba (`comments` no está entre ellas, ver más abajo), porque un elemento tiene que ser texto y `null` no lo es, como
   tampoco lo es un número: no se trata como el elemento vacío, que sí es texto. Es un `invalid_line`
   con código 3, que nombra la lista y la posición del elemento, y lo mismo vale para un `null` en el
   `text` de un criterio dado como objeto:
   ```
   line 7: references.1: expected text, got null
   ```
+  Los elementos de `acceptanceCriteria` y de `definitionOfDone` pueden ser texto o un objeto, así
+  que su mensaje lo dice: un elemento que no es ninguno de los dos, sea `null`, un número, un
+  booleano o una lista, falla con `acceptanceCriteria.0: expected text or an object, got null` (o
+  `got number`, `got bool`, `got array`), y un objeto cuyo `text` no es texto, con
+  `acceptanceCriteria.0.text: expected text, got null` (o `got number`). Los mismos mensajes valen
+  con `definitionOfDone` en lugar de `acceptanceCriteria`, y nombran la posición del elemento en la
+  lista, contando desde cero. Un `text` que falta no es un `text` nulo: es un texto vacío, y el
+  elemento se descarta.
   `documentation: null` y `modifiedFiles: null` son la clave ausente, y un `null` dentro de la lista
   de cualquiera de las dos es este mismo fallo.
+  **`comments` queda fuera de la regla del elemento vacío y de este `null` de elemento**: es una lista
+  de objetos con un cuerpo y se trata aparte, así que esta regla cubre las listas de texto libre y de
+  tokens y no cambia lo que hoy hace un lote con un comentario vacío.
 - **`labels` se valida línea a línea con la regla de las etiquetas con ámbito.** Una etiqueta vacía no
   es una etiqueta mal formada, sino un elemento vacío que se descarta (bullet de arriba). Una etiqueta mal
   formada, una clave escrita con `::` que recibe más de un valor, una clave con los dos separadores
