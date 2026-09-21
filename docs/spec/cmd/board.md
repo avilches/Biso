@@ -26,8 +26,8 @@ abrirla, ni la abre nadie por su cuenta.
 ## Agrupación visual
 
 La interfaz enseña un Kanban con las columnas fijas por `status`, en el orden configurado. Además,
-admite agrupar las tareas dentro de esas columnas de dos formas independientes, elegibles con un
-control de la propia interfaz y que no se combinan entre sí:
+admite agrupar las tareas dentro de esas columnas por uno de estos ejes, elegible con un control de
+la propia interfaz, sin que ninguno se combine con otro:
 
 - **Por padre** (`parent`): cada tarea con alguna hija actúa de cabecera de un grupo, con su propio
   título y su propio estado, y sus hijas aparecen debajo. Es un nivel exactamente: la jerarquía no se
@@ -38,11 +38,42 @@ control de la propia interfaz y que no se combinan entre sí:
   los filtros activos, y el grupo entero deja de aparecer solo cuando ninguna hija lo es.
 - **Por tipo** (`type`): una partición plana que no mira la jerarquía. Cada tarea cae en un grupo
   según su propio `type`, tantos grupos como valores en uso entre las tareas visibles.
+- **Por la clave de una etiqueta con ámbito**
+  (["Las etiquetas con ámbito"](../valores-de-entrada.md#las-etiquetas-con-ámbito)): se elige una clave
+  de las que el tablero tiene (["Consultar por la clave de una etiqueta con
+  ámbito"](../vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito)) y cada valor de esa
+  clave es un grupo, más un grupo para las tareas que no llevan ninguna etiqueta suya. Con una clave
+  escrita `::` cada tarea cae en un grupo y en uno solo, porque esa es justamente la garantía que da
+  el separador; con una clave escrita `:` **una tarea aparece en tantos grupos como valores lleve**,
+  que es lo que significa admitir varios, y por eso el eje no promete ser una partición.
 
 Sin agrupar, que es lo que se ve por defecto, las tareas quedan sueltas dentro de cada columna de
 estado. La agrupación es solo de esta interfaz: no existe ningún flag equivalente en `biso ls` ni
-en `biso prime`, aunque las dos ya permiten filtrar por `--parent` y por `--type`
-(secciones [`biso ls`](ls.md) y [`biso set`](set.md)).
+en `biso prime`, aunque las dos ya permiten filtrar por `--parent`, por `--type` y por la clave de
+una etiqueta (secciones [`biso ls`](ls.md) y [`biso set`](set.md)).
+
+## Qué escribe un arrastre
+
+Mover una tarea con el ratón escribe siempre un campo, y cuál depende de a dónde vaya:
+
+| Movimiento | Qué escribe |
+|---|---|
+| A otra columna | `status`, al de esa columna |
+| Al grupo de otro padre, agrupando por padre | `parent` |
+| A otro grupo de tipo, agrupando por tipo | `type` |
+| A otro grupo de valor, agrupando por la clave de una etiqueta | esa etiqueta: quita la del grupo del que sale y añade la del grupo al que entra, con la misma llamada que haría `--rm-labels k:<origen> --add-labels k:<destino>` (["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito)) |
+| Al grupo de las que no llevan la clave | solo quita la etiqueta del grupo de origen |
+| Desde el grupo de las que no llevan la clave | solo añade la del grupo de destino |
+| Dentro del mismo grupo | `ordinal`, que es lo único que reordena (["El orden manual es una clave de texto"](../../decisiones/detalles.md#el-orden-manual-es-una-clave-de-texto)) |
+
+**Un arrastre entre grupos nunca reordena, y un arrastre dentro de un grupo nunca cambia otro campo.**
+La regla vale igual para el eje de las etiquetas que para los otros: arrastrar cambia el campo por el
+que se agrupa, y solo moverse dentro del grupo toca el orden manual. Con una clave escrita `:`, en la
+que una tarea puede estar en varios grupos a la vez, lo que se quita es el valor del grupo del que
+sale y no todos los de la clave, que es lo único que conserva el resto de la información de la tarea.
+
+Nada de esta página está en la versión 1.0, porque `biso board` queda fuera de ella
+(["Qué hay implementado y qué no"](../estado-de-implementacion.md)).
 
 ## Salida
 
