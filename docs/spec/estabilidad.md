@@ -14,6 +14,10 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
 - Las claves de `data` en cada `kind` de JSON. Se pueden añadir claves; las que hay no se quitan ni
   cambian de tipo.
 - El ["algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia), idéntico al leer y al escribir.
+- La regla de análisis de una etiqueta con ámbito (["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito)):
+  dónde corta la clave, qué separadores hay y qué formas son mal formadas. De ella dependen el
+  significado de `clave::valor`, la consulta `--label clave:` y lo que la lista `labels` puede
+  declarar, así que cambiarla cambiaría en silencio qué encuentra un filtro ya escrito.
 - La simetría entre `biso export` y `biso new --from` sobre todos los campos no derivados, que es una
   prueba de la suite y no una intención. La de `biso snapshot` con `biso init --from` cubre además la
   configuración del tablero entera, campo a campo.
