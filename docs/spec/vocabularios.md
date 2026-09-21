@@ -271,9 +271,13 @@ error: unknown label key: "milestne"
 hint: did you mean: milestone?
 ```
 
-Su `code` es `unknown_label_key`, con `field` igual a `label`, `given` igual al filtro tal como se
-escribió (`milestne:`) y `valid` con las claves del tablero
-(["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)).
+Su `code` es `unknown_label_key`, con `field` igual a `label` y `valid` con las claves del tablero
+(["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)). Su `given` es el
+filtro ya normalizado a un solo dos puntos (`milestne:`), exactamente el que viaja en
+`data.filters.label` (["Los filtros de `biso ls`"](contrato-json.md#los-filtros-de-biso-ls)), así que
+un `--label Milestne::` se reprocha como `Milestne:`: la grafía tecleada de la clave se conserva y el
+separador no, porque las dos formas son el mismo filtro y citar una de las dos sería elegir por el
+lector.
 
 **`--unchecked` apaga también esta comprobación**, igual que las de etiquetas y personas y ninguna
 más: con él, `--label milestne:` se acepta y probablemente no devuelve nada.
