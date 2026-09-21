@@ -54,13 +54,13 @@ Precisiones:
 | `status` | `enum(...)`, configurable (ver `statuses` en [`biso config`](../cmd/config.md)) | obligatorio |
 | `type` | `enum(...)`, configurable (ver `types` en [`biso config`](../cmd/config.md)) | |
 | `priority` | `enum(...)`, configurable (ver `priorities` en [`biso config`](../cmd/config.md)) | |
-| `parent` | `string` (referencia a otra tarea) | |
+| `parent` | `string` (referencia a otra tarea); ver ["Las relaciones entre tareas"](relaciones.md) | |
 | `assignees` | `list<string>` (textos de persona) | |
 | `author` | `string` (texto de persona); ver ["El autor de una tarea"](autor.md) | |
 | `labels` | `list<string>` | |
-| `dependencies` | `list<string>` (referencias a tareas) | |
-| `references` | `list<string>` | |
-| `documentation` | `list<string>` | |
+| `dependencies` | `list<string>` (referencias a tareas); ver ["Las relaciones entre tareas"](relaciones.md) | |
+| `references` | `list<string>`; ver ["Las relaciones entre tareas"](relaciones.md) | |
+| `documentation` | `list<string>`; ver ["Las relaciones entre tareas"](relaciones.md) | |
 | `modifiedFiles` | `list<string>` | |
 | `due` | `date` (`YYYY-MM-DD`) | |
 | `ordinal` | `int` (>= 0) | |
