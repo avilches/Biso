@@ -213,7 +213,11 @@ configuración nueva.
 las demás de esa clave, sean `k:x` o `k::y`, y avisa nombrando cada una que quitó. `--add-labels k:v`
 sobre una tarea que lleva `k::x` es error 6, porque el estado guardado no lo permite, y el mensaje
 propone quitar primero la exclusiva. Dentro de una misma llamada, `k:a` junto a `k::b` es error 2 sin
-mirar el orden, y dos exclusivas de la misma clave dejan la última con un aviso. La comprobación se hace contra el estado que queda después de aplicar los
+mirar el orden, y dos exclusivas de la misma clave escritas en el mismo flag dejan la última con un
+aviso; repartidas entre `--add-labels` y `--replace-labels` no decide la línea de comandos sino el
+orden de los pasos de una escritura, que pone sustituir antes que añadir
+(["Escribir una etiqueta con ámbito"](../spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito)).
+La comprobación se hace contra el estado que queda después de aplicar los
 quitar de esa llamada, así que `--rm-labels k::1 --add-labels k:2` en una sola línea funciona. La misma
 regla vale para cada línea de un lote de `biso new --from`, con una salvedad: ahí dos exclusivas de la
 misma clave no dejan la última sino que son un fallo de validación de esa línea, porque la lista
