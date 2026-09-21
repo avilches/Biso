@@ -103,10 +103,12 @@ salen los tres sitios donde se puede soltar una tarea, y solo esos tres:
   desde el principio del orden hasta la primera tarea **de esa columna**, y soltar abajo del todo el
   que va desde la última **de esa columna** hasta el final. No son `--ordinal first` ni
   `--ordinal last`, que miran el tablero entero (["El hueco de cada
-  colocación"](../modelo-de-datos/orden-manual.md#el-hueco-de-cada-colocación)): en una vista
-  agrupada, el extremo de una columna y el extremo del tablero no tienen por qué coincidir. Con el
-  tablero sin agrupar y sin filtrar son el mismo sitio, y entonces sí coinciden, que es el caso de
-  meter la primera tarea de un tablero donde ninguna tiene clave todavía.
+  colocación"](../modelo-de-datos/orden-manual.md#el-hueco-de-cada-colocación)). **Y no coinciden ni
+  siquiera sin agrupar**, porque las columnas son siempre las de `status`
+  (["Agrupación visual"](#agrupación-visual)): la primera tarea de una columna no tiene por qué ser
+  la de menor clave del tablero, ya que otra columna puede tener una con una clave menor. Los dos
+  sitios son el mismo solo cuando ninguna tarea del tablero tiene clave todavía, que es justamente
+  el caso de meter la primera.
 - **Justo en la frontera entre las que tienen clave y las que no**, que es el hueco que deja la
   última tarea con clave de esa columna sin ninguna por debajo: las tareas sin clave van detrás de
   todas las que la tienen (["La regla de orden,
