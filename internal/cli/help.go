@@ -300,7 +300,7 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"      --priority <value>     configured priority\n" +
 	"      --label <value>        label; several labels are ANDed. The form key:\n" +
 	"                             matches any value of that scoped-label key\n" +
-	"      --label-or <value>     label; several are ORed\n" +
+	"      --label-or <value>     label; several are ORed; takes key: too\n" +
 	"      --assignee <@who>      assignee\n" +
 	"      --mine                 assigned to you\n" +
 	"      --unassigned           assigned to nobody\n" +

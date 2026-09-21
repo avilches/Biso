@@ -339,7 +339,7 @@ Filters (repeat or comma-separate; same field is OR, different fields are AND):
       --priority <value>     configured priority
       --label <value>        label; several labels are ANDed. The form key:
                              matches any value of that scoped-label key
-      --label-or <value>     label; several are ORed
+      --label-or <value>     label; several are ORed; takes key: too
       --assignee <@who>      assignee
       --mine                 assigned to you
       --unassigned           assigned to nobody
