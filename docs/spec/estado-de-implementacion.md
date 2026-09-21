@@ -15,6 +15,10 @@ avisar.
 - **hecho**: la tarea que lo implementó está cerrada, con sus criterios de aceptación verificados.
 - **hecho con matices**: implementado, pero con una diferencia frente al texto original de la
   especificación; la fila enlaza a la nota que la explica.
+- **especificado, no implementado**: la especificación ya lo define entero, con sus mensajes
+  literales y sus códigos de salida, y no hay ni una línea de código que lo ejerza. Es el estado de
+  una decisión que se escribió en la especificación antes de implementarla, y el paso siguiente es
+  la tarea que la lleva al programa.
 - **guía, no verificable**: el documento fija vocabulario o principios, no un comportamiento que un
   test pueda comprobar.
 - **fuera de alcance**: la propia especificación excluye este documento a propósito, así que nunca
@@ -36,6 +40,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | hecho | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | hecho | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`help`](cmd/help.md) | hecho con matices | TASK-17 |
+| | El orden manual ([abajo](#el-orden-manual-especificado-y-todavía-no-implementado)) | especificado, no implementado | sin tarea |
 | | [`board`](cmd/board.md) | fuera de alcance de 1.0 | sin tarea |
 
 ## Los documentos transversales
@@ -798,6 +803,54 @@ y el contrato JSON:
   ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño).
 - **La simetría entre `biso export` y `biso new --from` sigue pasando.** Las pruebas que llevaban un `ext`
   en su tablero lo dejan de llevar, y se eliminan las que solo ejercían `ext`.
+
+### El orden manual: especificado y todavía no implementado
+
+La especificación ya recoge entera la decisión
+["El orden manual es una clave de texto"](../decisiones/detalles.md#el-orden-manual-es-una-clave-de-texto),
+y **el programa no sabe nada de ella**: hoy `biso` guarda `ordinal` como un entero no negativo, lo
+acepta escrito con `--ordinal 3000`, rechaza el negativo con `invalid_number` y no conoce ni
+`--above` ni `--below`. Esta entrada está aquí para que nadie lea las páginas de arriba como una
+descripción de lo que el binario hace ahora mismo.
+
+Las anclas que la especificación cubre ya, y que la tarea de implementación tendrá que ejercer:
+
+- **La clave y su algoritmo**, en ["El orden manual y su clave"](modelo-de-datos/orden-manual.md):
+  qué es una clave, cómo se comparan dos, la función del punto medio con su tabla de casos, el hueco
+  que le toca a cada flag, el bloque de varias tareas en una llamada y por qué no hace falta
+  renumerar.
+- **Los flags**, en ["El orden manual"](familias-de-flags.md#el-orden-manual), con sus casos en la
+  tabla de ["`biso set`"](cmd/set.md#comportamiento-caso-a-caso) y en la de
+  ["`biso new`"](cmd/new.md#comportamiento-caso-a-caso), y el paso de escritura que les toca en
+  ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura).
+- **La lectura**, en ["La regla de orden, completa"](cmd/ls.md#la-regla-de-orden-completa), en el
+  sobre de ["`biso ls`"](cmd/ls.md#el-esquema-json) y en el de
+  ["`biso get`"](cmd/get.md#el-esquema-json), más la celda `manual` de la ficha de texto
+  (["`biso get`"](cmd/get.md#salida)).
+- **El intercambio**, con la clave escrita y validada en
+  ["El modo lote"](cmd/new.md#el-modo-lote) y devuelta tal cual por
+  ["`biso export`"](cmd/export.md#la-garantía-de-simetría).
+- **Los `code` nuevos**, en
+  ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error):
+  `invalid_ordinal_value`, `self_ordinal_neighbour` y `malformed_ordinal` con el código 2, y
+  `neighbour_without_ordinal` con el 6. Ningún aviso nuevo.
+- **El arrastre de [`biso board`](cmd/board.md#qué-escribe-un-arrastre)**, que sigue fuera de la
+  versión 1.0 y por tanto no lo ejerce nadie todavía.
+
+**El mensaje de arranque crece, y sus cifras hay que volver a medirlas al implementarlo.** El orden
+manual pasa a tener su propia línea en la rejilla `FIELD FLAGS`, que gana una línea y pierde
+`--ordinal --clear-ordinal` de la de los escalares. Contando el texto literal de
+["La salida literal"](cmd/prime.md#la-salida-literal) con el tablero del ejemplo, el mensaje pasa de
+5.070 a 5.112 bytes y la parte fija de 3.581 a 3.623 de los 3.840 que tiene asignados, que es lo que
+dice ahora ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño); el resumen no
+cambia. La medida que manda es la del proceso, así que la tarea que implemente esto tiene que
+confirmarla con la prueba del presupuesto y corregir esa página si sale otra cosa. La lista de
+`--full` gana los flags nuevos en su línea de `ordinal`, y no cuenta para el tope.
+
+**Lo que hay que hacer con los tableros de desarrollo.** El campo cambia de tipo, así que un tablero
+creado con un binario anterior guarda enteros donde el binario nuevo espera claves. Como `biso` no se
+ha publicado, vale la misma salida que en las retiradas anteriores: editar el primer script de
+migración en vez de añadir uno, y recrear los tableros de ensayo de esta máquina.
 
 ## Antes de empezar un paso
 
