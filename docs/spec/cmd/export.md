@@ -101,6 +101,26 @@ vocabulario distinto. Comparar esto con la vía manual de [`biso new --from`](ne
 existiendo para importar un NDJSON suelto en un tablero cuyo vocabulario ya se ha declarado por
 separado, pero ya no es la única manera de reconstruir un tablero entero.
 
+## Las tareas ilegibles
+
+**`biso export` escribe las tareas legibles y ninguna de las ilegibles, y sale con 6.** Una tarea es
+ilegible por la definición única de ["Qué se comprueba"](../garantias.md#qué-se-comprueba): un valor de
+`status`, `type` o `priority` que el tablero no declara, una fecha que no es una fecha, o cualquier otro
+de los motivos de esa lista. Se decide antes de mirar los filtros de la llamada, así que la tarea
+ilegible se salta y se nombra en el aviso `task_skipped` (por stderr, con todos los identificadores)
+aunque el filtro no la habría dejado pasar. **La ilegible no se copia**: ni entera, ni con el campo
+dañado, ni con un valor por defecto. Es lo que mantiene cierta la garantía de simetría de arriba para lo
+que sí sale: `biso new --from` y `biso init --from` aceptan la salida siempre entera, porque ninguna línea
+lleva un valor fuera de vocabulario ni una fecha rota.
+
+**Y tampoco se niega a escribir.** Un valor de fecha malformado no tiene remedio dentro de `biso`, y
+negarse a copiar el resto dejaría el tablero sin copia mientras dure el daño. El código 6, y no el 0, es
+lo que impide que un guion que encadene `biso export --out backup.ndjson && ...` tome por completa una
+copia a la que le falta algo. La razón completa, con las alternativas descartadas, está en
+["Una tarea ilegible es la misma para todos los comandos de lectura"](../../decisiones/detalles.md#una-tarea-ilegible-es-la-misma-para-todos-los-comandos-de-lectura),
+y cómo se arregla una tarea ilegible, para que la siguiente copia la lleve, en
+["Cómo se arregla una tarea ilegible"](../garantias.md#cómo-se-arregla-una-tarea-ilegible).
+
 ## El rechazo de `--json`
 
 `--json` es aquí la parte inválida de la llamada, así que el rechazo es texto plano por stderr y no
@@ -132,7 +152,7 @@ formato dos claves que ningún comando escribe y que solo servirían para ese ca
 | Desenlace | Código |
 |---|---:|
 | Exportado, aunque sean cero tareas | 0 |
-| Alguna tarea se ha saltado por ilegible | 6 |
+| Alguna tarea se ha saltado por ilegible: se escriben todas las demás, la ilegible no, y sale el aviso | 6 |
 | Flags de forma de `ls`, `--archived`, `--only-archived`, `--json`, o incompatibles | 2 |
 | Un valor de filtro no existe en el tablero | 3 |
 | No se puede escribir el fichero de salida | 8 |

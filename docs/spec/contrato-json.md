@@ -244,6 +244,15 @@ simultánea (["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)); sale con 8 p
 fue la petición, que era correcta, sino conseguir el acceso exclusivo que hacía falta para servirla,
 que es exactamente lo que ese código cubre en la tabla de ["`biso set`"](cmd/set.md#códigos-de-salida).
 
+**`undecodable_task` es el error de `biso get` y de las escrituras dirigidas sobre una tarea ilegible**
+(["El primer caso: una tarea ilegible"](garantias.md#el-primer-caso-una-tarea-ilegible)), con código 3.
+Lleva `field`, que nombra el campo dañado (`status`, `due`, `comment #1 createdAt`...), y `given`, que
+es lo que hay guardado, vacío incluido. `valid` viaja solo cuando el campo es de vocabulario y trae los
+valores que el tablero declara, igual que en `unknown_status`. Es un `code` propio y no uno de
+`unknown_status`, `unknown_type` o `unknown_priority` porque lo que falla no es un valor que llega sino
+uno que ya estaba guardado, y quien ramifica sobre él tiene que poder distinguir que repetir la llamada
+con otros filtros u otra referencia no lo cambia.
+
 **La lista es ampliable y las entradas son permanentes.** Una versión posterior puede añadir un `code`
 nuevo, pero ninguno de los de arriba cambiará de significado, cambiará de código de salida ni
 desaparecerá. Quien ramifique sobre un `code` desconocido debe tratarlo por su código de salida, que

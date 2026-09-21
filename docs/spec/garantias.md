@@ -68,24 +68,151 @@ variante del primero.
 
 ### El primer caso: una tarea ilegible
 
-Una tarea puede resultar ilegible: la base de datos devuelve algo corrupto para esa fila. El resto del
-tablero sigue legible, y la regla depende del tipo de lectura:
+Una tarea es **ilegible** cuando el programa no puede darle a alguno de sus campos el significado que
+el tablero le da: la base de datos devuelve algo corrupto para esa fila, un campo de vocabulario
+cerrado guarda un valor que la configuración no declara, o una fecha guardada no es una fecha. El
+resto del tablero sigue legible.
 
-| Tipo de lectura | Qué pasa |
+**La definición es una sola y vale igual para todos los comandos de lectura.** La tabla de la sección
+siguiente decide qué tarea es ilegible, y lo decide para el tablero entero antes de mirar ningún
+filtro de la llamada, no cada comando a su manera. Es la regla de
+["Los vocabularios del tablero y la regla de validación"](vocabularios.md), que rige "idéntica al
+escribir y al leer", aplicada a lo que ya está guardado: un valor que el tablero no declara es un error,
+y una tarea que lo guarda no puede salir en un listado como si estuviera bien, cuando
+`biso ls --priority urgent` sobre ese mismo tablero es un error. La razón de fondo y las alternativas
+que se descartaron están en
+["Una tarea ilegible es la misma para todos los comandos de lectura"](../decisiones/detalles.md#una-tarea-ilegible-es-la-misma-para-todos-los-comandos-de-lectura).
+
+#### Qué se comprueba
+
+Esta es la lista completa. Un campo que no está en ella no vuelve ilegible una tarea.
+
+| Campo | La tarea es legible si | `field` del error cuando no lo es |
+|---|---|---|
+| `status` | su valor es exactamente uno de los de `statuses`; vacío no lo es | `status` |
+| `type` | está vacío, o su valor es exactamente uno de los de `types` | `type` |
+| `priority` | está vacía, o su valor es exactamente uno de los de `priorities` | `priority` |
+| `due` | está vacía, o es un día real escrito `YYYY-MM-DD` | `due` |
+| `createdAt` y `updatedAt` | son un instante escrito `YYYY-MM-DDTHH:MM:SSZ`; ninguna puede estar vacía | `createdAt` o `updatedAt` |
+| `leaseExpiresAt` | está vacía, o es un instante | `leaseExpiresAt` |
+| `question.askedAt` | si la tarea tiene pregunta, es un instante y no está vacía | `question.askedAt` |
+| `createdAt` de un comentario | es un instante y no está vacía | `comment #<clave> createdAt` |
+| El nombre de un campo de lista | es uno de los que el modelo conoce | el nombre guardado |
+| Cualquier otra columna de la tarea, de sus criterios o de sus comentarios | su contenido es del tipo que el modelo le da: un booleano es 0 o 1, un entero es un número | el nombre del campo |
+
+**Los campos de vocabulario cerrado son los que un filtro valida contra la configuración: `status`,
+`type` y `priority`.** Son los únicos donde un valor guardado puede quedar fuera de lo que un filtro
+acepta, y por eso son los únicos donde la tarea deja de ser legible.
+
+**La comparación es exacta y no usa el algoritmo de coincidencia.** Lo que se guarda es siempre la
+grafía configurada, porque cada escritura resuelve lo tecleado a ella
+(["El algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia)). Un `done` guardado en
+un tablero cuyo estado terminal es `Done` no es la misma cosa escrita de otro modo, es un valor que
+ninguna escritura del programa produce, y como el programa compara el estado de una tarea con el
+terminal letra por letra para saber si está terminada, darlo por bueno la contaría como viva.
+
+**Una fecha vacía solo es válida donde la fecha es opcional.** `due` y `leaseExpiresAt` pueden no
+tener valor. `createdAt`, `updatedAt`, la fecha de la pregunta cuando la hay y la de cada comentario
+son no nulas en ["El modelo de datos de una tarea"](modelo-de-datos/index.md), así que una cadena
+vacía ahí es un dato que falta y no un dato ausente. El formato de cada fecha es el de
+["Números, fechas y ausencias"](contrato-json.md#números-fechas-y-ausencias), y `due` es un día y no un
+instante: `2026-09-21T10:00:00Z` no es un `due` legible.
+
+**Lo que no vuelve ilegible una tarea, y por qué.**
+
+- Las personas (`author`, `assignees`, `leaseHolder` y el autor de cada comentario y de la pregunta) y
+  las etiquetas son cerradas solo al leer y abiertas al escribir
+  (["Qué valida cada filtro, y contra qué"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué)): un
+  filtro las valida contra las que el tablero tiene en uso, y un valor guardado pertenece por
+  definición a ese conjunto. No hay ninguna lectura en la que un filtro rechace lo que un listado
+  muestra, que es lo que hace ilegible a un `type` desconocido.
+- Una etiqueta que la lista `labels` de la configuración prohíbe, una dependencia o un padre que no
+  existen y un arrendamiento a medias son incoherencias entre datos que se leen bien. `biso doctor` las
+  reporta como error (["`biso doctor`"](cmd/doctor.md#qué-comprueba)), pero la tarea se lee, se muestra
+  y se filtra con su sentido intacto. Un `ordinal` fuera de rango no se comprueba al leer.
+
+#### Qué hace cada comando
+
+| Comando | Con una tarea ilegible |
 |---|---|
-| **Lectura dirigida** a esa tarea, es decir, `get`, o `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y `archive` con una referencia que resuelve a ella | Error 3, con el motivo exacto. No se escribe nada |
-| **Lectura de conjunto**, es decir, `ls`, `prime`, `export`, `snapshot`, la resolución de una referencia por texto y cualquier filtro | La tarea se salta, se cuenta, y al final se emite `warning: 1 task could not be read and was skipped: MYP-2` con sus identificadores, por stderr, o, con más de una, `warning: 2 tasks could not be read and were skipped: MYP-2, MYP-7`. El resto del resultado es válido y el código es 0, **salvo en `biso export` y en `biso snapshot`, que salen con 6, y salvo en `biso prime`, que integra el mismo aviso dentro de su propio mensaje por stdout en vez de emitirlo por stderr** (["`biso prime`"](cmd/prime.md#la-salida-literal)) |
-| `biso doctor` | Se reporta como problema y se sigue con las demás. Nunca aborta |
+| `biso ls` | La salta, la cuenta y emite el aviso de abajo por stderr. No aparece en las filas y no entra en `--count`. El resto del listado es válido y el código es 0 |
+| `biso prime` | La deja fuera del recuento por estado y de todos sus bloques, y añade la línea `unreadable` al bloque `BOARD` en vez de emitir el aviso por stderr (["`biso prime`"](cmd/prime.md#la-salida-literal)). Código 0 |
+| `biso get` de esa tarea | Error 3 con `code` `undecodable_task` y el motivo exacto, sin imprimir nada de la ficha, con `--section` o sin él |
+| `biso get` de otra tarea | Imprime esa ficha y emite el aviso, porque resolver la referencia lee el resto del tablero |
+| `biso export` y `biso snapshot` | Escriben todas las tareas legibles y ninguna de las ilegibles, emiten el aviso y salen con código 6 |
+| `biso doctor` | La reporta como error con el `code` de su fila (`value_not_configured` para un valor fuera de vocabulario, `task_unreadable` para lo demás), sigue con las demás y nunca aborta. Código 6 |
+| Una escritura dirigida a ella: `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y `archive` con una referencia que resuelve a ella | Error 3, con el motivo exacto. No se escribe nada. Hay una excepción, la del valor fuera de vocabulario, en ["Cómo se arregla"](#cómo-se-arregla-una-tarea-ilegible) |
+| Resolver una referencia por texto, y cualquier filtro | La tarea no participa, y el aviso la nombra |
 
-Una lectura de conjunto **nunca** aborta por una tarea mala, y **nunca** la esconde en silencio. Las
-dos cosas juntas son lo que impide que un listado incompleto se confunda con un tablero vacío.
+**Los comandos de lectura de conjunto no abortan nunca por una tarea mala, y no la esconden nunca en
+silencio.** Las dos cosas juntas son lo que impide que un listado incompleto se confunda con un
+tablero vacío. El aviso, por stderr, es
+`warning: 1 task could not be read and was skipped: MYP-2` con sus identificadores, o, con más de una,
+`warning: 2 tasks could not be read and were skipped: MYP-2, MYP-7`, y `biso prime` lo integra en su
+propio mensaje por stdout en vez de emitirlo por stderr.
 
-**`biso export` y `biso snapshot` son las dos excepciones al código 0 de una lectura de conjunto.**
-Los dos escriben igual todo lo que han podido leer, con el mismo aviso por stderr, pero terminan con
-**código 6** en vez de 0 cuando han saltado alguna tarea: son los comandos cuyo propósito es
-servir de copia fiel del tablero, así que una copia incompleta no puede parecer un éxito llano. Un
-guion que encadene `biso export --out backup.ndjson && ...` o `biso snapshot && ...` puede comprobar el
-código de salida para detectar un volcado incompleto.
+**El aviso nombra todas las tareas ilegibles del tablero, casen o no con los filtros de la llamada.**
+Una tarea ilegible no se puede comparar con un filtro, así que no se puede afirmar que no lo cumple:
+`biso ls --status Done` sobre un tablero con una tarea ilegible imprime `note: no tasks match` y el aviso
+juntos, y nunca solo la nota, que quien lee tomaría por un hecho sobre el tablero. Cuentan también las
+archivadas y las que están en el estado terminal.
+
+**El aviso dice qué tarea y no por qué.** El motivo exacto lo da `biso get` de esa tarea, con el valor
+que hay guardado, y `biso doctor` la reporta junto al resto de problemas del tablero. El error de
+`biso get` es, en texto, una línea por stderr, y en JSON un sobre de error con `code` `undecodable_task`
+que lleva `field` y `given` siempre, y `valid` cuando el campo es de vocabulario
+(["Los errores en JSON"](contrato-json.md#los-errores-en-json)). El texto de los tres motivos que se
+reconocen por su forma, con `MYP-2` como ejemplo:
+
+| Motivo | Mensaje |
+|---|---|
+| Un valor de `status`, `type` o `priority` que el tablero no declara | `MYP-2 cannot be read: its priority is "urgent", which this board does not configure` |
+| Una fecha que no es un día, en `due` | `MYP-2 cannot be read: due is not a calendar day (YYYY-MM-DD): "2026-9-1"` |
+| Una fecha que no es un instante, en cualquier otro campo de fecha, o una fecha obligatoria vacía | `MYP-2 cannot be read: createdAt is not an instant (YYYY-MM-DDTHH:MM:SSZ): "nope"` |
+
+En la primera fila, `priority` es el nombre del campo que falla, así que es `status` o `type` según cuál
+sea. Los otros dos motivos, un nombre de campo de lista desconocido y una columna del tipo equivocado,
+nombran el campo y lo guardado, sin un texto fijo. En ningún caso el mensaje lleva el texto de un error del lenguaje
+o de la biblioteca de fechas, que no es parte del contrato.
+
+#### `biso export` y `biso snapshot`
+
+**Son las dos excepciones al código 0 de una lectura de conjunto.** Los dos escriben todo lo que han
+podido leer, con el mismo aviso por stderr, pero terminan con **código 6** en vez de 0 cuando han
+saltado alguna tarea: son los comandos cuyo propósito es servir de copia fiel del tablero, así que una
+copia incompleta no puede parecer un éxito llano. Un guion que encadene
+`biso export --out backup.ndjson && ...` o `biso snapshot && ...` puede comprobar el código de salida
+para detectar un volcado incompleto.
+
+**Lo que escriben es siempre algo que el propio programa sabe volver a leer.** Una tarea ilegible no se
+copia: ni entera, ni con el campo dañado, ni con un valor por defecto en su lugar. Un
+`snapshot.ndjson` con una tarea cuya prioridad el tablero no declara lo rechazaría `biso init --from`
+con el error 7 de la línea inválida, y con una fecha rota no se puede ni escribir la línea. Por eso la
+copia lleva las tareas legibles y solo esas, y se importa siempre entera.
+
+**Tampoco se niegan a escribir, aunque haya una ilegible.** Es la otra mitad de la misma decisión. Las
+fechas malformadas no tienen remedio dentro de `biso` (la sección siguiente), así que una negativa
+pararía las copias justo mientras hay un daño que el propio programa no puede arreglar. Escribir lo
+legible y salir con 6 conserva todo lo que se puede conservar y deja el fallo a la vista. A cambio, el
+`snapshot.ndjson` nuevo no lleva la tarea ilegible, y la versión anterior de esa tarea solo sigue en la
+historia del repositorio del tablero.
+
+#### Cómo se arregla una tarea ilegible
+
+El remedio depende de cuál sea el dato dañado, y `biso doctor` y `biso get` dicen cuál es.
+
+| Qué está mal | Cómo se arregla |
+|---|---|
+| Un valor fuera de vocabulario en `status`, `type` o `priority` | Escribir uno que el tablero declare, con `biso set MYP-2 --priority medium` (o `--status`, o `--type`; `--clear-type` y `--clear-priority` dejan el campo sin valor, y `status` no puede quedar vacío), o declarar el valor con `biso config set` si era el correcto |
+| Una fecha que no es una fecha, o una columna del tipo equivocado | No tiene remedio con ningún comando de `biso`: ninguno escribe `createdAt`, `updatedAt` ni las fechas de la pregunta y de un comentario, y una fila que no se decodifica no se puede ni cargar para editarla. Es daño externo, porque nada dentro del programa escribe una fecha mal formada: se corrige el valor en la base de datos (`board.db`, un fichero SQLite), o se recupera la tarea de una instantánea anterior |
+
+**Una escritura dirigida a una tarea ilegible solo por su vocabulario se aplica si lo que escribe la
+deja legible**, y en cualquier otro caso es error 3 sin escribir nada. Se juzga la tarea como quedaría
+después de la escritura, no como está: `biso set MYP-2 --priority medium` arregla la prioridad, y
+`biso set MYP-2 --title "Otro"` falla porque la tarea seguiría con su prioridad fuera de vocabulario. Con
+`--dry-run` la vista previa contesta lo mismo que la llamada real. Es lo que permite el remedio de
+arriba sin una vía especial de reparación, y no hay nada equivalente para una fila que no se
+decodifica, porque esa no llega a cargarse.
 
 ### El segundo caso: la base de datos que no se puede leer
 

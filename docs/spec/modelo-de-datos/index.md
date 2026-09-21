@@ -71,6 +71,10 @@ Precisiones:
 
 Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 
+- **Un `status`, `type` o `priority` guardado que la configuración no declara, o una fecha guardada que
+  no es una fecha, hace la tarea ilegible.** Los campos de vocabulario se comprueban al leer con la
+  misma regla que al escribir, y la lista completa de lo que se comprueba, con lo que hace cada comando,
+  está en ["Qué se comprueba"](../garantias.md#qué-se-comprueba).
 - **`author` se fija una sola vez, al crear la tarea, y con reglas propias** que dependen de si se
   pasa `--author` y de si hay identidad configurada; están completas en ["El autor de una
   tarea"](autor.md).
