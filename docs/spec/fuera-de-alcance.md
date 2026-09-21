@@ -43,7 +43,6 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
 - **No hay exportación al formato de Backlog.md.** `biso export` escribe el mismo formato que lee
   `biso new --from`, y traducir a un formato ajeno es trabajo de un conversor aparte, no de este
   comando.
-- **No hay sincronización con ningún sistema externo.**
 - **No hay sincronización entre máquinas.** Un tablero vive en la máquina donde se creó, y lo que
   cruza a otra es la instantánea que deja `biso snapshot`, para reconstruirlo entero con
   `biso init --from`, no para mantener dos copias vivas al día (sección ["La decisión de persistencia"](../decisiones/persistencia.md#la-decisión-de-persistencia)).

@@ -26,11 +26,11 @@ siempre, para ganar exactamente lo mismo que ya ofrecen `-` y `_`. Y olvidar la 
 falla alto: según qué flags haya alrededor, la palabra suelta puede convertirse en un argumento
 inesperado (el caso bueno, error 2) o colarse donde no tocaba. Cerrar el alfabeto quita el problema de
 raíz en vez de pedir disciplina. `references` y `dependencies` no
-llevan esta restricción, y una clave de `ext` lleva un tercer alfabeto distinto; el porqué de cada una
-está más abajo.
+llevan esta restricción; el porqué de cada una está más abajo. El `:` de una etiqueta tiene además un
+significado, que fija ["Las etiquetas con ámbito"](#las-etiquetas-con-ámbito).
 
 **El problema que la motiva.** La especificación no restringía ningún carácter en `labels`,
-`assignees`, `references`, `documentation`, `dependencies`, `modifiedFiles` ni en una clave de `ext`
+`assignees`, `references`, `documentation`, `dependencies` ni `modifiedFiles`
 (`documentation` y `modifiedFiles` eran entonces campos distintos de `references` y ya no existen, ver
 ["Se retira `documentation` y `references` queda como único campo de punteros"](#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)
 y ["Se retira `modifiedFiles`"](#se-retira-modifiedfiles)):
@@ -68,20 +68,15 @@ otro, `dependencies`, no guarda ni una URL ni una ruta y no necesita esta razón
 ninguna regla nueva porque ya tiene la suya, distinta de la de `references`. Cada elemento es un `<ref>` y lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](../spec/referencias.md), que ya distingue un identificador
 mal formado de una consulta de texto libre.
 
-**Por qué la clave de `ext` es un tercer alfabeto y no el mismo que `labels`.** Una clave de `ext`
-tiene la forma de un espacio de nombres con punto (`trello.card`, `github.issue`), así que necesita el
-punto y admite `-`/`_` para el segmento, pero no tiene ningún uso documentado para `@` ni para `:`. Y
-no puede admitir `=`, porque `--ext <clave>=<valor>` ya usa ese carácter para separar la clave del
-valor: permitirlo dentro de la clave haría ambiguo dónde termina una y empieza el otro en
-`--ext a=b=c`.
-
 **Por qué el código de salida es 2 y no 3.** El código 3 (["El código 3 cubre dos direcciones"](../spec/codigos-de-salida.md#el-código-3-cubre-dos-direcciones)) es para un valor
-sintácticamente correcto que el tablero no reconoce, y `labels` y `assignees` no tienen vocabulario
-cerrado al escribir (["Qué valida cada filtro, y contra qué"](../spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué)): cualquier texto que cumpla el alfabeto es válido sin que el
-tablero lo declare antes. Un carácter fuera del alfabeto no es un problema de reconocimiento sino de
-forma, la misma clase de fallo que un identificador mal formado, que ya es código 2. Tratarlo como
-código 3 habría mezclado dos preguntas distintas bajo el mismo número: "¿es sintácticamente válido?" y
-"¿el tablero lo tiene?".
+sintácticamente correcto que el tablero no reconoce, y `assignees` no tiene vocabulario cerrado al
+escribir, ni `labels` mientras su lista de la configuración no restrinja la clave de la etiqueta
+(["Qué valida cada filtro, y contra qué"](../spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué)
+y ["Las etiquetas con ámbito"](#las-etiquetas-con-ámbito)): cualquier texto que cumpla el alfabeto es
+válido sin que el tablero lo declare antes. Un carácter fuera del alfabeto no es un problema de
+reconocimiento sino de forma, la misma clase de fallo que un identificador mal formado, que ya es código
+2. Tratarlo como código 3 habría mezclado dos preguntas distintas bajo el mismo número: "¿es
+sintácticamente válido?" y "¿el tablero lo tiene?".
 
 ---
 
@@ -166,7 +161,8 @@ naturaleza puede declarar un valor `epic` en `types` (sección [`biso config`](.
 usarlo como cualquier otro tipo, sin que eso exija ningún campo ni comportamiento nuevo. La partición
 plana, la que separa tareas por su naturaleza sin mirar la jerarquía, ya la da ese mismo `type`. Ni
 `project`/`projects` ni `milestone` sobreviven a esta decisión: se retiran de la especificación
-entera, sin sustituto.
+entera, sin ningún campo que los sustituya. Agrupar tareas sueltas, sin ciclo de vida ni tarea padre,
+lo dan las etiquetas con ámbito de ["Las etiquetas con ámbito"](#las-etiquetas-con-ámbito).
 
 **Por qué no un campo `project` en la tarea.** Era un escalar con vocabulario cerrado, declarado en la
 lista `projects` de la configuración, igual que `type` o `priority`. Compartía nombre con
@@ -190,21 +186,108 @@ con subtareas anidadas de identificador estable, también sin campo dedicado.
 cubría un caso real y distinto del de `parent`: un cajón para agrupar tareas sueltas sin crear una
 tarea nueva, sin exigirles ciclo de vida y sin configuración previa. Ese caso sigue siendo real, pero
 `milestone` no era la única manera de resolverlo y arrastraba una palabra con connotación de fecha
-límite que no tenía nada que ver con lo que el campo hacía, que era texto puro sin fecha propia. La
-vía que queda escrita para el futuro, si el caso vuelve a aparecer con datos que lo justifiquen, son
-las labels con ámbito al estilo GitLab (`clave::valor`, por ejemplo `group::Decisiones`), que ya caben
-en el alfabeto cerrado de `labels` (sección ["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token): el `:` ya está
-permitido) y que añadirían exclusividad real, como mucho un valor por `clave` en la misma tarea, sin
-declarar nada de antemano en la configuración, a diferencia de `ext`. No se implementa ahora: es la
-vía descartada que queda anotada para no reabrir la pregunta sin motivo, con el mismo criterio de
-evidencia con el que se había defendido `milestone` la primera vez.
+límite que no tenía nada que ver con lo que el campo hacía, que era texto puro sin fecha propia. Lo
+cubren las etiquetas con ámbito al estilo GitLab (`milestone::m1`, `group::Decisiones`), que dan
+exclusividad real, como mucho un valor por clave en la misma tarea, sin ningún campo nuevo y sin
+declarar nada de antemano en la configuración: ["Las etiquetas con ámbito"](#las-etiquetas-con-ámbito).
+**La vía descartada que esta entrada dejaba anotada como pendiente ya no lo es: la sustituye esa otra
+entrada.**
 
-**Por qué no `ext`.** `ext` ya es un mapa de clave declarada a texto, pero su papel declarado es
-guardar la identidad de la tarea en otro sistema, no agrupar, y no tiene ningún filtro en `biso ls` ni
-vocabulario derivado. Usarlo para agrupar habría exigido, o bien construirle un filtro y un vocabulario
-derivado que hoy no tiene, que es exactamente lo que ya hacía `milestone` y por tanto no ahorra nada,
-o bien agrupar en el board por una dimensión que no se puede consultar por ningún otro sitio de la
-herramienta, una asimetría nueva entre lo que se ve y lo que se puede pedir por la línea de comandos.
+---
+
+## Las etiquetas con ámbito
+
+**La decisión.** Una etiqueta que contiene `:` es una etiqueta con ámbito. Su clave es el texto anterior
+a los primeros dos puntos y su valor es el resto, y el separador, uno o dos puntos, decide cuántos
+valores de esa clave admite una tarea: `clave:valor` admite varios y `clave::valor` admite como mucho
+uno. La clave y el valor no pueden estar vacíos y el valor no puede empezar ni terminar en `:`; cualquier
+otra forma con `:` (`a:`, `:a`, `a:::b`) es `malformed_label`, código 2. La clave se compara plegando
+mayúsculas y minúsculas en todas partes, y el separador no cuenta al comparar dos etiquetas por su
+valor, así que `milestone:m1` y `milestone::m1` son la misma etiqueta al consultar y al quitar. Se
+consulta por clave con `--label clave:` (o `--label clave::`, que es lo mismo), que encuentra cualquier
+valor de esa clave y se acepta también en `--label-or`. Y la lista `labels` de la configuración puede
+declarar claves y valores, y con eso restringir lo que se escribe, sin que exista ninguna clave de
+configuración nueva.
+
+**Escribir.** `--add-labels k::v` deja a `k::v` como única etiqueta de la clave `k` en la tarea: quita
+las demás de esa clave, sean `k:x` o `k::y`, y avisa nombrando cada una que quitó. `--add-labels k:v`
+sobre una tarea que lleva `k::x` es error 6, porque el estado guardado no lo permite, y el mensaje
+propone quitar primero la exclusiva. Dentro de una misma llamada, `k:a` junto a `k::b` es error 2 sin
+mirar el orden, y dos exclusivas de la misma clave dejan la última con un aviso. La comprobación se hace contra el estado que queda después de aplicar los
+quitar de esa llamada, así que `--rm-labels k::1 --add-labels k:2` en una sola línea funciona. La misma
+regla vale para cada línea de un lote de `biso new --from`. `--rm-labels k:v` quita `k::v` y al revés.
+
+**Consultar.** `--label k:` y `--label k::` significan cualquier etiqueta de la clave `k`, con cualquier
+valor y cualquier separador, y se unen con `y` a los demás `--label` como hoy. Como `a:` y `a::` nunca
+son una etiqueta guardable, esa forma queda libre como sintaxis de filtro sin chocar con ninguna
+etiqueta real. Una clave que el tablero no tiene es error 3 con las claves más parecidas, y
+`--unchecked` apaga esa comprobación igual que las demás de etiquetas. El JSON de una tarea no lleva
+ningún campo derivado por clave: quien lea `labels` parte por los primeros dos puntos.
+
+**La lista `labels` de la configuración.** Vacía, que es como nace, deja pasar cualquier cosa. Con
+entradas, cada una es de una de tres formas: una etiqueta plana (`pepe`), que solo se ofrece, por
+ejemplo a una interfaz que muestre las etiquetas al crear una tarea, y no restringe nada; un par exacto
+(`size::m`), que restringe la clave `size` a los valores declarados y fija su separador; y una clave
+abierta (`milestone::`), que no restringe el valor y fija el separador. Una etiqueta que ninguna entrada
+nombra sigue siendo libre. Escribir un valor que una clave restringida no declara, o la clave con el
+otro separador, es error 3, porque es un valor bien formado que el tablero no reconoce, y el mensaje
+lista los valores que esa clave admite. Una misma clave no puede aparecer en la lista con los dos
+separadores, ni como clave abierta y con valores exactos a la vez. `biso config set labels` falla si
+alguna tarea lleva un valor o un separador que la lista nueva prohíbe, y quitar una etiqueta plana no
+falla nunca porque no restringía. `biso doctor` señala lo guardado que la lista no cubre. Una clave
+declarada cuenta como conocida al consultar aunque ninguna tarea la use todavía. El mensaje de arranque
+no lista la clave `labels`: un agente que quiera verla tiene `biso config get labels`, y el error de una
+clave restringida ya dice qué valores admite.
+
+**Agrupar.** El prefijo de una etiqueta con ámbito es un tercer eje de agrupación válido para
+`biso board`, junto a `parent` y `type`. Arrastrar una tarea de un grupo a otro no escribe su orden
+sino el campo por el que se agrupa: otra columna cambia `status`, el grupo de otro padre cambia `parent`,
+otro grupo de tipo cambia `type` y otro valor de una clave con ámbito cambia esa etiqueta; moverse
+dentro de un grupo, en cambio, reordena (["El orden manual es una clave de texto"](#el-orden-manual-es-una-clave-de-texto)).
+Nada de esto está en la versión 1.0, porque `biso board` queda fuera de ella.
+
+**Descartado: una lista `labels` cerrada entera.** Que, con entradas en la lista, cualquier etiqueta que
+no case con ninguna sea error. Quien solo quisiera declarar `milestone::` tendría que listar además
+todas las demás etiquetas que quisiera admitir, y las etiquetas planas de la lista existen para
+ofrecerse, no para prohibir el resto.
+
+**Descartado: una clave de configuración nueva para declarar las claves de ámbito.** La lista `labels`
+ya existía, ya era el sitio de las etiquetas declaradas, y con esta decisión solo gana el papel de
+restringir por clave. Una clave nueva habría sido la vigésima primera, con su validación, su flag en
+`biso init`, su presencia en `biso snapshot` y su superficie en `biso config`.
+
+**Descartado: dejar las claves sin declarar del todo, o declararlas siempre.** Sin ninguna declaración
+posible, una clave mal escrita al guardar crea una clave nueva sin avisar y la cardinalidad queda a
+merced del primer uso; con declaración obligatoria, el tablero pierde la libertad que las etiquetas
+tienen hoy. La lista opcional da las dos cosas: libre si está vacía, restringida en lo que nombra.
+
+**Descartado: que `k:v` sustituya a `k::x`, o que `k::v` sobre `k:x` falle.** La asimetría es
+deliberada. Escribir `::` es declarar la intención de que sea el único valor, así que sustituir es lo
+esperado. Escribir `k:v` sobre una clave que ya es exclusiva es casi siempre un dos puntos olvidado, y
+aceptarlo rompería la exclusividad en silencio.
+
+**Descartado: que añadir una exclusiva sobre otra sea error.** Pasar la tarea al valor siguiente
+(`milestone::m1` a `milestone::m2`) es un solo gesto, y con un error habría que quitar antes la vieja.
+El aviso, que nombra lo que se quitó, deja el mismo rastro.
+
+**Descartado: consultar con un comodín, con un flag nuevo o con la clave a secas.** `--label 'k:*'`
+falla en zsh sin comillas con "no matches found" antes de llegar a `biso`. Un flag `--label-key` suma
+flags a la familia. `--label k` a secas choca con una etiqueta plana que se llame `k`. La
+forma `k:` no necesita nada de eso, porque queda libre.
+
+**Descartado: un campo derivado en el JSON con el valor de cada clave.** Es superficie de contrato que
+se congela en la 1.0, y quien lo necesita, que es una vista agrupada, ya tiene `labels` entera y la
+regla de análisis de esta entrada. Añadirlo después es un cambio compatible.
+
+**Descartado: no plegar la clave, o tratar las formas raras como etiquetas planas.** Con la clave sin
+plegar, `Milestone::a` y `milestone::b` en la misma tarea saltarían la exclusividad tecleando una
+mayúscula. Con `milestone::` (el valor olvidado) admitida como etiqueta plana, un error de tecleo
+entraría en silencio, que es justo lo que el vocabulario cerrado del resto del programa evita.
+
+**Por qué ahora.** El contrato de estabilidad (["El contrato de estabilidad"](../spec/estabilidad.md))
+obliga a partir de la versión 1.0, que no se ha publicado. Cambiar el alfabeto (`a:` deja de ser una
+etiqueta legal), añadir la regla de análisis y dar significado a una clave de configuración que ya
+existía es gratis hoy y costaría un ciclo de aviso después.
 
 ---
 
@@ -330,9 +413,9 @@ que pasan de seis a cinco. También toca la tabla de
 correspondencia con otros modelos, donde la cobertura se recalcula sin el campo retirado
 (["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Y hay una pérdida que
 se acepta a propósito: al importar desde Backlog.md ya no queda constancia de cuál de las dos listas
-era cada puntero, así que el conversor que reconstruya el formato de Backlog.md tendrá que guardar en
-`ext` de qué campo venía cada valor si quiere la ida y vuelta exacta, igual que se propuso para los
-identificadores con punto. Se hace ahora porque `biso` todavía no se ha publicado: no hay ningún
+era cada puntero, así que el conversor que reconstruya el formato de Backlog.md tendrá que guardar por
+su cuenta, por ejemplo en etiquetas con ámbito, de qué campo venía cada valor si quiere la ida y vuelta
+exacta. Se hace ahora porque `biso` todavía no se ha publicado: no hay ningún
 tablero ajeno con el campo escrito que migrar.
 
 ---
@@ -401,10 +484,136 @@ pasan de cinco a cuatro. La tabla de correspondencia con otros modelos se recalc
 total (["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Y hay la
 misma pérdida que se aceptó con `documentation`: al importar desde Backlog.md ya no queda constancia de
 cuál de las tres listas era cada puntero, así que el conversor que reconstruya el formato de Backlog.md
-tendrá que guardar en `ext` de qué campo venía cada valor si quiere la ida y vuelta exacta. Se hace
+tendrá que guardarlo por su cuenta, por ejemplo en etiquetas con ámbito, si quiere la ida y vuelta exacta. Se hace
 ahora porque el contrato de estabilidad (["El contrato de estabilidad"](../spec/estabilidad.md)) obliga a
 partir de la versión 1.0, que no se ha publicado: no hay ningún tablero ajeno con el campo escrito que
 migrar.
+
+---
+
+## Se retira `ext`
+
+**La decisión.** La tarea no tiene ningún campo de extensión. `ext` se retira de la especificación
+entera, con sus flags `--ext`, `--rm-ext` y `--clear-ext`, su clave de configuración `extensions`, su
+paso propio en el orden de aplicación de una escritura, sus cuatro identificadores de error
+(`malformed_extension_key`, `unknown_extension_key`, `undeclared_extension_key` y `duplicate_ext_key`),
+su comprobación de `biso doctor` y la página de campos externos. No hay ningún campo que lo sustituya:
+un valor corto asociado a una clave se guarda como etiqueta con ámbito
+(["Las etiquetas con ámbito"](#las-etiquetas-con-ámbito)), que sí se puede consultar.
+
+**Qué cuesta, y qué rendía.** `ext` no rendía nada que se pudiera consultar: no entra en ningún cálculo,
+no lo alcanza ninguno de los filtros de `biso ls` ni la búsqueda de texto, y solo se guardaba, se
+imprimía en `biso get` y viajaba en la exportación. Costaba una tabla propia y con ella una de las cinco
+consultas de una lectura completa del tablero, que es el camino caliente de `biso ls` y `biso prime`;
+uno de los nueve pasos del orden de aplicación de una escritura; una de las veinte claves de
+configuración, con su validación de vocabulario en uso, su flag en `biso init` y su presencia en la
+simetría de `biso snapshot` con `biso init --from`; cuatro identificadores de error; la única forma
+`clave=valor` de toda la línea de comandos, con una regla de corte contraria a la de
+`--set-comment-date`; uno de los dos alfabetos cerrados del programa; unas 158 líneas de Go fuera de
+pruebas y otras 155 dentro; quince páginas de la especificación que lo nombran; y 33 bytes de la parte
+fija del mensaje de arranque. Una medición de 2026-09-21 sobre las 535 tareas de seis tableros de
+Backlog.md no encontró ni una vez la necesidad que el campo decía cubrir. Backlog.md no tiene campo de
+extensión, así que ese cero no prueba nada por sí solo: lo que decide es que el campo cuesta todo lo
+anterior y no rinde nada consultable.
+
+**Qué se pierde.** El valor de una etiqueta tiene el alfabeto cerrado de ["El juego de caracteres de un
+token"](#el-juego-de-caracteres-de-un-token), sin espacios, sin `/`, sin `#` y sin una URL, mientras que
+el de `ext` era texto libre de una línea. Ya no hay dónde guardar un texto libre por clave. Y `ext` era
+la única puerta de salida de un modelo por lo demás cerrado: lo próximo que alguien quiera guardar en
+una tarea, si no cabe en una etiqueta con ámbito, se decide y se especifica como campo. Se acepta.
+
+**Descartado: dejarlo tal cual**, como un campo de constancia sin consulta. Seguiría pagando la lista
+entera de costes para no rendir nada consultable.
+
+**Descartado: abaratarlo**, con el mapa en una columna de texto de la tabla `task` y con el vocabulario
+de claves abierto. La columna quita la tabla y una consulta del camino caliente, pero deja un segundo
+mecanismo de clave y valor junto al de las etiquetas con ámbito. Y abrir el vocabulario quita la clave
+`extensions`, su validación y parte de sus errores, a costa de que una clave mal escrita deje de
+fallar en el momento, que es lo que el vocabulario cerrado existe para evitar y va contra la regla de
+que en un campo de vocabulario cerrado un valor que no existe es siempre un error.
+
+**Por qué ahora.** El contrato de estabilidad (["El contrato de estabilidad"](../spec/estabilidad.md))
+obliga a partir de la versión 1.0, que no se ha publicado: retirarlo después costaría un ciclo de aviso
+de al menos una versión menor, cuatro identificadores de error congelados que seguir emitiendo y una
+clave de configuración que seguir leyendo. Hoy es gratis.
+
+---
+
+## El orden manual es una clave de texto
+
+**La decisión.** El orden manual de una tarea, `ordinal`, es una clave de texto opcional y no un número.
+Se compone de los símbolos `0-9a-z`, no puede acabar en `0` y se compara por puntos de código, como
+`--sort title`, de modo que entre dos claves cualesquiera siempre cabe otra y siempre hay una menor y una
+mayor que cualquiera dada. No se puede teclear: se escribe con `--above <ref>` y `--below <ref>`, que
+colocan la tarea justo antes o justo después de la vecina nombrada, y con `--ordinal first` y
+`--ordinal last`, que la colocan delante o detrás de todas las que tienen clave, y se quita con
+`--clear-ordinal`. La clave cruda solo viaja en el JSON (la salida de `biso ls` y `biso get`, la
+exportación y el lote de `biso new --from`), y por eso la simetría entre `export` y `new --from` se
+conserva. Cada tarea tiene una sola clave, global, y los grupos de una vista son solo presentación.
+
+**El punto medio.** Entre dos claves se elige el centro del alfabeto y no el sucesor, para que las claves
+crezcan despacio. El caso peor es meter siempre una tarea en el mismo hueco, y añade un carácter cada
+cinco inserciones más o menos. La longitud no tiene tope y no hay renumerado: no hace falta, y si algún
+día hiciera falta sería un comando nuevo, que es un añadido compatible.
+
+**Las vecinas y los extremos.** `--above` sobre la primera tarea con clave y `--below` sobre la última no
+son error, porque siempre hay una clave menor y una mayor. Una vecina sin clave es error 6, porque las
+tareas sin clave van detrás de todas las que la tienen, ordenadas por urgencia, y "justo debajo de una"
+no se puede cumplir escribiendo solo la clave de la tarea que se mueve; el mensaje propone
+`biso set <vecina> --ordinal last` y luego `--below`. `--above`, `--below` y `--ordinal` son
+incompatibles entre sí (error 2), y una tarea no puede ser su propia vecina (error 2). `biso set A B
+--below C` deja `C`, `A`, `B`, y con `--above C` deja `A`, `B`, `C`. `--sort ordinal` es orden ascendente
+por puntos de código con las tareas sin clave al final, como hoy, y el orden por defecto de `biso ls` no
+cambia. La clave de una línea de lote se valida (el alfabeto y el `0` final) con un error propio en vez
+del `invalid_number` del entero.
+
+**Reordenar dentro de un grupo.** Como la clave es global, reordenar una tarea dentro de un grupo de
+`biso board` escribe una clave entre las vecinas de ese grupo, y la posición global de la tarea puede
+moverse como consecuencia. Es el precio de tener una sola clave, y es barato: en la medición de
+2026-09-21 solo siete de las 535 tareas de seis tableros de Backlog.md tenían un reordenamiento manual de
+verdad. Cruzar de un grupo a otro no reordena, sino que edita el campo por el que se agrupa (["Las
+etiquetas con ámbito"](#las-etiquetas-con-ámbito)). Nada de esto está en la versión 1.0, porque
+`biso board` queda fuera de ella y la línea de comandos no arrastra nada.
+
+**Descartado: un entero con huecos.** Hace falta que algo asigne los valores espaciados, como hace
+Backlog.md con sus múltiplos de 1000, y un paso de renumerado que reparta huecos iguales cuando se
+agoten, que hoy no existe. Quien se encierre con enteros consecutivos solo puede ir tarea por tarea.
+
+**Descartado: un decimal.** Un `float64` tiene 52 bits de mantisa, así que entre dos valores caben unas
+52 bisecciones y ni una más, y el caso peor, mover siempre una tarea al mismo sitio, es el más común. No
+elimina el renumerado, lo pospone y lo vuelve impredecible. Y la simetría entre `biso export` y
+`biso new --from` es una prueba de la suite, y un `float64` necesita 17 dígitos significativos para
+volver bit a bit, mientras que una cadena vuelve exacta sin especificar nada.
+
+**Descartado: una clave de orden por eje de agrupación**, es decir, un mapa de clave de eje a clave de
+orden, con el eje nombrado por un prefijo de etiqueta. Es la única que resuelve el problema de la
+posición global en vez de aceptar su consecuencia, y no se descarta por ser una mala idea: Linear tiene
+dos claves de orden por tarea (`subIssueSortOrder` y `sortOrder`, en ["Compatibilidad de
+modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Se descarta ahora por lo que cuesta un mapa
+por tarea, con claves que se quedan obsoletas en silencio cuando cambia el campo por el que se agrupaba
+y un mapa que crece sin límite si los ejes son abiertos, y porque es un añadido estricto sobre esta
+decisión: la clave global es exactamente la caída hacia atrás que necesitaría, así que pasar a ella
+después de la 1.0 es añadir un campo y no cambiar un tipo.
+
+**Descartado: el orden manual solo en la vista sin agrupar.** Dentro de un grupo mandaría el orden por
+defecto y no se podría reordenar a mano.
+
+**Descartado: teclear la clave cruda con `--ordinal <clave>`.** Nadie debería teclear `m8`, y aceptarlo
+abre la puerta a claves mal formadas que hay que validar en un flag además de en el lote. `first` y
+`last` cubren los extremos y el arranque de un tablero sin ninguna clave, y al ser palabras no chocan con
+ningún símbolo del alfabeto.
+
+**Descartado: `0-9A-Za-z` como alfabeto.** Gana menos de un bit por carácter frente a `0-9a-z`, a cambio
+de una clave con mayúsculas que depende del sistema donde se copie.
+
+**Descartado: dar clave a la vecina sin clave, o fijar la posición y avisar.** Lo primero escribe en una
+tarea que no se nombró como destino de la escritura y la sube por encima de otras sin clave. Lo segundo
+hace algo distinto de lo pedido y solo lo avisa.
+
+**Por qué ahora.** Cambiar el tipo de `ordinal` es un cambio del contrato JSON y del nombre de un flag,
+y el contrato de estabilidad (["El contrato de estabilidad"](../spec/estabilidad.md)) obliga a partir de
+la versión 1.0, que no se ha publicado. Hoy es gratis. El conversor de Backlog.md, que importa múltiplos
+de 1000, puede repartir claves uniformes en el mismo orden: 535 tareas caben en dos caracteres.
 
 ---
 
