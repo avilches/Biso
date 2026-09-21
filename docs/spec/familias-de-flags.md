@@ -84,7 +84,6 @@ a añadir un elemento de una lista es una operación con un resultado bien defin
 | etiquetas | `--add-labels` | `--rm-labels` | `--clear-labels` | `--replace-labels` |
 | personas asignadas | `--add-assignees` | `--rm-assignees` | `--clear-assignees` | `--replace-assignees` |
 | referencias | `--add-refs` | `--rm-refs` | `--clear-refs` | `--replace-refs` |
-| documentación | `--add-docs` | `--rm-docs` | `--clear-docs` | `--replace-docs` |
 | dependencias | `--add-deps` | `--rm-deps` | `--clear-deps` | `--replace-deps` |
 | ficheros tocados | `--add-files` | `--rm-files` | `--clear-files` | `--replace-files` |
 
@@ -110,8 +109,7 @@ Y esta, en cambio, deja solo `parser` y `urgent`, porque sustituye la lista y `c
 biso set MYP-11 --replace-labels parser,urgent
 ```
 
-Una etiqueta o una persona nunca llevan coma, pero una referencia, una documentación o un fichero
-tocado sí pueden, y entonces la coma se escapa con `\,`
+Una etiqueta o una persona nunca llevan coma, pero una referencia o un fichero tocado sí pueden, y entonces la coma se escapa con `\,`
 (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
 `--add-refs 'notes/a\,b.md'` añade una sola referencia, `notes/a,b.md`.
 

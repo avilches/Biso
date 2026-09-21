@@ -27,7 +27,7 @@ import (
 //     difference into SQL would only mean scanning every column through a
 //     nullable type. The one exception is task.ordinal, where 0 is a value
 //     a caller can legitimately give (int >= 0), so absence needs NULL.
-//   - **The six list<string> fields share one table**, task_list_item,
+//   - **The five list<string> fields share one table**, task_list_item,
 //     keyed by the field's name, instead of one table each. They have the
 //     same shape (ordered values with no structure of their own,
 //     addressed by their value and never by position), the CHECK keeps the
@@ -79,7 +79,7 @@ var migrations = []string{
 		task_id  TEXT    NOT NULL REFERENCES task(id) ON DELETE CASCADE,
 		field    TEXT    NOT NULL CHECK (field IN (
 			'assignees', 'labels', 'dependencies',
-			'references', 'documentation', 'modifiedFiles'
+			'references', 'modifiedFiles'
 		)),
 		position INTEGER NOT NULL,
 		value    TEXT    NOT NULL,

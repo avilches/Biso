@@ -117,7 +117,6 @@ func sampleTask() *model.Task {
 		Labels:         []string{"parser", "crlf"},
 		Dependencies:   []string{"MYP-4", "MYP-5"},
 		References:     []string{"docs/bugs/BUG-02.md"},
-		Documentation:  []string{"docs/spec/index.md"},
 		ModifiedFiles:  []string{"internal/diff/diff.go"},
 		Due:            time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
 		Ordinal:        &ordinal,
@@ -783,7 +782,7 @@ func TestATargetedReadOfAnUndecodableTaskIsAnError(t *testing.T) {
 
 // TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow covers the other
 // way a row stops being a task: a name in task_list_item that is not one
-// of the six list fields. The schema's CHECK keeps biso itself from
+// of the five list fields. The schema's CHECK keeps biso itself from
 // writing one, so it can only arrive from outside, like the dates above.
 func TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "board.sqlite")

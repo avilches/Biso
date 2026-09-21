@@ -148,6 +148,60 @@ func TestBatchAllowsARepeatedKeyInsideDefinitionOfDone(t *testing.T) {
 	}
 }
 
+func TestBatchMergesDocumentationIntoReferences(t *testing.T) {
+	h := newHarness(t)
+	result, err := h.batch(
+		`{"title":"Two pointers","references":["docs/a.md","notes/b.md"],` +
+			`"documentation":["docs/c.md","docs/a.md","https://example.com/d"]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := h.load("MYP-1")
+	// The documentation goes after the references, in the order it came,
+	// and a value the references already had is kept once.
+	want := []string{"docs/a.md", "notes/b.md", "docs/c.md", "https://example.com/d"}
+	if strings.Join(task.References, "|") != strings.Join(want, "|") {
+		t.Errorf("references = %v, want %v", task.References, want)
+	}
+	if len(result.Warnings) != 1 || result.Warnings[0].Code != "imported_documentation_merged" {
+		t.Fatalf("warnings = %v, want one imported_documentation_merged", result.Warnings)
+	}
+	if got := result.Warnings[0].Message; got != "line 1: 3 documentation items imported as references" {
+		t.Errorf("the warning says %q", got)
+	}
+	if got := result.Warnings[0].Fields; got["line"] != 1 || got["count"] != 3 {
+		t.Errorf("the warning fields = %v", got)
+	}
+}
+
+func TestBatchMergesOneDocumentationItemWithTheSingularWarning(t *testing.T) {
+	h := newHarness(t)
+	result, err := h.batch(`{"title":"One pointer","documentation":["docs/only.md"]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := h.load("MYP-1").References; len(got) != 1 || got[0] != "docs/only.md" {
+		t.Errorf("references = %v", got)
+	}
+	if len(result.Warnings) != 1 ||
+		result.Warnings[0].Message != "line 1: 1 documentation item imported as a reference" {
+		t.Errorf("warnings = %v", result.Warnings)
+	}
+}
+
+func TestBatchDoesNotWarnForAnEmptyOrAbsentDocumentation(t *testing.T) {
+	h := newHarness(t)
+	result, err := h.batch(
+		`{"title":"Empty","documentation":[]}`,
+		`{"title":"Null","documentation":null}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Warnings) != 0 {
+		t.Errorf("warnings = %v, and nothing was merged", result.Warnings)
+	}
+}
+
 func TestBatchKeepsTheKeysAndTheDatesOfTheComments(t *testing.T) {
 	h := newHarness(t)
 	if _, err := h.batch(`{"title":"With comments","comments":[` +

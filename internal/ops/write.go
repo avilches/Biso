@@ -410,13 +410,12 @@ const (
 )
 
 // listSuffixes maps the tail of a list flag to the field it writes. The four
-// prefixes and these six suffixes are the whole family: there is no field
+// prefixes and these five suffixes are the whole family: there is no field
 // that breaks the shape, which is what `biso set --help` promises.
 var listSuffixes = map[string]model.ListField{
 	"labels":    model.FieldLabels,
 	"assignees": model.FieldAssignees,
 	"refs":      model.FieldReferences,
-	"docs":      model.FieldDocumentation,
 	"deps":      model.FieldDependencies,
 	"files":     model.FieldModifiedFiles,
 }
@@ -537,8 +536,6 @@ func pluralItems(count int, field string) string {
 	switch field {
 	case "dependencies":
 		return "dependency"
-	case "documentation":
-		return "documentation"
 	}
 	return strings.TrimSuffix(field, "s")
 }

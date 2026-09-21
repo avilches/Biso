@@ -25,12 +25,14 @@ web, así que cada etiqueta con espacio sería una comilla que ese agente tendr�
 siempre, para ganar exactamente lo mismo que ya ofrecen `-` y `_`. Y olvidar la comilla no siempre
 falla alto: según qué flags haya alrededor, la palabra suelta puede convertirse en un argumento
 inesperado (el caso bueno, error 2) o colarse donde no tocaba. Cerrar el alfabeto quita el problema de
-raíz en vez de pedir disciplina. `references`, `documentation`, `dependencies` y `modifiedFiles` no
+raíz en vez de pedir disciplina. `references`, `dependencies` y `modifiedFiles` no
 llevan esta restricción, y una clave de `ext` lleva un tercer alfabeto distinto; el porqué de cada una
 está más abajo.
 
 **El problema que la motiva.** La especificación no restringía ningún carácter en `labels`,
-`assignees`, `references`, `documentation`, `dependencies`, `modifiedFiles` ni en una clave de `ext`:
+`assignees`, `references`, `documentation`, `dependencies`, `modifiedFiles` ni en una clave de `ext`
+(`documentation` era entonces un campo distinto de `references` y ya no existe, ver
+["Se retira `documentation` y `references` queda como único campo de punteros"](#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)):
 la única regla escrita era que una coma dentro de un valor se escapa con `\,`, lo que de hecho dejaba
 pasar espacios, saltos de línea y cualquier símbolo. `labels` y `assignees` se imprimen en las columnas
 de ancho fijo de `biso ls` y `biso prime`, así que un espacio o un salto de línea dentro de uno de esos
@@ -52,18 +54,17 @@ una línea de comandos, que es exactamente la situación de biso:
 Cerrar el alfabeto de estos dos campos tiene una consecuencia que también hay que anotar: **el escape
 de coma deja de aplicarles**. La única razón para escapar una coma es poder meterla como contenido
 literal de un valor, y una coma no está en el alfabeto cerrado de `labels` ni de `assignees`, así que
-ahí nunca hay una coma legítima que escapar. El escape sigue haciendo falta para `references`,
-`documentation` y `modifiedFiles`, que siguen siendo texto libre.
+ahí nunca hay una coma legítima que escapar. El escape sigue haciendo falta para `references` y
+`modifiedFiles`, que siguen siendo texto libre.
 
-**Por qué `references`, `documentation`, `dependencies` y `modifiedFiles` quedan fuera.** De los
-campos de lista con coma que no son `labels` ni `assignees`, tres (`references`, `documentation`
-y `modifiedFiles`) guardan contenido cuyo alfabeto no lo decide biso: una referencia o una
-documentación pueden ser una URL, y un fichero tocado es una ruta del sistema de ficheros. Cerrarles
-el alfabeto dejaría fuera casos legítimos (`/`, `?`, `#` de una URL; `/` de una ruta) a cambio de nada,
-porque ninguno de los tres se imprime en una columna de ancho fijo con otros de su misma clase de la
-forma en que lo hacen las etiquetas. El cuarto, `dependencies`, no guarda ni una URL ni una ruta y no
-necesita esta razón: no necesita ninguna regla nueva porque ya tiene la suya, distinta de la de los
-otros tres. Cada elemento es un `<ref>` y lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](../spec/referencias.md), que ya distingue un identificador
+**Por qué `references`, `dependencies` y `modifiedFiles` quedan fuera.** De los
+campos de lista con coma que no son `labels` ni `assignees`, dos (`references` y `modifiedFiles`)
+guardan contenido cuyo alfabeto no lo decide biso: una referencia puede ser una URL, y un fichero
+tocado es una ruta del sistema de ficheros. Cerrarles el alfabeto dejaría fuera casos legítimos
+(`/`, `?`, `#` de una URL; `/` de una ruta) a cambio de nada, porque ninguno de los dos se imprime en
+una columna de ancho fijo con otros de su misma clase de la forma en que lo hacen las etiquetas. El
+tercero, `dependencies`, no guarda ni una URL ni una ruta y no necesita esta razón: no necesita
+ninguna regla nueva porque ya tiene la suya, distinta de la de los otros dos. Cada elemento es un `<ref>` y lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](../spec/referencias.md), que ya distingue un identificador
 mal formado de una consulta de texto libre.
 
 **Por qué la clave de `ext` es un tercer alfabeto y no el mismo que `labels`.** Una clave de `ext`
@@ -271,6 +272,67 @@ tiene tope duro (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presup
 Se hace ahora porque no hay ni una línea de código Go escrita, así que el cambio es enteramente de
 documentación; cada día que el campo siguiera en la especificación sería un día más de superficie que
 después habría que implementar, probar y mantener para algo que nadie rellena.
+
+---
+
+## Se retira `documentation` y `references` queda como único campo de punteros
+
+**La decisión.** Una tarea tiene un solo campo de punteros, `references`, y un documento es una
+referencia más. El campo `documentation` no existe, ni sus flags (`--add-docs`, `--rm-docs`,
+`--clear-docs`, `--replace-docs`), ni su línea `docs` en la ficha de `biso get`, ni su clave en el
+JSON, ni su línea en la rejilla `FIELD FLAGS` del mensaje de arranque. La única huella que queda es de
+entrada: un lote de `biso new --from` que traiga `documentation` no falla, sino que añade cada
+elemento al final de `references` y avisa (sección [`biso new`](../spec/cmd/new.md)). Se conserva
+`references` y no `documentation` porque su palabra abarca el conjunto: un informe de bug o una URL no
+son documentación, y la ruta de una página de la especificación sí es una referencia.
+
+**La medida que lo decide.** El 2026-09-20 se contaron las 88 tareas del tablero de este mismo
+proyecto: 34 usan `documentation`, 5 usan `references` y **ninguna usa las dos**. De las 5 que usan
+`references`, tres apuntan a rutas de la especificación, que es exactamente lo que ponen las otras 34
+en `documentation`; una lleva prosa y otra el identificador de otra tarea. Los dos campos se llenan
+con la misma clase de contenido y nadie los ha usado a la vez, así que no hay ninguna tarea donde la
+distinción diga algo.
+
+**Por qué no había distinción que conservar.** La especificación nunca definió en qué se
+diferenciaban, y ninguna de las dos listas se valida, se resuelve a una tarea, se filtra ni entra en
+ningún cálculo: las dos son texto libre que se guarda, se imprime y viaja en la exportación
+(["Los punteros: `references`"](../spec/modelo-de-datos/relaciones.md#los-punteros-references)).
+Backlog.md, de donde `biso` copió los dos campos, tampoco los distingue: su ayuda dice `add reference
+URL or file path` para uno y `add documentation URL or file path` para el otro. Y de las siete
+herramientas de ["Estado del arte"](../estado-del-arte/index.md), Backlog.md es la única que tiene
+estos dos campos: Linear y Trello tienen `attachments`, que es un solo objeto y no dos, y las otras
+cuatro no tienen nada. Dos nombres para el mismo concepto es justo lo que prohíbe el principio 2 de
+la especificación (["Los principios"](../spec/principios.md)).
+
+**Alternativa descartada: conservar los dos y definir la diferencia.** Por ejemplo, `documentation`
+para lo que gobierna el trabajo y `references` para lo que solo lo acompaña. Se descarta porque la
+definición tendría que inventarse ahora, sin ningún uso que la respalde (34 tareas frente a 5, y ni
+una con las dos), y porque una frontera así obligaría a quien escribe a decidir en cada puntero de
+qué lado cae, para un dato que ni se valida ni se consulta.
+
+**Alternativa descartada: conservar `documentation` y retirar `references`.** Es la que más tareas de
+este tablero usan hoy, pero su palabra es más estrecha: un informe de bug, una dirección web o el
+identificador de otra tarea con la que hay que ser coherente no son documentación, y con ese nombre
+el campo pediría un segundo para todo lo demás, que es donde se empezó.
+
+**Alternativa descartada: una lista de adjuntos con nombre, al estilo de `attachments`.** Es lo que
+tienen Linear y Trello, y resolvería de paso cualquier separación futura, pero es otro objeto con
+título y dirección por elemento, con sus propios flags y su propia forma en la ficha y en el JSON, para
+un campo que hoy es una lista de textos que nadie interpreta. Si algún día hace falta distinguir la
+naturaleza de un puntero, el sitio por donde entrar es este.
+
+**Qué cuesta, y qué se libera.** La retirada quita de la rejilla `FIELD FLAGS` del mensaje de arranque la línea de los flags
+de `documentation`. El mensaje tiene un tope duro de 5.504 bytes (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño))
+y con el tablero del ejemplo pasa de 5.089 a 5.038 bytes, 51 menos, todos de la parte fija, que baja
+de 3.600 a 3.549 de los 3.840 que tiene asignados. El campo deja además de contar entre los de lista,
+que pasan de seis a cinco. También toca la tabla de
+correspondencia con otros modelos, donde la cobertura se recalcula sin el campo retirado
+(["Compatibilidad de modelos"](../estado-del-arte/compatibilidad-de-modelos.md)). Y hay una pérdida que
+se acepta a propósito: al importar desde Backlog.md ya no queda constancia de cuál de las dos listas
+era cada puntero, así que el conversor que reconstruya el formato de Backlog.md tendrá que guardar en
+`ext` de qué campo venía cada valor si quiere la ida y vuelta exacta, igual que se propuso para los
+identificadores con punto. Se hace ahora porque `biso` todavía no se ha publicado: no hay ningún
+tablero ajeno con el campo escrito que migrar.
 
 ---
 

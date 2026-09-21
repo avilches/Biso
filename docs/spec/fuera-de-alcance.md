@@ -17,6 +17,11 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   sus elementos en criterios, avisando de ello (["`biso new`"](cmd/new.md)). El porqué, con la medida
   que lo decide, está en
   ["Se retira la definición de hecho"](../decisiones/detalles.md#se-retira-la-definición-de-hecho).
+- **No hay un campo de documentación aparte de `references`.** Una tarea tiene un solo campo de
+  punteros, y un documento es una referencia más. La importación de `biso new --from` sí acepta la
+  clave `documentation` de un lote ajeno y funde sus valores en `references`, avisando de ello
+  (["`biso new`"](cmd/new.md)). El porqué, con la medida que lo decide, está en
+  ["Se retira `documentation` y `references` queda como único campo de punteros"](../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros).
 - **No hay contextos de sesión**, es decir, filtros por defecto guardados que cambien lo que devuelve
   una consulta sin que se vea en la línea de comandos.
 - **No hay recurrencia, ni seguimiento de tiempo, ni subtareas con numeración propia.** Una subtarea

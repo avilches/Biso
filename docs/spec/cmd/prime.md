@@ -76,7 +76,7 @@ Entra:
 
 - Las diez órdenes del ciclo de trabajo con su forma de uso. Quien no sabe que existe `biso finish`
   no va a escribir `biso finish --help`.
-- **Los nombres de todos los flags de campo**, en una rejilla de trece líneas.
+- **Los nombres de todos los flags de campo**, en una rejilla de doce líneas.
 - El vocabulario real de este tablero, con **el recuento por estado** y con la marca de cuál es el
   estado de las tareas nuevas, cuál el activo y cuál el terminal.
 - Las reglas que no son adivinables.
@@ -133,7 +133,6 @@ FIELD FLAGS  (same names, same meaning, in every command above that writes)
   --add-labels --rm-labels --clear-labels --replace-labels
   --add-assignees --rm-assignees --clear-assignees --replace-assignees
   --add-refs --rm-refs --clear-refs --replace-refs
-  --add-docs --rm-docs --clear-docs --replace-docs
   --add-deps --rm-deps --clear-deps --replace-deps
   --add-files --rm-files --clear-files --replace-files
   --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac
@@ -381,7 +380,7 @@ cada estado. El mensaje de arriba invita a crear la primera tarea, y ahí no ser
 
 `--full` añade al final del mensaje, después del párrafo de cierre y separado por una línea en
 blanco, la lista completa de los flags de campo. No sustituye a la rejilla `FIELD FLAGS`, que
-seguirá estando donde estaba: la rejilla da los nombres en trece líneas para que quepan en el
+seguirá estando donde estaba: la rejilla da los nombres en doce líneas para que quepan en el
 arranque, y esto los agrupa **por el campo que escriben y en el orden en que una escritura los
 aplica** (["Orden de aplicación dentro de una escritura"](../garantias.md#orden-de-aplicación-dentro-de-una-escritura)),
 que es lo que la rejilla no puede decir sin ocupar el triple.
@@ -391,7 +390,6 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
   labels              --clear-labels --replace-labels --rm-labels --add-labels
   assignees           --clear-assignees --replace-assignees --rm-assignees --add-assignees
   references          --clear-refs --replace-refs --rm-refs --add-refs
-  documentation       --clear-docs --replace-docs --rm-docs --add-docs
   dependencies        --clear-deps --replace-deps --rm-deps --add-deps
   modifiedFiles       --clear-files --replace-files --rm-files --add-files
   acceptanceCriteria  --clear-acs --rm-ac --add-ac --check-ac --uncheck-ac

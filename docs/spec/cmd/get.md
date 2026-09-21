@@ -57,7 +57,6 @@ created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     MYP-40
 lease      2026-09-06 15:40     holder     @claude
 refs       docs/bugs/BUG-02.md
-docs       -
 files      -
 ext        trello.card=5f2a8c1e3b9d4a7f6e0c2b81
 
@@ -93,7 +92,7 @@ La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la secci�
 Los encabezados de esta salida son un formato de presentación, no un formato de almacenamiento.
 
 **Cómo se escribe cada valor de ese bloque.** Una lista (`assignees`, `labels`, `depends`, `blocks`,
-`refs`, `docs`, `files`) va en una línea, con sus valores separados por coma y espacio; ninguno de
+`refs`, `files`) va en una línea, con sus valores separados por coma y espacio; ninguno de
 esos campos admite una coma dentro, así que el separador nunca se puede confundir con parte de un
 valor. `ext` se escribe igual, con sus pares `clave=valor` **ordenados por clave**, para que la misma
 tarea imprima siempre la misma ficha. Un campo sin valor es un guion, como en las columnas de
@@ -193,7 +192,6 @@ las repite todas para que sirva de esquema completo, verificable clave a clave:
       "parent": null,
       "dependencies": [],
       "references": ["docs/bugs/BUG-02.md"],
-      "documentation": [],
       "modifiedFiles": [],
       "due": null,
       "ordinal": null,

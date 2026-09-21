@@ -9,7 +9,7 @@ repetirse.
 |---|---|---|
 | `parent` | ¿de qué trabajo mayor es parte esto? | una tarea como mucho |
 | `dependencies` | ¿qué tiene que estar hecho antes que esto? | las que hagan falta |
-| `references`, `documentation` | ¿qué otra cosa hay que mirar? | las que hagan falta |
+| `references` | ¿qué otra cosa hay que mirar? | las que hagan falta |
 
 ## `parent`, la contención
 
@@ -50,11 +50,16 @@ Las dependencias son la única de estas relaciones que entra en un cálculo, con
 ["`biso ls`"](../cmd/ls.md), y la única que se valida al escribirla, con la existencia de la tarea y
 la detección de ciclos de ["Las familias de flags"](../familias-de-flags.md#campos-de-lista-que-admiten-coma).
 
-## Los punteros: `references` y `documentation`
+## Los punteros: `references`
 
 Todo lo demás que haya que mirar y que no cambie ni el alcance del trabajo ni su orden: la página
 que lo gobierna, el informe del que salió, una dirección web, incluso el identificador de otra tarea
 con la que hay que ser coherente.
+
+**Es un solo campo, y un documento es una referencia más.** No hay un segundo campo `documentation`
+para las páginas y las rutas de documentos: la distinción no la sostenía ningún uso ni ninguna
+regla, y por qué se retiró está en
+["Se retira `documentation` y `references` queda como único campo de punteros"](../../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros).
 
 Son texto libre, sin el alfabeto cerrado que sí tienen las etiquetas y las personas
 (["El juego de caracteres de un token"](../valores-de-entrada.md#el-juego-de-caracteres-de-un-token)).

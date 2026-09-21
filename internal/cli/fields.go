@@ -11,7 +11,7 @@ package cli
 // come out of the same four builders below, so a field that broke the shape
 // would be visible here as an entry that did not go through one of them.
 
-// listFields are the six fields of
+// listFields are the five fields of
 // docs/spec/familias-de-flags.md#campos-de-lista-que-admiten-coma, each with
 // its four flags. The name of the flag is the tail, the field of the JSON
 // envelope is the model's own name, and the two token fields close their
@@ -26,7 +26,6 @@ var listFieldFlags = []struct {
 	{suffix: "labels", field: "labels", alphabet: TokenAlphabet, noun: "label"},
 	{suffix: "assignees", field: "assignees", alphabet: TokenAlphabet, noun: "assignee"},
 	{suffix: "refs", field: "references"},
-	{suffix: "docs", field: "documentation"},
 	{suffix: "deps", field: "dependencies"},
 	{suffix: "files", field: "modifiedFiles"},
 }

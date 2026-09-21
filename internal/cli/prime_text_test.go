@@ -10,7 +10,7 @@ import (
 // from docs/spec/cmd/prime.md#la-salida-literal, and it is the one place of
 // the message where a list of flag names is written by hand: the block
 // `--full` adds is generated from the table of fields.go and cannot drift,
-// and the grid cannot be generated from that table because its thirteen
+// and the grid cannot be generated from that table because its twelve
 // lines are a layout, with their own grouping and their own order inside
 // each line, which no rule in the table carries.
 //

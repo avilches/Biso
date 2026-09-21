@@ -77,7 +77,7 @@ Para todo flag marcado como repetible:
 - Si además acepta lista, separar por comas acumula igual: `--add-labels a,b` deja las mismas dos.
 - Las dos formas se pueden mezclar.
 - **Una coma dentro de un valor se escapa con `\,`.** Es la única forma de meter una coma en una
-  referencia, en una documentación o en un fichero tocado. Una etiqueta, una persona asignada o una
+  referencia o en un fichero tocado. Una etiqueta, una persona asignada o una
   clave de `ext` nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
   (["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token)).
 - **Una barra invertida doble, `\\`, es una barra invertida literal**, y es la única forma de que un
@@ -101,9 +101,9 @@ error: --status given twice with different values: "In Progress" and "Done"
 
 `labels`, `assignees` y las claves de `ext` (["Campos externos"](modelo-de-datos/campos-externos.md#los-campos-externos)) son los únicos
 campos de esta sección cuyo alfabeto está cerrado. Los demás campos de lista de la tabla de
-["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma), es decir `references`, `documentation`,
+["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma), es decir `references`,
 `dependencies` y `modifiedFiles`, son texto libre y no tienen ninguna restricción de caracteres: una
-referencia o una documentación pueden ser una URL, y un fichero tocado es una ruta, y ninguna de las
+referencia puede ser una URL, y un fichero tocado es una ruta, y ninguna de las
 dos cosas admite cerrarle el alfabeto sin dejar fuera casos legítimos. `dependencies` tampoco la
 necesita: cada elemento es un `<ref>` y ya lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](referencias.md).
 

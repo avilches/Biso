@@ -255,7 +255,7 @@ func searchForRef(b *board.Board, all []*model.Task, query string,
 // description, the plan, the notes, the final summary, the text of the
 // acceptance criteria, the body of the comments, the body of the open
 // question and the labels. It does not look at the identifiers, the
-// references, the documentation or the extension fields.
+// references or the extension fields.
 //
 // It is exported because `biso ls --search` and `biso export --search` use
 // this very function and not a second implementation of the same list.

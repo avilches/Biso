@@ -28,12 +28,14 @@ type BatchParams struct {
 }
 
 // batchLine is one line of the file that passed its own validation: the
-// task it describes, the number of the line it came from, and the keys the
-// conversion of definitionOfDone created on it.
+// task it describes, the number of the line it came from, the keys the
+// conversion of definitionOfDone created on it, and how many elements of
+// documentation were merged into its references.
 type batchLine struct {
-	number  int
-	task    *model.Task
-	dodKeys []int
+	number   int
+	task     *model.Task
+	dodKeys  []int
+	docCount int
 }
 
 // NewBatch creates every task of an NDJSON file, all of them or none
@@ -61,6 +63,9 @@ func NewBatchOn(b *board.Board, env Env, p BatchParams) (*WriteResult, error) {
 	for _, line := range lines {
 		if len(line.dodKeys) > 0 {
 			result.Warnings = append(result.Warnings, dodWarning(line))
+		}
+		if line.docCount > 0 {
+			result.Warnings = append(result.Warnings, documentationWarning(line))
 		}
 	}
 	if p.DryRun {
@@ -123,6 +128,24 @@ func dodWarning(line *batchLine) Warning {
 		Code:    "imported_dod_merged",
 		Message: message,
 		Fields:  map[string]any{"line": line.number, "count": len(line.dodKeys)},
+	}
+}
+
+// documentationWarning is the one of
+// docs/spec/salida-y-terminal.md#notas-y-avisos for a line that merged at
+// least one element of documentation into its references. Like dodWarning it
+// names the line and not the task.
+func documentationWarning(line *batchLine) Warning {
+	message := fmt.Sprintf("line %d: %d documentation items imported as references",
+		line.number, line.docCount)
+	if line.docCount == 1 {
+		message = fmt.Sprintf("line %d: 1 documentation item imported as a reference",
+			line.number)
+	}
+	return Warning{
+		Code:    "imported_documentation_merged",
+		Message: message,
+		Fields:  map[string]any{"line": line.number, "count": line.docCount},
 	}
 }
 
@@ -254,7 +277,7 @@ func readBatchLine(cfg board.Config, line *batchLine, text string, now time.Time
 		return &model.Error{ExitCode: 3, Code: "invalid_line", Message: err.Error()}
 	}
 	t := d.task
-	line.task, line.dodKeys = t, d.dodKeys
+	line.task, line.dodKeys, line.docCount = t, d.dodKeys, d.docCount
 
 	if t.ID != "" {
 		if e := checkImportedID(cfg.TaskPrefix, t.ID); e != nil {
