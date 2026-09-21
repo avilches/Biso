@@ -196,9 +196,12 @@ TASK-10. Sus decisiones de implementación, que no se deducen de la especificaci
   es en todo campo de fecha.** `docs/spec/valores-de-entrada.md#el-valor-vacío` hace que la cadena
   vacía no sea nunca un valor que quien llama pueda guardar: en un escalar es un error, y vaciar un
   campo es un flag propio. Así que "" y "sin valor" no se pueden distinguir por nada observable, y
-  ni el modelo ni el esquema cargan con la diferencia; el contrato JSON los escribe como `null`. La
-  excepción es `ordinal`, donde 0 sí es un valor que se puede pedir, y por eso es la única columna
-  que admite `NULL` y el único campo del tipo `Task` que es un puntero.
+  ni el modelo ni el esquema cargan con la diferencia; el contrato JSON los escribe como `null`. **Ya
+  no hay excepción.** La tuvo `ordinal` mientras fue un entero, porque el 0 era un valor que se podía
+  pedir; desde que es la clave de texto de
+  ["El orden manual y su clave"](../../spec/modelo-de-datos/orden-manual.md), cuyo alfabeto no puede
+  escribir la cadena vacía, sigue la regla común: ninguna columna de la tabla `task` admite `NULL` y
+  ningún campo del tipo `Task` es un puntero por ese motivo.
 - **Los seis campos `list<string>` comparten una tabla**, `task_list_item`, con el nombre del campo
   como columna y un `CHECK` que la deja cerrada, en vez de una tabla por campo. Tienen la misma
   forma, el vocabulario cerrado se comprueba igual en SQL que en `internal/model`, y una sola tabla
