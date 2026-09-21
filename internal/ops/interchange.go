@@ -416,6 +416,22 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 	}
 	t.ID = in.ID
 
+	// The ordinal key is judged here and not by the model's validation,
+	// because this is the last place where a key written as "" can still be
+	// told from a key that was not written at all: inside a task the empty
+	// string already means "no key". A line that writes one is writing a
+	// value that is not a key, and the rule of
+	// docs/spec/cmd/new.md#el-modo-lote is that a key of the wrong shape is
+	// malformed_ordinal (the empty key of
+	// docs/spec/modelo-de-datos/orden-manual.md#qué-es-una-clave-de-orden).
+	// An explicit null, like a missing key, is a task with no place, which
+	// is why only a value that really came through is asked.
+	if in.Ordinal != nil {
+		if e := model.ValidateOrdinal(*in.Ordinal); e != nil {
+			return nil, e
+		}
+	}
+
 	for _, f := range []struct {
 		key   string
 		value *string

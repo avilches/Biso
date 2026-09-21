@@ -420,6 +420,78 @@ func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	}
 }
 
+// TestAStoredOrdinalThatIsNotAKeyMakesTheTaskUnreadable is the section
+// "Una clave guardada que no cumple la regla" of
+// docs/spec/modelo-de-datos/orden-manual.md: a key that does not keep its
+// form is not a new error of its own, it is a datum the program cannot
+// interpret, so the task is left out of the read and named in the second
+// list, and the board around it goes on being read.
+//
+// Getting the bad key in takes SQL with the column's CHECK turned off,
+// because that CHECK is what keeps this program from ever writing one. The
+// case is real all the same: a board written by an older binary holds
+// integers in that column, and SQLite's text affinity hands them back as
+// text, so the ones that are not keys arrive here.
+func TestAStoredOrdinalThatIsNotAKeyMakesTheTaskUnreadable(t *testing.T) {
+	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
+	defer done()
+
+	readable := &model.Task{Title: "Readable", Status: "To Do", Ordinal: "m"}
+	if err := tasks.Create(readable); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	for _, key := range []string{"3000", "m0", "M8"} {
+		bad := &model.Task{Title: "Written by something else", Status: "To Do"}
+		if err := tasks.Create(bad); err != nil {
+			t.Fatalf("Create: %v", err)
+		}
+		writeOrdinalPastTheCheck(t, tasks, bad.ID, key)
+	}
+
+	all, skipped, err := tasks.All()
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	if len(all) != 1 || all[0].ID != readable.ID {
+		t.Fatalf("the read answered %d tasks, want only %s", len(all), readable.ID)
+	}
+	if len(skipped) != 3 {
+		t.Fatalf("%d tasks were skipped, want three", len(skipped))
+	}
+	for _, s := range skipped {
+		if s.Reason == nil || s.Reason.Code != "undecodable_task" || s.Reason.Field != "ordinal" {
+			t.Errorf("%s was skipped as %+v, want an undecodable_task on ordinal", s.ID, s.Reason)
+		}
+		if !strings.Contains(s.Reason.Message, "is not an ordinal key") {
+			t.Errorf("the reason of %s is %q", s.ID, s.Reason.Message)
+		}
+	}
+
+	// Loading one by its identifier answers the same failure, which is what
+	// `biso get` and `biso doctor` print.
+	if _, err := tasks.Load(skipped[0].ID); err == nil {
+		t.Errorf("%s loaded with a key that is not one", skipped[0].ID)
+	}
+}
+
+// writeOrdinalPastTheCheck puts a value in the ordinal column that the
+// column's own CHECK refuses, which is the only way to reproduce a board
+// written by something other than this program.
+func writeOrdinalPastTheCheck(t *testing.T, tasks *Tasks, id, key string) {
+	t.Helper()
+	if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = ON"); err != nil {
+		t.Fatalf("turning the checks off: %v", err)
+	}
+	defer func() {
+		if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = OFF"); err != nil {
+			t.Fatalf("turning the checks back on: %v", err)
+		}
+	}()
+	if _, err := tasks.store.Exec("UPDATE task SET ordinal = ? WHERE id = ?", key, id); err != nil {
+		t.Fatalf("writing the key %q on %s: %v", key, id, err)
+	}
+}
+
 // TestAnOrdinalKeyComesBackExactly is the round trip the symmetry of
 // `biso export` rests on: a key is stored as text and read back character
 // for character, whatever its length and whichever end of the alphabet it

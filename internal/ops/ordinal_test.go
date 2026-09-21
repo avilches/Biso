@@ -465,6 +465,7 @@ func TestAMalformedKeyInABatchIsItsOwnFailure(t *testing.T) {
 		`{"title":"A well formed one","ordinal":"m8"}`,
 		`{"title":"A number where a key goes","ordinal":"3000"}`,
 		`{"title":"A key that ends in zero","ordinal":"m0"}`,
+		`{"title":"The empty string, which is not a key either","ordinal":""}`,
 		``,
 	}, "\n")})
 	e := specError(t, err)
@@ -476,6 +477,8 @@ func TestAMalformedKeyInABatchIsItsOwnFailure(t *testing.T) {
 			`(an ordinal key is made of 0-9 and a-z, and never ends in 0)`,
 		`  line 3: malformed ordinal: "m0" ` +
 			`(an ordinal key is made of 0-9 and a-z, and never ends in 0)`,
+		`  line 4: malformed ordinal: "" ` +
+			`(an ordinal key is made of 0-9 and a-z, and never ends in 0)`,
 	}
 	if !reflect.DeepEqual(e.Detail, want) {
 		t.Errorf("the report is %q, want %q", e.Detail, want)
@@ -483,6 +486,24 @@ func TestAMalformedKeyInABatchIsItsOwnFailure(t *testing.T) {
 	for _, d := range e.Details {
 		if d.Code != "malformed_ordinal" || d.ExitCode != 2 {
 			t.Errorf("a failure of the report is %d/%s", d.ExitCode, d.Code)
+		}
+	}
+
+	// An explicit null, on the other hand, is a task with no place, exactly
+	// like a line that does not write the key at all
+	// (docs/spec/cmd/new.md#el-modo-lote). It is the one value of that field
+	// the empty string does not share, which is why the two are told apart
+	// while the line is being read and not afterwards.
+	if _, err := NewBatchOn(h.b, h.env, BatchParams{Content: strings.Join([]string{
+		`{"id":"MYP-1","title":"An explicit null","ordinal":null}`,
+		`{"id":"MYP-2","title":"No key written at all"}`,
+		``,
+	}, "\n")}); err != nil {
+		t.Fatalf("a null ordinal was refused: %v", err)
+	}
+	for _, id := range []string{"MYP-1", "MYP-2"} {
+		if got := h.keyOf(id); got != "" {
+			t.Errorf("%s came out with the key %q, want none", id, got)
 		}
 	}
 
