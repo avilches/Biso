@@ -40,7 +40,7 @@ Backlog.md, de la que cada tarea de la tabla es una subtarea.
 | 7 | [`prime`](cmd/prime.md) y la medida real del presupuesto de arranque | hecho | TASK-15 |
 | 8 | El lote de `new --from`, [`export`](cmd/export.md), [`snapshot`](cmd/snapshot.md) e `init --from` | hecho | TASK-16 |
 | 9 | El resto: [`archive`](cmd/archive.md), [`config`](cmd/config.md), [`doctor`](cmd/doctor.md), [`help`](cmd/help.md) | hecho con matices | TASK-17 |
-| | Las etiquetas con ámbito ([abajo](#las-etiquetas-con-ámbito-especificadas-y-todavía-no-implementadas)) | especificado, no implementado | sin tarea |
+| | Las etiquetas con ámbito ([abajo](#las-etiquetas-con-ámbito)) | hecho | sin tarea |
 | | [`board`](cmd/board.md) | fuera de alcance de 1.0 | sin tarea |
 
 ## Los documentos transversales
@@ -799,41 +799,43 @@ y el contrato JSON:
 - **La simetría entre `biso export` y `biso new --from` sigue pasando.** Las pruebas que llevaban un `ext`
   en su tablero lo dejan de llevar, y se eliminan las que solo ejercían `ext`.
 
-### Las etiquetas con ámbito: especificadas y todavía no implementadas
+### Las etiquetas con ámbito
 
-La especificación ya recoge entera la decisión
-["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito), y **el programa no
-sabe nada de ella**: hoy `biso` guarda `size::m` como una etiqueta cualquiera, sin clave, sin
-exclusividad y sin que ningún filtro ni ninguna comprobación la distinga de `urgent`. Esta es la
-única entrada de esta página escrita antes del código, y está aquí para que nadie lea las páginas de
-abajo como una descripción de lo que el binario hace ahora mismo.
+La decisión ["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito) se
+escribió entera en la especificación antes de tocar código, y después se llevó al programa. Las
+anclas que cubre son la regla de análisis, la escritura, la consulta, la lista `labels` de la
+configuración, `biso doctor` y el contrato JSON:
 
-Las anclas que la especificación cubre ya, y que la tarea de implementación tendrá que ejercer:
+- **La regla de análisis vive en un sitio**, `internal/model/label.go`, y la ejercen los cuatro
+  lugares donde aparece una etiqueta: el valor de un flag, la línea de un lote, una entrada de la
+  configuración y una etiqueta ya guardada, porque la validación del modelo la pide sobre cada
+  etiqueta de la tarea antes de escribirla. De las dos lecturas que tiene, una acepta la forma
+  `clave:` y la otra no, y es la única diferencia entre ellas
+  (["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito)).
+- **La forma de una etiqueta se juzga al analizar la línea de comandos**, antes de abrir el tablero,
+  que es lo que hace que `--unchecked` no pueda apagarla
+  (["`biso ls`"](cmd/ls.md#comportamiento-caso-a-caso)).
+- **Lo que una llamada decide antes de tocar ninguna tarea** es lo que la lista `labels` rechaza, la
+  clave escrita con los dos separadores y la clave `::` repetida, en ese orden. Por eso una llamada
+  que nombra cuatro tareas no gana cuatro veces el mismo aviso, y por eso el aviso del último valor
+  no lleva tarea (["Escribir una etiqueta con ámbito"](familias-de-flags.md#escribir-una-etiqueta-con-ámbito)).
+- **La exclusividad se comprueba en el paso cuarto de la escritura**, con lo que la tarea conserva
+  tras vaciar, sustituir y quitar, que es lo que hace que
+  `--rm-labels k::1 --add-labels k:2` funcione en una sola llamada.
+- **Quitar una etiqueta sigue comparando el valor tal como está guardado**, con las dos diferencias
+  que la especificación le da a una etiqueta con ámbito: el separador no cuenta y la clave se compara
+  plegada.
+- **`biso doctor` gana las comprobaciones sobre etiquetas de su tabla**, ninguna reparable con
+  `--fix`, y su informe las saca entre las claves de criterio repetidas y el arrendamiento, que es
+  donde esa tabla las pone (["Qué comprueba"](cmd/doctor.md#qué-comprueba)).
+- **El eje de agrupación por la clave de una etiqueta no existe en código**, porque
+  ["`biso board`"](cmd/board.md) entero queda fuera de la versión 1.0 y no hay ningún comando `board`
+  todavía.
 
-- **La regla de análisis**, en
-  ["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito): dónde corta la clave,
-  qué separadores hay, qué formas son mal formadas y con qué mensaje, cómo se pliega la clave y por
-  qué el separador no cuenta al comparar valores.
-- **La escritura**, en
-  ["Escribir una etiqueta con ámbito"](familias-de-flags.md#escribir-una-etiqueta-con-ámbito), con
-  sus casos en la tabla de ["`biso set`"](cmd/set.md#comportamiento-caso-a-caso) y la misma regla
-  aplicada a cada línea del lote en ["El modo lote"](cmd/new.md#el-modo-lote).
-- **La consulta**, en
-  ["Consultar por la clave de una etiqueta con ámbito"](vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito),
-  con sus casos en ["`biso ls`"](cmd/ls.md#comportamiento-caso-a-caso) y la forma que toma el filtro
-  en ["Los filtros de `biso ls`"](contrato-json.md#los-filtros-de-biso-ls).
-- **La lista `labels` de la configuración**, en ["La lista `labels`"](cmd/config.md#la-lista-labels),
-  con las comprobaciones de `biso doctor` que la acompañan en
-  ["Qué comprueba"](cmd/doctor.md#qué-comprueba) y el eje de agrupación de
-  ["`biso board`"](cmd/board.md#agrupación-visual), que sigue fuera de la versión 1.0.
-- **Los `code` nuevos**, en
-  ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error), y los avisos
-  nuevos en ["Notas y avisos"](salida-y-terminal.md#notas-y-avisos).
-
-**El mensaje de arranque no cambia**, así que las cifras de
+**El mensaje de arranque no cambia ni un byte**, y una prueba comprueba que el bloque `BOARD` no
+lista la clave `labels` ni con una lista larga declarada, así que las cifras de
 ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño) siguen siendo las que están
-escritas ahí: el bloque `BOARD` no lista la clave `labels` y ninguna regla de `RULES` habla de las
-etiquetas con ámbito.
+escritas ahí.
 
 ## Antes de empezar un paso
 
