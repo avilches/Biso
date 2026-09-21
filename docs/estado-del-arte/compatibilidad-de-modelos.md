@@ -99,7 +99,7 @@ sistema.
 | `dependencies` | Sí | Sí | No | Transf. | Sí | Sí | Sí |
 | `references` | Sí | Transf. | Transf. | No | No | No | No |
 | `due` | Sí | Sí | Sí | No | No | Sí | No |
-| `ordinal` | Sí | Transf. | Transf. | No | No | No | No |
+| `ordinal` | Transf. | Transf. | Transf. | No | No | No | No |
 | `description` | Sí | Sí | Sí | Sí | Sí | No | Transf. |
 | `plan` | Sí | No | No | Transf. | No | No | Transf. |
 | `notes` | Sí | No | No | Sí | No | No | No |
@@ -143,7 +143,7 @@ concepto de tarea versionada como fichero, mismos nombres para casi todo.
 | `dependencies` | `dependencies` | Directa |
 | `references` | `references`, `documentation` y `modified_files`, tres listas de texto libre que Backlog.md no distingue | Directa: al importar, `documentation` y `modified_files` se funden en `references` con un aviso cada una, y al exportar todo sale como `references` (["Se retira `documentation` y `references` queda como único campo de punteros"](../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros), ["Se retira `modifiedFiles`"](../decisiones/detalles.md#se-retira-modifiedfiles)) |
 | `due` | `due_date` (`YYYY-MM-DD`) | Directa |
-| `ordinal` | `ordinal` | Directa |
+| `ordinal` | `ordinal` | Con transformación: el de Backlog.md es un entero y el de `biso` es una clave de texto, así que al importar hay que darle una clave a cada tarea que respete el orden que traían sus enteros, y al exportar hay que numerar las claves de nuevo (["El orden manual y su clave"](../spec/modelo-de-datos/orden-manual.md)) |
 | `description` | `description` | Directa |
 | `plan` | `plan` | Directa |
 | `notes` | `notes` | Directa |
@@ -174,9 +174,13 @@ segundos de `createdAt`/`updatedAt` se redondean al minuto.
 que las decisiones de fundirlas aceptan a propósito. No se pierde ninguna otra estructura: como Backlog.md nunca tuvo
 huecos en sus claves ni un campo de autor de tarea, `biso` simplemente asigna claves nuevas
 consecutivas y deja `author` vacío, que son exactamente sus valores por defecto. Aparte de la fusión, la única pérdida
-real en este sentido es la de precisión de fecha, que ya venía perdida del lado de Backlog.md.
+real en este sentido es la de precisión de fecha, que ya venía perdida del lado de Backlog.md. El
+`ordinal` no se pierde, pero sí cambia de forma: los enteros de Backlog.md se convierten en claves de
+texto que conservan el mismo orden, y al volver hay que numerarlos otra vez, así que la ida y vuelta
+devuelve el orden y no los números exactos que había.
 
-**Cobertura: 21/25 = 84 % en los dos sentidos.**
+**Cobertura: 21/25 = 84 % en los dos sentidos.** El `ordinal` pasa de correspondencia directa a
+correspondencia con transformación, y las dos cuentan igual en esta cifra.
 
 ## Linear
 

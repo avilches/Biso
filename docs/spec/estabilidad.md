@@ -18,12 +18,23 @@ todavía no está publicada: hasta que salga, nada de lo de abajo está roto por
   prueba de la suite y no una intención. La de `biso snapshot` con `biso init --from` cubre además la
   configuración del tablero entera, campo a campo.
 - La estabilidad de las claves de los criterios: una clave asignada no se reasigna nunca.
+- **La forma de una clave de orden manual y cómo se comparan dos claves** (["El orden manual y su
+  clave"](modelo-de-datos/orden-manual.md)): el alfabeto `0-9a-z`, la prohibición del `0` final y la
+  comparación por puntos de código. Es contrato porque la clave viaja en el JSON y en la exportación,
+  y porque quien lee dos claves tiene derecho a saber cuál va antes sin preguntárselo al programa.
 - El tope de tamaño del mensaje de `biso prime` (sección ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño)).
 
 **Puede cambiar entre versiones menores, y por eso no hay que analizarlo:**
 
 - El texto exacto de los mensajes de error y de los avisos. Lo estable es el `code`, no la prosa.
 - La disposición de las columnas de `biso ls` y de la ficha de `biso get`, y para eso está `--json`.
+- **Qué clave exacta elige el algoritmo del punto medio dentro de un hueco**
+  (["El algoritmo del punto medio"](modelo-de-datos/orden-manual.md#el-algoritmo-del-punto-medio)).
+  Está especificado paso a paso y con ejemplos, y una prueba los comprueba, por la misma razón por la
+  que están escritos los mensajes de error: para que la implementación sea una sola y no haya que
+  adivinarla. Lo que se promete a quien llama es el sitio donde cae la tarea, no la cadena que se
+  guarda, así que una versión menor puede elegir otra clave del mismo hueco. Lo que no cambia es su
+  forma ni su comparación, que están arriba.
 - El texto de `biso prime`, dentro de su tope, que es donde se espera que la herramienta más aprenda
   con el tiempo.
 - Los coeficientes por defecto de la urgencia. La estructura de la fórmula, no.
