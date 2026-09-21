@@ -93,6 +93,29 @@ func TestTheFlagsOfTheManualOrderAreIncompatibleWithOneAnother(t *testing.T) {
 	m.run("set", "MYP-1", "--clear-due", "--due", "2026-09-20").assertCode(t, 0)
 }
 
+// TestAnEmptyNeighbourIsTheEmptyScalarAndNotAReferenceThatFailed is the
+// paragraph of docs/spec/valores-de-entrada.md#el-valor-vacío about an
+// empty reference: nothing is looked up, so the answer is exit code 3 and
+// never the 4 of a task that is not there or the 5 of a text that matches
+// several. The hint that names the flag for emptying is not printed here,
+// because what is missing is the task to name.
+func TestAnEmptyNeighbourIsTheEmptyScalarAndNotAReferenceThatFailed(t *testing.T) {
+	m := newMachine(t).board()
+	m.run("new", "A task").assertCode(t, 0)
+
+	for _, flag := range []string{"--above", "--below"} {
+		out := m.run("set", "MYP-1", flag, "").assertCode(t, 3)
+		assertEqual(t, out.stderr, "error: "+flag+" cannot be empty\n",
+			"the refusal of an empty "+flag)
+	}
+
+	// And the envelope carries the code the table of that page promises.
+	envelope := m.run("set", "MYP-1", "--above", "", "--json").assertCode(t, 3)
+	if !strings.Contains(envelope.stderr, `"code": "empty_scalar_value"`) {
+		t.Errorf("the envelope says:\n%s", envelope.stderr)
+	}
+}
+
 // TestTheCardPrintsManualAndNeverTheKey is the paragraph of
 // docs/spec/cmd/get.md#salida: the key cannot be typed and says nothing a
 // reader can use, so the card says whether there is one and --json carries

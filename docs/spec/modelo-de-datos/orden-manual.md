@@ -42,9 +42,13 @@ lo que hace exacta la ida y vuelta entre `export` y `new --from`. La ficha de te
 la imprime, porque no se puede teclear y no dice nada que quien la lee pueda usar: imprime `manual`
 cuando la tarea tiene clave y `-` cuando no (["`biso get`"](../cmd/get.md#salida)).
 
-**Una tarea sin clave no está la última de nada**: las tareas con clave van todas antes que las que
-no la tienen, y entre estas últimas manda la urgencia (["La regla de orden,
-completa"](../cmd/ls.md#la-regla-de-orden-completa)).
+**Una tarea sin clave no ocupa ningún sitio del orden manual**, que no es lo mismo que ocupar el
+último. En un listado va detrás de todas las que tienen clave, y entre las que están en su misma
+situación manda la urgencia (["La regla de orden,
+completa"](../cmd/ls.md#la-regla-de-orden-completa)); pero eso es dónde se imprime, no un sitio del
+orden que alguien haya decidido. Por eso no se la puede nombrar como vecina de un `--above` ni de un
+`--below`: no hay ningún hueco a su lado que nombrar, y pedirlo es el error 6 de
+["El orden manual"](../familias-de-flags.md#el-orden-manual).
 
 ## El algoritmo del punto medio
 
@@ -60,7 +64,11 @@ de 0 para el `0` a 35 para la `z`:
 1. Si no hay `anterior`, vale la cadena vacía.
 2. Si hay `siguiente`, se toma el prefijo común de las dos claves, comparando símbolo a símbolo y
    tomando `0` allí donde `anterior` ya se haya acabado. Si ese prefijo común no está vacío, el
-   resultado es el prefijo seguido de `clave_entre` de las dos colas que quedan detrás de él.
+   resultado es el prefijo seguido de `clave_entre` de las dos colas que quedan detrás de él. Este
+   paso da por supuesta la precondición de la función, que `siguiente` sea estrictamente mayor que
+   `anterior`: con ella, el prefijo común nunca puede agotar `siguiente` entero, así que la cola de
+   `siguiente` nunca queda vacía. Una implementación puede comprobarlo igualmente, y la de `biso` lo
+   hace, pero es una guarda defensiva y no un caso que pueda darse.
 3. Llegados aquí, las dos claves difieren ya en su primer símbolo. Sea `a` el valor del primer
    símbolo de `anterior`, o 0 si `anterior` está vacía, y sea `b` el valor del primer símbolo de
    `siguiente`, o 36 si no hay `siguiente`.
@@ -97,6 +105,11 @@ hueco. Insertando una y otra vez delante de todas, las claves van `i`, `9`, `4`,
 `09`, `04`, `02`, `01`, `00i`: cinco inserciones por cada símbolo nuevo, que es lo que cuesta partir
 en dos un alfabeto de treinta y seis símbolos.
 
+**Eso es el ritmo, no lo que cuesta la primera inserción.** Un hueco que no tiene ninguna anchura,
+el que dejan dos claves de símbolos consecutivos como `a` y `b`, gasta ya un símbolo en la primera
+(`clave_entre("a", "b")` es `ai`), porque no hay ningún símbolo que quepa entre los dos; a partir de
+ahí vuelve a ser uno cada cinco. El ritmo es el mismo, y lo que cambia es dónde empieza la cuenta.
+
 ## El hueco de cada colocación
 
 Cada forma de colocar una tarea se traduce a un hueco, y el hueco a la clave con la función de
@@ -121,6 +134,15 @@ Precisiones que hacen determinista el cálculo:
 - **Los extremos no fallan nunca.** `--above` sobre la tarea de clave menor y `--below` sobre la de
   clave mayor dejan una de las dos vecinas vacía, y la función siempre encuentra una clave menor que
   la menor y otra mayor que la mayor.
+- **Pedir dos veces el mismo sitio cuesta como mucho una reescritura.** Como el hueco se calcula
+  descontando la clave de la tarea que se mueve, la clave que sale no depende de dónde estuviera esa
+  tarea, así que la segunda llamada da exactamente la misma y no cambia nada: la escritura lo dice
+  con la nota de siempre (["`biso set`"](../cmd/set.md#salida)). Lo que sí puede pasar es que la
+  **primera** llamada mueva una tarea que a la vista ya estaba en su sitio, y el caso claro es
+  `--ordinal first` sobre la que ya es la primera: al descontar su clave, la vecina de abajo pasa a
+  ser la segunda tarea del tablero, el hueco se ensancha y su punto medio no es donde la tarea
+  estaba. Es consecuencia directa del descuento, vale igual para cualquiera de las formas de colocar
+  de la tabla de arriba y no es un caso aparte.
 - **Si el tablero no tiene ninguna clave**, `--ordinal first` y `--ordinal last` dejan las dos
   vecinas vacías y escriben la misma clave, `i`.
 - **Dos tareas pueden compartir clave**, porque nada obliga a que sean únicas y un lote de

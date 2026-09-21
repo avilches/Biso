@@ -904,10 +904,26 @@ corregir ninguna cifra: con el tablero del ejemplo mide **5.112 bytes**, **3.623
 `--above` y `--below` en su línea de `ordinal` sin que nadie los escribiera ahí, porque se genera
 desde la tabla de campos.
 
-**Los tableros de desarrollo hay que recrearlos.** El campo cambió de tipo, así que un tablero creado
-con un binario anterior guarda enteros donde el binario nuevo espera claves. Como `biso` no se ha
-publicado, se editó el primer script de migración en vez de añadir uno, que es la misma salida que en
-las retiradas anteriores.
+**Los tableros de desarrollo hay que recrearlos, y el motivo no es que no se abran.** Se abren. El
+primer script de migración se editó en su sitio en vez de añadir uno, que es la misma salida que en
+las retiradas anteriores porque `biso` no se ha publicado, así que `PRAGMA user_version` no cambia y
+un tablero escrito por un binario anterior conserva su columna de entonces, sin la comprobación de
+forma. Lo que pasa al abrirlo es esto, y por eso hay que recrearlo:
+
+- **Los enteros se reinterpretan como claves de texto**, porque SQLite los devuelve como texto en esa
+  columna. El entero `7` se lee como la clave `7` y el `12` como la clave `12`.
+- **El orden manual deja de ser el que era**, porque las claves se comparan por puntos de código y no
+  por valor numérico: `12` va antes que `7`.
+- **Las tareas cuyo entero no tiene forma de clave se quedan fuera del listado**, con el aviso que
+  las nombra, y `biso doctor` las saca una a una con su motivo. Es la regla general de
+  ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)
+  aplicada a ["Una clave guardada que no cumple la
+  regla"](modelo-de-datos/orden-manual.md#una-clave-guardada-que-no-cumple-la-regla). Le pasa al `0`,
+  que acaba en cero, y a cualquier múltiplo de mil como el `3000` que usaba Backlog.md.
+
+Escribir en un tablero así sigue funcionando y guarda claves de verdad, lo que deja el tablero medio
+convertido. **No se añade una migración**: no la habría para decidir qué clave le toca a cada entero
+sin inventarse un orden, y un tablero de desarrollo se recrea en un segundo.
 
 ## Antes de empezar un paso
 

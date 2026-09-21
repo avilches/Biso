@@ -82,8 +82,11 @@ de otro grupo, escribe los dos campos en la misma escritura, con la garantía de
 
 **Reordenar dentro de la misma columna y el mismo grupo es escribir la clave de orden manual** de la
 tarea, la misma que escribirían `--above` y `--below`
-(["El orden manual y su clave"](../modelo-de-datos/orden-manual.md)). Las vecinas son las que la
-tarea tenga encima y debajo **en el sitio donde se suelta**, y la clave sale del hueco que dejan.
+(["El orden manual y su clave"](../modelo-de-datos/orden-manual.md)). Las vecinas son siempre las
+que la tarea tenga encima y debajo **en el sitio donde se suelta**, es decir dentro de la columna y
+del grupo donde cae, y la clave sale del hueco que dejan esas dos. Cualquiera de las dos puede
+faltar, y entonces el hueco llega hasta ese extremo, exactamente como cuando falta una vecina en la
+línea de comandos.
 
 **La clave que un arrastre escribe es global aunque la vista esté agrupada.** Cada tarea tiene una
 sola, así que reordenar dentro de un grupo puede mover la tarea también en la lista sin agrupar, y
@@ -94,14 +97,21 @@ eso está aceptado a propósito: la alternativa, una clave por eje de agrupació
 regla que hace que `--above` sobre una tarea sin clave sea un error en vez de escribirle una. De ahí
 salen los tres sitios donde se puede soltar una tarea, y solo esos tres:
 
-- **Delante de todas las de la columna**, que es `--ordinal first`, y **detrás de todas**, que es
-  `--ordinal last`. Es la forma de meter la primera tarea de un tablero donde ninguna tiene clave
-  todavía.
 - **Entre dos tareas que tienen clave**, que es el hueco de siempre.
-- **Justo en la frontera entre las que tienen clave y las que no**, que es `--ordinal last`: las
-  tareas sin clave van detrás de todas las que la tienen (["La regla de orden,
-  completa"](ls.md#la-regla-de-orden-completa)), así que ese sitio y el final del orden manual son el
-  mismo sitio.
+- **Delante de todas las de la columna, o detrás de todas.** También es un hueco, y el mismo de
+  siempre: la vecina que falta es la que falta, así que soltar arriba del todo da el hueco que va
+  desde el principio del orden hasta la primera tarea **de esa columna**, y soltar abajo del todo el
+  que va desde la última **de esa columna** hasta el final. No son `--ordinal first` ni
+  `--ordinal last`, que miran el tablero entero (["El hueco de cada
+  colocación"](../modelo-de-datos/orden-manual.md#el-hueco-de-cada-colocación)): en una vista
+  agrupada, el extremo de una columna y el extremo del tablero no tienen por qué coincidir. Con el
+  tablero sin agrupar y sin filtrar son el mismo sitio, y entonces sí coinciden, que es el caso de
+  meter la primera tarea de un tablero donde ninguna tiene clave todavía.
+- **Justo en la frontera entre las que tienen clave y las que no**, que es el hueco que deja la
+  última tarea con clave de esa columna sin ninguna por debajo: las tareas sin clave van detrás de
+  todas las que la tienen (["La regla de orden,
+  completa"](ls.md#la-regla-de-orden-completa)), así que ese sitio y el final del orden manual de la
+  columna son el mismo sitio.
 
 **Soltar una tarea entre dos que no tienen clave no escribe nada**, y la interfaz lo dice en vez de
 dejar la tarea en otro sitio: ahí no hay ningún hueco que nombrar, porque el orden de esa parte de la

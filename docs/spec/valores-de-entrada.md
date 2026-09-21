@@ -56,6 +56,16 @@ que sigue la regla del ["algoritmo de coincidencia"](vocabularios.md#el-algoritm
 Para los demás escalares (`--author ""`, `--due ""`), que no
 tienen vocabulario, el `code` es `empty_scalar_value`.
 
+**Un escalar cuyo valor es una referencia a otra tarea sigue esa misma regla, y la cadena vacía no
+llega a resolverse.** `--parent ""`, `--above ""` y `--below ""` son `empty_scalar_value` con
+código 3 y el mensaje de siempre, `error: --above cannot be empty`, antes de que nadie busque
+ninguna tarea: una referencia vacía no nombra nada, así que no puede ser ni la tarea que no existe
+(código 4) ni el texto que encaja con varias (código 5)
+(["Cómo se resuelve una referencia a una tarea"](referencias.md)). De los tres, `--above` y
+`--below` son además los únicos que no llevan debajo el `hint` que nombra el flag de vaciar: lo que
+falta en ellos es la tarea que hay que nombrar, no un valor que alguien intentara borrar, así que
+proponer `--clear-ordinal` contestaría a otra pregunta.
+
 **`--ordinal ""` es la excepción de la excepción**, y sale con código 2 y el `code`
 `invalid_ordinal_value` (["El orden manual"](familias-de-flags.md#el-orden-manual)). Su dominio no lo
 configura el tablero sino el programa, que admite `first` y `last` y nada más, así que la cadena
@@ -338,7 +348,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | Un valor vacío donde no se documenta ninguno | 2 | `unexpected_argument` | `error: --rm-labels cannot be empty` |
 | El valor vacío de una pareja | 2 | `unexpected_argument` | `error: --set-comment-date: the value of key "3" cannot be empty` |
 | Un salto de línea en un campo de una línea (["El salto de línea en un campo `string`"](#el-salto-de-línea-en-un-campo-string)) | 2 | `malformed_string_value` | `error: malformed title: "first line\nsecond line"` |
-| Un escalar de tarea vacío sin vocabulario cerrado | 3 | `empty_scalar_value` | `error: --author cannot be empty`, con `hint: to clear it, use --clear-author` cuando el campo tiene un flag que lo vacía |
+| Un escalar de tarea vacío sin vocabulario cerrado | 3 | `empty_scalar_value` | `error: --author cannot be empty`, con `hint: to clear it, use --clear-author` cuando el flag dice cuál lo vacía (["El valor vacío"](#el-valor-vacío)) |
 | Un argumento que no es UTF-8 | 3 | `invalid_encoding` | `error: invalid UTF-8 in argument 4 at byte 2: "ok\xffbad"`, con `field` igual a `argument` |
 | Un fichero o una entrada estándar que no es UTF-8 | 3 | `invalid_encoding` | `error: --append-desc: invalid UTF-8 at byte 12`, con `given` igual a lo que se escribió detrás del flag |
 | El fichero de un `@` que no existe | 4 | `file_not_found` | `error: --append-desc: file not found: docs/x.md` |

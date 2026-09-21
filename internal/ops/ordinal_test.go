@@ -223,6 +223,66 @@ func TestTheGapDiscountsTheTasksTheCallItselfMoves(t *testing.T) {
 	}
 }
 
+// TestRepeatingAPlacementConverges is the precision of
+// docs/spec/modelo-de-datos/orden-manual.md#el-hueco-de-cada-colocación
+// about asking twice for a place a task already has: the discount takes the
+// task's own key out of the gap, so the answer does not depend on where the
+// task was, and asking again lands on the very same key. Every one of the
+// four placements settles after at most one rewrite.
+func TestRepeatingAPlacementConverges(t *testing.T) {
+	for _, c := range []struct {
+		name  string
+		place func(neighbour string) Change
+	}{
+		{"--ordinal first", func(string) Change { return place("ordinal", "first") }},
+		{"--ordinal last", func(string) Change { return place("ordinal", "last") }},
+		{"--above", func(neighbour string) Change { return place("above", neighbour) }},
+		{"--below", func(neighbour string) Change { return place("below", neighbour) }},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			h := newHarness(t)
+			anchor := h.create("The anchor", place("ordinal", "last"))
+			mover := h.create("The one being placed", place("ordinal", "last"))
+
+			h.set(mover, c.place(anchor))
+			settled := h.keyOf(mover)
+			if settled == "" {
+				t.Fatal("the placement wrote no key")
+			}
+
+			for i := 0; i < 3; i++ {
+				again := h.set(mover, c.place(anchor))
+				if h.keyOf(mover) != settled {
+					t.Fatalf("call %d moved the key again, from %q to %q",
+						i+2, settled, h.keyOf(mover))
+				}
+				if len(again.Tasks[0].Changed) != 0 {
+					t.Errorf("call %d reports the change %v over a task it did not move",
+						i+2, again.Tasks[0].Changed)
+				}
+			}
+		})
+	}
+
+	// The one rewrite the first call may cost is real and worth pinning:
+	// a task that is already the first of the board is moved all the same,
+	// because the gap that opens when its own key is discounted reaches the
+	// next task and its midpoint is not where the task was.
+	h := newHarness(t)
+	first := h.create("The first one", place("ordinal", "last"))
+	h.create("The second one", place("ordinal", "last"))
+	before := h.keyOf(first)
+
+	moved := h.set(first, place("ordinal", "first"))
+
+	if h.keyOf(first) == before {
+		t.Errorf("--ordinal first left the key at %q, and the discount widens the gap", before)
+	}
+	if len(moved.Tasks[0].Changed) != 1 || moved.Tasks[0].Changed[0] != "ordinal" {
+		t.Errorf("the call changed %v, want only the ordinal", moved.Tasks[0].Changed)
+	}
+}
+
 // TestATaskCannotBeItsOwnNeighbour is the self_ordinal_neighbour of
 // docs/spec/familias-de-flags.md#el-orden-manual, with its literal message,
 // over the task itself and over another task of the same call.
@@ -366,21 +426,65 @@ func TestATaskCanBeBornPlaced(t *testing.T) {
 
 // TestTheGapIsTheWholeBoard is the precision that the key is global: an
 // archived task and a finished one count for the gap exactly as any other,
-// because where a task lands cannot depend on anybody's filters.
+// because where a task lands cannot depend on anybody's filters. Those two
+// are precisely the ones a listing hides by default, so they are the ones a
+// gap computed over what `biso ls` shows would lose in silence.
+//
+// Each case puts the hidden task at the end the flag reaches for, which is
+// the only arrangement where leaving it out changes the answer: with the
+// hidden task in the middle, the visible ones already close the gap.
 func TestTheGapIsTheWholeBoard(t *testing.T) {
-	h := newHarness(t)
-	visible := h.create("On the board", place("ordinal", "last"))
-	hidden := h.create("Archived and finished", place("ordinal", "last"))
-	if _, err := ArchiveOn(h.b, h.env, ArchiveParams{Refs: []string{hidden}}); err != nil {
-		t.Fatalf("biso archive: %v", err)
-	}
+	for _, c := range []struct {
+		name string
+		hide func(h *harness, id string)
+	}{
+		{"an archived task", func(h *harness, id string) {
+			if _, err := ArchiveOn(h.b, h.env, ArchiveParams{Refs: []string{id}}); err != nil {
+				h.t.Fatalf("biso archive: %v", err)
+			}
+			if !h.load(id).Archived {
+				h.t.Fatal("the task meant to be archived is not archived")
+			}
+		}},
+		{"a finished task", func(h *harness, id string) {
+			if _, err := FinishOn(h.b, h.env, FinishParams{Refs: []string{id}}); err != nil {
+				h.t.Fatalf("biso finish: %v", err)
+			}
+			if got := h.load(id).Status; got != h.b.Config.TerminalStatus {
+				h.t.Fatalf("the task meant to be finished is in %q", got)
+			}
+		}},
+	} {
+		t.Run(c.name+" at the top", func(t *testing.T) {
+			h := newHarness(t)
+			visible := h.create("On the board", place("ordinal", "last"))
+			hidden := h.create("Hidden, and holding the highest key", place("ordinal", "last"))
+			c.hide(h, hidden)
 
-	newcomer := h.create("Placed last of all", place("ordinal", "last"))
-	if h.keyOf(newcomer) <= h.keyOf(hidden) {
-		t.Errorf("--ordinal last gave %q, which is not past the archived %q: "+
-			"the gap left the archived task out", h.keyOf(newcomer), h.keyOf(hidden))
+			newcomer := h.create("Placed last of all", place("ordinal", "last"))
+
+			if h.keyOf(newcomer) <= h.keyOf(hidden) {
+				t.Errorf("--ordinal last gave %q, which is not past the hidden %q: "+
+					"the gap left it out", h.keyOf(newcomer), h.keyOf(hidden))
+			}
+			h.assertOrder(visible, hidden, newcomer)
+		})
+
+		t.Run(c.name+" at the bottom", func(t *testing.T) {
+			h := newHarness(t)
+			visible := h.create("On the board", place("ordinal", "last"))
+			hidden := h.create("Hidden, and holding the lowest key", place("ordinal", "first"))
+			c.hide(h, hidden)
+
+			newcomer := h.create("Placed first of all", place("ordinal", "first"))
+
+			if h.keyOf(newcomer) >= h.keyOf(hidden) {
+				t.Errorf("--ordinal first gave %q, which is not under the hidden %q: "+
+					"the gap left it out", h.keyOf(newcomer), h.keyOf(hidden))
+			}
+			h.assertOrder(newcomer, hidden, visible)
+		})
 	}
-	h.assertOrder(visible, hidden, newcomer)
 }
 
 // TestTwoTasksMaySharAKeyAndTheGapStaysUsable is the last precision of the
