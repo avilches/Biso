@@ -138,7 +138,6 @@ FIELD FLAGS  (same names, same meaning, in every command above that writes)
   --append-desc --clear-desc  --append-plan --clear-plan
   --append-note --clear-notes  --append-summary --clear-summary
   --comment --rm-comment --set-comment-date
-  --ext K=V --rm-ext --clear-ext
 
 RULES  (none of these are guessable; they are the whole learning curve)
   1. Every write goes through biso. Nothing else touches the board.
@@ -207,8 +206,7 @@ Cómo se calcula el resumen, para que la implementación sea única:
   **Un vocabulario vacío escribe `(none)`**, que es un hecho sobre el tablero y no un renglón a
   medias: un tablero sin tipos configurados no admite `--type` en ninguna llamada, y quien lea el
   arranque tiene que enterarse ahí. Los estados no pueden quedarse vacíos, porque un tablero
-  configura tres como mínimo (["`biso init`"](init.md)), y las extensiones no salen en el texto:
-  viajan solo en el esquema JSON, porque son un campo para otro programa y no para quien arranca.
+  configura tres como mínimo (["`biso init`"](init.md)).
 - Los cuatro bloques `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU` y `NEXT UP` se reparten
   el tablero por esta precedencia, y cada tarea cae en el primero que la acepte:
     1. `NEEDS ANSWER`, si tiene una pregunta abierta.
@@ -398,7 +396,6 @@ ALL FIELD FLAGS  (--full: by the field they write, in the order a write applies 
   plan                --clear-plan --append-plan
   notes               --clear-notes --append-note
   summary             --clear-summary --append-summary
-  ext                 --clear-ext --rm-ext --ext
   title               --title
   status              --status
   type                --clear-type --type
@@ -434,7 +431,6 @@ campo que el sobre llama `acceptanceCriteria`, y quien lee el sobre necesita el 
       "terminalStatus": "Done",
       "types": ["idea", "memory", "task", "bug", "docs"],
       "priorities": ["high", "medium", "low"],
-      "extensions": ["trello.card"],
       "countByStatus": { "To Do": 54, "In Progress": 4, "Done": 190 }
     },
     "inProgress": [

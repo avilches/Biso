@@ -77,8 +77,8 @@ Para todo flag marcado como repetible:
 - Si además acepta lista, separar por comas acumula igual: `--add-labels a,b` deja las mismas dos.
 - Las dos formas se pueden mezclar.
 - **Una coma dentro de un valor se escapa con `\,`.** Es la única forma de meter una coma en una
-  referencia. Una etiqueta, una persona asignada o una
-  clave de `ext` nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
+  referencia. Una etiqueta o una persona asignada
+  nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
   (["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token)).
 - **Una barra invertida doble, `\\`, es una barra invertida literal**, y es la única forma de que un
   valor termine en barra invertida justo antes de una coma que separa:
@@ -99,8 +99,7 @@ error: --status given twice with different values: "In Progress" and "Done"
 
 ## El juego de caracteres de un token
 
-`labels`, `assignees` y las claves de `ext` (["Campos externos"](modelo-de-datos/campos-externos.md#los-campos-externos)) son los únicos
-campos de esta sección cuyo alfabeto está cerrado. Los demás campos de lista de la tabla de
+`labels` y `assignees` son los únicos campos de esta sección cuyo alfabeto está cerrado. Los demás campos de lista de la tabla de
 ["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma), es decir `references`
 y `dependencies`, son texto libre y no tienen ninguna restricción de caracteres: una
 referencia puede ser una URL o una ruta, y ninguna de las
@@ -110,19 +109,14 @@ necesita: cada elemento es un `<ref>` y ya lo gobierna entera la gramática de [
 | Campo | Alfabeto |
 |---|---|
 | `labels`, `assignees` | letras y dígitos Unicode, y los símbolos `- _ . : @` |
-| clave de `ext` | letras y dígitos Unicode, y los símbolos `- _ .` |
 
-**Ninguno de los dos alfabetos admite el espacio.** Dos herramientas comparables que escriben una
+**El alfabeto no admite el espacio.** Dos herramientas comparables que escriben una
 etiqueta como palabra suelta de una línea de comandos, en vez de elegirla en un formulario web,
 la prohíben: Taskwarrior exige que una etiqueta sea una sola palabra, y Jira rechaza directamente
 cualquier etiqueta con espacio. GitHub sí permite etiquetas de varias palabras, pero nunca se
 enfrenta a este problema porque una etiqueta de GitHub nunca se teclea suelta en una shell: se elige
 en un desplegable o llega ya como cadena entrecomillada dentro de un JSON. La razón completa, con la
 comparación entera, está en ["El juego de caracteres de un token"](../decisiones/detalles.md#el-juego-de-caracteres-de-un-token).
-
-**La clave de `ext` no admite `@` ni `:`, porque no tienen ningún uso documentado ahí, ni tampoco
-`=`, porque `--ext <clave>=<valor>` ya usa ese carácter para separar la clave del valor**: si se
-permitiera dentro de la clave, `--ext a=b=c` sería ambiguo sobre dónde termina la clave.
 
 **Un carácter fuera del alfabeto que le toca es error 2 (`USAGE`)**, en la misma familia que un
 identificador mal formado (["Los tres mensajes de \"no la encuentro\""](referencias.md#los-tres-mensajes-de-no-la-encuentro)): es un problema de forma, no de que el
@@ -135,24 +129,20 @@ hint: a label may contain letters, digits, and - _ . : @
 
 error: malformed assignee: "sara smith"
 hint: an assignee may contain letters, digits, and - _ . : @
-
-error: malformed extension key: "trello=card"
-hint: an extension key may contain letters, digits, and - _ .
 ```
 
 **Esto rige al escribir.** Un valor ya guardado que no cumple este alfabeto, porque se escribió antes
 de que existiera esta regla o porque llegó por una vía que no pasa por esta validación, no es un error
 nuevo distinto: es un dato que el programa no puede interpretar, y se trata con la regla general de
-["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), la misma que ya cubre una clave de `ext` que la
-configuración ha dejado de declarar.
+["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar).
 
-Los `code` correspondientes, `malformed_label`, `malformed_assignee` y `malformed_extension_key`,
+Los `code` correspondientes, `malformed_label` y `malformed_assignee`,
 están en la tabla de ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error).
 
 ## El salto de línea en un campo `string`
 
-`title`, `author` de tarea/comentario/pregunta, `Criterion.text` de `acceptanceCriteria`,
-y los valores (no las claves) de `ext` son del tipo `string` de ["El modelo de datos de una
+`title`, `author` de tarea/comentario/pregunta y `Criterion.text` de `acceptanceCriteria`
+son del tipo `string` de ["El modelo de datos de una
 tarea"](modelo-de-datos/index.md#el-modelo-de-datos-de-una-tarea), es decir, texto de **una línea**.
 Ninguno de ellos admite un `\r` o un `\n` literal: si lo llevara, dejaría de ser una línea, y `title`
 en particular rompería la promesa de ["`biso ls`"](cmd/ls.md#salida) de que cada tarea ocupa
@@ -166,8 +156,8 @@ error: malformed title: "first line\nsecond line"
 hint: a string field cannot contain a newline or a carriage return
 ```
 
-El `code` es `malformed_string_value`, con `field` igual a `title`, `author`, `criterion_text` o
-`ext`, según cuál sea el campo. Está en la tabla de ["Los identificadores de
+El `code` es `malformed_string_value`, con `field` igual a `title`, `author` o `criterion_text`,
+según cuál sea el campo. Está en la tabla de ["Los identificadores de
 error"](contrato-json.md#los-identificadores-de-error).
 
 **Esto rige al escribir**, con la misma excepción que la sección anterior: un valor ya guardado con un
@@ -216,7 +206,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
   el texto de un error no dependa de cómo se tecleó la llamada: `-C ""` falla nombrando
   `--cwd`, con `error: --cwd cannot be empty`.
 - **Un valor vacío en un flag que no añade, no sustituye y no es un escalar de tarea de
-  ["El valor vacío"](#el-valor-vacío)**, por ejemplo `--rm-labels ""`, `--cwd ""` o `--ext k=`, es
+  ["El valor vacío"](#el-valor-vacío)**, por ejemplo `--rm-labels ""` o `--cwd ""`, es
   **error 2** con el `code` `unexpected_argument`: donde la especificación no documenta un valor
   vacío, escribirlo es un error y no algo que se ignore en silencio. Es el 2 y no el 3 porque el 3 es
   "el valor llega bien formado pero el tablero no lo reconoce"
@@ -241,7 +231,6 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | Un argumento suelto con el bloque ya cerrado | 2 | `unexpected_argument` | `error: unexpected argument: high` |
 | Un escalar repetido con valores distintos | 2 | `duplicate_scalar_flag` | `error: --status given twice with different values: "In Progress" and "Done"` |
 | La misma clave de `--set-comment-date` con dos instantes (["Comentarios"](familias-de-flags.md#comentarios)) | 2 | `duplicate_scalar_flag` | `error: --set-comment-date: key "3" given twice with different values: "2026-08-14T10:22:00Z" and "2026-08-15T10:22:00Z"` |
-| Un valor de pareja al que le falta su `=` | 2 | `unexpected_argument` | `error: --ext: expected <key>=<value>, got "trello"` |
 | Más de un flag pidiendo la entrada estándar | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc and --append-plan both read stdin` |
 | El mismo flag repetible pidiéndola dos veces | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc reads stdin twice` |
 | Un valor fuera del dominio de `--color` | 2 | `invalid_color_mode` | `error: --color: unknown value: "sometimes"` |
@@ -252,8 +241,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | `--dry-run` en un comando de lectura | 2 | `read_only_flag` | `error: --dry-run does not apply to a read-only command` |
 | `--print` donde no afecta a ninguna tarea | 2 | `read_only_flag` | `error: --print does not apply to a command that affects no task` |
 | Un valor vacío donde no se documenta ninguno | 2 | `unexpected_argument` | `error: --rm-labels cannot be empty` |
-| El valor vacío de una pareja | 2 | `unexpected_argument` | `error: --ext: the value of key "k" cannot be empty` |
-| Un salto de línea en un campo de una línea, la mitad derecha de una pareja incluida (["El salto de línea en un campo `string`"](#el-salto-de-línea-en-un-campo-string)) | 2 | `malformed_string_value` | `error: malformed ext: "first line\nsecond line"` |
+| Un salto de línea en un campo de una línea (["El salto de línea en un campo `string`"](#el-salto-de-línea-en-un-campo-string)) | 2 | `malformed_string_value` | `error: malformed title: "first line\nsecond line"` |
 | Un escalar de tarea vacío sin vocabulario cerrado | 3 | `empty_scalar_value` | `error: --author cannot be empty`, con `hint: to clear it, use --clear-author` cuando el campo tiene un flag que lo vacía |
 | Un argumento que no es UTF-8 | 3 | `invalid_encoding` | `error: invalid UTF-8 in argument 4 at byte 2: "ok\xffbad"`, con `field` igual a `argument` |
 | Un fichero o una entrada estándar que no es UTF-8 | 3 | `invalid_encoding` | `error: --append-desc: invalid UTF-8 at byte 12`, con `given` igual a lo que se escribió detrás del flag |

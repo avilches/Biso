@@ -66,8 +66,7 @@ func flagsOfTheGrid(t *testing.T) map[string]bool {
 }
 
 // tokensOfTheGrid is every flag name of the grid, in the order it writes
-// them. The heading is left out, and so is any token that is not a flag,
-// which today is only the `K=V` that shows the shape of an `--ext` value.
+// them. The heading is left out, and so is any token that is not a flag.
 func tokensOfTheGrid(t *testing.T) []string {
 	t.Helper()
 	lines := strings.Split(strings.TrimSuffix(primeFieldFlags, "\n"), "\n")

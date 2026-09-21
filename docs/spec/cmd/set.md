@@ -14,7 +14,7 @@ biso set <ref>... [cualquier flag de campo de las familias de flags]
 
 ## Parámetros propios
 
-**Todos** los flags de las secciones ["Campos de lista que admiten coma"](../familias-de-flags.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-flags.md#campos-de-prosa), ["Campos escalares"](../familias-de-flags.md#campos-escalares) y ["Campos externos"](../familias-de-flags.md#campos-externos) valen aquí, con exactamente el mismo
+**Todos** los flags de las secciones ["Campos de lista que admiten coma"](../familias-de-flags.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-flags.md#campos-de-prosa) y ["Campos escalares"](../familias-de-flags.md#campos-escalares) valen aquí, con exactamente el mismo
 significado que en cualquier otro comando. Lo propio de `set`:
 
 | Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
@@ -192,10 +192,6 @@ Replace by clearing and appending in the same call.
       --append-note X
       --append-summary X
       --clear-desc / --clear-plan / --clear-notes / --clear-summary
-
-External fields have three: --ext key=value sets that one key, --rm-ext key
-drops it, --clear-ext empties the map. There is no --replace-ext: setting a
-key already replaces its value.
 
 Scalars just take a value: --title, --status, --type, --priority,
 --parent, --due, --ordinal, --author. Each has a --clear-<field>. An

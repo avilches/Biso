@@ -19,8 +19,6 @@ Options:
   --terminal-status <status>  what `biso finish` sets (default: "Done")
   --types <list>              comma-separated (default: "task,bug,docs")
   --priorities <list>         comma-separated (default: "high,medium,low")
-  --extensions <list>         comma-separated declared external field keys,
-                              such as trello.card (default: none)
   --prefix <text>             task id prefix, letters only (default: derived
                               from the board name, uppercased)
   --overwrite-config          replace the configuration of an existing board,
@@ -73,5 +71,5 @@ Examples:
   biso init "My project" --statuses "Ideas,To Do,In Progress,Done" \
       --initial-status Ideas --active-status "In Progress" \
       --terminal-status Done
-  biso init "My project" --prefix MYP --at my-project-board --extensions trello.card
+  biso init "My project" --prefix MYP --at my-project-board
   biso init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c

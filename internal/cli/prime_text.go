@@ -41,8 +41,7 @@ const primeFieldFlags = "FIELD FLAGS  (same names, same meaning, in every comman
 	"  --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac\n" +
 	"  --append-desc --clear-desc  --append-plan --clear-plan\n" +
 	"  --append-note --clear-notes  --append-summary --clear-summary\n" +
-	"  --comment --rm-comment --set-comment-date\n" +
-	"  --ext K=V --rm-ext --clear-ext\n"
+	"  --comment --rm-comment --set-comment-date\n"
 
 // primeRules is the RULES block: the eleven rules that cannot be guessed.
 const primeRules = "RULES  (none of these are guessable; they are the whole learning curve)\n" +

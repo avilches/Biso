@@ -58,34 +58,9 @@ func assertReports(t *testing.T, m *machine, line string, argv ...string) {
 
 // ------------------------------------------- the checks with no test yet
 
-// TestDoctorReportsAnExtensionKeyTheBoardDoesNotDeclare is the row of an
-// undeclared extension key, in its two forms: with a key declared, which
-// the message quotes, and with none, which it cannot quote.
-func TestDoctorReportsAnExtensionKeyTheBoardDoesNotDeclare(t *testing.T) {
-	// With nothing declared, the message says so instead of printing a
-	// pair of empty quotes. A board declares nothing by default.
-	empty := oneTaskBoard(t)
-	empty.execOnBoard(t, boardOf(empty),
-		`INSERT INTO task_ext (task_id, key, value) VALUES ('MYP-1', 'trello.card', 'abc')`)
-	empty.run(t, "doctor").assertCode(t, 6)
-	assertReports(t, empty, strings.TrimSuffix(fixture(t, "doctor-ext-none.txt"), "\n"), "doctor")
-
-	// And with a key declared, it quotes the list. It is another board,
-	// because `biso config set extensions` refuses to leave behind the very
-	// undeclared key this check reports, so the two states cannot be
-	// reached one after the other on the same board.
-	declared := oneTaskBoard(t)
-	declared.run(t, "config", "set", "extensions", "jira.issue").assertCode(t, 0)
-	declared.execOnBoard(t, boardOf(declared),
-		`INSERT INTO task_ext (task_id, key, value) VALUES ('MYP-1', 'trello.card', 'abc')`)
-	declared.run(t, "doctor").assertCode(t, 6)
-	assertReports(t, declared,
-		`  MYP-1  ext key "trello.card" is not declared, declared keys are "jira.issue"`, "doctor")
-}
-
-// TestDoctorReportsAValueOfAVocabularyTheBoardEmptied is the other message
-// that quotes a list which can be emptied: `types` and `priorities` can both
-// be left with nothing in them, and then there is no list to quote.
+// TestDoctorReportsAValueOfAVocabularyTheBoardEmptied is the message that
+// quotes a list which can be emptied: `types` and `priorities` can both be
+// left with nothing in them, and then there is no list to quote.
 func TestDoctorReportsAValueOfAVocabularyTheBoardEmptied(t *testing.T) {
 	m := oneTaskBoard(t)
 	dir := boardOf(m)
@@ -287,12 +262,11 @@ func TestTheReportComesOutInTheOrderOfTheTableOfChecks(t *testing.T) {
 	m := brokenBoard(t)
 	dir := filepath.Join(m.dir, "board")
 	// One finding of five different checks, produced in an order that is
-	// not the one of the table: the lease and the extension key are found
+	// not the one of the table: the lease and the unconfigured type are found
 	// in the same pass over the tasks, and the role is found before it.
 	m.execOnBoard(t, dir, `UPDATE task SET lease_expires_at = '2026-09-06T13:12:04Z',
 		lease_holder = '@claude' WHERE id = 'MYP-41'`)
-	m.execOnBoard(t, dir,
-		`INSERT INTO task_ext (task_id, key, value) VALUES ('MYP-42', 'trello.card', 'abc')`)
+	m.execOnBoard(t, dir, `UPDATE task SET type = 'nonesuch' WHERE id = 'MYP-42'`)
 	m.execOnBoard(t, dir,
 		`UPDATE board_config SET value = 'Doing' WHERE key = 'active_status'`)
 	m.write(t, filepath.Join(dir, ".gitignore"), "board.db\n")
@@ -300,7 +274,7 @@ func TestTheReportComesOutInTheOrderOfTheTableOfChecks(t *testing.T) {
 	problems, warnings := doctorCodes(t, m, "doctor")
 
 	assertOrder(t, problems, []string{
-		"undeclared_extension_key",
+		"value_not_configured",
 		"status_role_unknown",
 		"dependency_not_found",
 		"lease_invariant",

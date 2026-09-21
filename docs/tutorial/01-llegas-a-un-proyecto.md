@@ -61,7 +61,6 @@ FIELD FLAGS  (same names, same meaning, in every command above that writes)
   --append-desc --clear-desc  --append-plan --clear-plan
   --append-note --clear-notes  --append-summary --clear-summary
   --comment --rm-comment --set-comment-date
-  --ext K=V --rm-ext --clear-ext
 
 RULES  (none of these are guessable; they are the whole learning curve)
   1. Every write goes through biso. Nothing else touches the board.

@@ -58,7 +58,6 @@ func TestReadBudgetOnThreeHundredTasks(t *testing.T) {
 			Labels:       []string{"parser", "crlf"},
 			Dependencies: []string{"MYP-1"},
 			Description:  "A description of the length a real task carries, more or less.",
-			Ext:          map[string]string{"trello.card": "5f2a8c1e"},
 		}
 		task.AddCriterion("The first criterion")
 		task.AddCriterion("The second criterion")
@@ -77,7 +76,7 @@ func TestReadBudgetOnThreeHundredTasks(t *testing.T) {
 	}
 	defer s.Close()
 
-	all, _, err := NewTasks(s, testPrefix, testExtensions).All()
+	all, _, err := NewTasks(s, testPrefix).All()
 	if err != nil {
 		t.Fatalf("All: %v", err)
 	}

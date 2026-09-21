@@ -31,10 +31,6 @@ Replace by clearing and appending in the same call.
       --append-summary X
       --clear-desc / --clear-plan / --clear-notes / --clear-summary
 
-External fields have three: --ext key=value sets that one key, --rm-ext key
-drops it, --clear-ext empties the map. There is no --replace-ext: setting a
-key already replaces its value.
-
 Scalars just take a value: --title, --status, --type, --priority,
 --parent, --due, --ordinal, --author. Each has a --clear-<field>. An
 empty string is never a way to clear anything.

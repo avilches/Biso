@@ -20,8 +20,7 @@ func snapshotDir(t *testing.T) (*machine, string) {
 	t.Helper()
 	m := newMachine(t)
 	m.env["BISO_ME"] = "@claude"
-	m.run(t, "init", "My project", "--prefix", "MYP",
-		"--extensions", "trello.card").assertCode(t, 0)
+	m.run(t, "init", "My project", "--prefix", "MYP").assertCode(t, 0)
 	m.run(t, "new", "One").assertCode(t, 0)
 	m.run(t, "new", "Two", "--status", "Done").assertCode(t, 0)
 	m.run(t, "snapshot", "--vcs", "none").assertCode(t, 0)
@@ -161,7 +160,7 @@ func TestRestoreRefusesAVocabularyThatCannotBeABoard(t *testing.T) {
 			"two statuses",
 			`{"project_name":"P","statuses":["A","B"],"initial_status":"A","active_status":"A",` +
 				`"terminal_status":"B","types":[],"priorities":[],"labels":[],"assignees":[],` +
-				`"extensions":[],"task_prefix":"MYP","finish_strict":false,"lease_minutes":240,` +
+				`"task_prefix":"MYP","finish_strict":false,"lease_minutes":240,` +
 				`"urgency":{"priority":6.0,"active":4.0,"blocking":8.0,"blocked":-5.0,"due":12.0,"criteria":1.0,"age":0.5}}`,
 			"at least three",
 		},
@@ -169,7 +168,7 @@ func TestRestoreRefusesAVocabularyThatCannotBeABoard(t *testing.T) {
 			"a prefix that is not letters",
 			`{"project_name":"P","statuses":["A","B","C"],"initial_status":"A","active_status":"B",` +
 				`"terminal_status":"C","types":[],"priorities":[],"labels":[],"assignees":[],` +
-				`"extensions":[],"task_prefix":"9","finish_strict":false,"lease_minutes":240,` +
+				`"task_prefix":"9","finish_strict":false,"lease_minutes":240,` +
 				`"urgency":{"priority":6.0,"active":4.0,"blocking":8.0,"blocked":-5.0,"due":12.0,"criteria":1.0,"age":0.5}}`,
 			"letters",
 		},
@@ -277,7 +276,6 @@ func TestRestoreIsIncompatibleWithEveryVocabularyFlag(t *testing.T) {
 		{"--types", "task,bug"},
 		{"--statuses", "a,b,c"},
 		{"--priorities", "high"},
-		{"--extensions", "trello.card"},
 		{"--overwrite-config"},
 	} {
 		argv := append([]string{"init", "--from", dir}, extra...)

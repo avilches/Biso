@@ -36,7 +36,6 @@ type wireConfig struct {
 	Priorities     []string    `json:"priorities"`
 	Labels         []string    `json:"labels"`
 	Assignees      []string    `json:"assignees"`
-	Extensions     []string    `json:"extensions"`
 	TaskPrefix     string      `json:"task_prefix"`
 	FinishStrict   bool        `json:"finish_strict"`
 	LeaseMinutes   int         `json:"lease_minutes"`
@@ -84,7 +83,6 @@ func encodeBoardConfig(cfg board.Config) ([]byte, error) {
 		Priorities:     listOrEmpty(cfg.Priorities),
 		Labels:         listOrEmpty(cfg.Labels),
 		Assignees:      listOrEmpty(cfg.Assignees),
-		Extensions:     listOrEmpty(cfg.Extensions),
 		TaskPrefix:     cfg.TaskPrefix,
 		FinishStrict:   cfg.FinishStrict,
 		LeaseMinutes:   cfg.LeaseMinutes,
@@ -130,7 +128,6 @@ func decodeBoardConfig(data []byte) (board.Config, *model.Error) {
 		Priorities:     w.Priorities,
 		Labels:         listOrEmpty(w.Labels),
 		Assignees:      listOrEmpty(w.Assignees),
-		Extensions:     listOrEmpty(w.Extensions),
 		TaskPrefix:     w.TaskPrefix,
 		FinishStrict:   w.FinishStrict,
 		LeaseMinutes:   w.LeaseMinutes,

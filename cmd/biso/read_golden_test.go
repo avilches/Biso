@@ -343,8 +343,7 @@ func cardBoard(t *testing.T) *machine {
 	t.Helper()
 	m := newMachine(t)
 	m.env["BISO_ME"] = "@avilches"
-	m.run(t, "init", "My project", "--prefix", "MYP",
-		"--extensions", "trello.card").assertCode(t, 0)
+	m.run(t, "init", "My project", "--prefix", "MYP").assertCode(t, 0)
 	for i := 1; i <= 10; i++ {
 		m.run(t, "new", "Task "+strconv.Itoa(i)).assertCode(t, 0)
 	}
@@ -353,7 +352,6 @@ func cardBoard(t *testing.T) *machine {
 	m.run(t, "new", "Normalize CRLF in the diff", "--start", "--author", "@avilches",
 		"--type", "bug", "--priority", "high",
 		"--add-labels", "parser", "--add-refs", "docs/bugs/BUG-02.md",
-		"--ext", "trello.card=5f2a8c1e3b9d4a7f6e0c2b81",
 		"--append-desc", "The diff compares byte by byte and marks as different "+
 			"two lines that only\ndiffer in the line ending.",
 		"--append-plan", "1. Read the parser.\n2. Add the CRLF case.",

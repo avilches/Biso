@@ -94,15 +94,6 @@ func writeTask(tx *sql.Tx, task *model.Task, num int) error {
 		}
 	}
 
-	for _, key := range model.SortedExtKeys(task.Ext) {
-		if _, err := tx.Exec(
-			"INSERT INTO task_ext (task_id, key, value) VALUES (?, ?, ?)",
-			task.ID, key, task.Ext[key],
-		); err != nil {
-			return err
-		}
-	}
-
 	for position, c := range task.AcceptanceCriteria {
 		if _, err := tx.Exec(
 			"INSERT INTO task_criterion (task_id, key, position, text, checked) VALUES (?, ?, ?, ?, ?)",
@@ -127,7 +118,7 @@ func writeTask(tx *sql.Tx, task *model.Task, num int) error {
 // id is not empty, in ascending identifier order, together with the ones it
 // could not decode.
 //
-// It runs five queries and never one per task: the whole point of the
+// It runs four queries and never one per task: the whole point of the
 // startup budget of docs/spec/presupuestos.md#el-presupuesto-de-arranque
 // is that reading a board of 300 tasks is a handful of scans, not fifteen
 // hundred round trips.
@@ -147,7 +138,6 @@ func (r *Tasks) read(id string) ([]*model.Task, []Skipped, error) {
 	}
 	for _, readChildren := range []func(string, map[string]*model.Task, map[string]*model.Error) error{
 		r.readListItems,
-		r.readExt,
 		r.readCriteria,
 		r.readComments,
 	} {
@@ -343,30 +333,6 @@ func (r *Tasks) readListItems(id string, byID map[string]*model.Task, bad map[st
 		if err := task.SetListField(model.ListField(field), append(current, value)); err != nil {
 			bad[taskID] = undecodable(taskID, field, err)
 		}
-	}
-	return r.store.Classify(rows.Err())
-}
-
-func (r *Tasks) readExt(id string, byID map[string]*model.Task, bad map[string]*model.Error) error {
-	rows, err := r.query("SELECT task_id, key, value FROM task_ext", "task_id", id, "task_id, key")
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var taskID, key, value string
-		if err := rows.Scan(&taskID, &key, &value); err != nil {
-			return r.store.Classify(err)
-		}
-		task := byID[taskID]
-		if task == nil {
-			continue
-		}
-		if task.Ext == nil {
-			task.Ext = map[string]string{}
-		}
-		task.Ext[key] = value
 	}
 	return r.store.Classify(rows.Err())
 }

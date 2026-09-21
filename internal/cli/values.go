@@ -185,7 +185,7 @@ func (a Alphabet) allowed(s string) bool {
 }
 
 // underscored turns the noun of a field into the tail of its error code, so
-// that "extension key" gives malformed_extension_key.
+// that a noun of two words gives one code word joined by an underscore.
 func underscored(noun string) string {
 	return strings.ReplaceAll(noun, " ", "_")
 }

@@ -360,7 +360,6 @@ func changedFields(before, after *model.Task) []string {
 		{"references", func(t *model.Task) any { return t.References }},
 		{"due", func(t *model.Task) any { return t.Due }},
 		{"ordinal", func(t *model.Task) any { return ordinalOf(t) }},
-		{"ext", func(t *model.Task) any { return t.Ext }},
 		{"description", func(t *model.Task) any { return t.Description }},
 		{"plan", func(t *model.Task) any { return t.Plan }},
 		{"notes", func(t *model.Task) any { return t.Notes }},

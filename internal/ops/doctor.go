@@ -142,23 +142,22 @@ func (d *doctor) warning(task, code, message string) {
 // each task in one pass over the board, so the report is sorted by this map
 // before it is answered.
 var checkRank = map[string]int{
-	"duplicate_id":             1,
-	"task_unreadable":          2,
-	"undeclared_extension_key": 3,
-	"value_not_configured":     4,
-	"status_role_unknown":      5,
-	"status_role_invalid":      6,
-	"dependency_not_found":     7,
-	"dependency_cycle":         8,
-	"parent_cycle":             9,
-	"duplicate_criterion_key":  10,
-	"lease_invariant":          11,
-	"highest_id_behind":        12,
-	"marker_missing":           13,
-	"marker_id_mismatch":       14,
-	"extra_root_unreadable":    15,
-	"unsafe_wal_filesystem":    16,
-	"ignore_file_mismatch":     17,
+	"duplicate_id":            1,
+	"task_unreadable":         2,
+	"value_not_configured":    3,
+	"status_role_unknown":     4,
+	"status_role_invalid":     5,
+	"dependency_not_found":    6,
+	"dependency_cycle":        7,
+	"parent_cycle":            8,
+	"duplicate_criterion_key": 9,
+	"lease_invariant":         10,
+	"highest_id_behind":       11,
+	"marker_missing":          12,
+	"marker_id_mismatch":      13,
+	"extra_root_unreadable":   14,
+	"unsafe_wal_filesystem":   15,
+	"ignore_file_mismatch":    16,
 }
 
 // inTableOrder sorts the findings the way the table lists the checks. The
@@ -309,12 +308,6 @@ func (d *doctor) checkTasks(tasks []*model.Task) error {
 		d.checkVocabulary(t, "status", t.Status, cfg.Statuses)
 		d.checkVocabulary(t, "type", t.Type, cfg.Types)
 		d.checkVocabulary(t, "priority", t.Priority, cfg.Priorities)
-		for _, key := range sortedKeysOfStrings(t.Ext) {
-			if containsString(cfg.Extensions, key) {
-				continue
-			}
-			d.problem(t.ID, "undeclared_extension_key", undeclaredKeyMessage(key, cfg.Extensions))
-		}
 		for _, dep := range t.Dependencies {
 			if _, ok := byID[dep]; !ok {
 				d.problem(t.ID, "dependency_not_found",
@@ -351,9 +344,8 @@ func (d *doctor) checkVocabulary(t *model.Task, field, value string, configured 
 	d.problem(t.ID, "value_not_configured", notConfiguredMessage(field, value, noun, configured))
 }
 
-// notConfiguredMessage and undeclaredKeyMessage are the two messages that
-// quote a list the board may have emptied. `types`, `priorities` and
-// `extensions` can all be left with nothing in them
+// notConfiguredMessage is the message that quotes a list the board may have
+// emptied. `types` and `priorities` can be left with nothing in them
 // (docs/spec/cmd/config.md), and quoting an empty list would print a pair
 // of empty quotes where a value should be, which says nothing and reads
 // like a bug. The message says there is none instead
@@ -365,14 +357,6 @@ func notConfiguredMessage(field, value, noun string, configured []string) string
 	}
 	return fmt.Sprintf("%s %q is not one of the configured %s %q",
 		field, value, noun, strings.Join(configured, ", "))
-}
-
-func undeclaredKeyMessage(key string, declared []string) string {
-	if len(declared) == 0 {
-		return fmt.Sprintf("ext key %q is not declared, and the board declares none", key)
-	}
-	return fmt.Sprintf("ext key %q is not declared, declared keys are %q",
-		key, strings.Join(declared, ", "))
 }
 
 // checkCycle reports one finding per cycle and not one per task in it: the
@@ -572,8 +556,8 @@ func (d *doctor) fix(dryRun bool) error {
 	return nil
 }
 
-// sortedKeys and sortedKeysOfStrings keep every list of this report in one
-// fixed order, so that two runs over the same board print the same thing.
+// sortedKeys keeps every list of this report in one fixed order, so that two
+// runs over the same board print the same thing.
 func sortedKeys[V any](m map[string]V) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -582,7 +566,5 @@ func sortedKeys[V any](m map[string]V) []string {
 	sortStrings(keys)
 	return keys
 }
-
-func sortedKeysOfStrings(m map[string]string) []string { return sortedKeys(m) }
 
 func sortStrings(values []string) { sort.Strings(values) }

@@ -62,7 +62,6 @@ Precisiones:
 | `references` | `list<string>`; ver ["Las relaciones entre tareas"](relaciones.md) | el único campo de punteros: un documento es una referencia más |
 | `due` | `date` (`YYYY-MM-DD`) | |
 | `ordinal` | `int` (>= 0) | |
-| `ext` | `map<string,string>` | |
 | `description` | `text` | |
 | `plan` | `text` | |
 | `notes` | `text` | |

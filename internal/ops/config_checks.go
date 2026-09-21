@@ -35,14 +35,6 @@ func checkConfigConsistency(b *board.Board, cfg board.Config, key string) error 
 		return checkVocabularyInUse(b, key, "priority", cfg.Priorities, func(t *model.Task) []string {
 			return oneOrNone(t.Priority)
 		})
-	case board.KeyExtensions:
-		return checkVocabularyInUse(b, key, "ext key", cfg.Extensions, func(t *model.Task) []string {
-			keys := make([]string, 0, len(t.Ext))
-			for k := range t.Ext {
-				keys = append(keys, k)
-			}
-			return keys
-		})
 	case board.KeyTaskPrefix:
 		return checkPrefixChange(b, cfg)
 	}

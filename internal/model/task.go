@@ -64,7 +64,6 @@ type Task struct {
 	References   []string
 	Due          time.Time // a calendar day at UTC midnight, zero when unset
 	Ordinal      *int
-	Ext          map[string]string
 	Description  string
 	Plan         string
 	Notes        string

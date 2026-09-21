@@ -34,8 +34,7 @@ func primeBoard(t *testing.T) (*machine, string) {
 	m := newMachine(t)
 	m.env["BISO_ME"] = "@claude"
 	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "board",
-		"--types", "idea,memory,task,bug,docs",
-		"--extensions", "trello.card").assertCode(t, 0)
+		"--types", "idea,memory,task,bug,docs").assertCode(t, 0)
 	dir := filepath.Join(m.dir, "board")
 
 	// The two hundred and forty eight tasks are seeded with one statement

@@ -6,28 +6,19 @@ Una sola invocación puede tocar muchos campos. El orden en que se aplican es fi
 orden en que aparecen los flags en la línea de comandos**, para que el resultado sea reproducible y
 determinista:
 
-1. Todos los `--clear-*`, incluido `--clear-ext`.
+1. Todos los `--clear-*`.
 2. Todos los `--replace-*`.
-3. Todos los `--rm-*`, incluido `--rm-comment` y `--rm-ext`.
+3. Todos los `--rm-*`, incluido `--rm-comment`.
 4. Los añadidos: `--add-*` y `--append-*`.
-5. Los campos de mapa: `--ext`.
-6. Los campos escalares.
-7. Los marcados de criterios (`--check-ac`, `--uncheck-ac`).
-8. `--set-comment-date`.
-9. Los comentarios, es decir `--comment`, el que añade.
+5. Los campos escalares.
+6. Los marcados de criterios (`--check-ac`, `--uncheck-ac`).
+7. `--set-comment-date`.
+8. Los comentarios, es decir `--comment`, el que añade.
 
 Con este orden, `--clear-labels --add-labels urgent` deja exactamente una etiqueta, y `--clear-acs
 --add-ac "A" --check-ac all` marca el criterio recién puesto. Dentro de un mismo paso manda el orden
 de la línea de comandos: `--add-labels b --add-labels a` deja `b` antes que `a`. Las listas nunca se
 ordenan solas.
-
-**`--ext` tiene un paso propio, entre los añadidos y los escalares, en vez de compartir uno de los
-dos que ya existían.** No es ni un añadido ni un escalar: una clave de `--ext` no se acumula sobre lo
-que había, como hacen `--add-*`/`--append-*`, ni guarda un único valor para toda la tarea, como un
-escalar, sino que fija el valor de una clave dentro de un mapa. `--clear-ext` y `--rm-ext`, en cambio,
-sí encajan por nombre en los pasos que ya existían para cualquier `--clear-*` y cualquier `--rm-*`, así
-que se quedan donde estaban: el mapa entero se vacía en el paso 1, y una clave suelta se quita en el
-paso 3, antes de que el paso 5 pueda fijar ninguna.
 
 **`--rm-comment` y `--set-comment-date` solo pueden señalar un comentario que ya existiera al empezar
 la llamada.** Como `--comment` va en el último paso, un comentario que la propia llamada añade nunca

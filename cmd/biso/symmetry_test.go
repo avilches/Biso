@@ -52,7 +52,7 @@ const richBoard = `# every shape the format can carry
 {"id":"MYP-1","title":"Write the parser","type":"bug","priority":"high","status":"Done",` +
 	`"description":"A long description\nover two lines","labels":["parser","urgent"],` +
 	`"references":["docs/bugs/BUG-02.md","parser.go"],` +
-	`"ext":{"trello.card":"5f2a8c1e"},"author":"@sara",` +
+	`"author":"@sara",` +
 	`"due":"2026-01-31","ordinal":7,"plan":"1. Read it","notes":"It was the CRLF",` +
 	`"summary":"Done and tested",` +
 	`"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},` +
@@ -70,7 +70,7 @@ const richBoard = `# every shape the format can carry
 `
 
 // vocabulary is what a board has to declare to accept the tasks above.
-var vocabulary = []string{"--prefix", "MYP", "--extensions", "trello.card"}
+var vocabulary = []string{"--prefix", "MYP"}
 
 func sourceBoard(t *testing.T) *machine {
 	t.Helper()
@@ -136,7 +136,7 @@ func TestSnapshotAndInitFromLeaveTwoIdenticalBoards(t *testing.T) {
 	elsewhere.run(t, "init", "--at", restored, "--from", sourceDir).assertCode(t, 0)
 
 	// Nothing of the vocabulary was declared by hand, so this comparison
-	// covers every table there is, the board's own identity and its twenty
+	// covers every table there is, the board's own identity and its nineteen
 	// configuration keys included.
 	assertEqual(t,
 		dumpDatabase(t, restored, allTables(t, restored)...),
@@ -164,7 +164,7 @@ func TestSnapshotAndInitFromLeaveTwoIdenticalBoards(t *testing.T) {
 // export` and `biso new --from` carry between two boards.
 var taskTables = []string{
 	"board_counter", "task", "task_comment", "task_criterion",
-	"task_ext", "task_list_item",
+	"task_list_item",
 }
 
 // allTables are every table of a board's database, in alphabetical order,

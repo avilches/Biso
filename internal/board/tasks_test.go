@@ -25,10 +25,6 @@ const testBoardID = "3f9a2b1c"
 // `biso init`'s job.
 const testPrefix = "MYP"
 
-// testExtensions is the `extensions` list the example board declares
-// (docs/spec/modelo-de-datos/campos-externos.md).
-var testExtensions = []string{"trello.card", "github.issue"}
-
 func openTasks(t *testing.T, path string) (*Tasks, func()) {
 	t.Helper()
 
@@ -36,7 +32,7 @@ func openTasks(t *testing.T, path string) (*Tasks, func()) {
 	if err != nil {
 		t.Fatalf("open the board at %s: %v", path, err)
 	}
-	return NewTasks(s, testPrefix, testExtensions), func() { s.Close() }
+	return NewTasks(s, testPrefix), func() { s.Close() }
 }
 
 func TestCreateAllocatesConsecutiveIdentifiers(t *testing.T) {
@@ -119,7 +115,6 @@ func sampleTask() *model.Task {
 		References:     []string{"docs/bugs/BUG-02.md", "internal/diff/diff.go"},
 		Due:            time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
 		Ordinal:        &ordinal,
-		Ext:            map[string]string{"trello.card": "5f2a8c1e", "github.issue": "42"},
 		Description:    "The diff compares byte by byte...",
 		Plan:           "1. Read the parser.\n2. Add the CRLF case.",
 		Notes:          "The parser already normalized LF.",
@@ -272,7 +267,7 @@ func TestTwoProcessesNeverAllocateTheSameIdentifier(t *testing.T) {
 			}
 			defer s.Close()
 
-			tasks := NewTasks(s, testPrefix, testExtensions)
+			tasks := NewTasks(s, testPrefix)
 			for i := 0; i < perWriter; i++ {
 				task := &model.Task{Title: fmt.Sprintf("writer %d task %d", w, i), Status: "To Do"}
 				if err := tasks.Create(task); err != nil {
@@ -399,57 +394,6 @@ func TestLoadTellsNeverAllocatedApartFromNotFound(t *testing.T) {
 	}
 }
 
-func TestAnUndeclaredExtensionKeyIsRejectedOnWrite(t *testing.T) {
-	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
-	defer done()
-
-	task := &model.Task{
-		Title:  "With an extension",
-		Status: "To Do",
-		Ext:    map[string]string{"jira.key": "PROJ-1"},
-	}
-	err := tasks.Create(task)
-	modelErr, ok := err.(*model.Error)
-	if !ok {
-		t.Fatalf("Create with an undeclared key = %v, want a *model.Error", err)
-	}
-	if modelErr.ExitCode != 3 || modelErr.Code != "unknown_extension_key" {
-		t.Fatalf("error = %d/%s, want 3/unknown_extension_key", modelErr.ExitCode, modelErr.Code)
-	}
-
-	// Nothing was written, not even the identifier: the check runs before
-	// the transaction that allocates it.
-	last, err := tasks.LastAllocated()
-	if err != nil {
-		t.Fatalf("LastAllocated: %v", err)
-	}
-	if last != 0 {
-		t.Fatalf("LastAllocated() = %d, want 0: the rejected write allocated an id", last)
-	}
-}
-
-func TestAMalformedExtensionKeyIsRejectedBeforeTheDeclaredList(t *testing.T) {
-	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
-	defer done()
-
-	task := &model.Task{
-		Title:  "With a bad key",
-		Status: "To Do",
-		Ext:    map[string]string{"trello card": "1"},
-	}
-	err := tasks.Create(task)
-	modelErr, ok := err.(*model.Error)
-	if !ok {
-		t.Fatalf("Create with a malformed key = %v, want a *model.Error", err)
-	}
-	// A character outside the alphabet is a problem of form, exit code 2,
-	// and not the 3 of a key the board does not declare
-	// (docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token).
-	if modelErr.ExitCode != 2 || modelErr.Code != "malformed_extension_key" {
-		t.Fatalf("error = %d/%s, want 2/malformed_extension_key", modelErr.ExitCode, modelErr.Code)
-	}
-}
-
 func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
 	defer done()
@@ -568,14 +512,6 @@ func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
 		{
 			name: "an assignee outside its alphabet",
 			task: &model.Task{Title: "A task", Status: "To Do", Assignees: []string{"sara smith"}},
-		},
-		{
-			name: "a newline in the value of an extension field",
-			task: &model.Task{
-				Title:  "A task",
-				Status: "To Do",
-				Ext:    map[string]string{"trello.card": "5f2a8c1e\n5f2a8c1f"},
-			},
 		},
 		{
 			name: "a negative ordinal",
@@ -700,7 +636,7 @@ func TestASetReadSkipsTheTaskItCannotDecodeAndNamesIt(t *testing.T) {
 				t.Fatalf("open the board: %v", err)
 			}
 			defer s.Close()
-			tasks := NewTasks(s, testPrefix, testExtensions)
+			tasks := NewTasks(s, testPrefix)
 			for i := 1; i <= 3; i++ {
 				task := &model.Task{Title: fmt.Sprintf("Task %d", i), Status: "To Do"}
 				task.AddComment("@avilches", time.Date(2026, 9, 6, 10, 0, 0, 0, time.UTC), "A comment.")
@@ -753,7 +689,7 @@ func TestATargetedReadOfAnUndecodableTaskIsAnError(t *testing.T) {
 		t.Fatalf("open the board: %v", err)
 	}
 	defer s.Close()
-	tasks := NewTasks(s, testPrefix, testExtensions)
+	tasks := NewTasks(s, testPrefix)
 
 	task := &model.Task{Title: "A task", Status: "To Do"}
 	if err := tasks.Create(task); err != nil {
@@ -790,7 +726,7 @@ func TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow(t *testing.T) {
 		t.Fatalf("open the board: %v", err)
 	}
 	defer s.Close()
-	tasks := NewTasks(s, testPrefix, testExtensions)
+	tasks := NewTasks(s, testPrefix)
 
 	for i := 1; i <= 2; i++ {
 		task := &model.Task{

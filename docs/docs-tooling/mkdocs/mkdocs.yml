@@ -129,7 +129,6 @@ nav:
       - Los criterios y sus claves estables: spec/modelo-de-datos/criterios.md
       - La pregunta abierta: spec/modelo-de-datos/pregunta-abierta.md
       - Los comentarios: spec/modelo-de-datos/comentarios.md
-      - Los campos externos: spec/modelo-de-datos/campos-externos.md
     - El arrendamiento de una tarea: spec/lease.md
     - Los presupuestos de arranque y de tamano: spec/presupuestos.md
     - Los vocabularios del tablero y la regla de validacion: spec/vocabularios.md

@@ -37,7 +37,6 @@ error: --json only applies to config list
 | `priorities` | lista | `high, medium, low` |
 | `labels` | lista | vacía |
 | `assignees` | lista | vacía |
-| `extensions` | lista | vacía |
 | `task_prefix` | texto de solo letras | se deriva de `project_name` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) |
 | `finish_strict` | booleano | falso |
 | `lease_minutes` | entero > 0 | 240 |
@@ -111,9 +110,8 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Quitar de `statuses` un estado que es `initial_status`, `active_status` o `terminal_status` | Error 6, diciendo cuál de los tres y que hay que cambiarlo antes |
 | Dejar `statuses` con menos de tres elementos | Error 6, diciendo cuántos hacen falta |
 | Dar a un papel (`initial_status`, `active_status` o `terminal_status`) el mismo estado que otro papel ya tiene | Error 6, con los dos papeles y el estado que comparten |
-| Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
-| Vaciar `types` o `priorities` del todo (`biso config set types ""`), sin ningún valor en uso | No es un error: ninguna de las dos tiene mínimo en la tabla de claves, al contrario que `statuses`, y `labels`, `assignees` y `extensions` ya nacen vacías. El tablero queda sin ese vocabulario, así que deja de admitir `--type` (o `--priority`) en cualquier llamada, y ["`biso prime`"](prime.md#la-salida-literal) lo dice en su línea `types` con un `(none)` |
+| Vaciar `types` o `priorities` del todo (`biso config set types ""`), sin ningún valor en uso | No es un error: ninguna de las dos tiene mínimo en la tabla de claves, al contrario que `statuses`, y `labels` y `assignees` ya nacen vacías. El tablero queda sin ese vocabulario, así que deja de admitir `--type` (o `--priority`) en cualquier llamada, y ["`biso prime`"](prime.md#la-salida-literal) lo dice en su línea `types` con un `(none)` |
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
 | Cambiar `project_name` a un valor vacío, o a uno cuyo slug (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) quede vacío tras derivarlo | Error 3, en los dos casos |
 | Cambiar `project_name` al mismo valor que ya tiene | El `set` se completa igual, con su `note:` |
@@ -198,7 +196,6 @@ types = idea,memory,task,bug,docs
 priorities = high,medium,low
 labels =
 assignees =
-extensions = trello.card
 task_prefix = TASK
 finish_strict = false
 lease_minutes = 240
@@ -211,7 +208,7 @@ urgency.criteria = 1.0
 urgency.age = 0.5
 ```
 
-**`config list` imprime las veinte claves, siempre, en el orden de la tabla de claves de arriba**, y
+**`config list` imprime las diecinueve claves, siempre, en el orden de la tabla de claves de arriba**, y
 los siete coeficientes de la urgencia con el nombre con el que `config set` los acepta, uno por línea.
 Lo que `list` enseña es exactamente el conjunto de claves que `set` admite, y por eso no puede haber
 ninguna que solo se vea con `--json`: una clave escondida es una clave que nadie sabe que puede cambiar.
@@ -240,7 +237,6 @@ Solo `config list` acepta `--json`:
       "priorities": ["high", "medium", "low"],
       "labels": [],
       "assignees": [],
-      "extensions": ["trello.card"],
       "task_prefix": "TASK",
       "finish_strict": false,
       "lease_minutes": 240,
@@ -284,7 +280,6 @@ Keys:
   priorities         configured priorities
   labels             labels that filters accept on top of the ones in use
   assignees          assignees that filters accept on top of the ones in use
-  extensions         declared external field keys, such as trello.card
   task_prefix        id prefix, letters only (default: derived from
                      project_name); immutable once the board has a task
   finish_strict      make `biso finish` refuse an incomplete task

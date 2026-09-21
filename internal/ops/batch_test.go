@@ -357,7 +357,6 @@ func TestBatchTreatsNullAsAbsentInAScalarAndAsAFailureInAList(t *testing.T) {
 	}
 	for _, line := range []string{
 		`{"title":"a","labels":null}`,
-		`{"title":"a","ext":null}`,
 		`{"title":"a","acceptanceCriteria":null}`,
 		`{"title":"a","comments":null}`,
 	} {

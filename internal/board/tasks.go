@@ -28,19 +28,14 @@ import (
 // (docs/spec/modelo-de-datos/identificadores.md), already decided: it is
 // derived from the board's name when the board is created, and by the time
 // anything reads or writes a task it is just configuration.
-//
-// extensions is the `extensions` list the board declares, the closed
-// vocabulary an `ext` key is checked against
-// (docs/spec/modelo-de-datos/campos-externos.md).
 type Tasks struct {
-	store      *store.Store
-	prefix     string
-	extensions []string
+	store  *store.Store
+	prefix string
 }
 
 // NewTasks builds the repository over an open store.
-func NewTasks(s *store.Store, prefix string, extensions []string) *Tasks {
-	return &Tasks{store: s, prefix: prefix, extensions: extensions}
+func NewTasks(s *store.Store, prefix string) *Tasks {
+	return &Tasks{store: s, prefix: prefix}
 }
 
 // Create allocates the task's identifier and writes it, both inside the
@@ -427,12 +422,11 @@ func (r *Tasks) number(id string) (int, error) {
 //
 // The rules themselves are the model's, in Task.Validate: they are rules
 // about a task and not about rows, so they hold whether the task came from
-// a flag or from an import. The board only supplies the one thing the
-// model cannot know, the `extensions` list this board declares. The
-// vocabularies that a board configures, statuses, types and priorities,
-// are matched by internal/match and checked by the layer above this one.
+// a flag or from an import. The vocabularies that a board configures,
+// statuses, types and priorities, are matched by internal/match and checked
+// by the layer above this one.
 func (r *Tasks) validate(task *model.Task) error {
-	return task.Validate(r.extensions)
+	return task.Validate()
 }
 
 // allocate moves the board's counter one forward and answers the number it

@@ -369,41 +369,7 @@ func TestTheOrderOfApplicationDoesNotDependOnTheCommandLine(t *testing.T) {
 		assertLabels(t, h.load(id), "parser")
 	})
 
-	t.Run("step 1 before step 5: --ext survives a --clear-ext of the same call", func(t *testing.T) {
-		h := newHarness(t)
-		id := h.create("A task", ext("trello.card", "old"))
-
-		h.set(id, ext("trello.card", "5f2a8c1e"), clear("clear-ext"))
-
-		if got := h.load(id).Ext["trello.card"]; got != "5f2a8c1e" {
-			t.Errorf("ext[trello.card] = %q, and step 5 comes after step 1", got)
-		}
-	})
-
-	t.Run("step 3 before step 5: --ext survives an --rm-ext of the same key", func(t *testing.T) {
-		h := newHarness(t)
-		id := h.create("A task", ext("trello.card", "old"))
-
-		h.set(id, ext("trello.card", "5f2a8c1e"), remove("rm-ext", "trello.card"))
-
-		if got := h.load(id).Ext["trello.card"]; got != "5f2a8c1e" {
-			t.Errorf("ext[trello.card] = %q, and step 5 comes after step 3", got)
-		}
-	})
-
-	t.Run("step 5 before step 6: --ext and a scalar do not fight", func(t *testing.T) {
-		h := newHarness(t)
-		id := h.create("A task")
-
-		h.set(id, scalar("title", "Renamed"), ext("trello.card", "abc"))
-
-		task := h.load(id)
-		if task.Title != "Renamed" || task.Ext["trello.card"] != "abc" {
-			t.Errorf("title = %q, ext = %v, want both written", task.Title, task.Ext)
-		}
-	})
-
-	t.Run("step 8 corrects the date of a comment that was already there", func(t *testing.T) {
+	t.Run("step 7 corrects the date of a comment that was already there", func(t *testing.T) {
 		h := newHarness(t)
 		id := h.create("A task", comment("Reported from Windows"))
 
@@ -465,7 +431,7 @@ func TestRemovingAndDatingTheSameCommentIsAConflict(t *testing.T) {
 
 func TestTheTolerantWarningsOfAddingAndRemoving(t *testing.T) {
 	h := newHarness(t)
-	id := h.create("A task", add("add-labels", "urgent"), ext("trello.card", "abc"))
+	id := h.create("A task", add("add-labels", "urgent"))
 
 	for _, c := range []struct {
 		change Change
@@ -473,7 +439,6 @@ func TestTheTolerantWarningsOfAddingAndRemoving(t *testing.T) {
 	}{
 		{add("add-labels", "urgent"), "value_already_present"},
 		{remove("rm-labels", "nothing-like-this"), "value_not_present"},
-		{remove("rm-ext", "priority_score"), "value_not_present"},
 	} {
 		result := h.set(id, c.change)
 		if !warned(result, c.code) {
@@ -677,7 +642,6 @@ func TestSetDryRunRefusesWhatTheRealWriteRefuses(t *testing.T) {
 		code    int
 		problem string
 	}{
-		{"an extension key the board does not declare", ext("trello.board", "42"), 3, "unknown_extension_key"},
 		{"an ordinal that is not a positive number", scalar("ordinal", "-5"), 2, "invalid_number"},
 	} {
 		t.Run(c.name, func(t *testing.T) {

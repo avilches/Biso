@@ -33,7 +33,6 @@ func newHarness(t *testing.T) *harness {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), "my-project-3f9a2b1c")
 	cfg := board.DefaultConfig("My project", "MYP")
-	cfg.Extensions = []string{"trello.card"}
 	b, err := board.Create(dir, "3f9a2b1c", cfg, board.Machine{})
 	if err != nil {
 		t.Fatal(err)
@@ -104,10 +103,6 @@ func replace(flag, value string) Change {
 
 func scalar(flag, value string) Change {
 	return Change{Flag: flag, Step: StepScalar, Value: value}
-}
-
-func ext(key, value string) Change {
-	return Change{Flag: "ext", Step: StepExt, Key: key, Value: value}
 }
 
 func check(flag, selector string) Change {

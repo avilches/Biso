@@ -65,8 +65,6 @@ const initHelp = "Usage: biso init [name] [options]\n" +
 	"  --terminal-status <status>  what `biso finish` sets (default: \"Done\")\n" +
 	"  --types <list>              comma-separated (default: \"task,bug,docs\")\n" +
 	"  --priorities <list>         comma-separated (default: \"high,medium,low\")\n" +
-	"  --extensions <list>         comma-separated declared external field keys,\n" +
-	"                              such as trello.card (default: none)\n" +
 	"  --prefix <text>             task id prefix, letters only (default: derived\n" +
 	"                              from the board name, uppercased)\n" +
 	"  --overwrite-config          replace the configuration of an existing board,\n" +
@@ -119,7 +117,7 @@ const initHelp = "Usage: biso init [name] [options]\n" +
 	"  biso init \"My project\" --statuses \"Ideas,To Do,In Progress,Done\" \\\n" +
 	"      --initial-status Ideas --active-status \"In Progress\" \\\n" +
 	"      --terminal-status Done\n" +
-	"  biso init \"My project\" --prefix MYP --at my-project-board --extensions trello.card\n" +
+	"  biso init \"My project\" --prefix MYP --at my-project-board\n" +
 	"  biso init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c\n"
 
 // whereHelp is `biso where --help` (docs/spec/cmd/where.md).
@@ -232,10 +230,6 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"      --append-note X\n" +
 	"      --append-summary X\n" +
 	"      --clear-desc / --clear-plan / --clear-notes / --clear-summary\n" +
-	"\n" +
-	"External fields have three: --ext key=value sets that one key, --rm-ext key\n" +
-	"drops it, --clear-ext empties the map. There is no --replace-ext: setting a\n" +
-	"key already replaces its value.\n" +
 	"\n" +
 	"Scalars just take a value: --title, --status, --type, --priority,\n" +
 	"--parent, --due, --ordinal, --author. Each has a --clear-<field>. An\n" +

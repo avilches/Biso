@@ -223,7 +223,6 @@ func metaBlock(v ops.TaskView) string {
 		pair("lease", minute(t.LeaseExpiresAt), "holder", orDash(t.LeaseHolder))
 	}
 	single("refs", joined(t.References))
-	single("ext", extCell(t.Ext))
 	return b.String()
 }
 
@@ -245,19 +244,6 @@ func joined(values []string) string {
 		return dash
 	}
 	return strings.Join(values, ", ")
-}
-
-// extCell writes the external fields sorted by key, so that the same task
-// prints the same card twice: a map has no order of its own.
-func extCell(ext map[string]string) string {
-	if len(ext) == 0 {
-		return dash
-	}
-	pairs := make([]string, 0, len(ext))
-	for _, key := range sortedKeys(ext) {
-		pairs = append(pairs, key+"="+ext[key])
-	}
-	return strings.Join(pairs, ", ")
 }
 
 func ordinalCell(t *model.Task) string {

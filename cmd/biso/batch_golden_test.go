@@ -21,14 +21,12 @@ import (
 // whole file has been read, and it sits between the other two that surround
 // it: that is the order of the file the block promises.
 
-// batchBoard is a board with the prefix and the extension key the examples
-// of the batch use.
+// batchBoard is a board with the prefix the examples of the batch use.
 func batchBoard(t *testing.T) *machine {
 	t.Helper()
 	m := newMachine(t)
 	m.env["BISO_ME"] = "@claude"
-	m.run(t, "init", "My project", "--prefix", "MYP",
-		"--extensions", "trello.card").assertCode(t, 0)
+	m.run(t, "init", "My project", "--prefix", "MYP").assertCode(t, 0)
 	return m
 }
 

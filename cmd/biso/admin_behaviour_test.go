@@ -179,9 +179,7 @@ func TestConfigRefusesAValueOutsideItsType(t *testing.T) {
 // code 6 of the same table, which is the half that has to read the tasks.
 func TestConfigRefusesAChangeThatWouldLeaveTheBoardInconsistent(t *testing.T) {
 	m := oneTaskBoard(t)
-	m.run(t, "config", "set", "extensions", "trello.card").assertCode(t, 0)
-	m.run(t, "set", "MYP-1", "--ext", "trello.card=8821",
-		"--type", "task", "--priority", "medium").assertCode(t, 0)
+	m.run(t, "set", "MYP-1", "--type", "task", "--priority", "medium").assertCode(t, 0)
 
 	for _, c := range []struct {
 		key, value, says string
@@ -190,7 +188,6 @@ func TestConfigRefusesAChangeThatWouldLeaveTheBoardInconsistent(t *testing.T) {
 		{"statuses", "Somewhere,In Progress,Done", `"To Do" is the initial_status`},
 		{"types", "bug,docs", `type "task" is used by 1 task: MYP-1`},
 		{"priorities", "high,low", `priority "medium" is used by 1 task: MYP-1`},
-		{"extensions", "", `ext key "trello.card" is used by 1 task: MYP-1`},
 		{"active_status", "To Do", "initial_status and active_status would both be"},
 		{"task_prefix", "OTHER", "cannot change on a board that has already handed out"},
 	} {

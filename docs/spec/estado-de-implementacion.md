@@ -104,9 +104,7 @@ una lectura de conjunto (`Tasks.All`) nunca aborta por una tarea mala, la deja f
 devuelve aparte con su motivo, y una lectura dirigida (`Tasks.Load`) de esa misma tarea falla con
 código 3 y la clave `undecodable_task`. Una fecha que el programa no escribió, un nombre de campo de
 lista que el modelo no conoce y una prioridad que la configuración ya no declara son las tres formas
-de llegar ahí que hay hoy, y las tres están probadas. El paso 2 rechaza además al escribir una clave
-de extensión que el tablero no declara (código 3, `unknown_extension_key`) y una clave fuera del
-alfabeto (código 2, `malformed_extension_key`).
+de llegar ahí que hay hoy, y las tres están probadas.
 
 La otra mitad, la que se ve desde fuera, la cerró el paso 8: el aviso
 `warning: 1 task could not be read and was skipped` con sus identificadores, y el código 6 de
@@ -121,7 +119,7 @@ configurado antes de rendirse, y lo prueban veinte intentos de cuatro conexiones
 
 **Del modelo de datos**, el paso 2 hace cumplir al escribir el título obligatorio (código 2,
 `missing_title`), la distinción entre un campo `string` de una línea y un campo `text` (código 2,
-`malformed_string_value`, sobre `title`, `author`, el texto de un criterio y los valores de `ext`),
+`malformed_string_value`, sobre `title`, `author` y el texto de un criterio),
 el alfabeto de las etiquetas y las personas (`malformed_label` y `malformed_assignee`), el
 `ordinal` no negativo (`invalid_number`) y las claves de los criterios. Todo eso se comprueba antes
 de abrir la transacción, así que una tarea rechazada no gasta identificador.
@@ -182,7 +180,7 @@ La primera mitad del paso 5 son los comandos que escriben, [`biso new`](cmd/new.
 escribirlos y que los demás comandos reusarán tal cual:
 
 - **[Las familias de flags](familias-de-flags.md) enteras**, en una sola tabla de `internal/cli` que
-  todo comando de escritura toma igual, y un solo motor en `internal/ops` que las aplica en los nueve
+  todo comando de escritura toma igual, y un solo motor en `internal/ops` que las aplica en los ocho
   pasos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura).
   Los seis verbos del ciclo y `biso archive` son ese mismo motor con un nombre y unos valores por
   defecto encima.
@@ -280,7 +278,7 @@ de ellas cambiaron la especificación:
 
 Los seis verbos del ciclo están enteros, y la forma en que lo están es lo que más conviene saber:
 **ninguno tiene ruta de escritura propia**. `biso set` se partió en un bucle compartido que recibe
-un `verb` con tres momentos (antes de aplicar las flags de campo, después de los nueve pasos de
+un `verb` con tres momentos (antes de aplicar las flags de campo, después de los ocho pasos de
 ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura),
 y después de arreglar el arrendamiento), más un cuarto que `biso answer` usa para meter sus dos
 comentarios por delante de cualquier `--comment` de la misma llamada. Los seis toman la misma tabla
@@ -761,6 +759,40 @@ la página de relaciones entre tareas y el presupuesto de tamaño del mensaje de
   la de `new` (`so each blocks the new task`), de modo que invertirlas falla aunque se edite a la vez el
   código, los ficheros de `cmd/biso/testdata/` y la especificación.
 - **No hay `--add-blocks`**, y la razón queda escrita en la decisión.
+
+### Qué dejó hecha la retirada de `ext`
+
+La tarea `TASK-87` aplicó ["Se retira `ext`"](../decisiones/detalles.md#se-retira-ext) al programa y a la
+especificación, en ese orden. Las anclas que cubre son el modelo de datos, las familias de flags, el orden
+de escritura, la configuración, `init`, `doctor`, el intercambio de `new` y `export`, `get`, `ls`, `prime`
+y el contrato JSON:
+
+- **El campo `ext` ya no existe en ningún sitio.** Ni en el modelo, ni en la tabla `task_ext`, ni en su
+  lectura, ni en el JSON de `get`, `ls` y `export`, ni en la ficha, ni en los flags `--ext`, `--rm-ext` y
+  `--clear-ext`, que ahora son un error 2 con el `code` `unknown_flag` como cualquier flag que no existe.
+  Un lote de `biso new --from` que traiga la clave `ext` falla como con cualquier clave desconocida. Como
+  `biso` no se ha publicado, se ha editado el primer script de migración en vez de añadir uno, igual que
+  en las retiradas anteriores.
+- **Los tableros creados antes del cambio dejan de abrirse.** Su configuración lleva una fila
+  `extensions` que el programa ya no conoce, y una clave desconocida es un dato que no se puede
+  interpretar, código 3. Solo afecta a tableros de ensayo de esta máquina, sin ningún dato real.
+- **El orden de aplicación de una escritura pasa de nueve pasos a ocho.** Desaparece el quinto, el de los
+  campos de mapa, y los escalares, los marcados de criterios, la corrección de fechas y los comentarios
+  suben un puesto. Lo comprueba `TestTheStepsOfBothLayersLineUp`.
+- **La configuración pasa de veinte claves a diecinueve.** `biso init` pierde `--extensions`, y `biso
+  config list` y `biso prime --json` dejan de llevar `extensions`.
+- **`biso doctor` pierde su comprobación de claves de extensión no declaradas**, con su `code`
+  `undeclared_extension_key`. La prueba del orden del informe usa ahora un tipo no configurado, que se
+  encuentra en la misma pasada sobre las tareas.
+- **La forma clave y valor deja de existir en la línea de comandos**, salvo en `--set-comment-date`, que
+  corta por el último `=`. El analizador pierde la categoría de paso de `ext`, su alfabeto y la regla de
+  que la última clave repetida gana, y con ella el aviso `duplicate_ext_key`.
+- **El mensaje de arranque mide ahora 5.070 bytes** con el tablero del ejemplo, 33 menos que antes: la parte
+  fija pasa de 3.614 a **3.581** y el resumen sigue en **1.489**. La rejilla `FIELD FLAGS` pierde la línea de
+  los flags del campo. El tope total de 5.504 no cambia y el margen de la parte fija sube de 226 a 259
+  bytes.
+- **La simetría entre `biso export` y `biso new --from` sigue pasando.** Las pruebas que llevaban un `ext`
+  en su tablero lo dejan de llevar, y se eliminan las que solo ejercían `ext`.
 
 ## Antes de empezar un paso
 

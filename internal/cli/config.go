@@ -150,7 +150,6 @@ type configEnvelopeConfig struct {
 	Priorities     []string              `json:"priorities"`
 	Labels         []string              `json:"labels"`
 	Assignees      []string              `json:"assignees"`
-	Extensions     []string              `json:"extensions"`
 	TaskPrefix     string                `json:"task_prefix"`
 	FinishStrict   bool                  `json:"finish_strict"`
 	LeaseMinutes   int                   `json:"lease_minutes"`
@@ -181,7 +180,6 @@ func configData(v ops.ConfigView) configEnvelopeData {
 		Priorities:     list(v.Priorities),
 		Labels:         list(v.Labels),
 		Assignees:      list(v.Assignees),
-		Extensions:     list(v.Extensions),
 		TaskPrefix:     v.TaskPrefix,
 		FinishStrict:   v.FinishStrict,
 		LeaseMinutes:   v.LeaseMinutes,

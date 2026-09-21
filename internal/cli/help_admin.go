@@ -57,7 +57,6 @@ const configHelp = "Usage: biso config get <key>\n" +
 	"  priorities         configured priorities\n" +
 	"  labels             labels that filters accept on top of the ones in use\n" +
 	"  assignees          assignees that filters accept on top of the ones in use\n" +
-	"  extensions         declared external field keys, such as trello.card\n" +
 	"  task_prefix        id prefix, letters only (default: derived from\n" +
 	"                     project_name); immutable once the board has a task\n" +
 	"  finish_strict      make `biso finish` refuse an incomplete task\n" +
@@ -92,14 +91,14 @@ const configHelp = "Usage: biso config get <key>\n" +
 // doctorHelp is `biso doctor --help` (docs/spec/cmd/doctor.md).
 const doctorHelp = "Usage: biso doctor [options]\n" +
 	"\n" +
-	"Check the board for duplicate ids, unreadable tasks, undeclared extension keys,\n" +
-	"values that are no longer configured, a broken status-role invariant, broken\n" +
-	"dependencies, dependency cycles, parent cycles, repeated criterion keys, a lease\n" +
-	"on a task that is not both active and assigned, a recorded highest id that has\n" +
-	"fallen behind, a database that fails its integrity check, a missing or\n" +
-	"mismatched <id>.id marker, an extra board root that cannot be read, an exclusion\n" +
-	"file that no longer matches the configured vcs, and a board directory on a\n" +
-	"filesystem where SQLite's WAL mode is not safe.\n" +
+	"Check the board for duplicate ids, unreadable tasks, values that are no longer\n" +
+	"configured, a broken status-role invariant, broken dependencies, dependency\n" +
+	"cycles, parent cycles, repeated criterion keys, a lease on a task that is not\n" +
+	"both active and assigned, a recorded highest id that has fallen behind, a\n" +
+	"database that fails its integrity check, a missing or mismatched <id>.id marker,\n" +
+	"an extra board root that cannot be read, an exclusion file that no longer\n" +
+	"matches the configured vcs, and a board directory on a filesystem where SQLite's\n" +
+	"WAL mode is not safe.\n" +
 	"\n" +
 	"Options:\n" +
 	"      --fix      repair what can be repaired without a decision\n" +

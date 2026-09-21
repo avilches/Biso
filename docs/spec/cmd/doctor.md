@@ -117,7 +117,6 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 |---|---|---|
 | Identificadores duplicados | error | no, hay que decidir a mano |
 | Tareas que no se pueden leer | error | no |
-| Claves de extensión no declaradas | error | no |
 | Estados, tipos o prioridades que ya no están configurados | error | no |
 | `initial_status`, `active_status` o `terminal_status` que no están en `statuses` | error | no |
 | `statuses` con menos de tres elementos, o dos de los tres papeles apuntando al mismo estado | error | no |
@@ -307,7 +306,6 @@ concreto, el mismo criterio que ya usan `extra_root_unreadable` e `ignore_file_m
 |---|---|---|---|
 | Identificadores duplicados | `duplicate_id` | el id compartido | `id "MYP-40" is used by 2 tasks, ids must be unique` |
 | Tareas que no se pueden leer | `task_unreadable` | el id, si se puede recuperar, o `null` | `task "MYP-40" could not be parsed: unexpected end of JSON input` |
-| Claves de extensión no declaradas | `undeclared_extension_key` | la tarea | `ext key "trello.card" is not declared, declared keys are "jira.issue"` |
 | Estados, tipos o prioridades ya no configurados | `value_not_configured` | la tarea | `status "Blocked" is not one of the configured statuses "To Do, In Progress, Done"` (o el mismo mensaje con `type` o `priority`, según cuál sea) |
 | `initial_status`, `active_status` o `terminal_status` fuera de `statuses` | `status_role_unknown` | `null` | `active_status "Doing" is not one of the configured statuses "To Do, In Progress, Done"` |
 | `statuses` con menos de tres elementos, o dos papeles apuntando al mismo estado | `status_role_invalid` | `null` | `statuses has 2 elements, at least 3 are required`, o `active_status and terminal_status are both "Done", the three roles must be distinct` |
@@ -378,22 +376,17 @@ contador a cero solo está por detrás cuando existe alguna tarea con un número
 
 ### Cuando la lista que el mensaje cita está vacía
 
-Dos de los mensajes citan una lista configurada: la de claves de extensión declaradas y la del
-vocabulario cerrado que un valor incumple. **`types`, `priorities` y `extensions` se pueden dejar
-vacías** (["`biso config`"](config.md)), y entonces citar la lista imprimiría unas comillas con nada
-dentro, que no dice nada y se lee como un fallo del programa. **Con la lista vacía el mensaje dice que
-no hay ninguna**, en vez de citarla:
-
-```
-  ext key "trello.card" is not declared, and the board declares none
-```
+El mensaje de un valor que incumple un vocabulario cerrado cita la lista configurada. **`types` y
+`priorities` se pueden dejar vacías** (["`biso config`"](config.md)), y entonces citar la lista
+imprimiría unas comillas con nada dentro, que no dice nada y se lee como un fallo del programa. **Con
+la lista vacía el mensaje dice que no hay ninguna**, en vez de citarla:
 
 ```
   type "bug" is not one of the configured types, and the board configures none
 ```
 
-Los `code` no cambian, `undeclared_extension_key` y `value_not_configured`: es el mismo hallazgo
-contado con las palabras que le tocan. `statuses` no necesita esta forma, porque nunca puede quedarse
+El `code` no cambia, `value_not_configured`: es el mismo hallazgo contado con las palabras que le
+tocan. `statuses` no necesita esta forma, porque nunca puede quedarse
 vacía: la comprobación de la tabla de arriba exige al menos tres.
 
 ### El orden en que sale el informe
@@ -563,14 +556,14 @@ llamada real que le sigue, y `doctor` no tiene fila del 7 en ella.
 ```
 Usage: biso doctor [options]
 
-Check the board for duplicate ids, unreadable tasks, undeclared extension keys,
-values that are no longer configured, a broken status-role invariant, broken
-dependencies, dependency cycles, parent cycles, repeated criterion keys, a lease
-on a task that is not both active and assigned, a recorded highest id that has
-fallen behind, a database that fails its integrity check, a missing or
-mismatched <id>.id marker, an extra board root that cannot be read, an exclusion
-file that no longer matches the configured vcs, and a board directory on a
-filesystem where SQLite's WAL mode is not safe.
+Check the board for duplicate ids, unreadable tasks, values that are no longer
+configured, a broken status-role invariant, broken dependencies, dependency
+cycles, parent cycles, repeated criterion keys, a lease on a task that is not
+both active and assigned, a recorded highest id that has fallen behind, a
+database that fails its integrity check, a missing or mismatched <id>.id marker,
+an extra board root that cannot be read, an exclusion file that no longer
+matches the configured vcs, and a board directory on a filesystem where SQLite's
+WAL mode is not safe.
 
 Options:
       --fix      repair what can be repaired without a decision

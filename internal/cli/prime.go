@@ -431,7 +431,6 @@ func primeData(r *ops.PrimeResult) map[string]any {
 			"terminalStatus": r.Board.TerminalStatus,
 			"types":          list(r.Board.Types),
 			"priorities":     list(r.Board.Priorities),
-			"extensions":     list(r.Board.Extensions),
 			"countByStatus":  r.Board.CountByStatus,
 		},
 		"inProgress":    primeTaskObjects(r.InProgress),
