@@ -212,10 +212,18 @@ dos y `--rm-labels milestone:m1` quita cualquiera de las dos. Al añadir sí cue
 separador no describe el valor sino cuántos admite la clave
 (["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma)).
 
-**Esto rige al escribir**, con la misma excepción que el alfabeto de la sección anterior: una etiqueta
-ya guardada que no se puede analizar con esta regla es un dato que el programa no sabe interpretar, y
-se trata con ["Qué pasa con un dato que no se puede
-interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar).
+**Al quitar, lo que se pliega es la clave y no el valor.** `--rm-labels` compara el valor tal como
+está guardado, letra por letra, igual que cualquier otro `--rm-*` de una lista de tokens, así que
+`--rm-labels colour:red` no quita un `colour::Red` guardado, aunque sí quitaría un `colour::red`. El
+plegado del que habla el párrafo anterior es el de las lecturas, y quitar es una escritura.
+
+**Esta regla se aplica al escribir**, igual que el alfabeto de la sección anterior, y por la misma
+razón: es lo que impide que una etiqueta que no se puede analizar llegue a guardarse. Al leer no se
+vuelve a aplicar, así que una etiqueta guardada de otra manera, por una edición directa de la base de
+datos, se lee y se imprime tal cual, y ninguna comprobación de
+["`biso doctor`"](cmd/doctor.md#qué-comprueba) la señala. Es el mismo trato que ya tenía una etiqueta
+guardada fuera del alfabeto, y no hace falta más: no hay ningún camino por dentro del programa que
+deje una ahí.
 
 ## El salto de línea en un campo `string`
 
