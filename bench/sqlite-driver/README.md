@@ -1,5 +1,15 @@
 # Banco de pruebas: con qué controlador habla `biso` con SQLite
 
+> **Este banco es una fotografía de un momento, no una herramienta mantenida.** Se midió el
+> 2026-09-10 con el modelo de datos de entonces, y desde entonces el programa retiró tres campos
+> que el banco todavía guarda: `ext`, `documentation` y `modifiedFiles` (su contenido, cuando lo hay,
+> vive ahora en `references`; ver ["Se retira `documentation` y `references` queda como único campo
+> de punteros"](../../docs/decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)
+> y ["Se retira `modifiedFiles`"](../../docs/decisiones/detalles.md#se-retira-modifiedfiles)). El esquema
+> y el generador de tableros los conservan a propósito, y las cifras de `RESULTADOS.md` y las que cita
+> ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go)
+> son las de ese modelo. La razón está en ["Por qué se deja como está"](#por-qué-se-deja-como-está).
+
 Este directorio contesta con números la única decisión que quedaba antes de escribir código,
 aplazada a propósito hasta tener datos: cómo habla el programa con SQLite.
 El resultado, con su tabla y su recomendación, está en
@@ -8,11 +18,42 @@ El resultado, con su tabla y su recomendación, está en
 Lo que se mide es el presupuesto de ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque): 25 milisegundos de reloj
 para `biso ls` sobre un tablero de 300 tareas.
 
-**Este banco está congelado.** Produjo las cifras que cita ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go), y no se
-mantiene al ritmo del modelo de datos del programa. Su esquema conserva a propósito una tabla `ext`
-(y el generador de tableros la llena), aunque `biso` ya retiró ese campo: quitarla cambiaría lo que
-se midió y dejaría esas cifras sin nada que las respalde. Si algún día hay que volver a medir, se
-actualiza el esquema a la vez que se rehacen las cifras y su decisión, nunca solo lo primero.
+## Por qué se deja como está
+
+**La decisión vigente.** El banco no se actualiza al modelo de datos actual: se conserva tal como
+produjo sus cifras, con el esquema y el generador de entonces, y este README lo declara arriba del
+todo. Esa es la regla para los tres campos retirados por igual (`ext`, `documentation` y
+`modifiedFiles`), sin distinguir entre ellos. Si algún día hay que volver a medir, se actualiza el
+esquema a la vez que se rehacen las cifras y su decisión, nunca solo lo primero.
+
+**Cuánto pesan esos campos en lo que se midió.** Se regeneró el tablero de 300 tareas con el
+generador sin tocar y salió idéntico al de `results/01-tableros.txt` (390 tareas, 1.441.792 bytes),
+así que el reparto es exacto:
+
+| Contenido | Filas | Bytes en el fichero | Parte del tablero |
+|---|---|---|---|
+| tabla `textlist` entera (`references`, `documentation` y `modifiedFiles`) | 1.197 | 73.728 | 5,1 % |
+| de ella, las filas de `documentation` y `modifiedFiles` | 804 | unos 49.000 | unos 3,4 % |
+| tabla `ext` | 106 | 4.096 | 0,3 % |
+
+Y lo que se mide, `biso ls`, no lee ninguna de las dos tablas: las cinco consultas de
+`internal/board/schema.go` recorren `task`, `assignee`, `criterion`, `dependency` y `board`, porque
+la primera regla de ["El presupuesto de arranque"](../../docs/spec/presupuestos.md#el-presupuesto-de-arranque)
+prohíbe leer lo que la invocación no imprime. Las cifras de reloj, de fases, de `init`, de enlazado
+y de compilación no dependen de esos campos; lo único que se movería es el tamaño del fichero del
+tablero, en unos pocos puntos por ciento.
+
+**Alternativa descartada: actualizar el generador y remedir.** Quitar los tres campos es fácil, pero
+no cuesta lo mismo que editar dos líneas: el generador saca todos sus valores de un único generador
+pseudoaleatorio con semilla fija, y cada llamada que se quita desplaza todas las siguientes, así que
+saldría un tablero distinto tarea a tarea. Habría que repetir entera la medición en macOS y en Linux
+(este último dentro de un contenedor), reescribir las tablas de `RESULTADOS.md` y revisar las cifras
+que cita ["El lenguaje de implementación es Go"](../../docs/decisiones/lenguaje-y-rendimiento.md#el-lenguaje-de-implementación-es-go),
+todo para llegar a la misma recomendación de controlador, porque nada de lo que decide el veredicto
+depende de esos campos. Se descarta por desproporcionada; no porque no sea posible.
+
+**Alternativa descartada: actualizar el esquema sin remedir.** Dejaría unas cifras medidas con un
+modelo bajo un README que dice otro, que es peor que una fotografía honesta.
 
 ## Cómo se vuelve a ejecutar
 
