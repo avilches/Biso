@@ -91,23 +91,41 @@ Los encabezados de esta salida son un formato de presentación, no un formato de
 
 **Cómo se escribe cada valor de ese bloque.** Una lista (`assignees`, `labels`, `depends`, `blocks`,
 `refs`) va en una línea, con sus valores separados por coma y espacio, y **cada valor se escribe con la
-misma regla de escape que se usa al guardarlo** (["Repetición y listas separadas por
-comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)): una coma dentro de un valor
-sale como `\,`, una barra invertida sale como `\\`, y ningún otro carácter se toca. Es exactamente la
-regla de entrada al revés, así que lo que se lee en la ficha es, valor a valor, lo que habría que teclear
-en `--add-refs` para guardarlo. Solo `refs` puede llevar esos dos caracteres: en `assignees`, `labels`,
-`depends` y `blocks` ningún valor los admite, y su línea sale sin cambios. El separador es siempre una
-coma **sin escapar** seguida de un espacio, y una coma escapada nunca separa. Por eso las referencias
-`a,b` y `c.md` salen como `a\,b, c.md`, y las referencias `a` y `b` salen como `a, b`; una ruta
-`C:\dir\notes.md` sale como `C:\\dir\\notes.md`, y una referencia que termina en barra invertida sale
-con la barra doble aunque le siga el separador (`a\\, b`). Los espacios de un valor se conservan tal
-cual, los de los extremos incluidos, porque quien separa es la coma y no el espacio. El ejemplo de arriba lo muestra: su línea `refs` lleva dos referencias, `docs/bugs/BUG-02.md` y
-`notes/a,b.md`. Para leer la línea
-de vuelta se parte por cada coma sin escapar, se descarta el espacio que la sigue y se deshace el escape.
+misma regla de escape que se usa al guardarlo**
+(["Repetición y listas separadas por comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
+una coma dentro de un valor sale como `\,`, una barra invertida sale como `\\`, y ningún otro carácter
+se toca. Es exactamente la regla de entrada al revés, así que lo que se lee en la ficha es, valor a valor,
+lo que habría que teclear en `--add-refs` para guardarlo. Solo `refs` puede llevar esos dos caracteres:
+en `assignees`, `labels`, `depends` y `blocks` ningún valor los admite, y su línea sale sin cambios.
+
+El separador es siempre una coma **sin escapar** seguida de un espacio, y una coma escapada nunca separa.
+Por eso las referencias `a,b` y `c.md` salen como `a\,b, c.md`, y las referencias `a` y `b` salen como
+`a, b`; una ruta `C:\dir\notes.md` sale como `C:\\dir\\notes.md`. Los espacios de un valor se conservan
+tal cual, los de los extremos incluidos, porque quien separa es la coma y no el espacio. El ejemplo de
+arriba lo muestra: su línea `refs` lleva dos referencias, `docs/bugs/BUG-02.md` y `notes/a,b.md`.
+
+**Cómo se lee "sin escapar".** La línea se recorre de izquierda a derecha y una barra invertida se lleva
+consigo el carácter que le sigue. Una referencia que termina en barra invertida sale con la barra doble, y
+esa barra doble ya está completa, así que la coma que viene detrás sí separa: las referencias `a\` y `b`
+salen como `a\\, b`, que se parte en dos, mientras que la única referencia `a, b` sale como `a\, b`, que
+no se parte. Para leer la línea de vuelta se parte por cada coma sin escapar, se descarta el espacio que
+la sigue y se deshace el escape de cada trozo.
+
+**Lo que se copia a un flag es el valor de una referencia, no la línea entera.** El valor de una
+referencia, tal como lo muestra la ficha, se puede pasar a `--add-refs` o a `--rm-refs` y nombra esa
+referencia. La línea entera no: el espacio que sigue a cada coma separadora forma parte de la ficha y no
+del valor, y un flag que recibe `a\,b, c.md` entiende la segunda referencia como ` c.md`, con su espacio.
+
+**Una excepción a la lectura exacta.** Una referencia cuyo valor es exactamente `-` se imprime igual que
+una lista vacía, porque la regla de entrada no define ningún escape que la distinga. Y un valor con un
+salto de línea queda fuera de lo dicho aquí: la ficha lo imprimiría partiendo la línea, y su tratamiento
+se decide aparte.
+
 La ficha sigue siendo un formato de presentación, y quien lea los valores con un programa los lee en
 `--json`, donde cada uno es un elemento de la lista y nunca lleva escape. La razón de esta regla, y las
 salidas que se descartaron, están en
 ["La ficha escapa la coma y la barra invertida de una lista"](../../decisiones/detalles.md#la-ficha-escapa-la-coma-y-la-barra-invertida-de-una-lista).
+
 Un campo sin valor es un guion, como en las columnas de
 ["`biso ls`"](ls.md). Los instantes (`created`, `updated`, `lease`) se escriben con el día y la hora
 hasta el minuto, `YYYY-MM-DD HH:MM`, que es la precisión que se lee: el segundo está en `--json`,

@@ -64,7 +64,7 @@ func listingBoard(t *testing.T) *machine {
 	m.run(t, "set", "MYP-11", "--title", "Normalize CRLF in the diff",
 		"--type", "bug", "--priority", "high", "--status", "In Progress",
 		"--add-assignees", "@claude", "--add-labels", "parser",
-		"--add-refs", "docs/bugs/BUG-02.md",
+		"--add-refs", "docs/bugs/BUG-02.md,notes/a\\,b.md",
 		"--add-ac", "The diff ignores CRLF",
 		"--add-ac", "There is a test that covers it").assertCode(t, 0)
 	m.run(t, "set", "MYP-11", "--check-ac", "1").assertCode(t, 0)

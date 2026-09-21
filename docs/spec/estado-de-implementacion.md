@@ -908,18 +908,24 @@ al programa. Las anclas que cubre son el párrafo "Cómo se escribe cada valor d
   ficha, así que no hizo falta tocarlos.
 - **`--json` no cambia**: `internal/cli/task_json.go` no se ha tocado, y una prueba comprueba que las
   referencias salen exactas y sin escape.
-- **El tablero del ejemplo lleva ahora dos referencias**, `docs/bugs/BUG-02.md` y `notes/a,b.md`, en
-  `cardBoard` de `cmd/biso/read_golden_test.go`, y cambian dos ficheros de referencia:
-  `get-output.txt` (la línea `refs`) y `get-json.txt` (el array `references`). Ningún bloque de código se
-  añadió ni se movió, y los demás ficheros de referencia no cambian ni un byte.
+- **La tarea `MYP-11` de los ejemplos lleva ahora dos referencias**, `docs/bugs/BUG-02.md` y
+  `notes/a,b.md`, en `get.md` y en `ls.md`. Los tableros de prueba que la construyen son `cardBoard` y
+  `listingBoard`, de `cmd/biso/read_golden_test.go`, y cambian tres ficheros de referencia: `get-output.txt`
+  (la línea `refs`), `get-json.txt` y `ls-json.txt` (el array `references`). `biso ls` no imprime
+  referencias en texto, así que solo cambia su JSON. Ningún bloque de código se añadió ni se movió, y los
+  demás ficheros de referencia no cambian ni un byte.
 - **Las pruebas** están en `internal/cli/card_list_test.go`, con la tabla de casos límite de la regla, la
   colisión que motivó escapar la barra y la propiedad de recorrido completo (lo que imprime la ficha, leído
   como dice la especificación, devuelve exactamente los valores de partida, sobre una batería fija y otra
   aleatoria), y en `cmd/biso/card_refs_test.go`, que recorre el binario: la coma, la barra, las dos listas
   que no deben compartir línea, el `--json` sin escape y el valor de la ficha copiado en `--rm-refs`.
-- **Fuera de esta tarea queda un hueco distinto**: `--add-refs` acepta una referencia con un salto de línea, y
-  la ficha parte entonces la línea `refs` en dos, aunque
-  ["El salto de línea en un campo `string`"](valores-de-entrada.md#el-salto-de-línea-en-un-campo-string) dice que ningún `string` lo admite.
+- **Una referencia con un salto de línea queda sin decidir.** `--add-refs` la acepta y la ficha parte
+  entonces la línea `refs` en dos. La frase general de que ningún `string` admite un salto de línea
+  literal está en ["El modelo de datos de una tarea"](modelo-de-datos/index.md), pero la sección
+  ["El salto de línea en un campo `string`"](valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)
+  solo enumera `title`, `author` y el `text` de un criterio, y ninguna regla cubre `references`. La
+  decisión y la página de `biso get` lo dicen como excepción a la lectura exacta de la ficha, y su
+  tratamiento se decide aparte.
 
 ## Antes de empezar un paso
 

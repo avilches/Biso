@@ -824,7 +824,8 @@ separados por coma y espacio, y el separador es siempre una coma sin escapar, as
 referencias `a,b` y `c.md` salen como `a\,b, c.md` y las referencias `a` y `b` como `a, b`. La regla es
 exactamente la inversa de la de entrada de
 ["Repetición y listas separadas por comas"](../spec/valores-de-entrada.md#repetición-y-listas-separadas-por-comas):
-para cualquier valor posible, deshacer el escape de lo que imprime la ficha da el valor guardado.
+para cualquier valor posible, salvo uno con un salto de línea, cuyo tratamiento se decide aparte,
+deshacer el escape de lo que imprime la ficha da el valor guardado.
 Vale para las cinco listas de la ficha (`assignees`, `labels`, `depends`, `blocks` y `refs`), pero solo
 `refs` admite una coma o una barra invertida, así que solo su línea puede cambiar. `--json` no cambia:
 cada valor es un elemento de la lista y nunca lleva escape. La regla está en
@@ -846,10 +847,16 @@ escriben JSON. Quien la lee, sea una persona o un agente, la usa para volver a e
 ejemplo con `--rm-refs`, y si la ficha muestra `a,b` pero el flag necesita `a\,b`, copiar el valor
 falla: `--rm-refs 'a,b'` intenta quitar `a` y `b` y avisa de que ninguna está. Con la misma regla en
 los dos sentidos, lo que se ve es lo que se teclea, y un agente no tiene que aprender una notación
-para leer y otra para escribir.
+para leer y otra para escribir. Lo que se copia a un flag es el valor de una referencia, no la línea
+entera: el espacio que sigue a cada coma separadora es de la ficha y no del valor, y `--rm-refs 'a\,b, c.md'`
+entiende su segundo valor como ` c.md`, con el espacio, y avisa de que no lo tiene.
 
 **Lo que no cambia.** Un aviso que cita un solo valor entre comillas (`warning: --rm-refs: "zz,y" not
-present, nothing removed`) no es una lista y sigue con su propia forma de citar. Una lista sin
+present, nothing removed`) no es una lista y sigue con su propia forma de citar, la de una cadena entre comillas, que no es la
+regla de la lista: la referencia `a,b` se cita `"a,b"` en el aviso y sale `a\,b` en la ficha, y la
+referencia `C:\dir\x` se cita `"C:\\dir\\x"`, con las barras dobladas porque una cadena entre comillas
+también las dobla, mientras que la ficha la escribe `C:\\dir\\x` por la regla de la lista. Que las dos
+formas coincidan con las barras no las convierte en la misma regla: difieren en la coma. Una lista sin
 valores sigue siendo un guion. Una referencia que fuera literalmente `-` sigue imprimiéndose como el
 guion de una lista vacía, igual que antes, porque la regla de entrada no define ningún escape que la
 distinga y una referencia así no es un caso que valga añadir una notación nueva.
