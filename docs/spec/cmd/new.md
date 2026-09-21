@@ -281,6 +281,11 @@ Las reglas del lote, todas obligatorias:
   ```
   line 14: malformed ordinal: "3000" (an ordinal key is made of 0-9 and a-z, and never ends in 0)
   ```
+  **La cadena vacía tampoco cumple la forma**, así que es ese mismo fallo y no una forma de decir
+  "sin clave": la que sí lo dice es `null`, o no escribir la clave, como en cualquier otro escalar
+  opcional (más abajo en esta misma lista). Es la misma frontera que en la línea de órdenes, donde
+  `--ordinal ""` es un error y `--clear-ordinal` es lo que quita la clave
+  (["El valor vacío"](../valores-de-entrada.md#el-valor-vacío)).
   Un valor que no sea una cadena, por ejemplo el `3000` sin comillas de un tablero exportado por otra
   herramienta, es un valor del tipo equivocado y cae en `invalid_line`, como cualquier otro
   (["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)). **Dos líneas
