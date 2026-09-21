@@ -390,16 +390,6 @@ func (r *reader) labelsOfTheBoard() []string {
 	return r.setOf(r.b.Config.Labels, func(t *model.Task) []string { return t.Labels })
 }
 
-// labelKeysOfTheBoard is the other set of that table, the one the key form
-// of a filter validates against: the keys of the labels the configuration
-// declares and of the ones any task carries, archived and finished included
-// (docs/spec/vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito).
-// A declared key counts as known although no task uses it yet, which is
-// exactly what makes declaring it useful.
-func (r *reader) labelKeysOfTheBoard() []string {
-	return sortedCopy(labelKeys(r.labelsOfTheBoard()))
-}
-
 // labelFilterValues judges the form of every value of --label or --label-or
 // and answers them in the spelling the effective filter carries. The key
 // form travels with a single colon however it was typed, because the two
@@ -437,6 +427,12 @@ func (r *reader) checkLabelFilter(field string, values []string) *model.Error {
 		return nil
 	}
 	labels := r.labelsOfTheBoard()
+	// The keys of the board are the other set of that table: the keys of
+	// the labels the configuration declares and of the ones any task
+	// carries, archived and finished included. A declared key counts as
+	// known although no task uses it yet, which is exactly what makes
+	// declaring it useful. They come out of the labels themselves, so the
+	// two sets cannot disagree about what the board holds.
 	keys := sortedCopy(labelKeys(labels))
 	for _, v := range values {
 		l := model.SplitLabel(v)
