@@ -17,7 +17,7 @@ vet: ## Ejecuta go vet sobre todo el codigo Go
 	go vet ./...
 
 fmt-check: ## Falla si algun fichero Go no esta formateado con gofmt
-	@out=$$(gofmt -l .); if [ -n "$$out" ]; then echo "Sin formatear con gofmt:"; echo "$$out"; exit 1; fi
+	@out=$$(find . -name .claude -prune -o -name .git -prune -o -name '*.go' -print0 | xargs -0 gofmt -l); if [ -n "$$out" ]; then echo "Sin formatear con gofmt:"; echo "$$out"; exit 1; fi
 
 check: build vet fmt-check test docs-doctor ## Comprueba todo antes de dar algo por terminado
 
