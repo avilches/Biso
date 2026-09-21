@@ -189,7 +189,7 @@ con ámbito, como `milestone::m1`, que se escribe y se consulta con las etiqueta
 decisión escrita y todavía no implementada, en
 ["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito). Y lo que no cabe en
 una etiqueta, un texto libre por clave, no tiene sitio hoy: si hace falta, se decide y se especifica
-como un campo, según ["Se retira `ext`"](../decisiones/detalles.md#se-retira-ext).
+como un campo, según ["la decisión que retira el campo de extensión"](../decisiones/detalles.md#se-retira-ext).
 
 ## 9. Estado compartido que cada invocación pisa
 

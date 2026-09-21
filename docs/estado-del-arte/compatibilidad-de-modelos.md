@@ -40,7 +40,7 @@ ningún otro proyecto usa) no cuenta como transformación para los campos que es
 forma nativa, aunque el dato quepa ahí técnicamente.** Meter ahí el resto del modelo de `biso`
 preservaría los bytes, pero no la compatibilidad: ningún comando nativo de esa herramienta sabría
 filtrar, mostrar o editar ese dato, así que la tarea se volvería ilegible para quien no conozca la
-convención de `biso`. `biso` no tiene ningún campo de extensión propio (["Se retira `ext`"](../decisiones/detalles.md#se-retira-ext)),
+convención de `biso`. `biso` no tiene ningún campo de extensión propio (["la decisión que retira el campo de extensión"](../decisiones/detalles.md#se-retira-ext)),
 así que esta regla no tiene excepciones.
 
 **Los dos sentidos casi siempre dan el mismo número, y donde no, se explica en prosa y no en la
