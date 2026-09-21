@@ -304,14 +304,19 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"export-help.txt", "cmd/export.md", "", "`biso export --help`", 0},
 		{"snapshot-help.txt", "cmd/snapshot.md", "", "`biso snapshot --help`", 0},
 		{"new-batch-lease.txt", "cmd/new.md", "", "El modo lote", 6},
-		// The block at index 7 is the one of the labels of a line, which
+		// The line of a batch with an empty element, the two warnings it
+		// gets and the failure a null in the place of an element is.
+		{"new-batch-empty-items-input.txt", "cmd/new.md", "", "El modo lote", 7},
+		{"new-batch-empty-items.txt", "cmd/new.md", "", "El modo lote", 8},
+		{"new-batch-null-element.txt", "cmd/new.md", "", "El modo lote", 9},
+		// The block at index 10 is the one of the labels of a line, which
 		// is five failures of five different files and therefore no
 		// fixture of a single run (docs/spec/cmd/new.md#el-modo-lote). Its
 		// five messages are pinned by the tests of internal/ops instead.
-		{"new-batch-ids.txt", "cmd/new.md", "", "El modo lote", 8},
-		{"new-batch-dry-run.txt", "cmd/new.md", "", "El modo lote", 9},
-		{"new-batch-invalid.txt", "cmd/new.md", "", "El modo lote", 10},
-		{"new-batch-invalid-one-line.txt", "cmd/new.md", "", "El modo lote", 11},
+		{"new-batch-ids.txt", "cmd/new.md", "", "El modo lote", 11},
+		{"new-batch-dry-run.txt", "cmd/new.md", "", "El modo lote", 12},
+		{"new-batch-invalid.txt", "cmd/new.md", "", "El modo lote", 13},
+		{"new-batch-invalid-one-line.txt", "cmd/new.md", "", "El modo lote", 14},
 		{"ref-malformed-id.txt", "referencias.md", "",
 			`Los tres mensajes de "no la encuentro"`, 0},
 		{"ref-never-allocated.txt", "referencias.md", "",

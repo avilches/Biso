@@ -104,7 +104,7 @@ de llegar a un estado terminal** (`terminal_ac_unchecked`, `terminal_no_summary`
 campo `task`, y aquí no hay ninguna que nombrar: el identificador no se ha gastado. Escribirlos con
 el hueco vacío daría una frase con dos espacios seguidos y un `task` con la cadena vacía, que es justo
 lo que prohíbe ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), y es el mismo motivo por el que los avisos
-`imported_dod_merged`, `imported_documentation_merged` e `imported_modified_files_merged` del lote nombran la línea del fichero en vez de la tarea. Los demás avisos, que
+`imported_dod_merged`, `imported_documentation_merged`, `imported_modified_files_merged` e `imported_empty_dropped` del lote nombran la línea del fichero en vez de la tarea. Los demás avisos, que
 no nombran ninguna tarea, salen igual con `--dry-run` que sin él: `due_in_past`, `clear_on_new_task`,
 `duplicate_flag_value` y el resto. Crear la tarea de verdad en un estado terminal sí emite los tres,
 porque entonces el identificador ya existe.
@@ -156,7 +156,7 @@ Las reglas del lote, todas obligatorias:
 
     1. Se importa `acceptanceCriteria` con sus propias reglas, y el contador de la tarea queda por
        encima de la clave mayor que haya entrado por ahí.
-    2. Cada elemento de `definitionOfDone` se añade al final de la lista, en el orden en que venía,
+    2. Cada elemento de `definitionOfDone` que no esté vacío (regla del elemento vacío, más abajo) se añade al final de la lista, en el orden en que venía,
        conservando su `text` y su `checked` y **tomando la siguiente clave libre del contador**. Su
        `key` original, si la trae, se descarta sin mirarla: las dos listas tenían contadores
        independientes, así que un elemento de cada una puede traer perfectamente la misma, y una
@@ -164,8 +164,9 @@ Las reglas del lote, todas obligatorias:
        motivo. Es la única diferencia con `acceptanceCriteria`, donde la `key` sí se respeta y
        repetirla sí es un fallo.
     3. Si se convirtió **al menos un** elemento, la tarea emite el aviso `imported_dod_merged`
-       (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Una lista vacía no avisa de
-       nada, porque no se ha convertido nada, y el lote no falla en ninguno de los dos casos.
+       (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Una lista vacía, o cuyos
+       elementos estaban todos vacíos, no avisa de esto, porque no se ha convertido nada, y el lote
+       no falla en ninguno de los dos casos.
 
     `definitionOfDone: null` equivale a que la clave no viniera, y no es un fallo de validación: la
     regla de que `null` en una lista es un fallo vale para las listas del modelo, y esta no lo es.
@@ -183,7 +184,7 @@ Las reglas del lote, todas obligatorias:
   procedimiento en tres pasos, en este orden:
 
     1. Se importa `references` con sus propias reglas.
-    2. Cada elemento de `documentation` se añade al final de esa lista, en el orden en que venía y
+    2. Cada elemento de `documentation` que no esté vacío (regla del elemento vacío, más abajo) se añade al final de esa lista, en el orden en que venía y
        conservando su texto. Un valor que la lista ya tenía, porque estaba en `references` o porque
        `documentation` lo repetía, no se añade otra vez. Es una regla propia de esta fusión, no la de
        los flags (["Repetición y listas separadas por comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
@@ -191,9 +192,9 @@ Las reglas del lote, todas obligatorias:
        repetido.
     3. Si la línea trajo **al menos un** elemento de `documentation`, la tarea emite el aviso
        `imported_documentation_merged` (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)),
-       que cuenta los elementos que llegaron, aunque alguno se haya guardado una sola vez por
-       repetido. Una lista vacía no avisa de nada, porque no se ha fundido nada, y el lote no falla en
-       ninguno de los dos casos.
+       que cuenta los elementos que llegaron y no estaban vacíos, aunque alguno se haya guardado una
+       sola vez por repetido. Una lista vacía, o cuyos elementos estaban todos vacíos, no avisa de
+       esto, porque no se ha fundido nada, y el lote no falla en ninguno de los dos casos.
 
     `documentation: null` equivale a que la clave no viniera y no es un fallo de validación, por la
     misma razón que `definitionOfDone: null`: la regla de que `null` en una lista es un fallo vale
@@ -212,7 +213,7 @@ Las reglas del lote, todas obligatorias:
   **Si una línea trae las dos claves, el orden es fijo y no depende del orden en que estén escritas en
   el fichero:** primero `references`, luego los elementos de `documentation` y por último los de
   `modifiedFiles`. Un valor que ya estaba se guarda una sola vez, donde apareció por primera vez, y
-  la línea emite ambos avisos, el de `documentation` primero. Cada aviso cuenta los elementos que
+  la línea emite ambos avisos, el de `documentation` primero. Cada aviso cuenta los elementos no vacíos que
   trajo su propia clave, aunque alguno se haya guardado una sola vez por repetido. `modifiedFiles: null`
   equivale a que la clave no viniera, por la misma razón que `documentation: null`. Estas dos
   líneas importan la misma tarea:
@@ -270,13 +271,70 @@ Las reglas del lote, todas obligatorias:
 - **`archived` se acepta como booleano.** Por defecto, si la clave no aparece, la tarea se crea sin
   archivar. Ningún otro comando tiene un flag de campo para él: fuera de la importación,
   archivar se hace con `biso archive`.
+- **Un elemento vacío o de solo espacios se descarta y avisa.** Vale para cada elemento de
+  `assignees`, `labels`, `dependencies`, `references` y `acceptanceCriteria`, y de las claves ajenas
+  `definitionOfDone`, `documentation` y `modifiedFiles`, y es la regla del flag que añade
+  (["El valor vacío"](../valores-de-entrada.md#el-valor-vacío)) aplicada a cada elemento: una cadena
+  sin ningún carácter, o solo con espacios, no es un valor. No es una etiqueta mal formada, ni una
+  dependencia que no existe, ni una referencia en blanco: no se guarda nada. Los elementos que no
+  están vacíos se guardan como llegan, sin recortar los espacios, igual que en el flag. La razón, y
+  las alternativas que se descartaron, están en
+  ["Un elemento vacío de un lote se descarta y avisa"](../../decisiones/detalles.md#un-elemento-vacío-de-un-lote-se-descarta-y-avisa).
+
+    - **En `acceptanceCriteria` y en `definitionOfDone` el elemento está vacío si su texto lo está**,
+      venga como cadena o como objeto, y un objeto que no trae `text` tiene el texto vacío. El
+      elemento se descarta antes de mirar nada más de él: su `key` no ocupa ninguna clave ni cuenta
+      para el fallo de una `key` repetida, el contador se sitúa por encima de la clave mayor de los
+      criterios que quedan, y un `checked` verdadero no deja nada marcado porque no hay nada que
+      marcar.
+    - **Los elementos que se descartan de `documentation` y de `modifiedFiles` no cuentan para el
+      aviso de la fusión** de más arriba, y los de `definitionOfDone` tampoco para el suyo: esos
+      avisos cuentan lo que se convirtió.
+    - **Una lista que se queda sin elementos por esto queda `[]`, y la línea no falla.**
+    - **El aviso es `imported_empty_dropped`** (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)),
+      uno por cada lista de la que una línea descartó algo, con la cuenta de lo descartado. Nombra la
+      línea y no la tarea, por la misma razón que `imported_dod_merged`. Las listas de una línea avisan
+      en este orden fijo, sea cual sea el de las claves en el fichero: `assignees`, `labels`,
+      `dependencies`, `references`, `acceptanceCriteria`, `definitionOfDone`, `documentation` y
+      `modifiedFiles`; y los avisos de una línea van antes que los de su conversión. Como los de
+      conversión, salen solo si el lote es válido, y también con `--dry-run`.
+  ```json
+  {"title":"Normalize CRLF","labels":["parser",""],"references":["","docs/bugs/BUG-02.md","   "]}
+  ```
+  ```
+  warning: line 1: 1 empty item dropped from labels
+  warning: line 1: 2 empty items dropped from references
+  ```
+  La línea deja la tarea con la etiqueta `parser` y la referencia `docs/bugs/BUG-02.md`.
 - **`null` explícito en un escalar opcional (`due`, `ordinal`, `parent`) equivale a que la clave no
   viniera.** En una lista (`labels`, `references`, `dependencies`,
   `acceptanceCriteria`, `comments`), en cambio, `null` es
   un fallo de validación: su forma de estar vacío es `[]`, nunca `null`, la misma regla que
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
-  órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta.
-- **`labels` se valida línea a línea con la regla de las etiquetas con ámbito.** Una etiqueta mal
+  órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta. **Y un `null` que
+  ocupa el sitio de un elemento de una lista es también un fallo de validación**, en cualquiera de
+  las listas del bullet de arriba (`comments` no está entre ellas, ver más abajo), porque un elemento tiene que ser texto y `null` no lo es, como
+  tampoco lo es un número: no se trata como el elemento vacío, que sí es texto. Es un `invalid_line`
+  con código 3, que nombra la lista y la posición del elemento, y lo mismo vale para un `null` en el
+  `text` de un criterio dado como objeto:
+  ```
+  line 7: references.1: expected text, got null
+  ```
+  Los elementos de `acceptanceCriteria` y de `definitionOfDone` pueden ser texto o un objeto, así
+  que su mensaje lo dice: un elemento que no es ninguno de los dos, sea `null`, un número, un
+  booleano o una lista, falla con `acceptanceCriteria.0: expected text or an object, got null` (o
+  `got number`, `got bool`, `got array`), y un objeto cuyo `text` no es texto, con
+  `acceptanceCriteria.0.text: expected text, got null` (o `got number`). Los mismos mensajes valen
+  con `definitionOfDone` en lugar de `acceptanceCriteria`, y nombran la posición del elemento en la
+  lista, contando desde cero. Un `text` que falta no es un `text` nulo: es un texto vacío, y el
+  elemento se descarta.
+  `documentation: null` y `modifiedFiles: null` son la clave ausente, y un `null` dentro de la lista
+  de cualquiera de las dos es este mismo fallo.
+  **`comments` queda fuera de la regla del elemento vacío y de este `null` de elemento**: es una lista
+  de objetos con un cuerpo y se trata aparte, así que esta regla cubre las listas de texto libre y de
+  tokens y no cambia lo que hoy hace un lote con un comentario vacío.
+- **`labels` se valida línea a línea con la regla de las etiquetas con ámbito.** Una etiqueta vacía no
+  es una etiqueta mal formada, sino un elemento vacío que se descarta (bullet de arriba). Una etiqueta mal
   formada, una clave escrita con `::` que recibe más de un valor, una clave con los dos separadores
   en la misma línea, o un valor o un separador que la lista `labels` de la configuración no admite,
   son fallos de validación de esa línea
@@ -311,7 +369,8 @@ Las reglas del lote, todas obligatorias:
   llegar, y una tarea importada no llega a ninguna parte: ya estaba donde el fichero la pone, igual
   que una escritura sobre una tarea que ya estaba en el estado terminal tampoco los repite
   (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Los únicos avisos propios del lote son
-  `imported_dod_merged`, `imported_documentation_merged` e `imported_modified_files_merged`.
+  `imported_dod_merged`, `imported_documentation_merged`, `imported_modified_files_merged` e
+  `imported_empty_dropped`.
 - **`--print` es error 2 en un lote**, con el mensaje `--print does not apply to a batch, which
   affects no task that existed before`. Es la misma razón por la que lo es en
   [`biso init --from`](init.md): un lote crea de cero todas las tareas del fichero, así que no hay

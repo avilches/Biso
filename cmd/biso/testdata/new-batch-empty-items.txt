@@ -1,0 +1,2 @@
+warning: line 1: 1 empty item dropped from labels
+warning: line 1: 2 empty items dropped from references

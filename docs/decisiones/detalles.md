@@ -724,3 +724,91 @@ encima es precisamente el error que esta decisión corrige, solo que en un sitio
 `--global` o `--machine` para que `biso config` escriba `~/.biso/config.json` se descarta por ahora,
 porque ninguna de las otras claves de esa configuración lo tiene y `me` no es un motivo suficiente
 para dárselo solo a ella.
+
+---
+
+## Un elemento vacío de un lote se descarta y avisa
+
+**La decisión.** En un lote, `biso new --from` y `biso init --from`, un elemento de una lista que es una
+cadena vacía o de solo espacios se descarta: no se guarda, no es un error y la tarea queda como si esa
+posición no existiera. Es la misma regla del flag que añade (`--add-refs ""` no añade nada y avisa),
+aplicada a cada elemento, y vale para todas las listas que un lote acepta: `assignees`, `labels`,
+`dependencies`, `references`, el texto de cada criterio de `acceptanceCriteria` (dado como cadena o como
+objeto) y las tres claves ajenas que se convierten al importar, `definitionOfDone`, `documentation` y
+`modifiedFiles`. `biso new --from` avisa con `imported_empty_dropped`, una vez por cada línea y cada
+lista de la que se descartó algo, con la cuenta; `biso init --from` no avisa, igual que no avisa de lo
+que funde. Un `null` que ocupa el sitio de un elemento no es un elemento vacío sino un fallo de
+validación de la línea, porque un elemento tiene que ser texto. Los elementos que no están vacíos se
+guardan como llegan, sin recortar espacios, como hace el flag. La regla está en
+["Un elemento vacío en un lote"](../spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote) y en
+["El modo lote"](../spec/cmd/new.md#el-modo-lote).
+
+**Para `labels`, `assignees` y `dependencies` es una relajación deliberada.** Un elemento vacío en
+cualquiera de ellas era un fallo de la línea (una etiqueta mal formada, un asignado mal formado, una
+dependencia que no está en el tablero ni en el fichero) y pasa a descartarse con aviso. Es un cambio
+decidido, no un efecto secundario: un elemento vacío no dice nada, y lo que esas listas siguen
+rechazando es un elemento que sí dice algo y lo dice mal.
+
+**Los comentarios quedan fuera de esta decisión.** Esta regla cubre las listas de texto libre y de
+tokens; los comentarios son objetos con un cuerpo y se tratan aparte, así que un elemento de
+`comments` no se descarta por estar vacío ni cambia con esta entrada.
+
+**Por qué se descarta y no se rechaza.** La regla de que un valor que no existe es siempre un error
+protege a quien lee una lista de una lectura falsa: un filtro mal escrito que devolviera vacío se
+tomaría por un hecho sobre el tablero. Aquí no hay ningún valor que pudiera no existir, porque un
+elemento vacío no dice nada: descartarlo no pierde un dato que el fichero afirmaba. Es lo que separa
+este caso del de dos etiquetas exclusivas de la misma clave en una línea, que sí es un fallo porque
+quedarse con una perdería un valor que el fichero decía
+(["Las etiquetas con ámbito"](#las-etiquetas-con-ámbito)). Además, `labels` y `assignees` solo
+tienen vocabulario cerrado al leer y no al escribir, y `references` y el texto de un criterio no
+tienen ninguno, así que ninguna regla de vocabulario pide rechazar. Y una fuente habitual de un
+elemento vacío es inocente, una cadena vacía que se parte por comas y deja un elemento, o un campo en
+blanco de un formato de origen, y eso es lo que el flag ya tolera.
+
+**Por qué avisa por línea y por lista.** El flag avisa por cada elemento vacío porque una línea de
+comandos tiene pocos. Un lote puede tener cientos de líneas, y quien lo lee necesita saber dónde
+está el problema del generador del fichero, no un aviso por cada hueco: la línea y la lista, con la
+cuenta, bastan para encontrarlo. Nombra la línea y no la tarea por la misma razón que los avisos de
+conversión, que el identificador puede no existir todavía.
+
+**Por qué `init --from` no avisa.** Una restauración no emite avisos ni tiene un campo `warnings` en
+su salida, y la instantánea que escribe `biso snapshot` de un tablero escrito con esta regla nunca
+trae un elemento vacío, porque ningún camino del programa lo guarda. El único caso es una instantánea editada a mano o escrita por otro
+programa, y ahí descartar un elemento que no dice nada es inocuo. Añadir un canal de avisos a la
+restauración para ese caso no compensa. Lo de que `biso snapshot` no escribe nunca un elemento vacío
+vale para un tablero escrito con esta regla, según el apartado siguiente.
+
+**La simetría se mantiene.** Como el flag no guarda un elemento vacío y el lote lo descarta, ninguna
+lista de un tablero escrito con esta regla lo contiene, así que `biso export` no lo escribe nunca y
+reimportar la salida deja el mismo tablero campo a campo.
+
+**Un tablero con vacíos guardados antes de esta regla.** El programa no ha tenido una versión
+publicada que escribiera elementos vacíos, así que solo un tablero de desarrollo puede tenerlos
+guardados; ese tablero los sigue exportando y se limpia con `biso export | biso new --from` sobre un
+tablero vacío, o con `biso snapshot` y `biso init --from`, que los descartan al leer. `biso doctor` no
+los detecta ni los repara.
+
+**Alternativas descartadas, y por qué.**
+
+- **Rechazar la línea con un error de validación** se descarta porque hace que el mismo contenido sea
+  válido en la línea de comandos y inválido en un fichero, y porque haría fallar todo el lote, que se
+  valida entero antes de escribir, por un hueco que no cambia el sentido de nada.
+- **Guardarlo tal cual**, en `references`, `documentation`, `modifiedFiles` y el texto de los
+  criterios, se descarta porque deja una tarea que ningún flag puede producir: la ficha de `biso
+  get` muestra una línea de `refs` con huecos entre comas, y el flag `--rm-refs` no puede quitarlo, porque
+  un valor vacío ahí es un error.
+- **Descartarlo sin avisar** se descarta porque la importación cambia un dato del fichero, aunque sea
+  uno que no dice nada, y el flag que añade ya avisa; sin aviso, el generador del fichero nunca se
+  entera de que produce huecos.
+- **Tratar `null` como un elemento vacío** se descarta porque un elemento de una lista es texto, y
+  `null` no lo es, igual que un número no lo es y hoy es un fallo. Es también la extensión natural de
+  la regla que ya rechaza `null` como lista entera, y aceptarlo dejaría dos maneras de escribir lo mismo
+  donde el resto del formato solo admite una.
+- **Un aviso por cada elemento descartado, como el flag**, se descarta por lo dicho arriba: un lote
+  con miles de huecos inundaría stderr sin decir nada más que la cuenta y la línea.
+- **Que `init --from` también avise** se descarta por lo dicho arriba, y porque exigiría un canal de
+  avisos que la restauración no tiene.
+- **Que `biso doctor` detecte y repare con `--fix` los vacíos ya guardados** se descarta porque ninguna
+  versión publicada los escribió: solo un tablero de desarrollo los tiene y se limpia una vez con
+  `export | new --from`, mientras que una comprobación nueva de `doctor` sería permanente para un caso
+  que no puede darse en un tablero escrito con esta regla.
