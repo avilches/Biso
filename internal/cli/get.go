@@ -236,14 +236,21 @@ func pad(value string, width int) string {
 	return value + columnGap
 }
 
-// joined writes a list of tokens on one line. None of the fields it is used
-// on can contain a comma or a space, so the separator can never be read as
-// part of a value.
+// joined writes a list of values on one line, per
+// docs/spec/cmd/get.md#salida: each value is escaped with the rule of the
+// input read backwards (escapeListValue), and the values are separated by a
+// bare comma and a space. Only a reference can carry a comma or a backslash,
+// so the other lists come out unchanged, but the rule is the same for all of
+// them and does not have to know which list it is writing.
 func joined(values []string) string {
 	if len(values) == 0 {
 		return dash
 	}
-	return strings.Join(values, ", ")
+	escaped := make([]string, len(values))
+	for i, v := range values {
+		escaped[i] = escapeListValue(v)
+	}
+	return strings.Join(escaped, ", ")
 }
 
 func ordinalCell(t *model.Task) string {

@@ -241,7 +241,7 @@ igual que las demás.
         "labels": ["parser"],
         "parent": null,
         "dependencies": [],
-        "references": ["docs/bugs/BUG-02.md"],
+        "references": ["docs/bugs/BUG-02.md", "notes/a,b.md"],
         "due": null,
         "ordinal": null,
         "createdAt": "2026-09-06T09:12:04Z",

@@ -157,6 +157,28 @@ func splitList(s string) []string {
 	return append(out, string(cur))
 }
 
+// escapeListValue is the inverse of splitList for one value: a comma comes out
+// as `\,` and a backslash as `\\`, and every other character, spaces
+// included, comes out as it is. Every backslash is doubled, whatever surrounds
+// it, so the rule needs no lookahead and two different lists can never print
+// the same line: without it, the values `a\` and `b` and the single value
+// `a, b` would both read `a\, b`
+// (docs/decisiones/detalles.md#la-ficha-escapa-la-coma-y-la-barra-invertida-de-una-lista).
+// For every value v, splitList(escapeListValue(v)) is []string{v}.
+func escapeListValue(s string) string {
+	if !strings.ContainsAny(s, `,\`) {
+		return s
+	}
+	var b strings.Builder
+	for _, r := range s {
+		if r == ',' || r == '\\' {
+			b.WriteRune('\\')
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
 // isEmpty is the definition of docs/spec/valores-de-entrada.md#el-valor-vacío:
 // a string with no character at all, or with nothing but spaces, wherever it
 // came from.

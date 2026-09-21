@@ -891,6 +891,42 @@ garantía de ["`biso export`"](cmd/export.md) y la fila de `imported_empty_dropp
   `--dry-run`, el lote inválido sin avisos, `init --from` con una instantánea escrita a mano y la
   simetría.
 
+### Qué dejó hecho el escape de la ficha
+
+La tarea `TASK-92` aplicó
+["La ficha escapa la coma y la barra invertida de una lista"](../decisiones/detalles.md#la-ficha-escapa-la-coma-y-la-barra-invertida-de-una-lista)
+al programa. Las anclas que cubre son el párrafo "Cómo se escribe cada valor de ese bloque" de
+["`biso get`"](cmd/get.md#salida), el ejemplo de esa página y la nota sobre la ficha de
+["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas):
+
+- **La ficha escribe cada valor de una lista con el escape de la entrada al revés.** Una coma sale como
+  `\,`, una barra invertida como `\\` y ningún otro carácter se toca, y los valores se separan por una coma
+  sin escapar y un espacio. La función `escapeListValue`, en `internal/cli/values.go`, es la inversa de
+  `splitList`, que está en el mismo fichero, y `joined`, en `internal/cli/get.go`, la aplica a cada valor.
+  `joined` sirve a todas las listas de la ficha y solo `refs` puede llevar uno de esos dos caracteres, así
+  que las demás líneas salen como antes. `--section meta` imprime el mismo bloque y `--print` la misma
+  ficha, así que no hizo falta tocarlos.
+- **`--json` no cambia**: `internal/cli/task_json.go` no se ha tocado, y una prueba comprueba que las
+  referencias salen exactas y sin escape.
+- **La tarea `MYP-11` de los ejemplos lleva ahora dos referencias**, `docs/bugs/BUG-02.md` y
+  `notes/a,b.md`, en `get.md` y en `ls.md`. Los tableros de prueba que la construyen son `cardBoard` y
+  `listingBoard`, de `cmd/biso/read_golden_test.go`, y cambian tres ficheros de referencia: `get-output.txt`
+  (la línea `refs`), `get-json.txt` y `ls-json.txt` (el array `references`). `biso ls` no imprime
+  referencias en texto, así que solo cambia su JSON. Ningún bloque de código se añadió ni se movió, y los
+  demás ficheros de referencia no cambian ni un byte.
+- **Las pruebas** están en `internal/cli/card_list_test.go`, con la tabla de casos límite de la regla, la
+  colisión que motivó escapar la barra y la propiedad de recorrido completo (lo que imprime la ficha, leído
+  como dice la especificación, devuelve exactamente los valores de partida, sobre una batería fija y otra
+  aleatoria), y en `cmd/biso/card_refs_test.go`, que recorre el binario: la coma, la barra, las dos listas
+  que no deben compartir línea, el `--json` sin escape y el valor de la ficha copiado en `--rm-refs`.
+- **Una referencia con un salto de línea queda sin decidir.** `--add-refs` la acepta y la ficha parte
+  entonces la línea `refs` en dos. La frase general de que ningún `string` admite un salto de línea
+  literal está en ["El modelo de datos de una tarea"](modelo-de-datos/index.md), pero la sección
+  ["El salto de línea en un campo `string`"](valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)
+  solo enumera `title`, `author` y el `text` de un criterio, y ninguna regla cubre `references`. La
+  decisión y la página de `biso get` lo dicen como excepción a la lectura exacta de la ficha, y su
+  tratamiento se decide aparte.
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según
