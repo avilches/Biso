@@ -624,8 +624,7 @@ hace algo distinto de lo pedido y solo lo avisa.
 
 **Por qué ahora.** Cambiar el tipo de `ordinal` es un cambio del contrato JSON y del nombre de un flag,
 y el contrato de estabilidad (["El contrato de estabilidad"](../spec/estabilidad.md)) obliga a partir de
-la versión 1.0, que no se ha publicado. Hoy es gratis. El conversor de Backlog.md, que importa múltiplos
-de 1000, puede repartir claves uniformes en el mismo orden: 535 tareas caben en dos caracteres.
+la versión 1.0, que no se ha publicado. Hoy es gratis.
 
 ---
 
