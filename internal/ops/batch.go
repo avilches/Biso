@@ -37,6 +37,8 @@ type batchLine struct {
 	dodKeys   []int
 	docCount  int
 	fileCount int
+	// emptyDropped is what the line dropped for being empty, list by list.
+	emptyDropped []emptyDrop
 }
 
 // NewBatch creates every task of an NDJSON file, all of them or none
@@ -62,6 +64,12 @@ func NewBatchOn(b *board.Board, env Env, p BatchParams) (*WriteResult, error) {
 		Created: true, Batch: true, DryRun: p.DryRun, Previewed: len(lines),
 	}
 	for _, line := range lines {
+		// What a line dropped comes before what it converted, and only
+		// here, after the whole file passed: an invalid batch warns of
+		// nothing (docs/spec/cmd/new.md#el-modo-lote).
+		for _, drop := range line.emptyDropped {
+			result.Warnings = append(result.Warnings, emptyDroppedWarning(line, drop))
+		}
 		if len(line.dodKeys) > 0 {
 			result.Warnings = append(result.Warnings, dodWarning(line))
 		}
@@ -115,6 +123,23 @@ func NewBatchOn(b *board.Board, env Env, p BatchParams) (*WriteResult, error) {
 		result.Tasks = append(result.Tasks, summary)
 	}
 	return result, nil
+}
+
+// emptyDroppedWarning is the one of
+// docs/spec/salida-y-terminal.md#notas-y-avisos for a list of a line that
+// lost at least one element for being empty. It names the line and not the
+// task, like the ones of the conversions, and says how many went.
+func emptyDroppedWarning(line *batchLine, drop emptyDrop) Warning {
+	message := fmt.Sprintf("line %d: %d empty items dropped from %s",
+		line.number, drop.count, drop.field)
+	if drop.count == 1 {
+		message = fmt.Sprintf("line %d: 1 empty item dropped from %s", line.number, drop.field)
+	}
+	return Warning{
+		Code:    "imported_empty_dropped",
+		Message: message,
+		Fields:  map[string]any{"line": line.number, "field": drop.field, "count": drop.count},
+	}
 }
 
 // dodWarning is the one of
@@ -301,6 +326,7 @@ func readBatchLine(cfg board.Config, line *batchLine, text string, now time.Time
 	}
 	t := d.task
 	line.task, line.dodKeys, line.docCount, line.fileCount = t, d.dodKeys, d.docCount, d.fileCount
+	line.emptyDropped = d.emptyDropped
 
 	if t.ID != "" {
 		if e := checkImportedID(cfg.TaskPrefix, t.ID); e != nil {

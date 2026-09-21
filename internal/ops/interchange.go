@@ -338,15 +338,158 @@ type decoded struct {
 	// the order it created them. They are the one thing `biso new` ever
 	// announces about a key it assigned (docs/spec/cmd/new.md#el-modo-lote).
 	dodKeys []int
-	// docCount is how many elements of documentation the line carried and
-	// were merged into references, which the warning announces.
+	// docCount is how many elements of documentation the line carried, not
+	// empty, and were merged into references, which the warning announces.
 	docCount int
 	// fileCount is the same for the elements of modifiedFiles.
 	fileCount int
+	// emptyDropped is what the line dropped for being empty or only spaces
+	// (docs/spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote), one
+	// entry per list that lost something, in the fixed order of
+	// elementLists and not in the order the keys were written in.
+	emptyDropped []emptyDrop
 	// rawStatus, rawType and rawPriority are the values as the line wrote
 	// them, before the board's vocabulary has judged them.
 	rawStatus, rawType, rawPriority string
 	hasStatus                       bool
+}
+
+// emptyDrop is the count of elements one list of a line lost for being empty.
+type emptyDrop struct {
+	field string
+	count int
+}
+
+// The lists of a line whose elements are text, in the order the warning of
+// the elements dropped from each of them is emitted in, which is the one of
+// docs/spec/cmd/new.md#el-modo-lote whatever order the keys were written in.
+// The two lists of criteria are apart because an element of them may be an
+// object, and a null in the place of one reads differently.
+var (
+	textLists     = []string{"assignees", "labels", "dependencies", "references"}
+	criteriaLists = []string{"acceptanceCriteria", "definitionOfDone"}
+	pointerLists  = []string{"documentation", "modifiedFiles"}
+)
+
+// checkElements is the failure of a value that is not text where a list of
+// text has one, which for a null is what makes it different from an empty
+// string: an empty string is dropped and a null is a line that cannot be read
+// (docs/spec/cmd/new.md#el-modo-lote). The message names the list and the
+// position, like the one for a number that encoding/json writes itself.
+//
+// It reads the raw elements and not the decoded ones because a null decodes
+// as an empty string, which is exactly the distinction to keep.
+func checkElements(raw map[string]json.RawMessage) error {
+	for _, key := range slices.Concat(textLists, pointerLists) {
+		for i, element := range rawElements(raw[key]) {
+			if kind := jsonKind(element); kind == "null" {
+				return fmt.Errorf("%s.%d: expected text, got null", key, i)
+			}
+		}
+	}
+	for _, key := range criteriaLists {
+		for i, element := range rawElements(raw[key]) {
+			switch kind := jsonKind(element); kind {
+			case "string":
+			case "object":
+				fields, err := rawObject(element)
+				if err != nil {
+					return err
+				}
+				if text, ok := fields["text"]; ok {
+					if kind := jsonKind(text); kind != "string" {
+						return fmt.Errorf("%s.%d.text: expected text, got %s", key, i, kind)
+					}
+				}
+			default:
+				return fmt.Errorf("%s.%d: expected text or an object, got %s", key, i, kind)
+			}
+		}
+	}
+	return nil
+}
+
+// rawElements is the elements of a value if it is a list, and nothing
+// otherwise: a value that is not a list is the failure encoding/json reports
+// with the name of the key.
+func rawElements(value json.RawMessage) []json.RawMessage {
+	var elements []json.RawMessage
+	if jsonKind(value) != "array" || json.Unmarshal(value, &elements) != nil {
+		return nil
+	}
+	return elements
+}
+
+// jsonKind names the type of a raw JSON value the way encoding/json does in
+// its own messages.
+func jsonKind(value json.RawMessage) string {
+	trimmed := strings.TrimSpace(string(value))
+	switch {
+	case trimmed == "":
+		return "null"
+	case trimmed == "null":
+		return "null"
+	case trimmed[0] == '"':
+		return "string"
+	case trimmed[0] == '{':
+		return "object"
+	case trimmed[0] == '[':
+		return "array"
+	case trimmed == "true" || trimmed == "false":
+		return "bool"
+	}
+	return "number"
+}
+
+// withoutEmpty drops the elements that are empty or only spaces, and answers
+// what is left and how many went. What is left is stored as it came, without
+// trimming (docs/spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote).
+func withoutEmpty(values []string) ([]string, int) {
+	dropped := 0
+	for _, v := range values {
+		if isEmpty(v) {
+			dropped++
+		}
+	}
+	if dropped == 0 {
+		return values, 0
+	}
+	kept := make([]string, 0, len(values)-dropped)
+	for _, v := range values {
+		if !isEmpty(v) {
+			kept = append(kept, v)
+		}
+	}
+	return kept, dropped
+}
+
+// withoutEmptyCriteria is withoutEmpty for criteria, whose element is empty
+// when its text is, whether it came as a string or as an object, and an object
+// with no text has none. It is dropped before anything else of the element is
+// looked at, so its key reserves nothing and its `checked` marks nothing.
+func withoutEmptyCriteria(criteria []wireCriterion) ([]wireCriterion, int) {
+	dropped := 0
+	for _, c := range criteria {
+		if isEmpty(c.Text) {
+			dropped++
+		}
+	}
+	if dropped == 0 {
+		return criteria, 0
+	}
+	kept := make([]wireCriterion, 0, len(criteria)-dropped)
+	for _, c := range criteria {
+		if !isEmpty(c.Text) {
+			kept = append(kept, c)
+		}
+	}
+	return kept, dropped
+}
+
+// isEmpty is the definition of an empty value of
+// docs/spec/valores-de-entrada.md#el-valor-vacío, the one the flags use.
+func isEmpty(s string) bool {
+	return strings.TrimSpace(s) == ""
 }
 
 // mergeIntoReferences appends each value to the references of t unless they
@@ -381,10 +524,43 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		}
 	}
 
+	if err := checkElements(raw); err != nil {
+		return nil, err
+	}
+
 	var in wireInput
 	if err := json.Unmarshal(line, &in); err != nil {
 		return nil, unwrapJSONError(err)
 	}
+
+	// An element that is empty or only spaces is dropped before anything
+	// else of the line is done with it: it is not a malformed label, nor a
+	// dependency that does not exist, nor a criterion that takes a key
+	// (docs/spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote). The
+	// lists are visited in the order the warnings come out in.
+	var emptyDropped []emptyDrop
+	note := func(field string, dropped int) {
+		if dropped > 0 {
+			emptyDropped = append(emptyDropped, emptyDrop{field, dropped})
+		}
+	}
+	var dropped int
+	in.Assignees, dropped = withoutEmpty(in.Assignees)
+	note("assignees", dropped)
+	in.Labels, dropped = withoutEmpty(in.Labels)
+	note("labels", dropped)
+	in.Dependencies, dropped = withoutEmpty(in.Dependencies)
+	note("dependencies", dropped)
+	in.References, dropped = withoutEmpty(in.References)
+	note("references", dropped)
+	in.AcceptanceCriteria, dropped = withoutEmptyCriteria(in.AcceptanceCriteria)
+	note("acceptanceCriteria", dropped)
+	in.DefinitionOfDone, dropped = withoutEmptyCriteria(in.DefinitionOfDone)
+	note("definitionOfDone", dropped)
+	in.Documentation, dropped = withoutEmpty(in.Documentation)
+	note("documentation", dropped)
+	in.ModifiedFiles, dropped = withoutEmpty(in.ModifiedFiles)
+	note("modifiedFiles", dropped)
 
 	t := &model.Task{
 		Title:        in.Title,
@@ -413,6 +589,7 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		rawType:           value(in.Type),
 		rawPriority:       value(in.Priority),
 		hasStatus:         in.Status != nil,
+		emptyDropped:      emptyDropped,
 	}
 	t.ID = in.ID
 
