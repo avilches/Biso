@@ -351,7 +351,7 @@ func cardBoard(t *testing.T) *machine {
 	m.env["BISO_ME"] = "@claude"
 	m.run(t, "new", "Normalize CRLF in the diff", "--start", "--author", "@avilches",
 		"--type", "bug", "--priority", "high",
-		"--add-labels", "parser", "--add-refs", "docs/bugs/BUG-02.md",
+		"--add-labels", "parser", "--add-refs", "docs/bugs/BUG-02.md,notes/a\\,b.md",
 		"--append-desc", "The diff compares byte by byte and marks as different "+
 			"two lines that only\ndiffer in the line ending.",
 		"--append-plan", "1. Read the parser.\n2. Add the CRLF case.",
