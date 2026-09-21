@@ -411,6 +411,16 @@ func TestTheFixedPartOfTheMessageIsAlwaysTheSame(t *testing.T) {
 	}
 }
 
+// TestTheBudgetConstantsAreTheNumbersOfTheSpecification keeps the two caps
+// of the message from drifting: the hard cap of 5,504 bytes is the only
+// number the stability contract freezes, and the fixed part is 3,840 of it
+// (docs/spec/presupuestos.md#el-presupuesto-de-tamaño). Raising either to
+// make room for a gloss would pass every other test in this file.
+func TestTheBudgetConstantsAreTheNumbersOfTheSpecification(t *testing.T) {
+	assertEqual(t, fmt.Sprint(cli.PrimeBudget), "5504", "the hard cap of the startup message")
+	assertEqual(t, fmt.Sprint(cli.PrimeFixedBudget), "3840", "the cap of its fixed part")
+}
+
 // blockSizes is how many tasks each of the first three blocks gets on a
 // board of three hundred; the rest fall into NEXT UP.
 type blockSizes struct{ inProgress, waiting, assigned int }

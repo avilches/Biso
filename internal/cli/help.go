@@ -161,7 +161,10 @@ const newHelp = "Usage: biso new <title> [options]\n" +
 	"      --status <value>        configured status (default: the initial one)\n" +
 	"      --add-labels <value>    add a label; repeatable or comma-separated\n" +
 	"      --add-assignees <@who>  add an assignee; repeatable or comma-separated\n" +
-	"      --add-deps <ref>        add a dependency; validated, repeatable\n" +
+	"      --add-deps <ref>        tasks that must be done first, so each blocks the\n" +
+	"                              new task; repeatable, checked to exist\n" +
+	"      --parent <ref>          the task this one is part of; at most one\n" +
+	"      --add-refs <text>       a path, URL or task id to look at; repeatable\n" +
 	"      --due <YYYY-MM-DD>      due date\n" +
 	"      --comment <text>        add a discussion comment; repeatable\n" +
 	"      --append-plan <text>    implementation plan\n" +
@@ -169,6 +172,10 @@ const newHelp = "Usage: biso new <title> [options]\n" +
 	"                              to you, with the lease claimed for you\n" +
 	"\n" +
 	"Every other field flag of `biso set --help` is accepted too.\n" +
+	"\n" +
+	"Dependencies are written on the task that waits: `--add-deps MYP-4` means\n" +
+	"MYP-4 goes first and blocks it. There is no flag for the opposite, a new task\n" +
+	"that blocks MYP-10; create it, then run `biso set MYP-10 --add-deps <new id>`.\n" +
 	"\n" +
 	"Batch:\n" +
 	"      --from <file|->        NDJSON, one task object per line. The only place\n" +
@@ -188,6 +195,7 @@ const newHelp = "Usage: biso new <title> [options]\n" +
 	"Examples:\n" +
 	"  biso new \"Normalize CRLF in the diff\" --type bug --priority high\n" +
 	"  biso new \"Add OAuth\" --add-ac \"Login succeeds\" --add-ac \"Token refreshes\"\n" +
+	"  biso new \"Parse the header\" --parent MYP-10 --add-deps MYP-4\n" +
 	"  biso new \"Rewrite the installer\" --append-desc @docs/installer.md --start\n" +
 	"  biso new --from tasks.ndjson --dry-run\n"
 
@@ -196,8 +204,9 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"\n" +
 	"Change any field of one or more tasks, all or nothing. Every flag here means\n" +
 	"the same in `biso new`, `biso start`, `biso note`, `biso comment`, `biso ask`,\n" +
-	"`biso answer`, `biso finish` and `biso archive`. Every flag name says what it\n" +
-	"does; there is no rule to learn beyond the name.\n" +
+	"`biso answer`, `biso finish` and `biso archive`. A flag name says what it does,\n" +
+	"and comma lists always have the same four shapes, but what a relation field\n" +
+	"means is not in its name: see Relations below.\n" +
 	"\n" +
 	"List fields that take comma-separated values have four shapes, and there is no\n" +
 	"field that breaks them:\n" +
@@ -231,6 +240,18 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"Scalars just take a value: --title, --status, --type, --priority,\n" +
 	"--parent, --due, --ordinal, --author. Each has a --clear-<field>. An\n" +
 	"empty string is never a way to clear anything.\n" +
+	"\n" +
+	"Relations point from the task you name in <ref> to other tasks:\n" +
+	"      --parent <ref>         the task this one is part of; at most one\n" +
+	"      --add-deps <ref>       tasks that must be done before this one, so each\n" +
+	"                             blocks it; checked to exist, no cycles\n" +
+	"      --add-refs X           a path, a URL or a task id to look at; free text,\n" +
+	"                             never checked\n" +
+	"A dependency is written on the task that waits, never on the one that blocks.\n" +
+	"To say that MYP-4 blocks MYP-10:\n" +
+	"  biso set MYP-10 --add-deps MYP-4\n" +
+	"The other way round, `biso set MYP-4 --add-deps MYP-10`, is just as valid and\n" +
+	"says the opposite, so biso cannot warn you when it is backwards.\n" +
 	"\n" +
 	"Comments:\n" +
 	"      --comment <text>            append a comment; repeatable\n" +

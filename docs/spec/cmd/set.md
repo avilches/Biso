@@ -152,13 +152,21 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 
 ## `biso set --help`
 
+La ayuda glosa los campos de relación (`--parent`, `--add-deps`, `--add-refs`) y dice hacia dónde
+apunta una dependencia, con `biso set MYP-10 --add-deps MYP-4` como ejemplo de que `MYP-4` bloquea a
+`MYP-10`. Es lo único que enseña la dirección en el camino de escritura, y no puede deducirse del
+nombre del flag: una dependencia escrita al revés es válida y el programa no la detecta. La
+decisión, y por qué no hay un flag inverso, está en
+["La ayuda enseña la dirección de una dependencia"](../../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia).
+
 ```
 Usage: biso set <ref>... [options]
 
 Change any field of one or more tasks, all or nothing. Every flag here means
 the same in `biso new`, `biso start`, `biso note`, `biso comment`, `biso ask`,
-`biso answer`, `biso finish` and `biso archive`. Every flag name says what it
-does; there is no rule to learn beyond the name.
+`biso answer`, `biso finish` and `biso archive`. A flag name says what it does,
+and comma lists always have the same four shapes, but what a relation field
+means is not in its name: see Relations below.
 
 List fields that take comma-separated values have four shapes, and there is no
 field that breaks them:
@@ -192,6 +200,18 @@ key already replaces its value.
 Scalars just take a value: --title, --status, --type, --priority,
 --parent, --due, --ordinal, --author. Each has a --clear-<field>. An
 empty string is never a way to clear anything.
+
+Relations point from the task you name in <ref> to other tasks:
+      --parent <ref>         the task this one is part of; at most one
+      --add-deps <ref>       tasks that must be done before this one, so each
+                             blocks it; checked to exist, no cycles
+      --add-refs X           a path, a URL or a task id to look at; free text,
+                             never checked
+A dependency is written on the task that waits, never on the one that blocks.
+To say that MYP-4 blocks MYP-10:
+  biso set MYP-10 --add-deps MYP-4
+The other way round, `biso set MYP-4 --add-deps MYP-10`, is just as valid and
+says the opposite, so biso cannot warn you when it is backwards.
 
 Comments:
       --comment <text>            append a comment; repeatable
