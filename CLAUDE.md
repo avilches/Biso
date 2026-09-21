@@ -90,7 +90,27 @@ pruebas del que salen las cifras en `bench/sqlite-driver/`, con su propio `READM
 ## Reglas de este repositorio
 
 - **El trabajo va en un worktree**, en `.claude/worktrees/<rama>`, nunca editando `main`
-  directamente, a no ser que lo pida el usuario.
+  directamente, a no ser que lo pida el usuario. Se mezcla a `main` con `git merge --no-ff` y un
+  mensaje que empieza por "Mezcla ...", sin PR, y después se borran el worktree y la rama. Antes de
+  mezclar se mira `git log main`, porque otra sesión puede estar mezclando a la vez, y si `main` ha
+  cambiado se vuelve a pasar `make check` sobre `main` después de mezclar.
+- **La implementación y la revisión se hacen siempre con subagentes.** Quien coordina la sesión
+  reparte el trabajo y no escribe código ni especificación de una tarea por su cuenta: lanza un
+  agente para escribir cada pieza (primero la especificación, luego el código, cada una en su
+  agente) y otro agente distinto, independiente del que escribió el cambio, para revisarla. La
+  revisión adversarial que piden las tareas del tablero la hace siempre un agente que no escribió
+  el cambio y cuyo encargo es buscar fallos; el informe de sus hallazgos se resuelve o se descarta
+  por escrito con su razón antes de marcar el criterio. Cada agente trabaja en el worktree que se le
+  indica, lee este fichero antes de empezar, no toca el tablero de Backlog.md (eso lo gestiona quien
+  coordina) y no mezcla a `main` ni borra el worktree.
+- **Los ejemplos de salida y los ficheros de referencia se cambian juntos.** Los ejemplos de la
+  especificación se comparan carácter a carácter con `cmd/biso/testdata/` (prueba
+  `TestTheFixturesStillMatchTheSpecification`). Si cambias un texto en la especificación, cambia
+  igual el código y el fichero de referencia, con el mismo salto de líneas en los tres.
+- **El comprobador de recuentos rechaza frases que cuentan cosas** ("dos flags", "cuatro errores")
+  salvo que el recuento esté declarado como hacen las demás páginas. Reformula sin cifra o decláralo.
+- **Para probar el binario sin tocar `~/.biso`**: `go build -o <directorio temporal>/biso ./cmd/biso`
+  y ejecútalo con `-C <directorio de prueba> init "X" --prefix TT --at <directorio del tablero>`.
 - **La documentación va en español**: `docs/`, este fichero y los demás `CLAUDE.md` del
   repositorio. La única excepción es el contenido de las páginas del tutorial (`docs/tutorial/*.md`),
   de la página de Conceptos (`docs/concepts.md`) y de los fixtures que generan el tutorial
