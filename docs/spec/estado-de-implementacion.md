@@ -1089,6 +1089,33 @@ ilegible"](garantias.md#cómo-se-arregla-una-tarea-ilegible), junto con las fila
   ya usaba el otro fichero para quitarle el `CHECK`, porque mientras la columna siga declarada como
   texto SQLite convierte cualquier número a su forma de texto antes de guardarlo.
 
+### Qué dejó hecha la comprobación con un agente fresco de la dirección de una dependencia
+
+La tarea `TASK-89` escribió el protocolo de
+["Protocolo propuesto: comprobar con un agente fresco la dirección de una dependencia"](../decisiones/vocabulario-y-mensaje-de-arranque.md#protocolo-propuesto-comprobar-con-un-agente-fresco-la-dirección-de-una-dependencia)
+y después lo ejecutó sobre la regla 11 de `RULES`. No es un paso de los nueve de `TASK-55`: es una
+medida sobre un texto ya implementado, y las anclas que cubre son esa misma sección del documento de
+decisiones y, de forma indirecta, la regla 11 de
+["La salida literal"](cmd/prime.md#la-salida-literal), que el resultado deja sin cambios.
+
+- **Las doce ejecuciones acertaron la dirección de la arista.** Cada una de las cuatro formulaciones del
+  encargo ("Alpha blocks Beta", "Beta depends on Alpha", "Alpha has to happen before Beta", "Beta
+  cannot start until Alpha is finished") se probó con tres agentes frescos, sobre una copia propia de un
+  tablero de ejemplo con dos tareas sin relación (`EXP-1` "Alpha", `EXP-2` "Beta"). Los doce escribieron
+  `biso set EXP-2 --add-deps EXP-1`, verificado leyendo `dependencies` con `biso get --json` sobre cada
+  copia: la tabla y el análisis quedaron en la propia entrada del documento de decisiones.
+- **El texto de la regla 11 no cambió.** El criterio que fijó el propio protocolo (una sola inversión
+  atribuible a la regla bastaba para reescribirla) no se activó, así que la especificación, el código de
+  `internal/cli/prime_text.go` y los ficheros de referencia de `cmd/biso/testdata/` siguen igual que
+  antes de esta tarea.
+- **La ejecución usó la herramienta `Agent` de la propia sesión en vez del binario `claude -p --bare`**
+  que el protocolo original describía, porque el entorno donde corrió `TASK-89` no podía invocar ese
+  binario como proceso del sistema. Cada una de las doce ejecuciones fue una llamada independiente sin
+  `isolation` y sin contexto de la conversación que coordinaba el protocolo, con el mismo encargo (el
+  texto de `biso prime`, la formulación y las rutas de su copia del tablero y del binario) y sin mención
+  de "TASK-89", "protocolo" ni "regla 11". La salvedad y sus consecuencias están anotadas en el propio
+  documento de decisiones, en la subsección que describe qué recibe cada agente fresco.
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según

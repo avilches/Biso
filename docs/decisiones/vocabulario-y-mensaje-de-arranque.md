@@ -226,12 +226,13 @@ flag de escritura, no la necesidad de `--help` para todo lo demás.
 
 ## Protocolo propuesto: comprobar con un agente fresco la dirección de una dependencia
 
-**Esto no es una decisión vigente.** Es el protocolo de `TASK-89`, escrito para que otro agente lo
-ejecute tal cual, sin decidir nada por su cuenta, y para que un tercero revise por separado si el
-diseño tiene algún sesgo antes de que se corra. Los resultados, la tabla de aciertos e inversiones y
-la decisión de tocar o no el texto de la regla 11 no están aquí: llegan en una revisión posterior de
-este mismo apartado, con los datos ya medidos. Hasta que eso ocurra, esta sección describe un
-experimento pendiente, no uno hecho.
+**El protocolo ya se ejecutó, y su resultado es que la regla 11 no se toca.** Lo que sigue describe el
+protocolo de `TASK-89` tal como se diseñó, escrito para que otro agente lo ejecutara tal cual sin
+decidir nada por su cuenta, y termina con la tabla medida y el análisis que exige su criterio de
+aceptación (["Los resultados medidos"](#cómo-se-tabula-y-qué-se-escribe-como-análisis)). Las doce
+ejecuciones acertaron la dirección de la arista sin ninguna excepción, así que el texto de la regla 11
+sigue siendo el de arriba y no se tocó ni la especificación, ni el código, ni los ficheros de
+referencia.
 
 **El problema que comprueba.** La regla 11 de `RULES`
 (["La salida literal"](../spec/cmd/prime.md#la-salida-literal)) dice hacia dónde apunta una
@@ -472,6 +473,20 @@ ninguna orden que se lo impida aparte de las banderas de arriba: `--tools "Bash"
 directorio de trabajo (`board/`, una copia de `template/`) no contiene ni la especificación ni el
 código fuente, solo el puntero y la base de datos del tablero.
 
+**Cómo se ejecutó en la práctica.** El entorno donde se corrió `TASK-89` no podía invocar el binario
+`claude` como proceso externo, así que las doce ejecuciones se lanzaron con la herramienta `Agent` de
+esa misma sesión de Claude Code (`subagent_type: "general-purpose"`, sin `isolation` y sin pasarle
+ningún contexto de la conversación que coordinaba el protocolo), una llamada independiente por
+ejecución. Es la misma salvedad que el párrafo de arriba advertía que había que evitar, aceptada aquí
+como la única vía disponible: cada agente fresco recibió, como todo su encargo, el texto exacto que
+este apartado describe (el bloque de `biso prime` capturado más arriba, la formulación que le tocaba y
+una frase neutra con la ruta de su copia del tablero y la del binario), sin ninguna mención de "TASK-89",
+de "protocolo", de "regla 11" ni de que se estuviera midiendo nada. La diferencia frente al diseño
+original es que el agente no llevaba `--tools "Bash"` forzado por la línea de comandos, así que en
+teoría podía usar `Read` o `Grep`; en la práctica, la carpeta desde la que trabajó no contenía nada
+que leer aparte del puntero y la base de datos del tablero, igual que la copia de `template/` del
+diseño original.
+
 ### Cómo se verifica el resultado
 
 Tras cada ejecución, con `<slug>` y `<n>` de esa ejecución:
@@ -510,18 +525,41 @@ La tabla, sobre tres ejecuciones por formulación, se rellena con las cifras med
 
 | Formulación | Aciertos | Inversiones | Sin resultado |
 |---|---|---|---|
-| F1, `Alpha blocks Beta.` | | | |
-| F2, `Beta depends on Alpha.` | | | |
-| F3, `Alpha has to happen before Beta.` | | | |
-| F4, `Beta cannot start until Alpha is finished.` | | | |
-| **Total** | | | |
+| F1, `Alpha blocks Beta.` | 3 | 0 | 0 |
+| F2, `Beta depends on Alpha.` | 3 | 0 | 0 |
+| F3, `Alpha has to happen before Beta.` | 3 | 0 | 0 |
+| F4, `Beta cannot start until Alpha is finished.` | 3 | 0 | 0 |
+| **Total** | 12 | 0 | 0 |
 
 Cada fila suma la cantidad fija de ejecuciones de esa formulación; la fila de total suma las doce.
-Debajo de la tabla, ya rellena, el análisis dice en prosa qué formulaciones acertaron siempre, cuáles
-fallaron y de qué manera (inversión o sin resultado), y si el patrón de fallo se repite entre las tres
-ejecuciones de una misma formulación o aparece una sola vez. Ese texto se escribe leyendo la tabla, no
-al revés: ninguna frase de esta sección se redacta antes de tener los números, porque el criterio de
-aceptación de `TASK-89` pide un análisis, no una premisa que los datos vengan a confirmar.
+
+**El análisis.** Las doce ejecuciones acertaron, sin una sola excepción: en las cuatro formulaciones,
+los tres agentes frescos de cada una escribieron la dependencia con `biso set EXP-2 --add-deps EXP-1`
+(verificado con `biso get EXP-1 --json` y `biso get EXP-2 --json` sobre cada una de las doce copias del
+tablero, que dan `EXP-1` con `dependencies` vacío y `EXP-2` con `dependencies: ["EXP-1"]` en las doce).
+No hay ninguna formulación que falle una sola vez, ni un patrón que aparezca en una ejecución y no en
+las otras dos de la misma fila: las tres repeticiones de cada formulación coinciden entre sí.
+
+El dato más informativo no es que acertaran, sino que las cuatro lo hicieron con el mismo comando pese
+a estar redactadas de maneras muy distintas. F1 ("Alpha blocks Beta") nombra el verbo activo
+(`blocks`) que también usa la propia regla 11 al describir el ejemplo, así que un acierto ahí es
+consistente con leer la regla y aplicarla, pero también con adivinar por la forma de la frase sin haber
+entendido la regla. F2 ("Beta depends on Alpha") es la única que usa la palabra "depends" y la nombra
+en la dirección contraria a como la nombra F1: si el acierto de F1 fuera un efecto de superficie del
+verbo "blocks" y no de haber entendido la regla, F2 tendría que fallar o al menos vacilar, porque pide
+traducir "depende de" a "escribe la dependencia en la tarea que depende", que es exactamente el paso
+que la regla 11 explica y que ninguna otra parte del mensaje de arranque dice. F2 acertó las tres veces
+igual que F1. F3 y F4 no usan ni "blocks" ni "depends": expresan la misma relación con un orden temporal
+("has to happen before") y con una condición de bloqueo ("cannot start until... is finished"), y
+tampoco fallaron. Que las cuatro formulaciones, con vocabulario disjunto entre sí, conviertan al mismo
+comando sin ninguna inversión es la evidencia de que la regla 11 enseña la dirección con claridad
+suficiente para un agente que parte de cero, y no solo para quien ya sabe interpretar el ejemplo.
+
+Con el criterio fijado antes de medir (una sola inversión atribuible a la regla 11, en cualquiera de las
+doce ejecuciones, bastaría para reescribir su texto), el resultado no lo activa: cero de doce
+ejecuciones invirtieron la arista y cero se quedaron sin resultado. El texto de la regla 11 se deja tal
+como está, y no se corrigen ni la especificación, ni el código, ni los ficheros de referencia de
+`cmd/biso/testdata/`.
 
 ### Qué pasa si algún agente invierte la arista
 
@@ -546,7 +584,11 @@ redacción de la regla 11 podría arreglar), se anota igual en el análisis, per
 texto de la regla: ese fallo no lo causa la regla, lo causaría igual cualquier redacción.
 
 **Si ninguna de las doce invierte la arista, la entrada lo dice así, con la tabla de arriba ya rellena
-de ceros en esa columna, y el texto de la regla 11 no se toca.**
+de ceros en esa columna, y el texto de la regla 11 no se toca.** Es lo que pasó: las doce ejecuciones
+midieron `EXP-2` con `EXP-1` como dependencia y `EXP-1` sin ninguna, la columna de inversiones de la
+tabla de arriba queda en cero en cada formulación, y el párrafo siguiente sobre el margen de bytes
+queda como referencia para la próxima vez que haga falta tocar `RULES`, no como algo que esta medición
+haya usado.
 
 **El margen de bytes disponible hoy, medido con el binario y no con la cifra ya escrita en
 ["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño):** la parte fija del
