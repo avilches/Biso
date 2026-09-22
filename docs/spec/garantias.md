@@ -155,6 +155,23 @@ instante: `2026-09-21T10:00:00Z` no es un `due` legible.
 | Una escritura dirigida a ella: `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y `archive` con una referencia que resuelve a ella | Error 3, con el motivo exacto. No se escribe nada. `set`, `start` y `finish` tienen la excepción del valor fuera de vocabulario de ["Cómo se arregla"](#cómo-se-arregla-una-tarea-ilegible); `note`, `comment`, `ask`, `answer` y `archive` no la tienen nunca, escriban lo que escriban |
 | Resolver una referencia por texto, y cualquier filtro | La tarea no participa, y el aviso la nombra |
 
+**Para `ordinal` y para el nombre de un campo de lista, la fila de `biso doctor` de arriba solo se
+alcanza si el valor guardado no viola ninguna restricción `CHECK` que el esquema de la base de datos
+declare en ese momento.** Los dos campos llevan un `CHECK` en el esquema que escribe `biso init`
+(`internal/store/migrations.go`), así que ninguna escritura del programa puede dejar un valor fuera de
+esa forma mientras ese `CHECK` siga declarado: un `UPDATE` corriente lo respeta siempre. Si se escribe
+un valor que sí lo viola dejando la declaración intacta, por ejemplo ejecutando `UPDATE` con `PRAGMA
+ignore_check_constraints=1` fuera de cualquier operación de `biso`, la comprobación de integridad
+general que `biso doctor` corre primero (el segundo caso de más abajo) encuentra esa misma violación y
+aborta el comando entero con el código 21, sin llegar a reportar `task_unreadable` para ese campo. Si
+en cambio el propio esquema deja de declarar el `CHECK`, por ejemplo en un tablero de una versión
+anterior a él o tras editar el esquema a mano, el mismo valor guardado no viola nada de lo que la
+comprobación de integridad verifica, y `biso doctor` sí reporta `task_unreadable` con normalidad: es
+el caso que ejercitan las pruebas de `cmd/biso/ordinal_unreadable_test.go` para `ordinal`. En los dos
+casos, `biso ls`, `biso get` y `biso export` sobre esa misma base de datos siguen el trato normal de
+tarea ilegible de la tabla de arriba, porque ninguno de los tres corre la comprobación de integridad
+general al abrir el tablero, así que son la vía de diagnóstico mientras el `CHECK` siga declarado.
+
 **Los comandos de lectura de conjunto no abortan nunca por una tarea mala, y no la esconden nunca en
 silencio.** Las dos cosas juntas son lo que impide que un listado incompleto se confunda con un
 tablero vacío. El aviso, por stderr, es

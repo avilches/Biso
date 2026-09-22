@@ -992,6 +992,22 @@ que se toma por un tablero vacío y que la especificación prohíbe.
   anterior de esa tarea solo sigue en la historia del repositorio del tablero.
 - Una fecha malformada o una columna del tipo equivocado no se arreglan con ningún comando: se corrige
   la base de datos a mano o se recupera la tarea de una instantánea anterior.
+- **`biso doctor` no reporta `task_unreadable` para `ordinal` ni para el nombre de un campo de lista
+  cuando el valor guardado viola una restricción `CHECK` que el esquema de la base de datos sigue
+  declarando, porque su comprobación de integridad general encuentra antes esa misma violación y
+  aborta el comando entero con el código 21** de
+  ["Qué pasa con un dato que no se puede interpretar"](../spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar),
+  sin llegar a construir el informe. Esa situación concreta solo se produce escribiendo el valor
+  mientras se ignora el `CHECK` por fuera de cualquier operación de `biso`, por ejemplo con `UPDATE`
+  bajo `PRAGMA ignore_check_constraints=1`, dejando la declaración intacta en el esquema
+  (`internal/store/migrations.go`). No se cambia el código porque ese caso concreto solo se alcanza
+  corrompiendo el fichero por fuera del programa, y sobre esa misma base de datos `biso ls`, `biso
+  get` y `biso export` ya dan el diagnóstico exacto con el trato normal de tarea ilegible, porque
+  ninguno de los tres corre la comprobación de integridad al abrir el tablero. Cuando en cambio el
+  propio esquema deja de declarar el `CHECK`, por ejemplo en un tablero de una versión anterior a él,
+  el mismo valor guardado no viola nada de lo que la comprobación de integridad verifica, y `biso
+  doctor` sí reporta `task_unreadable` con normalidad: es el caso que ya ejercita
+  `cmd/biso/ordinal_unreadable_test.go` para `ordinal`.
 
 **Alternativas descartadas, y por qué.**
 

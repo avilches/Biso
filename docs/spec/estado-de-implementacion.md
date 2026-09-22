@@ -1067,6 +1067,14 @@ ilegible"](garantias.md#cómo-se-arregla-una-tarea-ilegible), junto con las fila
   poder dar el `code` propio de cada motivo: `value_not_configured` para un valor fuera de vocabulario y
   `task_unreadable` para el resto. `checkVocabulary` ya no salta un `status` vacío, porque `status` es
   obligatorio.
+- **`biso doctor` no siempre puede llegar a reportar `task_unreadable` para `ordinal` ni para el
+  nombre de un campo de lista**, porque los dos llevan un `CHECK` en el esquema y la comprobación de
+  integridad que `doctor` corre primero encuentra antes su violación cuando ese `CHECK` sigue
+  declarado, y aborta el comando entero con el código 21 en vez de construir el informe. Es una
+  limitación aceptada y no un fallo del paso: está documentada en
+  ["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar),
+  en ["`biso doctor`"](cmd/doctor.md#qué-comprueba) y en la entrada de
+  ["Una tarea ilegible es la misma para todos los comandos de lectura"](../decisiones/detalles.md#una-tarea-ilegible-es-la-misma-para-todos-los-comandos-de-lectura).
 - **Las pruebas** están en `cmd/biso/unreadable_task_test.go`: una tabla con las formas de corromper una
   tarea (cada campo de vocabulario cerrado, cada campo de fecha, cada columna del tipo equivocado),
   recorrida por `biso ls`, `biso get`, `biso export`, `biso snapshot`, `biso prime` y `biso doctor`, con
