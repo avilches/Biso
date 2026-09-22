@@ -1115,6 +1115,19 @@ decisiones y, de forma indirecta, la regla 11 de
   texto de `biso prime`, la formulación y las rutas de su copia del tablero y del binario) y sin mención
   de "TASK-89", "protocolo" ni "regla 11". La salvedad y sus consecuencias están anotadas en el propio
   documento de decisiones, en la subsección que describe qué recibe cada agente fresco.
+- **Una revisión adversarial encontró dos sesgos posibles en esas doce ejecuciones, los dos se
+  comprobaron empíricamente y ninguno cambió la conclusión.** El primero, que el orden de creación de
+  `EXP-1` y `EXP-2` coincidía siempre con la respuesta correcta; se descartó con una contraprueba sobre
+  un tablero con el orden invertido (`EXP-1` la que debía depender, `EXP-2` la que no), que acertó las
+  cuatro formulaciones. El segundo, que la herramienta `Agent` sin aislamiento verdadero deja pasar el
+  `CLAUDE.md` del proyecto al agente fresco; se confirmó con tres agentes de diagnóstico (sin
+  `isolation`, con `isolation: "worktree"` y con `isolation: "remote"`, ninguno de los tres evita la
+  fuga con las herramientas de esta sesión) y se mitigó, no se eliminó, con una instrucción explícita
+  dentro del propio mensaje pidiendo al agente que ignore cualquier contexto previo y no lea ficheros de
+  más; las cuatro formulaciones repetidas con esa instrucción, sobre el tablero original, volvieron a
+  acertar. Las veinte ejecuciones en total (doce originales más las ocho de las dos contrapruebas) dan
+  cero inversiones. El análisis completo, con las tres tablas y sus matices, está en
+  ["La revisión adversarial y sus dos hallazgos"](../decisiones/vocabulario-y-mensaje-de-arranque.md#la-revisión-adversarial-y-sus-dos-hallazgos).
 
 ## Antes de empezar un paso
 

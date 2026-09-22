@@ -226,13 +226,16 @@ flag de escritura, no la necesidad de `--help` para todo lo demás.
 
 ## Protocolo propuesto: comprobar con un agente fresco la dirección de una dependencia
 
-**El protocolo ya se ejecutó, y su resultado es que la regla 11 no se toca.** Lo que sigue describe el
-protocolo de `TASK-89` tal como se diseñó, escrito para que otro agente lo ejecutara tal cual sin
-decidir nada por su cuenta, y termina con la tabla medida y el análisis que exige su criterio de
-aceptación (["Los resultados medidos"](#cómo-se-tabula-y-qué-se-escribe-como-análisis)). Las doce
-ejecuciones acertaron la dirección de la arista sin ninguna excepción, así que el texto de la regla 11
-sigue siendo el de arriba y no se tocó ni la especificación, ni el código, ni los ficheros de
-referencia.
+**El protocolo ya se ejecutó, una revisión adversarial le encontró dos sesgos posibles, los dos se
+comprobaron empíricamente, y el resultado sigue siendo que la regla 11 no se toca.** Lo que sigue
+describe el protocolo de `TASK-89` tal como se diseñó, escrito para que otro agente lo ejecutara tal
+cual sin decidir nada por su cuenta, con la tabla medida y el análisis que exige su criterio de
+aceptación (["Los resultados medidos"](#cómo-se-tabula-y-qué-se-escribe-como-análisis)), y termina con
+las dos contrapruebas que pidió la revisión
+(["La revisión adversarial y sus dos hallazgos"](#la-revisión-adversarial-y-sus-dos-hallazgos)). Entre
+las doce ejecuciones originales y las ocho de las contrapruebas, veinte ejecuciones acertaron la
+dirección de la arista sin ninguna excepción, así que el texto de la regla 11 sigue siendo el de arriba
+y no se tocó ni la especificación, ni el código, ni los ficheros de referencia.
 
 **El problema que comprueba.** La regla 11 de `RULES`
 (["La salida literal"](../spec/cmd/prime.md#la-salida-literal)) dice hacia dónde apunta una
@@ -483,9 +486,11 @@ este apartado describe (el bloque de `biso prime` capturado más arriba, la form
 una frase neutra con la ruta de su copia del tablero y la del binario), sin ninguna mención de "TASK-89",
 de "protocolo", de "regla 11" ni de que se estuviera midiendo nada. La diferencia frente al diseño
 original es que el agente no llevaba `--tools "Bash"` forzado por la línea de comandos, así que en
-teoría podía usar `Read` o `Grep`; en la práctica, la carpeta desde la que trabajó no contenía nada
-que leer aparte del puntero y la base de datos del tablero, igual que la copia de `template/` del
-diseño original.
+teoría podía usar `Read` o `Grep`, y su directorio de trabajo por defecto no era la copia del tablero
+sino el que hereda de la sesión que lo lanza. **Esa teoría resultó ser el problema real**, medido y
+corregido en ["La revisión adversarial y sus dos hallazgos"](#la-revisión-adversarial-y-sus-dos-hallazgos),
+más abajo: la carpeta desde la que trabaja un agente lanzado así no es la copia de `template/` que se
+le nombra en el texto, y sí lleva de serie los `CLAUDE.md` del proyecto.
 
 ### Cómo se verifica el resultado
 
@@ -553,7 +558,10 @@ igual que F1. F3 y F4 no usan ni "blocks" ni "depends": expresan la misma relaci
 ("has to happen before") y con una condición de bloqueo ("cannot start until... is finished"), y
 tampoco fallaron. Que las cuatro formulaciones, con vocabulario disjunto entre sí, conviertan al mismo
 comando sin ninguna inversión es la evidencia de que la regla 11 enseña la dirección con claridad
-suficiente para un agente que parte de cero, y no solo para quien ya sabe interpretar el ejemplo.
+suficiente para un agente que parte de cero, y no solo para quien ya sabe interpretar el ejemplo. Esta
+lectura da por hecho que el agente partía de cero y que el orden de creación no jugaba ningún papel;
+las dos cosas se pusieron a prueba después, en
+["La revisión adversarial y sus dos hallazgos"](#la-revisión-adversarial-y-sus-dos-hallazgos).
 
 Con el criterio fijado antes de medir (una sola inversión atribuible a la regla 11, en cualquiera de las
 doce ejecuciones, bastaría para reescribir su texto), el resultado no lo activa: cero de doce
@@ -611,3 +619,124 @@ corrección exista, la especificación
 (["La salida literal"](../spec/cmd/prime.md#la-salida-literal)), el código y los ficheros de referencia
 de `cmd/biso/testdata/` cambian a la vez, como pide la regla de este repositorio sobre ejemplos y
 fixtures.
+
+### La revisión adversarial y sus dos hallazgos
+
+Una revisión posterior, hecha por un agente que no había escrito ni ejecutado nada de lo de arriba,
+encontró dos maneras en que la medición de doce aciertos y cero inversiones podía estar sesgada. Las
+dos se comprobaron empíricamente, no se descartaron ni se dieron por buenas de palabra.
+
+**Primer hallazgo: el orden de creación coincidía con la respuesta correcta en las doce ejecuciones.**
+`EXP-1` ("Alpha", creada primero) quedó siempre sin dependencias y `EXP-2` ("Beta", creada segunda)
+quedó siempre con la dependencia. Un agente que ignorase la regla 11 por completo y aplicase la
+heurística "lo creado antes no depende de nada, lo creado después es lo que espera" habría acertado
+igual las doce veces, sin haber entendido la dirección que enseña la regla.
+
+La contraprueba fue un segundo tablero, creado con el orden invertido: `biso new "Beta"` primero
+(`EXP-1`) y `biso new "Alpha"` segundo (`EXP-2`), dejando intacto todo lo demás (mismos títulos, mismo
+significado de las cuatro formulaciones). En este tablero la respuesta correcta según la regla 11 es
+la contraria a la que predice la heurística del orden: `Beta` sigue siendo la que espera, así que la
+dependencia va en `EXP-1` (aunque se creó primero) apuntando a `EXP-2` (aunque se creó segundo). La
+heurística del orden, de estar operando, habría escrito `EXP-2 --add-deps EXP-1`, que en este tablero
+es la dirección equivocada.
+
+Se probó una ejecución por formulación sobre este tablero invertido (cuatro en total, no doce, porque
+esto es una contraprueba de un sesgo concreto y no una repetición de la medida). Las cuatro acertaron
+la dirección real y ninguna aplicó la heurística del orden:
+
+| Formulación | Comando ejecutado | Correcto según la regla 11 |
+|---|---|---|
+| F1, `Alpha blocks Beta.` | `biso set Beta --add-deps Alpha` (`EXP-1 --add-deps EXP-2` por resolución de título) | sí |
+| F2, `Beta depends on Alpha.` | `biso set EXP-1 --add-deps EXP-2` | sí |
+| F3, `Alpha has to happen before Beta.` | `biso set EXP-1 --add-deps EXP-2` | sí |
+| F4, `Beta cannot start until Alpha is finished.` | `biso set EXP-1 --add-deps EXP-2` | sí |
+
+Verificado con `biso get EXP-1 --json` y `biso get EXP-2 --json` sobre cada copia: las cuatro dieron
+`EXP-1` con `dependencies: ["EXP-2"]` y `EXP-2` sin ninguna, que es la dirección que pide la regla 11 y
+la contraria a la que predice "lo creado antes nunca depende de nada". El sesgo del orden de creación
+queda descartado con esta evidencia: los dieciséis aciertos conjuntos (los doce originales más estos
+cuatro) no se explican por una heurística de identificador, porque cuando el identificador y la regla
+piden cosas distintas, los agentes siguieron a la regla.
+
+**Segundo hallazgo: los agentes frescos podían estar recibiendo el `CLAUDE.md` del proyecto.** El
+párrafo de arriba, escrito antes de correr el protocolo, ya avisaba de que el diseño original quería
+excluirlo y que lanzar los doce con la herramienta `Agent` en vez de con `claude -p --bare` external era
+la salvedad que rompía esa exclusión. La comprobación pendiente era si de verdad pasaba.
+
+Se comprobó con tres agentes de diagnóstico, cada uno con una única instrucción neutra (ejecutar `pwd`,
+buscar `CLAUDE.md` en cada directorio ascendiente hasta `/`, y decir si ya traían contexto de proyecto
+antes de leer el mensaje), lanzados con las tres formas disponibles de la herramienta `Agent`:
+
+| Modo | `pwd` | `CLAUDE.md` encontrados subiendo hasta `/` | ¿Traía contexto de Biso ya puesto? |
+|---|---|---|---|
+| Sin `isolation` | `/Users/avilches/Hub/Projects/Biso` | `Biso/CLAUDE.md`, `Hub/CLAUDE.md` | sí, los dos completos más la memoria |
+| `isolation: "worktree"` | `.../Biso/.claude/worktrees/agent-<id>` | el `CLAUDE.md` del propio worktree, `.claude/CLAUDE.md`, `Biso/CLAUDE.md`, `Hub/CLAUDE.md` | sí, igual que sin `isolation` |
+| `isolation: "remote"` | el mismo patrón `.../worktrees/agent-<id>` que `worktree` | los mismos cuatro | sí, igual que los otros dos |
+
+Ninguno de los tres modos evita la fuga: los tres heredan como directorio de trabajo por defecto el de
+la sesión que los lanza, no la ruta que se les nombra dentro del mensaje, y esa ruta tiene `CLAUDE.md`
+en varios niveles. `isolation: "worktree"` no ayuda porque el worktree que crea es del propio
+repositorio de Biso, así que arrastra su `CLAUDE.md` igual; `isolation: "remote"` mostró el mismo
+patrón de directorio que `worktree`, así que tampoco lo evitó en este entorno. La herramienta `Agent`
+de esta sesión no tiene ningún parámetro para arrancar un agente en un directorio limpio sin
+ascendientes con `CLAUDE.md`, así que no hay, dentro de lo que ofrece esta herramienta, una forma de
+replicar la exclusión que lograba `claude -p --bare --tools "Bash"` del diseño original. Esto también
+significa que un agente lanzado así no estaba limitado a `Bash`: en teoría podía usar `Read` o `Grep`
+para abrir `docs/spec/cmd/set.md` o `docs/decisiones/detalles.md`, que explican la dirección de una
+dependencia en prosa mucho más extensa que la regla 11, y acertar por haber leído la especificación en
+vez de por haber entendido `biso prime`. Ninguna de las dieciséis ejecuciones que se pueden auditar
+(ver el párrafo siguiente) lo hizo, pero la posibilidad estuvo abierta en las doce originales sin que
+nada la cerrara.
+
+La mitigación disponible, a falta de una `isolation` que dé un directorio limpio, fue instruir al
+agente dentro del propio mensaje: una frase explícita pidiéndole que ignore cualquier contexto de
+proyecto que ya tuviera puesto y que no lea, busque ni abra ningún fichero salvo para ejecutar el
+comando de `biso`, más una segunda línea de respuesta obligatoria diciendo si leyó algo más. Con esa
+instrucción se repitió una ejecución por formulación (cuatro en total) sobre una copia nueva del
+tablero original (`EXP-1` "Alpha" sin dependencias, `EXP-2` "Beta" con la dependencia, el mismo reparto
+que las doce primeras ejecuciones):
+
+| Formulación | Comando ejecutado | ¿Leyó algún fichero además del binario? |
+|---|---|---|
+| F1, `Alpha blocks Beta.` | `biso set EXP-2 --add-deps EXP-1` | no |
+| F2, `Beta depends on Alpha.` | `biso set EXP-2 --add-deps EXP-1` | no (consultó `biso --help` y `biso set --help`, ningún fichero) |
+| F3, `Alpha has to happen before Beta.` | `biso set EXP-2 --add-deps EXP-1` | no |
+| F4, `Beta cannot start until Alpha is finished.` | `biso set EXP-2 --add-deps EXP-1` | no |
+
+Las cuatro acertaron, verificado igual que las demás con `biso get --json`, y las cuatro declararon no
+haber leído nada fuera del binario de `biso` (dos de ellas sí consultaron su propia ayuda con
+`--help`, que no es un fichero del repositorio). Esa declaración es autoinforme del propio agente, no
+una garantía estructural como la que daba `--tools "Bash"` en el diseño original, y por eso es una
+evidencia más débil que una exclusión real; combinada con que ninguna de las ocho ejecuciones nuevas
+(las cuatro de este hallazgo más las cuatro del sesgo de orden) usó más de un puñado de llamadas a
+herramientas, ninguna de ellas coherente con haber abierto y leído una página de la especificación,
+apoya que la fuga de `CLAUDE.md`, aunque real y confirmada, no cambió el resultado medido: ningún
+agente de los veinte (doce originales, cuatro de la contraprueba del orden, cuatro de esta
+confirmación) escribió la dependencia al revés.
+
+**Qué demuestra el experimento corregido y qué no.** Demuestra que, sobre las veinte ejecuciones que se
+han corrido en total sobre este texto de la regla 11, ninguna la invirtió, ni cuando el identificador
+más bajo era el que debía depender (contraprueba del orden) ni cuando se le pidió al agente que
+ignorase cualquier fuga de contexto de proyecto (contraprueba del `CLAUDE.md`). No demuestra que la
+fuga de `CLAUDE.md` sea inofensiva en general: solo que en las ocho ejecuciones donde se comprobó
+expresamente, ninguna explotó el acceso a herramientas de más para ir a leer la especificación, a
+juzgar por su propio informe y por su número de llamadas a herramientas. Una repetición futura de este
+protocolo con una herramienta capaz de arrancar un agente en un directorio sin ningún `CLAUDE.md`
+ascendiente (el equivalente real a `claude -p --bare --tools "Bash"`) cerraría esta pega por completo;
+hasta entonces, la mitigación de instruir al agente a ignorar el contexto y a no leer ficheros de más
+es la mejor disponible con las herramientas de esta sesión, y quedó aplicada y verificada en las ocho
+ejecuciones de arriba.
+
+Con el criterio de una sola inversión ya fijado, y sin que ninguna de las veinte ejecuciones lo
+active, la conclusión no cambia: el texto de la regla 11 sigue siendo el de arriba, y no se toca ni la
+especificación, ni el código, ni los ficheros de referencia.
+
+**Tercer hallazgo (menor, no obliga a nada): la formulación en voz pasiva.** Se sugirió añadir una
+quinta formulación del tipo "Beta is blocked by Alpha." como contraprueba adicional de vocabulario. Se
+descarta por escrito: las cuatro formulaciones que ya tiene la tabla alternan cuál de las dos tareas se
+nombra primero (F1 y F3 empiezan por `Alpha`, F2 y F4 empiezan por `Beta`) y usan vocabulario disjunto
+entre sí (`blocks`, `depends on`, `has to happen before`, `cannot start until... is finished`), así
+que ya cubren tanto el orden de mención como la ausencia de una palabra común entre todas. Una quinta
+formulación en voz pasiva pondría a prueba una construcción gramatical distinta, no una dirección
+semántica distinta, y el criterio de aceptación de `TASK-89` pide formulaciones que digan lo mismo de
+maneras distintas, no que cubran todas las construcciones gramaticales posibles del inglés.
