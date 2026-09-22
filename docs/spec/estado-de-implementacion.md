@@ -1097,6 +1097,46 @@ ilegible"](garantias.md#cómo-se-arregla-una-tarea-ilegible), junto con las fila
   ya usaba el otro fichero para quitarle el `CHECK`, porque mientras la columna siga declarada como
   texto SQLite convierte cualquier número a su forma de texto antes de guardarlo.
 
+### Qué dejó hecha la comprobación con un agente fresco de la dirección de una dependencia
+
+La tarea `TASK-89` escribió el protocolo de
+["Protocolo propuesto: comprobar con un agente fresco la dirección de una dependencia"](../decisiones/vocabulario-y-mensaje-de-arranque.md#protocolo-propuesto-comprobar-con-un-agente-fresco-la-dirección-de-una-dependencia)
+y después lo ejecutó sobre la regla 11 de `RULES`. No es un paso de los nueve de `TASK-55`: es una
+medida sobre un texto ya implementado, y las anclas que cubre son esa misma sección del documento de
+decisiones y, de forma indirecta, la regla 11 de
+["La salida literal"](cmd/prime.md#la-salida-literal), que el resultado deja sin cambios.
+
+- **Las doce ejecuciones acertaron la dirección de la arista.** Cada una de las cuatro formulaciones del
+  encargo ("Alpha blocks Beta", "Beta depends on Alpha", "Alpha has to happen before Beta", "Beta
+  cannot start until Alpha is finished") se probó con tres agentes frescos, sobre una copia propia de un
+  tablero de ejemplo con dos tareas sin relación (`EXP-1` "Alpha", `EXP-2` "Beta"). Los doce escribieron
+  `biso set EXP-2 --add-deps EXP-1`, verificado leyendo `dependencies` con `biso get --json` sobre cada
+  copia: la tabla y el análisis quedaron en la propia entrada del documento de decisiones.
+- **El texto de la regla 11 no cambió.** El criterio que fijó el propio protocolo (una sola inversión
+  atribuible a la regla bastaba para reescribirla) no se activó, así que la especificación, el código de
+  `internal/cli/prime_text.go` y los ficheros de referencia de `cmd/biso/testdata/` siguen igual que
+  antes de esta tarea.
+- **La ejecución usó la herramienta `Agent` de la propia sesión en vez del binario `claude -p --bare`**
+  que el protocolo original describía, porque el entorno donde corrió `TASK-89` no podía invocar ese
+  binario como proceso del sistema. Cada una de las doce ejecuciones fue una llamada independiente sin
+  `isolation` y sin contexto de la conversación que coordinaba el protocolo, con el mismo encargo (el
+  texto de `biso prime`, la formulación y las rutas de su copia del tablero y del binario) y sin mención
+  de "TASK-89", "protocolo" ni "regla 11". La salvedad y sus consecuencias están anotadas en el propio
+  documento de decisiones, en la subsección que describe qué recibe cada agente fresco.
+- **Una revisión adversarial encontró dos sesgos posibles en esas doce ejecuciones, los dos se
+  comprobaron empíricamente y ninguno cambió la conclusión.** El primero, que el orden de creación de
+  `EXP-1` y `EXP-2` coincidía siempre con la respuesta correcta; se descartó con una contraprueba sobre
+  un tablero con el orden invertido (`EXP-1` la que debía depender, `EXP-2` la que no), que acertó las
+  cuatro formulaciones. El segundo, que la herramienta `Agent` sin aislamiento verdadero deja pasar el
+  `CLAUDE.md` del proyecto al agente fresco; se confirmó con tres agentes de diagnóstico (sin
+  `isolation`, con `isolation: "worktree"` y con `isolation: "remote"`, ninguno de los tres evita la
+  fuga con las herramientas de esta sesión) y se mitigó, no se eliminó, con una instrucción explícita
+  dentro del propio mensaje pidiendo al agente que ignore cualquier contexto previo y no lea ficheros de
+  más; las cuatro formulaciones repetidas con esa instrucción, sobre el tablero original, volvieron a
+  acertar. Las veinte ejecuciones en total (doce originales más las ocho de las dos contrapruebas) dan
+  cero inversiones. El análisis completo, con las tres tablas y sus matices, está en
+  ["La revisión adversarial y sus dos hallazgos"](../decisiones/vocabulario-y-mensaje-de-arranque.md#la-revisión-adversarial-y-sus-dos-hallazgos).
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según
