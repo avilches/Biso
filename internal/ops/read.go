@@ -120,6 +120,34 @@ func readabilityError(cfg board.Config, t *model.Task) *model.Error {
 	return vocabularyReadabilityError(t.ID, "priority", t.Priority, cfg.Priorities, true)
 }
 
+// readabilityErrorExcluding is readabilityError with status, type or
+// priority left unchecked when this very call is about to write it: a
+// value that is wrong right now is not a fault the call needs to answer
+// for when the call itself is what replaces it. `biso start` and `biso
+// finish` are the two callers, because both carry a precondition of their
+// own (being archived, already finished, not ready to finish) that reads
+// the task as it is before the write, and that precondition must never
+// win over a fault the write does not touch
+// (docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible).
+func readabilityErrorExcluding(cfg board.Config, t *model.Task, changes []Change) *model.Error {
+	if !writesFlag(changes, "status") {
+		if err := vocabularyReadabilityError(t.ID, "status", t.Status, cfg.Statuses, false); err != nil {
+			return err
+		}
+	}
+	if !writesFlag(changes, "type") && !writesFlag(changes, "clear-type") {
+		if err := vocabularyReadabilityError(t.ID, "type", t.Type, cfg.Types, true); err != nil {
+			return err
+		}
+	}
+	if !writesFlag(changes, "priority") && !writesFlag(changes, "clear-priority") {
+		if err := vocabularyReadabilityError(t.ID, "priority", t.Priority, cfg.Priorities, true); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func vocabularyReadabilityError(id, field, value string, configured []string, emptyOK bool) *model.Error {
 	if value == "" && emptyOK {
 		return nil

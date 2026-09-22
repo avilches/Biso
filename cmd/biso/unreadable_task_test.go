@@ -763,3 +763,78 @@ func TestTheStartupMessageOfAHealthyBoardDoesNotDependOnTheCheck(t *testing.T) {
 		t.Errorf("a healthy board mentions unreadable tasks:\n%s", got.stdout)
 	}
 }
+
+// TestStartPreemptsItsOwnPreconditionWithAnIllegibleFieldItDoesNotTouch is
+// the row of docs/spec/cmd/set.md that says `biso start` repairs status,
+// combined with its own precondition (being archived, or already finished
+// without --reopen): a fault in a field this call never touches has to win,
+// because the readability of the whole task, and not only of what the call
+// happens to write, is what decides between exit 3 and the verb's own exit
+// 6. `biso start` always writes status (its default, or an explicit
+// --status), so status is excluded from the early check and only the
+// priority corruption of these two cases matters.
+func TestStartPreemptsItsOwnPreconditionWithAnIllegibleFieldItDoesNotTouch(t *testing.T) {
+	t.Run("archived and a priority outside the vocabulary", func(t *testing.T) {
+		m := smallBoard(t)
+		m.run(t, "archive", "MYP-2").assertCode(t, 0)
+		m.execOnBoard(t, m.boardDir(t), `UPDATE task SET priority = 'urgent' WHERE id = 'MYP-2'`)
+		before := m.dumpOfTheBoard(t)
+
+		got := m.run(t, "start", "MYP-2")
+
+		if got.code != 3 {
+			t.Errorf("biso start MYP-2 exited %d and not 3:\n%s", got.code, got.stderr)
+		}
+		if !strings.Contains(got.stderr, `MYP-2 cannot be read: its priority is "urgent"`) {
+			t.Errorf("the priority fault did not win over being archived: %q", got.stderr)
+		}
+		if strings.Contains(got.stderr, "is archived") {
+			t.Errorf("start's own precondition still answered: %q", got.stderr)
+		}
+		assertEqual(t, m.dumpOfTheBoard(t), before, "the database after the refused start")
+	})
+
+	t.Run("already Done and a priority outside the vocabulary", func(t *testing.T) {
+		m := smallBoard(t)
+		m.execOnBoard(t, m.boardDir(t),
+			`UPDATE task SET status = 'Done', priority = 'urgent' WHERE id = 'MYP-2'`)
+		before := m.dumpOfTheBoard(t)
+
+		got := m.run(t, "start", "MYP-2")
+
+		if got.code != 3 {
+			t.Errorf("biso start MYP-2 exited %d and not 3:\n%s", got.code, got.stderr)
+		}
+		if !strings.Contains(got.stderr, `MYP-2 cannot be read: its priority is "urgent"`) {
+			t.Errorf("the priority fault did not win over already being Done: %q", got.stderr)
+		}
+		if strings.Contains(got.stderr, "already") {
+			t.Errorf("start's own precondition still answered: %q", got.stderr)
+		}
+		assertEqual(t, m.dumpOfTheBoard(t), before, "the database after the refused start")
+	})
+}
+
+// TestFinishStrictPreemptsItsOwnPreconditionWithAnIllegibleFieldItDoesNotTouch
+// is the same row for `biso finish --strict`: a task with a type outside the
+// vocabulary and an unchecked criterion has two reasons to refuse, and the
+// readability one has to answer, not finishChecks' "is not ready to finish".
+func TestFinishStrictPreemptsItsOwnPreconditionWithAnIllegibleFieldItDoesNotTouch(t *testing.T) {
+	m := smallBoard(t)
+	m.run(t, "set", "MYP-2", "--add-ac", "A criterion").assertCode(t, 0)
+	m.execOnBoard(t, m.boardDir(t), `UPDATE task SET type = 'epic' WHERE id = 'MYP-2'`)
+	before := m.dumpOfTheBoard(t)
+
+	got := m.run(t, "finish", "MYP-2", "--strict")
+
+	if got.code != 3 {
+		t.Errorf("biso finish MYP-2 --strict exited %d and not 3:\n%s", got.code, got.stderr)
+	}
+	if !strings.Contains(got.stderr, `MYP-2 cannot be read: its type is "epic"`) {
+		t.Errorf("the type fault did not win over the unchecked criterion: %q", got.stderr)
+	}
+	if strings.Contains(got.stderr, "not ready to finish") {
+		t.Errorf("finish's own precondition still answered: %q", got.stderr)
+	}
+	assertEqual(t, m.dumpOfTheBoard(t), before, "the database after the refused finish")
+}

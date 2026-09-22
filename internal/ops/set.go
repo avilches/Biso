@@ -146,21 +146,39 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	}
 
 	result := &WriteResult{DryRun: p.DryRun}
-	// The verb this call runs is the only thing that decides whether it
-	// could possibly repair a task's vocabulary: `biso set`, `biso start`
-	// and `biso finish` can write status, type or priority, and the other
-	// four never do. For the four, a task's illegibility is settled before
-	// anything else, including a verb's own precondition, because a
-	// question such as "does it have an open question" or "is it already
-	// finished" reads a status or a priority the board no longer
-	// configures, which is exactly what makes the task unreadable in the
-	// first place. Checking it here, ahead of v.before, keeps
-	// docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible's one
-	// exception working: the loop below still judges `biso set` and the
-	// two verbs that fix status by what the write leaves behind.
-	canRepairVocabulary := v.name == "" || v.name == "start" || v.name == "finish"
+	// Only `biso set`, `biso start` and `biso finish` can ever repair a
+	// task's vocabulary, because only they can write status, type or
+	// priority (docs/spec/cmd/set.md#comportamiento-caso-a-caso): `biso
+	// note`, `biso comment`, `biso ask`, `biso answer` and `biso archive`
+	// never repair, whatever they write, so their illegibility is settled
+	// before anything else, including a verb's own precondition. A
+	// question such as "does it have an open question" reads a status or a
+	// priority the board no longer configures, which is exactly what makes
+	// the task unreadable in the first place.
+	//
+	// `biso start` and `biso finish` are not that simple, because they
+	// carry their own precondition too (`is archived`, `is already
+	// Done`, `is not ready to finish`), and that precondition reads
+	// fields of the task as it already is, before this call's status
+	// change is applied. Refusing on it first, ahead of the readability
+	// check, would let an unrelated fault, say a bad priority, hide
+	// behind "is archived" and answer with the wrong exit code. So the
+	// two are checked early as well, but excluding the fields this very
+	// call is about to write: that is what keeps
+	// docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible's
+	// exception working when the fault the call excludes is the one
+	// that made the task illegible, and still catches every fault it
+	// does not touch before the verb's own precondition runs.
 	for _, t := range tasks {
-		if !canRepairVocabulary {
+		switch v.name {
+		case "":
+			// Nothing here to preempt: the final loop below judges the
+			// task as `biso set` leaves it.
+		case "start", "finish":
+			if err := readabilityErrorExcluding(b.Config, t, w.changes); err != nil {
+				return w.partial(), err
+			}
+		default:
 			if err := readabilityError(b.Config, t); err != nil {
 				return w.partial(), err
 			}

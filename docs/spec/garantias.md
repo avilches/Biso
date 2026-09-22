@@ -141,7 +141,7 @@ instante: `2026-09-21T10:00:00Z` no es un `due` legible.
 | `biso get` de otra tarea | Imprime esa ficha y emite el aviso, porque resolver la referencia lee el resto del tablero |
 | `biso export` y `biso snapshot` | Escriben todas las tareas legibles y ninguna de las ilegibles, emiten el aviso y salen con código 6 |
 | `biso doctor` | La reporta como error con el `code` de su fila (`value_not_configured` para un valor fuera de vocabulario, `task_unreadable` para lo demás), sigue con las demás y nunca aborta. Código 6 |
-| Una escritura dirigida a ella: `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y `archive` con una referencia que resuelve a ella | Error 3, con el motivo exacto. No se escribe nada. Hay una excepción, la del valor fuera de vocabulario, en ["Cómo se arregla"](#cómo-se-arregla-una-tarea-ilegible) |
+| Una escritura dirigida a ella: `set`, `start`, `note`, `comment`, `finish`, `ask`, `answer` y `archive` con una referencia que resuelve a ella | Error 3, con el motivo exacto. No se escribe nada. `set`, `start` y `finish` tienen la excepción del valor fuera de vocabulario de ["Cómo se arregla"](#cómo-se-arregla-una-tarea-ilegible); `note`, `comment`, `ask`, `answer` y `archive` no la tienen nunca, escriban lo que escriban |
 | Resolver una referencia por texto, y cualquier filtro | La tarea no participa, y el aviso la nombra |
 
 **Los comandos de lectura de conjunto no abortan nunca por una tarea mala, y no la esconden nunca en
@@ -207,12 +207,19 @@ El remedio depende de cuál sea el dato dañado, y `biso doctor` y `biso get` di
 | Una fecha que no es una fecha, o una columna del tipo equivocado | No tiene remedio con ningún comando de `biso`: ninguno escribe `createdAt`, `updatedAt` ni las fechas de la pregunta y de un comentario, y una fila que no se decodifica no se puede ni cargar para editarla. Es daño externo, porque nada dentro del programa escribe una fecha mal formada: se corrige el valor en la base de datos (`board.db`, un fichero SQLite), o se recupera la tarea de una instantánea anterior |
 
 **Una escritura dirigida a una tarea ilegible solo por su vocabulario se aplica si lo que escribe la
-deja legible**, y en cualquier otro caso es error 3 sin escribir nada. Se juzga la tarea como quedaría
-después de la escritura, no como está: `biso set MYP-2 --priority medium` arregla la prioridad, y
-`biso set MYP-2 --title "Otro"` falla porque la tarea seguiría con su prioridad fuera de vocabulario. Con
-`--dry-run` la vista previa contesta lo mismo que la llamada real. Es lo que permite el remedio de
-arriba sin una vía especial de reparación, y no hay nada equivalente para una fila que no se
-decodifica, porque esa no llega a cargarse.
+deja legible, y solo `biso set`, `biso start` y `biso finish` tienen esta excepción**, porque son los
+únicos comandos que pueden escribir `status`, `type` o `priority`. En cualquier otro caso, incluidos
+`biso note`, `biso comment`, `biso ask`, `biso answer` y `biso archive` sobre una tarea ilegible, es
+error 3 sin escribir nada, aunque el campo que esos cinco escriben no tenga nada que ver con el
+vocabulario: no reparan nunca, porque no son la vía que la especificación declara para hacerlo. Se
+juzga la tarea como quedaría después de la escritura, no como está: `biso set MYP-2 --priority medium`
+arregla la prioridad, y `biso set MYP-2 --title "Otro"` falla porque la tarea seguiría con su
+prioridad fuera de vocabulario. Lo mismo vale para `biso start` y `biso finish`, que fijan el estado
+por su cuenta; y la propia precondición de `start` y de `finish` (estar archivada, estar ya en el estado
+terminal, no estar lista para cerrar) nunca contesta antes que la ilegibilidad de un campo que la
+llamada no toca. Con `--dry-run` la vista previa contesta lo mismo que la llamada real. Es lo que
+permite el remedio de arriba sin una vía especial de reparación, y no hay nada equivalente para una
+fila que no se decodifica, porque esa no llega a cargarse.
 
 ### El segundo caso: la base de datos que no se puede leer
 
