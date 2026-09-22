@@ -131,8 +131,14 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 
 	tasks, err := w.resolveAll(p.Refs, p.Mode, v.scope)
 	if err != nil {
+		// The targets are not known yet, so none of them can be excluded,
+		// but a reference that fails to resolve is still worth naming the
+		// rest of the board's unreadable tasks for
+		// (docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible).
+		w.warnAboutSkippedExcept(nil)
 		return w.partial(), err
 	}
+	w.warnAboutSkippedExcept(tasks)
 
 	byID, err := w.boardAfter(tasks)
 	if err != nil {
@@ -140,7 +146,25 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	}
 
 	result := &WriteResult{DryRun: p.DryRun}
+	// The verb this call runs is the only thing that decides whether it
+	// could possibly repair a task's vocabulary: `biso set`, `biso start`
+	// and `biso finish` can write status, type or priority, and the other
+	// four never do. For the four, a task's illegibility is settled before
+	// anything else, including a verb's own precondition, because a
+	// question such as "does it have an open question" or "is it already
+	// finished" reads a status or a priority the board no longer
+	// configures, which is exactly what makes the task unreadable in the
+	// first place. Checking it here, ahead of v.before, keeps
+	// docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible's one
+	// exception working: the loop below still judges `biso set` and the
+	// two verbs that fix status by what the write leaves behind.
+	canRepairVocabulary := v.name == "" || v.name == "start" || v.name == "finish"
 	for _, t := range tasks {
+		if !canRepairVocabulary {
+			if err := readabilityError(b.Config, t); err != nil {
+				return w.partial(), err
+			}
+		}
 		before := cloneTask(t)
 		if v.before != nil {
 			if err := v.before(w, t); err != nil {
@@ -190,8 +214,17 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	// lies: --dry-run promises the outcome of the call and not the outcome
 	// of everything except the last check
 	// (docs/spec/cmd/flags-globales.md).
+	//
+	// The readability check right after it judges the task as this write
+	// would leave it, not as it was: a call that clears the fault, such as
+	// `biso set MYP-11 --priority medium`, is applied, and one that does
+	// not is error 3 with nothing written, which is the one exception of
+	// docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible.
 	for _, t := range tasks {
 		if err := t.Validate(); err != nil {
+			return w.partial(), err
+		}
+		if err := readabilityError(b.Config, t); err != nil {
 			return w.partial(), err
 		}
 	}

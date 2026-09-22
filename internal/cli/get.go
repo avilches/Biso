@@ -24,7 +24,13 @@ func runGet(s Streams, p *Parsed, env ops.Env) int {
 	}
 	result, err := ops.Get(env, params)
 	if err != nil {
-		return failWithCandidates(s, p, env, asJSON, err)
+		var extra []Warning
+		if result != nil {
+			for _, w := range result.Warnings {
+				extra = append(extra, cliWarning(w))
+			}
+		}
+		return failWithCandidates(s, p, env, asJSON, err, extra)
 	}
 	printWarnings(s, p)
 	printOpsWarnings(s, result.Warnings)
@@ -370,15 +376,23 @@ func activeLabel(reason string) string {
 // there, `task.candidates`, with the exit code 5 all the same: the table of
 // docs/spec/contrato-json.md#el-sobre gives that kind to `get` and to no
 // other command, so the rest answer the ordinary error envelope.
-func failWithCandidates(s Streams, p *Parsed, env ops.Env, asJSON bool, err error) int {
+// extra is the warnings a call had already produced before the error, such
+// as `biso get`'s own r.warnings when the reference it resolved by text
+// named no task because the only one that matched could not be read
+// (docs/spec/garantias.md#qué-hace-cada-comando): the tasks a set read left
+// out are named whether or not the reference resolves.
+func failWithCandidates(s Streams, p *Parsed, env ops.Env, asJSON bool, err error, extra []Warning) int {
 	var ambiguous *ops.AmbiguousRef
 	if !errors.As(err, &ambiguous) || ambiguous.Listing == nil {
-		return fail(s, asJSON, err, warningsOf(p))
+		return fail(s, asJSON, err, append(warningsOf(p), extra...))
 	}
 	listing := ambiguous.Listing
 
 	if asJSON && p.Command == "get" {
 		printWarnings(s, p)
+		for _, w := range extra {
+			printWarning(s, w)
+		}
 		printOpsWarnings(s, listing.Warnings)
 		tasks := make([]map[string]any, 0, len(listing.Tasks))
 		for _, v := range listing.Tasks {
@@ -388,7 +402,7 @@ func failWithCandidates(s Streams, p *Parsed, env ops.Env, asJSON bool, err erro
 		return ambiguous.Err.ExitCode
 	}
 
-	warnings := warningsOf(p)
+	warnings := append(warningsOf(p), extra...)
 	for _, w := range listing.Warnings {
 		warnings = append(warnings, Warning{
 			Code: w.Code, Message: w.Message, Hints: w.Hints, Fields: w.Fields,

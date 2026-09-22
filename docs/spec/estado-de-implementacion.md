@@ -103,9 +103,10 @@ un identificador no se reutilice nunca, ni tras archivar la tarea ni tras desapa
 El primer caso de esa misma sección, la tarea suelta ilegible, lo cierra el paso 2 en su sustancia:
 una lectura de conjunto (`Tasks.All`) nunca aborta por una tarea mala, la deja fuera del listado y la
 devuelve aparte con su motivo, y una lectura dirigida (`Tasks.Load`) de esa misma tarea falla con
-código 3 y la clave `undecodable_task`. Una fecha que el programa no escribió, un nombre de campo de
-lista que el modelo no conoce y una prioridad que la configuración ya no declara son las tres formas
-de llegar ahí que hay hoy, y las tres están probadas.
+código 3 y la clave `undecodable_task`. La lista completa de lo que vuelve ilegible una tarea, con la
+misma definición aplicada a todos los comandos de lectura y a la escritura dirigida, la cierra la
+tarea `TASK-93`, contada más abajo en
+["Qué dejó hecho el cierre de la definición única de tarea ilegible"](#qué-dejó-hecho-el-cierre-de-la-definición-única-de-tarea-ilegible).
 
 La otra mitad, la que se ve desde fuera, la cerró el paso 8: el aviso
 `warning: 1 task could not be read and was skipped: MYP-2` con sus identificadores (y, con más de una, la forma plural con `were`), y el código 6 de
@@ -926,6 +927,75 @@ al programa. Las anclas que cubre son el párrafo "Cómo se escribe cada valor d
   solo enumera `title`, `author` y el `text` de un criterio, y ninguna regla cubre `references`. La
   decisión y la página de `biso get` lo dicen como excepción a la lectura exacta de la ficha, y su
   tratamiento se decide aparte.
+
+### Qué dejó hecho el cierre de la definición única de tarea ilegible
+
+La tarea `TASK-93` aplicó
+["Una tarea ilegible es la misma para todos los comandos de lectura"](../decisiones/detalles.md#una-tarea-ilegible-es-la-misma-para-todos-los-comandos-de-lectura)
+al programa: las anclas que cubre son ["Qué se comprueba"](garantias.md#qué-se-comprueba), ["Qué hace
+cada comando"](garantias.md#qué-hace-cada-comando) y ["Cómo se arregla una tarea
+ilegible"](garantias.md#cómo-se-arregla-una-tarea-ilegible), junto con las filas nuevas o cambiadas de
+`ls.md`, `get.md`, `prime.md`, `export.md`, `snapshot.md`, `doctor.md`, `set.md` y `archive.md`.
+
+- **La comprobación de vocabulario se hizo única.** Antes de esta tarea, la única comprobación de
+  vocabulario al leer era un efecto colateral del cálculo de la urgencia (`priorityWeight`, en
+  `internal/model/urgency.go`), que solo miraba la prioridad y solo en los comandos que calculan la
+  urgencia. Ahora `readabilityError`, en `internal/ops/read.go`, aplica la regla de `status`, `type` y
+  `priority` con comparación exacta contra la configuración del tablero (`status` obligatorio, `type` y
+  `priority` vacíos válidos), y la llaman `reader.load()` (antes de cualquier filtro, para `biso ls`,
+  `biso prime`, `biso export`, `biso snapshot` y la búsqueda por texto), `reader.view()` (para una
+  lectura dirigida que no pasa por `load`, como `biso get` de un identificador bien formado), y
+  `writer.tasks()` (para la resolución de referencias y los términos de la urgencia de una escritura).
+- **Las fechas, los campos de lista y las columnas del tipo equivocado se movieron a
+  `internal/board/rows.go`**, que es la capa que lee la fila y no depende de la configuración del
+  tablero. `createdAt` y `updatedAt` vacíos pasan ahora a ser ilegibles (antes se leían como si no
+  hubiera fecha), igual que `question.askedAt` vacío cuando la tarea tiene pregunta. `archived`,
+  `ordinal`, `next_criterion_key`, `next_comment_key`, la clave y el marcado de un criterio, y la clave
+  de un comentario se escanean como `any` y se convierten a mano: antes, un valor del tipo equivocado en
+  cualquiera de ellos hacía que `rows.Scan` devolviera un error que abortaba la lectura entera con
+  código 1, para el tablero completo y no solo para esa tarea. El mensaje de cada motivo ya no lleva el
+  texto de `time.Parse` ni el de la biblioteca de SQL, según pedía la especificación.
+- **El aviso nombra ya todas las tareas ilegibles del tablero, casen o no con los filtros.** Antes, un
+  `status` que la configuración no declaraba desaparecía de `biso ls`, de `biso export`, de `biso
+  snapshot` y del recuento de `biso prime` sin ningún aviso, porque el filtrado ocurría antes de la
+  comprobación. Ahora `reader.load()` parte el tablero entero en legibles e ilegibles antes de mirar
+  ningún filtro, así que `biso ls --status Done` sobre un tablero con una tarea ilegible imprime `note:
+  no tasks match` y el aviso juntos.
+- **`biso export` nunca aceptó `--json`**, así que `data.skipped` de un volcado se comprueba con `biso
+  snapshot` y con `biso ls`, no con `export`.
+- **La escritura dirigida distingue el verbo por si puede reparar el vocabulario.** `biso set`, `biso
+  start` y `biso finish` pueden dejar legible una tarea que no lo era, así que su comprobación se hace
+  sobre la tarea ya modificada, justo antes de `Tasks.SaveAll` (también con `--dry-run`, que pasa por
+  el mismo punto). Los verbos que nunca tocan el vocabulario (`biso note`, `biso comment`, `biso ask`,
+  `biso answer` y `biso archive`) se comprueban nada más resolver la referencia, antes de cualquier
+  precondición propia del verbo: sin este orden, `biso answer MYP-2 "..."` sobre una tarea con la
+  prioridad fuera de vocabulario y sin pregunta abierta fallaba con el código 6 de "no open question"
+  en vez del código 3 de `undecodable_task`, porque esa comprobación corría antes.
+- **Reparar la propia tarea del aviso ya no la nombra como si siguiera rota.** `writer.tasks()` ya no
+  avisa nada más leer el tablero: guarda lo que encontró en `skippedByTasks` y `writeOn` llama a
+  `warnAboutSkippedExcept(tasks)` una vez conoce los objetivos de la llamada, así que `biso set MYP-2
+  --priority medium` no avisa de MYP-2 y `biso set MYP-1 --title x` sí avisa de MYP-2.
+- **`biso get` de una referencia por texto que solo encontraba la tarea ilegible ahora avisa de ella
+  igual.** Antes, cuando la búsqueda no encontraba ninguna tarea (porque la única que encajaba era
+  ilegible), el error de "no task matches" no llevaba ningún aviso: `GetOn` devuelve ahora un resultado
+  parcial con los avisos acumulados, igual que ya hacía una escritura con `w.partial()`, y
+  `failWithCandidates`, en `internal/cli/get.go`, los imprime. Una referencia bien formada que resuelve
+  a la propia tarea ilegible sigue sin ese aviso, porque su error ya lo dice todo.
+- **`biso doctor` sigue leyendo la lista cruda del tablero** (`d.b.Tasks.All()`), no la de `reader`, para
+  poder dar el `code` propio de cada motivo: `value_not_configured` para un valor fuera de vocabulario y
+  `task_unreadable` para el resto. `checkVocabulary` ya no salta un `status` vacío, porque `status` es
+  obligatorio.
+- **Las pruebas** están en `cmd/biso/unreadable_task_test.go`: una tabla con las formas de corromper una
+  tarea (cada campo de vocabulario cerrado, cada campo de fecha, cada columna del tipo equivocado),
+  recorrida por `biso ls`, `biso get`, `biso export`, `biso snapshot`, `biso prime` y `biso doctor`, con
+  una tarea sana al lado de la corrupta, y los casos límite: un estado fuera de vocabulario
+  con `--any-status` y con un filtro que no la deja pasar, un tablero de una sola tarea, la escritura
+  dirigida con y sin `--dry-run`, la columna `archived = 7` sin abortar ningún comando, la simetría de lo
+  que escriben `export` y `snapshot` con `init --from`, y que el mensaje de arranque de `biso prime`
+  sigue dentro de su presupuesto. Se comprobó cada prueba nueva revirtiendo la implementación (con
+  `git stash`) y viéndola fallar (siete de ellas con el código 1 de un `sql.Scan` sin convertir, que es
+  justo lo que la fila de `archived = 7` del cuadro de la decisión describe), y volviendo a aplicar el
+  cambio para verla pasar.
 
 ## Antes de empezar un paso
 

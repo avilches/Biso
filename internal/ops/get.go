@@ -1,6 +1,7 @@
 package ops
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -93,7 +94,21 @@ func GetOn(b *board.Board, env Env, p GetParams) (*GetResult, error) {
 
 	resolved, err := resolveRefWith(b, r.all, p.Ref, p.Mode)
 	if err != nil {
-		return nil, withCandidates(b, env, r.all, err)
+		var asModel *model.Error
+		if errors.As(err, &asModel) && asModel.Code == "undecodable_task" {
+			// The reference itself named the one task that is unreadable:
+			// its own error is the answer, with nothing of the rest of
+			// the board's aviso mixed into it
+			// (docs/spec/garantias.md#qué-hace-cada-comando).
+			return nil, err
+		}
+		// Any other way to fail to resolve is still a set read: the tasks
+		// it left out are named whether or not a task answered the
+		// search, so the warning travels on this result even though the
+		// call itself failed, the same way a write's partial does
+		// (internal/ops/write.go).
+		r.warnAboutSkipped()
+		return &GetResult{Warnings: r.warnings}, withCandidates(b, env, r.all, err)
 	}
 	if resolved.Note != "" {
 		r.note(resolved.Note)
