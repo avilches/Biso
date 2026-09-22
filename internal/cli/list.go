@@ -20,7 +20,7 @@ func runList(s Streams, p *Parsed, env ops.Env) int {
 	}
 	result, err := ops.List(env, params)
 	if err != nil {
-		return failWithCandidates(s, p, env, asJSON, err)
+		return failWithCandidates(s, p, env, asJSON, err, nil)
 	}
 	printWarnings(s, p)
 	printOpsWarnings(s, result.Warnings)

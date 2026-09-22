@@ -137,6 +137,12 @@ type writer struct {
 	// depend on the rest of the board.
 	all     []*model.Task
 	allRead bool
+	// skippedByTasks is what tasks() found unreadable, kept aside instead
+	// of warned about right away: a task this very call is about to write
+	// is not skipped by it, whether the write repairs it or not, and
+	// tasks() runs before resolveAll knows which tasks those are
+	// (docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible).
+	skippedByTasks []board.Skipped
 
 	// ordinalKeys are the keys the manual order of this call hands out, one
 	// per task, in the order the references were written, and ordinalNext
@@ -301,7 +307,12 @@ func (w *writer) ofStep(step Step) []Change {
 // tasks reads the whole board once. Two things need it and neither can be
 // answered from the task alone: whether adding a dependency or a parent
 // would close a cycle, and the two terms of the urgency that ask about other
-// tasks (docs/spec/modelo-de-datos/urgencia.md).
+// tasks (docs/spec/modelo-de-datos/urgencia.md). A task the board no longer
+// configures the vocabulary of is left out the same way a row that failed
+// to decode already was, so a reference resolved by text never lands on
+// one. Which of them the warning ends up naming is decided later, once the
+// tasks this very call writes are known
+// (docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible).
 func (w *writer) tasks() ([]*model.Task, error) {
 	if w.allRead {
 		return w.all, nil
@@ -310,11 +321,34 @@ func (w *writer) tasks() ([]*model.Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	w.all, w.allRead = all, true
-	if len(skipped) > 0 {
-		w.warn(skippedWarning(skipped))
-	}
+	legible, badVocabulary := partitionByReadability(w.b.Config, all)
+	w.all, w.allRead = legible, true
+	w.skippedByTasks = mergeSkipped(skipped, badVocabulary)
 	return w.all, nil
+}
+
+// warnAboutSkippedExcept emits the warning of tasks() for every task it
+// found unreadable except the ones this call is about to write: those are
+// never "skipped", they either fail on their own with the exact reason or,
+// for a vocabulary fault, are repaired by the write
+// (docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible).
+func (w *writer) warnAboutSkippedExcept(targets []*model.Task) {
+	if len(w.skippedByTasks) == 0 {
+		return
+	}
+	isTarget := make(map[string]bool, len(targets))
+	for _, t := range targets {
+		isTarget[t.ID] = true
+	}
+	var rest []board.Skipped
+	for _, s := range w.skippedByTasks {
+		if !isTarget[s.ID] {
+			rest = append(rest, s)
+		}
+	}
+	if len(rest) > 0 {
+		w.warn(skippedWarning(rest))
+	}
 }
 
 // skippedWarning is the one of
@@ -449,7 +483,11 @@ func (w *writer) applyOne(t *model.Task, c Change) error {
 		}
 		t.Priority = value
 	case "parent":
-		resolved, err := resolveRef(w.b, c.Value, RefAuto)
+		all, err := w.tasks()
+		if err != nil {
+			return err
+		}
+		resolved, err := resolveRefWith(w.b, all, c.Value, RefAuto)
 		if err != nil {
 			return err
 		}
@@ -597,7 +635,11 @@ func removesValue(field model.ListField, stored, wanted string) bool {
 func (w *writer) addValue(t *model.Task, c Change, field model.ListField, values []string) error {
 	value := c.Value
 	if field == model.FieldDependencies {
-		resolved, err := resolveRef(w.b, value, RefAuto)
+		all, err := w.tasks()
+		if err != nil {
+			return err
+		}
+		resolved, err := resolveRefWith(w.b, all, value, RefAuto)
 		if err != nil {
 			return err
 		}

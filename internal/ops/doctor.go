@@ -427,9 +427,12 @@ func (d *doctor) checkMixedLabelKeys(tasks []*model.Task) {
 }
 
 // checkVocabulary is the row about a value the board no longer configures.
-// An empty value is no value at all and is never checked against anything.
+// An empty type or priority is no value at all and is never checked
+// against anything, but status is required
+// (docs/spec/garantias.md#qué-se-comprueba), so an empty one is reported
+// the same as any other value the board does not declare.
 func (d *doctor) checkVocabulary(t *model.Task, field, value string, configured []string) {
-	if value == "" || containsString(configured, value) {
+	if (value == "" && field != "status") || containsString(configured, value) {
 		return
 	}
 	noun := "statuses"

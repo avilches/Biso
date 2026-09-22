@@ -33,3 +33,12 @@ trae, toma el instante de la importación.
 new --from` no la trae, la tarea llega sin arrendamiento en vez de tomar el instante de la
 importación, y solo se acepta junto con `task.leaseHolder`, nunca uno sin el otro. El detalle completo,
 con el porqué de cada regla, está en [`lease.md`](../lease.md#la-importación).
+
+## Una fecha guardada que no es una fecha
+
+`task.createdAt`, `task.updatedAt`, `comment.createdAt` y `question.askedAt` son instantes
+`YYYY-MM-DDTHH:MM:SSZ` y `task.due` es un día `YYYY-MM-DD`
+(["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias)). Una fecha guardada
+con otra forma, o vacía donde el campo no puede estar vacío, hace ilegible la tarea entera, con el
+mismo tratamiento en todos los comandos de lectura (["El primer caso: una tarea ilegible"](../garantias.md#el-primer-caso-una-tarea-ilegible)).
+Solo `task.due` y `task.leaseExpiresAt` pueden no tener valor.

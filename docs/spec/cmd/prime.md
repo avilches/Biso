@@ -49,7 +49,7 @@ biso prime [--full] [--limit <n>] [--json]
 | Hay tablero y tiene tareas | Imprime el mensaje de la sección ["La salida literal"](#la-salida-literal) por stdout, código 0 |
 | Hay tablero y está vacío | Igual, con los cuatro bloques de tareas sustituidos por las tres líneas de la sección ["Tablero vacío"](#tablero-vacío) |
 | No hay tablero | Código 20, y por stderr el mensaje de la sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md) |
-| Alguna tarea no se puede leer | El mensaje sale igual, con una línea más en el bloque `BOARD` que resume el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) (por stdout, no por stderr: es la excepción declarada más abajo), código 0 |
+| Alguna tarea no se puede leer, sea por un valor fuera de vocabulario, por una fecha malformada o por cualquier otro motivo de ["Qué se comprueba"](../garantias.md#qué-se-comprueba), también si está archivada | El mensaje sale igual, sin esa tarea en el recuento por estado ni en ningún bloque, con una línea más en el bloque `BOARD` que resume el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) (por stdout, no por stderr: es la excepción declarada más abajo), código 0 |
 | `--limit` negativo | Código 2 |
 
 `biso prime` **no cambia ni una tarea ni una clave de configuración**, y no necesita acceso

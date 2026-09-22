@@ -3,6 +3,13 @@
 Hay campos con vocabulario cerrado, definido en la configuración: `status`, `type` y `priority`. Para
 todos ellos rige una sola regla, **idéntica al escribir y al leer**.
 
+**Idéntica al leer significa también lo ya guardado.** Un valor de `status`, `type` o `priority` que
+una tarea guarda y que la configuración no declara es un error igual que uno tecleado en un filtro: la
+tarea es ilegible y ningún comando de lectura la trata como si estuviera bien
+(["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)).
+La comparación con lo guardado es exacta, sin los pasos del algoritmo de abajo, porque lo que se guarda
+es siempre la grafía configurada.
+
 ## El algoritmo de coincidencia
 
 Dado un valor de entrada `v` y la lista de valores configurados, el programa calcula así:

@@ -145,9 +145,13 @@ quedado obsoleto, y un comando que no deja cerrar empuja a rodearlo con `set`, q
 a esquivar una herramienta. Para quien quiera la política dura está `--strict`.
 
 **["`biso export`"](../spec/cmd/export.md), por qué `export` no hereda los valores por defecto de `ls`, y por qué sale con código 6 y no
-con 0 cuando salta una tarea ilegible.** Porque exportar de más nunca hace daño y exportar de menos en
-silencio arruina una copia de seguridad. Es el único comando cuyo propósito es no perder nada, y por
-eso es la única excepción a la regla general de las lecturas de conjunto.
+con 0 cuando salta una tarea ilegible.** Porque exportar de más (todos los estados, las archivadas)
+nunca hace daño y exportar de menos en silencio arruina una copia de seguridad. Es el único comando
+cuyo propósito es no perder nada, y por eso es la única excepción a la regla general de las lecturas de
+conjunto. Lo único que no exporta es una tarea ilegible, que no se copia, se avisa y hace salir con 6.
+Qué cuenta como ilegible, y por qué `export` y `snapshot` escriben las legibles en vez de negarse a
+escribir, está en
+["Una tarea ilegible es la misma para todos los comandos de lectura"](detalles.md#una-tarea-ilegible-es-la-misma-para-todos-los-comandos-de-lectura).
 
 **["`biso help`"](../spec/cmd/help.md#biso-help), por qué `help` funciona sin tablero.** Porque es lo primero que alguien ejecuta cuando algo
 no va.

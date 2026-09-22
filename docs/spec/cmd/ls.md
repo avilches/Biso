@@ -138,7 +138,7 @@ que ["Los principios"](../principios.md) no admite. Para un título mal ordenado
 | `--limit 0` | No imprime ninguna fila, solo el aviso de recorte con el total. Es la forma de contar sin `--count` |
 | `--count` | Un número por stdout y nada más: ni filas, ni aviso de recorte, ni la nota de "sin resultados" |
 | `--ids` | Identificadores, uno por línea, sin cabeceras ni columnas. Es un listado, así que el límite y su aviso de recorte se aplican igual que con las columnas |
-| Alguna tarea ilegible | Se salta, con el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), y el resto del listado es válido |
+| Alguna tarea ilegible: un valor de `status`, `type` o `priority` que el tablero no declara, una fecha que no es una fecha, o cualquier otro motivo de ["Qué se comprueba"](../garantias.md#qué-se-comprueba) | Se salta, no entra en `--count`, y sale el aviso de la sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), y el resto del listado es válido. El aviso nombra **todas** las ilegibles del tablero, casen o no con los filtros: `--status Done` sin coincidencias imprime `note: no tasks match` y el aviso, nunca solo la nota |
 
 ## Salida
 

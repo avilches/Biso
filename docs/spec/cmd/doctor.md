@@ -116,8 +116,8 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Comprobación | Nivel | Reparable con `--fix` |
 |---|---|---|
 | Identificadores duplicados | error | no, hay que decidir a mano |
-| Tareas que no se pueden leer | error | no |
-| Estados, tipos o prioridades que ya no están configurados | error | no |
+| Tareas que no se pueden leer, por un motivo distinto de un valor fuera de vocabulario: una fecha que no es una fecha o una obligatoria vacía, un campo de lista desconocido, una columna del tipo equivocado (la lista completa está en ["Qué se comprueba"](../garantias.md#qué-se-comprueba)) | error | no, es daño externo que ningún comando de `biso` puede editar |
+| Un `status` vacío o fuera de `statuses`, un `type` fuera de `types` o una `priority` fuera de `priorities`, comparados letra por letra | error | no, hay que decidir qué valor se quiso decir: con `biso set` o con `biso config set` (["Cómo se arregla una tarea ilegible"](../garantias.md#cómo-se-arregla-una-tarea-ilegible)) |
 | `initial_status`, `active_status` o `terminal_status` que no están en `statuses` | error | no |
 | `statuses` con menos de tres elementos, o dos de los tres papeles apuntando al mismo estado | error | no |
 | Dependencias que apuntan a tareas inexistentes | error | no |
@@ -136,6 +136,16 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | El directorio del tablero está en un sistema de ficheros donde el modo WAL de SQLite no es seguro | aviso | no, es una propiedad del sistema de ficheros, no algo que `biso` pueda cambiar |
 | El fichero de exclusión no corresponde al `vcs` configurado en la máquina | aviso | no, hay que escribirlo a mano |
 | Huecos en la numeración | no es un problema | no son un problema, no se reportan |
+
+**Las dos primeras filas son la misma definición de tarea ilegible que usan todos los comandos de
+lectura**, la de ["Qué se comprueba"](../garantias.md#qué-se-comprueba), y `doctor` la aplica sin
+excepción a las archivadas y a las terminadas. Se reparten en dos `code` (`value_not_configured` para un
+valor fuera de vocabulario, `task_unreadable` para lo demás) porque el remedio es distinto: el primero
+se arregla con `biso set` o `biso config set`, y el segundo con ningún comando de `biso`
+(["Cómo se arregla una tarea ilegible"](../garantias.md#cómo-se-arregla-una-tarea-ilegible)). Una fila
+que no se puede decodificar se reporta por el primer campo dañado que se encuentra, y los demás
+aparecen al arreglarlo. `biso doctor` es el sitio donde se ve el porqué de un aviso `task_skipped` de
+otro comando, junto con el resto de problemas del tablero.
 
 **No hay ninguna comprobación sobre el nombre de la carpeta del tablero, y no es un olvido.** El nombre
 es decorativo y nadie resuelve por él (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), así que una carpeta con el nombre de un `project_name`
@@ -328,8 +338,8 @@ concreto, el mismo criterio que ya usan `extra_root_unreadable` e `ignore_file_m
 | Comprobación | `code` | `task` | Mensaje |
 |---|---|---|---|
 | Identificadores duplicados | `duplicate_id` | el id compartido | `id "MYP-40" is used by 2 tasks, ids must be unique` |
-| Tareas que no se pueden leer | `task_unreadable` | el id, si se puede recuperar, o `null` | `task "MYP-40" could not be parsed: unexpected end of JSON input` |
-| Estados, tipos o prioridades ya no configurados | `value_not_configured` | la tarea | `status "Blocked" is not one of the configured statuses "To Do, In Progress, Done"` (o el mismo mensaje con `type` o `priority`, según cuál sea) |
+| Tareas que no se pueden leer | `task_unreadable` | el id, si se puede recuperar, o `null` | `task "MYP-40" could not be parsed: due is not a calendar day (YYYY-MM-DD): "2026-9-1"`; lo que sigue a los dos puntos es el motivo exacto que da `biso get` de esa tarea (["Qué hace cada comando"](../garantias.md#qué-hace-cada-comando)) |
+| Estado, tipo o prioridad fuera de lo configurado | `value_not_configured` | la tarea | `status "Blocked" is not one of the configured statuses "To Do, In Progress, Done"` (o el mismo mensaje con `type` o `priority`, según cuál sea; un `status` vacío se cita como `status ""`) |
 | `initial_status`, `active_status` o `terminal_status` fuera de `statuses` | `status_role_unknown` | `null` | `active_status "Doing" is not one of the configured statuses "To Do, In Progress, Done"` |
 | `statuses` con menos de tres elementos, o dos papeles apuntando al mismo estado | `status_role_invalid` | `null` | `statuses has 2 elements, at least 3 are required`, o `active_status and terminal_status are both "Done", the three roles must be distinct` |
 | Dependencias que apuntan a tareas inexistentes | `dependency_not_found` | la tarea que declara la dependencia | `dependency MYP-99 does not exist` |

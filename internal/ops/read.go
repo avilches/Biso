@@ -1,6 +1,8 @@
 package ops
 
 import (
+	"fmt"
+	"sort"
 	"time"
 
 	"biso/internal/board"
@@ -69,6 +71,14 @@ func (r *reader) note(note string) { r.notes = append(r.notes, note) }
 
 // load reads every task of the board once, archived ones included, and
 // records the ones that could not be decoded.
+//
+// A row internal/board could not turn into a task is not the only way one
+// ends up unreadable: a status, a type or a priority the board no longer
+// configures is the other, and the two are folded into one list here,
+// before any command looks at a filter
+// (docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible). From this
+// point on r.all and r.byID hold only tasks every reading command can show
+// as if they were fine.
 func (r *reader) load() error {
 	if r.byID != nil {
 		return nil
@@ -77,13 +87,123 @@ func (r *reader) load() error {
 	if err != nil {
 		return err
 	}
-	r.all = all
-	r.byID = make(map[string]*model.Task, len(all))
-	for _, t := range all {
+	legible, badVocabulary := partitionByReadability(r.b.Config, all)
+	r.all = legible
+	r.byID = make(map[string]*model.Task, len(legible))
+	for _, t := range legible {
 		r.byID[t.ID] = t
 	}
-	r.skipped = append(r.skipped, skipped...)
+	r.skipped = append(r.skipped, mergeSkipped(skipped, badVocabulary)...)
 	return nil
+}
+
+// readabilityError is the vocabulary half of
+// docs/spec/garantias.md#qué-se-comprueba: a status, type or priority the
+// board's configuration does not declare. The other half, a date that is
+// not a date, an unknown list field or a column of the wrong type, is
+// already decided while a row becomes a task (internal/board/rows.go),
+// because that is the layer that reads the row and knows nothing about a
+// board's configuration; this one is the layer that has both the task and
+// the configuration.
+//
+// The comparison is exact and never the matching algorithm's: what a write
+// stores is always the configured spelling
+// (docs/spec/vocabularios.md#idéntica-al-leer-significa-también-lo-ya-guardado).
+// status cannot be empty; type and priority can.
+func readabilityError(cfg board.Config, t *model.Task) *model.Error {
+	if err := vocabularyReadabilityError(t.ID, "status", t.Status, cfg.Statuses, false); err != nil {
+		return err
+	}
+	if err := vocabularyReadabilityError(t.ID, "type", t.Type, cfg.Types, true); err != nil {
+		return err
+	}
+	return vocabularyReadabilityError(t.ID, "priority", t.Priority, cfg.Priorities, true)
+}
+
+// readabilityErrorExcluding is readabilityError with status, type or
+// priority left unchecked when this very call is about to write it: a
+// value that is wrong right now is not a fault the call needs to answer
+// for when the call itself is what replaces it. `biso start` and `biso
+// finish` are the two callers, because both carry a precondition of their
+// own (being archived, already finished, not ready to finish) that reads
+// the task as it is before the write, and that precondition must never
+// win over a fault the write does not touch
+// (docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible).
+func readabilityErrorExcluding(cfg board.Config, t *model.Task, changes []Change) *model.Error {
+	if !writesFlag(changes, "status") {
+		if err := vocabularyReadabilityError(t.ID, "status", t.Status, cfg.Statuses, false); err != nil {
+			return err
+		}
+	}
+	if !writesFlag(changes, "type") && !writesFlag(changes, "clear-type") {
+		if err := vocabularyReadabilityError(t.ID, "type", t.Type, cfg.Types, true); err != nil {
+			return err
+		}
+	}
+	if !writesFlag(changes, "priority") && !writesFlag(changes, "clear-priority") {
+		if err := vocabularyReadabilityError(t.ID, "priority", t.Priority, cfg.Priorities, true); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func vocabularyReadabilityError(id, field, value string, configured []string, emptyOK bool) *model.Error {
+	if value == "" && emptyOK {
+		return nil
+	}
+	if containsString(configured, value) {
+		return nil
+	}
+	return &model.Error{
+		ExitCode: 3,
+		Code:     "undecodable_task",
+		Message: fmt.Sprintf("%s cannot be read: its %s is %q, which this board does not configure",
+			id, field, value),
+		Field: field,
+		Given: value,
+		Valid: append([]string(nil), configured...),
+	}
+}
+
+// partitionByReadability splits all into the tasks readabilityError has
+// nothing to say about and the ones it does, the latter turned into the
+// same board.Skipped shape a row that failed to decode already comes in,
+// so both kinds travel the rest of the way through one list.
+func partitionByReadability(cfg board.Config, all []*model.Task) ([]*model.Task, []board.Skipped) {
+	var legible []*model.Task
+	var bad []board.Skipped
+	for _, t := range all {
+		if err := readabilityError(cfg, t); err != nil {
+			bad = append(bad, board.Skipped{ID: t.ID, Reason: err})
+			continue
+		}
+		legible = append(legible, t)
+	}
+	return legible, bad
+}
+
+// mergeSkipped answers base and extra as one list, in the ascending
+// identifier order docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible
+// names them in, whichever of the two kinds of unreadable task found them.
+func mergeSkipped(base, extra []board.Skipped) []board.Skipped {
+	if len(base) == 0 {
+		return extra
+	}
+	if len(extra) == 0 {
+		return base
+	}
+	all := make([]board.Skipped, 0, len(base)+len(extra))
+	all = append(all, base...)
+	all = append(all, extra...)
+	sort.Slice(all, func(i, j int) bool {
+		a, b := taskNumber(all[i].ID), taskNumber(all[j].ID)
+		if a != b {
+			return a < b
+		}
+		return all[i].ID < all[j].ID
+	})
+	return all
 }
 
 // skippedIDs are the identifiers of the tasks that were left out, in the
@@ -156,6 +276,14 @@ func (r *reader) blocked(t *model.Task) bool {
 // docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar:
 // failing with exit code 3 on a targeted read, or skipping it on a set one.
 func (r *reader) view(t *model.Task, explain bool) (TaskView, *model.Error) {
+	// A task load() already filtered out never reaches here through r.all,
+	// but one resolved straight off the store, such as `biso get` by a
+	// well-formed identifier, does: this is the check that catches it,
+	// docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible applied to
+	// one task instead of the whole board.
+	if err := readabilityError(r.b.Config, t); err != nil {
+		return TaskView{}, err
+	}
 	blocks := r.blocks(t)
 	breakdown, err := t.UrgencyBreakdown(model.UrgencyContext{
 		Coefficients:   r.b.Config.Urgency,

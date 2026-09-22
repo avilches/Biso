@@ -470,7 +470,7 @@ func failWriteWithCandidates(s Streams, p *Parsed, env ops.Env, asJSON bool,
 	err error, result *ops.WriteResult) int {
 	var ambiguous *ops.AmbiguousRef
 	if errors.As(err, &ambiguous) {
-		return failWithCandidates(s, p, env, asJSON, err)
+		return failWithCandidates(s, p, env, asJSON, err, nil)
 	}
 	return failWrite(s, p, asJSON, err, result)
 }

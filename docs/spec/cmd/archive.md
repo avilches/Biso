@@ -90,7 +90,7 @@ MYP-11  Done  ac 2/2  urgency 0.0  archived
 |---|---:|
 | Archivada o desarchivada | 0 |
 | `biso delete`, o flags incompatibles | 2 |
-| Tarea ilegible | 3 |
+| Tarea ilegible (el motivo, `code` `undecodable_task`, va en el mensaje; `archive` no cambia ningún campo de vocabulario, así que no tiene la excepción de `biso set`) | 3 |
 | Tarea inexistente | 4 |
 | Referencia ambigua | 5 |
 | El almacén falla | 8 |

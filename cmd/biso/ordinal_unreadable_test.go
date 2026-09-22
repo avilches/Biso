@@ -141,7 +141,7 @@ func TestAStoredOrdinalThatIsNotAKeyLeavesTheTaskOutAndIsReported(t *testing.T) 
 
 	report := m.run(t, "doctor").assertCode(t, 6)
 	for _, id := range []string{"MYP-2", "MYP-3"} {
-		if !strings.Contains(report.stdout, id+`  task "`+id+`" could not be parsed: ordinal:`) {
+		if !strings.Contains(report.stdout, id+`  task "`+id+`" could not be parsed: ordinal is not an ordinal key`) {
 			t.Errorf("biso doctor does not report %s:\n%s", id, report.stdout)
 		}
 	}

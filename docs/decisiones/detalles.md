@@ -887,3 +887,146 @@ distinga y una referencia así no es un caso que valga añadir una notación nue
   implementaciones razonables pueden discrepar en un borde, y lo único que ahorra es una barra doble
   en una ruta de Windows, un caso poco frecuente en una lista de referencias que casi siempre son rutas
   con `/`, URLs o identificadores.
+
+---
+
+## Una tarea ilegible es la misma para todos los comandos de lectura
+
+**La decisión.** Una tarea es ilegible por una sola definición, la de la lista completa de
+["Qué se comprueba"](../spec/garantias.md#qué-se-comprueba): `status`, `type` y `priority` con un valor
+que la configuración no declara (comparado letra por letra, y con `status` obligatorio), cada campo de
+fecha que no es una fecha o que es obligatorio y está vacío, un nombre de campo de lista desconocido y
+una columna cuyo contenido no es del tipo del modelo. La definición se aplica al tablero entero al
+leer, antes de mirar los filtros de la llamada, y todos los comandos de lectura la comparten. `biso ls`
+y `biso prime` saltan la tarea, la cuentan y avisan (`prime` dentro de su mensaje). `biso get` de esa
+tarea sale con código 3 y el motivo exacto. `biso export` y `biso snapshot` escriben las tareas
+legibles, no copian la ilegible, y salen con código 6. `biso doctor` la reporta como error y sigue.
+Una escritura dirigida a ella es error 3 sin escribir nada, salvo que lo que escribe la deje legible,
+que es el remedio de un valor fuera de vocabulario. El aviso nombra todas las tareas ilegibles del
+tablero, casen o no con los filtros. Las personas y las etiquetas no entran: son abiertas al escribir y
+solo cerradas al leer, contra el conjunto en uso, del que un valor guardado forma parte por definición.
+La regla está en ["Qué pasa con un dato que no se puede interpretar"](../spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)
+y en la página de cada comando de lectura. No cambia el mensaje de arranque: la línea `unreadable` de
+`biso prime` ya existía y no se toca ni una palabra de su parte fija.
+
+**El problema que la motiva.** Antes de esta regla la única comprobación de vocabulario al leer era un
+efecto secundario del cálculo de la urgencia, que mira la prioridad y ningún otro campo, y solo
+ocurría en los comandos que calculan la urgencia. Sobre un tablero con la base de datos editada a mano,
+cada campo daba un resultado distinto:
+
+| Valor guardado | Lo que hacían los comandos |
+|---|---|
+| Una prioridad que el tablero no declara | `ls` la saltaba con aviso, `get` fallaba y `doctor` la reportaba, pero `export` y `snapshot` la volcaban entera con código 0. El `snapshot.ndjson` resultante lo rechazaba `biso init --from` con el error 7 de la línea inválida |
+| Un estado que el tablero no declara | Desaparecía de `ls`, de `export`, de `snapshot` y del recuento de `prime` sin ningún aviso, porque el estado por defecto y el de `--any-status` son los configurados, mientras que `get` la mostraba y `set` la escribía. Es exactamente la lista incompleta que se confunde con un tablero sin esa tarea |
+| Un tipo que el tablero no declara | `ls` la listaba con un tipo que `ls --type` rechaza como inexistente, y `export` la volcaba |
+| Una fecha que no es una fecha | Ya era coherente: `ls` la saltaba, `get` fallaba, `export` y `snapshot` escribían el resto y salían con 6 |
+| Una fecha obligatoria vacía | Pasaba en silencio en todos los comandos |
+| Una columna del tipo equivocado | Abortaba todas las lecturas con el código 1, aunque la tarea fuera una sola |
+| Una prioridad fuera de vocabulario, con un filtro que no dejaba pasar a la tarea | El aviso no salía, porque el salto ocurría después de filtrar: `ls --status Done` decía `no tasks match` sin más |
+
+**Por qué una sola definición.** La regla del proyecto es que en un campo de vocabulario cerrado un
+valor que no existe es un error, se esté escribiendo o leyendo, y que un resultado incompleto nunca
+puede parecer un hecho sobre el tablero. Con cada comando decidiendo por su cuenta, la misma tarea
+salía en un listado y no en otro, o en ninguno sin decirlo. Una definición única, evaluada una vez al
+leer, hace que la pregunta "¿qué comandos ven esta tarea?" tenga la misma respuesta para todos, y que
+añadir un comando de lectura no obligue a decidir otra vez qué hace con un dato dañado.
+
+**Por qué el estado, el tipo y la prioridad entran y las etiquetas y las personas no.** El criterio es
+si un filtro valida el campo contra la configuración o contra lo que hay guardado. `--status`,
+`--type` y `--priority` validan contra la configuración, así que solo en ellos un valor guardado puede
+estar fuera de lo que el filtro acepta, y una tarea que se lista con un tipo que `ls --type` rechaza
+contradice la regla de que el mismo texto vale lo mismo al escribir y al leer
+(["El mismo texto vale lo mismo en los dos sentidos"](../spec/vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos)).
+`--label` y `--assignee` validan contra el conjunto de valores en uso, y un valor guardado siempre
+pertenece a él, así que ninguna lectura puede contradecirse. Que la lista `labels` de la configuración
+prohíba una etiqueta guardada es una incoherencia que `doctor` reporta, pero la etiqueta se lee y se
+filtra sin ambigüedad, y volver ilegible la tarea por eso la sacaría de los listados por un dato que
+se puede mostrar bien.
+
+**Por qué el estado en concreto no puede quedarse en un aviso de `doctor`.** Los papeles de los
+estados (inicial, activo y terminal) se calculan comparando el estado de la tarea con los configurados.
+Una tarea con un estado que no es ninguno de ellos no está viva ni terminada: no tiene significado, y
+todo lo derivado (cuántas hay en cada estado, qué bloquea, qué es lo siguiente) sería una suposición.
+
+**Por qué la comparación es exacta.** Cada escritura resuelve lo tecleado a la grafía configurada, así
+que lo guardado tiene siempre esa grafía. Un valor con otra capitalización o con guiones no lo produjo
+el programa, y como el estado de una tarea se compara con el terminal letra por letra para saber si
+está terminada, aceptar `done` donde el estado es `Done` la contaría como viva. Usar la normalización de
+`coincidir()` sería aceptar un dato que el resto del programa no reconoce.
+
+**Por qué `export` y `snapshot` escriben lo legible y salen con 6.** Son los comandos cuyo propósito es
+no perder nada, y son los que más importa que no entreguen una copia que el programa no sabría leer
+después. Escribir solo lo legible cumple las dos cosas: la copia se importa siempre entera con
+`biso init --from` o con `biso new --from`, y el código 6 más el aviso dejan a la vista que falta algo.
+Y no se niegan a escribir porque un valor de fecha malformado no tiene remedio dentro de `biso`:
+ningún flag escribe esas fechas y la fila no llega a cargarse para editarla, así que una negativa
+detendría las copias durante todo el tiempo que dure un daño que el propio programa no puede arreglar,
+que es justo cuando más falta hacen. La tarea ilegible no viaja en la copia ni siquiera cuando su dato
+se podría leer, como una prioridad desconocida, porque una línea que el importador rechaza convertiría
+la restauración entera en un error.
+
+**Por qué `get` sale con 3 y no con 6.** La tabla de ["Códigos de salida"](../spec/codigos-de-salida.md)
+reserva el 3 para "un dato guardado que no se puede interpretar", que es exactamente lo que dice
+`get`, y el 6 para una operación válida cuyo resultado el estado del tablero no permite satisfacer por
+completo, que es lo que le pasa a `export` y `snapshot`, que sí producen algo. Es la misma frontera que
+ya separaba a `get` de `export` para una fecha malformada, extendida a los demás campos.
+
+**Por qué una escritura que deja la tarea legible se aplica.** Un valor fuera de vocabulario es un
+daño que un comando del propio programa puede arreglar, y exigir una vía de reparación aparte
+(`doctor --fix`) chocaría con la razón por la que `--fix` no decide por quien llama qué valor quiso
+decir (["Para qué sirve `biso doctor`, y para qué no"](../spec/cmd/doctor.md#para-qué-sirve-biso-doctor-y-para-qué-no)).
+Juzgar la tarea como quedaría tras la escritura, y no como está, deja a `biso set MYP-2 --priority
+medium` arreglarla y a `biso set MYP-2 --title X` fallar, sin ninguna excepción nueva que enseñar:
+es la misma regla de validación que ya se aplica a toda escritura.
+
+**Por qué el aviso nombra todas las tareas ilegibles.** Una tarea ilegible no se puede comparar con un
+filtro, y no se puede afirmar que no lo cumple. `ls --status Done` que imprime solo `note: no tasks
+match` sobre un tablero con una tarea ilegible dice algo que nadie sabe, que es la lista incompleta
+que se toma por un tablero vacío y que la especificación prohíbe.
+
+**Consecuencias aceptadas.**
+
+- Una tarea que depende de una ilegible no consta como bloqueada por ella: la ilegible no participa en
+  el cálculo, igual que ya pasaba con una fecha rota. El aviso la nombra en la misma llamada.
+- El `snapshot.ndjson` que se escribe mientras hay una tarea ilegible no la lleva, y la versión
+  anterior de esa tarea solo sigue en la historia del repositorio del tablero.
+- Una fecha malformada o una columna del tipo equivocado no se arreglan con ningún comando: se corrige
+  la base de datos a mano o se recupera la tarea de una instantánea anterior.
+
+**Alternativas descartadas, y por qué.**
+
+- **Que `export` y `snapshot` no escriban nada y salgan con 6** se descarta porque el remedio de una
+  fecha malformada no está en `biso`: la negativa dejaría sin copias, y sin historia, un tablero cuyas
+  demás tareas están sanas, hasta que alguien edite la base de datos a mano. Escribir lo legible con
+  el código 6 protege lo mismo (la copia no se toma por completa) sin ese coste.
+- **Que copien la fila tal cual, con o sin aviso** se descarta porque la copia dejaría de poder
+  leerse: `biso init --from` rechaza una línea con un valor fuera de vocabulario, y una fecha rota no se
+  puede ni escribir. Es el comportamiento anterior para las prioridades, y es lo que la tarea llamaba
+  una copia que el propio programa no sabrá leer.
+- **Que salgan con 0 y aviso**, como una lectura de conjunto cualquiera, se descarta porque un guion
+  que encadene `biso snapshot && ...` no vería el aviso, que va por stderr, y la copia parecería
+  completa. Es la razón que ya tenía la excepción del 6 (["Comandos y flags"](comandos-y-flags.md)).
+- **Que la comprobación de vocabulario sea cosa de `doctor` y una tarea ilegible sea solo una fila
+  corrupta** se descarta porque deja a `ls` listando lo que `ls --type` rechaza y haciendo desaparecer
+  sin aviso las tareas con un estado desconocido. Es lo que pasaba, y se trata de una lista incompleta
+  que se confunde con un hecho sobre el tablero.
+- **Comparar con la normalización de `coincidir()`** se descarta por lo dicho arriba: aceptaría valores
+  que ninguna escritura produce y que el cálculo de estados no reconoce.
+- **Que `get` imprima la ficha de una tarea con un valor fuera de vocabulario y un aviso** se descarta
+  porque `get` es donde se lee el motivo exacto de que una tarea no se lea, y una ficha con un estado
+  sin significado calcularía la urgencia y los bloqueos con un valor inventado. Tampoco se puede
+  extender a las fechas, donde la ficha no se puede ni construir, y un comando con una regla para cada
+  motivo sería justo lo que esta decisión quita.
+- **Que el aviso nombre solo las tareas ilegibles que el filtro habría dejado pasar** se descarta
+  porque una ilegible no se puede comparar con el filtro, y porque el aviso dependería de qué filtros
+  se escribieran.
+- **Volver ilegible una tarea con una etiqueta prohibida por la lista `labels`, una dependencia rota o
+  un arrendamiento a medias** se descarta porque esos datos se leen y se muestran bien, `doctor` ya
+  los reporta, y esconder la tarea de los listados por ellos sería más daño que el que denuncian.
+- **Dejar que `doctor --fix` repare las tareas ilegibles** se descarta porque un valor fuera de
+  vocabulario tiene más de un arreglo válido, y elegir uno destruye información; y una fecha
+  malformada no tiene ninguno que el programa pueda decidir. Es exactamente el criterio con el que
+  `doctor` deja fuera de `--fix` lo que necesita una decisión o viene de un daño externo.
+- **Contar la tarea ilegible en los recuentos de `biso prime`, con su estado guardado** se descarta
+  porque su estado puede ser justo lo ilegible, y la línea de recuento pasaría a describir tareas que
+  el mensaje no supo mirar, que es lo que ya decía `prime` de las tareas saltadas.
