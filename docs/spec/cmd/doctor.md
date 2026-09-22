@@ -147,6 +147,18 @@ que no se puede decodificar se reporta por el primer campo dañado que se encuen
 aparecen al arreglarlo. `biso doctor` es el sitio donde se ve el porqué de un aviso `task_skipped` de
 otro comando, junto con el resto de problemas del tablero.
 
+**Para `ordinal` y para el nombre de un campo de lista, esta fila solo sale si el valor guardado no
+viola el `CHECK` que protege a los dos en el esquema.** Si se corrompe uno de ellos dejando ese
+`CHECK` declarado (por ejemplo con un `UPDATE` bajo `PRAGMA ignore_check_constraints=1`, fuera de
+cualquier operación de `biso`), la fila de la comprobación de integridad de la base de datos, más
+abajo en esta misma tabla, encuentra antes la misma violación y aborta el comando entero con el
+código 21, sin llegar a reportar `task_unreadable` para ese campo. Si en cambio el propio esquema no
+declara ya el `CHECK`, por ejemplo en un tablero de una versión anterior a él, el mismo valor no viola
+nada y esta fila sí sale con normalidad, como en `cmd/biso/ordinal_unreadable_test.go`. En los dos
+casos, `biso ls`, `biso get` y `biso export` sobre esa misma base de datos siguen el trato normal de
+tarea ilegible (["Qué se comprueba"](../garantias.md#qué-se-comprueba)), así que son la vía de
+diagnóstico mientras el `CHECK` siga declarado.
+
 **No hay ninguna comprobación sobre el nombre de la carpeta del tablero, y no es un olvido.** El nombre
 es decorativo y nadie resuelve por él (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), así que una carpeta con el nombre de un `project_name`
 anterior, o con un nombre que alguien puso a mano, no es un problema del que informar. Denunciarlo sería
