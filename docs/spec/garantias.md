@@ -251,11 +251,12 @@ fila que no se decodifica, porque esa no llega a cargarse.
 
 ### El segundo caso: la base de datos que no se puede leer
 
-Esto **no es una tarea ilegible: es que no hay tablero legible.** Si la base de datos no abre, o abre
-pero falla su comprobación de integridad, ninguna tarea es alcanzable, así que no tiene sentido
-presentarlo como "una tarea se ha saltado": no hay nada que saltar, hay un tablero entero fuera de
-alcance. La regla es la misma para cualquier operación, sea una lectura dirigida, una de conjunto, una
-escritura o `biso doctor`: el comando aborta entero, sin escribir nada, con este mensaje por stderr:
+Esto **no es una tarea ilegible: es que no hay tablero legible.** Si la base de datos no abre, o una
+página realmente dañada aparece mientras cualquier operación la lee, ninguna tarea de ahí en adelante
+es alcanzable, así que no tiene sentido presentarlo como "una tarea se ha saltado": no hay nada que
+saltar, hay un tablero entero fuera de alcance. Para esas dos formas de daño la regla es la misma para
+cualquier operación, sea una lectura dirigida, una de conjunto, una escritura o `biso doctor`: el
+comando aborta entero, sin escribir nada, con este mensaje por stderr:
 
 ```
 error: board 3f9a2b1c's database could not be read
@@ -267,6 +268,20 @@ El código de salida es **21** (`DAMAGED`, ver ["Códigos de salida"](codigos-de
 la ausencia de tablero, porque el remedio es otro: aquí el tablero está donde tiene que estar y lo que
 hay que hacer es reconstruirlo, no crearlo. La clave `code` del sobre JSON (sección
 ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)) es `database_unreadable`.
+
+**El segundo `hint`, "o falló su comprobación de integridad", nombra una comprobación explícita que
+solo corre `biso doctor`, no cualquier operación.** `PRAGMA integrity_check` lee la base de datos
+entera y compara cada fila contra las restricciones que el esquema declara hoy, así que encuentra un
+daño, como un valor que viola un `CHECK` todavía declarado, que una consulta corriente nunca toca por
+sí sola: abrir el tablero no la corre, porque leer cada página no cabe en el presupuesto de
+["El presupuesto de arranque"](presupuestos.md#el-presupuesto-de-arranque) en cada llamada, así que
+solo cuando `biso doctor` la ejecuta y falla sale este mensaje y este código 21 por ese motivo. Sobre
+esa misma base de datos, `biso ls`, `biso get`, `biso export` y una escritura dirigida no la corren
+nunca, así que no abortan por ella: siguen el trato normal que le corresponda al dato dañado, que para
+`ordinal` y para el nombre de un campo de lista es el de una tarea ilegible de
+["Qué hace cada comando"](#qué-hace-cada-comando). El aborto uniforme de más arriba sigue valiendo tal
+cual para las otras dos causas, la base de datos que no abre y la página dañada que aparece en
+cualquier lectura, porque esas sí las encuentra cualquier operación por su cuenta.
 
 **El código 21 puede salir de cualquier comando**, así que no aparece en la tabla de códigos de salida
 de ninguno, salvo las dos excepciones de la sección ["Códigos de salida"](codigos-de-salida.md#los-códigos-20-21-y-22-son-los-tres-desenlaces-malos-de-resolver-el-tablero-y-cada-uno-tiene-un-remedio-distinto).
