@@ -140,6 +140,14 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	}
 	w.warnAboutSkippedExcept(tasks)
 
+	// The manual order is resolved here, before the loop below writes
+	// anything: the neighbour is looked for against the board as it was,
+	// and the gap is computed once for every task the call moves
+	// (docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura).
+	if err := w.prepareOrdinal(tasks); err != nil {
+		return w.partial(), err
+	}
+
 	byID, err := w.boardAfter(tasks)
 	if err != nil {
 		return w.partial(), err

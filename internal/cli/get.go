@@ -259,11 +259,16 @@ func joined(values []string) string {
 	return strings.Join(escaped, ", ")
 }
 
+// ordinalCell is the one value of the card that is not printed as it is
+// stored. The key cannot be typed and says nothing a reader can use, so
+// what the card prints is whether the task has a place decided by hand,
+// which is what lets it be named as the neighbour of an --above or a
+// --below; the raw key is in --json (docs/spec/cmd/get.md#salida).
 func ordinalCell(t *model.Task) string {
-	if t.Ordinal == nil {
+	if t.Ordinal == "" {
 		return dash
 	}
-	return strconv.Itoa(*t.Ordinal)
+	return "manual"
 }
 
 // minute is how the card writes an instant: the calendar day and the time

@@ -183,11 +183,11 @@ agrupada por el código de salida con el que sale cada uno:
 | Código de salida | `code` |
 |---:|---|
 | 1 | `internal` |
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_string_value`, `mixed_label_separators`, `id_like_positional`, `missing_text`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_snapshot_id`, `unknown_key`, `id_taken`, `invalid_lease`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_string_value`, `malformed_ordinal`, `mixed_label_separators`, `id_like_positional`, `missing_text`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `self_ordinal_neighbour`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_ordinal_value`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_snapshot_id`, `unknown_key`, `id_taken`, `invalid_lease`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
 | 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_label_key`, `unknown_label_value`, `wrong_label_separator`, `unknown_assignee`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_line`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `no_such_command`, `unknown_config_key`, `criterion_not_found`, `comment_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous`, `comment_ambiguous` |
-| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity`, `exclusive_label_conflict` |
+| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity`, `exclusive_label_conflict`, `neighbour_without_ordinal` |
 | 7 | `batch_invalid` |
 | 8 | `busy`, `io_error`, `file_unreadable`, `lease_lost`, `no_terminal`, `port_in_use`, `vcs_commit_failed`, `vcs_push_failed` |
 | 20 | `no_board`, `pointer_unresolved` |
@@ -253,6 +253,18 @@ valores que el tablero declara, igual que en `unknown_status`. Es un `code` prop
 uno que ya estaba guardado, y quien ramifica sobre él tiene que poder distinguir que repetir la llamada
 con otros filtros u otra referencia no lo cambia.
 
+**Los `code` del orden manual se reparten por lo que falla en cada uno**, que es lo que
+permite ramificar sin leer la frase (["El orden manual"](familias-de-flags.md#el-orden-manual)).
+`invalid_ordinal_value` es `--ordinal` con algo que no es `first` ni `last`, y lleva `valid` porque su
+dominio es cerrado y del programa, como el de `--color` o el de `--vcs`. `self_ordinal_neighbour` es
+la tarea que se nombra a sí misma como vecina, hermano de `self_dependency`. `malformed_ordinal` es
+una clave de orden mal formada en una línea de un lote, el único sitio donde una clave llega escrita
+(["El modo lote"](cmd/new.md#el-modo-lote)), y viaja dentro de `details` como los demás fallos de un
+lote; no se confunde con `invalid_number`, porque una clave de orden no es un número, ni con
+`invalid_line`, que es lo que contesta un `ordinal` que ni siquiera es una cadena.
+`neighbour_without_ordinal` es el único que sale con el código 6, porque la llamada está bien escrita
+y lo que no la admite es el estado del tablero.
+
 **La lista es ampliable y las entradas son permanentes.** Una versión posterior puede añadir un `code`
 nuevo, pero ninguno de los de arriba cambiará de significado, cambiará de código de salida ni
 desaparecerá. Quien ramifique sobre un `code` desconocido debe tratarlo por su código de salida, que
@@ -274,6 +286,11 @@ anterior a esta rama.
   (["`biso get`"](cmd/get.md#el-esquema-json)). Los términos son los sumandos de ese mismo número, así que se escriben
   igual que él: `6.0` y no `6`, y los siete ceros de una tarea en estado terminal son `0.0` y no `0`.
   Decirlo solo de `urgency` fue lo que dejó que el desglose se serializara como entero.
+- **`ordinal` es una cadena o `null`, nunca un número.** Es la clave de orden manual de
+  ["El orden manual y su clave"](modelo-de-datos/orden-manual.md), y viaja tal cual está guardada en
+  `task.list`, en `task.get`, en la exportación y en el lote de entrada. Es el único campo de una
+  tarea cuyo valor no se puede teclear en la línea de comandos, así que el JSON es el único sitio
+  donde se lee entero.
 - Un campo sin valor es `null`, nunca la cadena vacía ni la ausencia de la clave. **Ninguna clave va ni
   viene según los datos**: la que está documentada para un `kind` aparece siempre que se emite ese
   `kind`, valga lo que valga, para que nadie tenga que distinguir entre "no está" y "no tiene valor".

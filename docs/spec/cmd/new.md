@@ -20,7 +20,7 @@ que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que 
 hace nada y avisa. Las que se usan de verdad al crear son
 `--append-desc`, `--add-ac`, `--type`, `--priority`, `--add-labels`,
 `--add-assignees`, `--add-refs`, `--add-deps`, `--parent`,
-`--due`, `--ordinal`, `--author`, `--append-plan`, `--append-note`,
+`--due`, `--ordinal`, `--above`, `--below`, `--author`, `--append-plan`, `--append-note`,
 `--append-summary` y `--comment`.
 
 - **El título llega por un sitio, y solo por uno.** Se escribe como argumento (`biso new "Fix the parser"`)
@@ -35,6 +35,11 @@ hace nada y avisa. Las que se usan de verdad al crear son
   si `--start` dejara la tarea activa y asignada sin arrendamiento, `biso new "X" --start` y
   `biso new "X"` seguido de `biso start` darían dos tareas distintas. Es, junto con `biso start`, la
   única vía que fija `leaseHolder` fuera de la importación.
+- **Una tarea puede nacer colocada en el orden manual.** `--ordinal first`, `--ordinal last`,
+  `--above <ref>` y `--below <ref>` valen aquí con el mismo significado que en `biso set`
+  (["El orden manual"](../familias-de-flags.md#el-orden-manual)), así que
+  `biso new "Fix the parser" --below MYP-11` crea la tarea justo debajo de `MYP-11`. Sin ninguno de
+  los cuatro, la tarea nace sin clave, que es lo normal.
 - **`--comment` funciona al crear**, igual que en cualquier otro comando de escritura.
 - **`--append-plan`, `--append-note` y `--append-summary` no están restringidos por el estado.** Se
   pueden escribir al crear, en cualquier estado.
@@ -54,6 +59,8 @@ hace nada y avisa. Las que se usan de verdad al crear son
 | `--parent` inexistente | Error 4. Un ciclo de padres tampoco puede darse aquí, por el mismo motivo |
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
 | `--due` en el pasado | Se acepta, con aviso |
+| `--above` o `--below` a una tarea inexistente | Error 4, como cualquier otra referencia |
+| `--above` o `--below` sobre una tarea que no tiene clave de orden | Error 6, con el `code` `neighbour_without_ordinal`, y la tarea no se crea (["El orden manual"](../familias-de-flags.md#el-orden-manual)) |
 | `--append-desc @fichero` que no existe | Error 4 |
 | `--start` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) y sin `--add-assignees` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (["El arrendamiento de una tarea"](../lease.md)). Es el mismo caso que la fila equivalente de `biso start` (["`biso start`"](verbos-del-ciclo.md#biso-start)) |
 | `--start` con `--add-assignees @sara` y una identidad configurada distinta | La tarea queda asignada a `@sara` y el arrendamiento es de quien llama, igual que en `biso start`: quien lo toma es quien escribe, no quien figura en `assignees` |
@@ -268,6 +275,25 @@ Las reglas del lote, todas obligatorias:
   tablero). No es una restricción nueva sobre la simetría: exportar un tablero y restaurarlo con
   `biso snapshot` y `biso init --from` (["`biso export`"](export.md), ["`biso snapshot`"](snapshot.md)) trae también su `task_prefix`, así que los `id`
   de su `snapshot.ndjson` siempre lo llevan puesto.
+- **`ordinal` es el único sitio donde una clave de orden llega escrita, y se valida.** Es una cadena
+  con la forma que fija ["El orden manual y su clave"](../modelo-de-datos/orden-manual.md): símbolos
+  de `0-9a-z` y sin `0` final. Una que no la cumpla es un fallo de validación con `code` propio,
+  `malformed_ordinal`, y no el error de un número mal escrito, porque aquí no hay ningún número:
+  ```
+  line 14: malformed ordinal: "3000" (an ordinal key is made of 0-9 and a-z, and never ends in 0)
+  ```
+  **La cadena vacía tampoco cumple la forma**, así que es ese mismo fallo y no una forma de decir
+  "sin clave": la que sí lo dice es `null`, o no escribir la clave, como en cualquier otro escalar
+  opcional (más abajo en esta misma lista). Es la misma frontera que en la línea de órdenes, donde
+  `--ordinal ""` es un error y `--clear-ordinal` es lo que quita la clave
+  (["El valor vacío"](../valores-de-entrada.md#el-valor-vacío)).
+  Un valor que no sea una cadena, por ejemplo el `3000` sin comillas de un tablero exportado por otra
+  herramienta, es un valor del tipo equivocado y cae en `invalid_line`, como cualquier otro
+  (["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)). **Dos líneas
+  pueden traer la misma clave**, y no es un fallo: las claves no son únicas, y el listado desempata
+  por identificador (["La regla de orden, completa"](ls.md#la-regla-de-orden-completa)). La clave se
+  guarda tal cual llega, sin recalcular nada, que es lo que hace exacta la simetría con
+  [`biso export`](export.md).
 - **`archived` se acepta como booleano.** Por defecto, si la clave no aparece, la tarea se crea sin
   archivar. Ningún otro comando tiene un flag de campo para él: fuera de la importación,
   archivar se hace con `biso archive`.
@@ -446,6 +472,7 @@ pasada. La línea 130 del bloque de arriba es justo uno de ellos, y aun así sal
 | Valor fuera de un vocabulario, entrada no interpretable | 3 |
 | `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
 | `--add-deps` o `--parent` por texto con varias coincidencias | 5 |
+| La vecina de `--above` o de `--below` no tiene clave de orden | 6 |
 | Cualquier fallo de validación en el lote de `--from`, o un `--dry-run` de ese lote que no pasa. **Solo del lote**: un `--dry-run` sobre una sola tarea nunca da 7, sino el código específico de su fallo (["`--dry-run` sobre una sola tarea"](#--dry-run-sobre-una-sola-tarea)) | 7 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 8 |
 | No hay tablero | 20 |
@@ -502,9 +529,10 @@ Batch:
 Any text option also takes @file to read a file, or - to read stdin.
 
 Exit codes:
-  0  created            4  a referenced task or file does not exist
-  2  bad usage          5  a text reference matched several tasks
+  0  created            5  a text reference matched several tasks
+  2  bad usage          6  --above or --below on a task with no place
   3  unknown value      8  the board could not be written
+  4  a referenced task or file does not exist
   7  batch or --dry-run validation failed, nothing was written
                         20 no board here
 

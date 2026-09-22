@@ -3,7 +3,6 @@ package ops
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -144,6 +143,13 @@ type writer struct {
 	// tasks() runs before resolveAll knows which tasks those are
 	// (docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible).
 	skippedByTasks []board.Skipped
+
+	// ordinalKeys are the keys the manual order of this call hands out, one
+	// per task, in the order the references were written, and ordinalNext
+	// is how many have been handed out already. They are computed once,
+	// before anything is written (ordinal.go).
+	ordinalKeys []string
+	ordinalNext int
 
 	// replaced remembers which --replace-* flag has already emptied its
 	// list on the task being written, so that the second value of the same
@@ -441,7 +447,7 @@ func (w *writer) applyOne(t *model.Task, c Change) error {
 	case "clear-due":
 		t.Due = time.Time{}
 	case "clear-ordinal":
-		t.Ordinal = nil
+		t.Ordinal = ""
 	case "clear-author":
 		t.Author = ""
 	case "append-desc":
@@ -502,18 +508,12 @@ func (w *writer) applyOne(t *model.Task, c Change) error {
 				Fields:  map[string]any{"value": c.Value},
 			})
 		}
-	case "ordinal":
-		n, err := strconv.Atoi(c.Value)
-		if err != nil {
-			return &model.Error{
-				ExitCode: 2,
-				Code:     "invalid_number",
-				Message:  fmt.Sprintf("--ordinal: not a whole number: %q", c.Value),
-				Field:    "ordinal",
-				Given:    c.Value,
-			}
-		}
-		t.Ordinal = &n
+	case "ordinal", "above", "below":
+		// The flags of the manual order are the one scalar whose value is
+		// not the value of the field: what goes in is the key the gap of
+		// this call produced, computed before anything was written
+		// (ordinal.go).
+		t.Ordinal = w.takeOrdinalKey()
 	case "author":
 		t.Author = c.Value
 	default:

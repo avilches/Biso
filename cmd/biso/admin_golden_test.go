@@ -366,7 +366,7 @@ func brokenBoard(t *testing.T) *machine {
 			question_asked_at, question_body, next_criterion_key, next_comment_key
 		)
 		SELECT 'MYP-' || i, i, 'Task ' || i, 'To Do', 'task', 'medium', '', '', '',
-			i, '', '', '', '', '2026-09-06T09:12:04Z', '2026-09-06T09:12:04Z',
+			'', '', '', '', '', '2026-09-06T09:12:04Z', '2026-09-06T09:12:04Z',
 			0, '', '', '', '', '', 1, 1
 		FROM n`)
 	// MYP-40 depends on a task that does not exist, which no call of the

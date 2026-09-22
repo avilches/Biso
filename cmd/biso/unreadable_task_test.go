@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"biso/internal/board"
 )
 
 // These tests are the one definition of an unreadable task of
@@ -21,7 +23,14 @@ type corruption struct {
 	// prepare runs commands of the program before the statements do, for the
 	// corruptions that need a comment, a criterion or a question to exist.
 	prepare func(t *testing.T, m *machine)
-	sql     []string
+	// schemaChange runs before the statements too, and after prepare, for
+	// the one corruption that needs the ordinal column itself to hold
+	// something other than text before the statement can store it: SQLite
+	// converts a number back into text on the way in as long as the column
+	// keeps its own declared type, so widening it first is the only way to
+	// get a genuinely wrong-typed value stored.
+	schemaChange func(t *testing.T, dir string)
+	sql          []string
 	// field and given are what the error of `biso get` carries.
 	field, given string
 	// reason is the part of the message of `biso get`, after
@@ -97,8 +106,12 @@ var everyCorruption = []corruption{
 
 	{name: "archived that is no boolean", sql: []string{`UPDATE task SET archived = 7 WHERE id = 'MYP-2'`},
 		field: "archived", given: "7", reason: `archived`},
-	{name: "ordinal that is no number", sql: []string{`UPDATE task SET ordinal = 'abc' WHERE id = 'MYP-2'`},
-		field: "ordinal", given: "abc", reason: `ordinal`},
+	{name: "ordinal that is not text", schemaChange: widenOrdinalColumnToInteger,
+		sql:   []string{`UPDATE task SET ordinal = 42 WHERE id = 'MYP-2'`},
+		field: "ordinal", given: "42", reason: `ordinal is not text: "42"`},
+	{name: "ordinal that does not keep the form of a key", schemaChange: dropTheCheckOfTheOrdinalColumn,
+		sql:   []string{`UPDATE task SET ordinal = 'm0' WHERE id = 'MYP-2'`},
+		field: "ordinal", given: "m0", reason: `ordinal is not an ordinal key: "m0"`},
 	{name: "criterion counter that is no number", sql: []string{`UPDATE task SET next_criterion_key = 'x' WHERE id = 'MYP-2'`},
 		field: "next_criterion_key", given: "x", reason: `next_criterion_key`},
 	{name: "comment counter that is no number", sql: []string{`UPDATE task SET next_comment_key = 'x' WHERE id = 'MYP-2'`},
@@ -130,10 +143,49 @@ func corrupted(t *testing.T, c corruption) *machine {
 	if c.prepare != nil {
 		c.prepare(t, m)
 	}
+	if c.schemaChange != nil {
+		c.schemaChange(t, m.boardDir(t))
+	}
 	for _, statement := range c.sql {
 		m.execOnBoard(t, m.boardDir(t), statement)
 	}
 	return m
+}
+
+// widenOrdinalColumnToInteger rewrites the stored schema so that the
+// ordinal column holds a number instead of a text key: as long as the
+// column keeps its own declared type, SQLite's own type affinity converts
+// any number back into text before storing it, so widening the column is
+// the only way to get a genuinely wrong-typed value into it, the same way
+// an older `biso` once stored an integer there before the manual order
+// existed (docs/spec/estado-de-implementacion.md#el-orden-manual).
+func widenOrdinalColumnToInteger(t *testing.T, dir string) {
+	t.Helper()
+	b, err := board.Open(&board.Location{ID: board.MarkerID(dir), Dir: dir}, board.Machine{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer b.Close()
+
+	before := schemaOfTheTaskTable(t, b)
+	after := ordinalColumn.ReplaceAllString(before, "ordinal${1}INTEGER,\n")
+	if after == before {
+		t.Fatalf("the ordinal column was not widened to an integer:\n%s", after)
+	}
+
+	for _, statement := range []string{
+		`PRAGMA writable_schema = ON`,
+		`UPDATE sqlite_schema SET sql = ? WHERE type = 'table' AND name = 'task'`,
+		`PRAGMA writable_schema = RESET`,
+	} {
+		var args []any
+		if strings.HasPrefix(statement, "UPDATE") {
+			args = []any{after}
+		}
+		if _, err := b.Store.Exec(statement, args...); err != nil {
+			t.Fatalf("%s: %v", statement, err)
+		}
+	}
 }
 
 func (m *machine) scalarOnBoard(t *testing.T, query string) string {

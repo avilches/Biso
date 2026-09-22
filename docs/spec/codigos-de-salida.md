@@ -11,7 +11,7 @@ significados. Quien llama puede ramificar sobre el número sin leer el mensaje.
 | 3 | `BAD_VALUE` | El valor que llega es sintácticamente correcto pero el tablero no lo reconoce, o un dato guardado no se puede interpretar | `--status "Pending"` en un tablero que no tiene `Pending` entre sus estados |
 | 4 | `NOT_FOUND` | La entidad referida no existe | `biso get MYP-999` |
 | 5 | `AMBIGUOUS` | La referencia encaja con más de una entidad | `biso get "parser"` con tres coincidencias |
-| 6 | `PRECONDITION` | La operación es válida, pero el estado actual del tablero no la permite o no la satisface | `biso finish --strict` con criterios sin marcar, `biso doctor` con problemas pendientes, o `biso export` y `biso snapshot` que han saltado una tarea ilegible |
+| 6 | `PRECONDITION` | La operación es válida, pero el estado actual del tablero no la permite o no la satisface | `biso finish --strict` con criterios sin marcar, `biso doctor` con problemas pendientes, `biso export` y `biso snapshot` que han saltado una tarea ilegible, o `--below` sobre una tarea que no tiene clave de orden manual |
 | 7 | `VALIDATION` | Una validación previa ha fallado y **no se ha escrito nada** | `biso new --from tareas.ndjson` con la línea 47 inválida |
 | 8 | `ENVIRONMENT` | Falla el entorno, no la petición | el almacén no responde, no hay permisos, no se puede adquirir el acceso exclusivo, no hay terminal donde hace falta |
 | 20 | `NO_BOARD` | No hay tablero accesible desde donde se ha llamado | cualquier comando fuera de un tablero, salvo `init`, `help`, `--help` y `--version`, que no necesitan uno; `biso where` también devuelve 20 cuando no encuentra ninguno |

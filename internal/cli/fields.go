@@ -56,6 +56,10 @@ var scalarFields = []struct {
 	vocabulary bool
 	singleLine bool
 	text       bool
+	// placement marks the manual order, whose four flags all write the
+	// same field and are therefore incompatible with one another
+	// (docs/spec/familias-de-flags.md#el-orden-manual).
+	placement bool
 }{
 	{name: "title", field: "title", singleLine: true, text: true},
 	{name: "status", field: "status", vocabulary: true},
@@ -63,7 +67,11 @@ var scalarFields = []struct {
 	{name: "priority", field: "priority", clear: "clear-priority", vocabulary: true},
 	{name: "parent", field: "parent", clear: "clear-parent"},
 	{name: "due", field: "due", clear: "clear-due"},
-	{name: "ordinal", field: "ordinal", clear: "clear-ordinal"},
+	// The manual order is the one scalar whose value is not the value of
+	// the field: --ordinal takes first or last and the two flags below take
+	// a neighbour, and what gets written is the key the program computes
+	// from them (docs/spec/familias-de-flags.md#el-orden-manual).
+	{name: "ordinal", field: "ordinal", clear: "clear-ordinal", placement: true},
 	// A person field never interprets a leading "@", so --author takes its
 	// value exactly as it is typed
 	// (docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
@@ -123,13 +131,39 @@ func fieldFlags() []FlagSpec {
 			value = TextValue
 		}
 		if f.clear != "" {
-			flags = append(flags, FlagSpec{Name: f.clear, Category: Clear, Field: f.field})
+			flags = append(flags, FlagSpec{
+				Name: f.clear, Category: Clear, Field: f.field,
+				Conflicts: placementConflicts(f.placement, f.clear),
+			})
 		}
-		flags = append(flags, FlagSpec{
+		scalar := FlagSpec{
 			Name: f.name, Value: value, Category: Scalar,
 			ClosedVocabulary: f.vocabulary, SingleLine: f.singleLine,
 			ClearFlag: f.clear, Field: f.field,
-		})
+			Conflicts: placementConflicts(f.placement, f.name),
+		}
+		if f.placement {
+			// --ordinal is the one scalar with a domain the program owns
+			// and the board does not, so an unknown value is exit code 2
+			// and never the 3 of a value the board does not have
+			// (docs/spec/familias-de-flags.md#el-orden-manual).
+			scalar.Domain = []string{"first", "last"}
+			scalar.DomainCode = "invalid_ordinal_value"
+			scalar.DomainHints = []string{
+				"--ordinal takes first or last; " +
+					"to place a task next to another one, use --above or --below",
+			}
+		}
+		flags = append(flags, scalar)
+		if !f.placement {
+			continue
+		}
+		for _, name := range []string{"above", "below"} {
+			flags = append(flags, FlagSpec{
+				Name: name, Value: PlainValue, Category: Scalar,
+				Field: f.field, Conflicts: placementConflicts(f.placement, name),
+			})
+		}
 	}
 
 	// The comments, which are the one list of objects that is never edited
@@ -155,4 +189,29 @@ func fieldFlags() []FlagSpec {
 		},
 	)
 	return flags
+}
+
+// placementFlagNames are the four flags of the manual order, in the order
+// of the table above, which is the order a message that names two of them
+// names them in.
+var placementFlagNames = []string{"clear-ordinal", "ordinal", "above", "below"}
+
+// placementConflicts answers what one flag of the manual order cannot share
+// a call with: the other three, because all four write the same field
+// (docs/spec/familias-de-flags.md#el-orden-manual). For every other scalar
+// it answers nothing, since the pair of a scalar and its --clear-<field> is
+// not a conflict anywhere else: --clear-due --due 2026-09-20 is the ordinary
+// way of replacing a value, and only here is it a contradiction, because
+// what the caller would be asking for is a place and no place at once.
+func placementConflicts(placement bool, self string) []string {
+	if !placement {
+		return nil
+	}
+	others := make([]string, 0, len(placementFlagNames)-1)
+	for _, name := range placementFlagNames {
+		if name != self {
+			others = append(others, name)
+		}
+	}
+	return others
 }

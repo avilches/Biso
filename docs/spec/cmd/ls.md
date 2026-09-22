@@ -99,9 +99,12 @@ Reglas de combinación de filtros:
 Sin `--sort` se aplica el orden por defecto, que es esta tupla, en este orden y sin excepciones:
 
 1. Las tareas que tienen `ordinal` van antes que las que no lo tienen.
-2. Entre las que lo tienen, `ordinal` ascendente.
+2. Entre las que lo tienen, `ordinal` ascendente, comparado por puntos de código como el resto de las
+   comparaciones de texto de esta regla (["El orden manual y su
+   clave"](../modelo-de-datos/orden-manual.md)).
 3. Entre las que no lo tienen, `urgency` descendente.
-4. Cualquier empate se rompe por identificador ascendente, siempre.
+4. Cualquier empate se rompe por identificador ascendente, siempre. Dos tareas pueden llevar la misma
+   clave de orden, y es ahí donde se desempatan.
 
 Un `--sort` explícito sustituye los pasos 1 a 3 por ese campo, ascendente salvo `urgency`, que es
 descendente por ser una medida de prioridad, y el paso 4 se sigue aplicando. `--reverse` invierte el
@@ -109,7 +112,10 @@ resultado final, incluido el desempate. **El orden nunca depende del estado**, p
 agrupa por estado.
 
 Un `--sort due` o `--sort ordinal` sobre tareas que no tienen ese campo las pone al final, en bloque,
-ordenadas por identificador.
+ordenadas por identificador. **`--sort ordinal` es, por tanto, el orden manual ascendente con las
+tareas sin clave detrás**, que es el orden por defecto sin su paso 3: lo que cambia es que las tareas
+sin clave se ordenan entre ellas por identificador y no por urgencia. `--reverse` lo invierte entero,
+así que pone las tareas sin clave delante.
 
 `--sort title` compara los títulos por sus puntos de código Unicode, de menor a mayor, y no por las
 reglas de intercalación de ningún idioma: una `Z` va antes que una `a`, y `ñ` va después de `z`. Es
@@ -301,6 +307,11 @@ cada una, está en ["Los filtros de `biso ls`"](../contrato-json.md#los-filtros-
 
 La cifra de urgencia del ejemplo puede no ser esta; el motivo está en la sección
 ["Urgencia"](../modelo-de-datos/urgencia.md).
+
+**`ordinal` viaja como cadena o como `null`, nunca como número**: es la clave de orden manual
+(["El orden manual y su clave"](../modelo-de-datos/orden-manual.md)), y este sobre es uno de los
+pocos sitios donde se puede leer, porque las columnas de texto no la enseñan. La tarea del ejemplo no
+tiene ninguna; una que la tuviera traería, por ejemplo, `"ordinal": "m"`.
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
 comentarios. Para eso está `biso get`. Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) sí están todos,

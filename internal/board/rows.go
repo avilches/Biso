@@ -17,7 +17,8 @@ import (
 // with no value is stored, since no caller can ever store a real empty
 // string (docs/spec/valores-de-entrada.md#el-valor-vacío), and the zero
 // time is how a date field with no value is stored, for the same reason.
-// Ordinal is the one field that needs a real NULL, because 0 is a value.
+// Ordinal is one more string of that first rule: an ordinal key can never
+// be the empty string, so the empty string is a task with no key.
 
 // taskColumns is the task row, in the order both directions use.
 const taskColumns = `id, num, title, status, type, priority, parent, author, due, ordinal,
@@ -54,10 +55,6 @@ func writeTask(tx *sql.Tx, task *model.Task, num int) error {
 	task.NextCriterionKey = atLeastOne(task.NextCriterionKey)
 	task.NextCommentKey = atLeastOne(task.NextCommentKey)
 
-	var ordinal any
-	if task.Ordinal != nil {
-		ordinal = *task.Ordinal
-	}
 	var questionAuthor, questionAskedAt, questionBody string
 	if task.Question != nil {
 		questionAuthor = task.Question.Author
@@ -68,7 +65,7 @@ func writeTask(tx *sql.Tx, task *model.Task, num int) error {
 	_, err := tx.Exec(`INSERT INTO task (`+taskColumns+`)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		task.ID, num, task.Title, task.Status, task.Type, task.Priority, task.Parent,
-		task.Author, formatDate(task.Due), ordinal,
+		task.Author, formatDate(task.Due), task.Ordinal,
 		task.Description, task.Plan, task.Notes, task.Summary,
 		formatInstant(task.CreatedAt), formatInstant(task.UpdatedAt), task.Archived,
 		formatInstant(task.LeaseExpiresAt), task.LeaseHolder,
@@ -274,6 +271,27 @@ func scannedBool(v any) (bool, bool) {
 	return n == 1, true
 }
 
+// scannedString is scannedInt for the model's text keys, the ordinal
+// column's own shape: a `string` from the driver, or the `[]byte` some
+// drivers hand back for TEXT instead, and nothing else. A `NULL` the
+// column's own constraint no longer allows, or any other storage class
+// SQLite's flexible typing let through, is not a key this column can hold.
+func scannedString(v any) (string, bool) {
+	switch x := v.(type) {
+	case string:
+		return x, true
+	case []byte:
+		return string(x), true
+	}
+	return "", false
+}
+
+// notText is notAWholeNumber and notZeroOrOne's counterpart for a column
+// the model reads as text.
+func notText(field, given string) string {
+	return fmt.Sprintf("%s is not text: %q", field, given)
+}
+
 // query runs one of the five reads, adding the single task filter when
 // there is one. column is what that table calls the task's identifier.
 func (r *Tasks) query(base, column, id, order string) (*sql.Rows, error) {
@@ -358,12 +376,23 @@ func (r *Tasks) readTasks(id string) ([]*model.Task, map[string]*model.Task, map
 			}
 			*date.into = parsed
 		}
-
-		if ordinalRaw != nil {
-			if value, ok := scannedInt(ordinalRaw); ok {
-				task.Ordinal = &value
-			} else {
-				mark("ordinal", rawText(ordinalRaw), notAWholeNumber("ordinal", rawText(ordinalRaw)))
+		// The ordinal column is a text key and not a number any more, but
+		// the two ways it can be undecodable are still the two different
+		// problems docs/spec/garantias.md keeps apart: the stored value is
+		// not text at all (a NULL the schema no longer allows, or anything
+		// else SQLite's flexible typing let through), which is the same
+		// column-of-the-wrong-type fault as `archived` and the two
+		// counters below, and a value that is text but does not keep the
+		// form of a key
+		// (docs/spec/modelo-de-datos/orden-manual.md#una-clave-guardada-que-no-cumple-la-regla),
+		// which is a different fault over a value that decoded fine.
+		// Neither one ends the read.
+		if value, ok := scannedString(ordinalRaw); !ok {
+			mark("ordinal", rawText(ordinalRaw), notText("ordinal", rawText(ordinalRaw)))
+		} else {
+			task.Ordinal = value
+			if value != "" && !model.ValidOrdinal(value) {
+				mark("ordinal", value, fmt.Sprintf("ordinal is not an ordinal key: %q (%s)", value, model.OrdinalHint))
 			}
 		}
 		if archived, ok := scannedBool(archivedRaw); ok {

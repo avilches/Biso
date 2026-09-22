@@ -56,7 +56,7 @@ func primeBoard(t *testing.T) (*machine, string) {
 			question_asked_at, question_body, next_criterion_key, next_comment_key
 		)
 		SELECT 'MYP-' || i, i, 'Task ' || i, 'To Do', '', 'low', '', '', '',
-			NULL, '', '', '', '', ?, ?, 0, '', '', '', '', '', 1, 1
+			'', '', '', '', '', ?, ?, 0, '', '', '', '', '', 1, 1
 		FROM n`, primeBoardTasks, today, today)
 	m.execOnBoard(t, dir, `UPDATE board_counter SET last_task_num = ?`, primeBoardTasks)
 

@@ -359,7 +359,7 @@ func changedFields(before, after *model.Task) []string {
 		{"dependencies", func(t *model.Task) any { return t.Dependencies }},
 		{"references", func(t *model.Task) any { return t.References }},
 		{"due", func(t *model.Task) any { return t.Due }},
-		{"ordinal", func(t *model.Task) any { return ordinalOf(t) }},
+		{"ordinal", func(t *model.Task) any { return t.Ordinal }},
 		{"description", func(t *model.Task) any { return t.Description }},
 		{"plan", func(t *model.Task) any { return t.Plan }},
 		{"notes", func(t *model.Task) any { return t.Notes }},
@@ -376,15 +376,6 @@ func changedFields(before, after *model.Task) []string {
 		}
 	}
 	return changed
-}
-
-// ordinalOf turns the one pointer field into a value, so that comparing two
-// tasks never compares two addresses.
-func ordinalOf(t *model.Task) any {
-	if t.Ordinal == nil {
-		return nil
-	}
-	return *t.Ordinal
 }
 
 // sameValue compares two field values the way the caller sees them: an empty

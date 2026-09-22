@@ -56,6 +56,14 @@ func NewOn(b *board.Board, env Env, p NewParams) (*WriteResult, error) {
 		return w.partial(), err
 	}
 
+	// A task can be born placed, so the gap is resolved before the field
+	// flags are applied, exactly as in `biso set`. The task does not exist
+	// yet, so it moves nothing and every key of the board counts
+	// (docs/spec/cmd/new.md#parámetros-propios).
+	if err := w.prepareOrdinal(nil); err != nil {
+		return w.partial(), err
+	}
+
 	task := &model.Task{
 		Title:  p.Title,
 		Status: b.Config.InitialStatus,

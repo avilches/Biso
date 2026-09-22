@@ -60,7 +60,7 @@ Precisiones:
 | `dependencies` | `list<string>` (referencias a tareas); ver ["Las relaciones entre tareas"](relaciones.md) | |
 | `references` | `list<string>`; ver ["Las relaciones entre tareas"](relaciones.md) | el único campo de punteros: un documento es una referencia más |
 | `due` | `date` (`YYYY-MM-DD`) | |
-| `ordinal` | `int` (>= 0) | |
+| `ordinal` | `string` (clave de orden); ver ["El orden manual y su clave"](orden-manual.md) | no se teclea: lo escriben `--ordinal first`, `--ordinal last`, `--above` y `--below` |
 | `description` | `text` | |
 | `plan` | `text` | |
 | `notes` | `text` | |
@@ -86,9 +86,13 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
   ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).
 - **`question` se llena con `biso ask` (autor e instante los fija el programa, el cuerpo lo da quien
   llama) y se vacía con `biso answer`.** Los tres detalles están en ["La pregunta abierta"](pregunta-abierta.md).
-- **Un `ordinal` negativo es error 2 (`USAGE`)**, con el `code` `invalid_number` y el mensaje
-  `error: ordinal cannot be negative: -1`. El tipo de la tabla es `int (>= 0)`, y el cero es un valor
-  legítimo y no una ausencia: la forma de dejar el campo sin valor es `--clear-ordinal`.
+- **`ordinal` es un `string` de una forma cerrada, y quien llama no lo teclea.** Es la clave de orden
+  manual de ["El orden manual y su clave"](orden-manual.md): sus símbolos salen de `0-9a-z`, no
+  termina en `0` y se compara por puntos de código. No hay ningún flag que la reciba escrita; la
+  escriben `--ordinal first`, `--ordinal last`, `--above <ref>` y `--below <ref>`, cada uno colocando
+  la tarea en un sitio del orden, y la forma de dejar el campo sin valor es `--clear-ordinal`
+  (["El orden manual"](../familias-de-flags.md#el-orden-manual)). El único sitio donde una clave
+  llega escrita es el lote de [`biso new --from`](../cmd/new.md#el-modo-lote), que la valida.
 
 ## Los campos derivados
 

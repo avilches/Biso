@@ -28,6 +28,7 @@ narrativa a los mismos conceptos, con menos detalle, está la página [Concepts]
 | `labels` | Un token que clasifica una tarea. El que lleva `:` se parte en una **clave** y un **valor** (["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito)); el que no, es una **etiqueta plana** | **etiqueta**, **etiqueta con ámbito** |
 | `acceptanceCriteria` | Un elemento de la lista de comprobación que dice cómo se sabe que el trabajo de esa tarea hace lo que se pidió | **criterio** |
 | `comments` | Una entrada del histórico cuyo cuerpo y autor no se editan nunca, aunque su fecha se pueda corregir o el comentario entero se pueda borrar | **comentario** |
+| `ordinal` | El sitio que alguien le ha dado a mano a una tarea dentro del orden del tablero. Es un texto y no un número, y no se teclea: se escribe colocando la tarea (["El orden manual y su clave"](modelo-de-datos/orden-manual.md)) | **orden manual**, y **clave** cuando se habla del texto que lo guarda |
 
 **Un estado no se llama nunca columna.** En muchas herramientas de tareas cada estado se dibuja como
 una columna de un tablero kanban, y es tentador llamarlo así. En esta documentación, **columna**

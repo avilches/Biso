@@ -184,9 +184,10 @@ const newHelp = "Usage: biso new <title> [options]\n" +
 	"Any text option also takes @file to read a file, or - to read stdin.\n" +
 	"\n" +
 	"Exit codes:\n" +
-	"  0  created            4  a referenced task or file does not exist\n" +
-	"  2  bad usage          5  a text reference matched several tasks\n" +
+	"  0  created            5  a text reference matched several tasks\n" +
+	"  2  bad usage          6  --above or --below on a task with no place\n" +
 	"  3  unknown value      8  the board could not be written\n" +
+	"  4  a referenced task or file does not exist\n" +
 	"  7  batch or --dry-run validation failed, nothing was written\n" +
 	"                        20 no board here\n" +
 	"\n" +
@@ -237,8 +238,19 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"      --clear-desc / --clear-plan / --clear-notes / --clear-summary\n" +
 	"\n" +
 	"Scalars just take a value: --title, --status, --type, --priority,\n" +
-	"--parent, --due, --ordinal, --author. Each has a --clear-<field>. An\n" +
-	"empty string is never a way to clear anything.\n" +
+	"--parent, --due, --author. Each has a --clear-<field>. An empty string\n" +
+	"is never a way to clear anything.\n" +
+	"\n" +
+	"Manual order is the one scalar you never type. You write where the task\n" +
+	"goes, and biso writes the key:\n" +
+	"      --ordinal first|last   before or after every task that has a place\n" +
+	"      --above <ref>          just above that task\n" +
+	"      --below <ref>          just below it\n" +
+	"      --clear-ordinal        out of the manual order\n" +
+	"Several tasks in one call land in the order you wrote them, so\n" +
+	"`biso set MYP-7 MYP-19 --below MYP-40` leaves MYP-40, MYP-7, MYP-19. A\n" +
+	"task with no place cannot be a neighbour: give it one first with\n" +
+	"`biso set <ref> --ordinal last`.\n" +
 	"\n" +
 	"Relations point from the task you name in <ref> to other tasks:\n" +
 	"      --parent <ref>         the task this one is part of; at most one\n" +
@@ -272,9 +284,10 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"\n" +
 	"Exit codes:\n" +
 	"  0  done                    5  something matched more than one thing\n" +
-	"  2  bad usage               6  a scoped label already has its one value\n" +
-	"  3  unknown value           8  the board could not be written\n" +
+	"  2  bad usage               6  a scoped label already has its one value,\n" +
+	"  3  unknown value              or --above/--below on a task with no place\n" +
 	"  4  a task, criterion or comment was not found\n" +
+	"                             8  the board could not be written\n" +
 	"                             20 no board here\n" +
 	"\n" +
 	"Examples:\n" +

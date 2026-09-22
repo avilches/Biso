@@ -101,7 +101,6 @@ func TestCreateFillsTheDatesItDoesNotReceiveAndKeepsTheOnesItDoes(t *testing.T) 
 // docs/spec/modelo-de-datos/index.md at a non-zero value, so that a round
 // trip that drops one is visible.
 func sampleTask() *model.Task {
-	ordinal := 7
 	task := &model.Task{
 		Title:          "Normalize CRLF in the diff",
 		Status:         "In Progress",
@@ -114,7 +113,7 @@ func sampleTask() *model.Task {
 		Dependencies:   []string{"MYP-4", "MYP-5"},
 		References:     []string{"docs/bugs/BUG-02.md", "internal/diff/diff.go"},
 		Due:            time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
-		Ordinal:        &ordinal,
+		Ordinal:        "m8",
 		Description:    "The diff compares byte by byte...",
 		Plan:           "1. Read the parser.\n2. Add the CRLF case.",
 		Notes:          "The parser already normalized LF.",
@@ -407,8 +406,8 @@ func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if got.Ordinal != nil {
-		t.Fatalf("ordinal = %v, want nil", *got.Ordinal)
+	if got.Ordinal != "" {
+		t.Fatalf("ordinal = %q, want no key", got.Ordinal)
 	}
 	if !got.Due.IsZero() || !got.LeaseExpiresAt.IsZero() {
 		t.Fatalf("an unset date came back set: %v / %v", got.Due, got.LeaseExpiresAt)
@@ -421,25 +420,99 @@ func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	}
 }
 
-func TestOrdinalZeroIsAValueAndNotAnAbsence(t *testing.T) {
+// TestAStoredOrdinalThatIsNotAKeyMakesTheTaskUnreadable is the section
+// "Una clave guardada que no cumple la regla" of
+// docs/spec/modelo-de-datos/orden-manual.md: a key that does not keep its
+// form is not a new error of its own, it is a datum the program cannot
+// interpret, so the task is left out of the read and named in the second
+// list, and the board around it goes on being read.
+//
+// Getting the bad key in takes SQL with the column's CHECK turned off,
+// because that CHECK is what keeps this program from ever writing one. The
+// case is real all the same: a board written by an older binary holds
+// integers in that column, SQLite hands them back as the integers they are,
+// and database/sql turns each one into a string on the way into the field,
+// so the ones that are not keys arrive here.
+func TestAStoredOrdinalThatIsNotAKeyMakesTheTaskUnreadable(t *testing.T) {
 	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
 	defer done()
 
-	zero := 0
-	task := &model.Task{Title: "First in the list", Status: "To Do", Ordinal: &zero}
-	if err := tasks.Create(task); err != nil {
+	readable := &model.Task{Title: "Readable", Status: "To Do", Ordinal: "m"}
+	if err := tasks.Create(readable); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+	for _, key := range []string{"3000", "m0", "M8"} {
+		bad := &model.Task{Title: "Written by something else", Status: "To Do"}
+		if err := tasks.Create(bad); err != nil {
+			t.Fatalf("Create: %v", err)
+		}
+		writeOrdinalPastTheCheck(t, tasks, bad.ID, key)
+	}
 
-	got, err := tasks.Load(task.ID)
+	all, skipped, err := tasks.All()
 	if err != nil {
-		t.Fatalf("Load: %v", err)
+		t.Fatalf("All: %v", err)
 	}
-	if got.Ordinal == nil {
-		t.Fatalf("ordinal came back absent, but 0 is a value a caller can give")
+	if len(all) != 1 || all[0].ID != readable.ID {
+		t.Fatalf("the read answered %d tasks, want only %s", len(all), readable.ID)
 	}
-	if *got.Ordinal != 0 {
-		t.Fatalf("ordinal = %d, want 0", *got.Ordinal)
+	if len(skipped) != 3 {
+		t.Fatalf("%d tasks were skipped, want three", len(skipped))
+	}
+	for _, s := range skipped {
+		if s.Reason == nil || s.Reason.Code != "undecodable_task" || s.Reason.Field != "ordinal" {
+			t.Errorf("%s was skipped as %+v, want an undecodable_task on ordinal", s.ID, s.Reason)
+		}
+		if !strings.Contains(s.Reason.Message, "is not an ordinal key") {
+			t.Errorf("the reason of %s is %q", s.ID, s.Reason.Message)
+		}
+	}
+
+	// Loading one by its identifier answers the same failure, which is what
+	// `biso get` and `biso doctor` print.
+	if _, err := tasks.Load(skipped[0].ID); err == nil {
+		t.Errorf("%s loaded with a key that is not one", skipped[0].ID)
+	}
+}
+
+// writeOrdinalPastTheCheck puts a value in the ordinal column that the
+// column's own CHECK refuses, which is the only way to reproduce a board
+// written by something other than this program.
+func writeOrdinalPastTheCheck(t *testing.T, tasks *Tasks, id, key string) {
+	t.Helper()
+	if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = 1"); err != nil {
+		t.Fatalf("turn the check constraints off: %v", err)
+	}
+	defer func() {
+		if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = 0"); err != nil {
+			t.Fatalf("turn the check constraints back on: %v", err)
+		}
+	}()
+	if _, err := tasks.store.Exec("UPDATE task SET ordinal = ? WHERE id = ?", key, id); err != nil {
+		t.Fatalf("writing the key %q on %s: %v", key, id, err)
+	}
+}
+
+// TestAnOrdinalKeyComesBackExactly is the round trip the symmetry of
+// `biso export` rests on: a key is stored as text and read back character
+// for character, whatever its length and whichever end of the alphabet it
+// sits at (docs/spec/modelo-de-datos/orden-manual.md).
+func TestAnOrdinalKeyComesBackExactly(t *testing.T) {
+	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
+	defer done()
+
+	for _, key := range []string{"i", "00i", "zzzzz1", "m8"} {
+		task := &model.Task{Title: "Placed by hand", Status: "To Do", Ordinal: key}
+		if err := tasks.Create(task); err != nil {
+			t.Fatalf("Create with the key %q: %v", key, err)
+		}
+		got, err := tasks.Load(task.ID)
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		if got.Ordinal != key {
+			t.Fatalf("ordinal = %q, want %q", got.Ordinal, key)
+		}
 	}
 }
 
@@ -514,8 +587,8 @@ func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
 			task: &model.Task{Title: "A task", Status: "To Do", Assignees: []string{"sara smith"}},
 		},
 		{
-			name: "a negative ordinal",
-			task: &model.Task{Title: "A task", Status: "To Do", Ordinal: negative()},
+			name: "an ordinal key outside its alphabet",
+			task: &model.Task{Title: "A task", Status: "To Do", Ordinal: "3000"},
 		},
 		{
 			name: "a criterion with a key the program never assigns",
@@ -562,13 +635,6 @@ func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
 			}
 		})
 	}
-}
-
-// negative is the one ordinal the field table of
-// docs/spec/modelo-de-datos/index.md does not admit.
-func negative() *int {
-	value := -1
-	return &value
 }
 
 // TestSaveRefusesAnInvalidTaskAndLeavesTheStoredOneAlone is the same rule
