@@ -155,6 +155,12 @@ Ocho columnas fijas, separadas por dos espacios, en este orden y con estos conte
 | 7 | primera persona asignada, con `+<n>` si hay más | `-` |
 | 8 | fecha límite | `-` |
 
+**La columna 8 es la primera candidata a recortar si algún día hace falta reducir el número de
+columnas.** En un tablero donde ninguna tarea usa `due` queda vacía, con `-`, en todas las filas de
+todas las llamadas: no hay ninguna fecha límite que mostrar. Cuánto se usa `due` hoy en esta máquina,
+medido con su fecha, y por qué el campo se conserva de todas formas, está en la nota sobre
+`urgency.due` de ["La urgencia"](../modelo-de-datos/urgencia.md).
+
 **El formato se calcula así, en dos pasos, siempre en este orden:**
 
 1. El título de cada tarea se recorta primero a 100 celdas, **contando los tres puntos**, así que la
