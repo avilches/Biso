@@ -104,6 +104,21 @@ func TestValidateRejectsANewlineInEveryStringField(t *testing.T) {
 			field: StringFieldCriterionText,
 			spoil: func(task *Task) { task.AcceptanceCriteria[0].Text = "first line\nsecond line" },
 		},
+		{
+			name:  "a reference with a line feed",
+			field: StringFieldReference,
+			spoil: func(task *Task) { task.References = []string{"docs/a.md", "first line\nsecond line"} },
+		},
+		{
+			name:  "a reference with a carriage return",
+			field: StringFieldReference,
+			spoil: func(task *Task) { task.References = []string{"first line\rsecond line"} },
+		},
+		{
+			name:  "a reference with a carriage return and a line feed",
+			field: StringFieldReference,
+			spoil: func(task *Task) { task.References = []string{"first line\r\nsecond line"} },
+		},
 	}
 
 	for _, c := range cases {
@@ -149,6 +164,20 @@ func TestValidateAcceptsANewlineInEveryTextField(t *testing.T) {
 
 	if err := task.Validate(); err != nil {
 		t.Fatalf("Validate rejected a line break in a text field: %v", err)
+	}
+}
+
+// TestValidateAcceptsAnOrdinaryReference is the other half of
+// TestValidateRejectsANewlineInEveryStringField for references:
+// docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token does
+// not give references a closed alphabet, so a comma, a backslash and a
+// space, none of which are a line break, still pass.
+func TestValidateAcceptsAnOrdinaryReference(t *testing.T) {
+	task := validTask()
+	task.References = []string{"docs/a,b.md", `C:\dir\file.md`, "a path with spaces.md"}
+
+	if err := task.Validate(); err != nil {
+		t.Fatalf("Validate rejected an ordinary reference: %v", err)
 	}
 }
 
