@@ -52,6 +52,18 @@ estado. La agrupación es solo de esta interfaz: no existe ningún flag equivale
 en `biso prime`, aunque las dos ya permiten filtrar por `--parent`, por `--type` y por la clave de
 una etiqueta (secciones [`biso ls`](ls.md) y [`biso set`](set.md)).
 
+### El orden dentro de una columna
+
+**El orden de las tareas dentro de una columna, y dentro de un grupo cuando la vista está agrupada,
+es el orden por defecto de `biso ls`** (["La regla de orden,
+completa"](ls.md#la-regla-de-orden-completa)). `biso board` no define ningún criterio de orden
+propio: agrupar cambia qué se ve junto, nunca en qué orden.
+
+Agrupando **por padre**, las cabeceras de grupo se ordenan entre sí con ese mismo orden por defecto,
+aplicado a las tareas que hacen de cabecera. Agrupando **por tipo**, los grupos se ordenan entre sí
+por el orden configurado de `types` y no por el alfabético, con el mismo criterio con el que las
+columnas ya siguen el orden configurado de `status` (["Agrupación visual"](#agrupación-visual)).
+
 ## Qué escribe un arrastre
 
 Mover una tarea con el ratón es una escritura del tablero como cualquier otra, y lo que escribe
