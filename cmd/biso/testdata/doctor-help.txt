@@ -1,15 +1,15 @@
 Usage: biso doctor [options]
 
 Check the board for duplicate ids, unreadable tasks, values that are no longer
-configured, a broken status-role invariant, broken dependencies, dependency
-cycles, parent cycles, repeated criterion keys, a stored label the labels list
-does not allow, a task with more than one value of a :: label key, a label key
-used with both separators, a lease on a task that is not both active and
-assigned, a recorded highest id that has fallen behind, a database that fails
-its integrity check, a missing or mismatched <id>.id marker, an extra board
-root that cannot be read, an exclusion file that no longer matches the
-configured vcs, and a board directory on a filesystem where SQLite's WAL mode
-is not safe.
+configured, a broken status-role invariant, broken dependencies, a parent that
+does not exist, dependency cycles, parent cycles, repeated criterion keys, a
+stored label the labels list does not allow, a task with more than one value of
+a :: label key, a label key used with both separators, a lease on a task that
+is not both active and assigned, a recorded highest id that has fallen behind,
+a database that fails its integrity check, a missing or mismatched <id>.id
+marker, an extra board root that cannot be read, an exclusion file that no
+longer matches the configured vcs, and a board directory on a filesystem where
+SQLite's WAL mode is not safe.
 
 Options:
       --fix      repair what can be repaired without a decision

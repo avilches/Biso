@@ -101,7 +101,7 @@ func TestTheHelpOfTheFourCommandsNamesWhatTheRuleAdded(t *testing.T) {
 		{"set", setHelp, "6  a scoped label already has its one value"},
 		{"ls", lsHelp, "The form key:"},
 		{"config", configHelp, "a key::value or key:: entry also restricts what that key"},
-		{"doctor", doctorHelp, "a stored label the labels list"},
+		{"doctor", doctorHelp, "stored label the labels list does not allow"},
 	} {
 		if !strings.Contains(c.help, c.sentence) {
 			t.Errorf("the help of biso %s no longer says %q", c.name, c.sentence)

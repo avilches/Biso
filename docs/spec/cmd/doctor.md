@@ -121,6 +121,7 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | `initial_status`, `active_status` o `terminal_status` que no están en `statuses` | error | no |
 | `statuses` con menos de tres elementos, o dos de los tres papeles apuntando al mismo estado | error | no |
 | Dependencias que apuntan a tareas inexistentes | error | no |
+| Un `parent` que apunta a una tarea inexistente | error | no |
 | Ciclos de dependencias | error | no |
 | Ciclos de tarea padre | error | no |
 | Claves de criterio repetidas dentro de una tarea | error | no |
@@ -355,6 +356,7 @@ concreto, el mismo criterio que ya usan `extra_root_unreadable` e `ignore_file_m
 | `initial_status`, `active_status` o `terminal_status` fuera de `statuses` | `status_role_unknown` | `null` | `active_status "Doing" is not one of the configured statuses "To Do, In Progress, Done"` |
 | `statuses` con menos de tres elementos, o dos papeles apuntando al mismo estado | `status_role_invalid` | `null` | `statuses has 2 elements, at least 3 are required`, o `active_status and terminal_status are both "Done", the three roles must be distinct` |
 | Dependencias que apuntan a tareas inexistentes | `dependency_not_found` | la tarea que declara la dependencia | `dependency MYP-99 does not exist` |
+| Un `parent` que apunta a una tarea inexistente | `parent_not_found` | la tarea que declara el padre | `parent MYP-99 does not exist` |
 | Ciclos de dependencias | `dependency_cycle` | una tarea del ciclo | `MYP-11 is part of a dependency cycle: MYP-11 -> MYP-12 -> MYP-11` |
 | Ciclos de tarea padre | `parent_cycle` | una tarea del ciclo | `MYP-11 is part of a parent cycle: MYP-11 -> MYP-12 -> MYP-11` |
 | Claves de criterio repetidas dentro de una tarea | `duplicate_criterion_key` | la tarea | `acceptance criterion key #3 is used by 2 criteria, keys must be unique within a task` |
@@ -605,15 +607,15 @@ llamada real que le sigue, y `doctor` no tiene fila del 7 en ella.
 Usage: biso doctor [options]
 
 Check the board for duplicate ids, unreadable tasks, values that are no longer
-configured, a broken status-role invariant, broken dependencies, dependency
-cycles, parent cycles, repeated criterion keys, a stored label the labels list
-does not allow, a task with more than one value of a :: label key, a label key
-used with both separators, a lease on a task that is not both active and
-assigned, a recorded highest id that has fallen behind, a database that fails
-its integrity check, a missing or mismatched <id>.id marker, an extra board
-root that cannot be read, an exclusion file that no longer matches the
-configured vcs, and a board directory on a filesystem where SQLite's WAL mode
-is not safe.
+configured, a broken status-role invariant, broken dependencies, a parent that
+does not exist, dependency cycles, parent cycles, repeated criterion keys, a
+stored label the labels list does not allow, a task with more than one value of
+a :: label key, a label key used with both separators, a lease on a task that
+is not both active and assigned, a recorded highest id that has fallen behind,
+a database that fails its integrity check, a missing or mismatched <id>.id
+marker, an extra board root that cannot be read, an exclusion file that no
+longer matches the configured vcs, and a board directory on a filesystem where
+SQLite's WAL mode is not safe.
 
 Options:
       --fix      repair what can be repaired without a decision
