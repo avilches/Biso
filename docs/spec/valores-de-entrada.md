@@ -321,6 +321,18 @@ salto de línea, porque se escribió antes de que existiera esta regla o llegó 
 por esta validación, se trata como un dato que no se puede interpretar (["Qué pasa con un dato que no
 se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)).
 
+**La misma regla vale para cada elemento de `references`.** Aunque `references` sea del tipo
+`list<string>` y no un `string` escalar, cada uno de sus elementos es de tipo `string`
+(["El modelo de datos de una tarea"](modelo-de-datos/index.md#el-modelo-de-datos-de-una-tarea)), así
+que un `\r` o un `\n` dentro de una referencia es el mismo error, con `field` igual a `reference`. Es
+el único campo de lista al que le hace falta esta comprobación: `labels` y `assignees` ya excluyen el
+salto de línea porque su alfabeto cerrado no lo admite (["El juego de caracteres de un
+token"](#el-juego-de-caracteres-de-un-token)), y `dependencies` siempre se resuelve a un identificador
+de tarea válido antes de guardarse (["Las relaciones entre
+tareas"](modelo-de-datos/relaciones.md#dependencies-la-precedencia)). La decisión completa, con las
+alternativas que se descartaron, está en
+["Una referencia con un salto de línea se rechaza al escribirla"](../decisiones/detalles.md#una-referencia-con-un-salto-de-línea-se-rechaza-al-escribirla).
+
 `Comment.body` y `Question.body` son del tipo `text`, no `string`, y admiten salto de línea sin
 ninguna restricción: la pregunta y su respuesta pueden ser tan largas y estructuradas como haga
 falta.
