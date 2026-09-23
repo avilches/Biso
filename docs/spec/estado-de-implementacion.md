@@ -122,7 +122,8 @@ configurado antes de rendirse, y lo prueban veinte intentos de cuatro conexiones
 
 **Del modelo de datos**, el paso 2 hace cumplir al escribir el título obligatorio (código 2,
 `missing_title`), la distinción entre un campo `string` de una línea y un campo `text` (código 2,
-`malformed_string_value`, sobre `title`, `author` y el texto de un criterio),
+`malformed_string_value`, sobre `title`, `author`, el texto de un criterio y, desde la tarea
+`TASK-96`, cada elemento de `references`),
 el alfabeto de las etiquetas y las personas (`malformed_label` y `malformed_assignee`), la forma de
 la clave del orden manual (`malformed_ordinal`, que era el `invalid_number` del entero hasta que
 `ordinal` pasó a ser una clave de texto, [abajo](#el-orden-manual)) y las claves de los criterios.
@@ -1002,13 +1003,23 @@ al programa. Las anclas que cubre son el párrafo "Cómo se escribe cada valor d
   como dice la especificación, devuelve exactamente los valores de partida, sobre una batería fija y otra
   aleatoria), y en `cmd/biso/card_refs_test.go`, que recorre el binario: la coma, la barra, las dos listas
   que no deben compartir línea, el `--json` sin escape y el valor de la ficha copiado en `--rm-refs`.
-- **Una referencia con un salto de línea queda sin decidir.** `--add-refs` la acepta y la ficha parte
-  entonces la línea `refs` en dos. La frase general de que ningún `string` admite un salto de línea
-  literal está en ["El modelo de datos de una tarea"](modelo-de-datos/index.md), pero la sección
-  ["El salto de línea en un campo `string`"](valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)
-  solo enumera `title`, `author` y el `text` de un criterio, y ninguna regla cubre `references`. La
-  decisión y la página de `biso get` lo dicen como excepción a la lectura exacta de la ficha, y su
-  tratamiento se decide aparte.
+- **Una referencia con un salto de línea se rechaza al escribirla, tarea `TASK-96`.** La comprobación
+  es la constante `StringFieldReference` (`"reference"`) de `internal/model/validate.go`, con su
+  entrada en `stringFieldNouns`, y un bucle sobre `t.References` en `Task.Validate()` que llama a
+  `ValidateStringField` para cada elemento, igual que ya hacía con `t.Labels`. `Task.Validate()` es el
+  único punto de paso de las tres vías que pueden dejar un salto de línea en una referencia,
+  `--add-refs`, `new --from` e `init --from`, así que ese único cambio basta para las tres: lo
+  comprueban `internal/board/tasks.go:429`, `internal/ops/new.go:102`, `internal/ops/set.go:250` e
+  `internal/ops/batch.go:375`, que llaman todos a `task.Validate()` antes de escribir. El error es el
+  mismo `malformed_string_value` (código 2) que ya usan `title`, `author` y el texto de un criterio,
+  con `field` igual a `reference`. Las pruebas están en `internal/model/validate_test.go`
+  (`TestValidateRejectsANewlineInEveryStringField`, que ahora suma los tres casos de una referencia
+  con `\n`, con `\r` y con `\r\n`, y `TestValidateAcceptsAnOrdinaryReference`, que confirma que una
+  referencia con coma, barra invertida o espacios sigue aceptándose) y en
+  `cmd/biso/reference_newline_test.go`, que recorre el binario por las tres vías: el flag, `new --from`
+  y `init --from`. La prueba de simetría entre `biso export` y `biso new --from`
+  (`TestExportAndNewFromLeaveTwoIdenticalBoards` y `TestSnapshotAndInitFromLeaveTwoIdenticalBoards`,
+  en `cmd/biso/symmetry_test.go`) sigue pasando sin tocarla.
 
 ### Qué dejó hecho el cierre de la definición única de tarea ilegible
 

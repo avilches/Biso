@@ -954,6 +954,53 @@ distinga y una referencia así no es un caso que valga añadir una notación nue
 
 ---
 
+## Una referencia con un salto de línea se rechaza al escribirla
+
+**La decisión.** Una referencia que contiene un `\r` o un `\n` literal se rechaza al escribirla, con
+el mismo error que ya usan `title`, `author` y el texto de un criterio: `malformed_string_value`,
+código 2, con `field` igual a `reference`. La comprobación se aplica en `Task.Validate()`, el único
+punto por el que pasan las tres vías que pueden dejar un salto de línea en una referencia, `--add-refs`,
+`biso new --from` y `biso init --from`, así que un solo cambio basta para las tres. No se sustituye
+el salto de línea por otra cosa, ni se escapa al imprimirlo en la ficha: una referencia con un salto de
+línea, sencillamente, no llega a guardarse. Ningún otro campo de lista necesita esta misma regla:
+`labels` y `assignees` ya la excluyen porque su alfabeto cerrado (letras, dígitos y los símbolos
+`- _ . : @`, ["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token)) no admite
+un salto de línea entre sus caracteres válidos, y `dependencies` siempre se resuelve a un identificador
+de tarea válido antes de guardarse (["Las relaciones entre tareas"](../spec/modelo-de-datos/relaciones.md#dependencies-la-precedencia)),
+así que tampoco hay ningún camino por el que un salto de línea sobreviva hasta el almacén.
+
+**Por qué.** `references` es del tipo `list<string>`
+(["El modelo de datos de una tarea"](../spec/modelo-de-datos/index.md#el-modelo-de-datos-de-una-tarea)),
+y cada uno de sus elementos es, por tanto, un `string`: el mismo tipo que ya declara, sin excepción,
+que "ningún `string` admite un salto de línea literal"
+(["El salto de línea en un campo `string`"](../spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)).
+Antes de esta decisión, `references` era el único campo de lista de la especificación sin ninguna
+restricción de caracteres, precisamente porque su contenido es una URL o una ruta y no admite el
+alfabeto cerrado de `labels` y `assignees`
+(["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token)); pero un salto de línea
+no es un carácter que una URL o una ruta necesiten, así que rechazarlo no deja fuera ningún caso
+legítimo, y aplicar aquí la misma regla que ya rige el resto de los `string` de la tarea es la opción
+más consistente con lo que la especificación ya afirmaba. Tampoco hace falta un tercer mecanismo de
+escape junto a los dos que ya usa la ficha de `biso get` para una lista, la coma y la barra invertida
+(["La ficha escapa la coma y la barra invertida de una lista"](#la-ficha-escapa-la-coma-y-la-barra-invertida-de-una-lista)):
+rechazar el valor en el punto de entrada quita el problema de raíz, en vez de arrastrarlo hasta la
+salida y pedirle a la ficha que lo disfrace.
+
+**Alternativas descartadas, y por qué.**
+
+- **Sustituir el salto de línea por otra cosa** (un espacio, por ejemplo) al guardar la referencia. Se
+  descarta porque el programa no cambia en silencio el valor que alguien escribió en ningún otro campo
+  de texto libre: `title`, `author` y el texto de un criterio se rechazan, nunca se corrigen solos.
+  Sustituir aquí rompería esa garantía, y nadie podría predecir, sin leer el código, en qué se convirtió
+  el texto que tecleó.
+- **Escaparlo en la ficha** (imprimirlo como la secuencia literal `\n`, por ejemplo). Se descarta porque
+  añadiría un tercer carácter de escape a la línea `refs`, junto a la coma y la barra invertida que ya
+  usa, y solo arreglaría la lectura por `biso get`: el valor seguiría siendo guardable por
+  `--json` y por el lote, dejando en el almacén un `string` con un salto de línea que contradice la
+  definición de ese tipo en el resto del modelo de datos.
+
+---
+
 ## Una tarea ilegible es la misma para todos los comandos de lectura
 
 **La decisión.** Una tarea es ilegible por una sola definición, la de la lista completa de

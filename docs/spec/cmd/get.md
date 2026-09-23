@@ -118,9 +118,11 @@ referencia. La línea entera no: el espacio que sigue a cada coma separadora for
 del valor, y un flag que recibe `a\,b, c.md` entiende la segunda referencia como ` c.md`, con su espacio.
 
 **Una excepción a la lectura exacta.** Una referencia cuyo valor es exactamente `-` se imprime igual que
-una lista vacía, porque la regla de entrada no define ningún escape que la distinga. Y un valor con un
-salto de línea queda fuera de lo dicho aquí: la ficha lo imprimiría partiendo la línea, y su tratamiento
-se decide aparte.
+una lista vacía, porque la regla de entrada no define ningún escape que la distinga. No hace falta una
+excepción parecida para el salto de línea: una referencia con un `\r` o un `\n` se rechaza al
+escribirla (["Una referencia con un salto de línea se rechaza al
+escribirla"](../../decisiones/detalles.md#una-referencia-con-un-salto-de-línea-se-rechaza-al-escribirla)),
+así que la ficha nunca tiene una que partir.
 
 La ficha sigue siendo un formato de presentación, y quien lea los valores con un programa los lee en
 `--json`, donde cada uno es un elemento de la lista y nunca lleva escape. La razón de esta regla, y las

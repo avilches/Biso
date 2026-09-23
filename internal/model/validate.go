@@ -83,25 +83,30 @@ func allowedToken(value, symbols string) bool {
 	return true
 }
 
-// The three values the `field` key takes on a malformed_string_value error,
+// The four values the `field` key takes on a malformed_string_value error,
 // per docs/spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string.
 // They name the field of the JSON envelope and not the flag that wrote it:
 // the same criterion text arrives through --add-ac and through an import,
-// and the reason it is rejected is the same one.
+// and the reason it is rejected is the same one. StringFieldReference is
+// singular, unlike the plural list it validates an element of, because the
+// field names the one string that failed and not the whole list
+// (docs/spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string).
 const (
 	StringFieldTitle         = "title"
 	StringFieldAuthor        = "author"
 	StringFieldCriterionText = "criterion_text"
+	StringFieldReference     = "reference"
 )
 
-// stringFieldNouns is how each of those three names itself in the message.
+// stringFieldNouns is how each of those four names itself in the message.
 // The specification writes only the title one literally, `error: malformed
-// title: "first line\nsecond line"`, so the other two follow its shape
+// title: "first line\nsecond line"`, so the other three follow its shape
 // with the field's own name in prose.
 var stringFieldNouns = map[string]string{
 	StringFieldTitle:         "title",
 	StringFieldAuthor:        "author",
 	StringFieldCriterionText: "criterion text",
+	StringFieldReference:     "reference",
 }
 
 // ValidateStringField answers the error of
@@ -178,6 +183,17 @@ func (t *Task) Validate() error {
 	}
 	for _, label := range t.Labels {
 		if err := ValidateLabel(label); err != nil {
+			return err
+		}
+	}
+	// references is the one list field whose element carries no closed
+	// alphabet of its own, so it is the one list that needs this check: a
+	// label or an assignee outside its alphabet already excludes a line
+	// break, and a dependency is always resolved to a valid task id before
+	// it reaches here
+	// (docs/decisiones/detalles.md#una-referencia-con-un-salto-de-línea-se-rechaza-al-escribirla).
+	for _, reference := range t.References {
+		if err := ValidateStringField(StringFieldReference, reference); err != nil {
 			return err
 		}
 	}
