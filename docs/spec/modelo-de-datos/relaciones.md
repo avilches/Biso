@@ -51,8 +51,11 @@ preferido es información para quien elige, no una verja.
 
 Las dependencias son la única de estas relaciones que entra en un cálculo, con los dos términos de
 ["La urgencia"](urgencia.md#la-urgencia) y los filtros `--blocked` y `--not-blocked` de
-["`biso ls`"](../cmd/ls.md), y la única que se valida al escribirla, con la existencia de la tarea y
-la detección de ciclos de ["Las familias de flags"](../familias-de-flags.md#campos-de-lista-que-admiten-coma).
+["`biso ls`"](../cmd/ls.md), y la única que se valida contra el resto del tablero al escribirla, con la
+existencia de la tarea y la detección de ciclos de
+["Las familias de flags"](../familias-de-flags.md#campos-de-lista-que-admiten-coma). La comprobación
+de ["Los punteros: `references`"](#los-punteros-references) es de forma y no de tablero: no mira si
+existe ninguna otra tarea, solo si el texto lleva un salto de línea.
 
 ## Los punteros: `references`
 
