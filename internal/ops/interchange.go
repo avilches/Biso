@@ -369,6 +369,12 @@ var (
 	textLists     = []string{"assignees", "labels", "dependencies", "references"}
 	criteriaLists = []string{"acceptanceCriteria", "definitionOfDone"}
 	pointerLists  = []string{"documentation", "modifiedFiles"}
+	// commentLists holds only "comments", apart from the other three because
+	// its element takes neither of their shapes: a comment is always an
+	// object, never a bare string, so anything else in its place, null
+	// included, fails the line
+	// (docs/spec/cmd/new.md#el-modo-lote).
+	commentLists = []string{"comments"}
 )
 
 // checkElements is the failure of a value that is not text where a list of
@@ -403,6 +409,13 @@ func checkElements(raw map[string]json.RawMessage) error {
 				}
 			default:
 				return fmt.Errorf("%s.%d: expected text or an object, got %s", key, i, kind)
+			}
+		}
+	}
+	for _, key := range commentLists {
+		for i, element := range rawElements(raw[key]) {
+			if kind := jsonKind(element); kind != "object" {
+				return fmt.Errorf("%s.%d: expected an object, got %s", key, i, kind)
 			}
 		}
 	}
@@ -703,9 +716,12 @@ func readCriteria(t *model.Task, criteria []wireCriterion) error {
 	return nil
 }
 
-// readComments is readCriteria for the comments, with the one difference
-// the specification gives them: a comment with no createdAt is stamped with
-// the instant of the import.
+// readComments is readCriteria for the comments, with two differences the
+// specification gives them: a comment with no createdAt is stamped with the
+// instant of the import, and an empty or blank body fails the line instead
+// of being dropped, because a comment with nothing in it is not a hole that
+// can be skipped but a comment missing the one thing that makes it one
+// (docs/spec/cmd/new.md#el-modo-lote).
 func readComments(t *model.Task, comments []wireComment, now time.Time) error {
 	highest := 0
 	for _, c := range comments {
@@ -715,7 +731,10 @@ func readComments(t *model.Task, comments []wireComment, now time.Time) error {
 	}
 	t.NextCommentKey = highest + 1
 	seen := map[int]bool{}
-	for _, c := range comments {
+	for i, c := range comments {
+		if isEmpty(c.Body) {
+			return fmt.Errorf("comments.%d: comment body cannot be empty", i)
+		}
 		at := now
 		if c.CreatedAt != nil {
 			instant, err := readInstant("comments.createdAt", *c.CreatedAt)

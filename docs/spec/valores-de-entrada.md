@@ -47,6 +47,7 @@ como si llega de un fichero vacío o de una entrada estándar vacía. La regla e
 | En un flag que sustituye (`--replace-labels`) | Deja el campo vacío, igual que `--clear-labels`. Sustituir por nada es vaciar, y eso sí es explícito |
 | En un campo escalar (`--type ""`, `--priority ""`) | Error 3. **La cadena vacía nunca es la forma de borrar un escalar**; para eso está `--clear-type` |
 | En el título, al crear | Error 2: `error: title cannot be empty` |
+| En `--comment`, incluido el texto posicional de `biso comment`, que es la misma escritura escrita de otra forma | Error 2: `error: --comment cannot be empty`. No sigue la regla del flag que añade: un comentario es contenido, no una decoración que se pueda descartar en silencio, la misma razón por la que el título tampoco la sigue. La razón completa está en ["Un comentario vacío o `null` en un lote es un fallo de validación"](../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación) |
 | En un elemento de una lista de un lote (`biso new --from`, `biso init --from`) | Se descarta y no se guarda nada, como en un flag que añade. `biso new --from` lo avisa una vez por línea y por lista, y `biso init --from` no avisa. Ver ["Un elemento vacío en un lote"](#un-elemento-vacío-en-un-lote) |
 
 **El `code` de un escalar vacío depende de si el campo tiene vocabulario cerrado.** Para `status`,
@@ -95,8 +96,12 @@ elemento vacío, porque una línea de comandos tiene pocos; un lote puede tener 
 que `biso new --from` avisa una vez por cada línea y cada lista, con la cuenta de lo descartado. La
 razón está en la decisión enlazada al final de esta sección.
 
-**Los comentarios no entran en esta regla.** Un comentario es un objeto con un cuerpo y se trata
-aparte de las listas de texto libre y de tokens (["El modo lote"](cmd/new.md#el-modo-lote)).
+**Los comentarios no entran en esta regla, y no se descartan: se rechazan.** Un comentario es un
+objeto con un cuerpo y un autor, no un elemento de texto suelto, y un cuerpo vacío o un elemento
+`null` en `comments` es un fallo de validación de la línea (`invalid_line`), la misma familia que un
+`null` en cualquier otra lista y no la del elemento que se descarta. La regla completa está en
+["El modo lote"](cmd/new.md#el-modo-lote) y la razón en
+["Un comentario vacío o `null` en un lote es un fallo de validación"](../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación).
 
 **Lo que sí es un error es un `null` en lugar de un elemento.** Un elemento de una lista tiene que
 ser texto, y `null` no lo es, igual que un número tampoco lo es. Es el fallo de validación que ya

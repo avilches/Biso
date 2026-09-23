@@ -243,6 +243,20 @@ Las reglas del lote, todas obligatorias:
   contador de comentarios de esa tarea, y una `key` repetida dentro de los comentarios de la misma
   tarea es un fallo de validación. Es lo que hace cierta la simetría de `biso export` para la clave de
   un comentario (["`biso export`"](export.md)).
+  **Un elemento de `comments` que no es un objeto, o cuyo `body` está vacío o es solo espacios, es un
+  fallo de validación de la línea y no se descarta con aviso.** No sigue la regla del elemento vacío
+  de más abajo, que es de las listas de texto libre y de tokens: un comentario es un objeto con
+  cuerpo y autor, y un cuerpo vacío no es un hueco inocente sino un comentario al que le falta lo
+  único que lo hace un comentario, la misma razón por la que un `title` vacío tampoco se descarta.
+  Falla igual un elemento `null` en el lugar de un comentario, que un objeto sin `body` o con `body`
+  vacío, y ninguno de los dos guarda nada. El `code` es `invalid_line`, el mismo de un `null` en
+  cualquier otra lista:
+  ```
+  line 7: comments.1: expected an object, got null
+  line 9: comments.0: comment body cannot be empty
+  ```
+  La razón completa, con las alternativas que se descartaron, está en
+  ["Un comentario vacío o `null` en un lote es un fallo de validación"](../../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación).
 - **`question` se acepta como objeto** con `author`, `askedAt` y `body` (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)) en el lote de `--from`.
   `askedAt` es opcional y, si falta, se pone el instante de la importación, igual que `createdAt` en
   `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.
@@ -339,7 +353,7 @@ Las reglas del lote, todas obligatorias:
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
   órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta. **Y un `null` que
   ocupa el sitio de un elemento de una lista es también un fallo de validación**, en cualquiera de
-  las listas del bullet de arriba (`comments` no está entre ellas, ver más abajo), porque un elemento tiene que ser texto y `null` no lo es, como
+  las listas del bullet de arriba, porque un elemento tiene que ser texto y `null` no lo es, como
   tampoco lo es un número: no se trata como el elemento vacío, que sí es texto. Es un `invalid_line`
   con código 3, que nombra la lista y la posición del elemento, y lo mismo vale para un `null` en el
   `text` de un criterio dado como objeto:
@@ -356,9 +370,9 @@ Las reglas del lote, todas obligatorias:
   elemento se descarta.
   `documentation: null` y `modifiedFiles: null` son la clave ausente, y un `null` dentro de la lista
   de cualquiera de las dos es este mismo fallo.
-  **`comments` queda fuera de la regla del elemento vacío y de este `null` de elemento**: es una lista
-  de objetos con un cuerpo y se trata aparte, así que esta regla cubre las listas de texto libre y de
-  tokens y no cambia lo que hoy hace un lote con un comentario vacío.
+  **`comments` queda fuera de esta regla, con la suya propia**, ya descrita en el bullet de arriba
+  que define esa clave: no se descarta con aviso ni un cuerpo vacío ni un `null` en su lugar, los dos
+  fallan la línea.
 - **`labels` se valida línea a línea con la regla de las etiquetas con ámbito.** Una etiqueta vacía no
   es una etiqueta mal formada, sino un elemento vacío que se descarta (bullet de arriba). Una etiqueta mal
   formada, una clave escrita con `::` que recibe más de un valor, una clave con los dos separadores

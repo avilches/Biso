@@ -207,7 +207,8 @@ formato de intercambio no declara), `id_taken` (un `id` que el tablero ya tiene,
 veces en el mismo fichero), `invalid_lease` (cualquiera de las dos mitades de la invariante de
 ["El vaciado"](lease.md#el-vaciado) rota en una línea), `invalid_line` (una línea que no se puede
 interpretar como una tarea del formato: JSON mal formado, un valor del tipo equivocado, un `null` en
-una lista, una fecha ilegible o una clave de criterio o de comentario repetida) y
+una lista, una fecha ilegible, una clave de criterio o de comentario repetida, o un comentario sin
+cuerpo, incluido un `null` en el lugar de un elemento de `comments`) y
 `invalid_snapshot_id`, que ["`biso init`"](cmd/init.md) ya nombraba en su tabla de casos y que esta
 lista no llevaba. Los cuatro primeros viajan siempre dentro de `details`, porque el lote los agrupa
 bajo un `batch_invalid`.

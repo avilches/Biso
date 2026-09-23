@@ -488,6 +488,30 @@ func TestCommentAppendsACommentAndSaysWhichKeyItTook(t *testing.T) {
 	}
 }
 
+// Unlike `biso note`, an empty or blank text is always an error: the
+// positional is the same call as --comment written the short way, and the
+// two give the same error (docs/spec/valores-de-entrada.md#el-valor-vacío).
+func TestCommentWithAnEmptyTextIsAUsageErrorAndWritesNothing(t *testing.T) {
+	h := newHarness(t)
+	id := h.create("Normalize CRLF")
+
+	_, err := CommentOn(h.b, h.env, CommentParams{Ref: id, Texts: texts("   ")})
+
+	e := specError(t, err)
+	if e.ExitCode != 2 || e.Code != "unexpected_argument" {
+		t.Fatalf("error = %d/%s, want 2/unexpected_argument", e.ExitCode, e.Code)
+	}
+	if e.Message != "--comment cannot be empty" {
+		t.Errorf("message = %q", e.Message)
+	}
+	if e.Field != "comments" {
+		t.Errorf("field = %q, want comments", e.Field)
+	}
+	if len(h.load(id).Comments) != 0 {
+		t.Errorf("an empty comment was written")
+	}
+}
+
 // The author is free text, validated against nothing, and the leading "@"
 // is never a file reference.
 func TestCommentTakesItsAuthorExactlyAsItIsWritten(t *testing.T) {
