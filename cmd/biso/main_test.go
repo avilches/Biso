@@ -21,6 +21,7 @@ import (
 
 var (
 	buildOnce  sync.Once
+	binaryDir  string
 	binaryPath string
 	buildErr   error
 )
@@ -34,6 +35,7 @@ func binary(t *testing.T) string {
 			buildErr = err
 			return
 		}
+		binaryDir = dir
 		binaryPath = filepath.Join(dir, "biso")
 		out, err := exec.Command("go", "build", "-o", binaryPath, ".").CombinedOutput()
 		if err != nil {
@@ -45,6 +47,52 @@ func binary(t *testing.T) string {
 		t.Fatalf("biso did not build: %v\n%s", buildErr, binaryPath)
 	}
 	return binaryPath
+}
+
+// TestMain removes the temporary directory the compiled binary lives in once
+// the whole suite has run, so that a repeated `go test -count=N` or many
+// separate invocations do not leave one biso-binary* directory per process
+// behind in the system's temporary directory.
+func TestMain(m *testing.M) {
+	code := m.Run()
+	if binaryDir != "" {
+		os.RemoveAll(binaryDir)
+	}
+	os.Exit(code)
+}
+
+// TestTheBinaryCompilesForTheSuite exercises binary directly, instead of
+// relying on some other test in the file to call it and keep its name, so
+// that this file always has at least one test that builds the binary.
+func TestTheBinaryCompilesForTheSuite(t *testing.T) {
+	path := binary(t)
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("the compiled binary is not at %s: %v", path, err)
+	}
+}
+
+// TestTheBuildDirectoryIsRemovedWhenTheSuiteExits runs a second copy of this
+// package's tests as a subprocess, pointed at a temporary directory of its
+// own through TMPDIR, and checks that no biso-binary* directory is left
+// there once the subprocess has exited. The temporary directory is created
+// fresh by t.TempDir, so it carries no residue from earlier runs.
+func TestTheBuildDirectoryIsRemovedWhenTheSuiteExits(t *testing.T) {
+	tmpdir := t.TempDir()
+
+	cmd := exec.Command("go", "test", "-count=1", "-run", "^TestTheBinaryCompilesForTheSuite$", ".")
+	cmd.Env = append(os.Environ(), "TMPDIR="+tmpdir)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("the subprocess suite failed: %v\n%s", err, out)
+	}
+
+	leftover, err := filepath.Glob(filepath.Join(tmpdir, "biso-binary*"))
+	if err != nil {
+		t.Fatalf("globbing %s: %v", tmpdir, err)
+	}
+	if len(leftover) > 0 {
+		t.Errorf("biso-binary* directories left behind in TMPDIR: %v", leftover)
+	}
 }
 
 type call struct {
