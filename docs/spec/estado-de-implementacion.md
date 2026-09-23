@@ -1137,6 +1137,48 @@ decisiones y, de forma indirecta, la regla 11 de
   cero inversiones. El análisis completo, con las tres tablas y sus matices, está en
   ["La revisión adversarial y sus dos hallazgos"](../decisiones/vocabulario-y-mensaje-de-arranque.md#la-revisión-adversarial-y-sus-dos-hallazgos).
 
+### Qué dejó hecho el comentario vacío como fallo de validación
+
+La tarea `TASK-95` aplicó
+["Un comentario vacío o `null` en un lote es un fallo de validación"](../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación)
+al programa. Las anclas que cubre son la fila de `--comment` de
+["El valor vacío"](valores-de-entrada.md#el-valor-vacío), el párrafo de los comentarios de
+["`biso comment`"](cmd/verbos-del-ciclo.md#biso-comment), el bullet de `comments` de
+["El modo lote"](cmd/new.md#el-modo-lote) y el párrafo que aparta los comentarios de la regla del
+elemento vacío en ["Un elemento vacío en un lote"](valores-de-entrada.md#un-elemento-vacío-en-un-lote):
+
+- **El texto posicional de `biso comment` da ahora el mismo error que su propio flag.** Antes de esta
+  tarea, `biso comment MYP-11 ""` avisaba con `empty_append` y no guardaba nada, como si fuera un
+  `--append-note`, mientras que `--comment ""` ya daba `error: --comment cannot be empty` con código 2.
+  El arreglo vive en `textChanges`, en `internal/ops/verbs.go`, la función que comparte `biso note` y
+  `biso comment`: cuando el paso de escritura es `StepComment`, un texto vacío o de solo espacios corta
+  la llamada entera con el mismo `code` `unexpected_argument`, el mismo mensaje y el mismo campo
+  `comments` que ya daba el flag, en vez de convertirse en un aviso. `biso note` sigue avisando, porque
+  su paso es `StepAdd` y la condición nueva no le afecta.
+- **En el modo lote, un elemento de `comments` que no es un objeto, `null` incluido, es `invalid_line`.**
+  Se comprueba en `checkElements`, en `internal/ops/interchange.go`, sobre los elementos sin decodificar
+  de la lista, con la misma técnica que ya usaban las demás listas para distinguir un `null` de un
+  elemento vacío: el mensaje es `comments.N: expected an object, got <tipo>`, con el tipo que trajera la
+  línea (`null`, `string`, `number`...). Es una categoría propia, `commentLists`, aparte de las listas de
+  texto y de las de criterios, porque un comentario no admite la forma de cadena suelta que sí admiten
+  `acceptanceCriteria` y `definitionOfDone`.
+- **Un objeto de `comments` cuyo `body` está vacío o es solo espacios también es `invalid_line`.** Se
+  comprueba en `readComments`, sobre el `body` ya decodificado, con el mensaje `comments.N: comment body
+  cannot be empty`; una clave `body` ausente decodifica como cadena vacía y cae en el mismo caso. La
+  línea falla antes de reservar ninguna clave, exactamente como cualquier otro `invalid_line` del lote:
+  no queda ningún comentario a medias ni ningún contador movido. Un `body` con contenido se guarda tal
+  cual llegó, sin recortar los espacios, igual que hace el flag.
+- **`biso init --from` sigue la misma regla que `biso new --from`**, porque las dos leen con la misma
+  `decodeTask`: no hay ningún camino del programa que pueda dejar un comentario sin cuerpo en un
+  tablero, así que la pregunta de qué debería exportar uno vacío no llega a plantearse.
+- **La simetría entre `biso export` y `biso new --from` se comprobó y sigue pasando**, sin que hiciera
+  falta tocarla: como ningún tablero válido puede tener ya un comentario vacío, no había ningún caso que
+  romper.
+- **Las pruebas** están en `internal/ops/verbs_test.go` (el texto posicional vacío de `biso comment`,
+  que ahora es error y no aviso) y en `internal/ops/batch_empty_items_test.go` (el elemento que no es un
+  objeto, con `null`, una cadena y un número, y el cuerpo vacío, de solo espacios o ausente, incluida una
+  línea con dos comentarios donde el segundo es el que falla).
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según

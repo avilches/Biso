@@ -750,8 +750,10 @@ decidido, no un efecto secundario: un elemento vacío no dice nada, y lo que esa
 rechazando es un elemento que sí dice algo y lo dice mal.
 
 **Los comentarios quedan fuera de esta decisión.** Esta regla cubre las listas de texto libre y de
-tokens; los comentarios son objetos con un cuerpo y se tratan aparte, así que un elemento de
-`comments` no se descarta por estar vacío ni cambia con esta entrada.
+tokens; los comentarios son objetos con un cuerpo y se tratan aparte. Lo que hacía la versión sin
+corregir con un elemento vacío de `comments`, guardarlo tal cual sin descartarlo ni avisar, ya no es
+cierto: tiene su propia regla, más estricta que esta, en
+["Un comentario vacío o `null` en un lote es un fallo de validación"](#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación).
 
 **Por qué se descarta y no se rechaza.** La regla de que un valor que no existe es siempre un error
 protege a quien lee una lista de una lectura falsa: un filtro mal escrito que devolviera vacío se
@@ -812,6 +814,68 @@ los detecta ni los repara.
   versión publicada los escribió: solo un tablero de desarrollo los tiene y se limpia una vez con
   `export | new --from`, mientras que una comprobación nueva de `doctor` sería permanente para un caso
   que no puede darse en un tablero escrito con esta regla.
+
+---
+
+## Un comentario vacío o `null` en un lote es un fallo de validación
+
+**La decisión.** En `comments`, a diferencia de `assignees`, `labels`, `dependencies`, `references` y
+`acceptanceCriteria`, un elemento vacío no se descarta con aviso: la línea entera falla como
+`invalid_line`, dentro del `batch_invalid` de siempre. Falla igual un objeto cuyo `body` está vacío o
+es solo espacios que un elemento `null` en el lugar de un comentario; ninguno de los dos guarda nada
+y ninguno se limita a avisar. La regla vive en
+["El modo lote"](../spec/cmd/new.md#el-modo-lote) y en
+["Un elemento vacío en un lote"](../spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote), que
+remite aquí.
+
+**Por qué un comentario no sigue la regla del elemento vacío.** Esa regla, de la entrada anterior,
+vale para una lista de texto libre o de tokens, donde un elemento vacío no dice nada y descartarlo no
+pierde ningún dato que el fichero afirmara. Un comentario no es eso: es un objeto con autor y cuerpo,
+el registro de que alguien dijo algo, y un cuerpo vacío no es una forma de "nada que añadir" sino un
+comentario al que le falta lo único que lo hace un comentario. La comparación que importa no es con
+`references` sino con el título: un título vacío tampoco se descarta en silencio al importar un lote,
+es el mismo `error: title cannot be empty` que da la línea de comandos
+(["El modo lote"](../spec/cmd/new.md#el-modo-lote) trae el ejemplo `line 201: title cannot be
+empty`). `comments` sigue esa misma familia y no la de las listas de texto libre.
+
+**La misma regla ya vale en la línea de comandos, y esta decisión la extiende al fichero.** `--comment
+""`, tanto en `biso set` y en `biso new` como en el propio `biso comment` (por su flag `--comment` o
+por su texto posicional, que es la misma escritura escrita de otra forma), es siempre `error:
+--comment cannot be empty`, código 2, nunca el aviso `empty_append` que sí reciben `--append-note` o
+`--add-labels`. Antes de esta decisión el texto posicional de `biso comment` no seguía esa regla:
+avisaba y no añadía nada, como si fuera un `--append-note`, en vez de fallar como ya hacía su propio
+flag `--comment`. Es una incoherencia dentro del mismo comando, no solo entre comandos distintos, y
+esta decisión también la cierra: las dos formas de escribir el mismo comentario dan ahora el mismo
+error. Con la línea de comandos y el fichero de acuerdo, ningún camino del programa puede dejar
+guardado un comentario sin cuerpo.
+
+**La simetría se mantiene, y de forma más fuerte que en la entrada anterior.** Allí la simetría se
+sostenía en que ningún flag guarda un elemento vacío y el lote tampoco. Aquí, además, ningún camino
+puede siquiera crear un comentario sin cuerpo, así que ningún tablero llega a tenerlo, y la pregunta
+de qué debería hacer `biso export` si alguna vez escribiera uno vacío no llega a plantearse: no hay
+ninguna instantánea válida que lo contenga. Es la misma garantía que ya vale para `title`.
+
+**Alternativas descartadas, y por qué.**
+
+- **Descartar el elemento con aviso, como las demás listas.** Es la opción que la entrada anterior
+  elige para `references` y compañía, y aquí se descarta por la razón de arriba: un cuerpo vacío no es
+  un hueco inocente que se pueda quitar sin perder nada, es el único dato que hace de un objeto un
+  comentario. Tratarlo como un hueco dejaría entrar por el fichero lo que la línea de comandos ya
+  rechaza, exactamente la asimetría que se discutió y se descartó para el título.
+- **Aceptarlo y guardar un comentario sin cuerpo**, que es lo que hacía la versión sin corregir: crea
+  un `Comment` con `author: null` y `body: ""`. Se descarta porque ningún flag puede producir ese
+  mismo objeto, así que sería una tarea que solo un fichero de importación puede dejar, y la ficha de
+  `biso get` mostraría un comentario en blanco que `--rm-comment` sí puede borrar pero que nada más en
+  el programa sabe explicar ni sabe producir.
+- **Dejar el texto posicional de `biso comment` avisando, como hacía antes, y hacer fallar solo el
+  flag `--comment` y el lote.** Mantendría la incoherencia dentro del mismo comando: la misma llamada,
+  escrita de dos maneras, seguiría dando dos resultados distintos según cuál de las dos se usara. Se
+  descarta por la misma razón que unifica el flag y el lote entre sí.
+- **Un `code` propio para el cuerpo vacío**, en vez de reutilizar `invalid_line`. Se descarta porque
+  `invalid_line` ya cubre un `null` de tipo equivocado en cualquier otra lista y una clave de
+  comentario repetida: un cuerpo vacío es la misma familia de fallo, una línea que no se puede
+  interpretar como una tarea válida del formato, y no una regla de vocabulario nueva que necesite
+  distinguirse de las demás por su código.
 
 ---
 

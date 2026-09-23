@@ -433,6 +433,14 @@ hint: the keys of the acceptance criteria of one task do not name the same thing
 | borrar uno o varios enteros | `--rm-comment <sel>` | sí |
 | corregir solo la fecha de uno o varios | `--set-comment-date <sel>=<instante>` | sí |
 
+**`--comment` añade, pero un valor vacío no sigue la regla de un flag que añade.** `--add-labels ""` y
+`--append-note ""` no añaden nada y avisan (["El valor vacío"](valores-de-entrada.md#el-valor-vacío));
+`--comment ""` es en cambio `error: --comment cannot be empty`, código 2. Un comentario es el cuerpo
+de una conversación, no una decoración prescindible, así que sigue la regla del título y no la de una
+etiqueta o una nota de más: crear con un cuerpo vacío está tan mal escrito como crear sin título. La
+razón, con las alternativas que se descartaron, está en
+["Un comentario vacío o `null` en un lote es un fallo de validación"](../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación).
+
 **No existe un flag que edite el cuerpo o el autor de un comentario ya escrito, y no va a
 existir.** Un comentario es el registro de una conversación, y lo único que se concede aquí es
 corregir un metadato (la fecha) o retirar el comentario entero, nunca reescribir lo que se dijo. La

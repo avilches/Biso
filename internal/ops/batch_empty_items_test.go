@@ -326,6 +326,7 @@ func TestBatchRefusesANullInThePlaceOfAnElement(t *testing.T) {
 		{`{"title":"a","acceptanceCriteria":[null]}`, "acceptanceCriteria.0: expected text or an object, got null"},
 		{`{"title":"a","acceptanceCriteria":["x",{"key":2,"text":null}]}`, "acceptanceCriteria.1.text: expected text, got null"},
 		{`{"title":"a","definitionOfDone":[{"text":null}]}`, "definitionOfDone.0.text: expected text, got null"},
+		{`{"title":"a","comments":[{"author":"@sara","body":"First"},null]}`, "comments.1: expected an object, got null"},
 	} {
 		if got := h.assertBatchFails(c.line); got != "line 1: "+c.message {
 			t.Errorf("%s\n  message = %q\n  want      %q", c.line, got, "line 1: "+c.message)
@@ -334,6 +335,40 @@ func TestBatchRefusesANullInThePlaceOfAnElement(t *testing.T) {
 		if e := specError(t, err).Details[0]; e.Code != "invalid_line" || e.ExitCode != 3 {
 			t.Errorf("%s: %d/%s, want 3/invalid_line", c.line, e.ExitCode, e.Code)
 		}
+	}
+}
+
+// TestBatchRefusesAnInvalidComment is
+// docs/decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación:
+// a comment does not follow the rule of the empty element, it fails the
+// line instead, whether the element is not an object at all or is an
+// object whose body is empty, only spaces, or missing.
+func TestBatchRefusesAnInvalidComment(t *testing.T) {
+	h := newHarness(t)
+	for _, c := range []struct{ line, message string }{
+		{`{"title":"a","comments":[null]}`, "comments.0: expected an object, got null"},
+		{`{"title":"a","comments":["x"]}`, "comments.0: expected an object, got string"},
+		{`{"title":"a","comments":[7]}`, "comments.0: expected an object, got number"},
+		{`{"title":"a","comments":[{"author":"@sara","body":""}]}`, "comments.0: comment body cannot be empty"},
+		{`{"title":"a","comments":[{"author":"@sara","body":"   "}]}`, "comments.0: comment body cannot be empty"},
+		{`{"title":"a","comments":[{"author":"@sara"}]}`, "comments.0: comment body cannot be empty"},
+		{`{"title":"a","comments":[{"body":"ok"},{"author":"@sara","body":""}]}`, "comments.1: comment body cannot be empty"},
+	} {
+		if got := h.assertBatchFails(c.line); got != "line 1: "+c.message {
+			t.Errorf("%s\n  message = %q\n  want      %q", c.line, got, "line 1: "+c.message)
+		}
+		_, err := h.batch(c.line)
+		if e := specError(t, err).Details[0]; e.Code != "invalid_line" || e.ExitCode != 3 {
+			t.Errorf("%s: %d/%s, want 3/invalid_line", c.line, e.ExitCode, e.Code)
+		}
+	}
+	// A comment whose body has real content is written as it came, without
+	// trimming, exactly like the flag (docs/spec/valores-de-entrada.md#el-valor-vacío).
+	if _, err := h.batch(`{"title":"Good","comments":[{"author":"@sara","body":" real "}]}`); err != nil {
+		t.Fatal(err)
+	}
+	if got := h.load("MYP-1").Comments[0].Body; got != " real " {
+		t.Errorf("body = %q, want the untrimmed text", got)
 	}
 }
 
