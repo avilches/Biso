@@ -57,8 +57,12 @@ donde ninguna tarea usa `due`, `proximidad` vale siempre 0.0 en todas las tareas
 de mayor peso de la fórmula no aporta nada a la urgencia de ninguna: queda inerte sin que la fórmula
 cambie ni haya que retirar nada. El 2026-09-21 se midió que `due` está en 0 de las 535 tareas de los
 seis tableros de Backlog.md de esta máquina, con el flag `--due-date` (y su opuesto
-`--clear-due-date`) disponible en el CLI de origen: es un cero de decisión, no de imposibilidad, y la
-clase de cero que cambia el día que el tablero lo use otra persona con un compromiso de fecha.
+`--clear-due-date`) disponible en el CLI de Backlog.md 1.52.0: es un cero de decisión, no de
+imposibilidad. El campo se conserva por dos motivos: `due` está en cuatro de las siete herramientas
+comparadas en ["Estado del arte"](../../estado-del-arte/compatibilidad-de-modelos.md#resumen) y es,
+después del título y del estado, el campo más universal del espacio; y este cero dice más sobre estos
+seis tableros, de una sola persona sin plazos externos, que sobre el campo, porque es la clase de
+cero que cambia el día que el tablero lo use otra persona con un compromiso de fecha.
 
 **El redondeo, `hoy` y las unidades de tiempo, sin ambigüedad:**
 

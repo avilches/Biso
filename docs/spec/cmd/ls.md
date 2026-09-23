@@ -159,7 +159,7 @@ Ocho columnas fijas, separadas por dos espacios, en este orden y con estos conte
 columnas.** En un tablero donde ninguna tarea usa `due` queda vacía, con `-`, en todas las filas de
 todas las llamadas: no hay ninguna fecha límite que mostrar. Cuánto se usa `due` hoy en esta máquina,
 medido con su fecha, y por qué el campo se conserva de todas formas, está en la nota sobre
-`urgency.due` de ["La urgencia"](../modelo-de-datos/urgencia.md).
+`urgency.due` de ["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia).
 
 **El formato se calcula así, en dos pasos, siempre en este orden:**
 
