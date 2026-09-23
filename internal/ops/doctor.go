@@ -148,22 +148,23 @@ var checkRank = map[string]int{
 	"status_role_unknown":     4,
 	"status_role_invalid":     5,
 	"dependency_not_found":    6,
-	"dependency_cycle":        7,
-	"parent_cycle":            8,
-	"duplicate_criterion_key": 9,
+	"parent_not_found":        7,
+	"dependency_cycle":        8,
+	"parent_cycle":            9,
+	"duplicate_criterion_key": 10,
 	// The three checks of the scoped labels sit where the table of
 	// docs/spec/cmd/doctor.md#qué-comprueba puts them, between the repeated
 	// criterion keys and the lease.
-	"label_not_declared":         10,
-	"label_exclusive_violated":   11,
-	"label_key_mixed_separators": 12,
-	"lease_invariant":            13,
-	"highest_id_behind":          14,
-	"marker_missing":             15,
-	"marker_id_mismatch":         16,
-	"extra_root_unreadable":      17,
-	"unsafe_wal_filesystem":      18,
-	"ignore_file_mismatch":       19,
+	"label_not_declared":         11,
+	"label_exclusive_violated":   12,
+	"label_key_mixed_separators": 13,
+	"lease_invariant":            14,
+	"highest_id_behind":          15,
+	"marker_missing":             16,
+	"marker_id_mismatch":         17,
+	"extra_root_unreadable":      18,
+	"unsafe_wal_filesystem":      19,
+	"ignore_file_mismatch":       20,
 }
 
 // inTableOrder sorts the findings the way the table lists the checks. The
@@ -326,6 +327,12 @@ func (d *doctor) checkTasks(tasks []*model.Task) error {
 			if _, ok := byID[dep]; !ok {
 				d.problem(t.ID, "dependency_not_found",
 					fmt.Sprintf("dependency %s does not exist", dep))
+			}
+		}
+		if t.Parent != "" {
+			if _, ok := byID[t.Parent]; !ok {
+				d.problem(t.ID, "parent_not_found",
+					fmt.Sprintf("parent %s does not exist", t.Parent))
 			}
 		}
 		d.checkCycle(t, byID, reportedDependency, "dependency_cycle", "dependency cycle",

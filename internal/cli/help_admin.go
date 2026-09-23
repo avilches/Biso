@@ -94,15 +94,15 @@ const configHelp = "Usage: biso config get <key>\n" +
 const doctorHelp = "Usage: biso doctor [options]\n" +
 	"\n" +
 	"Check the board for duplicate ids, unreadable tasks, values that are no longer\n" +
-	"configured, a broken status-role invariant, broken dependencies, dependency\n" +
-	"cycles, parent cycles, repeated criterion keys, a stored label the labels list\n" +
-	"does not allow, a task with more than one value of a :: label key, a label key\n" +
-	"used with both separators, a lease on a task that is not both active and\n" +
-	"assigned, a recorded highest id that has fallen behind, a database that fails\n" +
-	"its integrity check, a missing or mismatched <id>.id marker, an extra board\n" +
-	"root that cannot be read, an exclusion file that no longer matches the\n" +
-	"configured vcs, and a board directory on a filesystem where SQLite's WAL mode\n" +
-	"is not safe.\n" +
+	"configured, a broken status-role invariant, broken dependencies, a parent that\n" +
+	"does not exist, dependency cycles, parent cycles, repeated criterion keys, a\n" +
+	"stored label the labels list does not allow, a task with more than one value of\n" +
+	"a :: label key, a label key used with both separators, a lease on a task that\n" +
+	"is not both active and assigned, a recorded highest id that has fallen behind,\n" +
+	"a database that fails its integrity check, a missing or mismatched <id>.id\n" +
+	"marker, an extra board root that cannot be read, an exclusion file that no\n" +
+	"longer matches the configured vcs, and a board directory on a filesystem where\n" +
+	"SQLite's WAL mode is not safe.\n" +
 	"\n" +
 	"Options:\n" +
 	"      --fix      repair what can be repaired without a decision\n" +

@@ -103,6 +103,36 @@ func TestDoctorReportsStatusesThatCannotHoldThreeDistinctRoles(t *testing.T) {
 		"doctor")
 }
 
+// TestDoctorReportsAParentThatDoesNotExist is the row symmetric to a
+// dependency that points nowhere: a `parent` naming a task the board does
+// not have. It is a separate check from a parent cycle, so a report that
+// finds this one never also carries `parent_cycle` (docs/spec/cmd/doctor.md
+// criterion #3 of TASK-74): one looks at whether the task exists at all, the
+// other at whether following the chain of parents ever comes back around.
+func TestDoctorReportsAParentThatDoesNotExist(t *testing.T) {
+	m := oneTaskBoard(t)
+	m.execOnBoard(t, boardOf(m), `UPDATE task SET parent = 'MYP-99' WHERE id = 'MYP-1'`)
+
+	got := m.run(t, "doctor").assertCode(t, 6)
+	if !strings.Contains(got.stdout, "  MYP-1  parent MYP-99 does not exist") {
+		t.Errorf("the report does not carry the broken parent:\n%s", got.stdout)
+	}
+
+	problems, _ := doctorCodes(t, m, "doctor")
+	found := false
+	for _, code := range problems {
+		if code == "parent_cycle" {
+			t.Errorf("a parent that does not exist was also reported as a parent cycle:\n%v", problems)
+		}
+		if code == "parent_not_found" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("the report did not carry the code parent_not_found:\n%v", problems)
+	}
+}
+
 // TestDoctorReportsADependencyCycleAndAParentCycle is the pair of rows that
 // name the whole ring and report it once and not once per task in it.
 func TestDoctorReportsADependencyCycleAndAParentCycle(t *testing.T) {
@@ -261,12 +291,13 @@ func TestTheCounterSaysSoWhenNoIdentifierWasEverRecorded(t *testing.T) {
 func TestTheReportComesOutInTheOrderOfTheTableOfChecks(t *testing.T) {
 	m := brokenBoard(t)
 	dir := filepath.Join(m.dir, "board")
-	// One finding of five different checks, produced in an order that is
+	// One finding of six different checks, produced in an order that is
 	// not the one of the table: the lease and the unconfigured type are found
 	// in the same pass over the tasks, and the role is found before it.
 	m.execOnBoard(t, dir, `UPDATE task SET lease_expires_at = '2026-09-06T13:12:04Z',
 		lease_holder = '@claude' WHERE id = 'MYP-41'`)
 	m.execOnBoard(t, dir, `UPDATE task SET type = 'nonesuch' WHERE id = 'MYP-42'`)
+	m.execOnBoard(t, dir, `UPDATE task SET parent = 'MYP-98' WHERE id = 'MYP-43'`)
 	m.execOnBoard(t, dir,
 		`UPDATE board_config SET value = 'Doing' WHERE key = 'active_status'`)
 	m.write(t, filepath.Join(dir, ".gitignore"), "board.db\n")
@@ -277,6 +308,7 @@ func TestTheReportComesOutInTheOrderOfTheTableOfChecks(t *testing.T) {
 		"value_not_configured",
 		"status_role_unknown",
 		"dependency_not_found",
+		"parent_not_found",
 		"lease_invariant",
 		"highest_id_behind",
 	}, "the errors")
