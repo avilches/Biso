@@ -64,6 +64,7 @@ func getParams(p *Parsed) (ops.GetParams, error) {
 		Ref:            p.Positionals[0],
 		Sections:       p.Values("section"),
 		ExplainUrgency: p.Has("explain-urgency"),
+		Closure:        p.Has("closure"),
 	}
 	switch {
 	case p.Has("id"):
@@ -87,7 +88,7 @@ func renderCard(r *ops.GetResult) string {
 			printed = append(printed, section)
 		}
 	}
-	if len(printed) == 0 && r.Task.Breakdown == nil {
+	if len(printed) == 0 && r.Task.Breakdown == nil && r.Task.Closure == nil {
 		return ""
 	}
 
@@ -105,6 +106,10 @@ func renderCard(r *ops.GetResult) string {
 	if r.Task.Breakdown != nil {
 		b.WriteString("\n")
 		b.WriteString(renderUrgency(r.Task))
+	}
+	if r.Task.Closure != nil {
+		b.WriteString("\n")
+		b.WriteString(renderClosure(r.Task))
 	}
 	return b.String()
 }
@@ -221,6 +226,11 @@ func metaBlock(v ops.TaskView) string {
 	pair("due", orDash(dueCell(t)), "ordinal", ordinalCell(t))
 	pair("created", minute(t.CreatedAt), "updated", minute(t.UpdatedAt))
 	pair("depends", joined(t.Dependencies), "blocks", joined(v.Blocks))
+	// blocked by/unblocks are the transitive closure's two counts, always
+	// printed even at zero, because zero is a fact about the task and not
+	// the absence of one (docs/spec/cmd/get.md#salida).
+	single("blocked by", fmt.Sprintf("%d total", v.BlockedByCount))
+	single("unblocks", fmt.Sprintf("%d total", v.UnblocksCount))
 	if !t.LeaseExpiresAt.IsZero() {
 		// The two fields of a lease appear and disappear together, so one
 		// line carries both. A task without one does not print the line,
@@ -313,6 +323,31 @@ func renderUrgency(v ops.TaskView) string {
 		strings.Repeat("-", ruleWidth) + "\n")
 	fmt.Fprintf(&out, "%*s\n", totalWidth, strconv.FormatFloat(noNegativeZero(b.Sum), 'f', 2, 64))
 	return out.String()
+}
+
+// renderClosure is the block of --closure: the full transitive closure of
+// `dependencies` in both directions, with the same two counts the block of
+// metadata already carries and, this time, the complete list of
+// identifiers each one reaches (docs/spec/cmd/get.md#--closure).
+func renderClosure(v ops.TaskView) string {
+	c := v.Closure
+	var b strings.Builder
+	b.WriteString("closure\n")
+	b.WriteString(closureLine("blocked by", v.BlockedByCount, c.BlockedBy))
+	b.WriteString(closureLine("unblocks", v.UnblocksCount, c.Unblocks))
+	return b.String()
+}
+
+// closureLine is one line of that block: the label padded to the eleven
+// cells of the block of metadata, the count as `N total`, two literal
+// spaces, and the list of identifiers, or the usual dash when it is empty
+// (docs/spec/cmd/get.md#--closure).
+func closureLine(label string, count int, ids []string) string {
+	list := dash
+	if len(ids) > 0 {
+		list = strings.Join(ids, ", ")
+	}
+	return "  " + pad(label, metaLabelWidth) + fmt.Sprintf("%d total", count) + "  " + list + "\n"
 }
 
 // The widths of that block: the coefficient ends at coefficientWidth cells,

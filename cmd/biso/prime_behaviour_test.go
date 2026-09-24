@@ -210,9 +210,12 @@ func TestPrimeLimitSharesItsRowsBetweenTwoBlocks(t *testing.T) {
 	if n := len(blockOf(got.stdout, "ASSIGNED TO YOU")); n != 2 {
 		t.Errorf("ASSIGNED TO YOU printed %d lines and not two:\n%s", n, got.stdout)
 	}
-	// One row and the count line the two blocks share.
-	if n := len(blockOf(got.stdout, "NEXT UP")); n != 2 {
-		t.Errorf("NEXT UP printed %d lines and not a row plus its count:\n%s", n, got.stdout)
+	// One row, its own transitive-unblocking line (it is MYP-7, the first
+	// and only row NEXT UP keeps), and the count line the two blocks
+	// share.
+	if n := len(blockOf(got.stdout, "NEXT UP")); n != 3 {
+		t.Errorf("NEXT UP printed %d lines and not a row, its extra line and its count:\n%s",
+			n, got.stdout)
 	}
 	if !strings.Contains(got.stdout, "  51 more not shown: `biso ls --not-active --not-waiting`\n") {
 		t.Errorf("the shared count line is wrong:\n%s", got.stdout)

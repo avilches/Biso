@@ -43,6 +43,7 @@ type GetParams struct {
 	// when it asked for none, which is the whole card.
 	Sections       []string
 	ExplainUrgency bool
+	Closure        bool
 }
 
 // GetResult is what `biso get` answers.
@@ -125,6 +126,10 @@ func GetOn(b *board.Board, env Env, p GetParams) (*GetResult, error) {
 	if viewErr != nil {
 		return nil, viewErr
 	}
+	// blocked by/unblocks are always part of the card's block of metadata,
+	// with or without --closure (docs/spec/cmd/get.md#salida); the flag
+	// only decides whether the full lists are filled too.
+	view = r.withClosure(view, p.Closure)
 
 	result := &GetResult{
 		Task:      view,

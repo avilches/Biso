@@ -83,8 +83,18 @@ func getObject(r *ops.GetResult) map[string]any {
 	object["summary"] = orNull(t.Summary)
 	object["comments"] = commentsObject(t.Comments)
 	object["question"] = questionObject(t.Question)
+	// blockedByCount and unblocksCount are ordinary keys of the block of
+	// metadata, like blocks or urgency, and not governed by a flag: they
+	// are always present, with or without --closure
+	// (docs/spec/cmd/get.md#el-esquema-json). They are not in task.list,
+	// which is why taskObject does not carry them.
+	object["blockedByCount"] = r.Task.BlockedByCount
+	object["unblocksCount"] = r.Task.UnblocksCount
 	if r.Task.Breakdown != nil {
 		object["urgencyBreakdown"] = breakdownObject(r.Task.Breakdown)
+	}
+	if r.Task.Closure != nil {
+		object["closure"] = closureObject(r.Task.Closure)
 	}
 	if r.WholeCard {
 		return object
@@ -96,21 +106,36 @@ func getObject(r *ops.GetResult) map[string]any {
 			for key := range taskObject(r.Task) {
 				wanted[key] = true
 			}
+			wanted["blockedByCount"] = true
+			wanted["unblocksCount"] = true
 			continue
 		}
 		for _, key := range sectionKeys[section] {
 			wanted[key] = true
 		}
 	}
-	// urgencyBreakdown is governed by its own flag and not by a section,
-	// so --explain-urgency keeps it whatever was asked for.
+	// urgencyBreakdown and closure are governed by their own flag and not
+	// by a section, so --explain-urgency and --closure keep them whatever
+	// was asked for with --section.
 	wanted["urgencyBreakdown"] = true
+	wanted["closure"] = true
 	for key := range object {
 		if !wanted[key] {
 			delete(object, key)
 		}
 	}
 	return object
+}
+
+// closureObject is `closure` of docs/spec/cmd/get.md#el-esquema-json: the
+// complete transitive closure in each direction, finished and archived
+// tasks included, never filtered the way blockedByCount and unblocksCount
+// are.
+func closureObject(c *ops.Closure) map[string]any {
+	return map[string]any{
+		"blockedBy": list(c.BlockedBy),
+		"unblocks":  list(c.Unblocks),
+	}
 }
 
 // breakdownObject is the `urgencyBreakdown` of

@@ -268,3 +268,95 @@ func TestTheErrorOfAnAmbiguousReferenceStillPrintsAsAnOrdinaryError(t *testing.T
 		t.Errorf("the message is %q", e.Message)
 	}
 }
+
+// TestClosureCountsAreAlwaysPresentButTheListsOnlyWithTheFlag is the split
+// docs/spec/cmd/get.md#salida draws between blockedByCount/unblocksCount,
+// which every call answers, and the full lists of
+// docs/spec/cmd/get.md#--closure, which only --closure fills.
+func TestClosureCountsAreAlwaysPresentButTheListsOnlyWithTheFlag(t *testing.T) {
+	h := newHarness(t)
+	blocker := h.create("The blocker")
+	h.create("Depends on it", add("add-deps", blocker))
+
+	without := h.get(GetParams{Ref: blocker})
+	if without.Task.Closure != nil {
+		t.Error("the closure lists were computed without --closure")
+	}
+	if without.Task.UnblocksCount != 1 {
+		t.Errorf("unblocksCount = %d, want 1", without.Task.UnblocksCount)
+	}
+
+	with := h.get(GetParams{Ref: blocker, Closure: true})
+	if with.Task.Closure == nil {
+		t.Fatal("the closure lists are missing with --closure")
+	}
+	if !reflect.DeepEqual(with.Task.Closure.Unblocks, []string{"MYP-2"}) {
+		t.Errorf("unblocks = %v", with.Task.Closure.Unblocks)
+	}
+	if len(with.Task.Closure.BlockedBy) != 0 {
+		t.Errorf("blockedBy = %v, want none", with.Task.Closure.BlockedBy)
+	}
+}
+
+// TestClosureWalksThroughACycleWithoutHangingOrRepeating is the first of
+// the two mandatory edge cases of TASK-78: a cycle in the dependency graph
+// never makes the walk fail or hang, and the task the closure was asked
+// for never appears in its own closure even though the cycle reaches it
+// (docs/spec/cmd/get.md#--closure).
+//
+// The cycle is closed by writing straight to the store, because the write
+// path already refuses to create one (internal/ops/consistency.go,
+// checkGraph): the only way a real board carries one is damage from
+// outside the program, which is exactly the case this test stands in for.
+func TestClosureWalksThroughACycleWithoutHangingOrRepeating(t *testing.T) {
+	h := newHarness(t)
+	a := h.create("A")
+	b := h.create("B", add("add-deps", a))
+	c := h.create("C", add("add-deps", b))
+	// A -> C closes the cycle A -> C -> B -> A: A already depends on
+	// nothing, and now it depends on C, which depends on B, which depends
+	// on A.
+	task := h.load(a)
+	task.Dependencies = []string{c}
+	if err := h.b.Tasks.Save(task); err != nil {
+		t.Fatalf("closing the cycle: %v", err)
+	}
+
+	r := h.get(GetParams{Ref: a, Closure: true})
+
+	want := []string{b, c}
+	if !reflect.DeepEqual(r.Task.Closure.BlockedBy, want) {
+		t.Errorf("blockedBy = %v, want %v", r.Task.Closure.BlockedBy, want)
+	}
+	if !reflect.DeepEqual(r.Task.Closure.Unblocks, want) {
+		t.Errorf("unblocks = %v, want %v", r.Task.Closure.Unblocks, want)
+	}
+	if r.Task.BlockedByCount != 2 || r.Task.UnblocksCount != 2 {
+		t.Errorf("counts = %d/%d, want 2/2", r.Task.BlockedByCount, r.Task.UnblocksCount)
+	}
+}
+
+// TestClosureExcludesADependencyThatPointsAtNoTask is the second mandatory
+// edge case: a dependency that names an identifier the board does not have
+// adds nothing to the closure and the walk does not try to go past it
+// (docs/spec/cmd/get.md#--closure). --add-deps itself refuses a reference
+// that does not resolve, so the dangling value is written straight to the
+// store, the same way an external edit to the database would leave one.
+func TestClosureExcludesADependencyThatPointsAtNoTask(t *testing.T) {
+	h := newHarness(t)
+	id := h.create("A task")
+	task := h.load(id)
+	task.Dependencies = []string{"MYP-999"}
+	if err := h.b.Tasks.Save(task); err != nil {
+		t.Fatalf("writing the dangling dependency: %v", err)
+	}
+
+	r := h.get(GetParams{Ref: id, Closure: true})
+
+	if len(r.Task.Closure.BlockedBy) != 0 {
+		t.Errorf("blockedBy = %v, want none", r.Task.Closure.BlockedBy)
+	}
+	if r.Task.BlockedByCount != 0 {
+		t.Errorf("blockedByCount = %d, want 0", r.Task.BlockedByCount)
+	}
+}

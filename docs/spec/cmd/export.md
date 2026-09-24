@@ -191,7 +191,7 @@ Its shaping flags (--sort, --limit, --all, --ids, --count) do not apply either.
 line, while --json means the single envelope every other command prints.
 
 Derived fields are never written: urgency, acDone, acTotal, commentCount,
-blocks, blocked, waiting, leaseExpired.
+blocks, blocked, waiting, leaseExpired, blockedByCount, unblocksCount.
 
 Exit codes:
   0  exported       3  a filter value does not exist here

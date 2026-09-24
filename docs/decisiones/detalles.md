@@ -1157,3 +1157,76 @@ que se toma por un tablero vacío y que la especificación prohíbe.
 - **Contar la tarea ilegible en los recuentos de `biso prime`, con su estado guardado** se descarta
   porque su estado puede ser justo lo ilegible, y la línea de recuento pasaría a describir tareas que
   el mensaje no supo mirar, que es lo que ya decía `prime` de las tareas saltadas.
+
+---
+
+## El cierre transitivo del grafo de dependencias
+
+**La decisión.** El flag nuevo de `biso get` que imprime el cierre transitivo de `dependencies` se
+llama `--closure`. Imprime el grafo completo, con las tareas terminadas y archivadas incluidas, en las
+dos direcciones (["`biso get`"](../spec/cmd/get.md#--closure)); los dos recuentos que sí van siempre
+en la ficha, sin el flag, cuentan solo lo que sigue sin terminar (`blocked by`/`unblocks` en texto,
+`blockedByCount`/`unblocksCount` en JSON). Solo `biso get`, sobre una tarea, lo calcula: ni
+`biso ls` ni las cuatro listas de `biso prime` lo llevan, salvo la única línea con nombre propio de la
+primera fila de `NEXT UP` (["`biso prime`"](../spec/cmd/prime.md#la-salida-literal)). Un ciclo de
+dependencias o una dependencia que apunta a una tarea que no existe no hacen fallar ni colgarse el
+recorrido: lo primero se recorre sin repetir un identificador ya visitado y sin avisar de nada, lo
+segundo simplemente no añade ningún identificador al cierre.
+
+**Por qué `--closure` y no `--transitive` ni `--graph`.** `--transitive` es un adjetivo sin sujeto: no
+dice qué es lo que se vuelve transitivo sin leer la ayuda, mientras que "cierre" (`closure`) es el
+sustantivo exacto del concepto de teoría de grafos que el flag calcula, el mismo que usa la
+descripción de esta misma decisión. `--graph` se descarta porque sugiere una vista del grafo entero
+del tablero, y el flag es estrictamente el cierre de una sola tarea, la que se pidió con `<ref>`; un
+nombre que prometiera el tablero entero decepcionaría a quien lo probara. Un tercer candidato,
+`--explain-blocking`, con el mismo prefijo que `--explain-urgency`, se descarta porque "blocking" y
+"blocked" ya nombran los dos términos booleanos de la fórmula de urgencia
+(["La urgencia"](../spec/modelo-de-datos/urgencia.md#la-urgencia)): reutilizar ese vocabulario para un
+recuento transitivo distinto invitaría a confundir el término de la fórmula, que sigue siendo
+booleano, con el cierre completo, que no lo es.
+
+**Por qué la lista que imprime el flag es el grafo completo y el recuento no.** Las dos cifras
+existen para responder preguntas distintas: el recuento responde "¿cuánto de esto sigue bloqueando de
+verdad, hoy?", y por eso cuenta solo lo que sigue sin terminar, con la misma definición que ya usan
+los términos `bloquea` y `bloqueada` de la urgencia. El flag responde "¿cómo es el grafo alrededor de
+esta tarea?", una pregunta de auditoría a la que una tarea ya terminada le sigue perteneciendo: sigue
+siendo verdad que depende de ella, o que ella depende de otra, aunque ya no bloquee nada. Filtrar
+también la lista habría dejado dos cifras que siempre miden lo mismo, el tamaño de la lista y el
+recuento, y no habría ninguna razón para tener las dos.
+
+**Por qué el recorrido no señala un ciclo ni avisa de una dependencia rota.** `biso doctor` ya
+diagnostica los dos casos, con sus propios `code` (`dependency_cycle` y `dependency_not_found`,
+["`biso doctor`"](../spec/cmd/doctor.md#qué-comprueba)), y repetir el diagnóstico en cada
+`biso get --closure` que pase por la tarea dañada sería ruido y no información nueva, además de una
+segunda fuente de verdad sobre el mismo hecho. `--closure` es una vista de lectura, así que se limita
+a dar una respuesta correcta y terminar: ignora el identificador dañino y sigue con el resto del
+grafo, que es la respuesta más útil a "qué desbloquea esto" cuando parte del grafo está corrupto, en
+vez de negarse a contestar nada.
+
+**Por qué solo `biso get` lo calcula, y ninguna fila de `biso ls` ni de `biso prime`.** El coste de un
+cierre transitivo es proporcional al tamaño de la cadena de dependencias de una tarea, no una
+constante, y `biso ls` imprime hasta 300 tareas de una vez: repetirlo fila a fila multiplicaría ese
+coste por cada una, sin que nadie lo hubiera pedido, justo lo que prohíbe la primera regla de
+["El presupuesto de arranque"](../spec/presupuestos.md#el-presupuesto-de-arranque). `biso get` lee una
+sola tarea, así que paga el coste de una sola cadena; `biso prime` paga el de una, la primera fila de
+`NEXT UP`, y ninguna más, por la misma razón.
+
+**Alternativas descartadas, y por qué.**
+
+- **Que el cierre en sí, no solo el recuento, se filtre a tareas sin terminar**, como ya hace `blocks`
+  con sus dependientes directos, se descarta por la razón de arriba: habría dejado la lista y el
+  recuento siempre iguales, sin ganar nada por tener los dos.
+- **Que un ciclo se señale con una nota por stderr o con una marca en la lista** se descarta porque
+  `biso doctor` ya es el sitio con nombre propio para ese diagnóstico, y una vista de lectura que
+  avisara de daño en el almacén cada vez que lo atraviesa duplicaría esa responsabilidad sin
+  añadir ninguna información que `doctor` no dé ya, más despacio y en cada llamada en vez de una sola
+  vez.
+- **Que `biso ls --json` y las cuatro listas de `biso prime --json` lleven `blockedByCount` y
+  `unblocksCount` en cada tarea**, para simetría con `blocks` o `urgency`, se descarta por el coste:
+  son las dos únicas claves de un objeto de tarea que no valen una constante, y añadirlas a un listado
+  de 300 tareas sería el mismo trabajo que 300 llamadas a `biso get`, en una sola invocación que hoy
+  cabe en el presupuesto de 25 milisegundos.
+- **Que `biso prime` lleve la línea de desbloqueo transitivo en más de una fila de `NEXT UP`**, o en
+  las de `IN PROGRESS`, `NEEDS ANSWER` y `ASSIGNED TO YOU`, se descarta por la misma razón de coste:
+  cada fila adicional es un cierre transitivo más que nadie pidió, y el mensaje de arranque ya tiene
+  su propio tope de tamaño (["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)) que una línea por fila agotaría mucho antes.

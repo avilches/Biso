@@ -3,7 +3,7 @@
 ## Firma
 
 ```
-biso get <ref> [--id] [--match] [--section <name>]... [--explain-urgency]
+biso get <ref> [--id] [--match] [--section <name>]... [--explain-urgency] [--closure]
 ```
 
 ## Parámetros
@@ -15,6 +15,7 @@ biso get <ref> [--id] [--match] [--section <name>]... [--explain-urgency]
 | `--match` | no | booleano | falso | no | no | `--id` |
 | `--section <name>` | no | `meta`, `desc`, `ac`, `plan`, `notes`, `summary`, `comments`, `question` | todas | sí | sí | |
 | `--explain-urgency` | no | booleano | falso | no | no | |
+| `--closure` | no | booleano | falso | no | no | |
 
 `--section` sirve para pedir solo una parte. `biso get MYP-11 --section ac` imprime los criterios con
 sus claves y cuesta unas decenas de bytes en vez de la ficha entera, que es lo que hace falta antes de
@@ -25,6 +26,14 @@ marcar uno.
 plan,ac` y `--section ac,plan` imprimen lo mismo. Una sección repetida se guarda una vez, con la misma
 regla y el mismo aviso que cualquier flag repetible (["Repetición y listas separadas por
 comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)).
+
+**`--closure` es compatible con `--section`, con `--id` y con `--match`, sin ninguna
+excepción**, exactamente igual que `--explain-urgency`: los dos son flags que añaden un bloque propio
+al final de la ficha y no recortan ni dependen de qué secciones se pidieron
+(["`--closure`"](#--closure)). Sobre una referencia que no resuelve a una sola tarea (varias
+coincidencias, error 5; la tarea no se puede leer, error 3; no existe, error 4) no hay ninguna ficha
+que completar, así que `--closure` no tiene ningún efecto observable y no añade ningún código de
+salida propio.
 
 ## Comportamiento, caso a caso
 
@@ -56,6 +65,8 @@ labels     parser               parent     -
 due        -                    ordinal    -
 created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     MYP-40
+blocked by 0 total
+unblocks   2 total
 lease      2026-09-06 15:40     holder     @claude
 refs       docs/bugs/BUG-02.md, notes/a\,b.md
 
@@ -142,12 +153,53 @@ de ese campo es si la tarea tiene un sitio decidido a mano, que es lo que permit
 vecina de un `--above` o de un `--below`; la clave en crudo está en `--json`, que es donde la lee un
 programa.
 
+**`blocked by` y `unblocks` son las dos líneas que dan el recuento del cierre transitivo del grafo de
+dependencias**, es decir, no solo lo que esta tarea depende directamente y lo que depende
+directamente de ella (`depends` y `blocks`, arriba), sino toda la cadena: `blocked by` cuenta cuántas
+tareas tienen que terminar, siguiendo `dependencies` las veces que haga falta, antes de que esta sea
+tocable, y `unblocks` cuántas dependen de esta por esa misma cadena, en cualquier profundidad. Las dos
+cuentan solo tareas **sin terminar**, con la misma definición exacta que usan los términos `bloquea` y
+`bloqueada` de la fórmula de urgencia: ni en el estado terminal ni archivada
+(["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia)).
+
+Van en una línea propia cada una, sin pareja, con la forma `blocked by <n> total` y
+`unblocks <n> total`, entre `depends`/`blocks` y la línea condicional `lease`/`holder`. **Las dos
+salen siempre, aunque el recuento sea cero**, a diferencia de `lease`: un recuento de cero es un hecho
+sobre la tarea (no depende transitivamente de nada sin terminar, o no desbloquea nada) y no la ausencia
+de un dato, así que esconder la línea confundiría las dos cosas: es el mismo principio que en
+`--json` prohíbe que una clave presente se sustituya por su ausencia según el valor
+(["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias)), aplicado aquí a la
+salida de texto. Pertenecen al bloque de metadatos, así que las trae `--section meta` y ninguna otra
+sección, igual que el resto de las líneas de este bloque.
+
+**Es distinto de `blocks`, que sigue siendo solo directo y sin cambios.** `blocks` es la lista de
+identificadores que dependen directamente de esta tarea y siguen sin terminar
+(["Los campos derivados"](../modelo-de-datos/index.md#los-campos-derivados)); `unblocks` es su cierre
+transitivo, cuántos hay en cualquier profundidad de esa misma cadena. `MYP-11` del ejemplo de arriba
+tiene `blocks MYP-40` (un solo dependiente directo) y a la vez `unblocks 2 total`, porque `MYP-40`
+desbloquea a su vez a otra tarea sin terminar (["`--closure`"](#--closure) trae la cadena entera).
+`depends` es la contrapartida directa de `blocked by`, con la misma relación.
+
+**Estos dos recuentos son de `biso get` sobre una sola tarea, no de `biso ls`.** No están en el
+esquema de `task.list` (["`biso ls`"](ls.md#el-esquema-json)) ni en las cuatro listas de
+`biso prime` (["`biso prime`"](prime.md#el-esquema-json)), salvo la única excepción con nombre propio
+de la sección ["`biso prime`"](prime.md#la-salida-literal). La razón es
+["El presupuesto de arranque"](../presupuestos.md#el-presupuesto-de-arranque): calcular el cierre
+transitivo de una tarea cuesta proporcional al tamaño de su propia cadena de dependencias, y
+`biso ls` imprime hasta 300 a la vez, así que repetirlo tarea a tarea en un listado multiplicaría ese
+coste por cada fila sin que nadie lo hubiera pedido, justo lo que la regla 1 de ese presupuesto
+prohíbe. `biso get` lee una tarea, así que paga el coste de una sola cadena.
+
+Para el árbol completo de identificadores de cada cierre, con las tareas terminadas y archivadas
+incluidas, está el flag `--closure` (["`--closure`"](#--closure)).
+
 **La línea `lease` sale solo cuando la tarea tiene arrendamiento**, y entonces sale con sus campos:
 `lease` es `leaseExpiresAt`, con el mismo formato de instante que `created` y `updated`, y `holder` es
 `leaseHolder` (["El vaciado"](../lease.md#el-vaciado) de `lease.md`). Los dos aparecen y desaparecen juntos, porque esa misma regla no admite uno sin
 el otro. Pertenece al bloque de metadatos, así que la trae `--section meta` y no ninguna otra sección.
-Es la única línea condicional de ese bloque, y por eso va al final de las líneas de dos campos: así
-ninguna de las de arriba cambia de sitio según la tarea. Eso no choca con la regla de que la ficha
+Es la única línea condicional de ese bloque, la única que aparece o desaparece según la tarea, y por
+eso va al final de todas las líneas del bloque: así ninguna de las de arriba, `blocked by` y `unblocks`
+incluidas, cambia de sitio según la tarea. Eso no choca con la regla de que la ficha
 completa imprime las ocho secciones aunque estén vacías, porque lo condicional es una línea del bloque
 y no el bloque. Una tarea sin arrendamiento **no imprime la línea**, en vez de imprimirla con dos
 guiones, porque eso pondría dos guiones en la ficha de casi todas las tareas del tablero y la ausencia
@@ -209,11 +261,61 @@ urgency 0.0
   terminal status, urgency is zero by definition
 ```
 
+### `--closure`
+
+Con `--closure`, al final y por stdout, después del bloque de `--explain-urgency` si los dos se piden
+a la vez:
+
+```
+closure
+  blocked by 0 total  -
+  unblocks   2 total  MYP-40, MYP-71, MYP-72
+```
+
+Es el cierre transitivo completo del grafo de `dependencies`, en las dos direcciones, sobre `MYP-11`
+del ejemplo de arriba. En este tablero ficticio, `MYP-40` (la tarea que `MYP-11` bloquea
+directamente) tiene a su vez dos dependientes encadenados: `MYP-71`, "Migrate callers to the new
+config loader" (`To Do`), que depende de `MYP-40`, y `MYP-72`, "Remove the deprecated config loader
+path" (`Done`), que depende de `MYP-71`. El cierre hacia abajo de `MYP-11` es por tanto
+`MYP-40`, `MYP-71` y `MYP-72`, los tres identificadores completos, con `MYP-72` incluido aunque ya
+está terminada.
+
+**La lista es completa; el recuento no.** `unblocks 2 total` cuenta solo `MYP-40` y `MYP-71`, las dos
+tareas del cierre que siguen sin terminar, con la misma definición de más arriba (["Salida"](#salida));
+`MYP-72` entra en la lista igualmente, porque la lista describe el grafo entero tal cual está, no lo
+que queda por hacer. Es la diferencia deliberada entre lo que imprime el flag (el grafo, completo) y
+lo que imprime la ficha sin él (cuánto de ese grafo sigue bloqueando de verdad). No hay una tercera
+cifra "de la lista": quien la necesite cuenta los identificadores que imprime.
+
+Cada línea lleva la etiqueta rellenada a las once celdas del bloque de metadatos
+(["Salida"](#salida)), el recuento con la forma `N total`, dos espacios literales y la lista de
+identificadores separados por coma y espacio, en el mismo orden ascendente que usa `blocks`
+(["Los campos derivados"](../modelo-de-datos/index.md#los-campos-derivados)). Un identificador de
+tarea no puede llevar coma ni barra invertida
+(["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)), así que
+la lista no necesita ningún escape. Con un cierre vacío en esa dirección, la lista es el guion de
+siempre, como en `blocked by 0 total  -` de arriba, y nunca una lista vacía a secas.
+
+**El recorrido nunca falla ni se cuelga, sea cual sea el estado del almacén.** Es una vista de
+lectura, y cada cosa que podría romperla tiene una salida definida:
+
+| Caso | Qué imprime `--closure` |
+|---|---|
+| Un ciclo de dependencias en el grafo (["`biso doctor`"](doctor.md#qué-comprueba), `dependency_cycle`) | El recorrido no repite un identificador ya visitado y sigue por el resto del grafo; no señala el ciclo, porque diagnosticarlo es trabajo de `biso doctor` y no de esta vista de lectura |
+| Una dependencia que apunta a una tarea que no existe (["`biso doctor`"](doctor.md#qué-comprueba), `dependency_not_found`) | Ese identificador no entra en el cierre ni en el recuento: no hay ninguna tarea que añadir, y el recorrido no sigue más allá de él |
+| Una tarea del cierre que no se puede leer (["Qué se comprueba"](../garantias.md#qué-se-comprueba)) | Se excluye del cierre entero, de la lista y del recuento, con la misma razón que excluye a un dependiente ilegible de `blocks` (["Los campos derivados"](../modelo-de-datos/index.md#los-campos-derivados)): no se puede afirmar nada, ni que bloquea ni que sigue el grafo, de un dato que no se puede interpretar. El recorrido no sigue las dependencias de esa tarea, porque no se pueden leer |
+| Un ciclo que vuelve a la propia tarea de la que se pidió el cierre | La tarea de partida nunca aparece en su propio cierre, en ninguna de las dos direcciones, aunque el ciclo la alcance |
+
+Ninguno de los tres primeros casos avisa por stderr ni cambia el código de salida: `biso doctor` ya es
+el sitio donde se diagnostican, y repetir el aviso en cada `biso get --closure` sobre una tarea
+alcanzada por el daño sería ruido, no información nueva.
+
 ## El esquema JSON
 
 `data.task` lleva todas las claves de un objeto de ["`task.list`"](ls.md#el-esquema-json) más las del
 cuerpo (`description`, `acceptanceCriteria`, `plan`, `notes`, `summary`,
-`comments`, `question`). La lista completa de las primeras vive solo en `ls.md`; el ejemplo de abajo
+`comments`, `question`), más dos claves que no están en `task.list`: `blockedByCount` y
+`unblocksCount`. La lista completa de las primeras vive solo en `ls.md`; el ejemplo de abajo
 las repite todas para que sirva de esquema completo, verificable clave a clave:
 
 ```json
@@ -249,6 +351,8 @@ las repite todas para que sirva de esquema completo, verificable clave a clave:
       "waiting": false,
       "leaseExpired": false,
       "archived": false,
+      "blockedByCount": 0,
+      "unblocksCount": 2,
       "description": "The diff compares byte by byte...",
       "acceptanceCriteria": [ { "key": 1, "text": "The diff ignores CRLF", "checked": true },
                               { "key": 3, "text": "There is a test that covers it", "checked": false } ],
@@ -258,7 +362,8 @@ las repite todas para que sirva de esquema completo, verificable clave a clave:
       "comments": [ { "key": 1, "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "A user with a Windows clone..." } ],
       "question": null,
       "urgencyBreakdown": { "priority": 6.0, "active": { "value": 4.0, "reason": null }, "blocking": 8.0,
-                            "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 }
+                            "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 },
+      "closure": { "blockedBy": [], "unblocks": ["MYP-40", "MYP-71", "MYP-72"] }
     }
   }
 }
@@ -270,14 +375,40 @@ una urgencia que vale cero por definición, sin ningún término calculado, y la
 siempre que se escribe el flag, como promete la regla de abajo.
 
 **`urgencyBreakdown` solo sale con `--explain-urgency`**, igual que el desglose de la salida de texto, y
-el ejemplo de arriba es el de una llamada que la lleva. Es la única clave de todo el documento que un
-flag añade, y la excepción a la regla de las claves siempre presentes está declarada en la sección ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), junto
-con la otra cosa que `biso get` hace con sus flags: recortar `data.task` con `--section`.
+el ejemplo de arriba es el de una llamada que la lleva. Junto con `closure`, de más abajo, son las dos
+únicas claves de todo el documento que añade un flag en vez de una sección, y la excepción a la regla
+de las claves siempre presentes está declarada en la sección
+["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), junto con la otra
+cosa que `biso get` hace con sus flags: recortar `data.task` con `--section`.
 
 `urgencyBreakdown.active` es el único término que no es un número suelto: `value` es el número que
 entra en la suma, el producto del coeficiente por el factor, igual que en los demás términos.
 `reason` vale `null` cuando el término contribuye, y cuando contribuye `0.0` dice por qué:
 `"not_active"` si el estado no es el activo, y `"waiting"` si lo es pero hay una pregunta abierta.
+
+**`blockedByCount` y `unblocksCount` son el equivalente en JSON de las líneas `blocked by` y
+`unblocks` de la ficha de texto** (["Salida"](#salida)): dos enteros que cuentan las tareas sin
+terminar del cierre transitivo de `dependencies`, hacia arriba y hacia abajo. **Están siempre
+presentes**, con o sin `--closure`, porque a diferencia de `urgencyBreakdown` y de `closure` no los
+gobierna ningún flag: son dos claves ordinarias del bloque de metadatos, como `blocks` o `urgency`, y
+por eso `--section` sí los recorta (los trae `meta` y ninguna otra sección), mientras que ni
+`--section` ni la ausencia de `--closure` los hacen desaparecer del bloque `meta`. **No están en
+`task.list`, a diferencia del resto de claves de este bloque**: calcular el cierre transitivo de una
+tarea cuesta proporcional al tamaño de su propia cadena, y repetirlo en cada fila de un listado de
+hasta 300 violaría la primera regla de ["El presupuesto de arranque"](../presupuestos.md#el-presupuesto-de-arranque), así que
+`biso ls --json` y las cuatro listas de `biso prime --json` no las llevan
+(["`biso ls`"](ls.md#el-esquema-json), ["`biso prime`"](prime.md#el-esquema-json)).
+
+**`closure` solo sale con `--closure`**, con la misma regla que `urgencyBreakdown` y el mismo motivo:
+es el equivalente en JSON del bloque de texto de ["`--closure`"](#--closure), y `--section` no lo
+gobierna, así que aparece con el flag sea cual sea lo que se pidió con `--section`. `blockedBy` y
+`unblocks` son el cierre transitivo completo en cada dirección: todos los identificadores alcanzados,
+sin filtrar por si la tarea que nombran está terminada o archivada, ordenados igual que `blocks`
+(["Los campos derivados"](../modelo-de-datos/index.md#los-campos-derivados)); una lista vacía es `[]`,
+nunca `null`, con la regla general de ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias). Es la diferencia
+con `blockedByCount`/`unblocksCount`: la lista cuenta el grafo entero, el recuento solo lo que sigue
+sin terminar (["`--closure`"](#--closure) trae el porqué completo, con un ejemplo donde los dos
+difieren).
 
 **`ordinal` es una cadena o `null`**, y este sobre es el único sitio de `biso get` donde se puede
 leer la clave en crudo, porque la ficha de texto imprime `manual` en su lugar. La tarea del ejemplo
@@ -309,6 +440,10 @@ porque la tabla de `kind` de ["El sobre"](../contrato-json.md#el-sobre) le da `t
 | El almacén no responde | 8 |
 | No hay tablero | 20 |
 
+`--closure` no añade ningún código propio, con la misma tabla de arriba con `--closure` que sin él:
+como `--explain-urgency`, es un flag que decora una ficha ya resuelta y nunca decide por sí solo si la
+llamada acaba bien o mal.
+
 ## `biso get --help`
 
 ```
@@ -330,6 +465,8 @@ Options:
                              separated. One of: meta, desc, ac, plan, notes,
                              summary, comments, question
       --explain-urgency      show how the urgency number is built
+      --closure              show the full transitive closure of dependencies,
+                             both directions
   -h, --help                 show this help
 
 Exit codes:
@@ -344,6 +481,7 @@ Examples:
   biso get 11 --section ac
   biso get "CRLF"
   biso get MYP-11 --explain-urgency
+  biso get MYP-11 --closure
 ```
 
 ---

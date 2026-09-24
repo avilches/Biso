@@ -387,6 +387,7 @@ func getCommand() CommandSpec {
 				Domain: sections, DomainCode: "unknown_section",
 			},
 			{Name: "explain-urgency"},
+			{Name: "closure"},
 		},
 	}
 }

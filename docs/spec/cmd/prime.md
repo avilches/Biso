@@ -185,6 +185,7 @@ ASSIGNED TO YOU
 
 NEXT UP  (not assigned to you, by urgency)
   MYP-7   To Do        bug   high    Crash on an empty repository                      ac 0/4  -        2026-09-08
+    unblocks 6 tasks if finished first
   MYP-19  To Do        task  high    Retry the upload on 5xx                           ac 0/2  -        -
   MYP-44  To Do        bug   low     Wrong column width on narrow ttys                 ac 0/1  -        -
   49 more not shown: `biso ls --not-active --not-waiting`
@@ -292,12 +293,24 @@ Cómo se calcula el resumen, para que la implementación sea única:
   corte.
 - Las filas usan exactamente el algoritmo de columnas de `biso ls` de la sección ["`biso ls`"](ls.md), con una
   diferencia declarada aquí: el ancho de las columnas 1 a 7 se calcula sobre las filas de los cuatro
-  bloques juntas, **sin contar las líneas de pregunta ni las de arrendamiento vencido**, que no son
-  filas de la tabla, para que los cuatro bloques se lean como una sola tabla.
+  bloques juntas, **sin contar las líneas de pregunta, las de arrendamiento vencido ni la de
+  desbloqueo transitivo de más abajo**, que no son filas de la tabla, para que los cuatro bloques se
+  lean como una sola tabla.
 - `NEXT UP` es lo que no cae en ninguno de los tres bloques anteriores, no "lo que no ha empezado".
   Por eso su rótulo es `NEXT UP  (not assigned to you, by urgency)`, su línea de recuento tiene la
   forma `N more not shown: 'biso ls --not-active --not-waiting'`, y su clave en el esquema JSON del
   apartado ["El esquema JSON"](#el-esquema-json) es `hiddenCount`.
+- **La primera fila de `NEXT UP`, y solo ella, lleva una línea indentada más si desbloquea
+  transitivamente más de cero tareas sin terminar**, con la forma `unblocks <n> tasks if finished
+  first`, el mismo recuento que `unblocksCount` de ["`biso get`"](get.md#el-esquema-json) sobre esa
+  misma tarea. En el ejemplo de arriba, `MYP-7` desbloquea transitivamente 6 tareas sin terminar en
+  este tablero ficticio, así que lleva la línea; si valiera cero, no se imprimiría ninguna. Ninguna
+  otra fila de `IN PROGRESS`, `NEEDS ANSWER`, `ASSIGNED TO YOU` ni del resto de `NEXT UP` lleva esta
+  línea, ni siquiera cuando también desbloquea algo: es deliberadamente la única, para pagar el coste
+  de un solo cierre transitivo por llamada y no de una fila por cada una
+  (["El presupuesto de arranque"](../presupuestos.md#el-presupuesto-de-arranque)). Si el recorte en
+  cascada deja `NEXT UP` sin ninguna fila, la línea desaparece con ella, porque es parte de esa fila y
+  no del bloque.
 
 ## Lo que no depende del tablero
 
@@ -498,6 +511,17 @@ clave del mismo nombre en el esquema de `biso ls` (["`biso ls`"](ls.md#el-esquem
 bloque `BOARD` de la sección ["La salida literal"](#la-salida-literal): la línea de texto dice cuántas fueron y da el aviso; esta clave dice cuáles. Vacía
 cuando no se saltó ninguna, por la misma regla de la sección ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias) que mantiene `hiddenCount` en `0` en vez de
 omitir la clave.
+
+**La línea `unblocks <n> tasks if finished first` de la primera fila de `NEXT UP` no tiene
+contrapartida en el esquema JSON, a propósito y a diferencia de `leaseExpired`.** `nextUp[0]` no
+lleva ninguna clave nueva con ese recuento. La diferencia con `leaseExpired` es el coste: ese campo
+ya estaba calculado para las demás reglas de precedencia del bloque, así que dejarlo fuera del
+JSON solo escondería un dato que ya se tenía; el recuento transitivo, en cambio, es el único cálculo
+de todo `biso prime` que cuesta más que leer la propia tarea, y calcularlo dos veces (aquí y en el
+texto) para una sola fila no compra nada que `biso get MYP-7 --json` no dé ya. Quien pida `--json` y
+quiera ese número lo pide con `biso get <ref>` sobre la primera tarea de `nextUp`
+(["`biso get`"](get.md#el-esquema-json), clave `unblocksCount`), igual que ya hace para el cuerpo de
+la pregunta abierta unas líneas más arriba.
 
 ## Códigos de salida
 

@@ -77,6 +77,7 @@ ASSIGNED TO YOU
 
 NEXT UP  (not assigned to you, by urgency)
   MYP-7   To Do        bug   high    Crash on an empty repository                      ac 0/4  -        2026-09-08
+    unblocks 6 tasks if finished first
   MYP-19  To Do        task  high    Retry the upload on 5xx                           ac 0/2  -        -
   MYP-44  To Do        bug   low     Wrong column width on narrow ttys                 ac 0/1  -        -
   49 more not shown: `biso ls --not-active --not-waiting`

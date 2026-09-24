@@ -30,6 +30,8 @@
       "waiting": false,
       "leaseExpired": false,
       "archived": false,
+      "blockedByCount": 0,
+      "unblocksCount": 2,
       "description": "The diff compares byte by byte...",
       "acceptanceCriteria": [ { "key": 1, "text": "The diff ignores CRLF", "checked": true },
                               { "key": 3, "text": "There is a test that covers it", "checked": false } ],
@@ -39,7 +41,8 @@
       "comments": [ { "key": 1, "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "A user with a Windows clone..." } ],
       "question": null,
       "urgencyBreakdown": { "priority": 6.0, "active": { "value": 4.0, "reason": null }, "blocking": 8.0,
-                            "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 }
+                            "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 },
+      "closure": { "blockedBy": [], "unblocks": ["MYP-40", "MYP-71", "MYP-72"] }
     }
   }
 }
