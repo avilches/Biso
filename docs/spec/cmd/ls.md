@@ -83,7 +83,11 @@ Reglas de combinación de filtros:
   ella.
 - **`--overdue` es `dias < 0`**, la misma cuenta que usa el término `proximidad` de la urgencia
   (["La urgencia"](../modelo-de-datos/urgencia.md#la-urgencia)): una tarea que vence hoy tiene
-  `dias = 0` y no es `--overdue`.
+  `dias = 0` y no es `--overdue`. **En un tablero donde ninguna tarea tiene `due`, `--overdue` no
+  marca nunca ninguna**, porque no hay ninguna fecha con la que hacer esa cuenta.
+- **`--due-before <date>` filtra las tareas cuya `due` es anterior a la fecha dada.** **En un
+  tablero donde ninguna tarea tiene `due`, `--due-before` no filtra nunca nada**, por el mismo
+  motivo que `--overdue`: no hay ninguna fecha que comparar.
 - **`--waiting` es incompatible con `--not-waiting`, y `--active` con `--not-active`, cada uno con su
   opuesto.** `--active` y `--not-active` filtran por el papel del estado y no por su nombre, que es su
   razón de ser: sin ellos, pedir la cola activa obligaría a escribir `--status "In Progress"`, el nombre
@@ -115,7 +119,10 @@ Un `--sort due` o `--sort ordinal` sobre tareas que no tienen ese campo las pone
 ordenadas por identificador. **`--sort ordinal` es, por tanto, el orden manual ascendente con las
 tareas sin clave detrás**, que es el orden por defecto sin su paso 3: lo que cambia es que las tareas
 sin clave se ordenan entre ellas por identificador y no por urgencia. `--reverse` lo invierte entero,
-así que pone las tareas sin clave delante.
+así que pone las tareas sin clave delante. **En un tablero donde ninguna tarea tiene `due`,
+`--sort due` deja el tablero entero en ese bloque final, ordenado por identificador**: es la misma
+regla de arriba para `--sort ordinal` sobre tareas sin ese campo, aplicada aquí al caso en que
+ninguna tarea del tablero lo tiene.
 
 `--sort title` compara los títulos por sus puntos de código Unicode, de menor a mayor, y no por las
 reglas de intercalación de ningún idioma: una `Z` va antes que una `a`, y `ñ` va después de `z`. Es
