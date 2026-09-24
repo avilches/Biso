@@ -489,6 +489,10 @@ func (w *writer) views(tasks []*model.Task, byID map[string]*model.Task) ([]Task
 		if err != nil {
 			return nil, err
 		}
+		// The card --print writes is the whole card of `biso get`
+		// (docs/spec/cmd/flags-globales.md), which always carries `blocked
+		// by`/`unblocks`.
+		v = r.withClosure(v, false)
 		out = append(out, v)
 	}
 	return out, nil

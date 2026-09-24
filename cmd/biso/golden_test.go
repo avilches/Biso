@@ -220,6 +220,7 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"get-question.txt", "cmd/get.md", "", "Salida", 2},
 		{"get-explain.txt", "cmd/get.md", "", "Salida", 3},
 		{"get-terminal-urgency.txt", "cmd/get.md", "", "Salida", 4},
+		{"get-closure.txt", "cmd/get.md", "Salida", "`--closure`", 0},
 		{"get-json.txt", "cmd/get.md", "", "El esquema JSON", 0},
 		{"prime-help.txt", "cmd/prime.md", "", "`biso prime --help`", 0},
 		{"prime-full-json.txt", "cmd/prime.md", "", "Parámetros", 0},

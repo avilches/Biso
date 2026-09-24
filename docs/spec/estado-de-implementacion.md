@@ -1190,6 +1190,69 @@ elemento vacío en ["Un elemento vacío en un lote"](valores-de-entrada.md#un-el
   objeto, con `null`, una cadena y un número, y el cuerpo vacío, de solo espacios o ausente, incluida una
   línea con dos comentarios donde el segundo es el que falla).
 
+### Qué dejó hecha la vista transitiva del grafo
+
+La tarea `TASK-78` aplicó
+["El cierre transitivo del grafo de dependencias"](../decisiones/detalles.md#el-cierre-transitivo-del-grafo-de-dependencias)
+al programa. Las anclas que cubre son el flag `--closure` y las dos líneas nuevas de la ficha de
+["`biso get`"](cmd/get.md#salida), sus dos claves nuevas y `closure` en
+["El esquema JSON"](cmd/get.md#el-esquema-json), la línea nueva de la primera fila de `NEXT UP` en
+["`biso prime`"](cmd/prime.md#la-salida-literal), la cifra actualizada de
+["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño), la aclaración de
+["La urgencia"](modelo-de-datos/urgencia.md#la-urgencia) de que `bloquea`/`bloqueada` siguen siendo
+booleanos, la fila de `blockedByCount`/`unblocksCount` de
+["El modelo de datos de una tarea"](modelo-de-datos/index.md#los-campos-derivados), la excepción que
+[`biso export`](cmd/export.md) declara para esas dos claves y la que [`biso ls`](cmd/ls.md) declara
+para no llevarlas, y la fila nueva de
+["El contrato JSON"](contrato-json.md#números-fechas-y-ausencias) sobre `data.task.closure`:
+
+- **El recorrido vive en `internal/ops/read.go`**, junto al resto de los campos derivados que ya
+  calculaba ese fichero (`blocks`, `blocked`). `reader.withClosure` es el único punto de entrada:
+  camina el grafo con `closureReached` en las dos direcciones (`dependencies` hacia arriba,
+  `reader.dependents()` hacia abajo), marcando visitados para no repetir un identificador de un ciclo
+  y sin seguir nunca más allá de uno que `r.byID` no tiene, que es exactamente cómo `r.load()` ya deja
+  fuera una tarea que no existe o que no se puede leer. Los dos recuentos
+  (`TaskView.BlockedByCount`/`UnblocksCount`) cuentan solo lo que `r.unfinished` considera sin
+  terminar, la misma función que ya usaban `blocks` y `blocked`; la lista completa
+  (`TaskView.Closure`) solo se rellena cuando el llamador pide `full`, y nunca se llama desde un bucle
+  sobre las hasta 300 tareas de un tablero: `internal/ops/get.go` la pide siempre, para los dos
+  recuentos, y con la lista completa solo si `GetParams.Closure` es `true`; `internal/ops/prime.go` la
+  pide una sola vez, sobre la primera fila ya construida de `NEXT UP`, sin la lista completa; y
+  `internal/ops/consistency.go` la pide para cada tarea que `--print` va a mostrar, porque esa ficha es
+  la misma de `biso get` entera.
+- **La ficha de texto** (`internal/cli/get.go`) añade `blocked by`/`unblocks` al bloque de metadatos,
+  entre `depends`/`blocks` y la línea condicional de `lease`, y el bloque `closure` al final, después de
+  `--explain-urgency` cuando los dos se piden a la vez. El JSON (`internal/cli/task_json.go`) añade
+  `blockedByCount` y `unblocksCount` como claves ordinarias del bloque de metadatos, fuera de
+  `taskObject` para que seguir sin estar en `task.list`, y `closure` gobernada por el flag igual que
+  `urgencyBreakdown`.
+- **`biso prime`** (`internal/ops/prime.go`, `internal/cli/prime.go`) pide el cierre una sola vez, sobre
+  `NextUp[0]` después de aplicar `--limit`, y `primeRows` pasa ahora la posición de cada fila a su
+  función `extra` para que la línea `unblocks N tasks if finished first` solo pueda ir bajo la primera
+  fila de `NEXT UP`, nunca bajo otra.
+- **Las pruebas de los dos casos límite del criterio de aceptación 3** están en
+  `internal/ops/get_test.go`: `TestClosureWalksThroughACycleWithoutHangingOrRepeating` cierra un ciclo
+  de tres tareas escribiendo directamente en el almacén, porque la escritura normal ya rechaza un ciclo
+  (`internal/ops/consistency.go`, `checkGraph`), y comprueba que el recorrido no se cuelga, no repite
+  la tarea de partida en ninguna dirección y cuenta bien las otras dos; y
+  `TestClosureExcludesADependencyThatPointsAtNoTask` escribe una dependencia a un identificador que no
+  existe y comprueba que no entra en el cierre ni en el recuento. Una tercera,
+  `TestClosureCountsAreAlwaysPresentButTheListsOnlyWithTheFlag`, fija la distinción entre los dos
+  recuentos, que van siempre, y las dos listas completas, que solo van con `--closure`.
+- **Los ficheros de referencia de `cmd/biso/testdata/`** que cambiaron son `get-output.txt` (las dos
+  líneas nuevas), `get-json.txt` (las dos claves y `closure`), `get-help.txt` (el flag y el ejemplo),
+  `get-closure.txt` (nuevo, el bloque del flag), `prime-output.txt` (la línea nueva bajo la primera fila
+  de `NEXT UP`) y `export-help.txt` (las dos claves en la lista de derivados que nunca escribe). El
+  tablero de `cardBoard` en `cmd/biso/read_golden_test.go` ganó `MYP-71` y `MYP-72`, encadenadas después
+  de `MYP-40`, con `MYP-72` en `Done`, que es lo que hace falta para que `MYP-11` tenga un cierre de tres
+  identificadores y un `unblocks` de dos. El tablero de `primeBoard` en `cmd/biso/prime_golden_test.go`
+  ganó seis tareas de relleno (`MYP-1` a `MYP-6`) que dependen todas directamente de `MYP-7`, en estrella
+  y no en cadena, para que ninguna quede bloqueando a otra y su urgencia no altere el orden de las filas
+  que el mensaje ya mostraba.
+- **El mensaje de `biso prime` del ejemplo mide ahora 5.151 bytes**, los 39 que predijo la
+  especificación por encima de los 5.112 anteriores, medidos sobre el propio fichero de referencia
+  (`wc -c`) y no solo sobre lo que compara la prueba de oro.
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según

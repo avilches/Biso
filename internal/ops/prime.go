@@ -138,6 +138,12 @@ func PrimeOn(b *board.Board, env Env, p PrimeParams) (*PrimeResult, error) {
 		r.sortTasks(*block, ListParams{})
 	}
 	result.applyLimit(p)
+	if len(result.NextUp) > 0 {
+		// Only the first row of NEXT UP pays for a transitive closure, and
+		// only the count: the full lists are `biso get --closure`'s to
+		// give (docs/spec/cmd/prime.md#la-salida-literal).
+		result.NextUp[0] = r.withClosure(result.NextUp[0], false)
+	}
 	result.Skipped = r.skippedIDs()
 	return result, nil
 }

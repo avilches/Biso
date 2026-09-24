@@ -402,6 +402,8 @@ const getHelp = "Usage: biso get <ref> [options]\n" +
 	"                             separated. One of: meta, desc, ac, plan, notes,\n" +
 	"                             summary, comments, question\n" +
 	"      --explain-urgency      show how the urgency number is built\n" +
+	"      --closure              show the full transitive closure of dependencies,\n" +
+	"                             both directions\n" +
 	"  -h, --help                 show this help\n" +
 	"\n" +
 	"Exit codes:\n" +
@@ -415,7 +417,8 @@ const getHelp = "Usage: biso get <ref> [options]\n" +
 	"  biso get MYP-11\n" +
 	"  biso get 11 --section ac\n" +
 	"  biso get \"CRLF\"\n" +
-	"  biso get MYP-11 --explain-urgency\n"
+	"  biso get MYP-11 --explain-urgency\n" +
+	"  biso get MYP-11 --closure\n"
 
 // exportHelp is `biso export --help` (docs/spec/cmd/export.md).
 const exportHelp = "Usage: biso export [options]\n" +
@@ -442,7 +445,7 @@ const exportHelp = "Usage: biso export [options]\n" +
 	"line, while --json means the single envelope every other command prints.\n" +
 	"\n" +
 	"Derived fields are never written: urgency, acDone, acTotal, commentCount,\n" +
-	"blocks, blocked, waiting, leaseExpired.\n" +
+	"blocks, blocked, waiting, leaseExpired, blockedByCount, unblocksCount.\n" +
 	"\n" +
 	"Exit codes:\n" +
 	"  0  exported       3  a filter value does not exist here\n" +

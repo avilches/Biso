@@ -303,6 +303,7 @@ anterior a esta rama.
   | Clave | `kind` | El flag que la gobierna |
   |---|---|---|
   | `data.task.urgencyBreakdown` | `task.get` | Solo aparece con `--explain-urgency` (["`biso get`"](cmd/get.md)) |
+  | `data.task.closure` | `task.get` | Solo aparece con `--closure`, ignorando qué se pidió con `--section` (["`biso get`"](cmd/get.md#--closure)) |
   | Las demás claves de `data.task` | `task.get` | Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas, y ninguna otra (["`biso get`"](cmd/get.md)) |
 - Una lista vacía es `[]` y un mapa vacío es `{}`, nunca `null`.
 - **Todo lo de arriba gobierna las salidas de datos, y el sobre de error se gobierna aparte** (["Los errores en JSON"](#los-errores-en-json)). La

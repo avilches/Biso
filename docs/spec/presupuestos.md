@@ -121,10 +121,12 @@ recorte no toca nunca (la salida de `--json`), está en
 sobre el mensaje sin `--full`**, que es ayuda para quien aprende la herramienta y no parte del
 arranque.
 
-El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.112 bytes** con el tablero del ejemplo: **3.623** de
-parte fija y **1.489** de resumen. Las dos partes caben dentro de su tope. La última vez que esa
-cifra se movió fue al darle al orden manual su propia línea en la rejilla `FIELD FLAGS`, que le
-sumó 42 bytes a la parte fija (["El orden manual"](estado-de-implementacion.md#el-orden-manual)).
+El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.151 bytes** con el tablero del ejemplo: **3.623** de
+parte fija y **1.528** de resumen. Las dos partes caben dentro de su tope. La última vez que esa
+cifra se movió fue al añadir, bajo la primera fila de `NEXT UP`, la línea de cuántas tareas
+desbloquea transitivamente esa tarea si se termina antes que las demás
+(["`biso prime`"](cmd/prime.md#la-salida-literal)), que le sumó 39 bytes al resumen y ninguno a la
+parte fija, porque solo aparece en esa fila y solo cuando el recuento es mayor que cero.
 Es la medida del proceso y no un recuento sobre el texto: la comprueba la suite.
 
 **El número que congela el contrato de estabilidad de la sección ["El contrato de estabilidad"](estabilidad.md) es el total, 5.504 bytes**, porque

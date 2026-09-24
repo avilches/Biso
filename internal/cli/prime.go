@@ -321,13 +321,15 @@ func primeBlocks(r *ops.PrimeResult, cut primeCut) string {
 		(len(r.AssignedToYou) - cut.assigned) + (len(r.NextUp) - cut.nextUp)
 
 	var b strings.Builder
-	b.WriteString(primeBlock(inProgressHeading, primeRows(inProgress, widths, leaseLine),
+	b.WriteString(primeBlock(inProgressHeading,
+		primeRows(inProgress, widths, func(_ int, v ops.TaskView) string { return leaseLine(v) }),
 		len(r.InProgress)-cut.inProgress, inProgressFilter))
-	b.WriteString(primeBlock(needsAnswerHeading, primeRows(needsAnswer, widths, questionLine),
+	b.WriteString(primeBlock(needsAnswerHeading,
+		primeRows(needsAnswer, widths, func(_ int, v ops.TaskView) string { return questionLine(v) }),
 		len(r.NeedsAnswer)-cut.needsAnswer, needsAnswerFilter))
 
 	assignedRows := primeRows(assigned, widths, nil)
-	nextUpRows := primeRows(nextUp, widths, nil)
+	nextUpRows := primeRows(nextUp, widths, unblocksExtra)
 	switch {
 	case len(nextUpRows) > 0:
 		b.WriteString(primeBlock(assignedHeading, assignedRows, 0, ""))
@@ -366,17 +368,42 @@ func primeBlock(heading string, rows []string, hidden int, filter string) string
 }
 
 // primeRows writes the rows of one block, each one indented two spaces,
-// with the extra indented line its block adds under some of them.
-func primeRows(views []ops.TaskView, widths []int, extra func(ops.TaskView) string) []string {
+// with the extra indented line its block adds under some of them. extra
+// takes the row's position inside the block, because the one line
+// docs/spec/cmd/prime.md#la-salida-literal ties to a position rather than
+// to what a task is: the transitive-unblocking line of NEXT UP, which only
+// its first row ever carries.
+func primeRows(views []ops.TaskView, widths []int, extra func(int, ops.TaskView) string) []string {
 	rows := make([]string, 0, len(views))
-	for _, v := range views {
+	for i, v := range views {
 		row := "  " + renderRow(listRow(v), widths) + "\n"
 		if extra != nil {
-			row += extra(v)
+			row += extra(i, v)
 		}
 		rows = append(rows, row)
 	}
 	return rows
+}
+
+// unblocksExtra is the extra line of NEXT UP: only its first row, and only
+// when it unblocks more than zero unfinished tasks transitively
+// (docs/spec/cmd/prime.md#la-salida-literal).
+func unblocksExtra(i int, v ops.TaskView) string {
+	if i != 0 {
+		return ""
+	}
+	return unblocksLine(v)
+}
+
+// unblocksLine is that line's text: the same count `biso get`'s
+// unblocksCount answers for this very task
+// (docs/spec/cmd/get.md#el-esquema-json), paid once here and not once per
+// row (docs/spec/presupuestos.md#el-presupuesto-de-arranque).
+func unblocksLine(v ops.TaskView) string {
+	if v.UnblocksCount <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("    unblocks %d tasks if finished first\n", v.UnblocksCount)
 }
 
 // leaseLine is the second line IN PROGRESS prints under a task whose lease

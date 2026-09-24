@@ -321,8 +321,12 @@ tiene ninguna; una que la tuviera traería, por ejemplo, `"ordinal": "m"`.
 
 **El listado nunca trae el cuerpo de la tarea**: ni descripción, ni plan, ni notas, ni criterios, ni
 comentarios. Para eso está `biso get`. Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) sí están todos,
-`blocks` incluido. `truncated` es explícito para que nadie tenga que comparar `shown` con `matched`,
-y `skipped` lleva los identificadores de las tareas ilegibles que se han saltado.
+`blocks` incluido, con la única excepción declarada ahí mismo: `blockedByCount` y `unblocksCount`, que
+solo están en `task.get` porque calcular un cierre transitivo por cada fila de un listado de hasta 300
+violaría el presupuesto de arranque
+(["El modelo de datos de una tarea"](../modelo-de-datos/index.md#los-campos-derivados)). `truncated`
+es explícito para que nadie tenga que comparar `shown` con `matched`, y `skipped` lleva los
+identificadores de las tareas ilegibles que se han saltado.
 
 ## Códigos de salida
 

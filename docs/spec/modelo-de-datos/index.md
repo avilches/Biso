@@ -104,12 +104,20 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 | `blocks` | `list<string>` |
 | `blocked`, `waiting` | `bool` |
 | `leaseExpired` | `bool` |
+| `blockedByCount`, `unblocksCount` | `int`; ver ["`biso get`"](../cmd/get.md#salida) |
 
 **Ninguno de estos campos se guarda.** Se calculan al leer, y son exactamente los campos que
 [`biso export`](../cmd/export.md) no escribe y que [`biso new --from`](../cmd/new.md) rechaza como
 clave desconocida: `urgency`, `acDone`, `acTotal`, `commentCount`, `blocks`,
-`blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos derivados del documento; las
-demás páginas remiten a ella.
+`blocked`, `waiting`, `leaseExpired`, `blockedByCount` y `unblocksCount`. Esta es la única lista de
+campos derivados del documento; las demás páginas remiten a ella.
+
+**`blockedByCount` y `unblocksCount` son los dos únicos campos de esta tabla que no están en
+`task.list`.** Los demás ocho están en la ficha de cualquier tarea, tanto si viene de `biso ls` como
+de `biso get` o de los cuatro bloques de `biso prime`; estos dos solo están en `task.get`, por el
+coste de calcular un cierre transitivo tarea a tarea (["`biso get`"](../cmd/get.md#el-esquema-json)).
+Siguen siendo campos derivados en todo lo demás: no se guardan, `export` no los escribe y
+`new --from` los rechaza igual que a cualquier otra clave de esta tabla si llegaran en un lote.
 
 **`blocks` se ordena por identificador ascendente**, el mismo criterio de desempate que usa
 ["`biso ls`"](../cmd/ls.md#comportamiento-caso-a-caso) para cualquier listado de tareas, para no tener
