@@ -41,6 +41,12 @@ inversa y se calcula al leer, como el resto de
 revés es válido y el programa no lo detecta, y el mensaje de arranque lo repite en una regla
 (["La ayuda enseña la dirección de una dependencia"](../../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)).
 
+**`blocks` es siempre directo, un solo nivel de la cadena.** El cierre transitivo de esa misma
+cadena, cuántas tareas sin terminar hay en cualquier profundidad y cuáles son, no vive en este campo:
+lo trae el flag `--closure` de ["`biso get`"](../cmd/get.md#--closure), cuya sección de
+["Salida"](../cmd/get.md#salida) distingue explícitamente entre lo directo (`blocks`) y lo transitivo
+(el cierre).
+
 La prueba: **¿si hago esta primero, el trabajo se tira o se rehace?** Si la respuesta es sí, es una
 dependencia.
 

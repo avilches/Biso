@@ -224,7 +224,7 @@ flag de escritura, no la necesidad de `--help` para todo lo demás.
 
 ---
 
-## Protocolo propuesto: comprobar con un agente fresco la dirección de una dependencia
+## Protocolo y resultado: comprobar con un agente fresco la dirección de una dependencia
 
 **El protocolo ya se ejecutó, una revisión adversarial le encontró dos sesgos posibles, los dos se
 comprobaron empíricamente, y el resultado sigue siendo que la regla 11 no se toca.** Lo que sigue
