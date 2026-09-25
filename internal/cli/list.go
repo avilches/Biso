@@ -71,6 +71,22 @@ func listParams(p *Parsed) (ops.ListParams, error) {
 		}
 		params.DueBefore = &v
 	}
+	for _, d := range []struct {
+		flag string
+		dst  **string
+	}{
+		{"created-after", &params.CreatedAfter},
+		{"created-before", &params.CreatedBefore},
+		{"updated-after", &params.UpdatedAfter},
+		{"updated-before", &params.UpdatedBefore},
+	} {
+		if v, ok := p.Value(d.flag); ok {
+			if _, err := ops.ParseCalendarDay(d.flag, v); err != nil {
+				return ops.ListParams{}, err
+			}
+			*d.dst = &v
+		}
+	}
 	if v, ok := p.Value("limit"); ok {
 		limit, err := parseLimit(v)
 		if err != nil {
@@ -105,20 +121,28 @@ func parseLimit(v string) (int, error) {
 // own (docs/spec/cmd/export.md).
 func filtersOf(p *Parsed) ops.Filters {
 	f := ops.Filters{
-		Status:     p.Values("status"),
-		NotStatus:  p.Values("not-status"),
-		AnyStatus:  p.Has("any-status"),
-		Type:       p.Values("type"),
-		Priority:   p.Values("priority"),
-		Label:      p.Values("label"),
-		LabelOr:    p.Values("label-or"),
-		Assignee:   p.Values("assignee"),
-		Unassigned: p.Has("unassigned"),
-		Blocked:    either(p, "blocked", "not-blocked"),
-		Waiting:    either(p, "waiting", "not-waiting"),
-		Active:     either(p, "active", "not-active"),
-		Overdue:    p.Has("overdue"),
-		Unchecked:  p.Has("unchecked"),
+		Status:      p.Values("status"),
+		NotStatus:   p.Values("not-status"),
+		AnyStatus:   p.Has("any-status"),
+		Type:        p.Values("type"),
+		NotType:     p.Values("not-type"),
+		Priority:    p.Values("priority"),
+		NotPriority: p.Values("not-priority"),
+		Label:       p.Values("label"),
+		LabelOr:     p.Values("label-or"),
+		NotLabel:    p.Values("not-label"),
+		Assignee:    p.Values("assignee"),
+		NotAssignee: p.Values("not-assignee"),
+		Unassigned:  p.Has("unassigned"),
+		Author:      p.Values("author"),
+		Root:        p.Has("root"),
+		Blocked:     either(p, "blocked", "not-blocked"),
+		Waiting:     either(p, "waiting", "not-waiting"),
+		Active:      either(p, "active", "not-active"),
+		Overdue:     p.Has("overdue"),
+		Ref:         p.Values("ref"),
+		NotRef:      p.Values("not-ref"),
+		Unchecked:   p.Has("unchecked"),
 	}
 	if v, ok := p.Value("parent"); ok {
 		f.Parent = &v
