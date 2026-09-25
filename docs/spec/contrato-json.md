@@ -48,32 +48,46 @@ resuelto a la identidad concreta que se usó). Como cualquier otra clave documen
 | `archived` | `--archived` | `bool` | `false` |
 | `onlyArchived` | `--only-archived` | `bool` | `false` |
 | `type` | `--type` | `list<string>` | `[]` |
+| `notType` | `--not-type` | `list<string>` | `[]` |
 | `priority` | `--priority` | `list<string>` | `[]` |
+| `notPriority` | `--not-priority` | `list<string>` | `[]` |
 | `label` | `--label` | `list<string>` | `[]` |
 | `labelOr` | `--label-or` | `list<string>` | `[]` |
+| `notLabel` | `--not-label` | `list<string>` | `[]` |
 | `assignee` | `--assignee`, `--mine` | `list<string>` | `[]` |
+| `notAssignee` | `--not-assignee` | `list<string>` | `[]` |
 | `unassigned` | `--unassigned` | `bool` | `false` |
+| `author` | `--author` | `list<string>` | `[]` |
 | `parent` | `--parent` | `string \| null` | `null` |
+| `root` | `--root` | `bool` | `false` |
 | `blocked` | `--blocked` / `--not-blocked` | `bool \| null` | `null` |
 | `waiting` | `--waiting` / `--not-waiting` | `bool \| null` | `null` |
 | `active` | `--active` / `--not-active` | `bool \| null` | `null` |
 | `overdue` | `--overdue` | `bool` | `false` |
 | `dueBefore` | `--due-before` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `createdAfter` | `--created-after` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `createdBefore` | `--created-before` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `updatedAfter` | `--updated-after` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `updatedBefore` | `--updated-before` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `ref` | `--ref` | `list<string>` | `[]` |
+| `notRef` | `--not-ref` | `list<string>` | `[]` |
 | `search` | `--search` | `string \| null` | `null` |
 | `unchecked` | `--unchecked` | `bool` | `false` |
 
 Precisiones:
 
-- **Una lista con más de un valor es siempre un "o"**, salvo `label`, la única que se combina con "y"
-  (["Reglas de combinación de filtros"](cmd/ls.md#parámetros)). El JSON no lo distingue por forma, las
-  dos son `list<string>`; lo distingue la clave.
+- **Una lista con más de un valor es siempre un "o"**, salvo `label`, la única que se combina con "y",
+  y salvo las negaciones (`notStatus`, `notType`, `notPriority`, `notLabel`, `notAssignee` y `notRef`),
+  que restan cada valor por su cuenta en vez de combinarse con "o" o con "y"
+  (["Reglas de combinación de filtros"](cmd/ls.md#parámetros)). El JSON no lo distingue por forma,
+  todas son `list<string>`; lo distingue la clave.
 - **`assignee` ya trae `--mine` resuelto** a la identidad concreta que se usó, igual que `status`
   resuelve su valor por defecto. `unassigned` es una clave aparte porque "nadie asignado" no es una
   persona que se pueda meter en esa lista.
 - **`parent` es el identificador ya resuelto** (`MYP-11`), nunca el texto de búsqueda que se haya
   tecleado tras `--parent` (["Cómo se resuelve una referencia a una tarea"](referencias.md)).
-- **Un filtro por la clave de una etiqueta viaja en `label` y en `labelOr` con un solo dos puntos**,
-  `milestone:`, aunque se escribiera `milestone::`, porque las dos formas son el mismo filtro
+- **Un filtro por la clave de una etiqueta viaja en `label`, `labelOr` y `notLabel` con un solo dos
+  puntos**, `milestone:`, aunque se escribiera `milestone::`, porque las dos formas son el mismo filtro
   (["Consultar por la clave de una etiqueta con ámbito"](vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito)).
   Lo que sí conserva es la grafía de la clave tal como se tecleó: se compara plegada y no hay ninguna
   grafía configurada a la que resolverla, al contrario de lo que pasa con un `status`.
@@ -86,7 +100,12 @@ Precisiones:
   por el mismo bit.** `null` es "no se pidió ninguno de los dos", la misma convención que usa el resto
   de este contrato para "sin valor" (["Números, fechas y ausencias"](#números-fechas-y-ausencias)), y
   no `false`, que ya significa "se pidió la variante negativa". Los demás booleanos de la tabla son
-  unarios, sin opuesto, así que `false` ya significa por sí solo "no se filtró por esto".
+  unarios, sin opuesto, así que `false` ya significa por sí solo "no se filtró por esto". `root` es uno
+  de esos unarios: no compite por el mismo bit que `parent`, aunque los flags `--root` y `--parent`
+  sean incompatibles entre sí (["`biso ls`"](cmd/ls.md#parámetros)).
+- **`author` viaja como lista aunque `author` sea un escalar en cada tarea**, la misma forma que
+  `assignee`, porque `--author` es repetible y varios valores se combinan con "o", igual que
+  `--assignee`.
 
 ## Los errores en JSON
 

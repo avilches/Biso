@@ -33,6 +33,16 @@ aceptación, el cuerpo de los comentarios, el cuerpo de la pregunta abierta y la
 
 No busca en los identificadores ni en las referencias.
 
+**Por qué `references` queda fuera de este ámbito, a propósito.** Este es el mismo ámbito que usa la
+resolución de una referencia por texto, de arriba en esta misma sección, y el filtro `--search` de
+`biso ls` y `biso export`: si `references` entrara, `biso get "docs/spec/cmd/ls.md"` podría resolver
+a una tarea, y como es normal que varias tareas compartan la misma ruta o la misma página de la
+especificación en su lista de referencias, eso sembraría ambigüedades de código 5 cada vez que dos
+tareas apuntaran al mismo sitio, donde hoy no las hay. La consulta que de verdad hace falta, qué
+tareas apuntan a un fichero o a una página dada, tiene su propio filtro dedicado, `--ref` y su
+negación `--not-ref` (["`biso ls`"](cmd/ls.md#parámetros)), que no toca ni este ámbito compartido ni
+la resolución de referencias.
+
 **Alcanzar el cuerpo de la pregunta abierta tiene dos consecuencias, y ambas se aceptan a
 propósito.** La primera es que la resolución de una referencia por texto también llega ahí, así que
 `biso get "CRLF"` puede resolver a una tarea porque ese texto está en su pregunta. La segunda es que

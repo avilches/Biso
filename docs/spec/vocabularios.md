@@ -129,13 +129,15 @@ respuestas.
 ## El algoritmo de sugerencias más parecidas
 
 Cinco sitios de la especificación prometen, en su mensaje de error, una lista de los valores
-más parecidos a lo que se tecleó: `--label` y `--label-or` (hasta cinco etiquetas, más abajo en
-esta misma sección; y hasta cinco claves, cuando lo que se consulta es una clave con la forma
-`clave:` de ["Consultar por la clave de una etiqueta con ámbito"](#consultar-por-la-clave-de-una-etiqueta-con-ámbito)), `--assignee` (hasta cinco personas, igual), `biso config` con una clave
+más parecidos a lo que se tecleó: `--label`, `--label-or` y `--not-label` (hasta cinco etiquetas, más
+abajo en esta misma sección; y hasta cinco claves, cuando lo que se consulta es una clave con la forma
+`clave:` de ["Consultar por la clave de una etiqueta con ámbito"](#consultar-por-la-clave-de-una-etiqueta-con-ámbito)), `--assignee` y `--not-assignee` (hasta cinco personas, igual), `biso config` con una clave
 inexistente (hasta tres claves, sección ["`biso config`"](cmd/config.md#comportamiento-caso-a-caso)) y `biso help` con uno o
 varios nombres de comando, si alguno no existe (hasta tres nombres, sección ["La ayuda"](cmd/help.md)). Estos casos
 comparten un solo algoritmo, con el mismo espíritu que `coincidir()`: una sola regla, y solo
-cambia el tope `N` según el caso.
+cambia el tope `N` según el caso. `--not-label` y `--not-assignee` reusan exactamente el mensaje y el
+algoritmo de `--label`/`--label-or` y de `--assignee`, así que no cuentan como un sexto y un séptimo
+sitio: son el mismo sitio, alcanzado por un flag distinto.
 
 **La métrica es la distancia de Levenshtein, sobre la forma normalizada.** Dadas dos cadenas `a`
 y `b`, la distancia de Levenshtein es el número mínimo de inserciones, eliminaciones o
@@ -215,20 +217,27 @@ necesita la frase que la envuelve.
 
 | Filtro | Conjunto contra el que valida | Si no encaja |
 |---|---|---|
-| `--status`, `--type`, `--priority` | el vocabulario configurado | error 3 |
-| `--label` y `--label-or` | el conjunto de etiquetas del tablero, definido abajo | error 3, con hasta cinco de las más parecidas (las que pasen el umbral de ["El algoritmo de sugerencias más parecidas"](#el-algoritmo-de-sugerencias-más-parecidas)) |
-| `--label` y `--label-or` con la forma `clave:` | el conjunto de claves del tablero, definido en ["Consultar por la clave de una etiqueta con ámbito"](#consultar-por-la-clave-de-una-etiqueta-con-ámbito) | error 3, con hasta cinco de las claves más parecidas |
-| `--assignee` | el conjunto de personas del tablero, definido abajo | error 3, con hasta cinco de las más parecidas (mismo algoritmo) |
+| `--status`, `--not-status`, `--type`, `--not-type`, `--priority` y `--not-priority` | el vocabulario configurado | error 3 |
+| `--label`, `--label-or` y `--not-label` | el conjunto de etiquetas del tablero, definido abajo | error 3, con hasta cinco de las más parecidas (las que pasen el umbral de ["El algoritmo de sugerencias más parecidas"](#el-algoritmo-de-sugerencias-más-parecidas)) |
+| `--label`, `--label-or` y `--not-label` con la forma `clave:` | el conjunto de claves del tablero, definido en ["Consultar por la clave de una etiqueta con ámbito"](#consultar-por-la-clave-de-una-etiqueta-con-ámbito) | error 3, con hasta cinco de las claves más parecidas |
+| `--assignee` y `--not-assignee` | el conjunto de personas del tablero, definido abajo | error 3, con hasta cinco de las más parecidas (mismo algoritmo) |
 | `--parent` | la resolución de referencias de la sección ["Cómo se resuelve una referencia a una tarea"](referencias.md) | error 2, 4 o 5 |
+| `--author` | nada, no tiene vocabulario ni siquiera al leer (["El autor de una tarea"](modelo-de-datos/autor.md)) | nunca falla |
+| `--ref` y `--not-ref` | nada, es texto libre | nunca falla |
 | `--search` | nada, es texto libre | nunca falla |
 
 **El conjunto de etiquetas del tablero** es la unión de las etiquetas declaradas en la clave `labels`
 de la configuración y de las que lleva cualquier tarea del tablero, **incluidas las archivadas y las
 que están en el estado terminal**. **El conjunto de personas se define con la clave `assignees` de la
 configuración y con los valores de `assignees` de cualquier tarea, archivadas y terminadas incluidas.
-Los valores de `author` no entran en este conjunto**, porque no hay ningún filtro `--author`: una
-persona que solo consta como autora de la tarea y nunca la ha tenido asignada no pertenece al
-conjunto contra el que valida `--assignee`.
+Los valores de `author` no entran en este conjunto.** `--author` (["`biso ls`"](cmd/ls.md#parámetros))
+compara con el mismo `normalizar()` de ["El algoritmo de coincidencia"](#el-algoritmo-de-coincidencia)
+que usa `--assignee`, pero no lo resuelve contra ningún conjunto cerrado, porque `author` no tiene
+vocabulario, ni siquiera al leer (["El autor de una tarea"](modelo-de-datos/autor.md)): compara el
+normalizado del valor tecleado directamente contra el normalizado del `author` de cada tarea, sin el
+paso de vocabulario que sí tiene `--assignee`. Una persona que solo consta como autora de la
+tarea y nunca la ha tenido asignada sigue sin pertenecer al conjunto contra el que valida
+`--assignee`, y un `--author` que ninguna tarea usa es una lista vacía, no un error.
 
 Un tablero con las etiquetas `frontend`, `backend`, `bug`, `docs` y `parser`, y las personas
 `@claude`, `@sara` y `@avilches`:
@@ -256,8 +265,9 @@ El flag no cambia ninguna otra cosa.
 **`--label clave:` significa cualquier etiqueta de esa clave, con cualquier valor y con cualquiera de
 los separadores.** `--label clave::` es exactamente el mismo filtro, porque el separador no distingue
 nada al leer (["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito)), y las dos
-formas se aceptan igual en `--label-or`. Un filtro por la clave se combina con los demás como
-cualquier otro valor de su flag: con `y` en `--label` y con `o` en `--label-or`
+formas se aceptan igual en `--label-or` y en `--not-label`. Un filtro por la clave se combina con los
+demás como cualquier otro valor de su flag: con `y` en `--label`, con `o` en `--label-or` y restando
+en `--not-label`, con la misma regla que el resto de negaciones
 (["`biso ls`"](cmd/ls.md#parámetros)).
 
 Un filtro que nombra la etiqueta entera sigue validando contra el conjunto de etiquetas de arriba, y
@@ -281,13 +291,15 @@ hint: did you mean: milestone?
 Su `code` es `unknown_label_key`, con `field` igual a `label` y `valid` con las claves del tablero
 (["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)). Su `given` es el
 filtro ya normalizado a un solo dos puntos (`milestne:`), exactamente el que viaja en
-`data.filters.label` (["Los filtros de `biso ls`"](contrato-json.md#los-filtros-de-biso-ls)), así que
+`data.filters.label` (o en `data.filters.notLabel` cuando el flag era `--not-label`)
+(["Los filtros de `biso ls`"](contrato-json.md#los-filtros-de-biso-ls)), así que
 un `--label Milestne::` se reprocha como `Milestne:`: la grafía tecleada de la clave se conserva y el
 separador no, porque las dos formas son el mismo filtro y citar una de las dos sería elegir por el
 lector.
 
 **`--unchecked` apaga también esta comprobación**, igual que las de etiquetas y personas y ninguna
-más: con él, `--label milestne:` se acepta y probablemente no devuelve nada.
+más: con él, `--label milestne:` o `--not-label milestne:` se aceptan y probablemente no devuelven
+nada.
 
 **El JSON de una tarea no lleva ningún campo derivado por clave**, ni en `task.get`, ni en
 `task.list`, ni en la exportación: quien necesite el valor de una clave parte `labels` por los

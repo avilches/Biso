@@ -74,7 +74,10 @@ una referencia más, y por qué se retiró está en
 Son texto libre, sin el alfabeto cerrado que sí tienen las etiquetas y las personas
 (["El juego de caracteres de un token"](../valores-de-entrada.md#el-juego-de-caracteres-de-un-token)).
 No se resuelven a ninguna tarea, y **no los alcanza la búsqueda de texto**
-(["La búsqueda por texto"](../referencias.md#la-búsqueda-por-texto)). **Sí se valida una cosa:** que
+(["La búsqueda por texto"](../referencias.md#la-búsqueda-por-texto)), a propósito y por la misma razón
+que explica esa sección. Lo que sí los alcanza es el filtro dedicado, `--ref` y su negación
+`--not-ref` de ["`biso ls`"](../cmd/ls.md#parámetros): qué tareas apuntan a un fichero o a una página
+dada, sin tocar ni la búsqueda de texto ni la resolución de referencias. **Sí se valida una cosa:** que
 ningún elemento lleve un `\r` o un `\n` literal, la misma regla que rige cualquier `string` de la tarea
 (["El salto de línea en un campo `string`"](../valores-de-entrada.md#el-salto-de-línea-en-un-campo-string));
 fuera de eso, ninguna otra forma se rechaza. Se guardan, se imprimen y viajan en la exportación.
