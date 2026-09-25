@@ -1111,7 +1111,7 @@ ilegible"](garantias.md#cómo-se-arregla-una-tarea-ilegible), junto con las fila
 ### Qué dejó hecha la comprobación con un agente fresco de la dirección de una dependencia
 
 La tarea `TASK-89` escribió el protocolo de
-["Protocolo propuesto: comprobar con un agente fresco la dirección de una dependencia"](../decisiones/vocabulario-y-mensaje-de-arranque.md#protocolo-propuesto-comprobar-con-un-agente-fresco-la-dirección-de-una-dependencia)
+["Protocolo y resultado: comprobar con un agente fresco la dirección de una dependencia"](../decisiones/vocabulario-y-mensaje-de-arranque.md#protocolo-y-resultado-comprobar-con-un-agente-fresco-la-dirección-de-una-dependencia)
 y después lo ejecutó sobre la regla 11 de `RULES`. No es un paso de los nueve de `TASK-55`: es una
 medida sobre un texto ya implementado, y las anclas que cubre son esa misma sección del documento de
 decisiones y, de forma indirecta, la regla 11 de
