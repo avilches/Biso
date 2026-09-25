@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 // These are the rules of docs/spec/cmd/ls.md that are about the answer and
@@ -322,6 +323,26 @@ func TestSearchUsesTheOneScopeThereIs(t *testing.T) {
 	}
 }
 
+// TestSearchNeverReachesReferencesButRefDoes is the other half of that same
+// scope, now that --ref exists: docs/spec/cmd/ls.md#parámetros keeps
+// `references` out of --search's scope on purpose, and --ref is the
+// dedicated filter that reaches it instead
+// (docs/spec/referencias.md#la-búsqueda-por-texto).
+func TestSearchNeverReachesReferencesButRefDoes(t *testing.T) {
+	h := newHarness(t)
+	h.create("A task", add("add-refs", "docs/bugs/BUG-02.md"))
+
+	bySearch := h.list(ListParams{Filters: Filters{Search: pointer("BUG-02")}})
+	if got := ids(bySearch); len(got) != 0 {
+		t.Errorf("--search BUG-02 answered %v, want none: references is out of its scope", got)
+	}
+
+	byRef := h.list(ListParams{Filters: Filters{Ref: []string{"BUG-02"}}})
+	if got := ids(byRef); !reflect.DeepEqual(got, []string{"MYP-1"}) {
+		t.Errorf("--ref BUG-02 answered %v and not the task carrying it", got)
+	}
+}
+
 // TestTheFiltersOfTheParametersCarryTheKeysOfTheContract is the round trip
 // the plan of TASK-13 asks for: the parameters are serialized and read back,
 // and the keys are the ones of the table of
@@ -329,16 +350,29 @@ func TestSearchUsesTheOneScopeThereIs(t *testing.T) {
 // written by hand between the two.
 func TestTheFiltersOfTheParametersCarryTheKeysOfTheContract(t *testing.T) {
 	filters := Filters{
-		Status:     []string{"To Do"},
-		AnyStatus:  true,
-		Type:       []string{"bug"},
-		Label:      []string{"parser"},
-		Assignee:   []string{"@claude"},
-		Unassigned: true,
-		Parent:     pointer("MYP-1"),
-		Blocked:    boolPointer(false),
-		DueBefore:  pointer("2026-09-20"),
-		Search:     pointer("CRLF"),
+		Status:        []string{"To Do"},
+		AnyStatus:     true,
+		Type:          []string{"bug"},
+		NotType:       []string{"docs"},
+		Priority:      []string{"high"},
+		NotPriority:   []string{"low"},
+		Label:         []string{"parser"},
+		NotLabel:      []string{"blocked"},
+		Assignee:      []string{"@claude"},
+		NotAssignee:   []string{"@sara"},
+		Unassigned:    true,
+		Author:        []string{"@avilches"},
+		Parent:        pointer("MYP-1"),
+		Root:          false,
+		Blocked:       boolPointer(false),
+		DueBefore:     pointer("2026-09-20"),
+		CreatedAfter:  pointer("2026-09-01"),
+		CreatedBefore: pointer("2026-09-08"),
+		UpdatedAfter:  pointer("2026-09-02"),
+		UpdatedBefore: pointer("2026-09-09"),
+		Ref:           []string{"internal/ops/write.go"},
+		NotRef:        []string{"docs/bugs"},
+		Search:        pointer("CRLF"),
 	}
 
 	encoded, err := json.Marshal(filters)
@@ -356,9 +390,12 @@ func TestTheFiltersOfTheParametersCarryTheKeysOfTheContract(t *testing.T) {
 	sort.Strings(keys)
 
 	want := []string{
-		"active", "anyStatus", "archived", "assignee", "blocked", "dueBefore",
-		"label", "labelOr", "notStatus", "onlyArchived", "overdue", "parent",
-		"priority", "search", "status", "type", "unassigned", "unchecked", "waiting",
+		"active", "anyStatus", "archived", "assignee", "author", "blocked",
+		"createdAfter", "createdBefore", "dueBefore", "label", "labelOr",
+		"notAssignee", "notLabel", "notPriority", "notRef", "notStatus",
+		"notType", "onlyArchived", "overdue", "parent", "priority", "ref",
+		"root", "search", "status", "type", "unassigned", "unchecked",
+		"updatedAfter", "updatedBefore", "waiting",
 	}
 	if !reflect.DeepEqual(keys, want) {
 		t.Errorf("the filters serialize as %v and the contract has %v", keys, want)
@@ -450,5 +487,364 @@ func TestAFilterThatFoldsTheCaseStillRefusesAValueTheBoardDoesNotHave(t *testing
 			Filters: Filters{Label: []string{value}},
 		})
 		assertSpec(t, err, 3, "unknown_label")
+	}
+}
+
+// TestTheFourNegationsSubtractEachValueOnItsOwn is
+// docs/spec/cmd/ls.md#parámetros: a negation does not OR its repeated
+// values like the positive filters do, because summing exclusions can never
+// bring back a task that one of them already threw out.
+func TestTheFourNegationsSubtractEachValueOnItsOwn(t *testing.T) {
+	h := newHarness(t)
+	h.create("A bug", scalar("type", "bug"))
+	h.create("A doc", scalar("type", "docs"))
+	h.create("A task", scalar("type", "task"))
+
+	got := ids(h.list(ListParams{
+		Filters: Filters{NotType: []string{"bug", "docs"}},
+	}))
+
+	if want := []string{"MYP-3"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--not-type bug --not-type docs answered %v and not %v", got, want)
+	}
+}
+
+// TestATypeAndItsOwnNegationIsAnEmptyListNotAnError is the general rule of
+// docs/spec/cmd/ls.md#parámetros applied to naming the same value on both
+// sides of the same field: two valid filters that never overlap are a fact
+// about the board and not a usage error.
+func TestATypeAndItsOwnNegationIsAnEmptyListNotAnError(t *testing.T) {
+	h := newHarness(t)
+	h.create("A bug", scalar("type", "bug"))
+
+	r := h.list(ListParams{
+		Filters: Filters{Type: []string{"bug"}, NotType: []string{"bug"}},
+	})
+
+	if got := ids(r); len(got) != 0 {
+		t.Errorf("--type bug --not-type bug answered %v, want none", got)
+	}
+}
+
+// TestNotPriorityExcludesExactlyLikeNotType mirrors the type case for
+// --not-priority, the other vocabulary flag docs/spec/cmd/ls.md#parámetros
+// adds a negation for.
+func TestNotPriorityExcludesExactlyLikeNotType(t *testing.T) {
+	h := newHarness(t)
+	h.create("High", scalar("priority", "high"))
+	h.create("Low", scalar("priority", "low"))
+
+	got := ids(h.list(ListParams{Filters: Filters{NotPriority: []string{"high"}}}))
+
+	if want := []string{"MYP-2"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--not-priority high answered %v and not %v", got, want)
+	}
+}
+
+// TestNotTypeAndNotPriorityWithAnUnknownValueKeepTheFieldOfTheirPositive is
+// the mechanism --not-type and --not-priority replicate from --not-status:
+// both reuse match.Type/match.Priority the same way --not-status reuses
+// match.Status, so the error's `field` stays the domain name ("type",
+// "priority") and not a name of its own ("notType", "notPriority"), unlike
+// --not-label and --not-assignee just below, which do get their own
+// (docs/spec/contrato-json.md#los-filtros-de-biso-ls).
+func TestNotTypeAndNotPriorityWithAnUnknownValueKeepTheFieldOfTheirPositive(t *testing.T) {
+	h := newHarness(t)
+	h.create("A task")
+
+	_, err := ListOn(h.b, h.env, ListParams{Filters: Filters{NotType: []string{"epic"}}})
+	e := specError(t, err)
+	if e.ExitCode != 3 || e.Code != "unknown_type" || e.Field != "type" {
+		t.Errorf("--not-type epic answered %d/%s field=%q, want 3/unknown_type field=\"type\"",
+			e.ExitCode, e.Code, e.Field)
+	}
+
+	_, err = ListOn(h.b, h.env, ListParams{Filters: Filters{NotPriority: []string{"urgent"}}})
+	e = specError(t, err)
+	if e.ExitCode != 3 || e.Code != "unknown_priority" || e.Field != "priority" {
+		t.Errorf("--not-priority urgent answered %d/%s field=%q, want 3/unknown_priority field=\"priority\"",
+			e.ExitCode, e.Code, e.Field)
+	}
+}
+
+// TestNotLabelExcludesATaskCarryingAnyOfTheGivenLabels is the OR of
+// docs/spec/cmd/ls.md#parámetros applied to the subtractive side: a task is
+// excluded as soon as it carries any one of the --not-label values.
+func TestNotLabelExcludesATaskCarryingAnyOfTheGivenLabels(t *testing.T) {
+	h := newHarness(t)
+	h.create("Front", add("add-labels", "frontend"))
+	h.create("Back", add("add-labels", "backend"))
+	h.create("Neither")
+
+	got := ids(h.list(ListParams{
+		Filters: Filters{NotLabel: []string{"frontend", "backend"}},
+	}))
+
+	if want := []string{"MYP-3"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--not-label frontend --not-label backend answered %v and not %v", got, want)
+	}
+}
+
+// TestNotLabelAcceptsTheKeyForm is the same "clave:" reading --label and
+// --label-or already have (docs/spec/cmd/ls.md#parámetros).
+func TestNotLabelAcceptsTheKeyForm(t *testing.T) {
+	h := newHarness(t)
+	h.create("Milestone 1", add("add-labels", "milestone:m1"))
+	h.create("No milestone")
+
+	got := ids(h.list(ListParams{Filters: Filters{NotLabel: []string{"milestone:"}}}))
+
+	if want := []string{"MYP-2"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--not-label milestone: answered %v and not %v", got, want)
+	}
+}
+
+// TestNotLabelWithAnUnknownLabelIsExitCodeThree is the same check --label
+// already runs, reused by a different flag
+// (docs/spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué).
+func TestNotLabelWithAnUnknownLabelIsExitCodeThree(t *testing.T) {
+	h := newHarness(t)
+	h.create("A task", add("add-labels", "frontend"))
+
+	_, err := ListOn(h.b, h.env, ListParams{
+		Filters: Filters{NotLabel: []string{"fronted"}},
+	})
+	assertSpec(t, err, 3, "unknown_label")
+
+	// --unchecked turns that check off, the same as it does for --label.
+	r := h.list(ListParams{Filters: Filters{NotLabel: []string{"fronted"}, Unchecked: true}})
+	if got := ids(r); !reflect.DeepEqual(got, []string{"MYP-1"}) {
+		t.Errorf("--not-label fronted --unchecked answered %v", got)
+	}
+}
+
+// TestNotAssigneeExcludesATaskAssignedToAnyOfThem mirrors --not-label for
+// people, folding the case like --assignee does.
+func TestNotAssigneeExcludesATaskAssignedToAnyOfThem(t *testing.T) {
+	h := newHarness(t)
+	h.create("Claude's", add("add-assignees", "@claude"))
+	h.create("Sara's", add("add-assignees", "@sara"))
+	h.create("Nobody's")
+
+	got := ids(h.list(ListParams{Filters: Filters{NotAssignee: []string{"@CLAUDE"}}}))
+
+	want := []string{"MYP-2", "MYP-3"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("--not-assignee @CLAUDE answered %v and not %v", got, want)
+	}
+}
+
+// TestNotAssigneeWithAnUnknownPersonIsExitCodeThree is checkKnown reused for
+// the new flag, with the same suggestion algorithm.
+func TestNotAssigneeWithAnUnknownPersonIsExitCodeThree(t *testing.T) {
+	h := newHarness(t)
+	h.create("A task", add("add-assignees", "@claude"))
+
+	_, err := ListOn(h.b, h.env, ListParams{
+		Filters: Filters{NotAssignee: []string{"@clude"}},
+	})
+	assertSpec(t, err, 3, "unknown_assignee")
+}
+
+// TestAuthorComparesTheSameNormalizeAsAssigneeWithNoVocabulary is
+// docs/spec/cmd/ls.md#parámetros: --author folds the case, drops the
+// diacritics and the separators like --assignee, but never checks the
+// result against a configured set, so a value nobody used is an empty list
+// and never exit code 3.
+func TestAuthorComparesTheSameNormalizeAsAssigneeWithNoVocabulary(t *testing.T) {
+	h := newHarness(t)
+	h.as("@Alberto-Vilches").create("Written by Alberto")
+	h.as("@sara").create("Written by Sara")
+
+	got := ids(h.list(ListParams{Filters: Filters{Author: []string{"@albertovilches"}}}))
+	if want := []string{"MYP-1"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--author albertovilches answered %v and not %v", got, want)
+	}
+
+	nobody := h.list(ListParams{Filters: Filters{Author: []string{"@nobody"}}})
+	if got := ids(nobody); len(got) != 0 {
+		t.Errorf("--author @nobody answered %v, want none", got)
+	}
+	if len(nobody.Warnings) != 0 {
+		// The board-wide unreadable-task warning is the only one that could
+		// appear here, and this board has no such task; an unknown author
+		// must never turn into an error of its own.
+		t.Errorf("an unknown --author produced warnings: %v", nobody.Warnings)
+	}
+}
+
+// TestAuthorCombinesRepeatedValuesWithOr is the same combination rule as
+// --type or --assignee, named for --author in
+// docs/spec/cmd/ls.md#parámetros.
+func TestAuthorCombinesRepeatedValuesWithOr(t *testing.T) {
+	h := newHarness(t)
+	h.as("@claude").create("Claude's")
+	h.as("@sara").create("Sara's")
+	h.as("@avilches").create("Avilches's")
+
+	got := ids(h.list(ListParams{Filters: Filters{Author: []string{"@claude", "@sara"}}}))
+
+	want := []string{"MYP-1", "MYP-2"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("--author @claude --author @sara answered %v and not %v", got, want)
+	}
+}
+
+// TestRefMatchesASubstringOfReferencesFoldingCaseAndAccents is
+// docs/spec/cmd/ls.md#parámetros: --ref uses the same folding as a text
+// selector, case and diacritics alike, unlike a label or a person.
+func TestRefMatchesASubstringOfReferencesFoldingCaseAndAccents(t *testing.T) {
+	h := newHarness(t)
+	h.create("With a reference", add("add-refs", "docs/bugs/BUG-02.md"))
+	h.create("Without one")
+
+	got := ids(h.list(ListParams{Filters: Filters{Ref: []string{"bûg-02"}}}))
+
+	if want := []string{"MYP-1"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--ref bûg-02 answered %v and not %v", got, want)
+	}
+}
+
+// TestRefNeverLooksAtTheTitleOrOtherFields is the scope
+// docs/spec/cmd/ls.md#parámetros carves out: --ref only ever looks at
+// `references`, unlike --search.
+func TestRefNeverLooksAtTheTitleOrOtherFields(t *testing.T) {
+	h := newHarness(t)
+	h.create("Mentions CRLF in its title")
+	h.create("Has it in a reference", add("add-refs", "docs/CRLF.md"))
+
+	got := ids(h.list(ListParams{Filters: Filters{Ref: []string{"CRLF"}}}))
+
+	if want := []string{"MYP-2"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--ref CRLF answered %v and not %v", got, want)
+	}
+}
+
+// TestRefWithAValueNoTaskHasIsAnEmptyListNeverAnError is the same rule as
+// --search and --author: --ref has no vocabulary to fail against.
+func TestRefWithAValueNoTaskHasIsAnEmptyListNeverAnError(t *testing.T) {
+	h := newHarness(t)
+	h.create("A task", add("add-refs", "docs/a.md"))
+
+	r := h.list(ListParams{Filters: Filters{Ref: []string{"nothing/like/this"}}})
+	if got := ids(r); len(got) != 0 {
+		t.Errorf("--ref with an unused value answered %v, want none", got)
+	}
+}
+
+// TestNotRefExcludesATaskWhoseReferencesContainTheSubstring is the negation
+// of --ref, with the same subtraction rule as the other four.
+func TestNotRefExcludesATaskWhoseReferencesContainTheSubstring(t *testing.T) {
+	h := newHarness(t)
+	h.create("Bug doc", add("add-refs", "docs/bugs/BUG-02.md"))
+	h.create("Other doc", add("add-refs", "docs/other.md"))
+
+	got := ids(h.list(ListParams{Filters: Filters{NotRef: []string{"bugs"}}}))
+
+	if want := []string{"MYP-2"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--not-ref bugs answered %v and not %v", got, want)
+	}
+}
+
+// TestRootFiltersTasksWithNoParent is docs/spec/cmd/ls.md#parámetros:
+// --root is the complement of --parent.
+func TestRootFiltersTasksWithNoParent(t *testing.T) {
+	h := newHarness(t)
+	parent := h.create("Parent")
+	h.create("Child", scalar("parent", parent))
+	h.create("Another root")
+
+	got := ids(h.list(ListParams{Filters: Filters{Root: true}}))
+
+	want := []string{"MYP-1", "MYP-3"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("--root answered %v and not %v", got, want)
+	}
+}
+
+// TestCreatedAndUpdatedFiltersAreAHalfOpenInterval is
+// docs/spec/cmd/ls.md#parámetros: --created-after/--updated-after include
+// the day named, --created-before/--updated-before exclude it, so the two
+// together never overlap on their shared boundary.
+func TestCreatedAndUpdatedFiltersAreAHalfOpenInterval(t *testing.T) {
+	h := newHarness(t)
+	h.env.Now = func() time.Time { return time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC) }
+	early := h.create("Created on the 1st")
+	h.env.Now = func() time.Time { return time.Date(2026, 9, 8, 10, 0, 0, 0, time.UTC) }
+	onTheBoundary := h.create("Created on the 8th")
+	h.env.Now = func() time.Time { return time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC) }
+	h.create("Created on the 15th")
+
+	firstWeek := ids(h.list(ListParams{
+		Filters: Filters{
+			CreatedAfter:  pointer("2026-09-01"),
+			CreatedBefore: pointer("2026-09-08"),
+		},
+	}))
+	if want := []string{early}; !reflect.DeepEqual(firstWeek, want) {
+		t.Errorf("the first week answered %v and not %v", firstWeek, want)
+	}
+
+	secondWeek := ids(h.list(ListParams{
+		Filters: Filters{
+			CreatedAfter:  pointer("2026-09-08"),
+			CreatedBefore: pointer("2026-09-15"),
+		},
+	}))
+	if want := []string{onTheBoundary}; !reflect.DeepEqual(secondWeek, want) {
+		t.Errorf("the second week answered %v and not %v", secondWeek, want)
+	}
+
+	// --updated-after/--updated-before follow the same rule, over
+	// `updatedAt`: setting a field moves it without touching `createdAt`.
+	h.env.Now = func() time.Time { return time.Date(2026, 9, 20, 10, 0, 0, 0, time.UTC) }
+	h.set(early, scalar("priority", "high"))
+
+	updatedOnThe20th := ids(h.list(ListParams{
+		Filters: Filters{UpdatedAfter: pointer("2026-09-20")},
+	}))
+	if want := []string{early}; !reflect.DeepEqual(updatedOnThe20th, want) {
+		t.Errorf("--updated-after 2026-09-20 answered %v and not %v", updatedOnThe20th, want)
+	}
+}
+
+// TestSortPriorityOrdersByTheConfiguredPositionWithNoneLast is
+// docs/spec/cmd/ls.md#la-regla-de-orden-completa: ascending by the position
+// in `priorities`, 0-indexed from the most urgent, with a task that has none
+// at the end, in a block, by identifier.
+func TestSortPriorityOrdersByTheConfiguredPositionWithNoneLast(t *testing.T) {
+	h := newHarness(t)
+	h.create("Low", scalar("priority", "low"))
+	h.create("No priority")
+	h.create("High", scalar("priority", "high"))
+	h.create("Medium", scalar("priority", "medium"))
+	h.create("No priority either")
+
+	got := ids(h.list(ListParams{Sort: "priority"}))
+
+	want := []string{"MYP-3", "MYP-4", "MYP-1", "MYP-2", "MYP-5"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("--sort priority answered %v and not %v", got, want)
+	}
+
+	flipped := ids(h.list(ListParams{Sort: "priority", Reverse: true}))
+	wantFlipped := []string{"MYP-5", "MYP-2", "MYP-1", "MYP-4", "MYP-3"}
+	if !reflect.DeepEqual(flipped, wantFlipped) {
+		t.Errorf("--sort priority --reverse answered %v and not %v", flipped, wantFlipped)
+	}
+}
+
+// TestSortPriorityOnABoardWithNoPriorityIsDeterministic is the same
+// determinism --sort due already has for a board with no `due`
+// (docs/spec/cmd/ls.md#la-regla-de-orden-completa).
+func TestSortPriorityOnABoardWithNoPriorityIsDeterministic(t *testing.T) {
+	h := newHarness(t)
+	h.create("Z")
+	h.create("A")
+
+	got := ids(h.list(ListParams{Sort: "priority"}))
+
+	if want := []string{"MYP-1", "MYP-2"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("--sort priority with no priority anywhere answered %v and not %v", got, want)
 	}
 }

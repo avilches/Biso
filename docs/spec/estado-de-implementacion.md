@@ -1253,6 +1253,62 @@ para no llevarlas, y la fila nueva de
   especificación por encima de los 5.112 anteriores, medidos sobre el propio fichero de referencia
   (`wc -c`) y no solo sobre lo que compara la prueba de oro.
 
+### Qué dejó hecha TASK-76: los filtros que faltaban en `biso ls`
+
+La tarea `TASK-76` aplicó los ejes de `biso ls` que se podían escribir o filtrar por un lado, u
+ordenar por otro, y no las dos cosas a la vez. Las anclas que cubre son la firma, la tabla de
+parámetros, las reglas de combinación de filtros, la regla de orden completa, la tabla de
+comportamiento caso a caso, el esquema JSON, la tabla de códigos de salida y la ayuda de
+["`biso ls`"](cmd/ls.md), el conjunto de personas y la tabla de validación de
+["Los vocabularios del tablero"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué), la nota sobre
+`references` de ["La búsqueda por texto"](referencias.md#la-búsqueda-por-texto), el cruce hacia
+`--ref` en ["Los punteros: `references`"](modelo-de-datos/relaciones.md#los-punteros-references), y
+la tabla de `data.filters` y la nota sobre la asimetría de `field` en las negaciones de
+["El contrato JSON"](contrato-json.md#los-filtros-de-biso-ls):
+
+- **Se añadieron `--ref`/`--not-ref` sobre `references`, `--author`, las cuatro negaciones que
+  faltaban (`--not-type`, `--not-priority`, `--not-label`, `--not-assignee`), los cuatro filtros de
+  fecha (`--created-after`, `--created-before`, `--updated-after`, `--updated-before`), `--root` y
+  `--sort priority`.** El criterio de aceptación 7 original, un filtro por la clave de `ext`, no
+  necesitó ningún código: `ext` ya se había retirado en TASK-83 y `--label clave:valor` cubre ese caso
+  de uso desde entonces, así que solo hizo falta dejarlo dicho en la especificación
+  (["`biso ls`"](cmd/ls.md#parámetros)).
+- **`internal/ops/list.go`** ganó un campo nuevo de `Filters` (con su clave JSON) por cada flag nuevo,
+  `priority` al final de `SortFields`, y su validación y su aplicación: `--not-type`/`--not-priority` resuelven
+  con el mismo `match.Match` que su positivo, `--not-label`/`--not-assignee` con el mismo
+  `checkLabelFilter`/`checkKnown` que `--label`/`--assignee` pero con su propio nombre de campo,
+  `--author` compara con `match.Normalize` directamente contra el `author` de cada tarea sin resolver
+  contra ningún conjunto, `--created-after`/`--updated-after` y `--created-before`/`--updated-before`
+  son el intervalo semiabierto `onOrAfterDay`/`beforeDay` sobre el día de calendario UTC del instante
+  (nunca vacío, a diferencia de `due`), `--ref`/`--not-ref` reusan el plegado de `TextMatches` que ya
+  usaba `TaskMatchesText`, `--root` mira que `Parent` esté vacío, y `--sort priority` compara por
+  `priorityIndex`, la posición en `priorities` que también usa el término de prioridad de la urgencia,
+  con las tareas sin prioridad al final por identificador.
+- **`internal/cli/commands.go`** declara todos los flags nuevos con `filterFlags()`, incluida la
+  incompatibilidad `--root`/`--parent` con `Conflicts`, y **`internal/cli/help.go`** y
+  **`internal/cli/list.go`** llevan el texto de `--help` y la lectura de los flags a `ListParams`,
+  respectivamente.
+- **La asimetría del campo `field` en las negaciones**, ya escrita en
+  ["El contrato JSON"](contrato-json.md#los-filtros-de-biso-ls), tiene su prueba:
+  `TestNotTypeAndNotPriorityWithAnUnknownValueKeepTheFieldOfTheirPositive`
+  (`internal/ops/list_test.go`) comprueba que `--not-type` y `--not-priority` reportan `field` igual
+  al de su positivo (`type`, `priority`), mientras que `--not-label` y `--not-assignee` llevan el
+  suyo propio (`notLabel`, `notAssignee`), como ya hacía `--label-or` con `labelOr` antes de esta
+  tarea.
+- **Las pruebas viven en tres capas**: `internal/ops/list_test.go` (un caso por filtro y por
+  negación, incluida `TestRefNeverLooksAtTheTitleOrOtherFields` para comprobar que `--ref` no
+  reutiliza el ámbito de `--search`), `internal/cli/ls_filters_test.go` (nuevo, la validación de los
+  flags a nivel de línea de comandos) y `cmd/biso/read_behaviour_test.go` (los casos de extremo a
+  extremo contra el binario compilado).
+- **Los ficheros de referencia de `cmd/biso/testdata/`** que cambiaron son `ls-help.txt` (el texto
+  nuevo de `--help`) y `ls-json.txt` (las doce claves nuevas de `data.filters`). Ningún otro fichero
+  de referencia de `ls` ni de `prime` cambió: las ocho columnas de la tabla de texto son las mismas.
+- **El mensaje de arranque no cambió.** `TestTheStartupBudgetOfLsAndPrime` sigue en verde, y el
+  fichero de referencia `cmd/biso/testdata/prime-output.txt` mide los mismos 5.151 bytes de antes de
+  esta tarea (`wc -c`), la misma cifra que cita
+  ["El presupuesto de tamaño"](presupuestos.md#el-presupuesto-de-tamaño): los filtros de `biso ls` no
+  tocan ni la parte fija ni el resumen de `biso prime`.
+
 ## Antes de empezar un paso
 
 Al planificar la tarea de un paso (el plan que se registra antes de tocar código, según

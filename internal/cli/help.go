@@ -304,41 +304,55 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"does not have is an error, never an empty list, so an empty list is a fact.\n" +
 	"\n" +
 	"Filters (repeat or comma-separate; same field is OR, different fields are AND):\n" +
-	"      --status <value>       configured status (default: all but the terminal)\n" +
-	"      --not-status <value>   exclude a status\n" +
-	"      --any-status           include the terminal status too\n" +
-	"      --archived             include archived tasks\n" +
-	"      --only-archived        only archived tasks\n" +
-	"      --type <value>         configured type\n" +
-	"      --priority <value>     configured priority\n" +
-	"      --label <value>        label; several labels are ANDed. The form key:\n" +
-	"                             matches any value of that scoped-label key\n" +
-	"      --label-or <value>     label; several are ORed; takes key: too\n" +
-	"      --assignee <@who>      assignee\n" +
-	"      --mine                 assigned to you\n" +
-	"      --unassigned           assigned to nobody\n" +
-	"      --parent <ref>         subtasks of this task\n" +
-	"      --blocked              something unfinished blocks it\n" +
-	"      --not-blocked          nothing unfinished blocks it; it may still be\n" +
-	"                             waiting on an answer, so add --not-waiting\n" +
-	"      --waiting              has an open question\n" +
-	"      --not-waiting          has no open question\n" +
-	"      --active               in the board's active status\n" +
-	"      --not-active           not in the active status\n" +
-	"      --overdue              past its due date\n" +
-	"      --due-before <date>    due before YYYY-MM-DD\n" +
-	"      --search <text>        free text; see `biso get --help` for the scope\n" +
-	"      --unchecked            do not check that the labels and assignees you\n" +
-	"                             filter by exist on the board; nothing else\n" +
-	"                             changes\n" +
+	"      --status <value>          configured status (default: all but the terminal)\n" +
+	"      --not-status <value>      exclude a status\n" +
+	"      --any-status              include the terminal status too\n" +
+	"      --archived                include archived tasks\n" +
+	"      --only-archived           only archived tasks\n" +
+	"      --type <value>            configured type\n" +
+	"      --not-type <value>        exclude a type\n" +
+	"      --priority <value>        configured priority\n" +
+	"      --not-priority <value>    exclude a priority\n" +
+	"      --label <value>           label; several labels are ANDed. The form key:\n" +
+	"                                matches any value of that scoped-label key\n" +
+	"      --label-or <value>        label; several are ORed; takes key: too\n" +
+	"      --not-label <value>       exclude a label; several are ORed (excluded if it\n" +
+	"                                carries any of them); takes key: too\n" +
+	"      --assignee <@who>         assignee\n" +
+	"      --not-assignee <@who>     exclude an assignee\n" +
+	"      --mine                    assigned to you\n" +
+	"      --unassigned              assigned to nobody\n" +
+	"      --author <@who>           task author\n" +
+	"      --parent <ref>            subtasks of this task\n" +
+	"      --root                    no parent\n" +
+	"      --blocked                 something unfinished blocks it\n" +
+	"      --not-blocked             nothing unfinished blocks it; it may still be\n" +
+	"                                waiting on an answer, so add --not-waiting\n" +
+	"      --waiting                 has an open question\n" +
+	"      --not-waiting             has no open question\n" +
+	"      --active                  in the board's active status\n" +
+	"      --not-active              not in the active status\n" +
+	"      --overdue                 past its due date\n" +
+	"      --due-before <date>       due before YYYY-MM-DD\n" +
+	"      --created-after <date>    created on or after YYYY-MM-DD\n" +
+	"      --created-before <date>   created before YYYY-MM-DD\n" +
+	"      --updated-after <date>    updated on or after YYYY-MM-DD\n" +
+	"      --updated-before <date>   updated before YYYY-MM-DD\n" +
+	"      --ref <text>              substring match on references\n" +
+	"      --not-ref <text>          exclude a references substring match\n" +
+	"      --search <text>           free text; see `biso get --help` for the scope\n" +
+	"      --unchecked               do not check that the labels and assignees you\n" +
+	"                                filter by exist on the board; nothing else\n" +
+	"                                changes\n" +
 	"\n" +
 	"Shape:\n" +
-	"      --sort <field>         urgency, id, ordinal, due, updated, created, title\n" +
-	"      --reverse              flip the whole order, tie-breaks included\n" +
-	"      --limit <n>            how many rows to print (default 30, 0 prints none)\n" +
-	"      --all                  print every match\n" +
-	"      --ids                  print only ids, one per line\n" +
-	"      --count                print only how many match\n" +
+	"      --sort <field>            urgency, id, ordinal, due, updated, created, title,\n" +
+	"                                priority\n" +
+	"      --reverse                 flip the whole order, tie-breaks included\n" +
+	"      --limit <n>               how many rows to print (default 30, 0 prints none)\n" +
+	"      --all                     print every match\n" +
+	"      --ids                     print only ids, one per line\n" +
+	"      --count                   print only how many match\n" +
 	"\n" +
 	"Columns: id, status, type, priority, title, criteria, assignee, due. Empty\n" +
 	"cells print a dash. The title is cut at 100 characters, always, before any\n" +
@@ -357,7 +371,9 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"  biso ls --status \"In Progress\" --mine\n" +
 	"  biso ls --type bug --priority high --limit 10\n" +
 	"  biso ls --not-blocked --not-waiting --ids\n" +
-	"  biso ls --any-status --archived --all\n"
+	"  biso ls --any-status --archived --all\n" +
+	"  biso ls --ref internal/ops/write.go --any-status\n" +
+	"  biso ls --root --not-label blocked\n"
 
 // primeHelp is the help block of docs/spec/cmd/prime.md.
 const primeHelp = "Usage: biso prime [options]\n" +

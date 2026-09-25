@@ -354,13 +354,19 @@ func filterFlags() []FlagSpec {
 		vocabulary("not-status", "any-status"),
 		{Name: "any-status", Conflicts: []string{"status", "not-status"}},
 		vocabulary("type"),
+		vocabulary("not-type"),
 		vocabulary("priority"),
+		vocabulary("not-priority"),
 		labelFilter("label"),
 		labelFilter("label-or"),
+		labelFilter("not-label"),
 		filter("assignee", "mine", "unassigned"),
+		filter("not-assignee"),
 		{Name: "mine", Conflicts: []string{"assignee", "unassigned"}},
 		{Name: "unassigned", Conflicts: []string{"assignee", "mine"}},
-		{Name: "parent", Value: PlainValue},
+		filter("author"),
+		{Name: "parent", Value: PlainValue, Conflicts: []string{"root"}},
+		{Name: "root", Conflicts: []string{"parent"}},
 	}
 	flags = append(flags, opposites("blocked", "not-blocked")...)
 	flags = append(flags, opposites("waiting", "not-waiting")...)
@@ -368,6 +374,12 @@ func filterFlags() []FlagSpec {
 	return append(flags,
 		FlagSpec{Name: "overdue"},
 		FlagSpec{Name: "due-before", Value: PlainValue, Field: "dueBefore"},
+		FlagSpec{Name: "created-after", Value: PlainValue, Field: "createdAfter"},
+		FlagSpec{Name: "created-before", Value: PlainValue, Field: "createdBefore"},
+		FlagSpec{Name: "updated-after", Value: PlainValue, Field: "updatedAfter"},
+		FlagSpec{Name: "updated-before", Value: PlainValue, Field: "updatedBefore"},
+		filter("ref"),
+		filter("not-ref"),
 		FlagSpec{Name: "search", Value: TextValue},
 		FlagSpec{Name: "unchecked"},
 	)

@@ -187,7 +187,7 @@ func TestListSortRejectsAFieldThatDoesNotExist(t *testing.T) {
 
 	assertEqual(t, got.stderr,
 		"error: --sort: unknown value: \"importance\"\n"+
-			"       valid sort fields: urgency, id, ordinal, due, updated, created, title\n",
+			"       valid sort fields: urgency, id, ordinal, due, updated, created, title, priority\n",
 		"the message of an unknown sort field")
 }
 
@@ -389,6 +389,71 @@ func TestTheSameTextIsWorthTheSameWhenFilteringAsWhenWriting(t *testing.T) {
 				"the task written with "+strconv.Quote(c.typed)+" and filtered by it")
 		})
 	}
+}
+
+// TestListRootExcludesTasksWithAParent is docs/spec/cmd/ls.md#parámetros,
+// end to end through the compiled binary.
+func TestListRootExcludesTasksWithAParent(t *testing.T) {
+	m := smallBoard(t)
+	m.run(t, "set", "MYP-2", "--parent", "MYP-1").assertCode(t, 0)
+
+	got := m.run(t, "ls", "--ids", "--root").assertCode(t, 0)
+
+	assertEqual(t, got.stdout, joinLines([]string{"MYP-1", "MYP-3", "MYP-4"}),
+		"the listing with --root")
+}
+
+// TestListRootAndParentIsExitCodeTwo is the same incompatibility
+// internal/cli/ls_filters_test.go checks at the parser, run here through the
+// compiled binary so the wiring from argv to that check is covered too.
+func TestListRootAndParentIsExitCodeTwo(t *testing.T) {
+	m := smallBoard(t)
+
+	got := m.run(t, "ls", "--root", "--parent", "MYP-1").assertCode(t, 2)
+
+	assertEqual(t, got.stderr,
+		"error: --parent and --root cannot be used together\n",
+		"the message of --root with --parent")
+}
+
+// TestListNotLabelSuggestsTheClosestLabel is
+// docs/spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué reused by a
+// different flag, the same message --label already gives.
+func TestListNotLabelSuggestsTheClosestLabel(t *testing.T) {
+	m := smallBoard(t)
+
+	got := m.run(t, "ls", "--not-label", "fronted").assertCode(t, 3)
+
+	assertEqual(t, got.stderr,
+		"error: unknown label: \"fronted\"\nhint: did you mean: frontend?\n",
+		"the message of an unknown --not-label")
+}
+
+// TestListRefFindsAReferenceSubstring is docs/spec/cmd/ls.md#parámetros
+// through the compiled binary, with the example the specification itself
+// gives in its help text.
+func TestListRefFindsAReferenceSubstring(t *testing.T) {
+	m := smallBoard(t)
+	m.run(t, "set", "MYP-3", "--add-refs", "internal/ops/write.go").assertCode(t, 0)
+
+	got := m.run(t, "ls", "--ids", "--ref", "internal/ops/write.go").assertCode(t, 0)
+
+	assertEqual(t, got.stdout, "MYP-3\n", "the listing with --ref")
+}
+
+// TestListSortPriorityEndToEnd is the new value of --sort, run through the
+// compiled binary.
+func TestListSortPriorityEndToEnd(t *testing.T) {
+	m := smallBoard(t)
+	m.run(t, "set", "MYP-3", "--priority", "high").assertCode(t, 0)
+	m.run(t, "set", "MYP-4", "--priority", "low").assertCode(t, 0)
+
+	got := m.run(t, "ls", "--ids", "--sort", "priority").assertCode(t, 0)
+
+	// MYP-3 (high) first, MYP-4 (low) next, then the two without a
+	// priority, in a block, by identifier.
+	assertEqual(t, got.stdout, joinLines([]string{"MYP-3", "MYP-4", "MYP-1", "MYP-2"}),
+		"the listing with --sort priority")
 }
 
 func orZero(code int) int { return code }

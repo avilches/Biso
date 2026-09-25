@@ -34,25 +34,37 @@ const DefaultLimit = board.DefaultLimit
 // written by hand between the parameters and the envelope is exactly where
 // the two would drift apart.
 type Filters struct {
-	Status       []string `json:"status"`
-	NotStatus    []string `json:"notStatus"`
-	AnyStatus    bool     `json:"anyStatus"`
-	Archived     bool     `json:"archived"`
-	OnlyArchived bool     `json:"onlyArchived"`
-	Type         []string `json:"type"`
-	Priority     []string `json:"priority"`
-	Label        []string `json:"label"`
-	LabelOr      []string `json:"labelOr"`
-	Assignee     []string `json:"assignee"`
-	Unassigned   bool     `json:"unassigned"`
-	Parent       *string  `json:"parent"`
-	Blocked      *bool    `json:"blocked"`
-	Waiting      *bool    `json:"waiting"`
-	Active       *bool    `json:"active"`
-	Overdue      bool     `json:"overdue"`
-	DueBefore    *string  `json:"dueBefore"`
-	Search       *string  `json:"search"`
-	Unchecked    bool     `json:"unchecked"`
+	Status        []string `json:"status"`
+	NotStatus     []string `json:"notStatus"`
+	AnyStatus     bool     `json:"anyStatus"`
+	Archived      bool     `json:"archived"`
+	OnlyArchived  bool     `json:"onlyArchived"`
+	Type          []string `json:"type"`
+	NotType       []string `json:"notType"`
+	Priority      []string `json:"priority"`
+	NotPriority   []string `json:"notPriority"`
+	Label         []string `json:"label"`
+	LabelOr       []string `json:"labelOr"`
+	NotLabel      []string `json:"notLabel"`
+	Assignee      []string `json:"assignee"`
+	NotAssignee   []string `json:"notAssignee"`
+	Unassigned    bool     `json:"unassigned"`
+	Author        []string `json:"author"`
+	Parent        *string  `json:"parent"`
+	Root          bool     `json:"root"`
+	Blocked       *bool    `json:"blocked"`
+	Waiting       *bool    `json:"waiting"`
+	Active        *bool    `json:"active"`
+	Overdue       bool     `json:"overdue"`
+	DueBefore     *string  `json:"dueBefore"`
+	CreatedAfter  *string  `json:"createdAfter"`
+	CreatedBefore *string  `json:"createdBefore"`
+	UpdatedAfter  *string  `json:"updatedAfter"`
+	UpdatedBefore *string  `json:"updatedBefore"`
+	Ref           []string `json:"ref"`
+	NotRef        []string `json:"notRef"`
+	Search        *string  `json:"search"`
+	Unchecked     bool     `json:"unchecked"`
 }
 
 // ListParams is one `biso ls` call, already read off the command line: the
@@ -83,7 +95,9 @@ type ListParams struct {
 // SortFields are the values --sort admits, in the order of the table of
 // docs/spec/cmd/ls.md. The empty string is not one of them: it is the
 // absence of the flag, which is the default order.
-var SortFields = []string{"urgency", "id", "ordinal", "due", "updated", "created", "title"}
+var SortFields = []string{
+	"urgency", "id", "ordinal", "due", "updated", "created", "title", "priority",
+}
 
 // DefaultSort is what `data.sort` says when no --sort was written.
 const DefaultSort = "default"
@@ -236,7 +250,13 @@ func (r *reader) resolveFilters(p ListParams) (Filters, error) {
 	if f.Type, err = r.matchAll(match.Type, f.Type, r.b.Config.Types); err != nil {
 		return f, err
 	}
+	if f.NotType, err = r.matchAll(match.Type, f.NotType, r.b.Config.Types); err != nil {
+		return f, err
+	}
 	if f.Priority, err = r.matchAll(match.Priority, f.Priority, r.b.Config.Priorities); err != nil {
+		return f, err
+	}
+	if f.NotPriority, err = r.matchAll(match.Priority, f.NotPriority, r.b.Config.Priorities); err != nil {
 		return f, err
 	}
 
@@ -256,7 +276,7 @@ func (r *reader) resolveFilters(p ListParams) (Filters, error) {
 	for _, field := range []struct {
 		name   string
 		values *[]string
-	}{{"label", &f.Label}, {"labelOr", &f.LabelOr}} {
+	}{{"label", &f.Label}, {"labelOr", &f.LabelOr}, {"notLabel", &f.NotLabel}} {
 		normalized, err := labelFilterValues(field.name, *field.values)
 		if err != nil {
 			return f, err
@@ -271,7 +291,13 @@ func (r *reader) resolveFilters(p ListParams) (Filters, error) {
 		if err := r.checkLabelFilter("labelOr", f.LabelOr); err != nil {
 			return f, err
 		}
+		if err := r.checkLabelFilter("notLabel", f.NotLabel); err != nil {
+			return f, err
+		}
 		if err := r.checkKnown("assignee", f.Assignee, r.assigneesOfTheBoard()); err != nil {
+			return f, err
+		}
+		if err := r.checkKnown("notAssignee", f.NotAssignee, r.assigneesOfTheBoard()); err != nil {
 			return f, err
 		}
 	}
@@ -307,8 +333,9 @@ func (r *reader) resolveFilters(p ListParams) (Filters, error) {
 	// of one: `[]` is how the contract writes a filter nobody asked for
 	// (docs/spec/contrato-json.md#números-fechas-y-ausencias).
 	for _, values := range []*[]string{
-		&f.Status, &f.NotStatus, &f.Type, &f.Priority,
-		&f.Label, &f.LabelOr, &f.Assignee,
+		&f.Status, &f.NotStatus, &f.Type, &f.NotType, &f.Priority, &f.NotPriority,
+		&f.Label, &f.LabelOr, &f.NotLabel, &f.Assignee, &f.NotAssignee, &f.Author,
+		&f.Ref, &f.NotRef,
 	} {
 		if *values == nil {
 			*values = []string{}
@@ -360,7 +387,7 @@ func (r *reader) matchAll(field match.Field, values, configured []string) ([]str
 // an unknown value.
 func (r *reader) checkKnown(field string, values, known []string) *model.Error {
 	noun := "label"
-	if field == "assignee" {
+	if field == "assignee" || field == "notAssignee" {
 		noun = "assignee"
 	}
 	for _, v := range values {
@@ -489,9 +516,12 @@ func anyLabelMatches(known []string, wanted string) bool {
 	return false
 }
 
-// assigneesOfTheBoard is the set --assignee validates against. The authors
-// are not in it: there is no --author filter, so a person who only ever
-// wrote a task and never had one assigned does not belong to it.
+// assigneesOfTheBoard is the set --assignee (and --not-assignee) validate
+// against. The authors are not in it: --author has no vocabulary to resolve
+// against, not even at reading, so there is no set of its values to add here
+// in the first place, and a person who only ever wrote a task and never had
+// one assigned still does not belong to it
+// (docs/spec/vocabularios.md#qué-valida-cada-filtro-y-contra-qué).
 func (r *reader) assigneesOfTheBoard() []string {
 	return r.setOf(r.b.Config.Assignees, func(t *model.Task) []string { return t.Assignees })
 }
@@ -534,7 +564,13 @@ func (r *reader) matches(t *model.Task, f Filters) bool {
 	if len(f.Type) > 0 && !containsString(f.Type, t.Type) {
 		return false
 	}
+	if containsString(f.NotType, t.Type) {
+		return false
+	}
 	if len(f.Priority) > 0 && !containsString(f.Priority, t.Priority) {
+		return false
+	}
+	if containsString(f.NotPriority, t.Priority) {
 		return false
 	}
 	// The three filters over a label or a person fold the case, the same
@@ -549,13 +585,25 @@ func (r *reader) matches(t *model.Task, f Filters) bool {
 	if len(f.LabelOr) > 0 && !anyLabelOf(t.Labels, f.LabelOr) {
 		return false
 	}
+	if len(f.NotLabel) > 0 && anyLabelOf(t.Labels, f.NotLabel) {
+		return false
+	}
 	if len(f.Assignee) > 0 && !anyOfFold(t.Assignees, f.Assignee) {
+		return false
+	}
+	if len(f.NotAssignee) > 0 && anyOfFold(t.Assignees, f.NotAssignee) {
 		return false
 	}
 	if f.Unassigned && len(t.Assignees) > 0 {
 		return false
 	}
+	if len(f.Author) > 0 && !anyAuthorMatches(t.Author, f.Author) {
+		return false
+	}
 	if f.Parent != nil && t.Parent != *f.Parent {
+		return false
+	}
+	if f.Root && t.Parent != "" {
 		return false
 	}
 	if f.Blocked != nil && r.blocked(t) != *f.Blocked {
@@ -572,6 +620,26 @@ func (r *reader) matches(t *model.Task, f Filters) bool {
 	}
 	if f.DueBefore != nil && !dueBefore(t, *f.DueBefore) {
 		return false
+	}
+	if f.CreatedAfter != nil && !onOrAfterDay(t.CreatedAt, *f.CreatedAfter) {
+		return false
+	}
+	if f.CreatedBefore != nil && !beforeDay(t.CreatedAt, *f.CreatedBefore) {
+		return false
+	}
+	if f.UpdatedAfter != nil && !onOrAfterDay(t.UpdatedAt, *f.UpdatedAfter) {
+		return false
+	}
+	if f.UpdatedBefore != nil && !beforeDay(t.UpdatedAt, *f.UpdatedBefore) {
+		return false
+	}
+	if len(f.Ref) > 0 && !anyReferenceMatchesAny(t.References, f.Ref) {
+		return false
+	}
+	for _, q := range f.NotRef {
+		if anyReferenceContains(t.References, q) {
+			return false
+		}
 	}
 	if f.Search != nil && !TaskMatchesText(t, *f.Search) {
 		return false
@@ -597,13 +665,70 @@ func dueBefore(t *model.Task, day string) bool {
 	return t.Due.Before(limit)
 }
 
+// onOrAfterDay and beforeDay are --created-after/--updated-after and
+// --created-before/--updated-before (docs/spec/cmd/ls.md#parámetros): a
+// half-open interval over the UTC calendar day of an instant that is never
+// zero, unlike `due`, so there is no case of a board with nothing to
+// compare.
+func onOrAfterDay(instant time.Time, day string) bool {
+	limit, err := time.ParseInLocation(model.DateLayout, day, time.UTC)
+	if err != nil {
+		return false
+	}
+	return !instant.Before(limit)
+}
+
+func beforeDay(instant time.Time, day string) bool {
+	limit, err := time.ParseInLocation(model.DateLayout, day, time.UTC)
+	if err != nil {
+		return false
+	}
+	return instant.Before(limit)
+}
+
+// anyAuthorMatches is --author (docs/spec/cmd/ls.md#parámetros): the same
+// normalize() as --assignee, compared directly against the task's author
+// with no vocabulary to resolve either side to.
+func anyAuthorMatches(author string, wanted []string) bool {
+	normalized := match.Normalize(author)
+	for _, w := range wanted {
+		if match.Normalize(w) == normalized {
+			return true
+		}
+	}
+	return false
+}
+
+// anyReferenceContains is one --ref or --not-ref value against the whole of
+// `references`: a substring match with the folding TextMatches already
+// gives TaskMatchesText (docs/spec/cmd/ls.md#parámetros).
+func anyReferenceContains(refs []string, query string) bool {
+	for _, r := range refs {
+		if TextMatches(r, query) {
+			return true
+		}
+	}
+	return false
+}
+
+// anyReferenceMatchesAny is --ref with several values, which combine with
+// "or" like --type or --assignee.
+func anyReferenceMatchesAny(refs, queries []string) bool {
+	for _, q := range queries {
+		if anyReferenceContains(refs, q) {
+			return true
+		}
+	}
+	return false
+}
+
 // sortTasks is the rule of order of docs/spec/cmd/ls.md#la-regla-de-orden-completa,
 // whole: the default tuple, or the field --sort named, with the identifier
 // breaking every tie and --reverse flipping the finished list.
 func (r *reader) sortTasks(views []TaskView, p ListParams) {
 	sort.SliceStable(views, func(i, j int) bool {
 		a, b := views[i], views[j]
-		if less, decided := lessBySort(a, b, p.Sort); decided {
+		if less, decided := lessBySort(a, b, p.Sort, r.b.Config.Priorities); decided {
 			return less
 		}
 		return taskNumber(a.Task.ID) < taskNumber(b.Task.ID)
@@ -618,7 +743,7 @@ func (r *reader) sortTasks(views []TaskView, p ListParams) {
 // lessBySort compares two tasks by the order that was asked for, and says
 // whether the comparison decided anything: when it did not, the caller
 // breaks the tie by identifier, always.
-func lessBySort(a, b TaskView, field string) (bool, bool) {
+func lessBySort(a, b TaskView, field string, priorities []string) (bool, bool) {
 	switch field {
 	case "":
 		// The default order: the tasks that have an ordinal key come
@@ -666,8 +791,40 @@ func lessBySort(a, b TaskView, field string) (bool, bool) {
 		// so that the same board comes out in the same order on every
 		// machine (docs/spec/cmd/ls.md#la-regla-de-orden-completa).
 		return a.Task.Title < b.Task.Title, a.Task.Title != b.Task.Title
+	case "priority":
+		// Ascending by the position in `priorities`, 0-indexed from the
+		// most urgent level, the same `i` the urgency formula uses: that
+		// is already "most to least urgent", with no exception to make
+		// for it the way `urgency` needs one. A task with no priority
+		// goes last, in a block, ordered by identifier
+		// (docs/spec/cmd/ls.md#la-regla-de-orden-completa).
+		ai, aok := priorityIndex(a.Task.Priority, priorities)
+		bi, bok := priorityIndex(b.Task.Priority, priorities)
+		if aok != bok {
+			return aok, true
+		}
+		if !aok {
+			return false, false
+		}
+		return ai < bi, ai != bi
 	}
 	return false, false
+}
+
+// priorityIndex is the position of a task's priority in the configured
+// vocabulary, most urgent first, and whether it has one at all: the same
+// index the urgency formula's `priority` term uses
+// (docs/spec/modelo-de-datos/urgencia.md#la-urgencia).
+func priorityIndex(priority string, priorities []string) (int, bool) {
+	if priority == "" {
+		return 0, false
+	}
+	for i, p := range priorities {
+		if p == priority {
+			return i, true
+		}
+	}
+	return 0, false
 }
 
 // taskNumber is the number of an identifier, which is what the tie-break
