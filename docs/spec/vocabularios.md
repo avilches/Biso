@@ -288,11 +288,14 @@ error: unknown label key: "milestne"
 hint: did you mean: milestone?
 ```
 
-Su `code` es `unknown_label_key`, con `field` igual a `label` y `valid` con las claves del tablero
-(["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)). Su `given` es el
-filtro ya normalizado a un solo dos puntos (`milestne:`), exactamente el que viaja en
-`data.filters.label` (o en `data.filters.notLabel` cuando el flag era `--not-label`)
-(["Los filtros de `biso ls`"](contrato-json.md#los-filtros-de-biso-ls)), así que
+Su `code` es `unknown_label_key`, con `valid` con las claves del tablero
+(["Los identificadores de error"](contrato-json.md#los-identificadores-de-error)). **`field` no es un
+valor fijo: es el nombre exacto del flag que lo produjo**, `label`, `labelOr` o `notLabel` según si el
+filtro era `--label`, `--label-or` o `--not-label`, porque cada uno de los tres se valida por su
+cuenta (["El `field` de una negación de `biso ls`"](contrato-json.md#los-filtros-de-biso-ls)). Su
+`given` es el filtro ya normalizado a un solo dos puntos (`milestne:`), exactamente el que viaja en
+`data.filters.label`, `data.filters.labelOr` o `data.filters.notLabel`, la misma clave que `field`
+nombra (["Los filtros de `biso ls`"](contrato-json.md#los-filtros-de-biso-ls)), así que
 un `--label Milestne::` se reprocha como `Milestne:`: la grafía tecleada de la clave se conserva y el
 separador no, porque las dos formas son el mismo filtro y citar una de las dos sería elegir por el
 lector.

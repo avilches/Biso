@@ -194,6 +194,21 @@ quien ramifica sobre `busy` sabe que no va a tener ninguna de las cinco. `warnin
 no depende del `code`, sino de si esa llamada en concreto llegó a producir algún aviso antes de fallar,
 así que puede acompañar a cualquiera de ellos.
 
+**El `field` de una negación de `biso ls` no sigue una sola regla: depende de si el eje que valida es
+un vocabulario configurado por el tablero o uno de los conjuntos de etiquetas y personas.**
+`--not-status`, `--not-type` y `--not-priority` validan con la misma resolución de vocabulario que
+`--status`, `--type` y `--priority`
+(["El algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia)), así que su error, si
+lo hay, es del eje que falla y no del flag que lo pidió: `field` vale `status`, `type` o `priority` en
+los dos sentidos, el mismo para el filtro positivo y para su negación. `--not-label` y
+`--not-assignee`, en cambio, llevan su propio `field` (`notLabel` y `notAssignee`), distinto del de
+`--label` y `--assignee`, porque cada uno de esos filtros se valida por separado contra el conjunto de
+etiquetas o de personas del tablero
+(["Qué valida cada filtro, y contra qué"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué)), con
+su propio `field` desde antes de que existiera ninguna negación: es la misma razón por la que
+`--label-or` ya lleva `field: "labelOr"`, distinto del `field: "label"` de `--label`, aunque las dos
+validen contra el mismo conjunto de etiquetas.
+
 ## Los identificadores de error
 
 Un `code` estable es lo que permite ramificar sin analizar prosa. Esta es la lista de la versión 1.0,
