@@ -1,8 +1,10 @@
 # Decisiones de diseño
 
 > **Provisional.** Ninguna de estas decisiones está cerrada: son propuestas que se van a repasar una
-> por una, y varias dependen de un cambio en `biso` (TASK-73). La lista completa de lo que
-> falta revisar está en [`pendientes.md`](pendientes.md).
+> por una. TASK-73 ya se resolvió (`biso` no adopta identificadores de subtarea con punto), y la
+> decisión que le tocaba a este proyecto está más abajo, en ["El identificador de origen de una
+> subtarea se guarda en una etiqueta con ámbito"](#el-identificador-de-origen-de-una-subtarea-se-guarda-en-una-etiqueta-con-ámbito).
+> La lista completa de lo que falta revisar está en [`pendientes.md`](pendientes.md).
 
 Cada entrada dice primero la decisión vigente, en un párrafo que se puede citar sin más contexto. Las
 alternativas que se consideraron van después, marcadas como **descartadas** y con la razón. Si una
@@ -30,20 +32,31 @@ ejecuta una vez, o unas pocas mientras los dos tableros conviven. Ninguna mira e
 **Descartado: un sincronizador continuo.** Exige decidir qué gana cuando cambian los dos lados, y ese
 es justo el tipo de problema que el proyecto no quiere tener. El nombre `backlog.md-migrate` lo dice.
 
-## El milestone es una etiqueta `milestone:<slug>`
+## El milestone es una etiqueta con ámbito `milestone::<slug>`
 
 **La decisión.** `biso` no tiene milestone en su modelo de datos, y en Backlog.md es un dato que se
-guarda en cada tarea que pertenece a uno. Cada tarea recibe una etiqueta `milestone:<slug>`, con el slug del título del
-milestone. El alfabeto de las etiquetas admite los dos puntos, no añade ningún campo al modelo, se
-filtra con `--label` y se ve en `biso ls`.
+guarda en cada tarea que pertenece a uno. Cada tarea recibe una etiqueta con ámbito `milestone::<slug>`,
+con el slug del título del milestone. El separador es el doble `::` y no el simple `:`, porque una tarea
+de Backlog.md pertenece como mucho a un milestone, y `::` es justo la forma con la que una etiqueta con
+ámbito de `biso` deja como mucho un valor de esa clave por tarea, aplicado y comprobado por el propio
+`biso` al escribir, no por convención del convertidor
+(["Las etiquetas con ámbito"](../../../docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito)). No
+añade ningún campo al modelo, se filtra con `--label` (con `milestone:` o con `milestone::`, indistinto
+al consultar) y se ve en `biso ls`.
 
-**Descartado: un campo de extensión (`ext`).** Su clave es un identificador en otro sistema y no está
-claro que se pueda filtrar como una etiqueta. **Descartado: asumir la pérdida.** Se perdería la
-agrupación por hitos de los tableros que la usan.
+**Descartado: la etiqueta plana `milestone:<slug>` con separador simple.** Es lo que se propuso antes de
+que existieran las etiquetas con ámbito (TASK-85). Admite varios valores de la misma clave en la misma
+tarea, así que nada impide que una tarea termine con `milestone::a` y `milestone::b` a la vez si el
+convertidor tiene un error o si alguien la edita a mano después; `biso` no lo habría rechazado. El doble
+`::` traslada esa garantía al propio tablero de destino. **Descartado: un campo de extensión (`ext`).**
+Además de no estar claro que se pudiera filtrar como una etiqueta, el campo ya no existe en `biso`: se
+retiró (TASK-83). **Descartado: asumir la pérdida.** Se perdería la agrupación por hitos de los tableros
+que la usan.
 
-**El campo `project` de Backlog.md sigue la misma regla**, con la etiqueta `project:<slug>`. Es otro
-dato de agrupación que `biso` no modela y que Backlog.md guarda como un texto en cada tarea, y darle un
-trato distinto al del milestone no tendría justificación.
+**El campo `project` de Backlog.md sigue la misma regla**, con la etiqueta con ámbito `project::<slug>`.
+Es otro dato de agrupación que `biso` no modela, que Backlog.md guarda como un texto en cada tarea y del
+que también hay como mucho uno por tarea, y darle un trato distinto al del milestone no tendría
+justificación.
 
 ## Los identificadores conservan su número y cambian de prefijo
 
@@ -61,7 +74,10 @@ reasignando todos los ids.
 **Las subtareas siempre reciben un número nuevo.** Backlog.md da a una subtarea un id con punto
 (`XYZ-001.01`, `ABC-1.2`), y un id de `biso` es siempre `<PREFIJO>-<n>`. No hay forma de conservarlo, así
 que se le asigna un número libre y se reescriben sus menciones. El parentesco no se pierde: va en
-`parent`. Por eso la regla de la tarea ya importada no compara los ids, sino el título y la fecha.
+`parent`. Por eso la regla de la tarea ya importada no compara los ids, sino el título y la fecha. Esto
+ya no es una regla provisional a la espera de TASK-73: TASK-73 se resolvió confirmándola, `biso` no va a
+adoptar la forma con punto, y lo único que queda de esa tarea es la decisión de este proyecto para
+conservar el id de origen, en la siguiente sección.
 
 **La coincidencia de menciones distingue mayúsculas y no toca lo que va pegado a otras palabras.** En el
 tablero medido hay cinco menciones en minúsculas que son nombres de ramas y de worktrees
@@ -72,6 +88,79 @@ Dejaba un tablero con un prefijo que no elige nadie y que no se puede cambiar de
 renumerar todo desde el siguiente libre.** Cambia todos los números aunque no choque nada y rompe el
 parecido entre los dos tableros. **Descartado: dejar que `biso` asigne los ids.** Un lote no puede
 expresar un padre o una dependencia sobre un id que todavía no existe.
+
+## El identificador de origen de una subtarea se guarda en una etiqueta con ámbito
+
+**La decisión.** `biso` decidió no adoptar la forma `<PREFIJO>-<n>.<m>` de Backlog.md, y dejó
+explícitamente en manos de este proyecto decidir cómo conservar ese identificador de origen para el
+viaje de ida y vuelta
+(["No se adoptan identificadores de subtarea con punto"](../../../docs/decisiones/detalles.md#no-se-adoptan-identificadores-de-subtarea-con-punto)).
+La respuesta es una etiqueta con ámbito exclusiva, `backlog.id::<id-de-origen>`, con el id completo tal
+como lo escribe Backlog.md, punto incluido (`backlog.id::TASK-56.1`), añadida a la tarea junto con las
+demás etiquetas de la importación. El separador es `::` porque una tarea tiene como mucho un id de
+origen. El alfabeto de una etiqueta con ámbito admite letras, dígitos y los símbolos `- _ . : @`
+(["El juego de caracteres de un token"](../../../docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token)),
+y un id de Backlog.md solo usa letras, dígitos, el guion del prefijo y el punto de la subtarea, así que
+el valor cabe entero sin ninguna conversión. La clave `backlog.id` no choca con `milestone` ni con
+`project`, las otras dos claves con ámbito que ya usa este convertidor.
+
+Con esta etiqueta, `export` (TASK-7) puede reconstruir el id exacto de Backlog.md de una tarea que fue
+una subtarea al importarla, en vez de inventar uno nuevo: lee `backlog.id::` si existe y, si no, genera
+un id propio de Backlog.md a partir del `parent` y de una numeración nueva. La etiqueta se añade
+**solo** a las tareas cuyo id de origen llevaba punto; una tarea con un id simple (`TASK-70`) no la
+necesita, porque su id de destino ya se reconstruye con la regla de "Los identificadores conservan su
+número y cambian de prefijo": basta con volver a poner el prefijo de origen delante del mismo número,
+salvo que ese id fuera de los reasignados por colisión, caso en el que de todos modos no hay un número
+de origen que reconstruir con sentido, porque el conflicto ya dice que ese número no era libre en el
+tablero de origen en el momento de exportar.
+
+**Descartado: guardar el id de origen para toda tarea, no solo las subtareas.** Sería una etiqueta más
+por tarea sin ninguna ganancia: un id simple ya se reconstruye con la regla de prefijo y número, y
+guardarlo de todos modos duplicaría un dato que no hace falta leer nunca.
+
+**Descartado: un campo de extensión (`ext`).** Es la solución obvia para un identificador corto asociado
+a una clave, y es justo el ejemplo que pone la propia especificación de `biso` para lo que sustituye a
+`ext`. Pero `ext` no existe en `biso`: se retiró (TASK-83), así que ni siquiera es una alternativa
+disponible hoy.
+
+**Descartado: guardarlo en `references`**, como un puntero de texto libre (`backlog:TASK-56.1`, por
+ejemplo). `references` no tiene vocabulario ni estructura: nada impide que se acumulen varias entradas
+parecidas, no se puede filtrar por él con una sintaxis dedicada como `--label backlog.id:`, y ya va a
+llevar los punteros reales de la tarea (ver "Documentación y ficheros tocados" en la especificación), así
+que mezclar ahí un dato de contabilidad interna del convertidor haría más difícil distinguir un puntero
+de verdad de una anotación de importación.
+
+**Descartado: guardar solo el sufijo de la subtarea (`.1`) en vez del id completo.** El sufijo por sí
+solo no sirve para nada sin saber a qué padre pertenece y con qué prefijo se escribió en origen; el id
+completo es autocontenido y se puede leer sin cruzarlo con `parent`.
+
+## Una etiqueta con ámbito derivada del dato real gana a la etiqueta de origen que choca con ella
+
+**La decisión.** Las tres etiquetas con ámbito que añade el convertidor, `milestone::<slug>`,
+`project::<slug>` y `backlog.id::<id-de-origen>`, se derivan siempre de un dato real de la tarea de
+origen: su `milestone`, su `project`, o su id con punto. Si esa misma tarea ya trae en su propia lista de
+`labels` un valor con esa misma clave (por ejemplo, un equipo que ya usaba `milestone::sprint-3` como
+convención propia antes de migrar), escribir las dos etiquetas de la misma clave con ámbito haría que
+`biso` rechazara el lote entero, porque una clave con `::` deja como mucho un valor por tarea
+(["Escribir una etiqueta con
+ámbito"](../../../docs/spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito)):
+`error: MYP-11 already has "size::s", and :: allows at most one value of the key "size"`. Gana la
+etiqueta que deriva el convertidor del dato real, no la que ya traía el origen: es el dato que
+efectivamente vive en la tarea de Backlog.md (su milestone real, su proyecto real, su id de origen real),
+mientras que la etiqueta de `labels` con esa misma clave es, en el peor de los casos, una convención local
+del tablero de origen que no tiene por qué significar lo mismo en el destino. La etiqueta de origen que
+choca se quita de `labels` antes de escribir el lote, y se informa con el mismo tratamiento que un
+carácter fuera del alfabeto de un token: una línea de hallazgo con el fichero, la tarea y el valor
+descartado. La tarea no se salta: perder una etiqueta plana es una pérdida menor y reversible con un
+aviso, mientras que saltar la tarea entera perdería mucho más (el resto de sus campos, sus criterios, sus
+comentarios) por una sola etiqueta que ya iba a quedar duplicada.
+
+**Descartado: dejar que gane la etiqueta que ya traía el origen.** Invertiría el propósito de la etiqueta
+sintética: `milestone::`, `project::` y `backlog.id::` existen para que `biso` y `export` puedan confiar
+en que esa clave contiene el dato real de Backlog.md, no una convención de texto libre que alguien haya
+usado antes con la misma forma por casualidad. **Descartado: saltar la tarea entera cuando hay
+colisión.** Convertiría un choque de una sola etiqueta en la pérdida de toda la tarea, un coste
+desproporcionado para un caso que se resuelve quitando un valor y avisando.
 
 ## Las fechas se leen como UTC
 
@@ -85,6 +174,34 @@ recién modificada.
 
 **Descartado: un flag de zona horaria.** Hasta que aparezca una versión de Backlog.md que no guarde en
 UTC, sería configuración para un caso que no existe.
+
+## El orden manual se recalcula, no se copia
+
+**La decisión.** El `ordinal` de Backlog.md es un número; el `ordinal` de `biso` es una clave de texto en
+base 36 que no puede terminar en `0` y que no guarda ninguna relación aritmética con un número
+(["El orden manual y su clave"](../../../docs/spec/modelo-de-datos/orden-manual.md)). No se copia tal
+cual, ni siquiera convertido a su grafía en base 36: un `ordinal` como `1000` terminaría en `0`, que es
+justo la forma que `biso` rechaza al escribir. El convertidor lee también el `ordinal` de las tareas que
+ya existen en el destino y toma la mayor de esas claves como ancla; después ordena las tareas de origen
+por su `ordinal` ascendente y les asigna claves nuevas que conservan ese orden relativo, con el mismo
+algoritmo del punto medio que usan `--ordinal last`, `--above` y `--below` de `biso`, como si el lote
+entero se colocara con `--ordinal last` detrás de esa ancla, una tarea tras otra. Anclarlas después de la
+última clave del destino, en vez de calcularlas como si el destino estuviera vacío, es lo que hace que
+ninguna clave nueva choque nunca con una que ya exista: cada clave calculada es estrictamente mayor que
+el ancla y que la clave que se acaba de asignar antes que ella, así que cae siempre en un hueco donde no
+hay ninguna tarea del destino, sea cual sea el estado del destino. Una tarea sin `ordinal` en origen no
+recibe ninguna clave, igual que en `biso` una tarea sin orden manual no ocupa ningún sitio de él.
+
+**Descartado: convertir el número a su grafía en base 36 y usarla tal cual.** Falla por partida doble:
+puede terminar en `0` (`1000` en base 36 es `rs`, que no termina en cero por casualidad, pero `36000` sí
+lo haría) y, sobre todo, no preserva el orden relativo entre dos claves de longitudes distintas de la
+forma en que lo exige `biso`: la comparación es por punto de código, no numérica, así que una conversión
+de base ingenua no basta y hay que pasar por el algoritmo del punto medio de todos modos.
+
+**Descartado: no importar el orden manual.** Se perdería un dato real: la propia medición de `biso`
+sobre seis tableros de Backlog.md encontró reordenamientos manuales de verdad
+(["El orden manual es una clave de texto"](../../../docs/decisiones/detalles.md#el-orden-manual-es-una-clave-de-texto)),
+así que no es un campo que nadie use.
 
 ## Estados, tipos y prioridades son los del destino
 
@@ -113,16 +230,25 @@ migración. **Descartado: quitar la etiqueta con aviso.** Perdía un dato que se
 transformación evidente.
 
 **Se aplica también a los asignados.** El encargo hablaba de las etiquetas, pero los asignados tienen el
-mismo alfabeto y el mismo problema, y darles un trato distinto no tendría justificación. Pendiente de
-confirmar.
+mismo alfabeto cerrado que las etiquetas en `biso`, así que se les aplica exactamente la misma
+conversión de espacios a guion, sin ningún trato distinto.
 
-## `documentation` y `references` van tal cual
+## `documentation`, `references` y `modified_files` van tal cual, y `documentation`/`modified_files` se dejan fundir en `references`
 
-**La decisión.** En `biso` los campos `documentation` y `references` son texto libre, sin restricción de
-caracteres, así que las listas de Backlog.md pasan sin comprobación ni cambio. El alfabeto cerrado de
-`biso` (letras, dígitos y `- _ . : @`) rige solo para `labels`, `assignees` y las claves de `ext`, y
-solo esos campos se validan. Un valor inválido se quita de la lista y se informa, para que un lote no
-falle entero por una etiqueta.
+**La decisión.** `biso` no tiene campo `documentation` ni campo `modifiedFiles`: los dos se retiraron
+(TASK-83 retiró `ext`, y por separado se retiraron `documentation` y `modifiedFiles`) y `references`
+quedó como el único campo de punteros de una tarea. Es texto libre, sin restricción de caracteres, así
+que las listas de Backlog.md pasan sin comprobación ni cambio. El alfabeto cerrado de `biso` (letras,
+dígitos y `- _ . : @`) rige solo para `labels` y `assignees` (ya no para las claves de `ext`, que no
+existen), y solo esos dos campos se validan. Un valor inválido se quita de la lista y se informa, para
+que un lote no falle entero por una etiqueta.
+
+`documentation` y `modified_files` de Backlog.md se escriben, tal cual, en las claves `documentation` y
+`modifiedFiles` del lote: son las claves de compatibilidad que `biso new --from` sigue aceptando de un
+lote ajeno, y que funde en `references` por su cuenta, avisando de ello. El convertidor no las funde él
+mismo. El detalle y la pega que esto acepta (la pérdida de la distinción entre las tres listas de origen
+al volver a exportar) están en la especificación, sección ["Documentación y ficheros
+tocados"](especificacion.md#documentación-y-ficheros-tocados).
 
 ## La definición de hecho se marca con el sufijo `#dod`
 
@@ -169,12 +295,17 @@ problemas del tablero de una sola vez.
 
 **La decisión (sin implementar; su diseño y su prueba son TASK-7).** `export` escribe un directorio
 `backlog/` que Backlog.md abre. Los campos de `biso` que Backlog.md no tiene (comentarios, pregunta
-abierta, arrendamiento, `ext`, `modifiedFiles`) se escriben como una sección de Markdown delimitada y
-legible por máquina, dentro de la descripción o de las notas, y `import` la reconstruye como campos:
-exportar e importar de nuevo conserva todo. Las reglas de arriba se aplican al revés: el prefijo de
-`biso` pasa al del Backlog.md de destino con las mismas reglas de colisión, la etiqueta
-`milestone:<slug>` vuelve a ser un milestone y el exportador crea el fichero de milestone que falte,
-` #dod` vuelve a la definición de hecho y las fechas se escriben al minuto en UTC.
+abierta y arrendamiento) se escriben como una sección de Markdown delimitada y legible por máquina,
+dentro de la descripción o de las notas, y `import` la reconstruye como campos: exportar e importar de
+nuevo conserva todo. `ext` y `modifiedFiles` no están en esta lista porque no son campos de `biso`: se
+retiraron los dos, y no hay nada que reconstruir para ellos. Las reglas de arriba se aplican al revés:
+el prefijo de `biso` pasa al del Backlog.md de destino con las mismas reglas de colisión, la etiqueta
+`milestone::<slug>` vuelve a ser un milestone y el exportador crea el fichero de milestone que falte,
+` #dod` vuelve a la definición de hecho, las fechas se escriben al minuto en UTC y la clave de orden
+manual se traduce de vuelta a un `ordinal` numérico que conserva el mismo orden relativo (el mismo
+problema que "Orden manual" en la especificación, en el sentido contrario). `references` vuelve entero
+al campo `references` de Backlog.md: no se reparte entre `references`, `documentation` y
+`modified_files`, por la pérdida ya aceptada en la sección enlazada arriba.
 
 **Riesgo abierto.** Backlog.md pierde las claves de frontmatter que no conoce cuando edita una tarea.
 Hay que medir si conserva también una sección desconocida del cuerpo.

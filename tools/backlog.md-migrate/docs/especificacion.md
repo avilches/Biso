@@ -1,7 +1,8 @@
 # Especificación
 
 > **Borrador provisional.** Ninguna regla de esta página está aprobada: son propuestas pendientes de
-> revisión, y varias dependen de un cambio en `biso` (TASK-73). Ver
+> revisión. TASK-73 ya se resolvió (`biso` no adopta identificadores de subtarea con punto), así que
+> lo que queda pendiente es una decisión propia de este proyecto y el resto de lo que ya recogía
 > [`pendientes.md`](pendientes.md).
 
 Esta página dice qué hace cada orden, sin decir por qué: las razones están en
@@ -47,7 +48,8 @@ Ejecuta `biso` con `--cwd <project>` y `--json`, para no depender del formato de
 - la configuración (`biso config list --json`): el prefijo de los ids (`task_prefix`) y los estados,
   tipos y prioridades declarados;
 - las tareas que ya existen, archivadas y terminales incluidas (`biso export --out -`): de cada una
-  se usan su `id`, su `title` y su `createdAt`.
+  se usan su `id`, su `title`, su `createdAt` y su `ordinal`. Ver "Orden manual" para qué hace con este
+  último.
 
 No escribe nada en el tablero destino: la escritura la hace después `biso new --from`. Lo que lee del
 destino es una fotografía del momento de la conversión. Si otra persona o agente añade tareas al
@@ -70,15 +72,15 @@ orden fijo, para que dos ejecuciones sobre el mismo tablero den el mismo fichero
 | `type`, `priority` | `type`, `priority` | Igual que `status` |
 | `assignee` (lista) | `assignees` | Cada valor se valida contra el alfabeto de un token |
 | `labels` (lista) | `labels` | Igual, más las etiquetas del milestone y del proyecto |
-| `milestone` | una etiqueta en `labels` | `milestone:<slug>`. Ver "Milestone" |
-| `project` | una etiqueta en `labels` | `project:<slug>`, con el mismo slug que el milestone |
+| `milestone` | una etiqueta en `labels` | `milestone::<slug>`. Ver "Milestone y proyecto" |
+| `project` | una etiqueta en `labels` | `project::<slug>`, con el mismo slug que el milestone |
 | `dependencies` | `dependencies` | Con los ids reescritos |
 | `parent_task_id` | `parent` | Con el id reescrito |
-| `ordinal` | `ordinal` | Tal cual |
+| `ordinal` | `ordinal` | Se recalcula, no se copia. Ver "Orden manual" |
 | `due_date` | `due` | `YYYY-MM-DD`, tal cual |
-| `documentation` | `documentation` | Lista tal cual |
+| `documentation` | `documentation` | Clave de compatibilidad de `biso new --from`, que la funde en `references`. Ver "Documentación y ficheros tocados" |
 | `references` | `references` | Lista tal cual |
-| `modified_files` | `modifiedFiles` | Lista tal cual |
+| `modified_files` | `modifiedFiles` | Clave de compatibilidad de `biso new --from`, que la funde en `references`. Ver "Documentación y ficheros tocados" |
 | `created_date` | `createdAt` | Ver "Fechas" |
 | `updated_date` | `updatedAt` | Ver "Fechas" |
 | sección `DESCRIPTION` | `description` | El texto entre las marcas `<!-- SECTION:DESCRIPTION:BEGIN -->` y `END`, sin el salto de línea inicial y final. Los `##` de dentro del texto no se interpretan como secciones |
@@ -128,8 +130,8 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    **distinguiendo mayúsculas**, y solo si no va precedida de una letra, un dígito, `_` o `-`, ni
    seguida de una letra, un dígito, `_` o de `-` y una letra o un dígito. Así `TASK-10-modelo`, que
    podría ser el nombre de una rama, no se toca, y tampoco `SUBTASK-12`. Se reescribe en cualquier
-   lugar del texto, un bloque de código incluido. No se toca `documentation` ni `references`, que son
-   rutas y URLs opacas.
+   lugar del texto, un bloque de código incluido. No se toca `documentation`, `references` ni
+   `modified_files`, que son rutas y URLs opacas.
 6. Una mención que tiene la forma de un id de origen pero no corresponde a ninguna tarea del origen, o
    que solo difiere en las mayúsculas (`Xyz-002`, `task-12`), se deja como está y es un hallazgo,
    uno por fichero y campo con el recuento, para que quien ejecuta pueda revisarla.
@@ -139,6 +141,15 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    `biso new --from --dry-run`, y por eso el ensayo forma parte del uso.
 8. Cada id reasignado es un hallazgo: `XYZ-001.01: id BISO-97 assigned (subtask ids have no equivalent)`
    o `TASK-12: id BISO-12 is taken on the destination, reassigned to BISO-97`.
+9. **El id de origen de una subtarea se guarda además en la etiqueta con ámbito
+   `backlog.id::<id-de-origen>`** (`backlog.id::TASK-56.1`), con el id completo tal como lo escribe
+   Backlog.md, punto incluido, para que `export` lo pueda reconstruir; el porqué está en decisiones.md,
+   ["El identificador de origen de una subtarea se guarda en una etiqueta con
+   ámbito"](decisiones.md#el-identificador-de-origen-de-una-subtarea-se-guarda-en-una-etiqueta-con-ámbito).
+   Si la tarea de origen ya trae en sus propias `labels` un valor con la clave `backlog.id`, prevalece la
+   etiqueta que el convertidor deriva del id de origen real, y la etiqueta de origen que choca se quita
+   de la lista antes de escribir el lote, con el mismo hallazgo que "Milestone y proyecto" describe para
+   `milestone::` y `project::`.
 
 ### Milestone y proyecto
 
@@ -146,20 +157,89 @@ El `milestone` de una tarea es un id de milestone (`m-4`). El título se lee del
 `milestones/m-4 - *.md` o del de `archive/milestones/`. El slug es el título en minúsculas, sin
 diacríticos, con cada tramo de caracteres que no sean letras ni dígitos Unicode convertido en un solo
 `-` y sin `-` en los extremos: `Puesta en uso` da `puesta-en-uso` e `Implementación` da
-`implementacion`. La tarea recibe la etiqueta `milestone:puesta-en-uso`, después de las etiquetas que
-ya tuviera. Una tarea sin milestone no recibe ninguna etiqueta y eso no es un hallazgo. Usa el id como
-slug (`milestone:m-9`), con un hallazgo, cuando el fichero del milestone no existe o cuando el slug
-sale vacío. Dos milestones distintos que dan el mismo slug se fusionarían en una sola etiqueta, así que
-es un hallazgo.
+`implementacion`. La tarea recibe la etiqueta con ámbito `milestone::puesta-en-uso`, después de las
+etiquetas que ya tuviera. El separador es `::` y no `:` porque una tarea de Backlog.md pertenece como
+mucho a un milestone, y `::` es la forma con la que una etiqueta con ámbito deja como mucho un valor
+de su clave por tarea (["Las etiquetas con ámbito"](../../../docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito)):
+`biso` mismo hace cumplir esa exclusividad al escribir, en vez de que el convertidor confíe en no
+escribirla nunca dos veces. Una tarea sin milestone no recibe ninguna etiqueta y eso no es un hallazgo.
+Usa el id como slug (`milestone::m-9`), con un hallazgo, cuando el fichero del milestone no existe o
+cuando el slug sale vacío. Dos milestones distintos que dan el mismo slug se fusionarían en una sola
+etiqueta, así que es un hallazgo.
 
 El campo `project` de una tarea es un texto que ya viene escrito (`alpha`), sin fichero aparte. Recibe
-la etiqueta `project:<slug>`, con el mismo cálculo del slug y después de la del milestone.
+la etiqueta con ámbito `project::<slug>`, con el mismo cálculo del slug, la misma razón para el `::` (una
+tarea tiene como mucho un `project`) y después de la del milestone.
+
+**Si la tarea de origen ya trae en sus propias `labels` un valor con la clave `milestone` o la clave
+`project`**, prevalece la etiqueta que el convertidor deriva del dato real de Backlog.md, no la que ya
+traía el origen. Escribir las dos dejaría dos valores de la misma clave con ámbito en la misma tarea, y
+`biso` rechaza eso al escribir (["Escribir una etiqueta con
+ámbito"](../../../docs/spec/familias-de-flags.md#escribir-una-etiqueta-con-ámbito)). La etiqueta de origen
+que choca se quita de `labels` antes de escribir el lote, y se informa con el mismo tratamiento que un
+carácter fuera del alfabeto de un token: una línea de hallazgo con el fichero, la tarea y el valor
+descartado. La misma regla se aplica igual a la etiqueta `backlog.id::`, ver "Identificadores". El
+razonamiento está en decisiones.md, ["Una etiqueta con ámbito derivada del dato real gana a la etiqueta de
+origen que choca con
+ella"](decisiones.md#una-etiqueta-con-ámbito-derivada-del-dato-real-gana-a-la-etiqueta-de-origen-que-choca-con-ella).
+
+**Filtrar no cambia.** `--label milestone:` sigue encontrando cualquier etiqueta de esa clave sea cual
+sea su separador, y `--label milestone:puesta-en-uso` sigue encontrando `milestone::puesta-en-uso`,
+porque el separador no cuenta al consultar ni al quitar, solo al escribir
+(["Las etiquetas con ámbito"](../../../docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito)).
+
+### Orden manual
+
+Backlog.md guarda `ordinal` como un número; `biso` lo guarda como una clave de texto en base 36 que no
+puede terminar en `0` y que no tiene relación aritmética con el número de origen
+(["El orden manual y su clave"](../../../docs/spec/modelo-de-datos/orden-manual.md)). **No es un mapeo
+directo.** Copiar el número tal cual fallaría además por la propia forma: un `ordinal` de Backlog.md
+como `1000` termina en `0`, que es precisamente la forma que `biso` rechaza.
+
+El convertidor lee también el `ordinal` de las tareas que ya existen en el destino (ver "Qué le pregunta
+al destino") y toma la mayor de esas claves como ancla, o ninguna si el destino no tiene todavía ninguna
+clave de orden manual. Después ordena las tareas del origen por su `ordinal` ascendente (las que no lo
+tienen quedan sin clave, igual que en `biso`) y les asigna claves nuevas que conservan ese mismo orden
+relativo, con el mismo algoritmo del punto medio que usan `--ordinal last`, `--above` y `--below`
+(["El algoritmo del punto medio"](../../../docs/spec/modelo-de-datos/orden-manual.md#el-algoritmo-del-punto-medio)):
+la primera tarea importada toma la clave intermedia entre el ancla del destino y la ausencia de
+siguiente, y cada tarea siguiente toma la clave intermedia entre la que se acaba de asignar y la
+ausencia de siguiente, como si el lote entero se colocara con `--ordinal last`, una tarea detrás de otra,
+después de todo lo que ya hubiera en el destino. Un empate en el `ordinal` de origen se desempata por el
+id de origen, para que dos ejecuciones den el mismo resultado. Las claves calculadas no chocan nunca con
+una clave ya existente en el destino, porque cada una es estrictamente mayor que el ancla y que la clave
+recién asignada antes que ella, sea cual sea el estado del destino.
 
 ### Fechas
 
 Backlog.md guarda `YYYY-MM-DD HH:mm`, en UTC. Se convierte a `YYYY-MM-DDTHH:mm:00Z`. Una fecha sin hora
 (`YYYY-MM-DD`) pasa a `YYYY-MM-DDT00:00:00Z`. Si una tarea no tiene `updated_date`, `updatedAt` es su
 `createdAt`. Una fecha que no encaja en ninguna de las dos formas es un hallazgo, y el campo se omite.
+
+### Documentación y ficheros tocados
+
+`biso` no tiene un campo `documentation` ni un campo `modifiedFiles`: los dos se retiraron y `references`
+quedó como el único campo de punteros de una tarea
+(["Las relaciones entre tareas"](../../../docs/spec/modelo-de-datos/relaciones.md#los-punteros-references)).
+La única huella que queda de los dos es de entrada: `biso new --from` sigue aceptando las claves
+`documentation` y `modifiedFiles` de un lote ajeno, y funde cada una en `references`, avisando con
+`imported_documentation_merged` e `imported_modified_files_merged` (["`biso new`"](../../../docs/spec/cmd/new.md)).
+
+El convertidor aprovecha exactamente esa compatibilidad: escribe `documentation` y `modified_files` de
+Backlog.md en las claves `documentation` y `modifiedFiles` del lote, tal cual, y deja que `biso new --from`
+haga la fusión y emita sus propios avisos. No hace falta que el convertidor las funda él mismo en
+`references`.
+
+**La pega, aceptada como tal.** `biso` no conserva de qué lista venía cada puntero: al volver a exportar
+una tarea importada, sus tres listas de origen (`references`, `documentation`, `modified_files`)
+llegarían todas juntas a un solo campo, y `export` (TASK-7) no tiene forma de repartirlas de vuelta. Es
+la misma pérdida que ya acepta la propia decisión de `biso` de retirar los dos campos
+(["Se retira `documentation` y `references` queda como único campo de
+punteros"](../../../docs/decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)),
+que además apunta la salida de quien la quiera evitar: guardar en una etiqueta con ámbito de qué campo
+venía cada valor. Este proyecto no lo hace por el mismo motivo que llevó a `biso` a fusionar los campos:
+ninguna tarea real usa las dos listas a la vez, así que la distinción no sostiene el coste de una
+etiqueta por cada elemento de `references`.
 
 ### Vocabularios del destino
 
