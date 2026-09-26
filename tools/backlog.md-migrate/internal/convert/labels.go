@@ -97,7 +97,7 @@ func scopedLabelKey(label string) (key string, hasKey bool) {
 	return label[:idx], true
 }
 
-// removeCollidingScopedLabel removes every label in labels whose scoped
+// RemoveCollidingScopedLabel removes every label in labels whose scoped
 // key case-folds (Unicode case folding, no diacritic or space stripping,
 // per docs/spec/valores-de-entrada.md, "La clave se compara plegada, y el
 // separador no cuenta al comparar valores") to targetKey, returning the
@@ -110,7 +110,12 @@ func scopedLabelKey(label string) (key string, hasKey bool) {
 // normalizeVocabulary: the two rules differ (this one folds case only, it
 // does not strip diacritics, spaces, hyphens, or underscores), and reusing
 // the vocabulary function here would silently change which labels collide.
-func removeCollidingScopedLabel(file string, labels []string, targetKey string) (kept []string, findings []source.Finding) {
+//
+// Exported because phase 4b (identifiers.go) reuses it verbatim for the
+// backlog.id:: label, per docs/especificacion.md, "Identificadores", point
+// 9: a source label whose key collides with backlog.id is dropped the same
+// way one colliding with milestone or project already is here.
+func RemoveCollidingScopedLabel(file string, labels []string, targetKey string) (kept []string, findings []source.Finding) {
 	foldedTarget := foldCase(targetKey)
 	for _, label := range labels {
 		key, hasKey := scopedLabelKey(label)
@@ -148,7 +153,7 @@ func removeCollidingScopedLabel(file string, labels []string, targetKey string) 
 //     this phase's implementer, documented in its final report, since the
 //     specification leaves it open).
 //  3. Removes from labels any label whose key collides with "milestone" or
-//     "project" (removeCollidingScopedLabel), then appends
+//     "project" (RemoveCollidingScopedLabel), then appends
 //     "milestone::<slug>" and "project::<slug>", in that order, after
 //     whatever origin labels remain: the exact final ordering docs task
 //     point 4 requires.
@@ -175,7 +180,7 @@ func ScopedLabels(file string, labels []string, milestoneID, projectValue string
 			slug = milestoneID
 		}
 
-		kept, collisionFindings := removeCollidingScopedLabel(file, result, "milestone")
+		kept, collisionFindings := RemoveCollidingScopedLabel(file, result, "milestone")
 		result = kept
 		findings = append(findings, collisionFindings...)
 		result = append(result, "milestone::"+slug)
@@ -195,7 +200,7 @@ func ScopedLabels(file string, labels []string, milestoneID, projectValue string
 			slug = projectValue
 		}
 
-		kept, collisionFindings := removeCollidingScopedLabel(file, result, "project")
+		kept, collisionFindings := RemoveCollidingScopedLabel(file, result, "project")
 		result = kept
 		findings = append(findings, collisionFindings...)
 		result = append(result, "project::"+slug)
