@@ -34,8 +34,7 @@ func primeBoard(t *testing.T) (*machine, string) {
 	m := newMachine(t)
 	m.env["BISO_ME"] = "@claude"
 	m.run(t, "init", "My project", "--prefix", "MYP", "--at", "board",
-		"--types", "idea,memory,task,bug,docs",
-		"--extensions", "trello.card").assertCode(t, 0)
+		"--types", "idea,memory,task,bug,docs").assertCode(t, 0)
 	dir := filepath.Join(m.dir, "board")
 
 	// The two hundred and forty eight tasks are seeded with one statement
@@ -57,7 +56,7 @@ func primeBoard(t *testing.T) (*machine, string) {
 			question_asked_at, question_body, next_criterion_key, next_comment_key
 		)
 		SELECT 'MYP-' || i, i, 'Task ' || i, 'To Do', '', 'low', '', '', '',
-			NULL, '', '', '', '', ?, ?, 0, '', '', '', '', '', 1, 1
+			'', '', '', '', '', ?, ?, 0, '', '', '', '', '', 1, 1
 		FROM n`, primeBoardTasks, today, today)
 	m.execOnBoard(t, dir, `UPDATE board_counter SET last_task_num = ?`, primeBoardTasks)
 
@@ -114,6 +113,17 @@ func primeBoard(t *testing.T) (*machine, string) {
 	m.run(t, "set", "MYP-61", "--title", "Rewrite the install section",
 		"--type", "docs", "--priority", "medium", "--add-assignees", "@claude",
 		"--add-ac", "The section is rewritten").assertCode(t, 0)
+
+	// MYP-1 through MYP-6 are otherwise generic filler tasks, each one made
+	// to depend directly on MYP-7, so that it transitively unblocks six
+	// unfinished tasks, which is what the line under its row shows
+	// (docs/spec/cmd/prime.md#la-salida-literal). They depend on MYP-7 and
+	// not on each other, on purpose: none of the six blocks another one of
+	// them, so none of them picks up the `blocking` term of the urgency and
+	// their order among the filler tasks nobody sees does not change.
+	for _, id := range []string{"MYP-1", "MYP-2", "MYP-3", "MYP-4", "MYP-5", "MYP-6"} {
+		m.run(t, "set", id, "--add-deps", "MYP-7").assertCode(t, 0)
+	}
 
 	// The expired lease of MYP-52 goes in last and with a statement: no
 	// command of biso hands a lease to somebody else, and any later write

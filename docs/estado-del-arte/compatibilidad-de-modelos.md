@@ -16,7 +16,23 @@ la que motivó la pregunta.
 Lo que queda vivo no es una correspondencia sino una regla de entrada: un lote de `biso new --from`
 que traiga esa clave, como el que saldría de un tablero de Backlog.md, convierte cada elemento en un
 criterio de aceptación conservando su texto y su marcado, y avisa de ello (["`biso new`"](../spec/cmd/new.md)).
-Las tablas de abajo, por tanto, tienen una fila menos que las versiones anteriores de este documento.
+Las tablas de abajo, por tanto, tienen una fila menos que las versiones anteriores de este documento por
+ese campo, y tampoco tienen fila propia para otros dos que también salieron del modelo. `documentation` se
+fundió en `references`, que quedó como único campo de punteros
+(["Se retira `documentation` y `references` queda como único campo de punteros"](../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)),
+y `modifiedFiles` se retiró sin sustituto, porque una ruta que valga la pena señalar es una referencia más
+(["Se retira `modifiedFiles`"](../decisiones/detalles.md#se-retira-modifiedfiles)). Lo que Backlog.md
+llama `documentation` y `modified_files` sigue cruzándose, pero como entrada de `references`, y por eso
+aparece en la fila de `references` y no en filas aparte.
+
+**La fila `id` frente a Backlog.md se corrigió el 2026-09-25,** cuando se decidió que `biso` no
+adopta la forma con punto que Backlog.md usa para nombrar una subtarea
+(["No se adoptan identificadores de subtarea con punto"](../decisiones/detalles.md#no-se-adoptan-identificadores-de-subtarea-con-punto)).
+Antes de esa decisión la fila trataba el `id` de Backlog.md, con punto incluido para una subtarea,
+como si `biso` fuera a guardarlo tal cual en su propio campo `id`, y por eso lo marcaba como directa.
+Ahora es con transformación: el `id` de `biso` es siempre `<PREFIJO>-<n>` y no reproduce por sí solo el
+identificador con punto de una subtarea de Backlog.md, y la conservación de ese dato para el viaje de
+ida y vuelta queda en manos del conversor de `tools/backlog.md-migrate`.
 
 ## Método
 
@@ -40,9 +56,8 @@ ningún otro proyecto usa) no cuenta como transformación para los campos que es
 forma nativa, aunque el dato quepa ahí técnicamente.** Meter ahí el resto del modelo de `biso`
 preservaría los bytes, pero no la compatibilidad: ningún comando nativo de esa herramienta sabría
 filtrar, mostrar o editar ese dato, así que la tarea se volvería ilegible para quien no conozca la
-convención de `biso`. La única excepción es el propio campo `ext` de `biso`, que por construcción ya
-es un mapa de extensión y por tanto sí corresponde, de forma directa o con transformación de tipo,
-con el mecanismo de extensión del sistema destino cuando existe uno.
+convención de `biso`. `biso` no tiene ningún campo de extensión propio (["la decisión que retira el campo de extensión"](../decisiones/detalles.md#se-retira-ext)),
+así que esta regla no tiene excepciones.
 
 **Los dos sentidos casi siempre dan el mismo número, y donde no, se explica en prosa y no en la
 cifra.** La compatibilidad estructural (si los dos modelos tienen un sitio equivalente para un campo)
@@ -52,7 +67,7 @@ estados no es lo mismo que no perder nada al importar esos mismos estados de vue
 casos el campo sigue siendo "con transformación". Cada tabla dice explícitamente, en su prosa de
 después, en qué sentido concreto ocurre cada pérdida.
 
-**El porcentaje es (directa + transformación) / 28**, sobre el total de campos guardados de `biso`,
+**El porcentaje es (directa + transformación) / 25**, sobre el total de campos guardados de `biso`,
 igual en los dos sentidos salvo que la prosa de después de la tabla diga lo contrario para un campo
 suelto.
 
@@ -60,13 +75,13 @@ suelto.
 
 | Sistema | Cobertura al exportar | Cobertura al importar |
 |---|---|---|
-| Backlog.md | 23/28 ≈ 82 % | 23/28 ≈ 82 % |
-| Linear | 17/28 ≈ 61 % | 17/28 ≈ 61 % |
-| Trello | 16/28 ≈ 57 % | 16/28 ≈ 57 % |
-| Beads (`bd`) | 16/28 ≈ 57 % | 16/28 ≈ 57 % |
-| GitHub Issues | 13/28 ≈ 46 % | 13/28 ≈ 46 % |
-| Taskwarrior | 12/28 ≈ 43 % | 12/28 ≈ 43 % |
-| Task Master | 9/28 ≈ 32 % | 9/28 ≈ 32 % |
+| Backlog.md | 21/25 = 84 % | 21/25 = 84 % |
+| Linear | 16/25 = 64 % | 16/25 = 64 % |
+| Trello | 14/25 = 56 % | 14/25 = 56 % |
+| Beads (`bd`) | 15/25 = 60 % | 15/25 = 60 % |
+| GitHub Issues | 13/25 = 52 % | 13/25 = 52 % |
+| Taskwarrior | 11/25 = 44 % | 11/25 = 44 % |
+| Task Master | 9/25 = 36 % | 9/25 = 36 % |
 
 **La misma comparación, en una sola tabla.** "Sí" es la correspondencia directa, "Transf." es con
 transformación, y "No" agrupa tanto la ausencia de campo como los pocos casos marcados como "sin
@@ -76,7 +91,7 @@ sistema.
 
 | Campo de `biso` | Backlog.md | Linear | Trello | Beads | GitHub Issues | Taskwarrior | Task Master |
 |---|---|---|---|---|---|---|---|
-| `id` | Sí | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
+| `id` | Transf. | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
 | `createdAt` | Transf. | Sí | No | Sí | Sí | Transf. | No |
 | `updatedAt` | Transf. | Sí | Transf. | Sí | Sí | Transf. | No |
 | `archived` | Transf. | No | Sí | No | No | Transf. | No |
@@ -92,11 +107,8 @@ sistema.
 | `labels` | Sí | Sí | Sí | Sí | Sí | Sí | No |
 | `dependencies` | Sí | Sí | No | Transf. | Sí | Sí | Sí |
 | `references` | Sí | Transf. | Transf. | No | No | No | No |
-| `documentation` | Sí | Transf. | Transf. | No | No | No | No |
-| `modifiedFiles` | Sí | No | No | No | No | No | No |
 | `due` | Sí | Sí | Sí | No | No | Sí | No |
-| `ordinal` | Sí | Transf. | Transf. | No | No | No | No |
-| `ext` | No | No | Transf. | Sí | No | Sí | No |
+| `ordinal` | Transf. | Transf. | Transf. | No | No | No | No |
 | `description` | Sí | Sí | Sí | Sí | Sí | No | Transf. |
 | `plan` | Sí | No | No | Transf. | No | No | Transf. |
 | `notes` | Sí | No | No | Sí | No | No | No |
@@ -123,7 +135,7 @@ concepto de tarea versionada como fichero, mismos nombres para casi todo.
 
 | Campo de `biso` | Backlog.md | Correspondencia |
 |---|---|---|
-| `id` | `id` (`TASK-<n>`, o `TASK-<n>.<m>` para una subtarea) | Directa |
+| `id` | `id` (`TASK-<n>`, o `TASK-<n>.<m>` para una subtarea) | Con transformación: el de una subtarea es `TASK-<n>.<m>` y el `id` de `biso` es siempre `<PREFIJO>-<n>`; la conservación exacta de ese identificador con punto no es directa en el campo `id` de `biso` (["No se adoptan identificadores de subtarea con punto"](../decisiones/detalles.md#no-se-adoptan-identificadores-de-subtarea-con-punto)) |
 | `createdAt` | `created_date` | Con transformación: precisión de minuto, no de segundo, y no se confirmó que sea UTC |
 | `updatedAt` | `updated_date` | Con transformación: mismo caso |
 | `archived` | mover el fichero a `archive/` con `backlog task archive` | Con transformación: es una ubicación de fichero, no un campo booleano |
@@ -133,17 +145,14 @@ concepto de tarea versionada como fichero, mismos nombres para casi todo.
 | `status` | `status`, enum configurable por proyecto | Directa |
 | `type` | `type`, enum configurable por proyecto | Directa |
 | `priority` | `priority`, enum configurable por proyecto | Directa |
-| `parent` | `parent_task_id` | Directa (el `id` de la propia subtarea pasa a forma jerárquica `TASK-56.1`, pero el campo en sí no pierde el valor) |
+| `parent` | `parent_task_id` | Directa |
 | `assignees` | `assignee` (lista de `@nombre`) | Directa |
 | `author` | ninguno (solo hay `assignee`, no un campo de quien creó la tarea) | Sin equivalente |
 | `labels` | `labels` | Directa |
 | `dependencies` | `dependencies` | Directa |
-| `references` | `references` | Directa |
-| `documentation` | `documentation` | Directa |
-| `modifiedFiles` | `modified_files` | Directa |
+| `references` | `references`, `documentation` y `modified_files`, tres listas de texto libre que Backlog.md no distingue | Directa: al importar, `documentation` y `modified_files` se funden en `references` con un aviso cada una, y al exportar todo sale como `references` (["Se retira `documentation` y `references` queda como único campo de punteros"](../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros), ["Se retira `modifiedFiles`"](../decisiones/detalles.md#se-retira-modifiedfiles)) |
 | `due` | `due_date` (`YYYY-MM-DD`) | Directa |
-| `ordinal` | `ordinal` | Directa |
-| `ext` | ninguno | Sin equivalente |
+| `ordinal` | `ordinal` | Con transformación: el de Backlog.md es un entero y el de `biso` es una clave de texto, así que al importar hay que darle una clave a cada tarea que respete el orden que traían sus enteros, y al exportar hay que numerar las claves de nuevo (["El orden manual y su clave"](../spec/modelo-de-datos/orden-manual.md)) |
 | `description` | `description` | Directa |
 | `plan` | `plan` | Directa |
 | `notes` | `notes` | Directa |
@@ -166,15 +175,21 @@ edición o de borrado de un comentario individual (a diferencia de `--rm-comment
 
 **Qué se pierde al exportar (`biso` → Backlog.md).** La clave estable de los criterios y de los
 comentarios: si `biso` tiene los criterios `#1` y `#3`, Backlog.md los guarda como `#1` y `#2`,
-seguidos, y ya no queda constancia del hueco. `author`, `ext` y `question` desaparecen del todo. Los
+seguidos, y ya no queda constancia del hueco. `author` y `question` desaparecen del todo. Los
 segundos de `createdAt`/`updatedAt` se redondean al minuto.
 
-**Qué se pierde al importar (Backlog.md → `biso`).** Nada de estructura: como Backlog.md nunca tuvo
+**Qué se pierde al importar (Backlog.md → `biso`).** De qué lista venía cada puntero: `documentation` y
+`modified_files` se funden en `references` y no queda constancia de cuál era cuál, que es la pérdida
+que las decisiones de fundirlas aceptan a propósito. No se pierde ninguna otra estructura: como Backlog.md nunca tuvo
 huecos en sus claves ni un campo de autor de tarea, `biso` simplemente asigna claves nuevas
-consecutivas y deja `author` vacío, que son exactamente sus valores por defecto. La única pérdida
-real en este sentido es la de precisión de fecha, que ya venía perdida del lado de Backlog.md.
+consecutivas y deja `author` vacío, que son exactamente sus valores por defecto. Aparte de la fusión, la única pérdida
+real en este sentido es la de precisión de fecha, que ya venía perdida del lado de Backlog.md. El
+`ordinal` no se pierde, pero sí cambia de forma: los enteros de Backlog.md se convierten en claves de
+texto que conservan el mismo orden, y al volver hay que numerarlos otra vez, así que la ida y vuelta
+devuelve el orden y no los números exactos que había.
 
-**Cobertura: 23/28 ≈ 82 % en los dos sentidos.**
+**Cobertura: 21/25 = 84 % en los dos sentidos.** El `ordinal` pasa de correspondencia directa a
+correspondencia con transformación, y las dos cuentan igual en esta cifra.
 
 ## Linear
 
@@ -199,11 +214,8 @@ directamente del `schema.graphql` público del SDK oficial.
 | `labels` | `labels` | Directa |
 | `dependencies` | `IssueRelation` con `type: blocks` | Directa |
 | `references` | `attachments` (no detallado en la investigación) | Con transformación |
-| `documentation` | `attachments`, mismo mecanismo | Con transformación |
-| `modifiedFiles` | ninguno | Sin equivalente |
 | `due` | `dueDate` | Directa |
 | `ordinal` | `subIssueSortOrder` (entre hermanos) o `sortOrder` (mencionado, no detallado) | Con transformación: orden relativo, no un entero libre |
-| `ext` | ninguno | Sin equivalente |
 | `description` | `description` | Directa |
 | `plan` | ninguno | Sin equivalente |
 | `notes` | ninguno | Sin equivalente |
@@ -214,7 +226,7 @@ directamente del `schema.graphql` público del SDK oficial.
 
 **Qué se pierde al exportar (`biso` → Linear).** Si una tarea tiene más de una persona en
 `assignees`, solo la primera sobrevive. El resto de campos sin equivalente desaparece del todo:
-`type`, `leaseExpiresAt`/`leaseHolder`, `ext`, `plan`, `notes`, `summary`,
+`type`, `leaseExpiresAt`/`leaseHolder`, `plan`, `notes`, `summary`,
 `acceptanceCriteria`, `question`. Un comentario exportado deja de ser inmutable:
 Linear permite editarlo después, y `biso` ya no lo sabría.
 
@@ -224,7 +236,7 @@ modela tampoco llega para perderse. Sí se pierde la información propia de Line
 en `biso`: los hilos de comentarios, el estado resuelto/no resuelto, el `cycle` y el `project` a los
 que pertenece el issue.
 
-**Cobertura: 17/28 ≈ 61 % en los dos sentidos.**
+**Cobertura: 16/25 = 64 % en los dos sentidos.**
 
 ## Trello
 
@@ -249,11 +261,8 @@ oficial.
 | `labels` | `labels` / `idLabels` | Directa |
 | `dependencies` | ninguno (el Power-Up de dependencias no está en la API REST pública) | Sin equivalente |
 | `references` | `Attachment` (`url`, `name`...) | Con transformación |
-| `documentation` | `Attachment`, mismo mecanismo | Con transformación |
-| `modifiedFiles` | ninguno | Sin equivalente |
 | `due` | `due` | Directa |
 | `ordinal` | `pos` (flotante, orden dentro de la lista) | Con transformación |
-| `ext` | Custom Fields (declarados de antemano, tipados) | Con transformación |
 | `description` | `desc` (hasta 16.384 caracteres) | Directa |
 | `plan` | ninguno | Sin equivalente |
 | `notes` | ninguno | Sin equivalente |
@@ -263,9 +272,9 @@ oficial.
 | `question` | ninguno | Sin equivalente |
 
 **Qué se pierde al exportar (`biso` → Trello).** `type`, `parent`, `author`, `dependencies`,
-`modifiedFiles`, `plan`, `notes`, `summary` y `question` no tienen dónde ir. Un comentario exportado
-deja de ser inmutable, igual que en Linear y GitHub. `priority` y `ext` solo sobreviven si el tablero
-de destino ya declaró los Custom Fields correspondientes; si no, hay que crearlos antes de exportar.
+`plan`, `notes`, `summary` y `question` no tienen dónde ir. Un comentario exportado
+deja de ser inmutable, igual que en Linear y GitHub. `priority` solo sobrevive si el tablero
+de destino ya declaró el Custom Field correspondiente; si no, hay que crearlo antes de exportar.
 
 **Qué se pierde al importar (Trello → `biso`).** Nada adicional: `dependencies` y `parent` no
 existen en el origen y por tanto no hay nada que perder en ese sentido. Se pierde, en cambio, todo lo
@@ -273,7 +282,7 @@ propio de Trello sin sitio en `biso`: `pos` como orden fino entre tarjetas de un
 Custom Fields no declarados de antemano en un tablero de `biso` (que no tiene ese concepto), y el
 board/list como jerarquía de agrupación.
 
-**Cobertura: 16/28 ≈ 57 % en los dos sentidos.**
+**Cobertura: 14/25 = 56 % en los dos sentidos.**
 
 ## Beads (`bd`)
 
@@ -297,11 +306,8 @@ Fuente: `docs/estado-del-arte/esquemas-de-datos-externos.md#2-beads-bd`.
 | `labels` | `labels` | Directa |
 | `dependencies` | arista `type: blocks` (por defecto) | Con transformación: mismo mecanismo que `parent`, distinguido solo por el valor de `type` |
 | `references` | ninguno | Sin equivalente |
-| `documentation` | ninguno | Sin equivalente |
-| `modifiedFiles` | ninguno | Sin equivalente |
 | `due` | ninguno | Sin equivalente |
 | `ordinal` | ninguno | Sin equivalente |
-| `ext` | `metadata` (JSON arbitrario) | Directa |
 | `description` | `description` | Directa |
 | `plan` | `design` | Con transformación: nombre más específico ("notas de diseño") que el "plan" genérico de `biso` |
 | `notes` | `notes` | Directa |
@@ -311,7 +317,7 @@ Fuente: `docs/estado-del-arte/esquemas-de-datos-externos.md#2-beads-bd`.
 | `question` | ninguno (`waiters` es una lista interna de qué espera a qué, no una pregunta dirigida a alguien) | Sin equivalente |
 
 **Qué se pierde al exportar (`biso` → Beads).** `assignees`, `author`, `references`,
-`documentation`, `modifiedFiles`, `due`, `ordinal`, `summary` y `question` desaparecen.
+`due`, `ordinal`, `summary` y `question` desaparecen.
 `acceptanceCriteria` cae en el único campo de texto libre de Beads, perdiendo el marcado individual
 de cada criterio.
 
@@ -321,7 +327,7 @@ el `payload` JSON asociado al issue, la lista `waiters`, y los tipos de relació
 bloqueo ni de jerarquía (`related`, `tracks`, `discovered-from`, `caused-by`, `validates`,
 `supersedes`).
 
-**Cobertura: 16/28 ≈ 57 % en los dos sentidos.**
+**Cobertura: 15/25 = 60 % en los dos sentidos.**
 
 ## GitHub Issues
 
@@ -345,11 +351,8 @@ Fuente: `docs/estado-del-arte/esquemas-de-datos-externos.md#4-github-issues-api-
 | `labels` | `labels` | Directa |
 | `dependencies` | API de issue-dependencies (`blocked_by`/`blocking`) | Directa |
 | `references` | ninguno (solo menciones de texto en el `body`, no un campo estructurado) | Sin equivalente |
-| `documentation` | ninguno | Sin equivalente |
-| `modifiedFiles` | ninguno (es propio del objeto Pull Request, no del Issue) | Sin equivalente |
 | `due` | ninguno (solo existe `due_on` en el Milestone compartido, no por Issue) | Sin equivalente |
 | `ordinal` | ninguno (existe orden dentro de Projects v2, no en el Issue) | Sin equivalente |
-| `ext` | ninguno (los campos personalizados de Projects v2 viven en el objeto "item" del proyecto, no en el Issue) | Sin equivalente |
 | `description` | `body` | Directa |
 | `plan` | ninguno | Sin equivalente |
 | `notes` | ninguno | Sin equivalente |
@@ -364,14 +367,14 @@ de `biso` (por ejemplo `to do`/`in progress`/`blocked`/`done`) se colapsa a esos
 
 **Qué se pierde al exportar (`biso` → GitHub Issues).** La granularidad de `status` (varios estados
 activos se ven todos como `open`). Todo lo que no tiene equivalente: `priority`, `references`,
-`documentation`, `modifiedFiles`, `due` por tarea, `ordinal`, `ext`, `plan`, `notes`, `summary`,
+`due` por tarea, `ordinal`, `plan`, `notes`, `summary`,
 `acceptanceCriteria`, `question`. Un comentario exportado deja de ser inmutable.
 
 **Qué se pierde al importar (GitHub Issues → `biso`).** Nada adicional a lo de arriba: `open`/`closed`
 se mapea sin pérdida a dos valores del vocabulario de `biso`. Se pierde lo propio de GitHub sin sitio
 en `biso`: `milestone`, `locked`/`active_lock_reason`, y el resumen `issue_dependencies_summary`.
 
-**Cobertura: 13/28 ≈ 46 % en los dos sentidos.**
+**Cobertura: 13/25 = 52 % en los dos sentidos.**
 
 ## Taskwarrior
 
@@ -395,11 +398,8 @@ Fuente: `docs/estado-del-arte/esquemas-de-datos-externos.md#1-taskwarrior`.
 | `labels` | `tag_<tag>` | Directa |
 | `dependencies` | `dep_<uuid>` | Directa |
 | `references` | ninguno | Sin equivalente |
-| `documentation` | ninguno | Sin equivalente |
-| `modifiedFiles` | ninguno | Sin equivalente |
 | `due` | `due` | Directa |
 | `ordinal` | ninguno | Sin equivalente |
-| `ext` | UDA (user defined attributes) | Directa |
 | `description` (texto largo) | ninguno (el único campo de texto de Taskwarrior ya es el título) | Sin equivalente |
 | `plan` | ninguno | Sin equivalente |
 | `notes` | ninguno | Sin equivalente |
@@ -410,7 +410,7 @@ Fuente: `docs/estado-del-arte/esquemas-de-datos-externos.md#1-taskwarrior`.
 
 **Por qué no se cuentan más campos "con transformación" vía UDA.** Una UDA es de un único valor
 escalar (`string`, `numeric`, `date`, `duration` o `uuid`); no admite una lista, así que
-`assignees`/`references`/`documentation`/`modifiedFiles` no caben sin aplanarlos a texto separado por
+`assignees`/`references` no caben sin aplanarlos a texto separado por
 comas, perdiendo la propiedad de lista real que Taskwarrior reconoce. Y una lista de objetos con
 clave propia (`acceptanceCriteria`, `comments` con estructura completa, `question`) no cabe en absoluto en un valor escalar sin volverse texto opaco que ningún comando de
 Taskwarrior sabría interpretar como checklist.
@@ -424,7 +424,7 @@ campos. Se pierde lo propio de Taskwarrior sin sitio en `biso`: `wait` (ocultar 
 fecha), `recur`/`mask` (la recurrencia entera, que `biso` no modela), y cualquier UDA que el usuario
 haya declarado con su propio significado.
 
-**Cobertura: 12/28 ≈ 43 % en los dos sentidos.**
+**Cobertura: 11/25 = 44 % en los dos sentidos.**
 
 ## Task Master (`claude-task-master`)
 
@@ -448,11 +448,8 @@ Fuente: `docs/estado-del-arte/esquemas-de-datos-externos.md#3-task-master-claude
 | `labels` | ninguno | Sin equivalente |
 | `dependencies` | `dependencies` (array de ids numéricos) | Directa |
 | `references` | ninguno | Sin equivalente |
-| `documentation` | ninguno | Sin equivalente |
-| `modifiedFiles` | ninguno | Sin equivalente |
 | `due` | ninguno | Sin equivalente |
 | `ordinal` | ninguno (el orden es la posición en el array, sin campo dedicado) | Sin equivalente |
-| `ext` | ninguno | Sin equivalente |
 | `description` | `description` (resumen corto, no un bloque de prosa libre) | Con transformación |
 | `plan` | `details` | Con transformación: nombre distinto, mismo papel |
 | `notes` | ninguno | Sin equivalente |
@@ -462,15 +459,15 @@ Fuente: `docs/estado-del-arte/esquemas-de-datos-externos.md#3-task-master-claude
 | `question` | ninguno | Sin equivalente |
 
 **Qué se pierde al exportar (`biso` → Task Master).** Las fechas (`createdAt`, `updatedAt`, `due`),
-todo lo relativo a personas (`assignees`, `author`), `labels`, `references`, `documentation`,
-`modifiedFiles`, `ext`, `notes`, `summary`, `comments` y `question`.
+todo lo relativo a personas (`assignees`, `author`), `labels`, `references`,
+`notes`, `summary`, `comments` y `question`.
 `acceptanceCriteria` se funde en `testStrategy` como texto, perdiendo el marcado por ítem.
 
 **Qué se pierde al importar (Task Master → `biso`).** Nada adicional: ninguno de esos campos existe
 en origen. Se pierde lo propio de Task Master sin sitio en `biso`: el informe aparte de complejidad
 (`task-complexity-report.json`), y el nivel de "tags" que agrupa varios `tasks.json` en uno.
 
-**Cobertura: 9/28 ≈ 32 % en los dos sentidos.**
+**Cobertura: 9/25 = 36 % en los dos sentidos.**
 
 ## Qué quedó sin verificar
 

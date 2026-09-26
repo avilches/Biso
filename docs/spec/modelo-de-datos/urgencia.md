@@ -52,6 +52,18 @@ en **1.0**, el mismo máximo que una tarea que vence hoy. Una tarea vencida no s
 vence hoy; para distinguirlas está el filtro `--overdue` de `biso ls`, no un término sin tope en la
 fórmula.
 
+**El coeficiente de este término, `urgency.due` (12.0), es el mayor de los siete.** En un tablero
+donde ninguna tarea usa `due`, `proximidad` vale siempre 0.0 en todas las tareas, así que el término
+de mayor peso de la fórmula no aporta nada a la urgencia de ninguna: queda inerte sin que la fórmula
+cambie ni haya que retirar nada. El 2026-09-21 se midió que `due` está en 0 de las 535 tareas de los
+seis tableros de Backlog.md de esta máquina, con el flag `--due-date` (y su opuesto
+`--clear-due-date`) disponible en el CLI de Backlog.md 1.52.0: es un cero de decisión, no de
+imposibilidad. El campo se conserva por dos motivos: `due` está en cuatro de las siete herramientas
+comparadas en ["Estado del arte"](../../estado-del-arte/compatibilidad-de-modelos.md#resumen) y es,
+después del título y del estado, el campo más universal del espacio; y este cero dice más sobre estos
+seis tableros, de una sola persona sin plazos externos, que sobre el campo, porque es la clase de
+cero que cambia el día que el tablero lo use otra persona con un compromiso de fecha.
+
 **El redondeo, `hoy` y las unidades de tiempo, sin ambigüedad:**
 
 ```
@@ -101,5 +113,20 @@ adicional. Es una definición distinta de la que usa el aviso de "subtareas sin 
 finish`](../cmd/verbos-del-ciclo.md#biso-finish), que sí sigue contando una subtarea archivada como
 sin terminar; el porqué de la diferencia está en [`biso archive`](../cmd/archive.md).
 
+**`bloquea` y `bloqueada` son, y siguen siendo, booleanos, a propósito.** Cada uno vale `1.0` o `0.0`
+según haya o no al menos una tarea sin terminar en la dirección que mira, nunca cuántas: una tarea que
+bloquea a una sola pesa en la fórmula exactamente lo mismo que una que bloquea a nueve, porque el
+término no distingue "cuánto" bloquea, solo "si" bloquea. Es una limitación conocida y no un
+descuido: un booleano no puede decir si una tarea arrastra detrás una cadena de una o de nueve, y la
+fórmula no se ha tocado para arreglarlo, porque cambiar sus dos coeficientes por un recuento
+transitivo cambiaría el orden de `biso ls` de todo tablero con dependencias, una regresión silenciosa
+para cualquiera que ya confíe en ese orden, a cambio de una cifra que ya se puede leer sin tocar la
+fórmula: `blockedByCount` y `unblocksCount` de `biso get` (["`biso get`"](../cmd/get.md#el-esquema-json))
+cuentan cuántas tareas sin terminar hay en el cierre transitivo de `dependencies`, hacia arriba y
+hacia abajo, y la primera fila de `NEXT UP` de ["`biso prime`"](../cmd/prime.md#la-salida-literal)
+repite el segundo con la línea `unblocks <n> tasks if finished first`. Los dos viven aparte, como una
+vista de lectura sobre el mismo grafo y no como un término más de esta suma.
+
 **El `ordinal` no forma parte de la urgencia.** Es un orden manual que se aplica aparte, según la
-regla de orden completa de la sección [`biso ls`](../cmd/ls.md).
+regla de orden completa de la sección [`biso ls`](../cmd/ls.md), y es una clave de texto y no un
+número (["El orden manual y su clave"](orden-manual.md)), así que tampoco podría entrar en una suma.

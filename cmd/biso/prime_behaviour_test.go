@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -64,7 +66,7 @@ func TestPrimeOnABoardWhoseTasksAreAllFinished(t *testing.T) {
 	if !strings.Contains(got.stdout, "  To Do 0 | In Progress 0 | Done 1\n") {
 		t.Errorf("the finished task is not in the counts line:\n%s", got.stdout)
 	}
-	if !strings.Contains(got.stdout, "decided you should do.\n\nPick one,") {
+	if !strings.Contains(got.stdout, lastRuleOfTheMessage+"Pick one,") {
 		t.Errorf("the blocks of tasks did not disappear cleanly:\n%s", got.stdout)
 	}
 }
@@ -208,9 +210,12 @@ func TestPrimeLimitSharesItsRowsBetweenTwoBlocks(t *testing.T) {
 	if n := len(blockOf(got.stdout, "ASSIGNED TO YOU")); n != 2 {
 		t.Errorf("ASSIGNED TO YOU printed %d lines and not two:\n%s", n, got.stdout)
 	}
-	// One row and the count line the two blocks share.
-	if n := len(blockOf(got.stdout, "NEXT UP")); n != 2 {
-		t.Errorf("NEXT UP printed %d lines and not a row plus its count:\n%s", n, got.stdout)
+	// One row, its own transitive-unblocking line (it is MYP-7, the first
+	// and only row NEXT UP keeps), and the count line the two blocks
+	// share.
+	if n := len(blockOf(got.stdout, "NEXT UP")); n != 3 {
+		t.Errorf("NEXT UP printed %d lines and not a row, its extra line and its count:\n%s",
+			n, got.stdout)
 	}
 	if !strings.Contains(got.stdout, "  51 more not shown: `biso ls --not-active --not-waiting`\n") {
 		t.Errorf("the shared count line is wrong:\n%s", got.stdout)
@@ -411,6 +416,73 @@ func TestTheFixedPartOfTheMessageIsAlwaysTheSame(t *testing.T) {
 	}
 }
 
+// TestTheBoardBlockNeverListsTheLabelsKey is the bullet of
+// docs/spec/cmd/prime.md#la-salida-literal that the scoped labels added:
+// `types` and `priorities` are there because a board that configures none
+// accepts no --type and no --priority, and the labels are not like that,
+// since they can be written without being declared and the error of a
+// restricted key already says what it admits, at the moment it is needed.
+//
+// The board it runs over declares a long `labels` list on purpose: with the
+// key listed, the message would grow with it, and both halves of this test
+// would fail at once.
+func TestTheBoardBlockNeverListsTheLabelsKey(t *testing.T) {
+	m := blockBoard(t, blockSizes{inProgress: 20, waiting: 10, assigned: 30})
+	m.run(t, "config", "set", "labels",
+		"milestone::,size::s,size::m,size::l,area::parser,area::store,area::cli,urgent").
+		assertCode(t, 0)
+
+	got := m.run(t, "prime").assertCode(t, 0)
+
+	board := strings.SplitN(got.stdout, "\n\n", 2)[0]
+	for _, absent := range []string{"labels", "milestone::", "size::s", "area::parser"} {
+		if strings.Contains(board, absent) {
+			t.Errorf("the BOARD block carries %q:\n%s", absent, board)
+		}
+	}
+	// And the whole message still fits, which is the other reason the key
+	// is not there (docs/spec/presupuestos.md#el-presupuesto-de-tamaño).
+	if len(got.stdout) > cli.PrimeBudget {
+		t.Errorf("the message measures %d bytes and the hard cap is %d",
+			len(got.stdout), cli.PrimeBudget)
+	}
+}
+
+// TestTheBudgetConstantsAreTheNumbersOfTheSpecification keeps the two caps
+// of the message from drifting: the hard cap of 5,504 bytes is the only
+// number the stability contract freezes, and the fixed part is 3,840 of it
+// (docs/spec/presupuestos.md#el-presupuesto-de-tamaño). Raising either to
+// make room for a gloss would pass every other test in this file, so the
+// constants are compared with the numbers the page itself prints, and not
+// with literals repeated here.
+func TestTheBudgetConstantsAreTheNumbersOfTheSpecification(t *testing.T) {
+	page, err := os.ReadFile(filepath.Join("..", "..", "docs", "spec", "presupuestos.md"))
+	if err != nil {
+		t.Fatalf("read the budget page: %v", err)
+	}
+	for _, c := range []struct {
+		name     string
+		pattern  string
+		constant int
+	}{
+		{"the hard cap of the startup message", `tope duro de ([\d.]+) bytes`, cli.PrimeBudget},
+		{"the cap of its fixed part", `La parte fija no pasa de ([\d.]+) bytes`, cli.PrimeFixedBudget},
+	} {
+		m := regexp.MustCompile(c.pattern).FindSubmatch(page)
+		if m == nil {
+			t.Errorf("the budget page no longer has a sentence that matches %q", c.pattern)
+			continue
+		}
+		// The page writes 5.504, with the dot of a thousands separator.
+		want, err := strconv.Atoi(strings.ReplaceAll(string(m[1]), ".", ""))
+		if err != nil {
+			t.Errorf("%s: %q is not a number: %v", c.name, m[1], err)
+			continue
+		}
+		assertEqual(t, fmt.Sprint(c.constant), fmt.Sprint(want), c.name)
+	}
+}
+
 // blockSizes is how many tasks each of the first three blocks gets on a
 // board of three hundred; the rest fall into NEXT UP.
 type blockSizes struct{ inProgress, waiting, assigned int }
@@ -445,7 +517,7 @@ func blockBoard(t *testing.T, sizes blockSizes) *machine {
 		SELECT 'MYP-' || i, i,
 			'A task with a title about as long as a real one gets, the one numbered ' || i,
 			'To Do', 'task', 'medium', '', '', '',
-			NULL, '', '', '', '', ?, ?, 0, '', '', '', '', '', 1, 1
+			'', '', '', '', '', ?, ?, 0, '', '', '', '', '', 1, 1
 		FROM n`, blockBoardTasks, now, now)
 	m.execOnBoard(t, dir, `UPDATE board_counter SET last_task_num = ?`, blockBoardTasks)
 
@@ -497,7 +569,7 @@ const primeClosingParagraph = "Pick one, `biso start <ref> --append-plan \"...\"
 
 // lastRuleOfTheMessage is where the fixed part ends and the blocks of
 // tasks begin.
-const lastRuleOfTheMessage = "     assigned to you is one a person decided you should do.\n\n"
+const lastRuleOfTheMessage = "     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.\n\n"
 
 // blockOf answers the lines of one block of the message, its heading
 // excluded and its count line included, and nothing when that block did

@@ -16,6 +16,8 @@ Options:
                              separated. One of: meta, desc, ac, plan, notes,
                              summary, comments, question
       --explain-urgency      show how the urgency number is built
+      --closure              show the full transitive closure of dependencies,
+                             both directions
   -h, --help                 show this help
 
 Exit codes:
@@ -30,3 +32,4 @@ Examples:
   biso get 11 --section ac
   biso get "CRLF"
   biso get MYP-11 --explain-urgency
+  biso get MYP-11 --closure

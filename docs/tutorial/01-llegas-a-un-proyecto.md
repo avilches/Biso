@@ -52,22 +52,20 @@ COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
   --title  --status  --type --clear-type  --priority --clear-priority
-  --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author
+  --parent --clear-parent  --due --clear-due  --author --clear-author
+  --ordinal first|last  --above <ref> --below <ref>  --clear-ordinal
   --add-labels --rm-labels --clear-labels --replace-labels
   --add-assignees --rm-assignees --clear-assignees --replace-assignees
   --add-refs --rm-refs --clear-refs --replace-refs
-  --add-docs --rm-docs --clear-docs --replace-docs
   --add-deps --rm-deps --clear-deps --replace-deps
-  --add-files --rm-files --clear-files --replace-files
   --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac
   --append-desc --clear-desc  --append-plan --clear-plan
   --append-note --clear-notes  --append-summary --clear-summary
   --comment --rm-comment --set-comment-date
-  --ext K=V --rm-ext --clear-ext
 
 RULES  (none of these are guessable; they are the whole learning curve)
   1. Every write goes through biso. Nothing else touches the board.
-  2. <ref> is an id (TASK-12), a bare number (12) or free text ("CRLF"). Text
+  2. <ref> is an id (MYP-12), a bare number (12) or free text ("CRLF"). Text
      matching several tasks is an error that lists them, never a guess. `note`,
      `comment`, `ask` and `answer` take one <ref>; `set`, `start` and `finish`
      take several.
@@ -91,6 +89,8 @@ RULES  (none of these are guessable; they are the whole learning curve)
  10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
      it, writing both into the comments. Ask instead of guessing. A task
      assigned to you is one a person decided you should do.
+ 11. A dependency is written on the task that waits:
+     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.
 
 IN PROGRESS
   TASK-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
@@ -120,9 +120,9 @@ edits directly.
 
 Exit code: `0`
 
-*(derived output, see [La salida literal](../spec/cmd/prime.md#la-salida-literal); not literal spec text)*
+*(derived output, see [La salida literal](../spec/cmd/prime.md#la-salida-literal), [Lo que no depende del tablero](../spec/cmd/prime.md#lo-que-no-depende-del-tablero); not literal spec text)*
 
-*Note: This is the whole message, top to bottom, and there is no second screen after it. Every fixed part of it, the command list, the field flags and the rules, is copied from the specification; what changes here is the board summary, which is this tutorial's board, and the example id in rule 2, written with this board's prefix (see tutorial/lagunas/01-03.md). The BOARD block states the actual vocabulary of this board (the types, the priorities, the three states and their role) and who you are here. The four sections below split up the entire board without any task showing up in two places: what's in progress, what's waiting on an answer from you, what's yours, and what's next by urgency. No one writes that urgency by hand, it's recalculated every time you ask for it (you'll come back to this in scenario 3, "What now?"). With this alone you could already create a task, start it, work on it and close it without opening any other document: that's the standard this message is written to.*
+*Note: This is the whole message, top to bottom, and there is no second screen after it. Every fixed part of it, the command list, the field flags and the rules, is copied from the specification, character by character, and is the same on every board; what changes here is the board summary, which is this tutorial's board. That includes the example ids in rules 2 and 11, `MYP-12`, `MYP-10` and `MYP-4`: they show the shape of an id and the direction of a dependency, they are not tasks of this board, and they keep the `MYP` prefix whatever prefix the board uses. The task rows below are the real ids. The BOARD block states the actual vocabulary of this board (the types, the priorities, the three states and their role) and who you are here. The four sections below split up the entire board without any task showing up in two places: what's in progress, what's waiting on an answer from you, what's yours, and what's next by urgency. No one writes that urgency by hand, it's recalculated every time you ask for it (you'll come back to this in scenario 3, "What now?"). With this alone you could already create a task, start it, work on it and close it without opening any other document: that's the standard this message is written to.*
 
 Even so, there's one doubt `prime` doesn't answer: this board, the one you just read,
 is it exactly the one you think it is? If you work with several copies of the project at

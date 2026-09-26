@@ -21,18 +21,16 @@ COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
 
 FIELD FLAGS  (same names, same meaning, in every command above that writes)
   --title  --status  --type --clear-type  --priority --clear-priority
-  --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author
+  --parent --clear-parent  --due --clear-due  --author --clear-author
+  --ordinal first|last  --above <ref> --below <ref>  --clear-ordinal
   --add-labels --rm-labels --clear-labels --replace-labels
   --add-assignees --rm-assignees --clear-assignees --replace-assignees
   --add-refs --rm-refs --clear-refs --replace-refs
-  --add-docs --rm-docs --clear-docs --replace-docs
   --add-deps --rm-deps --clear-deps --replace-deps
-  --add-files --rm-files --clear-files --replace-files
   --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac
   --append-desc --clear-desc  --append-plan --clear-plan
   --append-note --clear-notes  --append-summary --clear-summary
   --comment --rm-comment --set-comment-date
-  --ext K=V --rm-ext --clear-ext
 
 RULES  (none of these are guessable; they are the whole learning curve)
   1. Every write goes through biso. Nothing else touches the board.
@@ -60,6 +58,8 @@ RULES  (none of these are guessable; they are the whole learning curve)
  10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
      it, writing both into the comments. Ask instead of guessing. A task
      assigned to you is one a person decided you should do.
+ 11. A dependency is written on the task that waits:
+     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.
 
 IN PROGRESS
   MYP-11  In Progress  bug   high    Normalize CRLF in the diff                        ac 1/2  @claude  -
@@ -77,6 +77,7 @@ ASSIGNED TO YOU
 
 NEXT UP  (not assigned to you, by urgency)
   MYP-7   To Do        bug   high    Crash on an empty repository                      ac 0/4  -        2026-09-08
+    unblocks 6 tasks if finished first
   MYP-19  To Do        task  high    Retry the upload on 5xx                           ac 0/2  -        -
   MYP-44  To Do        bug   low     Wrong column width on narrow ttys                 ac 0/1  -        -
   49 more not shown: `biso ls --not-active --not-waiting`

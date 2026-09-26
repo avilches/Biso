@@ -14,7 +14,7 @@ biso set <ref>... [cualquier flag de campo de las familias de flags]
 
 ## Parámetros propios
 
-**Todos** los flags de las secciones ["Campos de lista que admiten coma"](../familias-de-flags.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-flags.md#campos-de-prosa), ["Campos escalares"](../familias-de-flags.md#campos-escalares) y ["Campos externos"](../familias-de-flags.md#campos-externos) valen aquí, con exactamente el mismo
+**Todos** los flags de las secciones ["Campos de lista que admiten coma"](../familias-de-flags.md#campos-de-lista-que-admiten-coma), ["Campos de lista sin coma (criterios)"](../familias-de-flags.md#campos-de-lista-sin-coma-criterios), ["Campos de prosa"](../familias-de-flags.md#campos-de-prosa) y ["Campos escalares"](../familias-de-flags.md#campos-escalares) valen aquí, con exactamente el mismo
 significado que en cualquier otro comando. Lo propio de `set`:
 
 | Parámetro | Oblig. | Tipo | Por defecto | Repetible | Lista | Incompatible con |
@@ -44,13 +44,20 @@ excepción, aunque en `biso comment` el prefijo parezca redundante. Un concepto,
 | Varias referencias y `--check-ac all` | Válido |
 | Una de varias referencias no existe | Error 4, y **no se escribe ninguna**, ni siquiera las buenas |
 | Un `--replace-*` sustituye una lista no vacía | Se hace, con el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) diciendo cuántos elementos ha reemplazado |
+| `--add-labels k::v` sobre una tarea que conserva otras etiquetas de la clave `k` | Se hace: `k::v` queda como única etiqueta de esa clave y el aviso nombra las que quitó (["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito)) |
+| `--add-labels k:v` sobre una tarea que conserva un `k::x` | Error 6 con el `code` `exclusive_label_conflict`, y no se escribe nada, ni en esa tarea ni en las demás de la llamada |
+| `k:a` y `k::b` de la misma clave en la misma llamada | Error 2 con el `code` `mixed_label_separators`, sin mirar el orden en que se escribieron |
 | Paso a un estado terminal con criterios sin marcar | Se hace, con aviso |
 | Paso a un estado terminal con una pregunta abierta (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)) | Se hace, con aviso, igual que en `biso finish` (["`biso finish`"](verbos-del-ciclo.md#biso-finish)) y como atribuye la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) a cualquier llegada al estado terminal |
 | Todos los flags dejan la tarea igual | Código 0, con `note: MYP-11 unchanged`. Ningún campo de la tarea se escribe, `updatedAt` no cambia y `changed` sale vacía, pero si quien llama es `leaseHolder` **el arrendamiento se renueva igual**: es una escritura del tenedor sobre su tarea, y el latido no depende de si los valores coincidían (["La renovación"](../lease.md#la-renovación) de `lease.md`) |
 | `--status` a un estado que no es el activo, `--clear-assignees` o `--rm-assignees` que deja la tarea sin nadie, sobre una tarea con arrendamiento | `leaseExpiresAt` y `leaseHolder` se vacían en esa misma escritura, sea de quien sea el arrendamiento; si era de otra identidad, sale además el aviso de la sección ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos) (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
+| `--above` o `--below` con varias referencias | Válido, y es la forma de mover un bloque: las tareas caen en el hueco en el orden en que se escribieron (["El orden manual"](../familias-de-flags.md#el-orden-manual)) |
+| `--above` o `--below` nombrando a una de las tareas que se están moviendo | Error 2, con el `code` `self_ordinal_neighbour`: `error: --below: MYP-11 cannot be its own neighbour` |
+| `--above` o `--below` sobre una tarea sin clave de orden | Error 6, con el `code` `neighbour_without_ordinal`, y **no se escribe ninguna** de las tareas de la llamada |
+| Dos de `--ordinal`, `--above`, `--below` y `--clear-ordinal` en la misma llamada | Error 2, con el `code` `incompatible_flags`: los cuatro escriben el mismo campo |
 | `--comment-author` sin `--comment` | Error 2 |
 | `--comment` sin `--comment-author` y sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) | Error 2 |
-| La tarea no se puede leer | Error 3, y no se escribe nada |
+| La tarea no se puede leer, por un valor de `status`, `type` o `priority` que el tablero no declara, una fecha malformada o cualquier otro motivo de ["Qué se comprueba"](../garantias.md#qué-se-comprueba) | Error 3 con `code` `undecodable_task`, y no se escribe nada. **La excepción es el valor fuera de vocabulario cuando la propia llamada lo corrige**: `biso set MYP-11 --priority medium` sobre una tarea cuya prioridad el tablero no declara se aplica, porque se juzga la tarea como quedaría, y `biso set MYP-11 --title X` no, porque seguiría ilegible. Una fecha malformada no tiene excepción, porque esa tarea no llega a cargarse. Lo mismo vale para los verbos del ciclo que fijan el estado, `biso start` y `biso finish`, y con `--dry-run` la vista previa contesta lo mismo que la llamada real ("Cómo se arregla una tarea ilegible" en ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#cómo-se-arregla-una-tarea-ilegible)) |
 | La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. `biso set` no reclama ningún arrendamiento, así que archivar no le opone ninguna restricción; la única excepción del programa es [`biso start`](verbos-del-ciclo.md#biso-start), que sí lo reclama (["El vaciado"](../lease.md#el-vaciado) de `lease.md`) |
 
 ## Salida
@@ -144,27 +151,42 @@ de estado y nunca en la salida por defecto de `biso new` (["`biso new`"](new.md)
 |---|---:|
 | Cambio aplicado, o nada que cambiar | 0 |
 | Sin flags de cambio, flags incompatibles, selector por clave con varias tareas, solape | 2 |
-| Valor fuera de un vocabulario, clave de extensión no declarada, tarea ilegible | 3 |
+| Valor fuera de un vocabulario, tarea ilegible | 3 |
 | Alguna referencia no existe, o un selector de texto no encaja con ningún criterio o comentario | 4 |
 | Alguna referencia de texto encaja con varias tareas, o un selector con varios criterios o comentarios | 5 |
+| Una etiqueta con ámbito escrita con `:` sobre una clave que la tarea conserva con `::` (["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito)) | 6 |
+| La vecina de `--above` o de `--below` no tiene clave de orden | 6 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 8 |
 | No hay tablero | 20 |
 
 ## `biso set --help`
+
+La ayuda glosa los campos de relación (`--parent`, `--add-deps`, `--add-refs`) y dice hacia dónde
+apunta una dependencia, con `biso set MYP-10 --add-deps MYP-4` como ejemplo de que `MYP-4` bloquea a
+`MYP-10`. Junto con la regla 11 del mensaje de arranque (["La salida literal"](prime.md#la-salida-literal)), es lo que enseña la dirección, y no puede deducirse del
+nombre del flag: una dependencia escrita al revés es válida y el programa no la detecta. La
+decisión, y por qué no hay un flag inverso, está en
+["La ayuda enseña la dirección de una dependencia"](../../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia).
 
 ```
 Usage: biso set <ref>... [options]
 
 Change any field of one or more tasks, all or nothing. Every flag here means
 the same in `biso new`, `biso start`, `biso note`, `biso comment`, `biso ask`,
-`biso answer`, `biso finish` and `biso archive`. Every flag name says what it
-does; there is no rule to learn beyond the name.
+`biso answer`, `biso finish` and `biso archive`. A flag name says what it does,
+and comma lists always have the same four shapes, but what a relation field
+means is not in its name: see Relations below.
 
 List fields that take comma-separated values have four shapes, and there is no
 field that breaks them:
   --add-labels X      add one or more       --replace-labels X   replace the whole list
   --rm-labels X       remove one or more    --clear-labels       empty the list
-The same works for --assignees, --refs, --docs, --deps and --files.
+The same works for --assignees, --refs and --deps.
+
+A label with a colon is scoped: key:value allows several values of that key
+on a task, key::value at most one, and writing key::value drops the other
+values of that key and says on stderr which ones it dropped. Filter with
+`biso ls --label key:` to get any value of a key.
 
 Criteria have three, because a criterion's text can contain a comma and so is
 never split on one. There is no whole-list replace; do it by clearing and
@@ -185,13 +207,32 @@ Replace by clearing and appending in the same call.
       --append-summary X
       --clear-desc / --clear-plan / --clear-notes / --clear-summary
 
-External fields have three: --ext key=value sets that one key, --rm-ext key
-drops it, --clear-ext empties the map. There is no --replace-ext: setting a
-key already replaces its value.
-
 Scalars just take a value: --title, --status, --type, --priority,
---parent, --due, --ordinal, --author. Each has a --clear-<field>. An
-empty string is never a way to clear anything.
+--parent, --due, --author. Each has a --clear-<field>. An empty string
+is never a way to clear anything.
+
+Manual order is the one scalar you never type. You write where the task
+goes, and biso writes the key:
+      --ordinal first|last   before or after every task that has a place
+      --above <ref>          just above that task
+      --below <ref>          just below it
+      --clear-ordinal        out of the manual order
+Several tasks in one call land in the order you wrote them, so
+`biso set MYP-7 MYP-19 --below MYP-40` leaves MYP-40, MYP-7, MYP-19. A
+task with no place cannot be a neighbour: give it one first with
+`biso set <ref> --ordinal last`.
+
+Relations point from the task you name in <ref> to other tasks:
+      --parent <ref>         the task this one is part of; at most one
+      --add-deps <ref>       tasks that must be done before this one, so each
+                             blocks it; checked to exist, no cycles
+      --add-refs <text>      a path, a URL or a task id to look at; free text,
+                             never checked
+A dependency is written on the task that waits, never on the one that blocks.
+To say that MYP-4 blocks MYP-10:
+  biso set MYP-10 --add-deps MYP-4
+The other way round, `biso set MYP-4 --add-deps MYP-10`, is just as valid and
+says the opposite, so biso cannot warn you when it is backwards.
 
 Comments:
       --comment <text>            append a comment; repeatable
@@ -213,9 +254,11 @@ replaced.
 
 Exit codes:
   0  done                    5  something matched more than one thing
-  2  bad usage               8  the board could not be written
-  3  unknown value           20 no board here
+  2  bad usage               6  a scoped label already has its one value,
+  3  unknown value              or --above/--below on a task with no place
   4  a task, criterion or comment was not found
+                             8  the board could not be written
+                             20 no board here
 
 Examples:
   biso set MYP-11 --priority high --add-labels parser

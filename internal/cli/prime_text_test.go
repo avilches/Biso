@@ -10,9 +10,9 @@ import (
 // from docs/spec/cmd/prime.md#la-salida-literal, and it is the one place of
 // the message where a list of flag names is written by hand: the block
 // `--full` adds is generated from the table of fields.go and cannot drift,
-// and the grid cannot be generated from that table because its thirteen
-// lines are a layout, with their own grouping and their own order inside
-// each line, which no rule in the table carries.
+// and the grid cannot be generated from that table because its lines are a
+// layout, with their own grouping and their own order inside each line,
+// which no rule in the table carries.
 //
 // So the grid is tied to the table by this test instead: the flags it names
 // are exactly the flags the table has, and a flag added to one and not to
@@ -66,8 +66,7 @@ func flagsOfTheGrid(t *testing.T) map[string]bool {
 }
 
 // tokensOfTheGrid is every flag name of the grid, in the order it writes
-// them. The heading is left out, and so is any token that is not a flag,
-// which today is only the `K=V` that shows the shape of an `--ext` value.
+// them. The heading is left out, and so is any token that is not a flag.
 func tokensOfTheGrid(t *testing.T) []string {
 	t.Helper()
 	lines := strings.Split(strings.TrimSuffix(primeFieldFlags, "\n"), "\n")

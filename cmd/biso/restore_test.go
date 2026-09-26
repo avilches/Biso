@@ -20,8 +20,7 @@ func snapshotDir(t *testing.T) (*machine, string) {
 	t.Helper()
 	m := newMachine(t)
 	m.env["BISO_ME"] = "@claude"
-	m.run(t, "init", "My project", "--prefix", "MYP",
-		"--extensions", "trello.card").assertCode(t, 0)
+	m.run(t, "init", "My project", "--prefix", "MYP").assertCode(t, 0)
 	m.run(t, "new", "One").assertCode(t, 0)
 	m.run(t, "new", "Two", "--status", "Done").assertCode(t, 0)
 	m.run(t, "snapshot", "--vcs", "none").assertCode(t, 0)
@@ -161,7 +160,7 @@ func TestRestoreRefusesAVocabularyThatCannotBeABoard(t *testing.T) {
 			"two statuses",
 			`{"project_name":"P","statuses":["A","B"],"initial_status":"A","active_status":"A",` +
 				`"terminal_status":"B","types":[],"priorities":[],"labels":[],"assignees":[],` +
-				`"extensions":[],"task_prefix":"MYP","finish_strict":false,"lease_minutes":240,` +
+				`"task_prefix":"MYP","finish_strict":false,"lease_minutes":240,` +
 				`"urgency":{"priority":6.0,"active":4.0,"blocking":8.0,"blocked":-5.0,"due":12.0,"criteria":1.0,"age":0.5}}`,
 			"at least three",
 		},
@@ -169,7 +168,7 @@ func TestRestoreRefusesAVocabularyThatCannotBeABoard(t *testing.T) {
 			"a prefix that is not letters",
 			`{"project_name":"P","statuses":["A","B","C"],"initial_status":"A","active_status":"B",` +
 				`"terminal_status":"C","types":[],"priorities":[],"labels":[],"assignees":[],` +
-				`"extensions":[],"task_prefix":"9","finish_strict":false,"lease_minutes":240,` +
+				`"task_prefix":"9","finish_strict":false,"lease_minutes":240,` +
 				`"urgency":{"priority":6.0,"active":4.0,"blocking":8.0,"blocked":-5.0,"due":12.0,"criteria":1.0,"age":0.5}}`,
 			"letters",
 		},
@@ -223,6 +222,38 @@ func TestRestoreRefusesTasksThatDoNotFitTheirOwnVocabulary(t *testing.T) {
 	}
 }
 
+// TestRestoreMergesTheRetiredPointerFieldsWithoutWarnings is the row of
+// docs/spec/cmd/init.md that says a snapshot written by a version that still
+// had `documentation` or `modifiedFiles` is restored with the merge rules of
+// `new --from`, and that `init --from` says nothing about it: the elements
+// end up at the end of `references` in the order references, documentation,
+// modifiedFiles, a value seen before is kept once, no warning is emitted and
+// the restored board passes `biso doctor`.
+func TestRestoreMergesTheRetiredPointerFieldsWithoutWarnings(t *testing.T) {
+	m, dir := snapshotDir(t)
+	old := filepath.Join(m.home, "old-snapshot")
+	copySnapshot(t, m, dir, old)
+	m.write(t, filepath.Join(old, board.SnapshotTasksFile),
+		`{"title":"Old","references":["r1"],"modifiedFiles":["f1","d1"],`+
+			`"documentation":["d1","d2"]}`+"\n")
+	into := filepath.Join(m.home, "restored-old")
+
+	got := m.restoreInto(t, old, into).assertCode(t, 0)
+
+	if strings.Contains(got.stderr, "imported_") || strings.Contains(got.stderr, "warning") {
+		t.Errorf("the restore warned about a merge it should do silently:\n%s", got.stderr)
+	}
+	restored := m.at(into)
+	refs := ""
+	for _, line := range strings.Split(restored.run(t, "get", "MYP-1").assertCode(t, 0).stdout, "\n") {
+		if strings.HasPrefix(line, "refs ") {
+			refs = strings.TrimSpace(strings.TrimPrefix(line, "refs"))
+		}
+	}
+	assertEqual(t, refs, "r1, d1, d2, f1", "the references of the restored task")
+	restored.run(t, "doctor").assertCode(t, 0)
+}
+
 func TestRestorePreviewCountsTheTasksAndCreatesNothing(t *testing.T) {
 	m, dir := snapshotDir(t)
 	into := filepath.Join(m.home, "previewed")
@@ -245,7 +276,6 @@ func TestRestoreIsIncompatibleWithEveryVocabularyFlag(t *testing.T) {
 		{"--types", "task,bug"},
 		{"--statuses", "a,b,c"},
 		{"--priorities", "high"},
-		{"--extensions", "trello.card"},
 		{"--overwrite-config"},
 	} {
 		argv := append([]string{"init", "--from", dir}, extra...)

@@ -48,54 +48,59 @@ const (
 	// NotAChange is every flag that writes no field: the global flags, and
 	// each command's own switches. They never appear in Changes.
 	NotAChange  Category = iota
-	Clear                // step 1: every --clear-*, --clear-ext included
+	Clear                // step 1: every --clear-*
 	Replace              // step 2: every --replace-*
-	Remove               // step 3: every --rm-*, --rm-comment and --rm-ext included
+	Remove               // step 3: every --rm-*, --rm-comment included
 	Add                  // step 4: the additions, --add-* and --append-*
-	ExtKey               // step 5: the map fields, --ext
-	Scalar               // step 6: the scalar fields
-	CheckAC              // step 7: --check-ac and --uncheck-ac
-	CommentDate          // step 8: --set-comment-date
-	AddComment           // step 9: --comment, the one that adds
+	Scalar               // step 5: the scalar fields
+	CheckAC              // step 6: --check-ac and --uncheck-ac
+	CommentDate          // step 7: --set-comment-date
+	AddComment           // step 8: --comment, the one that adds
 )
 
 // Alphabet is the closed character set of a token field, from
 // docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token. Fields
-// that are free text (references, documentation, touched files) use AnyText,
+// that are free text (references) use AnyText,
 // because a URL or a path cannot have its alphabet closed without leaving
 // legitimate values out.
 type Alphabet int
 
 const (
-	AnyText        Alphabet = iota
-	TokenAlphabet           // labels and assignees: letters, digits, and - _ . : @
-	ExtKeyAlphabet          // an ext key: letters, digits, and - _ .
+	AnyText       Alphabet = iota
+	TokenAlphabet          // labels and assignees: letters, digits, and - _ . : @
 )
 
 // symbols is the list of symbols this alphabet admits, written as the hint of
 // docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token prints it.
 func (a Alphabet) symbols() string {
-	switch a {
-	case TokenAlphabet:
+	if a == TokenAlphabet {
 		return "- _ . : @"
-	case ExtKeyAlphabet:
-		return "- _ ."
 	}
 	return ""
 }
 
+// LabelSyntax is which reading of the scoped-label rule a flag's values go
+// through. The difference between the two is one form: `milestone:` with
+// nothing behind the separator, which is how a filter asks for any value of
+// a key and which no task can ever carry
+// (docs/spec/valores-de-entrada.md#las-formas-mal-formadas).
+type LabelSyntax int
+
+const (
+	NotALabel LabelSyntax = iota
+	LabelWritten
+	LabelFilter
+)
+
 // PairKind says whether a value is a pair of the form "<left>=<right>", and
-// which "=" separates the two halves. The two rules of the specification are
-// different on purpose and
-// docs/spec/familias-de-flags.md#comentarios explains why: --ext can cut at
-// the first "=" because an ext key cannot contain one, and
-// --set-comment-date has to cut at the last one because its left half is free
-// text that may well carry another.
+// which "=" separates the two halves. The only flag that takes a pair is
+// --set-comment-date, which has to cut at the last "=" because its left half
+// is free text that may well carry another
+// (docs/spec/familias-de-flags.md#comentarios).
 type PairKind int
 
 const (
 	NotAPair PairKind = iota
-	PairAtFirstEquals
 	PairAtLastEquals
 )
 
@@ -135,27 +140,26 @@ type FlagSpec struct {
 
 	// Pair, with PairSyntax, describes a value of the form "<left>=<right>".
 	// PairSyntax is the form the error message shows, such as
-	// "<key>=<value>".
+	// "<sel>=<instant>". The same key twice in one call is the error of a
+	// repeated scalar when the two right halves differ, and applies once and
+	// says nothing when they are the same
+	// (docs/spec/familias-de-flags.md#comentarios).
 	Pair       PairKind
 	PairSyntax string
 
-	// LastKeyWins says what the same key twice in one call means, and the
-	// two flags that take a pair answer differently on purpose. --ext keeps
-	// the last value with a warning, because a key of a map behaves like one
-	// more token
-	// (docs/spec/familias-de-flags.md#campos-externos).
-	// --set-comment-date does not: the same key with two different instants
-	// is the error of a repeated scalar, and with the same instant it
-	// applies once and says nothing
-	// (docs/spec/familias-de-flags.md#comentarios).
-	LastKeyWins bool
-
 	// Alphabet and Noun close the character set of a token field. Noun is
-	// the singular word its message uses ("label", "assignee",
-	// "extension key"); the error code is "malformed_" plus that noun with
-	// its spaces turned into underscores.
+	// the singular word its message uses ("label", "assignee"); the error
+	// code is "malformed_" plus that noun with its spaces turned into
+	// underscores.
 	Alphabet Alphabet
 	Noun     string
+
+	// Labels marks a flag whose values go through the parsing rule of
+	// docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito, and says
+	// which of its two readings applies. It is checked here, on the command
+	// line, so that a malformed label is refused before the board is
+	// opened and whatever --unchecked turns off cannot reach it.
+	Labels LabelSyntax
 
 	// SingleLine marks a field of type string, one line of text, which
 	// admits no carriage return and no newline
@@ -179,8 +183,13 @@ type FlagSpec struct {
 
 	// Domain closes the set of values a flag accepts, such as the three of
 	// --color, and DomainCode is the error code that rejecting one produces.
-	Domain     []string
-	DomainCode string
+	// DomainHints are the lines printed under that refusal, for the flag
+	// whose domain needs saying what to write instead: --ordinal, whose
+	// answer to a number is the two flags that place a task next to another
+	// (docs/spec/familias-de-flags.md#el-orden-manual).
+	Domain      []string
+	DomainCode  string
+	DomainHints []string
 
 	// Conflicts and Requires are the last two columns of a command's table
 	// of parameters: the long names this flag cannot share a call with, and
@@ -361,7 +370,7 @@ func commandNames(commands []CommandSpec) []string {
 }
 
 // article answers "a" or "an" for a noun, which is all the hint of a malformed
-// token needs: "a label", "an assignee", "an extension key".
+// token needs: "a label", "an assignee".
 func article(noun string) string {
 	if noun == "" {
 		return "a"

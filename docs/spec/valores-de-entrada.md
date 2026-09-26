@@ -47,14 +47,74 @@ como si llega de un fichero vacío o de una entrada estándar vacía. La regla e
 | En un flag que sustituye (`--replace-labels`) | Deja el campo vacío, igual que `--clear-labels`. Sustituir por nada es vaciar, y eso sí es explícito |
 | En un campo escalar (`--type ""`, `--priority ""`) | Error 3. **La cadena vacía nunca es la forma de borrar un escalar**; para eso está `--clear-type` |
 | En el título, al crear | Error 2: `error: title cannot be empty` |
+| En `--comment`, incluido el texto posicional de `biso comment`, que es la misma escritura escrita de otra forma | Error 2: `error: --comment cannot be empty`. No sigue la regla del flag que añade: un comentario es contenido, no una decoración que se pueda descartar en silencio, la misma razón por la que el título tampoco la sigue. La razón completa está en ["Un comentario vacío o `null` en un lote es un fallo de validación"](../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación) |
+| En un elemento de una lista de un lote (`biso new --from`, `biso init --from`) | Se descarta y no se guarda nada, como en un flag que añade. `biso new --from` lo avisa una vez por línea y por lista, y `biso init --from` no avisa. Ver ["Un elemento vacío en un lote"](#un-elemento-vacío-en-un-lote) |
 
 **El `code` de un escalar vacío depende de si el campo tiene vocabulario cerrado.** Para `status`,
 `type` y `priority`, una cadena vacía es un valor que no coincide con nada configurado, así
 que sigue la regla del ["algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia) y el
 `code` es el de un valor desconocido (`unknown_status` y análogos, con el mensaje de
 ["El mismo texto vale lo mismo en los dos sentidos"](vocabularios.md#el-mismo-texto-vale-lo-mismo-en-los-dos-sentidos)).
-Para los demás escalares (`--author ""`, `--ordinal ""`, `--due ""`), que no
+Para los demás escalares (`--author ""`, `--due ""`), que no
 tienen vocabulario, el `code` es `empty_scalar_value`.
+
+**Un escalar cuyo valor es una referencia a otra tarea sigue esa misma regla, y la cadena vacía no
+llega a resolverse.** `--parent ""`, `--above ""` y `--below ""` son `empty_scalar_value` con
+código 3 y el mensaje de siempre, `error: --above cannot be empty`, antes de que nadie busque
+ninguna tarea: una referencia vacía no nombra nada, así que no puede ser ni la tarea que no existe
+(código 4) ni el texto que encaja con varias (código 5)
+(["Cómo se resuelve una referencia a una tarea"](referencias.md)). De los tres, `--above` y
+`--below` son además los únicos que no llevan debajo el `hint` que nombra el flag de vaciar: lo que
+falta en ellos es la tarea que hay que nombrar, no un valor que alguien intentara borrar, así que
+proponer `--clear-ordinal` contestaría a otra pregunta.
+
+**`--ordinal ""` es la excepción de la excepción**, y sale con código 2 y el `code`
+`invalid_ordinal_value` (["El orden manual"](familias-de-flags.md#el-orden-manual)). Su dominio no lo
+configura el tablero sino el programa, que admite `first` y `last` y nada más, así que la cadena
+vacía es una línea de comandos mal escrita y no un valor que el tablero no reconozca, exactamente
+igual que `--color rosa` o que un `--sort` inventado (["Los identificadores de
+error"](contrato-json.md#los-identificadores-de-error)).
+
+## Un elemento vacío en un lote
+
+**Un lote lee cada elemento de una lista con la regla del flag que añade.** Un elemento vacío, o de
+solo espacios, no es un valor: no se guarda, y la tarea queda como si esa posición no existiera. Lo
+mismo da que venga de una lista de texto libre (`references`, y el texto de un criterio de
+`acceptanceCriteria`), de una lista de tokens (`labels`, `assignees`) o de identificadores
+(`dependencies`), y de las tres claves ajenas que se convierten al importar (`definitionOfDone`,
+`documentation` y `modifiedFiles`): un elemento vacío ni es una etiqueta mal formada, ni una
+dependencia que no existe, ni una referencia en blanco. Los elementos que no están vacíos se guardan
+como llegan, sin recortar los espacios, igual que en el flag.
+
+**Qué cuenta como «solo espacios» es lo mismo que en el flag.** Son los caracteres de espacio en
+blanco de Unicode (la propiedad `White_Space`): el espacio, el tabulador, el salto de línea, el espacio
+duro (U+00A0) y los demás de esa propiedad. Un espacio de ancho cero (U+200B) no es uno de ellos, así que
+un elemento que solo lo contiene no está vacío y se guarda.
+
+**El flag avisa por elemento y el lote avisa por lista.** `--add-refs a,,b` avisa una vez por cada
+elemento vacío, porque una línea de comandos tiene pocos; un lote puede tener cientos de líneas, así
+que `biso new --from` avisa una vez por cada línea y cada lista, con la cuenta de lo descartado. La
+razón está en la decisión enlazada al final de esta sección.
+
+**Los comentarios no entran en esta regla, y no se descartan: se rechazan.** Un comentario es un
+objeto con un cuerpo y un autor, no un elemento de texto suelto, y un cuerpo vacío o un elemento
+`null` en `comments` es un fallo de validación de la línea (`invalid_line`), la misma familia que un
+`null` en cualquier otra lista y no la del elemento que se descarta. La regla completa está en
+["El modo lote"](cmd/new.md#el-modo-lote) y la razón en
+["Un comentario vacío o `null` en un lote es un fallo de validación"](../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación).
+
+**Lo que sí es un error es un `null` en lugar de un elemento.** Un elemento de una lista tiene que
+ser texto, y `null` no lo es, igual que un número tampoco lo es. Es el fallo de validación que ya
+describe ["El modo lote"](cmd/new.md#el-modo-lote) para un `null` que ocupa el sitio de una lista
+entera, extendido a lo que ocupa el sitio de un elemento. Un elemento que es texto vacío, en cambio,
+sí tiene forma de valor y por eso se descarta con la regla de arriba.
+
+**`biso new --from` avisa de lo que descartó y `biso init --from` no.** El aviso es
+`imported_empty_dropped`, uno por cada línea y cada lista de la que se descartó algo, con la cuenta
+(["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)). Una restauración no emite avisos, igual
+que no emite los de lo que funde (["`biso init`"](cmd/init.md)). La regla y la razón, con las
+alternativas que se descartaron, están en
+["Un elemento vacío de un lote se descarta y avisa"](../decisiones/detalles.md#un-elemento-vacío-de-un-lote-se-descarta-y-avisa).
 
 ## Valores que empiezan por guion
 
@@ -76,15 +136,21 @@ Para todo flag marcado como repetible:
 - Repetirlo acumula: `--add-labels a --add-labels b` deja dos etiquetas.
 - Si además acepta lista, separar por comas acumula igual: `--add-labels a,b` deja las mismas dos.
 - Las dos formas se pueden mezclar.
+- **Un elemento vacío entre dos comas es un valor vacío.** `--add-labels a,,b` añade `a` y `b`, y avisa una vez
+  por el elemento que sobra, según ["El valor vacío"](#el-valor-vacío); `--add-labels ,` no añade nada y avisa dos veces.
 - **Una coma dentro de un valor se escapa con `\,`.** Es la única forma de meter una coma en una
-  referencia, en una documentación o en un fichero tocado. Una etiqueta, una persona asignada o una
-  clave de `ext` nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
+  referencia. Una etiqueta o una persona asignada
+  nunca llevan coma, así que en ninguno de esos campos hay nada que escapar
   (["El juego de caracteres de un token"](#el-juego-de-caracteres-de-un-token)).
 - **Una barra invertida doble, `\\`, es una barra invertida literal**, y es la única forma de que un
   valor termine en barra invertida justo antes de una coma que separa:
   `--add-refs 'C:\\dir\\,notes/b.md'` añade dos referencias, `C:\dir\` y `notes/b.md`. Una barra
   invertida delante de cualquier otro carácter no escapa nada y se guarda tal cual, así que una ruta
   de Windows o una expresión regular conservan lo que traen.
+- **La ficha de `biso get` escribe estos escapes al revés.** Al imprimir una lista, cada coma de un
+  valor sale como `\,` y cada barra invertida como `\\`, de modo que lo que se lee en la ficha es lo
+  que se teclearía aquí para guardar ese valor
+  (["`biso get`"](cmd/get.md#salida)).
 - Los campos de texto largo y los criterios **nunca** se parten por comas.
 - Un valor repetido dentro del mismo flag se guarda una vez y produce
   `warning: --add-labels: "urgent" given twice, kept once`. Con tres apariciones o más el aviso sigue
@@ -99,30 +165,24 @@ error: --status given twice with different values: "In Progress" and "Done"
 
 ## El juego de caracteres de un token
 
-`labels`, `assignees` y las claves de `ext` (["Campos externos"](modelo-de-datos/campos-externos.md#los-campos-externos)) son los únicos
-campos de esta sección cuyo alfabeto está cerrado. Los demás campos de lista de la tabla de
-["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma), es decir `references`, `documentation`,
-`dependencies` y `modifiedFiles`, son texto libre y no tienen ninguna restricción de caracteres: una
-referencia o una documentación pueden ser una URL, y un fichero tocado es una ruta, y ninguna de las
+`labels` y `assignees` son los únicos campos de esta sección cuyo alfabeto está cerrado. Los demás campos de lista de la tabla de
+["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma), es decir `references`
+y `dependencies`, son texto libre y no tienen ninguna restricción de caracteres: una
+referencia puede ser una URL o una ruta, y ninguna de las
 dos cosas admite cerrarle el alfabeto sin dejar fuera casos legítimos. `dependencies` tampoco la
 necesita: cada elemento es un `<ref>` y ya lo gobierna entera la gramática de ["Cómo se resuelve una referencia a una tarea"](referencias.md).
 
 | Campo | Alfabeto |
 |---|---|
 | `labels`, `assignees` | letras y dígitos Unicode, y los símbolos `- _ . : @` |
-| clave de `ext` | letras y dígitos Unicode, y los símbolos `- _ .` |
 
-**Ninguno de los dos alfabetos admite el espacio.** Dos herramientas comparables que escriben una
+**El alfabeto no admite el espacio.** Dos herramientas comparables que escriben una
 etiqueta como palabra suelta de una línea de comandos, en vez de elegirla en un formulario web,
 la prohíben: Taskwarrior exige que una etiqueta sea una sola palabra, y Jira rechaza directamente
 cualquier etiqueta con espacio. GitHub sí permite etiquetas de varias palabras, pero nunca se
 enfrenta a este problema porque una etiqueta de GitHub nunca se teclea suelta en una shell: se elige
 en un desplegable o llega ya como cadena entrecomillada dentro de un JSON. La razón completa, con la
 comparación entera, está en ["El juego de caracteres de un token"](../decisiones/detalles.md#el-juego-de-caracteres-de-un-token).
-
-**La clave de `ext` no admite `@` ni `:`, porque no tienen ningún uso documentado ahí, ni tampoco
-`=`, porque `--ext <clave>=<valor>` ya usa ese carácter para separar la clave del valor**: si se
-permitiera dentro de la clave, `--ext a=b=c` sería ambiguo sobre dónde termina la clave.
 
 **Un carácter fuera del alfabeto que le toca es error 2 (`USAGE`)**, en la misma familia que un
 identificador mal formado (["Los tres mensajes de \"no la encuentro\""](referencias.md#los-tres-mensajes-de-no-la-encuentro)): es un problema de forma, no de que el
@@ -135,24 +195,110 @@ hint: a label may contain letters, digits, and - _ . : @
 
 error: malformed assignee: "sara smith"
 hint: an assignee may contain letters, digits, and - _ . : @
-
-error: malformed extension key: "trello=card"
-hint: an extension key may contain letters, digits, and - _ .
 ```
 
 **Esto rige al escribir.** Un valor ya guardado que no cumple este alfabeto, porque se escribió antes
 de que existiera esta regla o porque llegó por una vía que no pasa por esta validación, no es un error
 nuevo distinto: es un dato que el programa no puede interpretar, y se trata con la regla general de
-["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar), la misma que ya cubre una clave de `ext` que la
-configuración ha dejado de declarar.
+["Qué pasa con un dato que no se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar).
 
-Los `code` correspondientes, `malformed_label`, `malformed_assignee` y `malformed_extension_key`,
+**Un token vacío no llega a ser un carácter fuera del alfabeto.** Ni en un flag que añade ni en un
+lote se juzga contra el alfabeto: se descarta antes, con el aviso de ["El valor vacío"](#el-valor-vacío)
+y de ["Un elemento vacío en un lote"](#un-elemento-vacío-en-un-lote).
+
+Los `code` correspondientes, `malformed_label` y `malformed_assignee`,
 están en la tabla de ["Los identificadores de error"](contrato-json.md#los-identificadores-de-error).
+
+## Las etiquetas con ámbito
+
+**Una etiqueta que lleva `:` es una etiqueta con ámbito**, y esos dos puntos la parten en una clave y
+un valor. Es la única estructura que el programa lee dentro de un token, y existe para agrupar tareas
+sueltas y para que una clave admita como mucho un valor por tarea sin ningún campo nuevo; el
+razonamiento está en ["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito).
+Una etiqueta sin ningún `:` es una etiqueta plana: no tiene clave, y nada de esta sección la toca.
+
+**La regla de análisis es una sola, y vale igual al escribir, al quitar y al consultar:**
+
+1. La **clave** es el texto anterior a los primeros dos puntos.
+2. El **separador** es el grupo de dos puntos que viene justo detrás de la clave, tomado tan largo
+   como se pueda hasta un máximo de dos: en `size::m` el separador es `::` y no `:`.
+3. El **valor** es todo lo que queda detrás del separador, dos puntos incluidos: el valor de
+   `trello:card:42` es `card:42`.
+4. **El separador dice cuántos valores de esa clave admite una tarea**: `clave:valor` admite varios y
+   `clave::valor` admite como mucho uno. Lo que hace cada uno al escribir está en
+   ["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma).
+
+| Etiqueta | Clave | Separador | Valor |
+|---|---|---|---|
+| `urgent` | no tiene | | |
+| `milestone:m1` | `milestone` | `:` | `m1` |
+| `milestone::m1` | `milestone` | `::` | `m1` |
+| `trello:card:42` | `trello` | `:` | `card:42` |
+
+### Las formas mal formadas
+
+**La clave y el valor no pueden estar vacíos, y el valor no puede empezar ni terminar en `:`.**
+Cualquier otra forma con dos puntos es **error 2 (`USAGE`)**, con el mismo `code` `malformed_label`
+que un carácter fuera del alfabeto, porque es el mismo tipo de fallo: la forma del token, y no el
+vocabulario del tablero.
+
+| Etiqueta | Qué le pasa | Código |
+|---|---|---:|
+| `size:` | el valor está vacío | 2 |
+| `size::` | el valor está vacío | 2 |
+| `:m` | la clave está vacía | 2 |
+| `::` | las dos partes están vacías | 2 |
+| `size:::m` | el valor, `:m`, empieza por dos puntos | 2 |
+| `size::m:` | el valor, `m:`, termina en dos puntos | 2 |
+
+Hay un mensaje por cada mitad de la regla, y los dos llevan el mismo `code`:
+
+```
+error: malformed label: "size:"
+hint: a scoped label is key:value or key::value, and neither side can be empty
+
+error: malformed label: "size:::m"
+hint: the value of a scoped label cannot start or end with a colon
+```
+
+**La forma `clave:` sin valor es, en cambio, la sintaxis con la que un filtro pregunta por una
+clave** (["Qué valida cada filtro, y contra qué"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué)),
+y ahí no es un error. Las dos no chocan justamente porque `size:` y `size::` no son etiquetas
+guardables: la forma queda libre para el filtro sin quitarle a nadie ninguna etiqueta real.
+
+### La clave se compara plegada, y el separador no cuenta al comparar valores
+
+**Dos claves que solo se diferencian en mayúsculas son la misma clave**, en todas partes: al escribir,
+al quitar y al consultar. La comparación es el plegado de mayúsculas y minúsculas de Unicode (el
+*case folding*), sin tocar acentos, la misma que fija ["Campos de lista que admiten
+coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma) para una etiqueta entera al filtrar. Así,
+`Milestone::a` y `milestone::b` son dos valores de la misma clave, y no dos claves distintas que se
+saltan la exclusividad tecleando una mayúscula. El valor sigue la regla general de una etiqueta: se
+guarda como se escribió y se compara plegado al leer.
+
+**Y el separador no cuenta al comparar dos etiquetas por su valor**, así que `milestone:m1` y
+`milestone::m1` son la misma etiqueta al consultar y al quitar: `--label milestone:m1` encuentra las
+dos y `--rm-labels milestone:m1` quita cualquiera de las dos. Al añadir sí cuenta, porque ahí el
+separador no describe el valor sino cuántos admite la clave
+(["Campos de lista que admiten coma"](familias-de-flags.md#campos-de-lista-que-admiten-coma)).
+
+**Al quitar, lo que se pliega es la clave y no el valor.** `--rm-labels` compara el valor tal como
+está guardado, letra por letra, igual que cualquier otro `--rm-*` de una lista de tokens, así que
+`--rm-labels colour:red` no quita un `colour::Red` guardado, aunque sí quitaría un `colour::red`. El
+plegado del que habla el párrafo anterior es el de las lecturas, y quitar es una escritura.
+
+**Esta regla se aplica al escribir**, igual que el alfabeto de la sección anterior, y por la misma
+razón: es lo que impide que una etiqueta que no se puede analizar llegue a guardarse. Al leer no se
+vuelve a aplicar, así que una etiqueta guardada de otra manera, por una edición directa de la base de
+datos, se lee y se imprime tal cual, y ninguna comprobación de
+["`biso doctor`"](cmd/doctor.md#qué-comprueba) la señala. Es el mismo trato que ya tenía una etiqueta
+guardada fuera del alfabeto, y no hace falta más: no hay ningún camino por dentro del programa que
+deje una ahí.
 
 ## El salto de línea en un campo `string`
 
-`title`, `author` de tarea/comentario/pregunta, `Criterion.text` de `acceptanceCriteria`,
-y los valores (no las claves) de `ext` son del tipo `string` de ["El modelo de datos de una
+`title`, `author` de tarea/comentario/pregunta y `Criterion.text` de `acceptanceCriteria`
+son del tipo `string` de ["El modelo de datos de una
 tarea"](modelo-de-datos/index.md#el-modelo-de-datos-de-una-tarea), es decir, texto de **una línea**.
 Ninguno de ellos admite un `\r` o un `\n` literal: si lo llevara, dejaría de ser una línea, y `title`
 en particular rompería la promesa de ["`biso ls`"](cmd/ls.md#salida) de que cada tarea ocupa
@@ -166,14 +312,26 @@ error: malformed title: "first line\nsecond line"
 hint: a string field cannot contain a newline or a carriage return
 ```
 
-El `code` es `malformed_string_value`, con `field` igual a `title`, `author`, `criterion_text` o
-`ext`, según cuál sea el campo. Está en la tabla de ["Los identificadores de
+El `code` es `malformed_string_value`, con `field` igual a `title`, `author` o `criterion_text`,
+según cuál sea el campo. Está en la tabla de ["Los identificadores de
 error"](contrato-json.md#los-identificadores-de-error).
 
 **Esto rige al escribir**, con la misma excepción que la sección anterior: un valor ya guardado con un
 salto de línea, porque se escribió antes de que existiera esta regla o llegó por una vía que no pasa
 por esta validación, se trata como un dato que no se puede interpretar (["Qué pasa con un dato que no
 se puede interpretar"](garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)).
+
+**La misma regla vale para cada elemento de `references`.** Aunque `references` sea del tipo
+`list<string>` y no un `string` escalar, cada uno de sus elementos es de tipo `string`
+(["El modelo de datos de una tarea"](modelo-de-datos/index.md#el-modelo-de-datos-de-una-tarea)), así
+que un `\r` o un `\n` dentro de una referencia es el mismo error, con `field` igual a `reference`. Es
+el único campo de lista al que le hace falta esta comprobación: `labels` y `assignees` ya excluyen el
+salto de línea porque su alfabeto cerrado no lo admite (["El juego de caracteres de un
+token"](#el-juego-de-caracteres-de-un-token)), y `dependencies` siempre se resuelve a un identificador
+de tarea válido antes de guardarse (["Las relaciones entre
+tareas"](modelo-de-datos/relaciones.md#dependencies-la-precedencia)). La decisión completa, con las
+alternativas que se descartaron, está en
+["Una referencia con un salto de línea se rechaza al escribirla"](../decisiones/detalles.md#una-referencia-con-un-salto-de-línea-se-rechaza-al-escribirla).
 
 `Comment.body` y `Question.body` son del tipo `text`, no `string`, y admiten salto de línea sin
 ninguna restricción: la pregunta y su respuesta pueden ser tan largas y estructuradas como haga
@@ -216,7 +374,7 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
   el texto de un error no dependa de cómo se tecleó la llamada: `-C ""` falla nombrando
   `--cwd`, con `error: --cwd cannot be empty`.
 - **Un valor vacío en un flag que no añade, no sustituye y no es un escalar de tarea de
-  ["El valor vacío"](#el-valor-vacío)**, por ejemplo `--rm-labels ""`, `--cwd ""` o `--ext k=`, es
+  ["El valor vacío"](#el-valor-vacío)**, por ejemplo `--rm-labels ""` o `--cwd ""`, es
   **error 2** con el `code` `unexpected_argument`: donde la especificación no documenta un valor
   vacío, escribirlo es un error y no algo que se ignore en silencio. Es el 2 y no el 3 porque el 3 es
   "el valor llega bien formado pero el tablero no lo reconoce"
@@ -241,10 +399,11 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | Un argumento suelto con el bloque ya cerrado | 2 | `unexpected_argument` | `error: unexpected argument: high` |
 | Un escalar repetido con valores distintos | 2 | `duplicate_scalar_flag` | `error: --status given twice with different values: "In Progress" and "Done"` |
 | La misma clave de `--set-comment-date` con dos instantes (["Comentarios"](familias-de-flags.md#comentarios)) | 2 | `duplicate_scalar_flag` | `error: --set-comment-date: key "3" given twice with different values: "2026-08-14T10:22:00Z" and "2026-08-15T10:22:00Z"` |
-| Un valor de pareja al que le falta su `=` | 2 | `unexpected_argument` | `error: --ext: expected <key>=<value>, got "trello"` |
+| Un valor de pareja al que le falta su `=` | 2 | `unexpected_argument` | `error: --set-comment-date: expected <sel>=<instant>, got "trello"` |
 | Más de un flag pidiendo la entrada estándar | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc and --append-plan both read stdin` |
 | El mismo flag repetible pidiéndola dos veces | 2 | `two_stdin` | `error: - can be given only once per invocation; --append-desc reads stdin twice` |
 | Un valor fuera del dominio de `--color` | 2 | `invalid_color_mode` | `error: --color: unknown value: "sometimes"` |
+| Un valor fuera del dominio de `--ordinal` (["El orden manual"](familias-de-flags.md#el-orden-manual)) | 2 | `invalid_ordinal_value` | `error: --ordinal: unknown value: "3"` |
 | `BISO_LIMIT` con algo que no es un número de filas (["Variables de entorno"](invocacion.md#variables-de-entorno)) | 2 | `invalid_number` | `error: BISO_LIMIT: not a whole number of rows: "lots"` |
 | Una pareja de `--json`, `--quiet` y `--print` | 2 | `incompatible_flags` | `error: --json and --quiet cannot be used together` |
 | Un flag que exige otro, sin ese otro | 2 | `incompatible_flags` | `error: --comment-author requires --comment` |
@@ -252,9 +411,9 @@ argumento suelto, que es lo que hace falta para llegar a aplicarlo.
 | `--dry-run` en un comando de lectura | 2 | `read_only_flag` | `error: --dry-run does not apply to a read-only command` |
 | `--print` donde no afecta a ninguna tarea | 2 | `read_only_flag` | `error: --print does not apply to a command that affects no task` |
 | Un valor vacío donde no se documenta ninguno | 2 | `unexpected_argument` | `error: --rm-labels cannot be empty` |
-| El valor vacío de una pareja | 2 | `unexpected_argument` | `error: --ext: the value of key "k" cannot be empty` |
-| Un salto de línea en un campo de una línea, la mitad derecha de una pareja incluida (["El salto de línea en un campo `string`"](#el-salto-de-línea-en-un-campo-string)) | 2 | `malformed_string_value` | `error: malformed ext: "first line\nsecond line"` |
-| Un escalar de tarea vacío sin vocabulario cerrado | 3 | `empty_scalar_value` | `error: --author cannot be empty`, con `hint: to clear it, use --clear-author` cuando el campo tiene un flag que lo vacía |
+| El valor vacío de una pareja | 2 | `unexpected_argument` | `error: --set-comment-date: the value of key "3" cannot be empty` |
+| Un salto de línea en un campo de una línea (["El salto de línea en un campo `string`"](#el-salto-de-línea-en-un-campo-string)) | 2 | `malformed_string_value` | `error: malformed title: "first line\nsecond line"` |
+| Un escalar de tarea vacío sin vocabulario cerrado | 3 | `empty_scalar_value` | `error: --author cannot be empty`, con `hint: to clear it, use --clear-author` cuando el flag dice cuál lo vacía (["El valor vacío"](#el-valor-vacío)) |
 | Un argumento que no es UTF-8 | 3 | `invalid_encoding` | `error: invalid UTF-8 in argument 4 at byte 2: "ok\xffbad"`, con `field` igual a `argument` |
 | Un fichero o una entrada estándar que no es UTF-8 | 3 | `invalid_encoding` | `error: --append-desc: invalid UTF-8 at byte 12`, con `given` igual a lo que se escribió detrás del flag |
 | El fichero de un `@` que no existe | 4 | `file_not_found` | `error: --append-desc: file not found: docs/x.md` |

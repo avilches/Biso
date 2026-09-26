@@ -14,9 +14,7 @@
       "labels": ["parser"],
       "parent": null,
       "dependencies": [],
-      "references": ["docs/bugs/BUG-02.md"],
-      "documentation": [],
-      "modifiedFiles": [],
+      "references": ["docs/bugs/BUG-02.md", "notes/a,b.md"],
       "due": null,
       "ordinal": null,
       "createdAt": "2026-09-06T09:12:04Z",
@@ -32,7 +30,8 @@
       "waiting": false,
       "leaseExpired": false,
       "archived": false,
-      "ext": { "trello.card": "5f2a8c1e3b9d4a7f6e0c2b81" },
+      "blockedByCount": 0,
+      "unblocksCount": 2,
       "description": "The diff compares byte by byte...",
       "acceptanceCriteria": [ { "key": 1, "text": "The diff ignores CRLF", "checked": true },
                               { "key": 3, "text": "There is a test that covers it", "checked": false } ],
@@ -42,7 +41,8 @@
       "comments": [ { "key": 1, "author": "@avilches", "createdAt": "2026-09-06T10:02:11Z", "body": "A user with a Windows clone..." } ],
       "question": null,
       "urgencyBreakdown": { "priority": 6.0, "active": { "value": 4.0, "reason": null }, "blocking": 8.0,
-                            "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 }
+                            "blocked": 0.0, "due": 0.0, "criteria": 1.0, "age": 0.0 },
+      "closure": { "blockedBy": [], "unblocks": ["MYP-40", "MYP-71", "MYP-72"] }
     }
   }
 }

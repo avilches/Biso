@@ -37,7 +37,6 @@ error: --json only applies to config list
 | `priorities` | lista | `high, medium, low` |
 | `labels` | lista | vacía |
 | `assignees` | lista | vacía |
-| `extensions` | lista | vacía |
 | `task_prefix` | texto de solo letras | se deriva de `project_name` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) |
 | `finish_strict` | booleano | falso |
 | `lease_minutes` | entero > 0 | 240 |
@@ -87,6 +86,87 @@ consecuencias de un valor mal calibrado son más pequeñas de lo que parecen, po
 y coge la tarea igual incluso con el arrendamiento vivo (["`biso start`"](verbos-del-ciclo.md#biso-start)): una duración mal puesta produce un
 informe equivocado, no datos equivocados.
 
+## La lista `labels`
+
+**Vacía, que es como nace, no restringe nada.** Cualquier etiqueta bien formada se puede escribir, y
+los filtros validan contra el conjunto de etiquetas en uso
+(["Qué valida cada filtro, y contra qué"](../vocabularios.md#qué-valida-cada-filtro-y-contra-qué)). Con
+entradas, cada una toma una de estas formas, y **la lista solo restringe las claves que nombra**:
+
+| Entrada | Qué es | Qué restringe |
+|---|---|---|
+| `pepe` | una etiqueta plana | nada. Se ofrece, por ejemplo a una interfaz que enseñe las etiquetas disponibles al crear una tarea, y no prohíbe ninguna otra |
+| `size::m` | un par exacto | la clave `size` admite solo los valores declarados así, y solo con el separador declarado |
+| `milestone::` | una clave abierta | la clave `milestone` admite cualquier valor, pero solo con el separador declarado |
+
+Una etiqueta cuya clave ninguna entrada nombra sigue siendo libre, y una etiqueta plana que nadie
+declara también: declarar `milestone::` no obliga a declarar nada más.
+
+**Dentro de esta lista, y solo aquí, la forma sin valor no es una etiqueta mal formada**
+(["Las etiquetas con ámbito"](../valores-de-entrada.md#las-etiquetas-con-ámbito)): es la declaración de
+una clave abierta, igual que en un filtro es la consulta por una clave. `milestone::` declara la
+clave con el separador que admite como mucho un valor por tarea, y `trello:` la declara con el que
+admite varios.
+
+**La lista tiene que ser coherente consigo misma**, y se comprueba al escribirla. Una misma clave no
+puede aparecer con los dos separadores, ni como clave abierta y con valores exactos a la vez, porque
+en los dos casos la lista diría dos cosas distintas sobre la misma clave:
+
+```
+error: labels: the key "size" is declared with both : and ::
+hint: a key takes one separator, : for several values or :: for at most one
+
+error: labels: the key "milestone" is declared both as an open key and with exact values
+hint: declare milestone:: on its own, or its values, but not both
+```
+
+Las dos salen con código 3 y el `code` `bad_config_value`, como cualquier otro valor de configuración
+fuera de dominio.
+
+**Escribir en una tarea un valor que una clave restringida no declara, o esa clave con el otro
+separador, es error 3**, porque es una etiqueta bien formada que el tablero no reconoce, que es
+exactamente lo que ese código significa (["Códigos de salida"](../codigos-de-salida.md#el-código-3-cubre-dos-direcciones)):
+
+```
+error: unknown label value: "size::xl"
+       valid labels for the key "size" on this board: size::s, size::m, size::l
+
+error: wrong separator for the label key "milestone": "milestone:m1"
+hint: this board declares milestone::, at most one value per task
+```
+
+Sus `code` son `unknown_label_value` y `wrong_label_separator`
+(["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)). El primero lleva
+en `valid` las etiquetas que esa clave admite, escritas enteras y con su separador, que es lo mismo
+que lista su segunda línea; el segundo no lleva `valid`, porque la clave abierta no tiene ningún
+conjunto de valores que ofrecer.
+
+**Esas comprobaciones son de escritura y no de lectura.** Al leer, el separador no distingue nada
+(["Las etiquetas con ámbito"](../valores-de-entrada.md#las-etiquetas-con-ámbito)), así que
+`biso ls --label milestone:m1` encuentra igual las tareas etiquetadas `milestone::m1` aunque la lista
+declare la clave con `::`. Un valor que no existe en el tablero ya lo rechaza el filtro con su propio
+`unknown_label`, sin que esta lista tenga que decir nada.
+
+**`biso config set labels` falla si alguna tarea lleva una etiqueta que la lista nueva prohibiría**,
+mirando todas las tareas del tablero, archivadas y terminadas incluidas, que es el mismo conjunto
+contra el que validan los filtros. Es la misma regla que impide quitar de `statuses` un estado en
+uso: la configuración no puede dejar guardado un valor que ella misma declara imposible. El informe da una línea por etiqueta ofendida, con
+las tareas que la llevan en orden ascendente de identificador, y sale con código 6 y el `code`
+`board_inconsistent`:
+
+```
+error: labels: 3 tasks use a label the new list would not allow
+  "milestone:m1" on MYP-11: the new list declares the key "milestone" with ::
+  "size::xl" on MYP-19, MYP-23: the key "size" allows size::s, size::m, size::l
+```
+
+Con una sola tarea la primera línea es `error: labels: 1 task uses a label the new list would not
+allow`. **Quitar de la lista una etiqueta plana no falla nunca**, porque no restringía nada, y
+tampoco falla quitar una clave entera: lo que deja de estar declarado vuelve a ser libre.
+
+**El mensaje de arranque no lista esta clave**, y eso está dicho en
+["`biso prime`"](prime.md#la-salida-literal) con su razón.
+
 **Los tres estados especiales son valores explícitos, no posiciones.** Se escriben al crear el tablero
 y **cambiar `statuses` no los mueve nunca**. Esta es la diferencia que evita que añadir un estado al
 final cambie en silencio a dónde va `biso finish`.
@@ -111,9 +191,12 @@ tareas nunca puede cambiar el `task_prefix` que ya tenía, se pase `--prefix` ex
 | Quitar de `statuses` un estado que es `initial_status`, `active_status` o `terminal_status` | Error 6, diciendo cuál de los tres y que hay que cambiarlo antes |
 | Dejar `statuses` con menos de tres elementos | Error 6, diciendo cuántos hacen falta |
 | Dar a un papel (`initial_status`, `active_status` o `terminal_status`) el mismo estado que otro papel ya tiene | Error 6, con los dos papeles y el estado que comparten |
-| Quitar de `extensions` una clave que alguna tarea usa | Error 6, con la lista de tareas |
 | Quitar de `types` o `priorities` un valor en uso | Error 6, igual |
-| Vaciar `types` o `priorities` del todo (`biso config set types ""`), sin ningún valor en uso | No es un error: ninguna de las dos tiene mínimo en la tabla de claves, al contrario que `statuses`, y `labels`, `assignees` y `extensions` ya nacen vacías. El tablero queda sin ese vocabulario, así que deja de admitir `--type` (o `--priority`) en cualquier llamada, y ["`biso prime`"](prime.md#la-salida-literal) lo dice en su línea `types` con un `(none)` |
+| Una entrada de `labels` que no es ni una etiqueta bien formada, ni un par exacto, ni una clave abierta | Error 2 con el `code` `malformed_label`, el mismo que en cualquier otro sitio donde se escribe una etiqueta (["Las etiquetas con ámbito"](../valores-de-entrada.md#las-etiquetas-con-ámbito)) |
+| La misma clave en `labels` con los dos separadores, o abierta y con valores exactos a la vez | Error 3 (["La lista `labels`"](#la-lista-labels)) |
+| `set labels` a una lista que prohibiría una etiqueta que alguna tarea lleva | Error 6, con una línea por etiqueta y las tareas que la llevan (["La lista `labels`"](#la-lista-labels)) |
+| Quitar de `labels` una etiqueta plana, o una clave entera | No es un error: lo que deja de estar declarado vuelve a ser libre |
+| Vaciar `types` o `priorities` del todo (`biso config set types ""`), sin ningún valor en uso | No es un error: ninguna de las dos tiene mínimo en la tabla de claves, al contrario que `statuses`, y `labels` y `assignees` ya nacen vacías. El tablero queda sin ese vocabulario, así que deja de admitir `--type` (o `--priority`) en cualquier llamada, y ["`biso prime`"](prime.md#la-salida-literal) lo dice en su línea `types` con un `(none)` |
 | Cambiar `task_prefix` cuando el tablero ya tiene alguna tarea | Error 6, remitiendo a exportar el tablero, reescribir los identificadores e importarlos en un tablero nuevo |
 | Cambiar `project_name` a un valor vacío, o a uno cuyo slug (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) quede vacío tras derivarlo | Error 3, en los dos casos |
 | Cambiar `project_name` al mismo valor que ya tiene | El `set` se completa igual, con su `note:` |
@@ -198,7 +281,6 @@ types = idea,memory,task,bug,docs
 priorities = high,medium,low
 labels =
 assignees =
-extensions = trello.card
 task_prefix = TASK
 finish_strict = false
 lease_minutes = 240
@@ -211,7 +293,7 @@ urgency.criteria = 1.0
 urgency.age = 0.5
 ```
 
-**`config list` imprime las veinte claves, siempre, en el orden de la tabla de claves de arriba**, y
+**`config list` imprime las diecinueve claves, siempre, en el orden de la tabla de claves de arriba**, y
 los siete coeficientes de la urgencia con el nombre con el que `config set` los acepta, uno por línea.
 Lo que `list` enseña es exactamente el conjunto de claves que `set` admite, y por eso no puede haber
 ninguna que solo se vea con `--json`: una clave escondida es una clave que nadie sabe que puede cambiar.
@@ -240,7 +322,6 @@ Solo `config list` acepta `--json`:
       "priorities": ["high", "medium", "low"],
       "labels": [],
       "assignees": [],
-      "extensions": ["trello.card"],
       "task_prefix": "TASK",
       "finish_strict": false,
       "lease_minutes": 240,
@@ -282,9 +363,10 @@ Keys:
   terminal_status    what `biso finish` sets        (one of statuses)
   types              configured task types
   priorities         configured priorities
-  labels             labels that filters accept on top of the ones in use
+  labels             labels that filters accept on top of the ones in use;
+                     a key::value or key:: entry also restricts what that key
+                     accepts, a plain one only offers itself
   assignees          assignees that filters accept on top of the ones in use
-  extensions         declared external field keys, such as trello.card
   task_prefix        id prefix, letters only (default: derived from
                      project_name); immutable once the board has a task
   finish_strict      make `biso finish` refuse an incomplete task

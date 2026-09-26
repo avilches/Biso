@@ -55,7 +55,7 @@ func Open(loc *Location, m Machine) (*Board, error) {
 		Config:   cfg,
 		Machine:  m,
 		Store:    s,
-		Tasks:    NewTasks(s, cfg.TaskPrefix, cfg.Extensions),
+		Tasks:    NewTasks(s, cfg.TaskPrefix),
 	}, nil
 }
 
@@ -137,7 +137,7 @@ func Create(dir, id string, cfg Config, m Machine) (*Board, error) {
 		Config:   cfg,
 		Machine:  m,
 		Store:    s,
-		Tasks:    NewTasks(s, cfg.TaskPrefix, cfg.Extensions),
+		Tasks:    NewTasks(s, cfg.TaskPrefix),
 	}, nil
 }
 
@@ -153,7 +153,7 @@ func (b *Board) Rewrite(cfg Config) error {
 		return err
 	}
 	b.Config = cfg
-	b.Tasks = NewTasks(b.Store, cfg.TaskPrefix, cfg.Extensions)
+	b.Tasks = NewTasks(b.Store, cfg.TaskPrefix)
 	return nil
 }
 

@@ -28,9 +28,9 @@ estados, `ls` parte de todos menos el terminal.
 ## La garantía de simetría
 
 **Esta garantía asume un tablero destino con vocabulario compatible**: el mismo `task_prefix`, los
-mismos estados, tipos, prioridades y claves de extensión que el tablero de origen. Si no lo es, la
+mismos estados, tipos y prioridades que el tablero de origen. Si no lo es, la
 importación falla con los errores que ya define ["El modo lote"](new.md#el-modo-lote) de `biso new`
-(un `id` sin el prefijo correcto, una clave de extensión desconocida, un valor sin vocabulario), no es
+(un `id` sin el prefijo correcto, un valor sin vocabulario), no es
 un fallo de esta garantía. Reconstruir también el vocabulario, para un tablero destino que no lo
 declara de antemano, es lo que hace `snapshot` con `init --from`, más abajo.
 
@@ -39,18 +39,33 @@ en la forma de objeto que esa sección define para los criterios, los comentario
 abierta, e incluyendo `id`, `createdAt`, `updatedAt`, `archived`, `question`
 y las claves estables de cada criterio **y de cada comentario** (["Los criterios y sus claves estables"](../modelo-de-datos/criterios.md#los-criterios-y-sus-claves-estables), ["Los comentarios"](../modelo-de-datos/comentarios.md#los-comentarios)).
 
-**El formato de entrada de `biso new --from` es un superconjunto del de salida, y la diferencia es
-una sola clave.** `new --from` acepta además `definitionOfDone`, que `export` no escribe nunca porque
-no es un campo del modelo, y la convierte en criterios de aceptación (["`biso new`"](new.md)). La
-garantía de la ida y vuelta no se resiente: lo que `export` escribe, `new --from` lo lee campo a
-campo, y esa clave solo aparece en lotes que vengan de fuera.
+**El formato de entrada de `biso new --from` es un superconjunto del de salida, y la diferencia son
+tres claves.** `new --from` acepta además `definitionOfDone`, que convierte en criterios de aceptación,
+y `documentation` y `modifiedFiles`, que funde en `references` (["`biso new`"](new.md)). `export` no
+escribe ninguna de las tres nunca, porque no son campos del modelo. La garantía de la ida y vuelta no se resiente: lo que
+`export` escribe, `new --from` lo lee campo a campo, y esas claves solo aparecen en lotes que vengan
+de fuera.
 
 **Los únicos campos que no salen son los derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md).** `question` sale en `export` y
 entra de vuelta con `new --from`, con sus tres partes completas.
 
+**La clave de orden manual sale tal cual está guardada.** `ordinal` es una cadena, no un número
+(["El orden manual y su clave"](../modelo-de-datos/orden-manual.md)), y `export` la escribe sin
+recalcular nada: `biso new --from` la vuelve a guardar igual, así que las tareas del tablero de
+destino quedan en el mismo orden manual que las del de origen. Es justamente lo que un decimal no
+podía prometer sin fijar cuántos dígitos se escriben.
+
 **Un escalar opcional sin valor sale como `null`; una lista o un mapa sin elementos sale como `[]` o
 `{}`, nunca como `null`.** Es la misma regla de coerción de ["El modo lote"](new.md#el-modo-lote) de
 `biso new`, en el sentido contrario, la que hace que reimportar la salida reproduzca la tarea exacta.
+
+**Y una lista de un tablero escrito con esta regla nunca lleva un elemento vacío.** Ningún camino del
+programa guarda una cadena vacía, ni una de solo espacios, como elemento de una lista, porque un flag
+que añade no la guarda y un lote la descarta (["Un elemento vacío en un lote"](../valores-de-entrada.md#un-elemento-vacío-en-un-lote)),
+así que `export` no la escribe y reimportar la salida no descarta nada. Es lo que mantiene cierta la
+garantía de la ida y vuelta para las listas de texto libre. Un tablero de desarrollo que guardó
+elementos vacíos antes de la regla los seguiría exportando, y se limpia con `export | new --from`
+(["Un elemento vacío de un lote se descarta y avisa"](../../decisiones/detalles.md#un-elemento-vacío-de-un-lote-se-descarta-y-avisa)).
 
 `export` solo lleva las tareas: reconstruir un tablero entero, con su vocabulario y no solo con sus
 datos, es lo que hace [`biso snapshot`](snapshot.md), cuyo `snapshot.ndjson` tiene exactamente esta misma forma
@@ -65,8 +80,8 @@ biso snapshot
 HOME=/tmp/otra-maquina biso -C /tmp init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c
 # los dos tableros son identicos en todos los campos no derivados, incluidos
 # los identificadores, las fechas, las claves de los criterios y sus marcas,
-# las claves de los comentarios, y en toda su configuracion: estados, tipos,
-# extensiones y task_prefix. La unica salvedad son los dos contadores de
+# las claves de los comentarios, y en toda su configuracion: estados, tipos
+# y task_prefix. La unica salvedad son los dos contadores de
 # claves, que no son una clave del formato y se deducen al importar: ver
 # "El contador de claves no es una clave del formato", mas abajo
 ```
@@ -91,6 +106,26 @@ los mismos tipos que el de origen, y por eso la importación de su `snapshot.ndj
 vocabulario distinto. Comparar esto con la vía manual de [`biso new --from`](new.md): esa sigue
 existiendo para importar un NDJSON suelto en un tablero cuyo vocabulario ya se ha declarado por
 separado, pero ya no es la única manera de reconstruir un tablero entero.
+
+## Las tareas ilegibles
+
+**`biso export` escribe las tareas legibles y ninguna de las ilegibles, y sale con 6.** Una tarea es
+ilegible por la definición única de ["Qué se comprueba"](../garantias.md#qué-se-comprueba): un valor de
+`status`, `type` o `priority` que el tablero no declara, una fecha que no es una fecha, o cualquier otro
+de los motivos de esa lista. Se decide antes de mirar los filtros de la llamada, así que la tarea
+ilegible se salta y se nombra en el aviso `task_skipped` (por stderr, con todos los identificadores)
+aunque el filtro no la habría dejado pasar. **La ilegible no se copia**: ni entera, ni con el campo
+dañado, ni con un valor por defecto. Es lo que mantiene cierta la garantía de simetría de arriba para lo
+que sí sale: `biso new --from` y `biso init --from` aceptan la salida siempre entera, porque ninguna línea
+lleva un valor fuera de vocabulario ni una fecha rota.
+
+**Y tampoco se niega a escribir.** Un valor de fecha malformado no tiene remedio dentro de `biso`, y
+negarse a copiar el resto dejaría el tablero sin copia mientras dure el daño. El código 6, y no el 0, es
+lo que impide que un guion que encadene `biso export --out backup.ndjson && ...` tome por completa una
+copia a la que le falta algo. La razón completa, con las alternativas descartadas, está en
+["Una tarea ilegible es la misma para todos los comandos de lectura"](../../decisiones/detalles.md#una-tarea-ilegible-es-la-misma-para-todos-los-comandos-de-lectura),
+y cómo se arregla una tarea ilegible, para que la siguiente copia la lleve, en
+["Cómo se arregla una tarea ilegible"](../garantias.md#cómo-se-arregla-una-tarea-ilegible).
 
 ## El rechazo de `--json`
 
@@ -123,7 +158,7 @@ formato dos claves que ningún comando escribe y que solo servirían para ese ca
 | Desenlace | Código |
 |---|---:|
 | Exportado, aunque sean cero tareas | 0 |
-| Alguna tarea se ha saltado por ilegible | 6 |
+| Alguna tarea se ha saltado por ilegible: se escriben todas las demás, la ilegible no, y sale el aviso | 6 |
 | Flags de forma de `ls`, `--archived`, `--only-archived`, `--json`, o incompatibles | 2 |
 | Un valor de filtro no existe en el tablero | 3 |
 | No se puede escribir el fichero de salida | 8 |
@@ -156,7 +191,7 @@ Its shaping flags (--sort, --limit, --all, --ids, --count) do not apply either.
 line, while --json means the single envelope every other command prints.
 
 Derived fields are never written: urgency, acDone, acTotal, commentCount,
-blocks, blocked, waiting, leaseExpired.
+blocks, blocked, waiting, leaseExpired, blockedByCount, unblocksCount.
 
 Exit codes:
   0  exported       3  a filter value does not exist here

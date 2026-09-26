@@ -34,7 +34,7 @@ func Commands() []CommandSpec {
 // (docs/spec/cmd/init.md).
 var vocabularyFlagNames = []string{
 	"statuses", "initial-status", "active-status", "terminal-status",
-	"types", "priorities", "extensions", "prefix", "overwrite-config",
+	"types", "priorities", "prefix", "overwrite-config",
 }
 
 func initCommand() CommandSpec {
@@ -63,7 +63,6 @@ func initCommand() CommandSpec {
 			{Name: "terminal-status", Value: PlainValue, Conflicts: conflictsWithFrom},
 			list("types"),
 			list("priorities"),
-			list("extensions"),
 			{Name: "prefix", Value: PlainValue, Conflicts: conflictsWithFrom},
 			{Name: "overwrite-config", Conflicts: conflictsWithFrom},
 			{Name: "from", Value: PlainValue, Conflicts: vocabularyFlagNames},
@@ -334,6 +333,14 @@ func filterFlags() []FlagSpec {
 		f.ClosedVocabulary = true
 		return f
 	}
+	// The two label filters go through the parsing rule of a scoped label
+	// in the reading that accepts the key form, which is how they ask for
+	// any value of a key (docs/spec/vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito).
+	labelFilter := func(name string) FlagSpec {
+		f := filter(name)
+		f.Labels = LabelFilter
+		return f
+	}
 	// The two halves of a pair of opposites each name the other, because
 	// the parser judges a pair when it reads the second of the two.
 	opposites := func(yes, no string) []FlagSpec {
@@ -347,13 +354,19 @@ func filterFlags() []FlagSpec {
 		vocabulary("not-status", "any-status"),
 		{Name: "any-status", Conflicts: []string{"status", "not-status"}},
 		vocabulary("type"),
+		vocabulary("not-type"),
 		vocabulary("priority"),
-		filter("label"),
-		filter("label-or"),
+		vocabulary("not-priority"),
+		labelFilter("label"),
+		labelFilter("label-or"),
+		labelFilter("not-label"),
 		filter("assignee", "mine", "unassigned"),
+		filter("not-assignee"),
 		{Name: "mine", Conflicts: []string{"assignee", "unassigned"}},
 		{Name: "unassigned", Conflicts: []string{"assignee", "mine"}},
-		{Name: "parent", Value: PlainValue},
+		filter("author"),
+		{Name: "parent", Value: PlainValue, Conflicts: []string{"root"}},
+		{Name: "root", Conflicts: []string{"parent"}},
 	}
 	flags = append(flags, opposites("blocked", "not-blocked")...)
 	flags = append(flags, opposites("waiting", "not-waiting")...)
@@ -361,6 +374,12 @@ func filterFlags() []FlagSpec {
 	return append(flags,
 		FlagSpec{Name: "overdue"},
 		FlagSpec{Name: "due-before", Value: PlainValue, Field: "dueBefore"},
+		FlagSpec{Name: "created-after", Value: PlainValue, Field: "createdAfter"},
+		FlagSpec{Name: "created-before", Value: PlainValue, Field: "createdBefore"},
+		FlagSpec{Name: "updated-after", Value: PlainValue, Field: "updatedAfter"},
+		FlagSpec{Name: "updated-before", Value: PlainValue, Field: "updatedBefore"},
+		filter("ref"),
+		filter("not-ref"),
 		FlagSpec{Name: "search", Value: TextValue},
 		FlagSpec{Name: "unchecked"},
 	)
@@ -380,6 +399,7 @@ func getCommand() CommandSpec {
 				Domain: sections, DomainCode: "unknown_section",
 			},
 			{Name: "explain-urgency"},
+			{Name: "closure"},
 		},
 	}
 }

@@ -157,26 +157,44 @@ func splitList(s string) []string {
 	return append(out, string(cur))
 }
 
+// escapeListValue is the inverse of splitList for one value: a comma comes out
+// as `\,` and a backslash as `\\`, and every other character, spaces
+// included, comes out as it is. Every backslash is doubled, whatever surrounds
+// it, so the rule needs no lookahead and two different lists can never print
+// the same line: without it, the values `a\` and `b` and the single value
+// `a, b` would both read `a\, b`
+// (docs/decisiones/detalles.md#la-ficha-escapa-la-coma-y-la-barra-invertida-de-una-lista).
+// For every value v, splitList(escapeListValue(v)) is []string{v}.
+func escapeListValue(s string) string {
+	if !strings.ContainsAny(s, `,\`) {
+		return s
+	}
+	var b strings.Builder
+	for _, r := range s {
+		if r == ',' || r == '\\' {
+			b.WriteRune('\\')
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
 // isEmpty is the definition of docs/spec/valores-de-entrada.md#el-valor-vacío:
 // a string with no character at all, or with nothing but spaces, wherever it
 // came from.
 func isEmpty(s string) bool { return strings.TrimSpace(s) == "" }
 
 // allowed answers whether every character of a value is inside the alphabet
-// the field closes. Neither alphabet admits a space.
+// the field closes. The alphabet does not admit a space.
 func (a Alphabet) allowed(s string) bool {
 	if a == AnyText {
 		return true
-	}
-	symbols := "-_."
-	if a == TokenAlphabet {
-		symbols = "-_.:@"
 	}
 	for _, r := range s {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			continue
 		}
-		if strings.ContainsRune(symbols, r) {
+		if strings.ContainsRune("-_.:@", r) {
 			continue
 		}
 		return false
@@ -185,7 +203,7 @@ func (a Alphabet) allowed(s string) bool {
 }
 
 // underscored turns the noun of a field into the tail of its error code, so
-// that "extension key" gives malformed_extension_key.
+// that a noun of two words gives one code word joined by an underscore.
 func underscored(noun string) string {
 	return strings.ReplaceAll(noun, " ", "_")
 }

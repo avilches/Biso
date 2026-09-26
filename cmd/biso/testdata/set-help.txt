@@ -2,14 +2,20 @@ Usage: biso set <ref>... [options]
 
 Change any field of one or more tasks, all or nothing. Every flag here means
 the same in `biso new`, `biso start`, `biso note`, `biso comment`, `biso ask`,
-`biso answer`, `biso finish` and `biso archive`. Every flag name says what it
-does; there is no rule to learn beyond the name.
+`biso answer`, `biso finish` and `biso archive`. A flag name says what it does,
+and comma lists always have the same four shapes, but what a relation field
+means is not in its name: see Relations below.
 
 List fields that take comma-separated values have four shapes, and there is no
 field that breaks them:
   --add-labels X      add one or more       --replace-labels X   replace the whole list
   --rm-labels X       remove one or more    --clear-labels       empty the list
-The same works for --assignees, --refs, --docs, --deps and --files.
+The same works for --assignees, --refs and --deps.
+
+A label with a colon is scoped: key:value allows several values of that key
+on a task, key::value at most one, and writing key::value drops the other
+values of that key and says on stderr which ones it dropped. Filter with
+`biso ls --label key:` to get any value of a key.
 
 Criteria have three, because a criterion's text can contain a comma and so is
 never split on one. There is no whole-list replace; do it by clearing and
@@ -30,13 +36,32 @@ Replace by clearing and appending in the same call.
       --append-summary X
       --clear-desc / --clear-plan / --clear-notes / --clear-summary
 
-External fields have three: --ext key=value sets that one key, --rm-ext key
-drops it, --clear-ext empties the map. There is no --replace-ext: setting a
-key already replaces its value.
-
 Scalars just take a value: --title, --status, --type, --priority,
---parent, --due, --ordinal, --author. Each has a --clear-<field>. An
-empty string is never a way to clear anything.
+--parent, --due, --author. Each has a --clear-<field>. An empty string
+is never a way to clear anything.
+
+Manual order is the one scalar you never type. You write where the task
+goes, and biso writes the key:
+      --ordinal first|last   before or after every task that has a place
+      --above <ref>          just above that task
+      --below <ref>          just below it
+      --clear-ordinal        out of the manual order
+Several tasks in one call land in the order you wrote them, so
+`biso set MYP-7 MYP-19 --below MYP-40` leaves MYP-40, MYP-7, MYP-19. A
+task with no place cannot be a neighbour: give it one first with
+`biso set <ref> --ordinal last`.
+
+Relations point from the task you name in <ref> to other tasks:
+      --parent <ref>         the task this one is part of; at most one
+      --add-deps <ref>       tasks that must be done before this one, so each
+                             blocks it; checked to exist, no cycles
+      --add-refs <text>      a path, a URL or a task id to look at; free text,
+                             never checked
+A dependency is written on the task that waits, never on the one that blocks.
+To say that MYP-4 blocks MYP-10:
+  biso set MYP-10 --add-deps MYP-4
+The other way round, `biso set MYP-4 --add-deps MYP-10`, is just as valid and
+says the opposite, so biso cannot warn you when it is backwards.
 
 Comments:
       --comment <text>            append a comment; repeatable
@@ -58,9 +83,11 @@ replaced.
 
 Exit codes:
   0  done                    5  something matched more than one thing
-  2  bad usage               8  the board could not be written
-  3  unknown value           20 no board here
+  2  bad usage               6  a scoped label already has its one value,
+  3  unknown value              or --above/--below on a task with no place
   4  a task, criterion or comment was not found
+                             8  the board could not be written
+                             20 no board here
 
 Examples:
   biso set MYP-11 --priority high --add-labels parser

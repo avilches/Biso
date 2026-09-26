@@ -28,12 +28,17 @@ type BatchParams struct {
 }
 
 // batchLine is one line of the file that passed its own validation: the
-// task it describes, the number of the line it came from, and the keys the
-// conversion of definitionOfDone created on it.
+// task it describes, the number of the line it came from, the keys the
+// conversion of definitionOfDone created on it, and how many elements of
+// documentation and of modifiedFiles were merged into its references.
 type batchLine struct {
-	number  int
-	task    *model.Task
-	dodKeys []int
+	number    int
+	task      *model.Task
+	dodKeys   []int
+	docCount  int
+	fileCount int
+	// emptyDropped is what the line dropped for being empty, list by list.
+	emptyDropped []emptyDrop
 }
 
 // NewBatch creates every task of an NDJSON file, all of them or none
@@ -59,8 +64,20 @@ func NewBatchOn(b *board.Board, env Env, p BatchParams) (*WriteResult, error) {
 		Created: true, Batch: true, DryRun: p.DryRun, Previewed: len(lines),
 	}
 	for _, line := range lines {
+		// What a line dropped comes before what it converted, and only
+		// here, after the whole file passed: an invalid batch warns of
+		// nothing (docs/spec/cmd/new.md#el-modo-lote).
+		for _, drop := range line.emptyDropped {
+			result.Warnings = append(result.Warnings, emptyDroppedWarning(line, drop))
+		}
 		if len(line.dodKeys) > 0 {
 			result.Warnings = append(result.Warnings, dodWarning(line))
+		}
+		if line.docCount > 0 {
+			result.Warnings = append(result.Warnings, documentationWarning(line))
+		}
+		if line.fileCount > 0 {
+			result.Warnings = append(result.Warnings, modifiedFilesWarning(line))
 		}
 	}
 	if p.DryRun {
@@ -108,6 +125,23 @@ func NewBatchOn(b *board.Board, env Env, p BatchParams) (*WriteResult, error) {
 	return result, nil
 }
 
+// emptyDroppedWarning is the one of
+// docs/spec/salida-y-terminal.md#notas-y-avisos for a list of a line that
+// lost at least one element for being empty. It names the line and not the
+// task, like the ones of the conversions, and says how many went.
+func emptyDroppedWarning(line *batchLine, drop emptyDrop) Warning {
+	message := fmt.Sprintf("line %d: %d empty items dropped from %s",
+		line.number, drop.count, drop.field)
+	if drop.count == 1 {
+		message = fmt.Sprintf("line %d: 1 empty item dropped from %s", line.number, drop.field)
+	}
+	return Warning{
+		Code:    "imported_empty_dropped",
+		Message: message,
+		Fields:  map[string]any{"line": line.number, "field": drop.field, "count": drop.count},
+	}
+}
+
 // dodWarning is the one of
 // docs/spec/salida-y-terminal.md#notas-y-avisos for a line that converted
 // at least one element of definitionOfDone. It names the line and not the
@@ -123,6 +157,43 @@ func dodWarning(line *batchLine) Warning {
 		Code:    "imported_dod_merged",
 		Message: message,
 		Fields:  map[string]any{"line": line.number, "count": len(line.dodKeys)},
+	}
+}
+
+// documentationWarning is the one of
+// docs/spec/salida-y-terminal.md#notas-y-avisos for a line that merged at
+// least one element of documentation into its references. Like dodWarning it
+// names the line and not the task.
+func documentationWarning(line *batchLine) Warning {
+	message := fmt.Sprintf("line %d: %d documentation items imported as references",
+		line.number, line.docCount)
+	if line.docCount == 1 {
+		message = fmt.Sprintf("line %d: 1 documentation item imported as a reference",
+			line.number)
+	}
+	return Warning{
+		Code:    "imported_documentation_merged",
+		Message: message,
+		Fields:  map[string]any{"line": line.number, "count": line.docCount},
+	}
+}
+
+// modifiedFilesWarning is the one of
+// docs/spec/salida-y-terminal.md#notas-y-avisos for a line that merged at
+// least one element of modifiedFiles into its references. It has the shape of
+// documentationWarning, and a line that carried both gets the two, the one of
+// documentation first, which is the order of the merge itself.
+func modifiedFilesWarning(line *batchLine) Warning {
+	message := fmt.Sprintf("line %d: %d modified files imported as references",
+		line.number, line.fileCount)
+	if line.fileCount == 1 {
+		message = fmt.Sprintf("line %d: 1 modified file imported as a reference",
+			line.number)
+	}
+	return Warning{
+		Code:    "imported_modified_files_merged",
+		Message: message,
+		Fields:  map[string]any{"line": line.number, "count": line.fileCount},
 	}
 }
 
@@ -254,7 +325,8 @@ func readBatchLine(cfg board.Config, line *batchLine, text string, now time.Time
 		return &model.Error{ExitCode: 3, Code: "invalid_line", Message: err.Error()}
 	}
 	t := d.task
-	line.task, line.dodKeys = t, d.dodKeys
+	line.task, line.dodKeys, line.docCount, line.fileCount = t, d.dodKeys, d.docCount, d.fileCount
+	line.emptyDropped = d.emptyDropped
 
 	if t.ID != "" {
 		if e := checkImportedID(cfg.TaskPrefix, t.ID); e != nil {
@@ -288,6 +360,9 @@ func readBatchLine(cfg board.Config, line *batchLine, text string, now time.Time
 	if e := checkImportedLease(d, cfg.ActiveStatus); e != nil {
 		return e
 	}
+	if e := checkImportedLabels(cfg, t.Labels); e != nil {
+		return e
+	}
 	// The dates the line did not bring are the instant of the import, the
 	// same ones a task created by hand gets
 	// (docs/spec/modelo-de-datos/fechas.md).
@@ -297,7 +372,7 @@ func readBatchLine(cfg board.Config, line *batchLine, text string, now time.Time
 	if t.UpdatedAt.IsZero() {
 		t.UpdatedAt = now
 	}
-	if validateErr := t.Validate(cfg.Extensions); validateErr != nil {
+	if validateErr := t.Validate(); validateErr != nil {
 		if e, ok := validateErr.(*model.Error); ok {
 			return e
 		}
@@ -378,6 +453,69 @@ func checkImportedLease(d *decoded, activeStatus string) *model.Error {
 		}
 	}
 	return nil
+}
+
+// checkImportedLabels is the rule of the scoped labels applied to the
+// `labels` list of one line (docs/spec/cmd/new.md#el-modo-lote), in the same
+// order a call of `biso set` asks it: the form of each label, then what the
+// `labels` list of the configuration refuses, then the same key with the two
+// separators, then the key that takes one value and was given several.
+//
+// The last one is the difference the specification declares between a line
+// and a command line: here two `::` values of one key are a failure of
+// validation instead of the last one winning, because the flags of a call
+// are a sequence whose last value is the most recent intention, while the
+// `labels` list of a line describes a state that was saved, and dropping one
+// of its values in silence would lose a fact the file asserted.
+func checkImportedLabels(cfg board.Config, labels []string) *model.Error {
+	for _, raw := range labels {
+		if _, e := model.ParseLabel(raw); e != nil {
+			return e
+		}
+	}
+	rules, e := readLabelRules(cfg.Labels)
+	if e != nil {
+		return e
+	}
+	for _, raw := range labels {
+		if rule := rules.allows(raw); rule != nil {
+			return rule.refuse(raw)
+		}
+	}
+	if pair := mixedSeparators(labels); pair != nil {
+		return mixedSeparatorsError(fmt.Sprintf(
+			"labels mix the two separators of the key %q: %s",
+			pair[0].Key, quotedList([]string{pair[0].Raw, pair[1].Raw})))
+	}
+	for _, of := range exclusiveKeyViolations(labels) {
+		// It carries neither `field` nor `given`, exactly as it does
+		// outside a batch: the table of
+		// docs/spec/contrato-json.md#los-errores-en-json promises those two
+		// keys to the errors of exit code 3 and to the ones of 2 that name
+		// a flag, and this one is a 6. A `code` that carried the key on one
+		// line and not on another would be one a caller cannot branch on.
+		return &model.Error{
+			ExitCode: 6,
+			Code:     "exclusive_label_conflict",
+			Message: fmt.Sprintf(
+				"labels give the key %q more than one value, and :: allows at most one: %s",
+				model.SplitLabel(of[0]).Key, quotedList(of)),
+		}
+	}
+	return nil
+}
+
+// quotedList writes the labels a message names, each one quoted and joined
+// with "and" when there are two, which is how both messages above read.
+func quotedList(values []string) string {
+	quoted := make([]string, 0, len(values))
+	for _, v := range values {
+		quoted = append(quoted, fmt.Sprintf("%q", v))
+	}
+	if len(quoted) == 2 {
+		return quoted[0] + " and " + quoted[1]
+	}
+	return strings.Join(quoted, ", ")
 }
 
 // checkBatchGraph is what `biso new` checks about a reference as it writes

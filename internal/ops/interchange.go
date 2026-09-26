@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -21,10 +22,11 @@ import (
 // drift away from this one without any test noticing, and then exporting a
 // board and importing it would stop reproducing it field for field.
 //
-// The only key the two directions do not share is `definitionOfDone`, which
-// `new --from` accepts and `export` never writes because it is not a field
-// of the model (docs/spec/cmd/new.md#el-modo-lote). It lives in wireInput,
-// which embeds wireTask, so even that difference is written once.
+// The only keys the two directions do not share are `definitionOfDone`,
+// `documentation` and `modifiedFiles`, which `new --from` accepts and
+// `export` never writes because none is a field of the model
+// (docs/spec/cmd/new.md#el-modo-lote). They live in wireInput, which embeds
+// wireTask, so even that difference is written once.
 
 // wireTask is one task as a line of the interchange format. Every key is
 // always written: a scalar with no value goes as null and a list or a map
@@ -35,41 +37,40 @@ import (
 // The field order is the order the keys come out in, because that is the
 // order encoding/json writes a struct in.
 type wireTask struct {
-	ID                 string            `json:"id"`
-	Title              string            `json:"title"`
-	Status             *string           `json:"status"`
-	Type               *string           `json:"type"`
-	Priority           *string           `json:"priority"`
-	Parent             *string           `json:"parent"`
-	Assignees          []string          `json:"assignees"`
-	Author             *string           `json:"author"`
-	Labels             []string          `json:"labels"`
-	Dependencies       []string          `json:"dependencies"`
-	References         []string          `json:"references"`
-	Documentation      []string          `json:"documentation"`
-	ModifiedFiles      []string          `json:"modifiedFiles"`
-	Due                *string           `json:"due"`
-	Ordinal            *int              `json:"ordinal"`
-	Ext                map[string]string `json:"ext"`
-	Description        *string           `json:"description"`
-	Plan               *string           `json:"plan"`
-	Notes              *string           `json:"notes"`
-	Summary            *string           `json:"summary"`
-	AcceptanceCriteria []wireCriterion   `json:"acceptanceCriteria"`
-	Comments           []wireComment     `json:"comments"`
-	Question           *wireQuestion     `json:"question"`
-	CreatedAt          *string           `json:"createdAt"`
-	UpdatedAt          *string           `json:"updatedAt"`
-	LeaseExpiresAt     *string           `json:"leaseExpiresAt"`
-	LeaseHolder        *string           `json:"leaseHolder"`
-	Archived           bool              `json:"archived"`
+	ID                 string          `json:"id"`
+	Title              string          `json:"title"`
+	Status             *string         `json:"status"`
+	Type               *string         `json:"type"`
+	Priority           *string         `json:"priority"`
+	Parent             *string         `json:"parent"`
+	Assignees          []string        `json:"assignees"`
+	Author             *string         `json:"author"`
+	Labels             []string        `json:"labels"`
+	Dependencies       []string        `json:"dependencies"`
+	References         []string        `json:"references"`
+	Due                *string         `json:"due"`
+	Ordinal            *string         `json:"ordinal"`
+	Description        *string         `json:"description"`
+	Plan               *string         `json:"plan"`
+	Notes              *string         `json:"notes"`
+	Summary            *string         `json:"summary"`
+	AcceptanceCriteria []wireCriterion `json:"acceptanceCriteria"`
+	Comments           []wireComment   `json:"comments"`
+	Question           *wireQuestion   `json:"question"`
+	CreatedAt          *string         `json:"createdAt"`
+	UpdatedAt          *string         `json:"updatedAt"`
+	LeaseExpiresAt     *string         `json:"leaseExpiresAt"`
+	LeaseHolder        *string         `json:"leaseHolder"`
+	Archived           bool            `json:"archived"`
 }
 
-// wireInput is a line of a batch: everything above plus the one key that
-// only the reading direction knows.
+// wireInput is a line of a batch: everything above plus the three keys that
+// only the reading direction knows, all of them from a foreign batch.
 type wireInput struct {
 	wireTask
 	DefinitionOfDone []wireCriterion `json:"definitionOfDone"`
+	Documentation    []string        `json:"documentation"`
+	ModifiedFiles    []string        `json:"modifiedFiles"`
 }
 
 // wireCriterion is one acceptance criterion on the wire. Reading it takes
@@ -226,8 +227,8 @@ var interchangeKeys = keysOf(reflect.TypeOf(wireInput{}))
 //
 // The shape it reads is wireTask and not wireInput, which is exactly the
 // rule: the lists of the model are the ones whose empty value is [] or {},
-// and definitionOfDone is not one of them, so null there means the key was
-// not written (docs/spec/cmd/new.md#el-modo-lote).
+// and definitionOfDone, documentation and modifiedFiles are not among them,
+// so null there means the key was not written (docs/spec/cmd/new.md#el-modo-lote).
 var listKeys = listKeysOf(reflect.TypeOf(wireTask{}))
 
 func keysOf(t reflect.Type) []string {
@@ -283,11 +284,8 @@ func encodeTask(t *model.Task) ([]byte, error) {
 		Labels:             listOrEmpty(t.Labels),
 		Dependencies:       listOrEmpty(t.Dependencies),
 		References:         listOrEmpty(t.References),
-		Documentation:      listOrEmpty(t.Documentation),
-		ModifiedFiles:      listOrEmpty(t.ModifiedFiles),
 		Due:                dayOrNil(t.Due),
-		Ordinal:            t.Ordinal,
-		Ext:                mapOrEmpty(t.Ext),
+		Ordinal:            orNil(t.Ordinal),
 		Description:        orNil(t.Description),
 		Plan:               orNil(t.Plan),
 		Notes:              orNil(t.Notes),
@@ -340,10 +338,183 @@ type decoded struct {
 	// the order it created them. They are the one thing `biso new` ever
 	// announces about a key it assigned (docs/spec/cmd/new.md#el-modo-lote).
 	dodKeys []int
+	// docCount is how many elements of documentation the line carried, not
+	// empty, and were merged into references, which the warning announces.
+	docCount int
+	// fileCount is the same for the elements of modifiedFiles.
+	fileCount int
+	// emptyDropped is what the line dropped for being empty or only spaces
+	// (docs/spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote), one
+	// entry per list that lost something, in the fixed order of
+	// elementLists and not in the order the keys were written in.
+	emptyDropped []emptyDrop
 	// rawStatus, rawType and rawPriority are the values as the line wrote
 	// them, before the board's vocabulary has judged them.
 	rawStatus, rawType, rawPriority string
 	hasStatus                       bool
+}
+
+// emptyDrop is the count of elements one list of a line lost for being empty.
+type emptyDrop struct {
+	field string
+	count int
+}
+
+// The lists of a line whose elements are text, in the order the warning of
+// the elements dropped from each of them is emitted in, which is the one of
+// docs/spec/cmd/new.md#el-modo-lote whatever order the keys were written in.
+// The two lists of criteria are apart because an element of them may be an
+// object, and a null in the place of one reads differently.
+var (
+	textLists     = []string{"assignees", "labels", "dependencies", "references"}
+	criteriaLists = []string{"acceptanceCriteria", "definitionOfDone"}
+	pointerLists  = []string{"documentation", "modifiedFiles"}
+	// commentLists holds only "comments", apart from the other three because
+	// its element takes neither of their shapes: a comment is always an
+	// object, never a bare string, so anything else in its place, null
+	// included, fails the line
+	// (docs/spec/cmd/new.md#el-modo-lote).
+	commentLists = []string{"comments"}
+)
+
+// checkElements is the failure of a value that is not text where a list of
+// text has one, which for a null is what makes it different from an empty
+// string: an empty string is dropped and a null is a line that cannot be read
+// (docs/spec/cmd/new.md#el-modo-lote). The message names the list and the
+// position, like the one for a number that encoding/json writes itself.
+//
+// It reads the raw elements and not the decoded ones because a null decodes
+// as an empty string, which is exactly the distinction to keep.
+func checkElements(raw map[string]json.RawMessage) error {
+	for _, key := range slices.Concat(textLists, pointerLists) {
+		for i, element := range rawElements(raw[key]) {
+			if kind := jsonKind(element); kind == "null" {
+				return fmt.Errorf("%s.%d: expected text, got null", key, i)
+			}
+		}
+	}
+	for _, key := range criteriaLists {
+		for i, element := range rawElements(raw[key]) {
+			switch kind := jsonKind(element); kind {
+			case "string":
+			case "object":
+				fields, err := rawObject(element)
+				if err != nil {
+					return err
+				}
+				if text, ok := fields["text"]; ok {
+					if kind := jsonKind(text); kind != "string" {
+						return fmt.Errorf("%s.%d.text: expected text, got %s", key, i, kind)
+					}
+				}
+			default:
+				return fmt.Errorf("%s.%d: expected text or an object, got %s", key, i, kind)
+			}
+		}
+	}
+	for _, key := range commentLists {
+		for i, element := range rawElements(raw[key]) {
+			if kind := jsonKind(element); kind != "object" {
+				return fmt.Errorf("%s.%d: expected an object, got %s", key, i, kind)
+			}
+		}
+	}
+	return nil
+}
+
+// rawElements is the elements of a value if it is a list, and nothing
+// otherwise: a value that is not a list is the failure encoding/json reports
+// with the name of the key.
+func rawElements(value json.RawMessage) []json.RawMessage {
+	var elements []json.RawMessage
+	if jsonKind(value) != "array" || json.Unmarshal(value, &elements) != nil {
+		return nil
+	}
+	return elements
+}
+
+// jsonKind names the type of a raw JSON value the way encoding/json does in
+// its own messages.
+func jsonKind(value json.RawMessage) string {
+	trimmed := strings.TrimSpace(string(value))
+	switch {
+	case trimmed == "":
+		return "null"
+	case trimmed == "null":
+		return "null"
+	case trimmed[0] == '"':
+		return "string"
+	case trimmed[0] == '{':
+		return "object"
+	case trimmed[0] == '[':
+		return "array"
+	case trimmed == "true" || trimmed == "false":
+		return "bool"
+	}
+	return "number"
+}
+
+// withoutEmpty drops the elements that are empty or only spaces, and answers
+// what is left and how many went. What is left is stored as it came, without
+// trimming (docs/spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote).
+func withoutEmpty(values []string) ([]string, int) {
+	dropped := 0
+	for _, v := range values {
+		if isEmpty(v) {
+			dropped++
+		}
+	}
+	if dropped == 0 {
+		return values, 0
+	}
+	kept := make([]string, 0, len(values)-dropped)
+	for _, v := range values {
+		if !isEmpty(v) {
+			kept = append(kept, v)
+		}
+	}
+	return kept, dropped
+}
+
+// withoutEmptyCriteria is withoutEmpty for criteria, whose element is empty
+// when its text is, whether it came as a string or as an object, and an object
+// with no text has none. It is dropped before anything else of the element is
+// looked at, so its key reserves nothing and its `checked` marks nothing.
+func withoutEmptyCriteria(criteria []wireCriterion) ([]wireCriterion, int) {
+	dropped := 0
+	for _, c := range criteria {
+		if isEmpty(c.Text) {
+			dropped++
+		}
+	}
+	if dropped == 0 {
+		return criteria, 0
+	}
+	kept := make([]wireCriterion, 0, len(criteria)-dropped)
+	for _, c := range criteria {
+		if !isEmpty(c.Text) {
+			kept = append(kept, c)
+		}
+	}
+	return kept, dropped
+}
+
+// isEmpty is the definition of an empty value of
+// docs/spec/valores-de-entrada.md#el-valor-vacío, the one the flags use.
+func isEmpty(s string) bool {
+	return strings.TrimSpace(s) == ""
+}
+
+// mergeIntoReferences appends each value to the references of t unless they
+// already hold it, and answers how many values there were, which is what the
+// warning of the batch counts, repeated ones included.
+func mergeIntoReferences(t *model.Task, values []string) int {
+	for _, v := range values {
+		if !slices.Contains(t.References, v) {
+			t.References = append(t.References, v)
+		}
+	}
+	return len(values)
 }
 
 // decodeTask reads one line of the interchange format into a task.
@@ -366,31 +537,61 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		}
 	}
 
+	if err := checkElements(raw); err != nil {
+		return nil, err
+	}
+
 	var in wireInput
 	if err := json.Unmarshal(line, &in); err != nil {
 		return nil, unwrapJSONError(err)
 	}
 
+	// An element that is empty or only spaces is dropped before anything
+	// else of the line is done with it: it is not a malformed label, nor a
+	// dependency that does not exist, nor a criterion that takes a key
+	// (docs/spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote). The
+	// lists are visited in the order the warnings come out in.
+	var emptyDropped []emptyDrop
+	note := func(field string, dropped int) {
+		if dropped > 0 {
+			emptyDropped = append(emptyDropped, emptyDrop{field, dropped})
+		}
+	}
+	var dropped int
+	in.Assignees, dropped = withoutEmpty(in.Assignees)
+	note("assignees", dropped)
+	in.Labels, dropped = withoutEmpty(in.Labels)
+	note("labels", dropped)
+	in.Dependencies, dropped = withoutEmpty(in.Dependencies)
+	note("dependencies", dropped)
+	in.References, dropped = withoutEmpty(in.References)
+	note("references", dropped)
+	in.AcceptanceCriteria, dropped = withoutEmptyCriteria(in.AcceptanceCriteria)
+	note("acceptanceCriteria", dropped)
+	in.DefinitionOfDone, dropped = withoutEmptyCriteria(in.DefinitionOfDone)
+	note("definitionOfDone", dropped)
+	in.Documentation, dropped = withoutEmpty(in.Documentation)
+	note("documentation", dropped)
+	in.ModifiedFiles, dropped = withoutEmpty(in.ModifiedFiles)
+	note("modifiedFiles", dropped)
+
 	t := &model.Task{
-		Title:         in.Title,
-		Type:          value(in.Type),
-		Priority:      value(in.Priority),
-		Parent:        value(in.Parent),
-		Assignees:     in.Assignees,
-		Author:        value(in.Author),
-		Labels:        in.Labels,
-		Dependencies:  in.Dependencies,
-		References:    in.References,
-		Documentation: in.Documentation,
-		ModifiedFiles: in.ModifiedFiles,
-		Ordinal:       in.Ordinal,
-		Ext:           in.Ext,
-		Description:   value(in.Description),
-		Plan:          value(in.Plan),
-		Notes:         value(in.Notes),
-		Summary:       value(in.Summary),
-		LeaseHolder:   value(in.LeaseHolder),
-		Archived:      in.Archived,
+		Title:        in.Title,
+		Type:         value(in.Type),
+		Priority:     value(in.Priority),
+		Parent:       value(in.Parent),
+		Assignees:    in.Assignees,
+		Author:       value(in.Author),
+		Labels:       in.Labels,
+		Dependencies: in.Dependencies,
+		References:   in.References,
+		Ordinal:      value(in.Ordinal),
+		Description:  value(in.Description),
+		Plan:         value(in.Plan),
+		Notes:        value(in.Notes),
+		Summary:      value(in.Summary),
+		LeaseHolder:  value(in.LeaseHolder),
+		Archived:     in.Archived,
 	}
 	d := &decoded{
 		task:              t,
@@ -401,8 +602,25 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		rawType:           value(in.Type),
 		rawPriority:       value(in.Priority),
 		hasStatus:         in.Status != nil,
+		emptyDropped:      emptyDropped,
 	}
 	t.ID = in.ID
+
+	// The ordinal key is judged here and not by the model's validation,
+	// because this is the last place where a key written as "" can still be
+	// told from a key that was not written at all: inside a task the empty
+	// string already means "no key". A line that writes one is writing a
+	// value that is not a key, and the rule of
+	// docs/spec/cmd/new.md#el-modo-lote is that a key of the wrong shape is
+	// malformed_ordinal (the empty key of
+	// docs/spec/modelo-de-datos/orden-manual.md#qué-es-una-clave-de-orden).
+	// An explicit null, like a missing key, is a task with no place, which
+	// is why only a value that really came through is asked.
+	if in.Ordinal != nil {
+		if e := model.ValidateOrdinal(*in.Ordinal); e != nil {
+			return nil, e
+		}
+	}
 
 	for _, f := range []struct {
 		key   string
@@ -442,6 +660,13 @@ func decodeTask(line []byte, now time.Time) (*decoded, error) {
 		added.Checked = c.Checked
 		d.dodKeys = append(d.dodKeys, added.Key)
 	}
+	// documentation and then modifiedFiles are merged into references, after
+	// the ones the line already had and in the order they came, whatever
+	// order the keys were written in. A value that references already holds
+	// is not added again. That is a rule of this merge only: a references list
+	// that already carries a repeated value keeps it repeated.
+	d.docCount = mergeIntoReferences(t, in.Documentation)
+	d.fileCount = mergeIntoReferences(t, in.ModifiedFiles)
 	if err := readComments(t, in.Comments, now); err != nil {
 		return nil, err
 	}
@@ -491,9 +716,12 @@ func readCriteria(t *model.Task, criteria []wireCriterion) error {
 	return nil
 }
 
-// readComments is readCriteria for the comments, with the one difference
-// the specification gives them: a comment with no createdAt is stamped with
-// the instant of the import.
+// readComments is readCriteria for the comments, with two differences the
+// specification gives them: a comment with no createdAt is stamped with the
+// instant of the import, and an empty or blank body fails the line instead
+// of being dropped, because a comment with nothing in it is not a hole that
+// can be skipped but a comment missing the one thing that makes it one
+// (docs/spec/cmd/new.md#el-modo-lote).
 func readComments(t *model.Task, comments []wireComment, now time.Time) error {
 	highest := 0
 	for _, c := range comments {
@@ -503,7 +731,10 @@ func readComments(t *model.Task, comments []wireComment, now time.Time) error {
 	}
 	t.NextCommentKey = highest + 1
 	seen := map[int]bool{}
-	for _, c := range comments {
+	for i, c := range comments {
+		if isEmpty(c.Body) {
+			return fmt.Errorf("comments.%d: comment body cannot be empty", i)
+		}
 		at := now
 		if c.CreatedAt != nil {
 			instant, err := readInstant("comments.createdAt", *c.CreatedAt)
@@ -588,13 +819,6 @@ func listOrEmpty(values []string) []string {
 		return []string{}
 	}
 	return values
-}
-
-func mapOrEmpty(m map[string]string) map[string]string {
-	if m == nil {
-		return map[string]string{}
-	}
-	return m
 }
 
 func instantOrNil(at time.Time) *string {

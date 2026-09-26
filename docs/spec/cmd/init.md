@@ -6,7 +6,7 @@
 biso init [<name>] [--at <dir>] [--statuses <list>]
           [--initial-status <status>] [--active-status <status>]
           [--terminal-status <status>] [--types <list>] [--priorities <list>]
-          [--extensions <list>] [--prefix <text>]
+          [--prefix <text>]
           [--overwrite-config] [--from <location>]
 ```
 
@@ -22,10 +22,9 @@ biso init [<name>] [--at <dir>] [--statuses <list>]
 | `--terminal-status <status>` | sí, si hay `--statuses` | uno de `--statuses` | | no | no | requiere `--statuses` |
 | `--types <list>` | no | lista | `task, bug, docs` ¹ | sí | sí | |
 | `--priorities <list>` | no | lista | `high, medium, low` ¹ | sí | sí | |
-| `--extensions <list>` | no | lista | vacía ¹ | sí | sí | |
 | `--prefix <text>` | no | texto de solo letras | se deriva de `<name>` en mayúsculas (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) ¹ | no | no | |
 | `--overwrite-config` | no | booleano | falso | no | no | |
-| `--from <location>` | no | ruta de un directorio | | no | no | `<name>`<br>`--statuses`<br>`--initial-status`<br>`--active-status`<br>`--terminal-status`<br>`--types`<br>`--priorities`<br>`--extensions`<br>`--prefix`<br>`--overwrite-config` |
+| `--from <location>` | no | ruta de un directorio | | no | no | `<name>`<br>`--statuses`<br>`--initial-status`<br>`--active-status`<br>`--terminal-status`<br>`--types`<br>`--priorities`<br>`--prefix`<br>`--overwrite-config` |
 
 ¹ Solo aplica al crear un tablero nuevo. Con `--overwrite-config` sobre un tablero que ya existe,
 no pasar este flag no vuelve a este valor por defecto: conserva el valor que el tablero ya tenía
@@ -33,7 +32,7 @@ para esa clave (tabla de casos más abajo).
 
 **Repetible** dice si el flag se puede dar más de una vez en la misma llamada, cada vez se acumula.
 **Lista** dice si, además, admite varios valores separados por coma dentro de un solo `--flag a,b`. En
-esta tabla las dos siempre coinciden porque `--statuses`, `--types`, `--priorities` y `--extensions`
+esta tabla las dos siempre coinciden porque `--statuses`, `--types` y `--priorities`
 son todas listas de tokens que admiten las dos formas a la vez; no es la regla general de la
 especificación, donde hay flags repetibles que no admiten coma, como `--comment` (sección
 ["`biso set`"](set.md)). El detalle exacto de cómo se acumulan las dos formas está en
@@ -212,7 +211,7 @@ crear el tablero con la configuración de `board.json` e importar `snapshot.ndjs
 reglas del lote de `biso new --from` (sección ["`biso new`"](new.md)): valida el fichero de tareas entero contra el
 vocabulario de `board.json` antes de escribir nada y, solo si todo es válido, escribe primero la
 configuración y después las tareas. Como `board.json` ya trae el nombre del tablero, los estados,
-los tipos, las prioridades, las extensiones y el prefijo del tablero de origen,
+los tipos, las prioridades y el prefijo del tablero de origen,
 **`--from` es incompatible con `<name>` y con cualquier flag de vocabulario**: no hay nada que
 decidir, todo viene del fichero. `--at` sigue valiendo igual que en un `init` normal, porque gobierna
 dónde queda el tablero nuevo, no su vocabulario. **`--overwrite-config` en cambio es incompatible con
@@ -226,6 +225,21 @@ permitido, y lo hace `biso new --from`; lo que no existe es la copia paralela. S
 `--from` ya tiene un tablero, ese caso ya está cubierto por la primera fila de la tabla siguiente: es
 el mismo Error 2 de "ya hay uno accesible desde aquí", y no hace falta `--overwrite-config` para
 distinguirlo porque `--from` siempre crea un tablero nuevo, nunca reescribe uno existente.
+
+**`--from` no avisa de lo que funde.** Una instantánea escrita por una versión que aún tenía
+`documentation` o `modifiedFiles` se restaura con las mismas reglas de fusión del lote de `biso new --from`
+(sección ["`biso new`"](new.md)): los elementos de esas claves acaban al final de `references`, pero
+`init --from` no emite los avisos `imported_documentation_merged` ni `imported_modified_files_merged`,
+porque una restauración no tiene un lote que comentar línea a línea.
+
+**Y tampoco avisa de lo que descarta.** Un elemento vacío o de solo espacios en una lista de la
+instantánea se descarta con la misma regla del lote de `biso new --from` (["Un elemento vacío en un lote"](../valores-de-entrada.md#un-elemento-vacío-en-un-lote)),
+y `init --from` no emite `imported_empty_dropped`, por la misma razón: la salida de una restauración
+no lleva avisos. Una instantánea que escribió `biso snapshot` de un tablero escrito con esta regla
+nunca trae un elemento vacío, porque ningún camino del programa lo guarda, así que esto solo importa
+con un fichero editado a mano, escrito por otro programa o sacado de un tablero de desarrollo
+anterior a la regla. Un `null` que ocupa el sitio de un elemento sigue siendo un fallo de
+validación de la línea, con el código 7 del lote.
 
 **"Un identificador que ya existe en esta máquina" son las raíces y solo las raíces, y basta con
 que esté en una.** La fila de abajo que da el error de identidad duplicada se mide igual que en
@@ -307,7 +321,7 @@ además de esa frase, para no decir dos veces que no se ha escrito nada.
 | Caso | Qué pasa |
 |---|---|
 | Ya hay un tablero accesible desde aquí | Error 2, salvo con `--overwrite-config`, que reescribe la configuración y **nunca toca las tareas** |
-| `--overwrite-config` sin uno de los flags de vocabulario (`--statuses` y sus tres papeles, `--types`, `--priorities`, `--extensions`) | No es un error: esa clave conserva el valor que el tablero ya tenía, igual que `project_name` sin `<name>` explícito (sección ["`biso config`"](config.md)). Como consecuencia, el prefijo sin `<name>` ni `--prefix` también se conserva, porque se deriva de `project_name`, que a su vez se conserva; no hace falta ningún caso especial para él |
+| `--overwrite-config` sin uno de los flags de vocabulario (`--statuses` y sus tres papeles, `--types` o `--priorities`) | No es un error: esa clave conserva el valor que el tablero ya tenía, igual que `project_name` sin `<name>` explícito (sección ["`biso config`"](config.md)). Como consecuencia, el prefijo sin `<name>` ni `--prefix` también se conserva, porque se deriva de `project_name`, que a su vez se conserva; no hace falta ningún caso especial para él |
 | El directorio de destino no tiene una base de datos legible: le falta, o no se puede leer (sección ["Qué pasa con un dato que no se puede interpretar"](../garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar)) | No cuenta como tablero accesible, así que `--from` reconstruye ahí mismo, con `--at` apuntando a ese mismo directorio, adoptando el `id` del marcador, código 0. Es el remedio que el `hint` del error 21 nombra, y también el que necesita un clon traído a otra máquina que llega con la carpeta del tablero versionada y sin base de datos: el mismo remedio lo repite el `hint` del error `pointer_unresolved` (código 20) cuando es la resolución normal, no `init`, quien encuentra ese directorio a medias (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md#el-puntero-nombra-un-tablero-que-no-está-en-esta-máquina)) |
 | `--at`, sin `--from`, al mismo directorio de la fila anterior: con el marcador pero sin una base de datos legible | No cuenta como tablero accesible, igual que en la fila anterior: `init` lo crea ahí mismo, adoptando el `id` del marcador, código 0. Sin `--from` no hay instantánea que restaurar, así que el tablero nace vacío; es el remedio de un clon cuyo directorio del tablero se versionó antes de la primera instantánea |
 | El directorio de trabajo es ya el directorio de un tablero | Es el caso de la fila "Ya hay un tablero accesible desde aquí", alcanzado por la primera vía de ["Cómo se elige el tablero"](../resolucion-del-tablero.md), y se resuelve igual: Error 2, y con `--overwrite-config` se reescribe la configuración de ese tablero, que es exactamente lo que ese flag significa. Un tablero no se crea nunca dentro de otro. Si la base de datos que ese directorio tiene no se puede leer, no es un tablero accesible y manda la fila de arriba: `init` lo crea ahí mismo, adoptando el `id` de su marcador, código 0 |
@@ -320,7 +334,6 @@ además de esa frase, para no decir dos veces que no se ha escrito nada.
 | `--overwrite-config` con `--statuses` explícito (y sus tres papeles) que dejaría el tablero inconsistente, sobre un tablero con tareas | Error 6, las mismas reglas de la tabla de casos de ["`biso config`"](config.md#comportamiento-caso-a-caso), aplicadas solo porque `--statuses` se pasó explícito: una clave conservada no puede quitar nada que ya estuviera en uso |
 | `--overwrite-config` con `--types` explícito que quita un tipo en uso, sobre un tablero con tareas | Error 6, la misma regla de la tabla de casos de ["`biso config`"](config.md#comportamiento-caso-a-caso) |
 | `--overwrite-config` con `--priorities` explícito que quita una prioridad en uso, sobre un tablero con tareas | Error 6, la misma regla de la tabla de casos de ["`biso config`"](config.md#comportamiento-caso-a-caso) |
-| `--overwrite-config` con `--extensions` explícito que quita una clave en uso, sobre un tablero con tareas | Error 6, la misma regla de la tabla de casos de ["`biso config`"](config.md#comportamiento-caso-a-caso) |
 | Falta alguno de los tres flags de papel, habiendo `--statuses` | Error 2, con los tres nombrados y cuáles faltan |
 | Un flag de papel sin `--statuses` | Error 2, diciendo que los papeles solo se fijan junto a la lista de estados |
 | Un flag de papel nombra un estado que no está en `--statuses` | Error 2, con el valor y la lista de estados |
@@ -339,7 +352,7 @@ además de esa frase, para no decir dos veces que no se ha escrito nada.
 | `--from` cuyo `board.json` tiene el mismo problema que haría fallar con Error 2 al flag de vocabulario equivalente (por ejemplo, `statuses` con menos de tres elementos, o un `task_prefix` sin letras) | Error 2, con el mismo `code` que usaría ese flag |
 | `--from` cuyo `snapshot.ndjson` está vacío (una instantánea con configuración pero sin tareas) | No es un error: se crea el tablero con esa configuración y cero tareas, código 0 |
 | `--from` cuyo `board.json` declara un vocabulario que ninguna tarea de `snapshot.ndjson` usa | No es un error: el tablero se crea con ese vocabulario tal cual lo declara `board.json`, tenga tareas que lo usen entero o no |
-| `--from` cuyas tareas usan un valor, una clave de extensión o un `id` que `board.json` no hace válido | Error 7, la misma regla del lote de `biso new --from` (sección ["`biso new`"](new.md)), con el detalle de qué falta línea a línea |
+| `--from` cuyas tareas usan un valor o un `id` que `board.json` no hace válido | Error 7, la misma regla del lote de `biso new --from` (sección ["`biso new`"](new.md)), con el detalle de qué falta línea a línea |
 
 **Los tres estados especiales se guardan como valores explícitos en la configuración, no como
 posiciones.** Cambiar `statuses` después no los mueve nunca. Si al cambiar `statuses` uno de los tres
@@ -416,7 +429,7 @@ revisiones.
 ## Salida
 
 Esto es lo que imprime la tercera invocación de los ejemplos de ayuda,
-`biso init "My project" --prefix MYP --at my-project-board --extensions trello.card` (con `--json` para el
+`biso init "My project" --prefix MYP --at my-project-board` (con `--json` para el
 esquema de más abajo). El prefijo sale `MYP` porque lo fija `--prefix`, no porque se derive del nombre
 `My project`, que sin ese flag daría `MYPROJECT` (sección ["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)).
 
@@ -531,8 +544,6 @@ Options:
   --terminal-status <status>  what `biso finish` sets (default: "Done")
   --types <list>              comma-separated (default: "task,bug,docs")
   --priorities <list>         comma-separated (default: "high,medium,low")
-  --extensions <list>         comma-separated declared external field keys,
-                              such as trello.card (default: none)
   --prefix <text>             task id prefix, letters only (default: derived
                               from the board name, uppercased)
   --overwrite-config          replace the configuration of an existing board,
@@ -585,7 +596,7 @@ Examples:
   biso init "My project" --statuses "Ideas,To Do,In Progress,Done" \
       --initial-status Ideas --active-status "In Progress" \
       --terminal-status Done
-  biso init "My project" --prefix MYP --at my-project-board --extensions trello.card
+  biso init "My project" --prefix MYP --at my-project-board
   biso init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c
 ```
 

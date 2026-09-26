@@ -322,7 +322,7 @@ func TestTheOrderOfApplicationDoesNotDependOnTheCommandLine(t *testing.T) {
 		assertLabels(t, h.load(id), "urgent")
 	})
 
-	t.Run("step 1 before step 4 and step 7: a criterion created here is checked here", func(t *testing.T) {
+	t.Run("step 1 before step 4 and step 6: a criterion created here is checked here", func(t *testing.T) {
 		h := newHarness(t)
 		id := h.create("A task", add("add-ac", "Old"))
 
@@ -369,41 +369,55 @@ func TestTheOrderOfApplicationDoesNotDependOnTheCommandLine(t *testing.T) {
 		assertLabels(t, h.load(id), "parser")
 	})
 
-	t.Run("step 1 before step 5: --ext survives a --clear-ext of the same call", func(t *testing.T) {
+	// Step 5, the scalars, against every step before it. A scalar and a
+	// list field never write the same data, except that a --clear-* and a
+	// scalar of the same field do, so the first case is checked on the data.
+	// For the other three, what a scalar shares with them is the list of
+	// warnings of the call, which is written in the order the steps ran, so
+	// each one pairs a warning of its own step with the past-due warning that
+	// --due earns in step 5 and writes --due first on the command line.
+	t.Run("step 1 before step 5: --clear-author does not undo an --author", func(t *testing.T) {
 		h := newHarness(t)
-		id := h.create("A task", ext("trello.card", "old"))
+		id := h.create("A task", scalar("author", "old"))
 
-		h.set(id, ext("trello.card", "5f2a8c1e"), clear("clear-ext"))
+		h.set(id, scalar("author", "sara"), clear("clear-author"))
 
-		if got := h.load(id).Ext["trello.card"]; got != "5f2a8c1e" {
-			t.Errorf("ext[trello.card] = %q, and step 5 comes after step 1", got)
+		if got := h.load(id).Author; got != "sara" {
+			t.Errorf("author = %q, want the one this call wrote", got)
 		}
 	})
 
-	t.Run("step 3 before step 5: --ext survives an --rm-ext of the same key", func(t *testing.T) {
-		h := newHarness(t)
-		id := h.create("A task", ext("trello.card", "old"))
+	pastDue := scalar("due", "2000-01-01")
+	for _, c := range []struct {
+		name   string
+		setup  []Change
+		change Change
+		first  string
+	}{
+		{"step 2 before step 5: the overwrite warning of --replace-labels comes before the scalar's",
+			[]Change{add("add-labels", "cli")}, replace("replace-labels", "parser"), "overwrite"},
+		{"step 3 before step 5: the warning of --rm-labels comes before the scalar's",
+			nil, remove("rm-labels", "parser"), "value_not_present"},
+		{"step 4 before step 5: the warning of --add-labels comes before the scalar's",
+			[]Change{add("add-labels", "cli")}, add("add-labels", "cli"), "value_already_present"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			h := newHarness(t)
+			id := h.create("A task", c.setup...)
 
-		h.set(id, ext("trello.card", "5f2a8c1e"), remove("rm-ext", "trello.card"))
+			result := h.set(id, pastDue, c.change)
 
-		if got := h.load(id).Ext["trello.card"]; got != "5f2a8c1e" {
-			t.Errorf("ext[trello.card] = %q, and step 5 comes after step 3", got)
-		}
-	})
+			var codes []string
+			for _, w := range result.Warnings {
+				codes = append(codes, w.Code)
+			}
+			if want := c.first + "|due_in_past"; strings.Join(codes, "|") != want {
+				t.Errorf("warnings = %v, want %s", codes, want)
+			}
+		})
+	}
 
-	t.Run("step 5 before step 6: --ext and a scalar do not fight", func(t *testing.T) {
-		h := newHarness(t)
-		id := h.create("A task")
-
-		h.set(id, scalar("title", "Renamed"), ext("trello.card", "abc"))
-
-		task := h.load(id)
-		if task.Title != "Renamed" || task.Ext["trello.card"] != "abc" {
-			t.Errorf("title = %q, ext = %v, want both written", task.Title, task.Ext)
-		}
-	})
-
-	t.Run("step 8 corrects the date of a comment that was already there", func(t *testing.T) {
+	t.Run("step 7 corrects the date of a comment that was already there", func(t *testing.T) {
 		h := newHarness(t)
 		id := h.create("A task", comment("Reported from Windows"))
 
@@ -415,7 +429,7 @@ func TestTheOrderOfApplicationDoesNotDependOnTheCommandLine(t *testing.T) {
 		}
 	})
 
-	t.Run("step 8 before step 9: a comment this call adds is not a target", func(t *testing.T) {
+	t.Run("step 7 before step 8: a comment this call adds is not a target", func(t *testing.T) {
 		h := newHarness(t)
 		id := h.create("A task")
 
@@ -432,7 +446,7 @@ func TestTheOrderOfApplicationDoesNotDependOnTheCommandLine(t *testing.T) {
 		assertSpec(t, err, 4, "comment_not_found")
 	})
 
-	t.Run("step 3 before step 9: removing every comment and adding one leaves one", func(t *testing.T) {
+	t.Run("step 3 before step 8: removing every comment and adding one leaves one", func(t *testing.T) {
 		h := newHarness(t)
 		id := h.create("A task", comment("first"))
 
@@ -465,7 +479,7 @@ func TestRemovingAndDatingTheSameCommentIsAConflict(t *testing.T) {
 
 func TestTheTolerantWarningsOfAddingAndRemoving(t *testing.T) {
 	h := newHarness(t)
-	id := h.create("A task", add("add-labels", "urgent"), ext("trello.card", "abc"))
+	id := h.create("A task", add("add-labels", "urgent"))
 
 	for _, c := range []struct {
 		change Change
@@ -473,7 +487,6 @@ func TestTheTolerantWarningsOfAddingAndRemoving(t *testing.T) {
 	}{
 		{add("add-labels", "urgent"), "value_already_present"},
 		{remove("rm-labels", "nothing-like-this"), "value_not_present"},
-		{remove("rm-ext", "priority_score"), "value_not_present"},
 	} {
 		result := h.set(id, c.change)
 		if !warned(result, c.code) {
@@ -677,8 +690,8 @@ func TestSetDryRunRefusesWhatTheRealWriteRefuses(t *testing.T) {
 		code    int
 		problem string
 	}{
-		{"an extension key the board does not declare", ext("trello.board", "42"), 3, "unknown_extension_key"},
-		{"an ordinal that is not a positive number", scalar("ordinal", "-5"), 2, "invalid_number"},
+		{"a newline in a one-line field", scalar("title", "first line\nsecond line"), 2, "malformed_string_value"},
+		{"a status outside the closed vocabulary", scalar("status", "Pending"), 3, "unknown_status"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			h := newHarness(t)

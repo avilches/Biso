@@ -95,14 +95,10 @@ type Resolved struct {
 	Note string
 }
 
-// resolveRef resolves one reference to one task, exactly as
-// docs/spec/referencias.md says and with no variant per command.
-func resolveRef(b *board.Board, ref string, mode RefMode) (*Resolved, error) {
-	return resolveRefWith(b, nil, ref, mode)
-}
-
-// resolveRefWith is resolveRef over a board whose tasks the caller has
-// already read. Every command that resolves a reference reads the whole
+// resolveRefWith resolves one reference to one task, exactly as
+// docs/spec/referencias.md says and with no variant per command, over a
+// board whose tasks the caller has already read. Every command that
+// resolves a reference reads the whole
 // board anyway, for the derived fields or for the cycles, so handing that
 // list in keeps the text search from running the same five queries twice.
 // A nil list means the search reads them itself.
@@ -254,8 +250,8 @@ func searchForRef(b *board.Board, all []*model.Task, query string,
 // (docs/spec/referencias.md#la-búsqueda-por-texto): the title, the
 // description, the plan, the notes, the final summary, the text of the
 // acceptance criteria, the body of the comments, the body of the open
-// question and the labels. It does not look at the identifiers, the
-// references, the documentation or the extension fields.
+// question and the labels. It does not look at the identifiers or the
+// references.
 //
 // It is exported because `biso ls --search` and `biso export --search` use
 // this very function and not a second implementation of the same list.

@@ -76,9 +76,6 @@ due        -                    ordinal    -
 created    2026-08-20 09:40     updated    2026-09-03 16:15
 depends    -                    blocks     -
 refs       -
-docs       -
-files      -
-ext        -
 
 ## Description
 Every failed upload retries silently. The log does not say how many attempts it took,

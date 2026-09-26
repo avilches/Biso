@@ -25,9 +25,13 @@ import (
 //     and clearing a field is a flag of its own. So "" and "no value"
 //     cannot be told apart by anything observable, and carrying the
 //     difference into SQL would only mean scanning every column through a
-//     nullable type. The one exception is task.ordinal, where 0 is a value
-//     a caller can legitimately give (int >= 0), so absence needs NULL.
-//   - **The six list<string> fields share one table**, task_list_item,
+//     nullable type. There is no exception: task.ordinal holds the ordinal
+//     key of docs/spec/modelo-de-datos/orden-manual.md, whose alphabet
+//     cannot spell the empty string, so the empty string is the absence of
+//     a key there too. Its CHECK is that same rule written in SQL, the
+//     symbols 0-9a-z and never a 0 at the end, so a key the model would
+//     refuse cannot reach the file by another route either.
+//   - **The four list<string> fields share one table**, task_list_item,
 //     keyed by the field's name, instead of one table each. They have the
 //     same shape (ordered values with no structure of their own,
 //     addressed by their value and never by position), the CHECK keeps the
@@ -58,7 +62,9 @@ var migrations = []string{
 		parent             TEXT    NOT NULL,
 		author             TEXT    NOT NULL,
 		due                TEXT    NOT NULL,
-		ordinal            INTEGER,
+		ordinal            TEXT    NOT NULL CHECK (
+			ordinal = '' OR (ordinal NOT GLOB '*[^0-9a-z]*' AND ordinal NOT GLOB '*0')
+		),
 		description        TEXT    NOT NULL,
 		plan               TEXT    NOT NULL,
 		notes              TEXT    NOT NULL,
@@ -79,18 +85,11 @@ var migrations = []string{
 		task_id  TEXT    NOT NULL REFERENCES task(id) ON DELETE CASCADE,
 		field    TEXT    NOT NULL CHECK (field IN (
 			'assignees', 'labels', 'dependencies',
-			'references', 'documentation', 'modifiedFiles'
+			'references'
 		)),
 		position INTEGER NOT NULL,
 		value    TEXT    NOT NULL,
 		PRIMARY KEY (task_id, field, position)
-	) WITHOUT ROWID;
-
-	CREATE TABLE task_ext (
-		task_id TEXT NOT NULL REFERENCES task(id) ON DELETE CASCADE,
-		key     TEXT NOT NULL,
-		value   TEXT NOT NULL,
-		PRIMARY KEY (task_id, key)
 	) WITHOUT ROWID;
 
 	CREATE TABLE task_criterion (
@@ -120,7 +119,7 @@ var migrations = []string{
 	//
 	//   - **The board's id lives in a table of its own, in the single row
 	//     the CHECK allows**, and not as one more configuration key. It is
-	//     not configuration: docs/spec/cmd/config.md lists the twenty keys
+	//     not configuration: docs/spec/cmd/config.md lists the nineteen keys
 	//     `biso config list` prints and the id is not one of them, because
 	//     nothing can ever change it. Keeping it here is what lets
 	//     `biso doctor` compare it with the name of the <id>.id marker

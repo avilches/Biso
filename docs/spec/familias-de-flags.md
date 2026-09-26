@@ -17,19 +17,18 @@ una más ni una menos:
 campo.** Se deriva del tipo concreto de ["El modelo de datos de una tarea"](modelo-de-datos/index.md): a
 efectos de qué flag tiene sentido ofrecer, da igual si un valor único es `string`, `enum(...)`,
 `date`, `int`, `float` o `bool`, porque a todos les basta con fijar y vaciar, así que esos tipos
-comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa";
-`map<string,string>` es "mapa de claves"; y `list<Criterion>` / `list<Comment>` son "lista de
-objetos". **Una forma se reparte en más de una fila** cuando, dentro de la misma forma, hay más de
-un conjunto de operaciones posible: `acceptanceCriteria` y `comments` son los dos "lista de
-objetos", pero los criterios y los comentarios no comparten los mismos flags, así que la forma
-aparece dos veces, una por cada conjunto de operaciones.
+comparten la forma "escalar". `list<string>` es "lista de tokens"; `text` es "bloque de prosa"; y
+`list<Criterion>` / `list<Comment>` son "lista de objetos".
+**Una forma se reparte en más de una fila** cuando, dentro de la misma forma, hay más de un
+conjunto de operaciones posible: `acceptanceCriteria` y `comments` son los dos "lista de objetos",
+pero los criterios y los comentarios no comparten los mismos flags, así que la forma aparece dos
+veces, una por cada conjunto de operaciones.
 
 | Forma | Clase de campo | Variantes |
 |---|---|---|
 | escalar | Escalar | fijar, vaciar |
 | lista de tokens | Lista de tokens | añadir, quitar, vaciar, sustituir entera |
 | bloque de prosa | Bloque de prosa | añadir al final, vaciar |
-| mapa de claves | Mapa de claves | fijar una clave, quitar una clave, vaciar |
 | lista de objetos | Criterios (`acceptanceCriteria`) | añadir, quitar, vaciar; y aparte, marcar y desmarcar (["Selectores de criterios"](#selectores-de-criterios)) |
 | lista de objetos | Comentarios (`comments`) | añadir (`--comment`), quitar uno o varios enteros, corregir solo su fecha; nunca editar cuerpo ni autor |
 
@@ -84,9 +83,7 @@ a añadir un elemento de una lista es una operación con un resultado bien defin
 | etiquetas | `--add-labels` | `--rm-labels` | `--clear-labels` | `--replace-labels` |
 | personas asignadas | `--add-assignees` | `--rm-assignees` | `--clear-assignees` | `--replace-assignees` |
 | referencias | `--add-refs` | `--rm-refs` | `--clear-refs` | `--replace-refs` |
-| documentación | `--add-docs` | `--rm-docs` | `--clear-docs` | `--replace-docs` |
 | dependencias | `--add-deps` | `--rm-deps` | `--clear-deps` | `--replace-deps` |
-| ficheros tocados | `--add-files` | `--rm-files` | `--clear-files` | `--replace-files` |
 
 Todas son repetibles, y admiten lista separada por comas además de repetición. Las de "añade" y las de
 "sustituye" se acumulan igual dentro de la misma llamada: `--replace-labels a --replace-labels b` dejaría
@@ -110,12 +107,11 @@ Y esta, en cambio, deja solo `parser` y `urgent`, porque sustituye la lista y `c
 biso set MYP-11 --replace-labels parser,urgent
 ```
 
-Una etiqueta o una persona nunca llevan coma, pero una referencia, una documentación o un fichero
-tocado sí pueden, y entonces la coma se escapa con `\,`
+Una etiqueta o una persona nunca llevan coma, pero una referencia sí puede, y entonces la coma se escapa con `\,`
 (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
 `--add-refs 'notes/a\,b.md'` añade una sola referencia, `notes/a,b.md`.
 
-**Las dependencias se validan al escribirlas, y solo al escribirlas.** `--add-deps` y
+**Las dependencias se validan al escribirlas, y solo al escribirlas.** Lo que significa una dependencia, y hacia dónde apunta, está en ["Las relaciones entre tareas"](modelo-de-datos/relaciones.md); aquí solo está lo que pasa al escribirla. `--add-deps` y
 `--replace-deps` resuelven cada valor con la rutina de ["Cómo se resuelve una referencia a una
 tarea"](referencias.md) y guardan el identificador al que resuelve, así que `--add-deps "CRLF"`
 deja guardado `MYP-11` y no el texto que se tecleó, y una referencia que no existe o que encaja con
@@ -168,6 +164,84 @@ filtro de lectura, en cambio, no distingue: `biso ls --label parser` encuentra l
 (case-fold Unicode), pero no toca acentos, porque una etiqueta o una persona son tokens cortos y no
 prosa, y no comparten la regla de acentos de los selectores de texto de la sección
 ["Selectores de criterios"](#selectores-de-criterios).
+
+### Escribir una etiqueta con ámbito
+
+Una etiqueta que lleva `:` se analiza con la regla de
+["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito), que fija cuál es su clave,
+cuál su valor y qué forma es mal formada. Lo que añade esta sección es lo único que el separador
+decide al escribir: **una clave escrita con `::` deja como mucho una etiqueta suya en la tarea, y una
+clave escrita con `:` admite todas las que se le pongan.**
+
+**La exclusividad se comprueba sobre la lista que queda al final de la escritura**, no sobre la que
+la tarea tenía al empezar. Con el orden fijo de
+["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura),
+eso significa que los pasos que vacían, sustituyen y quitan ya se han aplicado cuando se juzga lo que
+se añade, así que `biso set MYP-11 --rm-labels milestone::m1 --add-labels milestone:m2` funciona en
+una sola llamada aunque la tarea empezara con una etiqueta exclusiva de esa clave. La comprobación
+es de la fase de validación, así que cuando falla no se escribe nada.
+
+| Caso | Qué pasa | Código |
+|---|---|---:|
+| `--add-labels k::v` sobre una tarea que conserva otras etiquetas de la clave `k` | `k::v` queda como única etiqueta de `k`: las demás se quitan, sean `k:x` o `k::y`, y el aviso las nombra una a una | 0 |
+| `--add-labels k:v` sobre una tarea que conserva un `k::x`, incluso si `x` es el mismo `v` | Error 6, y no se escribe nada. El separador no es un detalle del valor: escribir `k:v` pide que la clave admita varios, y la tarea dice que admite uno | 6 |
+| `k:a` y `k::b` de la misma clave en la misma llamada, en cualquier orden y repartidas como sea entre `--add-labels` y `--replace-labels` | Error 2. Los valores de `--rm-labels` no cuentan aquí, porque no escriben ninguna etiqueta: son justamente lo que deja sitio a la que se añade | 2 |
+| `k::a` y `k::b` en el mismo flag | Gana la última escrita en la línea de comandos, con aviso. Repartidas entre `--add-labels` y `--replace-labels`, quien manda es el orden de los pasos y no la línea de comandos, más abajo | 0 |
+| `--rm-labels k:v` | Quita la etiqueta de esa clave y ese valor, sea `k:v` o `k::v`: al quitar, el separador no cuenta | 0 |
+| `--rm-labels k:` o `--rm-labels k::` | Error 2, etiqueta mal formada: la forma sin valor es sintaxis de filtro y no de escritura, y para vaciar la lista entera está `--clear-labels` | 2 |
+
+Los avisos de esos casos, con su `code` en ["Notas y avisos"](salida-y-terminal.md#notas-y-avisos):
+
+```
+warning: --add-labels: "size::m" replaced size::s, size:l on MYP-11
+warning: --add-labels: key "size" given twice with ::, kept "size::b"
+```
+
+El primero nombra lo que quitó en el orden en que la tarea lo tenía guardado, porque las listas nunca
+se ordenan solas. El segundo cuenta las apariciones cuando son más de dos, igual que
+`duplicate_flag_value`: `key "size" given 3 times with ::, kept "size::c"`.
+
+Y los mensajes que rechazan la escritura:
+
+```
+error: MYP-11 already has "size::s", and :: allows at most one value of the key "size"
+hint: drop it first, as in --rm-labels size::s --add-labels size:m
+
+error: "size:a" and "size::b" mix the two separators of the key "size"
+hint: a key takes either several values with :, or at most one with ::
+```
+
+Sus `code` son `exclusive_label_conflict` (código 6) y `mixed_label_separators` (código 2), los dos en
+["Los identificadores de error"](contrato-json.md#los-identificadores-de-error). El segundo **no culpa
+a ninguno de los dos valores**, porque ninguno lo es más que el otro, y por eso los nombra en el orden
+en que la escritura los aplicaría, el de ["Orden de aplicación dentro de una
+escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura): el de `--replace-labels`, que
+sustituye, antes que el de `--add-labels`, que añade. Dentro de un mismo flag ese orden es el de la
+línea de comandos. Qué claves lleva su objeto de error está en
+["Los errores en JSON"](contrato-json.md#los-errores-en-json).
+
+**Nada de esto es propio de `--add-labels`.** `--replace-labels` deja la lista que se le da y la misma
+regla la juzga entera, así que `--replace-labels k:a,k::b` es el mismo error 2 y
+`--replace-labels k::a,k::b` deja `k::b` con el mismo aviso. Lo que sí cambia con `--replace-labels`
+y con `--clear-labels` es que la tarea no conserva nada de antes, así que una etiqueta exclusiva que
+estuviera guardada no puede entrar en conflicto con nada: se fue en su propio paso.
+
+**Entre `--add-labels` y `--replace-labels`, en cambio, no decide la línea de comandos sino el orden
+de los pasos**, porque sustituir va antes que añadir
+(["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)).
+Así, `--add-labels g::AA --replace-labels g::BB` deja `g::AA` aunque se escribiera primero: la
+sustitución pone `g::BB` y la adición la reemplaza, que es lo que hace cualquier `::` sobre una clave
+que la tarea conserva. El aviso que sale es entonces el de la sustitución,
+`warning: --add-labels: "g::AA" replaced g::BB on MYP-11`, y no el del último valor, porque lo que
+pasó es que una etiqueta ya escrita en esta misma llamada se fue.
+
+**Y la misma regla vale para cada línea de un lote de `biso new --from`**, donde no hay flags sino la
+lista `labels` de la línea, con una diferencia declarada en ["El modo lote"](cmd/new.md#el-modo-lote):
+ahí dos valores `::` de la misma clave son un fallo de validación en vez de quedarse con el último.
+
+**Si la lista `labels` de la configuración restringe la clave**, escribir un valor que no declara, o
+la clave con el otro separador, es error 3, y esa comprobación va antes que todo lo de arriba
+(["La lista `labels`"](cmd/config.md#la-lista-labels)).
 
 ## Campos de lista sin coma (criterios)
 
@@ -359,6 +433,14 @@ hint: the keys of the acceptance criteria of one task do not name the same thing
 | borrar uno o varios enteros | `--rm-comment <sel>` | sí |
 | corregir solo la fecha de uno o varios | `--set-comment-date <sel>=<instante>` | sí |
 
+**`--comment` añade, pero un valor vacío no sigue la regla de un flag que añade.** `--add-labels ""` y
+`--append-note ""` no añaden nada y avisan (["El valor vacío"](valores-de-entrada.md#el-valor-vacío));
+`--comment ""` es en cambio `error: --comment cannot be empty`, código 2. Un comentario es el cuerpo
+de una conversación, no una decoración prescindible, así que sigue la regla del título y no la de una
+etiqueta o una nota de más: crear con un cuerpo vacío está tan mal escrito como crear sin título. La
+razón, con las alternativas que se descartaron, está en
+["Un comentario vacío o `null` en un lote es un fallo de validación"](../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación).
+
 **No existe un flag que edite el cuerpo o el autor de un comentario ya escrito, y no va a
 existir.** Un comentario es el registro de una conversación, y lo único que se concede aquí es
 corregir un metadato (la fecha) o retirar el comentario entero, nunca reescribir lo que se dijo. La
@@ -398,17 +480,9 @@ de comentario que termine literalmente en algo con forma de instante detrás de 
 que esta regla no puede resolver por texto; para ese caso, la clave sigue siendo el selector que
 siempre funciona.
 
-**Esto no es la misma regla que `--ext <clave>=<valor>`, y no hace falta que lo sea.** `--ext` corta
-por el primer `=` porque puede: el alfabeto de una clave de `ext` ya excluye el propio `=`
-(["El juego de caracteres de un token"](valores-de-entrada.md#el-juego-de-caracteres-de-un-token)), así que el primer `=` de la cadena es siempre el único
-`=` que puede separar la clave del valor, y da igual por cuál de los dos extremos se busque. El
-selector de `--set-comment-date`, en cambio, puede ser un texto libre sin alfabeto cerrado, así que
-necesita su propia regla de corte, y esa regla es "por el último" precisamente porque aquí sí puede
-haber más de un `=` en la cadena.
-
 **El solape entre `--rm-comment` y `--set-comment-date` se detecta antes de aplicar ninguno de los
 dos, no durante el orden de escritura.** Caen en pasos distintos de ["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)
-(`--rm-comment` en el 3, `--set-comment-date` en el 8), así que si se dejara que cada uno resolviera
+(`--rm-comment` en el 3, `--set-comment-date` en el 7), así que si se dejara que cada uno resolviera
 su selector en su propio paso, `--rm-comment` ya habría borrado el comentario para cuando
 `--set-comment-date` intentara corregirle la fecha, y el resultado sería un error 4 de "no existe" en
 vez de un conflicto. Para que la regla no dependa de ese orden, cada selector se resuelve contra la
@@ -442,7 +516,7 @@ selectores resueltos, es error 2 y no se aplica ni el borrado ni la corrección.
 | prioridad | `--priority` | `--clear-priority` |
 | tarea padre | `--parent` | `--clear-parent` |
 | fecha límite | `--due` | `--clear-due` |
-| orden manual | `--ordinal` | `--clear-ordinal` |
+| orden manual | `--ordinal first`, `--ordinal last`, `--above <ref>`, `--below <ref>` (["El orden manual"](#el-orden-manual)) | `--clear-ordinal` |
 | autor de la tarea | `--author` | `--clear-author` |
 
 **Un escalar guarda un único valor, así que fijarlo con su propio nombre nunca es ambiguo con
@@ -452,72 +526,97 @@ regla aplicada a una forma de dato que solo admite una operación de escritura.
 
 Un escalar **nunca** se borra pasándole la cadena vacía, según ["El valor vacío"](valores-de-entrada.md#el-valor-vacío).
 
-**Dos de estos escalares no son texto libre y rechazan lo que no cumple su forma**, los dos con
-código 2:
+**`--due` no es texto libre y rechaza lo que no cumple su forma**, con código 2 y el `code`
+`invalid_date`, el mismo que lleva la fecha mal formada de ["El modelo de datos de una
+tarea"](modelo-de-datos/index.md):
 
 ```
 error: --due: invalid date: "20/09/2026"
 hint: a due date is written YYYY-MM-DD
-
-error: --ordinal: not a whole number: "first"
 ```
 
-Su `code` es `invalid_date` y `invalid_number` respectivamente, los mismos que ya llevan la fecha mal
-formada y el `ordinal` negativo de ["El modelo de datos de una tarea"](modelo-de-datos/index.md).
 `--due` con una fecha ya pasada, en cambio, no es un error: se acepta con el aviso `due_in_past`
 (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)).
 
-## Campos externos
+**El orden manual es la otra fila de la tabla que no acepta cualquier valor**, y además es la única
+cuyo valor no se teclea: tiene su propia sección, ["El orden manual"](#el-orden-manual).
 
-| Operación | Flag | Repetible |
-|---|---|---|
-| fijar una clave | `--ext <clave>=<valor>` | sí |
-| quitar una clave | `--rm-ext <clave>` | sí |
-| vaciar el mapa entero | `--clear-ext` | no |
+## El orden manual
 
-**No existe `--replace-ext`.** Fijar una clave con `--ext` ya sustituye su valor, así que un segundo
-flag para lo mismo solo serviría para equivocarse. Vaciar el mapa entero es `--clear-ext`, y es la
-única forma de vaciarlo. Este campo ya era explícito antes del resto del rediseño de esta sección: no
-cambia nada aquí.
+El campo `ordinal` es una clave de texto que quien llama nunca escribe
+(["El orden manual y su clave"](modelo-de-datos/orden-manual.md)). Lo que se escribe es **dónde va la
+tarea**, con estos flags, ninguno repetible:
 
-**Fijar la misma clave dos veces en la misma llamada, con valores distintos, no es un error.**
-`--ext k=a --ext k=b` dentro de la misma llamada deja `k` con el último valor de la línea de comandos,
-`b`, con aviso:
+| Flag | Dónde deja la tarea |
+|---|---|
+| `--ordinal first` | delante de todas las tareas que tienen clave |
+| `--ordinal last` | detrás de todas las tareas que tienen clave |
+| `--above <ref>` | justo por encima de la tarea que nombra la referencia |
+| `--below <ref>` | justo por debajo de ella |
+| `--clear-ordinal` | sin clave, es decir fuera del orden manual |
 
-```
-warning: --ext: key "k" given twice, kept last value
-```
+**`--above` y `--below` no llevan el nombre del campo, y aun así cumplen ["La regla"](#la-regla) de
+esta sección.** Lo que un flag de escritura tiene que decir en su nombre es qué hace, y estos dos lo
+dicen entero: dejan la tarea encima o debajo de la que se nombre. El nombre del campo no ayudaría a
+nadie, porque la clave no se teclea; un `--ordinal <clave>` diría el campo y escondería la operación,
+que es justo el nombre desnudo que esta sección no admite.
 
-Es el mismo estilo que el aviso ya existente de valor repetido en una lista
-(["Campos de lista que admiten coma"](#campos-de-lista-que-admiten-coma)), y no el error 2 de un escalar
-repetido con valores distintos (["Repetición y listas separadas por comas"](valores-de-entrada.md#repetición-y-listas-separadas-por-comas)): cada clave de
-`--ext` se comporta como un token más de un mapa, no como un escalar único de toda la tarea. Con tres
-apariciones de la misma clave o más, el aviso sigue siendo uno solo y las cuenta
-(`warning: --ext: key "k" given 3 times, kept last value`).
-
-**Es justo la regla contraria a la de `--set-comment-date`** (["Comentarios"](#comentarios)), y la
-diferencia es deliberada: la fecha de un comentario es un dato único de ese comentario, así que
-fijarla dos veces con instantes distintos es la contradicción de un escalar repetido y es error 2,
-mientras que una clave de `ext` es una entrada más de un mapa y la última gana.
-
-**El valor de una clave de `--ext` es texto de una línea y no puede estar vacío.** Un `\r` o un `\n`
-es error 2 con el `code` `malformed_string_value` y `field` igual a `ext`
-(["El salto de línea en un campo `string`"](valores-de-entrada.md#el-salto-de-línea-en-un-campo-string)),
-y `--ext k=` también es error 2, porque vaciar no se dice así: una clave se quita con `--rm-ext` y el
-mapa entero se vacía con `--clear-ext`
-(["Cómo se lee la línea de comandos"](valores-de-entrada.md#cómo-se-lee-la-línea-de-comandos)).
-
-**Quitar con `--rm-ext` una clave que el mapa no tiene también avisa en vez de fallar,** con el mismo
-patrón tolerante que el resto de quitas de esta sección (["Campos de lista que admiten coma"](#campos-de-lista-que-admiten-coma)):
+**Todos los flags de esa tabla escriben el mismo campo, así que son incompatibles entre sí**, con el
+`code` `incompatible_flags` y código 2:
 
 ```
-warning: --rm-ext: "priority_score" not present, nothing removed
+error: --above and --below cannot be used together
 ```
 
-**`--ext` tiene su propio paso en el orden de aplicación de una escritura, distinto del de
-`--clear-ext` y del de `--rm-ext`.** Los tres flags de esta sección no comparten paso:
-`--clear-ext` va en el paso 1, `--rm-ext` en el paso 3, y `--ext` en el paso nuevo entre los añadidos y
-los escalares (["Orden de aplicación dentro de una escritura"](garantias.md#orden-de-aplicación-dentro-de-una-escritura)).
+**`--ordinal` solo acepta `first` y `last`.** Cualquier otro valor, la cadena vacía incluida, es
+código 2 con el `code` `invalid_ordinal_value` y el `valid` de la tabla de ["Los errores en
+JSON"](contrato-json.md#los-errores-en-json):
+
+```
+error: --ordinal: unknown value: "3"
+hint: --ordinal takes first or last; to place a task next to another one, use --above or --below
+```
+
+**La referencia de `--above` y de `--below` se resuelve como cualquier otra**
+(["Cómo se resuelve una referencia a una tarea"](referencias.md)), así que una vecina que no existe
+es código 4 y un texto que encaja con varias tareas es código 5, con sus candidatas.
+
+**Una tarea no puede ser su propia vecina.** Si la referencia resuelve a una de las tareas que la
+misma llamada está moviendo, es código 2 con el `code` `self_ordinal_neighbour`:
+
+```
+error: --below: MYP-11 cannot be its own neighbour
+```
+
+**Una vecina sin clave es código 6**, con el `code` `neighbour_without_ordinal`, y el mensaje trae el
+remedio entero porque son dos llamadas y no una:
+
+```
+error: --above: MYP-19 has no ordinal
+hint: a task without one has no place in the manual order, so there is nothing to write above
+hint: `biso set MYP-19 --ordinal last` gives it one, and then --above MYP-19 works
+```
+
+Es código 6 y no 2 porque la llamada está bien escrita y lo que no la admite es el estado del tablero
+(["Códigos de salida"](codigos-de-salida.md)): la misma llamada funciona en cuanto la vecina tenga
+clave. Y no se arregla sola escribiéndole una clave a la vecina, porque eso sería escribir en una
+tarea que nadie nombró como destino de la escritura, ni se hace algo distinto de lo pedido avisando
+después; las dos salidas están descartadas en la decisión.
+
+**Los extremos no son un error.** `--above` sobre la tarea de clave menor y `--below` sobre la de
+clave mayor funcionan siempre, porque siempre hay una clave menor que la menor y otra mayor que la
+mayor (["El algoritmo del punto medio"](modelo-de-datos/orden-manual.md#el-algoritmo-del-punto-medio)).
+
+**Varias tareas en una llamada caen en el hueco en el orden en que se escribieron**, así que
+`biso set MYP-7 MYP-19 --below MYP-40` deja `MYP-40`, `MYP-7`, `MYP-19`, y con `--above MYP-40` deja
+`MYP-7`, `MYP-19`, `MYP-40`. La regla completa, con el hueco de cada flag y las claves que salen,
+está en ["Varias tareas en la misma
+llamada"](modelo-de-datos/orden-manual.md#varias-tareas-en-la-misma-llamada).
+
+**Todos valen en `biso new` como en cualquier otro comando de escritura.** Una tarea recién
+creada puede nacer colocada (`biso new "Fix the parser" --below MYP-11`), y `--clear-ordinal` sobre
+una tarea nueva no hace nada y avisa con `clear_on_new_task`, como cualquier otro `--clear-*` de
+`biso new` (["`biso new`"](cmd/new.md#parámetros-propios)).
 
 ## Casos límite de añadir, quitar y fijar
 
@@ -525,10 +624,12 @@ los escalares (["Orden de aplicación dentro de una escritura"](garantias.md#ord
 |---|---|---|
 | `--add-labels`, o cualquier otro `--add-*`/`--append-*` de lista de tokens, con un valor que la tarea ya tiene | Se queda igual, sin duplicar, con `warning: --add-labels: "urgent" already present, kept once` | 0 |
 | `--rm-labels`, `--rm-deps` o cualquier otro `--rm-*` de lista de tokens, sobre un valor que la tarea no tiene | Sin efecto, con `warning: --rm-labels: "urgent" not present, nothing removed` | 0 |
-| `--rm-ext` sobre una clave que el mapa no tiene | Sin efecto, con `warning: --rm-ext: "priority_score" not present, nothing removed` | 0 |
-| Paso de `--ext` y `--rm-ext` en el orden de aplicación | `--clear-ext` en el paso 1, `--rm-ext` en el paso 3, `--ext` en su propio paso 5, entre los añadidos (4) y los escalares (6) | no aplica |
-| `--ext k=a --ext k=b`, la misma clave dos veces con valores distintos | Gana el último valor de la línea de comandos, con `warning: --ext: key "k" given twice, kept last value` | 0 |
 | Mayúsculas en una etiqueta o una persona asignada, por ejemplo `--add-labels Parser --add-labels parser` | Quedan como dos valores distintos al guardar; un filtro de lectura como `ls --label parser` encuentra los dos | 0 |
 | Mayúsculas y acentos en el selector de texto de un criterio o de un comentario | Se pliegan las mayúsculas y se descartan los acentos antes de comparar (normalización NFKD, sin marcas combinantes); no cambia si el resultado es 0, 4 o 5, solo qué encuentra | sin cambio |
+| Una etiqueta con ámbito en cualquiera de los flags de etiquetas | Lo decide ["Escribir una etiqueta con ámbito"](#escribir-una-etiqueta-con-ámbito), según el separador y según lo que la tarea conserve tras los `--rm-labels` de la misma llamada | 0, 2, 3 o 6 |
+| `--ordinal` con un valor que no es `first` ni `last`, la cadena vacía incluida | Error con el `code` `invalid_ordinal_value` (["El orden manual"](#el-orden-manual)) | 2 |
+| `--above` o `--below` nombrando una de las tareas que la propia llamada mueve | Error con el `code` `self_ordinal_neighbour` | 2 |
+| `--above` o `--below` sobre una tarea que no tiene clave de orden | Error con el `code` `neighbour_without_ordinal`, y no se escribe ninguna de las tareas de la llamada | 6 |
+| `--above` sobre la tarea de clave menor, o `--below` sobre la de clave mayor | Se coloca, sin aviso: siempre hay sitio en los extremos | 0 |
 
 ---

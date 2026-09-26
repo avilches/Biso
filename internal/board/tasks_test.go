@@ -25,10 +25,6 @@ const testBoardID = "3f9a2b1c"
 // `biso init`'s job.
 const testPrefix = "MYP"
 
-// testExtensions is the `extensions` list the example board declares
-// (docs/spec/modelo-de-datos/campos-externos.md).
-var testExtensions = []string{"trello.card", "github.issue"}
-
 func openTasks(t *testing.T, path string) (*Tasks, func()) {
 	t.Helper()
 
@@ -36,7 +32,7 @@ func openTasks(t *testing.T, path string) (*Tasks, func()) {
 	if err != nil {
 		t.Fatalf("open the board at %s: %v", path, err)
 	}
-	return NewTasks(s, testPrefix, testExtensions), func() { s.Close() }
+	return NewTasks(s, testPrefix), func() { s.Close() }
 }
 
 func TestCreateAllocatesConsecutiveIdentifiers(t *testing.T) {
@@ -105,7 +101,6 @@ func TestCreateFillsTheDatesItDoesNotReceiveAndKeepsTheOnesItDoes(t *testing.T) 
 // docs/spec/modelo-de-datos/index.md at a non-zero value, so that a round
 // trip that drops one is visible.
 func sampleTask() *model.Task {
-	ordinal := 7
 	task := &model.Task{
 		Title:          "Normalize CRLF in the diff",
 		Status:         "In Progress",
@@ -116,12 +111,9 @@ func sampleTask() *model.Task {
 		Author:         "@avilches",
 		Labels:         []string{"parser", "crlf"},
 		Dependencies:   []string{"MYP-4", "MYP-5"},
-		References:     []string{"docs/bugs/BUG-02.md"},
-		Documentation:  []string{"docs/spec/index.md"},
-		ModifiedFiles:  []string{"internal/diff/diff.go"},
+		References:     []string{"docs/bugs/BUG-02.md", "internal/diff/diff.go"},
 		Due:            time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
-		Ordinal:        &ordinal,
-		Ext:            map[string]string{"trello.card": "5f2a8c1e", "github.issue": "42"},
+		Ordinal:        "m8",
 		Description:    "The diff compares byte by byte...",
 		Plan:           "1. Read the parser.\n2. Add the CRLF case.",
 		Notes:          "The parser already normalized LF.",
@@ -274,7 +266,7 @@ func TestTwoProcessesNeverAllocateTheSameIdentifier(t *testing.T) {
 			}
 			defer s.Close()
 
-			tasks := NewTasks(s, testPrefix, testExtensions)
+			tasks := NewTasks(s, testPrefix)
 			for i := 0; i < perWriter; i++ {
 				task := &model.Task{Title: fmt.Sprintf("writer %d task %d", w, i), Status: "To Do"}
 				if err := tasks.Create(task); err != nil {
@@ -401,57 +393,6 @@ func TestLoadTellsNeverAllocatedApartFromNotFound(t *testing.T) {
 	}
 }
 
-func TestAnUndeclaredExtensionKeyIsRejectedOnWrite(t *testing.T) {
-	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
-	defer done()
-
-	task := &model.Task{
-		Title:  "With an extension",
-		Status: "To Do",
-		Ext:    map[string]string{"jira.key": "PROJ-1"},
-	}
-	err := tasks.Create(task)
-	modelErr, ok := err.(*model.Error)
-	if !ok {
-		t.Fatalf("Create with an undeclared key = %v, want a *model.Error", err)
-	}
-	if modelErr.ExitCode != 3 || modelErr.Code != "unknown_extension_key" {
-		t.Fatalf("error = %d/%s, want 3/unknown_extension_key", modelErr.ExitCode, modelErr.Code)
-	}
-
-	// Nothing was written, not even the identifier: the check runs before
-	// the transaction that allocates it.
-	last, err := tasks.LastAllocated()
-	if err != nil {
-		t.Fatalf("LastAllocated: %v", err)
-	}
-	if last != 0 {
-		t.Fatalf("LastAllocated() = %d, want 0: the rejected write allocated an id", last)
-	}
-}
-
-func TestAMalformedExtensionKeyIsRejectedBeforeTheDeclaredList(t *testing.T) {
-	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
-	defer done()
-
-	task := &model.Task{
-		Title:  "With a bad key",
-		Status: "To Do",
-		Ext:    map[string]string{"trello card": "1"},
-	}
-	err := tasks.Create(task)
-	modelErr, ok := err.(*model.Error)
-	if !ok {
-		t.Fatalf("Create with a malformed key = %v, want a *model.Error", err)
-	}
-	// A character outside the alphabet is a problem of form, exit code 2,
-	// and not the 3 of a key the board does not declare
-	// (docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token).
-	if modelErr.ExitCode != 2 || modelErr.Code != "malformed_extension_key" {
-		t.Fatalf("error = %d/%s, want 2/malformed_extension_key", modelErr.ExitCode, modelErr.Code)
-	}
-}
-
 func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
 	defer done()
@@ -465,8 +406,8 @@ func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if got.Ordinal != nil {
-		t.Fatalf("ordinal = %v, want nil", *got.Ordinal)
+	if got.Ordinal != "" {
+		t.Fatalf("ordinal = %q, want no key", got.Ordinal)
 	}
 	if !got.Due.IsZero() || !got.LeaseExpiresAt.IsZero() {
 		t.Fatalf("an unset date came back set: %v / %v", got.Due, got.LeaseExpiresAt)
@@ -479,25 +420,99 @@ func TestATaskWithNoOptionalFieldSurvivesTheRoundTrip(t *testing.T) {
 	}
 }
 
-func TestOrdinalZeroIsAValueAndNotAnAbsence(t *testing.T) {
+// TestAStoredOrdinalThatIsNotAKeyMakesTheTaskUnreadable is the section
+// "Una clave guardada que no cumple la regla" of
+// docs/spec/modelo-de-datos/orden-manual.md: a key that does not keep its
+// form is not a new error of its own, it is a datum the program cannot
+// interpret, so the task is left out of the read and named in the second
+// list, and the board around it goes on being read.
+//
+// Getting the bad key in takes SQL with the column's CHECK turned off,
+// because that CHECK is what keeps this program from ever writing one. The
+// case is real all the same: a board written by an older binary holds
+// integers in that column, SQLite hands them back as the integers they are,
+// and database/sql turns each one into a string on the way into the field,
+// so the ones that are not keys arrive here.
+func TestAStoredOrdinalThatIsNotAKeyMakesTheTaskUnreadable(t *testing.T) {
 	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
 	defer done()
 
-	zero := 0
-	task := &model.Task{Title: "First in the list", Status: "To Do", Ordinal: &zero}
-	if err := tasks.Create(task); err != nil {
+	readable := &model.Task{Title: "Readable", Status: "To Do", Ordinal: "m"}
+	if err := tasks.Create(readable); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+	for _, key := range []string{"3000", "m0", "M8"} {
+		bad := &model.Task{Title: "Written by something else", Status: "To Do"}
+		if err := tasks.Create(bad); err != nil {
+			t.Fatalf("Create: %v", err)
+		}
+		writeOrdinalPastTheCheck(t, tasks, bad.ID, key)
+	}
 
-	got, err := tasks.Load(task.ID)
+	all, skipped, err := tasks.All()
 	if err != nil {
-		t.Fatalf("Load: %v", err)
+		t.Fatalf("All: %v", err)
 	}
-	if got.Ordinal == nil {
-		t.Fatalf("ordinal came back absent, but 0 is a value a caller can give")
+	if len(all) != 1 || all[0].ID != readable.ID {
+		t.Fatalf("the read answered %d tasks, want only %s", len(all), readable.ID)
 	}
-	if *got.Ordinal != 0 {
-		t.Fatalf("ordinal = %d, want 0", *got.Ordinal)
+	if len(skipped) != 3 {
+		t.Fatalf("%d tasks were skipped, want three", len(skipped))
+	}
+	for _, s := range skipped {
+		if s.Reason == nil || s.Reason.Code != "undecodable_task" || s.Reason.Field != "ordinal" {
+			t.Errorf("%s was skipped as %+v, want an undecodable_task on ordinal", s.ID, s.Reason)
+		}
+		if !strings.Contains(s.Reason.Message, "is not an ordinal key") {
+			t.Errorf("the reason of %s is %q", s.ID, s.Reason.Message)
+		}
+	}
+
+	// Loading one by its identifier answers the same failure, which is what
+	// `biso get` and `biso doctor` print.
+	if _, err := tasks.Load(skipped[0].ID); err == nil {
+		t.Errorf("%s loaded with a key that is not one", skipped[0].ID)
+	}
+}
+
+// writeOrdinalPastTheCheck puts a value in the ordinal column that the
+// column's own CHECK refuses, which is the only way to reproduce a board
+// written by something other than this program.
+func writeOrdinalPastTheCheck(t *testing.T, tasks *Tasks, id, key string) {
+	t.Helper()
+	if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = 1"); err != nil {
+		t.Fatalf("turn the check constraints off: %v", err)
+	}
+	defer func() {
+		if _, err := tasks.store.Exec("PRAGMA ignore_check_constraints = 0"); err != nil {
+			t.Fatalf("turn the check constraints back on: %v", err)
+		}
+	}()
+	if _, err := tasks.store.Exec("UPDATE task SET ordinal = ? WHERE id = ?", key, id); err != nil {
+		t.Fatalf("writing the key %q on %s: %v", key, id, err)
+	}
+}
+
+// TestAnOrdinalKeyComesBackExactly is the round trip the symmetry of
+// `biso export` rests on: a key is stored as text and read back character
+// for character, whatever its length and whichever end of the alphabet it
+// sits at (docs/spec/modelo-de-datos/orden-manual.md).
+func TestAnOrdinalKeyComesBackExactly(t *testing.T) {
+	tasks, done := openTasks(t, filepath.Join(t.TempDir(), "board.sqlite"))
+	defer done()
+
+	for _, key := range []string{"i", "00i", "zzzzz1", "m8"} {
+		task := &model.Task{Title: "Placed by hand", Status: "To Do", Ordinal: key}
+		if err := tasks.Create(task); err != nil {
+			t.Fatalf("Create with the key %q: %v", key, err)
+		}
+		got, err := tasks.Load(task.ID)
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		if got.Ordinal != key {
+			t.Fatalf("ordinal = %q, want %q", got.Ordinal, key)
+		}
 	}
 }
 
@@ -572,16 +587,8 @@ func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
 			task: &model.Task{Title: "A task", Status: "To Do", Assignees: []string{"sara smith"}},
 		},
 		{
-			name: "a newline in the value of an extension field",
-			task: &model.Task{
-				Title:  "A task",
-				Status: "To Do",
-				Ext:    map[string]string{"trello.card": "5f2a8c1e\n5f2a8c1f"},
-			},
-		},
-		{
-			name: "a negative ordinal",
-			task: &model.Task{Title: "A task", Status: "To Do", Ordinal: negative()},
+			name: "an ordinal key outside its alphabet",
+			task: &model.Task{Title: "A task", Status: "To Do", Ordinal: "3000"},
 		},
 		{
 			name: "a criterion with a key the program never assigns",
@@ -628,13 +635,6 @@ func TestCreateRefusesAnInvalidTaskWithoutSpendingAnIdentifier(t *testing.T) {
 			}
 		})
 	}
-}
-
-// negative is the one ordinal the field table of
-// docs/spec/modelo-de-datos/index.md does not admit.
-func negative() *int {
-	value := -1
-	return &value
 }
 
 // TestSaveRefusesAnInvalidTaskAndLeavesTheStoredOneAlone is the same rule
@@ -702,7 +702,7 @@ func TestASetReadSkipsTheTaskItCannotDecodeAndNamesIt(t *testing.T) {
 				t.Fatalf("open the board: %v", err)
 			}
 			defer s.Close()
-			tasks := NewTasks(s, testPrefix, testExtensions)
+			tasks := NewTasks(s, testPrefix)
 			for i := 1; i <= 3; i++ {
 				task := &model.Task{Title: fmt.Sprintf("Task %d", i), Status: "To Do"}
 				task.AddComment("@avilches", time.Date(2026, 9, 6, 10, 0, 0, 0, time.UTC), "A comment.")
@@ -755,7 +755,7 @@ func TestATargetedReadOfAnUndecodableTaskIsAnError(t *testing.T) {
 		t.Fatalf("open the board: %v", err)
 	}
 	defer s.Close()
-	tasks := NewTasks(s, testPrefix, testExtensions)
+	tasks := NewTasks(s, testPrefix)
 
 	task := &model.Task{Title: "A task", Status: "To Do"}
 	if err := tasks.Create(task); err != nil {
@@ -783,7 +783,7 @@ func TestATargetedReadOfAnUndecodableTaskIsAnError(t *testing.T) {
 
 // TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow covers the other
 // way a row stops being a task: a name in task_list_item that is not one
-// of the six list fields. The schema's CHECK keeps biso itself from
+// of the four list fields. The schema's CHECK keeps biso itself from
 // writing one, so it can only arrive from outside, like the dates above.
 func TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "board.sqlite")
@@ -792,7 +792,7 @@ func TestASetReadSkipsATaskWithAListFieldTheModelDoesNotKnow(t *testing.T) {
 		t.Fatalf("open the board: %v", err)
 	}
 	defer s.Close()
-	tasks := NewTasks(s, testPrefix, testExtensions)
+	tasks := NewTasks(s, testPrefix)
 
 	for i := 1; i <= 2; i++ {
 		task := &model.Task{

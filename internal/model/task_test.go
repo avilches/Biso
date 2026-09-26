@@ -179,61 +179,13 @@ func TestListFieldsCoversEveryListFieldOfTheModel(t *testing.T) {
 			t.Fatalf("%s = %v, want one value", f, got)
 		}
 	}
-	if len(ListFields()) != 6 {
-		t.Fatalf("ListFields() has %d entries, want the 6 of docs/spec/modelo-de-datos/index.md", len(ListFields()))
-	}
-}
-
-func TestUnknownExtensionKeyIsRejectedAgainstTheDeclaredOnes(t *testing.T) {
-	declared := []string{"trello.card", "github.issue"}
-
-	if err := ValidateExtensionKey("trello.card", declared); err != nil {
-		t.Fatalf("a declared key was rejected: %v", err)
-	}
-
-	err := ValidateExtensionKey("jira.key", declared)
-	if err == nil {
-		t.Fatalf("an undeclared key was accepted")
-	}
-	// docs/spec/modelo-de-datos/campos-externos.md
-	if err.ExitCode != 3 || err.Code != "unknown_extension_key" {
-		t.Fatalf("error = %d/%s, want 3/unknown_extension_key", err.ExitCode, err.Code)
-	}
-	if err.Message != `unknown extension key: "jira.key"` {
-		t.Fatalf("message = %q", err.Message)
-	}
-	if err.Field != "ext" || err.Given != "jira.key" {
-		t.Fatalf("field/given = %q/%q, want ext/jira.key", err.Field, err.Given)
-	}
-	if len(err.Valid) != 2 || err.Valid[0] != "trello.card" || err.Valid[1] != "github.issue" {
-		t.Fatalf("valid = %v, want the declared keys in their configured order", err.Valid)
-	}
-}
-
-func TestExtensionKeyAlphabetIsChecked(t *testing.T) {
-	// docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token
-	for _, good := range []string{"trello.card", "github_issue", "a-b", "año.1"} {
-		if err := ValidateExtensionKeySyntax(good); err != nil {
-			t.Fatalf("ValidateExtensionKeySyntax(%q) = %v, want nil", good, err)
-		}
-	}
-	for _, bad := range []string{"trello=card", "trello card", "trello:card", "trello@card", ""} {
-		err := ValidateExtensionKeySyntax(bad)
-		if err == nil {
-			t.Fatalf("ValidateExtensionKeySyntax(%q) = nil, want an error", bad)
-		}
-		if err.ExitCode != 2 || err.Code != "malformed_extension_key" {
-			t.Fatalf("%q gave %d/%s, want 2/malformed_extension_key", bad, err.ExitCode, err.Code)
-		}
-		if len(err.Hints) != 1 || err.Hints[0] != "an extension key may contain letters, digits, and - _ ." {
-			t.Fatalf("%q gave hints %v", bad, err.Hints)
-		}
+	if len(ListFields()) != 4 {
+		t.Fatalf("ListFields() has %d entries, want the 4 of docs/spec/modelo-de-datos/index.md", len(ListFields()))
 	}
 }
 
 func TestLabelAndAssigneeAlphabetIsChecked(t *testing.T) {
-	// docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token: the
-	// label and assignee alphabet adds @ and : to the one of an extension key.
+	// docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token
 	for _, good := range []string{"urgent", "team:core", "@sara", "a-b_c.d"} {
 		if err := ValidateLabel(good); err != nil {
 			t.Fatalf("ValidateLabel(%q) = %v, want nil", good, err)

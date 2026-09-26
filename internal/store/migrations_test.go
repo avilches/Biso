@@ -48,7 +48,7 @@ func TestSchemaHasEveryTableOfTheModel(t *testing.T) {
 
 	for _, table := range []string{
 		"board_counter", "task", "task_list_item",
-		"task_ext", "task_criterion", "task_comment",
+		"task_criterion", "task_comment",
 	} {
 		var n int
 		if err := s.scanOne(&n, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?", table); err != nil {

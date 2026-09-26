@@ -65,8 +65,6 @@ const initHelp = "Usage: biso init [name] [options]\n" +
 	"  --terminal-status <status>  what `biso finish` sets (default: \"Done\")\n" +
 	"  --types <list>              comma-separated (default: \"task,bug,docs\")\n" +
 	"  --priorities <list>         comma-separated (default: \"high,medium,low\")\n" +
-	"  --extensions <list>         comma-separated declared external field keys,\n" +
-	"                              such as trello.card (default: none)\n" +
 	"  --prefix <text>             task id prefix, letters only (default: derived\n" +
 	"                              from the board name, uppercased)\n" +
 	"  --overwrite-config          replace the configuration of an existing board,\n" +
@@ -119,7 +117,7 @@ const initHelp = "Usage: biso init [name] [options]\n" +
 	"  biso init \"My project\" --statuses \"Ideas,To Do,In Progress,Done\" \\\n" +
 	"      --initial-status Ideas --active-status \"In Progress\" \\\n" +
 	"      --terminal-status Done\n" +
-	"  biso init \"My project\" --prefix MYP --at my-project-board --extensions trello.card\n" +
+	"  biso init \"My project\" --prefix MYP --at my-project-board\n" +
 	"  biso init --at /tmp/tablero-nuevo --from ~/.biso/boards/my-project-3f9a2b1c\n"
 
 // whereHelp is `biso where --help` (docs/spec/cmd/where.md).
@@ -161,7 +159,10 @@ const newHelp = "Usage: biso new <title> [options]\n" +
 	"      --status <value>        configured status (default: the initial one)\n" +
 	"      --add-labels <value>    add a label; repeatable or comma-separated\n" +
 	"      --add-assignees <@who>  add an assignee; repeatable or comma-separated\n" +
-	"      --add-deps <ref>        add a dependency; validated, repeatable\n" +
+	"      --add-deps <ref>        tasks that must be done first, so each blocks the\n" +
+	"                              new task; repeatable, checked to exist\n" +
+	"      --parent <ref>          the task this one is part of; at most one\n" +
+	"      --add-refs <text>       a path, URL or task id to look at; repeatable\n" +
 	"      --due <YYYY-MM-DD>      due date\n" +
 	"      --comment <text>        add a discussion comment; repeatable\n" +
 	"      --append-plan <text>    implementation plan\n" +
@@ -169,6 +170,10 @@ const newHelp = "Usage: biso new <title> [options]\n" +
 	"                              to you, with the lease claimed for you\n" +
 	"\n" +
 	"Every other field flag of `biso set --help` is accepted too.\n" +
+	"\n" +
+	"Dependencies are written on the task that waits: `--add-deps MYP-4` means\n" +
+	"MYP-4 goes first and blocks it. There is no flag for the opposite, a new task\n" +
+	"that blocks MYP-10; create it, then run `biso set MYP-10 --add-deps <new id>`.\n" +
 	"\n" +
 	"Batch:\n" +
 	"      --from <file|->        NDJSON, one task object per line. The only place\n" +
@@ -179,15 +184,17 @@ const newHelp = "Usage: biso new <title> [options]\n" +
 	"Any text option also takes @file to read a file, or - to read stdin.\n" +
 	"\n" +
 	"Exit codes:\n" +
-	"  0  created            4  a referenced task or file does not exist\n" +
-	"  2  bad usage          5  a text reference matched several tasks\n" +
+	"  0  created            5  a text reference matched several tasks\n" +
+	"  2  bad usage          6  --above or --below on a task with no place\n" +
 	"  3  unknown value      8  the board could not be written\n" +
+	"  4  a referenced task or file does not exist\n" +
 	"  7  batch or --dry-run validation failed, nothing was written\n" +
 	"                        20 no board here\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso new \"Normalize CRLF in the diff\" --type bug --priority high\n" +
 	"  biso new \"Add OAuth\" --add-ac \"Login succeeds\" --add-ac \"Token refreshes\"\n" +
+	"  biso new \"Parse the header\" --parent MYP-10 --add-deps MYP-4\n" +
 	"  biso new \"Rewrite the installer\" --append-desc @docs/installer.md --start\n" +
 	"  biso new --from tasks.ndjson --dry-run\n"
 
@@ -196,14 +203,20 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"\n" +
 	"Change any field of one or more tasks, all or nothing. Every flag here means\n" +
 	"the same in `biso new`, `biso start`, `biso note`, `biso comment`, `biso ask`,\n" +
-	"`biso answer`, `biso finish` and `biso archive`. Every flag name says what it\n" +
-	"does; there is no rule to learn beyond the name.\n" +
+	"`biso answer`, `biso finish` and `biso archive`. A flag name says what it does,\n" +
+	"and comma lists always have the same four shapes, but what a relation field\n" +
+	"means is not in its name: see Relations below.\n" +
 	"\n" +
 	"List fields that take comma-separated values have four shapes, and there is no\n" +
 	"field that breaks them:\n" +
 	"  --add-labels X      add one or more       --replace-labels X   replace the whole list\n" +
 	"  --rm-labels X       remove one or more    --clear-labels       empty the list\n" +
-	"The same works for --assignees, --refs, --docs, --deps and --files.\n" +
+	"The same works for --assignees, --refs and --deps.\n" +
+	"\n" +
+	"A label with a colon is scoped: key:value allows several values of that key\n" +
+	"on a task, key::value at most one, and writing key::value drops the other\n" +
+	"values of that key and says on stderr which ones it dropped. Filter with\n" +
+	"`biso ls --label key:` to get any value of a key.\n" +
 	"\n" +
 	"Criteria have three, because a criterion's text can contain a comma and so is\n" +
 	"never split on one. There is no whole-list replace; do it by clearing and\n" +
@@ -224,13 +237,32 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"      --append-summary X\n" +
 	"      --clear-desc / --clear-plan / --clear-notes / --clear-summary\n" +
 	"\n" +
-	"External fields have three: --ext key=value sets that one key, --rm-ext key\n" +
-	"drops it, --clear-ext empties the map. There is no --replace-ext: setting a\n" +
-	"key already replaces its value.\n" +
-	"\n" +
 	"Scalars just take a value: --title, --status, --type, --priority,\n" +
-	"--parent, --due, --ordinal, --author. Each has a --clear-<field>. An\n" +
-	"empty string is never a way to clear anything.\n" +
+	"--parent, --due, --author. Each has a --clear-<field>. An empty string\n" +
+	"is never a way to clear anything.\n" +
+	"\n" +
+	"Manual order is the one scalar you never type. You write where the task\n" +
+	"goes, and biso writes the key:\n" +
+	"      --ordinal first|last   before or after every task that has a place\n" +
+	"      --above <ref>          just above that task\n" +
+	"      --below <ref>          just below it\n" +
+	"      --clear-ordinal        out of the manual order\n" +
+	"Several tasks in one call land in the order you wrote them, so\n" +
+	"`biso set MYP-7 MYP-19 --below MYP-40` leaves MYP-40, MYP-7, MYP-19. A\n" +
+	"task with no place cannot be a neighbour: give it one first with\n" +
+	"`biso set <ref> --ordinal last`.\n" +
+	"\n" +
+	"Relations point from the task you name in <ref> to other tasks:\n" +
+	"      --parent <ref>         the task this one is part of; at most one\n" +
+	"      --add-deps <ref>       tasks that must be done before this one, so each\n" +
+	"                             blocks it; checked to exist, no cycles\n" +
+	"      --add-refs <text>      a path, a URL or a task id to look at; free text,\n" +
+	"                             never checked\n" +
+	"A dependency is written on the task that waits, never on the one that blocks.\n" +
+	"To say that MYP-4 blocks MYP-10:\n" +
+	"  biso set MYP-10 --add-deps MYP-4\n" +
+	"The other way round, `biso set MYP-4 --add-deps MYP-10`, is just as valid and\n" +
+	"says the opposite, so biso cannot warn you when it is backwards.\n" +
 	"\n" +
 	"Comments:\n" +
 	"      --comment <text>            append a comment; repeatable\n" +
@@ -252,9 +284,11 @@ const setHelp = "Usage: biso set <ref>... [options]\n" +
 	"\n" +
 	"Exit codes:\n" +
 	"  0  done                    5  something matched more than one thing\n" +
-	"  2  bad usage               8  the board could not be written\n" +
-	"  3  unknown value           20 no board here\n" +
+	"  2  bad usage               6  a scoped label already has its one value,\n" +
+	"  3  unknown value              or --above/--below on a task with no place\n" +
 	"  4  a task, criterion or comment was not found\n" +
+	"                             8  the board could not be written\n" +
+	"                             20 no board here\n" +
 	"\n" +
 	"Examples:\n" +
 	"  biso set MYP-11 --priority high --add-labels parser\n" +
@@ -270,40 +304,55 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"does not have is an error, never an empty list, so an empty list is a fact.\n" +
 	"\n" +
 	"Filters (repeat or comma-separate; same field is OR, different fields are AND):\n" +
-	"      --status <value>       configured status (default: all but the terminal)\n" +
-	"      --not-status <value>   exclude a status\n" +
-	"      --any-status           include the terminal status too\n" +
-	"      --archived             include archived tasks\n" +
-	"      --only-archived        only archived tasks\n" +
-	"      --type <value>         configured type\n" +
-	"      --priority <value>     configured priority\n" +
-	"      --label <value>        label; several labels are ANDed\n" +
-	"      --label-or <value>     label; several are ORed\n" +
-	"      --assignee <@who>      assignee\n" +
-	"      --mine                 assigned to you\n" +
-	"      --unassigned           assigned to nobody\n" +
-	"      --parent <ref>         subtasks of this task\n" +
-	"      --blocked              something unfinished blocks it\n" +
-	"      --not-blocked          nothing unfinished blocks it; it may still be\n" +
-	"                             waiting on an answer, so add --not-waiting\n" +
-	"      --waiting              has an open question\n" +
-	"      --not-waiting          has no open question\n" +
-	"      --active               in the board's active status\n" +
-	"      --not-active           not in the active status\n" +
-	"      --overdue              past its due date\n" +
-	"      --due-before <date>    due before YYYY-MM-DD\n" +
-	"      --search <text>        free text; see `biso get --help` for the scope\n" +
-	"      --unchecked            do not check that the labels and assignees you\n" +
-	"                             filter by exist on the board; nothing else\n" +
-	"                             changes\n" +
+	"      --status <value>          configured status (default: all but the terminal)\n" +
+	"      --not-status <value>      exclude a status\n" +
+	"      --any-status              include the terminal status too\n" +
+	"      --archived                include archived tasks\n" +
+	"      --only-archived           only archived tasks\n" +
+	"      --type <value>            configured type\n" +
+	"      --not-type <value>        exclude a type\n" +
+	"      --priority <value>        configured priority\n" +
+	"      --not-priority <value>    exclude a priority\n" +
+	"      --label <value>           label; several labels are ANDed. The form key:\n" +
+	"                                matches any value of that scoped-label key\n" +
+	"      --label-or <value>        label; several are ORed; takes key: too\n" +
+	"      --not-label <value>       exclude a label; several are ORed (excluded if it\n" +
+	"                                carries any of them); takes key: too\n" +
+	"      --assignee <@who>         assignee\n" +
+	"      --not-assignee <@who>     exclude an assignee\n" +
+	"      --mine                    assigned to you\n" +
+	"      --unassigned              assigned to nobody\n" +
+	"      --author <@who>           task author\n" +
+	"      --parent <ref>            subtasks of this task\n" +
+	"      --root                    no parent\n" +
+	"      --blocked                 something unfinished blocks it\n" +
+	"      --not-blocked             nothing unfinished blocks it; it may still be\n" +
+	"                                waiting on an answer, so add --not-waiting\n" +
+	"      --waiting                 has an open question\n" +
+	"      --not-waiting             has no open question\n" +
+	"      --active                  in the board's active status\n" +
+	"      --not-active              not in the active status\n" +
+	"      --overdue                 past its due date\n" +
+	"      --due-before <date>       due before YYYY-MM-DD\n" +
+	"      --created-after <date>    created on or after YYYY-MM-DD\n" +
+	"      --created-before <date>   created before YYYY-MM-DD\n" +
+	"      --updated-after <date>    updated on or after YYYY-MM-DD\n" +
+	"      --updated-before <date>   updated before YYYY-MM-DD\n" +
+	"      --ref <text>              substring match on references\n" +
+	"      --not-ref <text>          exclude a references substring match\n" +
+	"      --search <text>           free text; see `biso get --help` for the scope\n" +
+	"      --unchecked               do not check that the labels and assignees you\n" +
+	"                                filter by exist on the board; nothing else\n" +
+	"                                changes\n" +
 	"\n" +
 	"Shape:\n" +
-	"      --sort <field>         urgency, id, ordinal, due, updated, created, title\n" +
-	"      --reverse              flip the whole order, tie-breaks included\n" +
-	"      --limit <n>            how many rows to print (default 30, 0 prints none)\n" +
-	"      --all                  print every match\n" +
-	"      --ids                  print only ids, one per line\n" +
-	"      --count                print only how many match\n" +
+	"      --sort <field>            urgency, id, ordinal, due, updated, created, title,\n" +
+	"                                priority\n" +
+	"      --reverse                 flip the whole order, tie-breaks included\n" +
+	"      --limit <n>               how many rows to print (default 30, 0 prints none)\n" +
+	"      --all                     print every match\n" +
+	"      --ids                     print only ids, one per line\n" +
+	"      --count                   print only how many match\n" +
 	"\n" +
 	"Columns: id, status, type, priority, title, criteria, assignee, due. Empty\n" +
 	"cells print a dash. The title is cut at 100 characters, always, before any\n" +
@@ -322,7 +371,9 @@ const lsHelp = "Usage: biso ls [options]\n" +
 	"  biso ls --status \"In Progress\" --mine\n" +
 	"  biso ls --type bug --priority high --limit 10\n" +
 	"  biso ls --not-blocked --not-waiting --ids\n" +
-	"  biso ls --any-status --archived --all\n"
+	"  biso ls --any-status --archived --all\n" +
+	"  biso ls --ref internal/ops/write.go --any-status\n" +
+	"  biso ls --root --not-label blocked\n"
 
 // primeHelp is the help block of docs/spec/cmd/prime.md.
 const primeHelp = "Usage: biso prime [options]\n" +
@@ -367,6 +418,8 @@ const getHelp = "Usage: biso get <ref> [options]\n" +
 	"                             separated. One of: meta, desc, ac, plan, notes,\n" +
 	"                             summary, comments, question\n" +
 	"      --explain-urgency      show how the urgency number is built\n" +
+	"      --closure              show the full transitive closure of dependencies,\n" +
+	"                             both directions\n" +
 	"  -h, --help                 show this help\n" +
 	"\n" +
 	"Exit codes:\n" +
@@ -380,7 +433,8 @@ const getHelp = "Usage: biso get <ref> [options]\n" +
 	"  biso get MYP-11\n" +
 	"  biso get 11 --section ac\n" +
 	"  biso get \"CRLF\"\n" +
-	"  biso get MYP-11 --explain-urgency\n"
+	"  biso get MYP-11 --explain-urgency\n" +
+	"  biso get MYP-11 --closure\n"
 
 // exportHelp is `biso export --help` (docs/spec/cmd/export.md).
 const exportHelp = "Usage: biso export [options]\n" +
@@ -407,7 +461,7 @@ const exportHelp = "Usage: biso export [options]\n" +
 	"line, while --json means the single envelope every other command prints.\n" +
 	"\n" +
 	"Derived fields are never written: urgency, acDone, acTotal, commentCount,\n" +
-	"blocks, blocked, waiting, leaseExpired.\n" +
+	"blocks, blocked, waiting, leaseExpired, blockedByCount, unblocksCount.\n" +
 	"\n" +
 	"Exit codes:\n" +
 	"  0  exported       3  a filter value does not exist here\n" +

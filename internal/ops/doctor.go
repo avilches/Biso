@@ -142,23 +142,29 @@ func (d *doctor) warning(task, code, message string) {
 // each task in one pass over the board, so the report is sorted by this map
 // before it is answered.
 var checkRank = map[string]int{
-	"duplicate_id":             1,
-	"task_unreadable":          2,
-	"undeclared_extension_key": 3,
-	"value_not_configured":     4,
-	"status_role_unknown":      5,
-	"status_role_invalid":      6,
-	"dependency_not_found":     7,
-	"dependency_cycle":         8,
-	"parent_cycle":             9,
-	"duplicate_criterion_key":  10,
-	"lease_invariant":          11,
-	"highest_id_behind":        12,
-	"marker_missing":           13,
-	"marker_id_mismatch":       14,
-	"extra_root_unreadable":    15,
-	"unsafe_wal_filesystem":    16,
-	"ignore_file_mismatch":     17,
+	"duplicate_id":            1,
+	"task_unreadable":         2,
+	"value_not_configured":    3,
+	"status_role_unknown":     4,
+	"status_role_invalid":     5,
+	"dependency_not_found":    6,
+	"parent_not_found":        7,
+	"dependency_cycle":        8,
+	"parent_cycle":            9,
+	"duplicate_criterion_key": 10,
+	// The three checks of the scoped labels sit where the table of
+	// docs/spec/cmd/doctor.md#qué-comprueba puts them, between the repeated
+	// criterion keys and the lease.
+	"label_not_declared":         11,
+	"label_exclusive_violated":   12,
+	"label_key_mixed_separators": 13,
+	"lease_invariant":            14,
+	"highest_id_behind":          15,
+	"marker_missing":             16,
+	"marker_id_mismatch":         17,
+	"extra_root_unreadable":      18,
+	"unsafe_wal_filesystem":      19,
+	"ignore_file_mismatch":       20,
 }
 
 // inTableOrder sorts the findings the way the table lists the checks. The
@@ -304,21 +310,29 @@ func (d *doctor) checkTasks(tasks []*model.Task) error {
 	cfg := d.b.Config
 	reportedDependency := map[string]bool{}
 	reportedParent := map[string]bool{}
+	// A `labels` list that contradicts itself is not reported here: it is
+	// refused when it is written, and a board that somehow holds one has a
+	// configuration biso cannot read, which is the error every other
+	// unreadable configuration value already is.
+	rules, rulesErr := readLabelRules(cfg.Labels)
+	if rulesErr != nil {
+		return rulesErr
+	}
 
 	for _, t := range tasks {
 		d.checkVocabulary(t, "status", t.Status, cfg.Statuses)
 		d.checkVocabulary(t, "type", t.Type, cfg.Types)
 		d.checkVocabulary(t, "priority", t.Priority, cfg.Priorities)
-		for _, key := range sortedKeysOfStrings(t.Ext) {
-			if containsString(cfg.Extensions, key) {
-				continue
-			}
-			d.problem(t.ID, "undeclared_extension_key", undeclaredKeyMessage(key, cfg.Extensions))
-		}
 		for _, dep := range t.Dependencies {
 			if _, ok := byID[dep]; !ok {
 				d.problem(t.ID, "dependency_not_found",
 					fmt.Sprintf("dependency %s does not exist", dep))
+			}
+		}
+		if t.Parent != "" {
+			if _, ok := byID[t.Parent]; !ok {
+				d.problem(t.ID, "parent_not_found",
+					fmt.Sprintf("parent %s does not exist", t.Parent))
 			}
 		}
 		d.checkCycle(t, byID, reportedDependency, "dependency_cycle", "dependency cycle",
@@ -330,15 +344,102 @@ func (d *doctor) checkTasks(tasks []*model.Task) error {
 				}
 				return []string{x.Parent}
 			})
+		d.checkLabels(t, rules)
 		d.checkLease(t)
 	}
+	d.checkMixedLabelKeys(tasks)
 	return d.checkDuplicateCriterionKeys()
 }
 
+// checkLabels is the two errors about the labels of one task
+// (docs/spec/cmd/doctor.md#qué-comprueba): a label the `labels` list does
+// not allow, by its value or by its separator, and a key that carries more
+// than one value while one of them was written with the separator that
+// admits at most one.
+//
+// Neither is repairable with --fix, and both report external damage:
+// `biso config set labels` refuses to declare a list that would forbid
+// something already stored, and every write checks what it puts, so a board
+// that reaches either state had its database written from outside. Choosing
+// which value was meant, or which of the stored ones is the spare, is
+// exactly the kind of decision that destroys information when it is taken
+// alone.
+func (d *doctor) checkLabels(t *model.Task, rules *labelRules) {
+	for _, raw := range t.Labels {
+		rule := rules.allows(raw)
+		if rule == nil {
+			continue
+		}
+		if rule.open {
+			d.problem(t.ID, "label_not_declared", fmt.Sprintf(
+				"label %q uses %s, and the key %q is declared with %s",
+				raw, model.SplitLabel(raw).Separator, rule.key, rule.separator))
+			continue
+		}
+		d.problem(t.ID, "label_not_declared", fmt.Sprintf(
+			"label %q is not one of the values the key %q declares: %s",
+			raw, rule.key, rule.declares()))
+	}
+	for _, of := range exclusiveKeyViolations(t.Labels) {
+		d.problem(t.ID, "label_exclusive_violated", fmt.Sprintf(
+			"the label key %q has %d values on this task, and :: allows at most one: %s",
+			model.SplitLabel(of[0]).Key, len(of), strings.Join(of, ", ")))
+	}
+}
+
+// checkMixedLabelKeys is the warning of a key the board writes with the two
+// separators in different tasks. It denounces no damage but an ambiguity:
+// the writes that produced it were each legitimate, because the exclusivity
+// is checked inside one task and never over the whole board, and while
+// nobody decides, that key does not say whether it takes one value per task
+// or several. It is a finding of the board and not of any one task, so it
+// carries no identifier (docs/spec/cmd/doctor.md#qué-comprueba).
+func (d *doctor) checkMixedLabelKeys(tasks []*model.Task) {
+	several := map[string]int{}
+	exclusive := map[string]int{}
+	spelling := map[string]string{}
+	var order []string
+	for _, t := range tasks {
+		for _, key := range labelKeys(t.Labels) {
+			folded := foldKey(key)
+			if _, known := spelling[folded]; !known {
+				spelling[folded] = key
+				order = append(order, folded)
+			}
+			withSeveral, withExclusive := false, false
+			for _, raw := range labelsOfKey(t.Labels, key) {
+				if model.SplitLabel(raw).Exclusive() {
+					withExclusive = true
+				} else {
+					withSeveral = true
+				}
+			}
+			if withSeveral {
+				several[folded]++
+			}
+			if withExclusive {
+				exclusive[folded]++
+			}
+		}
+	}
+	sortStrings(order)
+	for _, folded := range order {
+		if several[folded] == 0 || exclusive[folded] == 0 {
+			continue
+		}
+		d.warning("", "label_key_mixed_separators", fmt.Sprintf(
+			"label key %q is used with both separators, %s with : and %d with ::",
+			spelling[folded], plural(several[folded], "task"), exclusive[folded]))
+	}
+}
+
 // checkVocabulary is the row about a value the board no longer configures.
-// An empty value is no value at all and is never checked against anything.
+// An empty type or priority is no value at all and is never checked
+// against anything, but status is required
+// (docs/spec/garantias.md#qué-se-comprueba), so an empty one is reported
+// the same as any other value the board does not declare.
 func (d *doctor) checkVocabulary(t *model.Task, field, value string, configured []string) {
-	if value == "" || containsString(configured, value) {
+	if (value == "" && field != "status") || containsString(configured, value) {
 		return
 	}
 	noun := "statuses"
@@ -351,9 +452,8 @@ func (d *doctor) checkVocabulary(t *model.Task, field, value string, configured 
 	d.problem(t.ID, "value_not_configured", notConfiguredMessage(field, value, noun, configured))
 }
 
-// notConfiguredMessage and undeclaredKeyMessage are the two messages that
-// quote a list the board may have emptied. `types`, `priorities` and
-// `extensions` can all be left with nothing in them
+// notConfiguredMessage is the message that quotes a list the board may have
+// emptied. `types` and `priorities` can be left with nothing in them
 // (docs/spec/cmd/config.md), and quoting an empty list would print a pair
 // of empty quotes where a value should be, which says nothing and reads
 // like a bug. The message says there is none instead
@@ -365,14 +465,6 @@ func notConfiguredMessage(field, value, noun string, configured []string) string
 	}
 	return fmt.Sprintf("%s %q is not one of the configured %s %q",
 		field, value, noun, strings.Join(configured, ", "))
-}
-
-func undeclaredKeyMessage(key string, declared []string) string {
-	if len(declared) == 0 {
-		return fmt.Sprintf("ext key %q is not declared, and the board declares none", key)
-	}
-	return fmt.Sprintf("ext key %q is not declared, declared keys are %q",
-		key, strings.Join(declared, ", "))
 }
 
 // checkCycle reports one finding per cycle and not one per task in it: the
@@ -572,8 +664,8 @@ func (d *doctor) fix(dryRun bool) error {
 	return nil
 }
 
-// sortedKeys and sortedKeysOfStrings keep every list of this report in one
-// fixed order, so that two runs over the same board print the same thing.
+// sortedKeys keeps every list of this report in one fixed order, so that two
+// runs over the same board print the same thing.
 func sortedKeys[V any](m map[string]V) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -582,7 +674,5 @@ func sortedKeys[V any](m map[string]V) []string {
 	sortStrings(keys)
 	return keys
 }
-
-func sortedKeysOfStrings(m map[string]string) []string { return sortedKeys(m) }
 
 func sortStrings(values []string) { sort.Strings(values) }

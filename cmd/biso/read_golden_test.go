@@ -64,7 +64,7 @@ func listingBoard(t *testing.T) *machine {
 	m.run(t, "set", "MYP-11", "--title", "Normalize CRLF in the diff",
 		"--type", "bug", "--priority", "high", "--status", "In Progress",
 		"--add-assignees", "@claude", "--add-labels", "parser",
-		"--add-refs", "docs/bugs/BUG-02.md",
+		"--add-refs", "docs/bugs/BUG-02.md,notes/a\\,b.md",
 		"--add-ac", "The diff ignores CRLF",
 		"--add-ac", "There is a test that covers it").assertCode(t, 0)
 	m.run(t, "set", "MYP-11", "--check-ac", "1").assertCode(t, 0)
@@ -311,6 +311,19 @@ func TestGetExplainsATerminalUrgencyWithOneLine(t *testing.T) {
 // TestGetPrintsTheOpenQuestionWithItsAuthorAndItsInstant is the third block
 // of docs/spec/cmd/get.md#salida. The question is written with a statement
 // because `biso ask` is the next step's command.
+// TestGetClosurePrintsTheFullTransitiveGraph is the example of
+// docs/spec/cmd/get.md#--closure: MYP-11's transitive closure downward is
+// MYP-40, MYP-71 and MYP-72, and its unblocks count leaves MYP-72 out
+// because it is already Done.
+func TestGetClosurePrintsTheFullTransitiveGraph(t *testing.T) {
+	m := cardBoard(t)
+
+	got := m.run(t, "get", "MYP-11", "--closure", "--section", "ac").assertCode(t, 0)
+
+	closure := got.stdout[strings.Index(got.stdout, "closure\n"):]
+	assertEqual(t, closure, fixture(t, "get-closure.txt"), "the closure of biso get")
+}
+
 func TestGetPrintsTheOpenQuestionWithItsAuthorAndItsInstant(t *testing.T) {
 	m := newMachine(t)
 	dir := filepath.Join(m.home, ".biso", "boards", "my-project-3f9a2b1c")
@@ -332,7 +345,10 @@ func TestGetPrintsTheOpenQuestionWithItsAuthorAndItsInstant(t *testing.T) {
 // cardBoard is the board of the examples of docs/spec/cmd/get.md: MYP-11
 // with the body, the lease and the assignee those blocks show, and MYP-40
 // depending on it, which is the `blocking` term of the urgency 19.0 they
-// print.
+// print. MYP-40 has, in turn, two dependents chained after it, MYP-71 and
+// MYP-72, which is what docs/spec/cmd/get.md#--closure walks: MYP-11's
+// transitive closure downward is MYP-40, MYP-71 and MYP-72, and its
+// `unblocks` count is 2 because MYP-72 is already Done.
 //
 // MYP-11 is created by @claude with --start, which is what leaves it in the
 // active status, assigned to @claude and with the lease in @claude's hands,
@@ -343,8 +359,7 @@ func cardBoard(t *testing.T) *machine {
 	t.Helper()
 	m := newMachine(t)
 	m.env["BISO_ME"] = "@avilches"
-	m.run(t, "init", "My project", "--prefix", "MYP",
-		"--extensions", "trello.card").assertCode(t, 0)
+	m.run(t, "init", "My project", "--prefix", "MYP").assertCode(t, 0)
 	for i := 1; i <= 10; i++ {
 		m.run(t, "new", "Task "+strconv.Itoa(i)).assertCode(t, 0)
 	}
@@ -352,8 +367,7 @@ func cardBoard(t *testing.T) *machine {
 	m.env["BISO_ME"] = "@claude"
 	m.run(t, "new", "Normalize CRLF in the diff", "--start", "--author", "@avilches",
 		"--type", "bug", "--priority", "high",
-		"--add-labels", "parser", "--add-refs", "docs/bugs/BUG-02.md",
-		"--ext", "trello.card=5f2a8c1e3b9d4a7f6e0c2b81",
+		"--add-labels", "parser", "--add-refs", "docs/bugs/BUG-02.md,notes/a\\,b.md",
 		"--append-desc", "The diff compares byte by byte and marks as different "+
 			"two lines that only\ndiffer in the line ending.",
 		"--append-plan", "1. Read the parser.\n2. Add the CRLF case.",
@@ -371,6 +385,14 @@ func cardBoard(t *testing.T) *machine {
 		m.run(t, "new", "Task "+strconv.Itoa(i)).assertCode(t, 0)
 	}
 	m.run(t, "new", "Depends on the parser", "--add-deps", "MYP-11").assertCode(t, 0)
+	for i := 41; i <= 70; i++ {
+		m.run(t, "new", "Task "+strconv.Itoa(i)).assertCode(t, 0)
+	}
+	m.run(t, "new", "Migrate callers to the new config loader",
+		"--add-deps", "MYP-40").assertCode(t, 0)
+	m.run(t, "new", "Remove the deprecated config loader path",
+		"--add-deps", "MYP-71").assertCode(t, 0)
+	m.run(t, "set", "MYP-72", "--status", "Done").assertCode(t, 0)
 	return m
 }
 
@@ -429,8 +451,8 @@ func TestGetEnvelopeMatchesTheSchemaOfTheSpecification(t *testing.T) {
 	m := cardBoard(t)
 
 	// The schema of that page is the one of a call that asked for the
-	// explanation, which is the only flag that adds a key.
-	got := m.run(t, "get", "MYP-11", "--explain-urgency", "--json").assertCode(t, 0)
+	// explanation and the closure, the two flags that add a key.
+	got := m.run(t, "get", "MYP-11", "--explain-urgency", "--closure", "--json").assertCode(t, 0)
 
 	assertSameShape(t, got.stdout, fixture(t, "get-json.txt"))
 }
@@ -568,12 +590,6 @@ func compareShape(t *testing.T, path string, got, want any) {
 		object, ok := got.(map[string]any)
 		if !ok {
 			t.Errorf("%s is %T and the schema has an object there", path, got)
-			return
-		}
-		if strings.HasSuffix(path, ".ext") {
-			// The external fields are the one object of the contract
-			// whose keys are the board's and not the schema's
-			// (docs/spec/modelo-de-datos/campos-externos.md).
 			return
 		}
 		if a, b := keysOf(object), keysOf(expected); !reflect.DeepEqual(a, b) {

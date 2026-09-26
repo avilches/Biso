@@ -1,6 +1,8 @@
 package ops
 
 import (
+	"fmt"
+	"sort"
 	"time"
 
 	"biso/internal/board"
@@ -38,6 +40,26 @@ type TaskView struct {
 	Waiting bool
 
 	LeaseExpired bool
+
+	// BlockedByCount and UnblocksCount are the two always-present counts of
+	// docs/spec/cmd/get.md#salida: how many unfinished tasks sit in the
+	// transitive closure of `dependencies`, in each direction. They are
+	// zero until withClosure fills them, which is never done from a loop
+	// over the whole board (docs/spec/presupuestos.md#el-presupuesto-de-arranque).
+	BlockedByCount int
+	UnblocksCount  int
+	// Closure is the full transitive closure in both directions, filled
+	// only when the caller asked for it with --closure
+	// (docs/spec/cmd/get.md#--closure).
+	Closure *Closure
+}
+
+// Closure is the full transitive closure of a task's dependencies, in both
+// directions, finished and archived tasks included
+// (docs/spec/cmd/get.md#--closure).
+type Closure struct {
+	BlockedBy []string
+	Unblocks  []string
 }
 
 // reader is one reading invocation while it is being answered.
@@ -69,6 +91,14 @@ func (r *reader) note(note string) { r.notes = append(r.notes, note) }
 
 // load reads every task of the board once, archived ones included, and
 // records the ones that could not be decoded.
+//
+// A row internal/board could not turn into a task is not the only way one
+// ends up unreadable: a status, a type or a priority the board no longer
+// configures is the other, and the two are folded into one list here,
+// before any command looks at a filter
+// (docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible). From this
+// point on r.all and r.byID hold only tasks every reading command can show
+// as if they were fine.
 func (r *reader) load() error {
 	if r.byID != nil {
 		return nil
@@ -77,13 +107,123 @@ func (r *reader) load() error {
 	if err != nil {
 		return err
 	}
-	r.all = all
-	r.byID = make(map[string]*model.Task, len(all))
-	for _, t := range all {
+	legible, badVocabulary := partitionByReadability(r.b.Config, all)
+	r.all = legible
+	r.byID = make(map[string]*model.Task, len(legible))
+	for _, t := range legible {
 		r.byID[t.ID] = t
 	}
-	r.skipped = append(r.skipped, skipped...)
+	r.skipped = append(r.skipped, mergeSkipped(skipped, badVocabulary)...)
 	return nil
+}
+
+// readabilityError is the vocabulary half of
+// docs/spec/garantias.md#qué-se-comprueba: a status, type or priority the
+// board's configuration does not declare. The other half, a date that is
+// not a date, an unknown list field or a column of the wrong type, is
+// already decided while a row becomes a task (internal/board/rows.go),
+// because that is the layer that reads the row and knows nothing about a
+// board's configuration; this one is the layer that has both the task and
+// the configuration.
+//
+// The comparison is exact and never the matching algorithm's: what a write
+// stores is always the configured spelling
+// (docs/spec/vocabularios.md#idéntica-al-leer-significa-también-lo-ya-guardado).
+// status cannot be empty; type and priority can.
+func readabilityError(cfg board.Config, t *model.Task) *model.Error {
+	if err := vocabularyReadabilityError(t.ID, "status", t.Status, cfg.Statuses, false); err != nil {
+		return err
+	}
+	if err := vocabularyReadabilityError(t.ID, "type", t.Type, cfg.Types, true); err != nil {
+		return err
+	}
+	return vocabularyReadabilityError(t.ID, "priority", t.Priority, cfg.Priorities, true)
+}
+
+// readabilityErrorExcluding is readabilityError with status, type or
+// priority left unchecked when this very call is about to write it: a
+// value that is wrong right now is not a fault the call needs to answer
+// for when the call itself is what replaces it. `biso start` and `biso
+// finish` are the two callers, because both carry a precondition of their
+// own (being archived, already finished, not ready to finish) that reads
+// the task as it is before the write, and that precondition must never
+// win over a fault the write does not touch
+// (docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible).
+func readabilityErrorExcluding(cfg board.Config, t *model.Task, changes []Change) *model.Error {
+	if !writesFlag(changes, "status") {
+		if err := vocabularyReadabilityError(t.ID, "status", t.Status, cfg.Statuses, false); err != nil {
+			return err
+		}
+	}
+	if !writesFlag(changes, "type") && !writesFlag(changes, "clear-type") {
+		if err := vocabularyReadabilityError(t.ID, "type", t.Type, cfg.Types, true); err != nil {
+			return err
+		}
+	}
+	if !writesFlag(changes, "priority") && !writesFlag(changes, "clear-priority") {
+		if err := vocabularyReadabilityError(t.ID, "priority", t.Priority, cfg.Priorities, true); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func vocabularyReadabilityError(id, field, value string, configured []string, emptyOK bool) *model.Error {
+	if value == "" && emptyOK {
+		return nil
+	}
+	if containsString(configured, value) {
+		return nil
+	}
+	return &model.Error{
+		ExitCode: 3,
+		Code:     "undecodable_task",
+		Message: fmt.Sprintf("%s cannot be read: its %s is %q, which this board does not configure",
+			id, field, value),
+		Field: field,
+		Given: value,
+		Valid: append([]string(nil), configured...),
+	}
+}
+
+// partitionByReadability splits all into the tasks readabilityError has
+// nothing to say about and the ones it does, the latter turned into the
+// same board.Skipped shape a row that failed to decode already comes in,
+// so both kinds travel the rest of the way through one list.
+func partitionByReadability(cfg board.Config, all []*model.Task) ([]*model.Task, []board.Skipped) {
+	var legible []*model.Task
+	var bad []board.Skipped
+	for _, t := range all {
+		if err := readabilityError(cfg, t); err != nil {
+			bad = append(bad, board.Skipped{ID: t.ID, Reason: err})
+			continue
+		}
+		legible = append(legible, t)
+	}
+	return legible, bad
+}
+
+// mergeSkipped answers base and extra as one list, in the ascending
+// identifier order docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible
+// names them in, whichever of the two kinds of unreadable task found them.
+func mergeSkipped(base, extra []board.Skipped) []board.Skipped {
+	if len(base) == 0 {
+		return extra
+	}
+	if len(extra) == 0 {
+		return base
+	}
+	all := make([]board.Skipped, 0, len(base)+len(extra))
+	all = append(all, base...)
+	all = append(all, extra...)
+	sort.Slice(all, func(i, j int) bool {
+		a, b := taskNumber(all[i].ID), taskNumber(all[j].ID)
+		if a != b {
+			return a < b
+		}
+		return all[i].ID < all[j].ID
+	})
+	return all
 }
 
 // skippedIDs are the identifiers of the tasks that were left out, in the
@@ -150,12 +290,119 @@ func (r *reader) blocked(t *model.Task) bool {
 	return false
 }
 
+// dependents is the reverse of `dependencies`: for every task, the ones
+// that name it directly. It is built once per closure walk and not once
+// per node visited, over r.all, which already excludes every task that
+// could not be read.
+func (r *reader) dependents() map[string][]string {
+	out := make(map[string][]string, len(r.all))
+	for _, t := range r.all {
+		for _, dep := range t.Dependencies {
+			out[dep] = append(out[dep], t.ID)
+		}
+	}
+	return out
+}
+
+// closureReached walks the graph edges gives it, starting from start, and
+// answers every identifier it reaches, start itself excluded even if a
+// cycle returns to it. A cycle is walked without revisiting an identifier
+// instead of failing, and an edge that names an identifier not in byID,
+// whether it never existed or could not be read, simply adds nothing and is
+// never followed any further: byID already holds only the tasks r.load
+// could decode (docs/spec/cmd/get.md#--closure).
+func closureReached(start string, byID map[string]*model.Task, edges func(*model.Task) []string) map[string]bool {
+	visited := map[string]bool{start: true}
+	var walk func(id string)
+	walk = func(id string) {
+		t, ok := byID[id]
+		if !ok {
+			return
+		}
+		for _, next := range edges(t) {
+			if visited[next] {
+				continue
+			}
+			visited[next] = true
+			walk(next)
+		}
+	}
+	walk(start)
+	delete(visited, start)
+	return visited
+}
+
+// closureOrder answers the members of reached in the ascending identifier
+// order r.all already carries, which is the same order `blocks` uses
+// (docs/spec/modelo-de-datos/index.md#los-campos-derivados).
+func (r *reader) closureOrder(reached map[string]bool) []string {
+	if len(reached) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(reached))
+	for _, t := range r.all {
+		if reached[t.ID] {
+			out = append(out, t.ID)
+		}
+	}
+	return out
+}
+
+// closureCount is how many of reached are still unfinished, with the exact
+// definition the `bloquea`/`bloqueada` terms of the urgency use
+// (docs/spec/modelo-de-datos/urgencia.md).
+func (r *reader) closureCount(reached map[string]bool) int {
+	count := 0
+	for id := range reached {
+		if t, ok := r.byID[id]; ok && r.unfinished(t) {
+			count++
+		}
+	}
+	return count
+}
+
+// withClosure fills v's transitive closure fields over t's dependency
+// graph: the two counts docs/spec/cmd/get.md#salida always prints, and,
+// when full is true, the two complete lists of docs/spec/cmd/get.md#--closure.
+//
+// It is never called from a loop over the whole board: the cost is
+// proportional to the size of the task's own chain of dependencies, and
+// `biso get` pays it once, for the one task it reads, the same way
+// `biso prime` pays it once, for the first row of NEXT UP, and nowhere
+// else (docs/spec/presupuestos.md#el-presupuesto-de-arranque).
+func (r *reader) withClosure(v TaskView, full bool) TaskView {
+	dependents := r.dependents()
+	blockedBy := closureReached(v.Task.ID, r.byID, func(x *model.Task) []string {
+		return x.Dependencies
+	})
+	unblocks := closureReached(v.Task.ID, r.byID, func(x *model.Task) []string {
+		return dependents[x.ID]
+	})
+	v.BlockedByCount = r.closureCount(blockedBy)
+	v.UnblocksCount = r.closureCount(unblocks)
+	if full {
+		v.Closure = &Closure{
+			BlockedBy: r.closureOrder(blockedBy),
+			Unblocks:  r.closureOrder(unblocks),
+		}
+	}
+	return v
+}
+
 // view computes a task's derived fields. It answers the error of an
 // undecodable task untouched, so that the caller decides between the two
 // endings of
 // docs/spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar:
 // failing with exit code 3 on a targeted read, or skipping it on a set one.
 func (r *reader) view(t *model.Task, explain bool) (TaskView, *model.Error) {
+	// A task load() already filtered out never reaches here through r.all,
+	// but one resolved straight off the store, such as `biso get` by a
+	// well-formed identifier, does: this is the check that catches it,
+	// docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible applied to
+	// one task instead of the whole board.
+	if err := readabilityError(r.b.Config, t); err != nil {
+		return TaskView{}, err
+	}
 	blocks := r.blocks(t)
 	breakdown, err := t.UrgencyBreakdown(model.UrgencyContext{
 		Coefficients:   r.b.Config.Urgency,

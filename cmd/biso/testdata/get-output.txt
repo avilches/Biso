@@ -6,11 +6,10 @@ labels     parser               parent     -
 due        -                    ordinal    -
 created    2026-09-06 09:12     updated    2026-09-06 11:40
 depends    -                    blocks     MYP-40
+blocked by 0 total
+unblocks   2 total
 lease      2026-09-06 15:40     holder     @claude
-refs       docs/bugs/BUG-02.md
-docs       -
-files      -
-ext        trello.card=5f2a8c1e3b9d4a7f6e0c2b81
+refs       docs/bugs/BUG-02.md, notes/a\,b.md
 
 ## Description
 The diff compares byte by byte and marks as different two lines that only

@@ -115,7 +115,6 @@ const finishHelp = "Usage: biso finish <ref>... [options]\n" +
 	"      --check-ac <sel>         check criteria: all, 3, 1-4, 1,3,7 or the text.\n" +
 	"                               With several tasks the selector has to be `all`\n" +
 	"      --append-note <text>     one last implementation note; repeatable\n" +
-	"      --add-files <path>       record a modified file; repeatable\n" +
 	"      --status <value>         use another status instead of the terminal one\n" +
 	"      --strict           refuse to finish with unchecked criteria, unfinished\n" +
 	"                         subtasks or no summary\n" +

@@ -24,7 +24,13 @@ func runGet(s Streams, p *Parsed, env ops.Env) int {
 	}
 	result, err := ops.Get(env, params)
 	if err != nil {
-		return failWithCandidates(s, p, env, asJSON, err)
+		var extra []Warning
+		if result != nil {
+			for _, w := range result.Warnings {
+				extra = append(extra, cliWarning(w))
+			}
+		}
+		return failWithCandidates(s, p, env, asJSON, err, extra)
 	}
 	printWarnings(s, p)
 	printOpsWarnings(s, result.Warnings)
@@ -58,6 +64,7 @@ func getParams(p *Parsed) (ops.GetParams, error) {
 		Ref:            p.Positionals[0],
 		Sections:       p.Values("section"),
 		ExplainUrgency: p.Has("explain-urgency"),
+		Closure:        p.Has("closure"),
 	}
 	switch {
 	case p.Has("id"):
@@ -81,7 +88,7 @@ func renderCard(r *ops.GetResult) string {
 			printed = append(printed, section)
 		}
 	}
-	if len(printed) == 0 && r.Task.Breakdown == nil {
+	if len(printed) == 0 && r.Task.Breakdown == nil && r.Task.Closure == nil {
 		return ""
 	}
 
@@ -99,6 +106,10 @@ func renderCard(r *ops.GetResult) string {
 	if r.Task.Breakdown != nil {
 		b.WriteString("\n")
 		b.WriteString(renderUrgency(r.Task))
+	}
+	if r.Task.Closure != nil {
+		b.WriteString("\n")
+		b.WriteString(renderClosure(r.Task))
 	}
 	return b.String()
 }
@@ -182,7 +193,7 @@ func prose(text string) string {
 }
 
 // The layout of the block of metadata: a label of eleven cells, a value of
-// twenty one, and then the second pair. The last four rows carry one field
+// twenty one, and then the second pair. The last rows carry one field
 // and pad nothing after it.
 const (
 	metaLabelWidth = 11
@@ -215,6 +226,11 @@ func metaBlock(v ops.TaskView) string {
 	pair("due", orDash(dueCell(t)), "ordinal", ordinalCell(t))
 	pair("created", minute(t.CreatedAt), "updated", minute(t.UpdatedAt))
 	pair("depends", joined(t.Dependencies), "blocks", joined(v.Blocks))
+	// blocked by/unblocks are the transitive closure's two counts, always
+	// printed even at zero, because zero is a fact about the task and not
+	// the absence of one (docs/spec/cmd/get.md#salida).
+	single("blocked by", fmt.Sprintf("%d total", v.BlockedByCount))
+	single("unblocks", fmt.Sprintf("%d total", v.UnblocksCount))
 	if !t.LeaseExpiresAt.IsZero() {
 		// The two fields of a lease appear and disappear together, so one
 		// line carries both. A task without one does not print the line,
@@ -223,9 +239,6 @@ func metaBlock(v ops.TaskView) string {
 		pair("lease", minute(t.LeaseExpiresAt), "holder", orDash(t.LeaseHolder))
 	}
 	single("refs", joined(t.References))
-	single("docs", joined(t.Documentation))
-	single("files", joined(t.ModifiedFiles))
-	single("ext", extCell(t.Ext))
 	return b.String()
 }
 
@@ -239,34 +252,33 @@ func pad(value string, width int) string {
 	return value + columnGap
 }
 
-// joined writes a list of tokens on one line. None of the fields it is used
-// on can contain a comma or a space, so the separator can never be read as
-// part of a value.
+// joined writes a list of values on one line, per
+// docs/spec/cmd/get.md#salida: each value is escaped with the rule of the
+// input read backwards (escapeListValue), and the values are separated by a
+// bare comma and a space. Only a reference can carry a comma or a backslash,
+// so the other lists come out unchanged, but the rule is the same for all of
+// them and does not have to know which list it is writing.
 func joined(values []string) string {
 	if len(values) == 0 {
 		return dash
 	}
-	return strings.Join(values, ", ")
+	escaped := make([]string, len(values))
+	for i, v := range values {
+		escaped[i] = escapeListValue(v)
+	}
+	return strings.Join(escaped, ", ")
 }
 
-// extCell writes the external fields sorted by key, so that the same task
-// prints the same card twice: a map has no order of its own.
-func extCell(ext map[string]string) string {
-	if len(ext) == 0 {
-		return dash
-	}
-	pairs := make([]string, 0, len(ext))
-	for _, key := range sortedKeys(ext) {
-		pairs = append(pairs, key+"="+ext[key])
-	}
-	return strings.Join(pairs, ", ")
-}
-
+// ordinalCell is the one value of the card that is not printed as it is
+// stored. The key cannot be typed and says nothing a reader can use, so
+// what the card prints is whether the task has a place decided by hand,
+// which is what lets it be named as the neighbour of an --above or a
+// --below; the raw key is in --json (docs/spec/cmd/get.md#salida).
 func ordinalCell(t *model.Task) string {
-	if t.Ordinal == nil {
+	if t.Ordinal == "" {
 		return dash
 	}
-	return strconv.Itoa(*t.Ordinal)
+	return "manual"
 }
 
 // minute is how the card writes an instant: the calendar day and the time
@@ -311,6 +323,31 @@ func renderUrgency(v ops.TaskView) string {
 		strings.Repeat("-", ruleWidth) + "\n")
 	fmt.Fprintf(&out, "%*s\n", totalWidth, strconv.FormatFloat(noNegativeZero(b.Sum), 'f', 2, 64))
 	return out.String()
+}
+
+// renderClosure is the block of --closure: the full transitive closure of
+// `dependencies` in both directions, with the same two counts the block of
+// metadata already carries and, this time, the complete list of
+// identifiers each one reaches (docs/spec/cmd/get.md#--closure).
+func renderClosure(v ops.TaskView) string {
+	c := v.Closure
+	var b strings.Builder
+	b.WriteString("closure\n")
+	b.WriteString(closureLine("blocked by", v.BlockedByCount, c.BlockedBy))
+	b.WriteString(closureLine("unblocks", v.UnblocksCount, c.Unblocks))
+	return b.String()
+}
+
+// closureLine is one line of that block: the label padded to the eleven
+// cells of the block of metadata, the count as `N total`, two literal
+// spaces, and the list of identifiers, or the usual dash when it is empty
+// (docs/spec/cmd/get.md#--closure).
+func closureLine(label string, count int, ids []string) string {
+	list := dash
+	if len(ids) > 0 {
+		list = strings.Join(ids, ", ")
+	}
+	return "  " + pad(label, metaLabelWidth) + fmt.Sprintf("%d total", count) + "  " + list + "\n"
 }
 
 // The widths of that block: the coefficient ends at coefficientWidth cells,
@@ -379,15 +416,23 @@ func activeLabel(reason string) string {
 // there, `task.candidates`, with the exit code 5 all the same: the table of
 // docs/spec/contrato-json.md#el-sobre gives that kind to `get` and to no
 // other command, so the rest answer the ordinary error envelope.
-func failWithCandidates(s Streams, p *Parsed, env ops.Env, asJSON bool, err error) int {
+// extra is the warnings a call had already produced before the error, such
+// as `biso get`'s own r.warnings when the reference it resolved by text
+// named no task because the only one that matched could not be read
+// (docs/spec/garantias.md#qué-hace-cada-comando): the tasks a set read left
+// out are named whether or not the reference resolves.
+func failWithCandidates(s Streams, p *Parsed, env ops.Env, asJSON bool, err error, extra []Warning) int {
 	var ambiguous *ops.AmbiguousRef
 	if !errors.As(err, &ambiguous) || ambiguous.Listing == nil {
-		return fail(s, asJSON, err, warningsOf(p))
+		return fail(s, asJSON, err, append(warningsOf(p), extra...))
 	}
 	listing := ambiguous.Listing
 
 	if asJSON && p.Command == "get" {
 		printWarnings(s, p)
+		for _, w := range extra {
+			printWarning(s, w)
+		}
 		printOpsWarnings(s, listing.Warnings)
 		tasks := make([]map[string]any, 0, len(listing.Tasks))
 		for _, v := range listing.Tasks {
@@ -397,7 +442,7 @@ func failWithCandidates(s Streams, p *Parsed, env ops.Env, asJSON bool, err erro
 		return ambiguous.Err.ExitCode
 	}
 
-	warnings := warningsOf(p)
+	warnings := append(warningsOf(p), extra...)
 	for _, w := range listing.Warnings {
 		warnings = append(warnings, Warning{
 			Code: w.Code, Message: w.Message, Hints: w.Hints, Fields: w.Fields,

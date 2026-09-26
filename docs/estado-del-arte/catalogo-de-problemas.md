@@ -177,10 +177,19 @@ bug: los ficheros de tarea son markdown por diseño, lo que invita a que otras h
 propias claves, y hoy cualquier clave así se pierde en silencio en la siguiente edición. Se reproduce
 añadiendo una clave a mano y haciendo una edición trivial.
 
-**Qué hace `biso`.** Los campos externos son un mecanismo declarado, no un hueco: el tablero declara
-qué claves admite, y una tarea con una clave que la configuración ya no declara **no se lee en silencio
-ni se reescribe perdiéndola**, sino que sigue la regla de
-["Qué pasa con un dato que no se puede interpretar"](../spec/garantias.md#qué-pasa-con-un-dato-que-no-se-puede-interpretar) y `biso doctor` la reporta.
+**Qué hace `biso`.** El problema no se plantea igual, porque nadie edita a mano el almacén: cada
+escritura pasa por un comando que valida, y un dato que `biso` no conoce **nunca se guarda a medias ni
+se pierde en la siguiente edición, sino que se rechaza en el momento** con un error. Un flag que no
+existe es error 2, una clave que no existe en una línea de un lote de `biso new --from` es error 2 con
+el código `unknown_key`, y una clave de configuración que no existe es error 4.
+
+Lo que `biso` no ofrece es un campo de extensión para que otra herramienta guarde sus propios datos en
+una tarea: no lo tiene. La respuesta prevista para un dato corto asociado a una clave es una etiqueta
+con ámbito, como `milestone::m1`, que se escribe y se consulta con las etiquetas de siempre. Es una
+decisión escrita y todavía no implementada, en
+["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito). Y lo que no cabe en
+una etiqueta, un texto libre por clave, no tiene sitio hoy: si hace falta, se decide y se especifica
+como un campo, según ["la decisión que retira el campo de extensión"](../decisiones/detalles.md#se-retira-ext).
 
 ## 9. Estado compartido que cada invocación pisa
 

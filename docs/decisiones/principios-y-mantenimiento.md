@@ -89,8 +89,10 @@ definición o la regla completa, y el otro sitio solo la usa, la ejemplifica o r
 | Excepción de `doctor --fix --dry-run` al código 7 | [`cmd/flags-globales.md`](../spec/cmd/flags-globales.md) | [`cmd/doctor.md`](../spec/cmd/doctor.md#el-informe-en-seco-de---fix---dry-run) (el razonamiento completo y su propia tabla de códigos) | auditoría 2026-09-18 |
 | Lista de avisos y sus campos JSON | [`salida-y-terminal.md`](../spec/salida-y-terminal.md#notas-y-avisos) | [`cmd/ls.md`](../spec/cmd/ls.md#el-esquema-json) y [`contrato-json.md`](../spec/contrato-json.md) (dónde sale cada uno en `data`) | auditoría 2026-09-18 |
 | Los tres ficheros de una instantánea (`snapshot.ndjson`, `board.json`, `<id>.id`) | [`cmd/snapshot.md`](../spec/cmd/snapshot.md#qué-entra-en-la-revisión) | [`cmd/init.md`](../spec/cmd/init.md) (sus tablas de error de `--from`) | auditoría 2026-09-18 |
+| Elemento vacío de una lista (flag que añade y lote) | [`valores-de-entrada.md`](../spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote) | [`cmd/new.md`](../spec/cmd/new.md#el-modo-lote), [`cmd/init.md`](../spec/cmd/init.md), [`cmd/export.md`](../spec/cmd/export.md) (la simetría), [`salida-y-terminal.md`](../spec/salida-y-terminal.md#notas-y-avisos) (el aviso) | TASK-88, 2026-09-21 |
+| Comentario vacío o `null` en `--comment` y en un lote | [`valores-de-entrada.md`](../spec/valores-de-entrada.md#un-elemento-vacío-en-un-lote) | [`cmd/new.md`](../spec/cmd/new.md#el-modo-lote), [`cmd/verbos-del-ciclo.md`](../spec/cmd/verbos-del-ciclo.md#biso-comment) (el texto posicional), [`familias-de-flags.md`](../spec/familias-de-flags.md#comentarios), [`modelo-de-datos/comentarios.md`](../spec/modelo-de-datos/comentarios.md), [`contrato-json.md`](../spec/contrato-json.md#los-identificadores-de-error) (`invalid_line`) | TASK-95, 2026-09-23 |
 | Coerción de `null` en el NDJSON de lote | [`cmd/new.md`](../spec/cmd/new.md#el-modo-lote) | [`cmd/export.md`](../spec/cmd/export.md) (debe producir en el sentido contrario) | auditoría 2026-09-18 |
-| Validación de vocabulario al importar (`id`, prefijo, claves de `ext`, valores) | [`cmd/new.md`](../spec/cmd/new.md#el-modo-lote) | [`cmd/export.md`](../spec/cmd/export.md) (declara la precondición, no repite los errores) | auditoría 2026-09-18 |
+| Validación de vocabulario al importar (`id`, prefijo, valores) | [`cmd/new.md`](../spec/cmd/new.md#el-modo-lote) | [`cmd/export.md`](../spec/cmd/export.md) (declara la precondición, no repite los errores) | auditoría 2026-09-18 |
 | Identificador ascendente como criterio de orden | [`cmd/ls.md`](../spec/cmd/ls.md#comportamiento-caso-a-caso) (desempate de listados) | [`modelo-de-datos/index.md`](../spec/modelo-de-datos/index.md#los-campos-derivados) (`blocks` reusa el mismo criterio) | auditoría 2026-09-18 |
 | Cuándo el puntero lleva `path` | [`cmd/init.md`](../spec/cmd/init.md) (siempre que se usó `--at`) | [`resolucion-del-tablero.md`](../spec/resolucion-del-tablero.md#el-fichero-bisojson-y-sus-claves) | auditoría 2026-09-18 |
 | Presupuesto de 25 ms y sus excepciones | [`presupuestos.md`](../spec/presupuestos.md) | [`cmd/snapshot.md`](../spec/cmd/snapshot.md), [`cmd/doctor.md`](../spec/cmd/doctor.md#el-sondeo-del-sistema-de-ficheros) (sus propios topes) | auditoría 2026-09-18 |
@@ -104,7 +106,7 @@ definición o la regla completa, y el otro sitio solo la usa, la ejemplifica o r
 | El modelo de datos de una tarea | [`modelo-de-datos/index.md`](../spec/modelo-de-datos/index.md) | [`familias-de-flags.md`](../spec/familias-de-flags.md) | 2026-09-12 |
 
 **Dos puntos quedaron pendientes de la auditoría de 2026-09-18, sin fuente decidida todavía**: si un
-`string` (texto de una línea: `title`, `author`, `Criterion.text`, valores de `ext`) admite `\r` o
+`string` (texto de una línea: `title`, `author`, `Criterion.text`) admite `\r` o
 `\n`, y el esquema completo de `data.filters` en `task.list` para los filtros de `biso ls` que hoy no
 tienen clave documentada. El detalle de cada uno está en el acta interna de esa auditoría (no se
 publica en el sitio, así que no lleva enlace desde aquí).

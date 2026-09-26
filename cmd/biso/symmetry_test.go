@@ -41,8 +41,11 @@ import (
 // richBoard is a board carrying one of everything the interchange format
 // can hold: the three kinds of date, an explicit identifier, criteria with
 // gaps in their keys and with one checked, comments with their own keys and
-// instants, an open question, a lease, an archived task, external fields,
-// a parent, a dependency and every list.
+// instants, an open question, a lease, an archived task, a parent, a
+// dependency, every list and, on three of its four tasks, a key of the
+// manual order: the lowest of the board, one in the middle and the longest
+// shape a key takes, which is what makes the round trip of a key that is
+// never recomputed visible (docs/spec/cmd/export.md).
 //
 // Its tasks come in through the batch because that is the only way to write
 // some of them: an archived task, a created-at of last year and a lease
@@ -50,10 +53,15 @@ import (
 // their own anywhere else.
 const richBoard = `# every shape the format can carry
 {"id":"MYP-1","title":"Write the parser","type":"bug","priority":"high","status":"Done",` +
-	`"description":"A long description\nover two lines","labels":["parser","urgent"],` +
-	`"references":["docs/bugs/BUG-02.md"],"documentation":["docs/parser.md"],` +
-	`"modifiedFiles":["parser.go"],"ext":{"trello.card":"5f2a8c1e"},"author":"@sara",` +
-	`"due":"2026-01-31","ordinal":7,"plan":"1. Read it","notes":"It was the CRLF",` +
+	// The labels carry one of each shape of
+	// docs/spec/valores-de-entrada.md#las-etiquetas-con-ámbito: a plain
+	// one, a key that admits several values, one that admits at most one,
+	// and a value with a colon of its own.
+	`"description":"A long description\nover two lines",` +
+	`"labels":["parser","urgent","size::m","area:store","area:cli","trello:card:42"],` +
+	`"references":["docs/bugs/BUG-02.md","parser.go"],` +
+	`"author":"@sara",` +
+	`"due":"2026-01-31","ordinal":"m8","plan":"1. Read it","notes":"It was the CRLF",` +
 	`"summary":"Done and tested",` +
 	`"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},` +
 	`{"key":3,"text":"There is a test","checked":false}],` +
@@ -62,15 +70,17 @@ const richBoard = `# every shape the format can carry
 	`"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},` +
 	`"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 {"id":"MYP-2","title":"Depends on the parser","status":"In Progress","assignees":["@sara"],` +
+	`"ordinal":"00i",` +
 	`"dependencies":["MYP-1"],"leaseHolder":"@sara","leaseExpiresAt":"2126-09-08T14:00:00Z",` +
 	`"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 {"id":"MYP-9","title":"An archived one","archived":true,"type":"docs","priority":"low",` +
+	`"ordinal":"zzzzzzzz1",` +
 	`"parent":"MYP-1","createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 {"title":"No identifier of its own, and no dates either"}
 `
 
 // vocabulary is what a board has to declare to accept the tasks above.
-var vocabulary = []string{"--prefix", "MYP", "--extensions", "trello.card"}
+var vocabulary = []string{"--prefix", "MYP"}
 
 func sourceBoard(t *testing.T) *machine {
 	t.Helper()
@@ -136,7 +146,7 @@ func TestSnapshotAndInitFromLeaveTwoIdenticalBoards(t *testing.T) {
 	elsewhere.run(t, "init", "--at", restored, "--from", sourceDir).assertCode(t, 0)
 
 	// Nothing of the vocabulary was declared by hand, so this comparison
-	// covers every table there is, the board's own identity and its twenty
+	// covers every table there is, the board's own identity and its nineteen
 	// configuration keys included.
 	assertEqual(t,
 		dumpDatabase(t, restored, allTables(t, restored)...),
@@ -164,7 +174,7 @@ func TestSnapshotAndInitFromLeaveTwoIdenticalBoards(t *testing.T) {
 // export` and `biso new --from` carry between two boards.
 var taskTables = []string{
 	"board_counter", "task", "task_comment", "task_criterion",
-	"task_ext", "task_list_item",
+	"task_list_item",
 }
 
 // allTables are every table of a board's database, in alphabetical order,

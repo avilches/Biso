@@ -125,9 +125,26 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	w := newWriter(b, env, p.Changes)
 	w.manyTasks = len(p.Refs) > 1
 	w.warnings = append(w.warnings, p.Warnings...)
+	if err := w.prepareLabels(); err != nil {
+		return w.partial(), err
+	}
 
 	tasks, err := w.resolveAll(p.Refs, p.Mode, v.scope)
 	if err != nil {
+		// The targets are not known yet, so none of them can be excluded,
+		// but a reference that fails to resolve is still worth naming the
+		// rest of the board's unreadable tasks for
+		// (docs/spec/garantias.md#el-primer-caso-una-tarea-ilegible).
+		w.warnAboutSkippedExcept(nil)
+		return w.partial(), err
+	}
+	w.warnAboutSkippedExcept(tasks)
+
+	// The manual order is resolved here, before the loop below writes
+	// anything: the neighbour is looked for against the board as it was,
+	// and the gap is computed once for every task the call moves
+	// (docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura).
+	if err := w.prepareOrdinal(tasks); err != nil {
 		return w.partial(), err
 	}
 
@@ -137,7 +154,43 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	}
 
 	result := &WriteResult{DryRun: p.DryRun}
+	// Only `biso set`, `biso start` and `biso finish` can ever repair a
+	// task's vocabulary, because only they can write status, type or
+	// priority (docs/spec/cmd/set.md#comportamiento-caso-a-caso): `biso
+	// note`, `biso comment`, `biso ask`, `biso answer` and `biso archive`
+	// never repair, whatever they write, so their illegibility is settled
+	// before anything else, including a verb's own precondition. A
+	// question such as "does it have an open question" reads a status or a
+	// priority the board no longer configures, which is exactly what makes
+	// the task unreadable in the first place.
+	//
+	// `biso start` and `biso finish` are not that simple, because they
+	// carry their own precondition too (`is archived`, `is already
+	// Done`, `is not ready to finish`), and that precondition reads
+	// fields of the task as it already is, before this call's status
+	// change is applied. Refusing on it first, ahead of the readability
+	// check, would let an unrelated fault, say a bad priority, hide
+	// behind "is archived" and answer with the wrong exit code. So the
+	// two are checked early as well, but excluding the fields this very
+	// call is about to write: that is what keeps
+	// docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible's
+	// exception working when the fault the call excludes is the one
+	// that made the task illegible, and still catches every fault it
+	// does not touch before the verb's own precondition runs.
 	for _, t := range tasks {
+		switch v.name {
+		case "":
+			// Nothing here to preempt: the final loop below judges the
+			// task as `biso set` leaves it.
+		case "start", "finish":
+			if err := readabilityErrorExcluding(b.Config, t, w.changes); err != nil {
+				return w.partial(), err
+			}
+		default:
+			if err := readabilityError(b.Config, t); err != nil {
+				return w.partial(), err
+			}
+		}
 		before := cloneTask(t)
 		if v.before != nil {
 			if err := v.before(w, t); err != nil {
@@ -187,8 +240,17 @@ func writeOn(b *board.Board, env Env, p SetParams, v verb) (*WriteResult, error)
 	// lies: --dry-run promises the outcome of the call and not the outcome
 	// of everything except the last check
 	// (docs/spec/cmd/flags-globales.md).
+	//
+	// The readability check right after it judges the task as this write
+	// would leave it, not as it was: a call that clears the fault, such as
+	// `biso set MYP-11 --priority medium`, is applied, and one that does
+	// not is error 3 with nothing written, which is the one exception of
+	// docs/spec/garantias.md#cómo-se-arregla-una-tarea-ilegible.
 	for _, t := range tasks {
-		if err := t.Validate(b.Config.Extensions); err != nil {
+		if err := t.Validate(); err != nil {
+			return w.partial(), err
+		}
+		if err := readabilityError(b.Config, t); err != nil {
 			return w.partial(), err
 		}
 	}

@@ -122,13 +122,14 @@ nav:
     - El modelo de datos de una tarea:
       - spec/modelo-de-datos/index.md
       - Identificador de tarea: spec/modelo-de-datos/identificadores.md
+      - Las relaciones entre tareas: spec/modelo-de-datos/relaciones.md
       - Las fechas: spec/modelo-de-datos/fechas.md
       - La urgencia: spec/modelo-de-datos/urgencia.md
+      - El orden manual y su clave: spec/modelo-de-datos/orden-manual.md
       - El autor de una tarea: spec/modelo-de-datos/autor.md
       - Los criterios y sus claves estables: spec/modelo-de-datos/criterios.md
       - La pregunta abierta: spec/modelo-de-datos/pregunta-abierta.md
       - Los comentarios: spec/modelo-de-datos/comentarios.md
-      - Los campos externos: spec/modelo-de-datos/campos-externos.md
     - El arrendamiento de una tarea: spec/lease.md
     - Los presupuestos de arranque y de tamano: spec/presupuestos.md
     - Los vocabularios del tablero y la regla de validacion: spec/vocabularios.md

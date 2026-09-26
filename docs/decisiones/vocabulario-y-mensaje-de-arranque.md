@@ -221,3 +221,522 @@ en la parte fija y 320 en el total, proporciones parecidas a las que dejaba el r
 valores, tipos e incompatibilidades de cada flag, el formato de lote de `new --from`, los comandos
 de administración y los casos límite. El grid completo elimina la adivinanza del *nombre* de un
 flag de escritura, no la necesidad de `--help` para todo lo demás.
+
+---
+
+## Protocolo y resultado: comprobar con un agente fresco la dirección de una dependencia
+
+**El protocolo ya se ejecutó, una revisión adversarial le encontró dos sesgos posibles, los dos se
+comprobaron empíricamente, y el resultado sigue siendo que la regla 11 no se toca.** Lo que sigue
+describe el protocolo de `TASK-89` tal como se diseñó, escrito para que otro agente lo ejecutara tal
+cual sin decidir nada por su cuenta, con la tabla medida y el análisis que exige su criterio de
+aceptación (["Los resultados medidos"](#cómo-se-tabula-y-qué-se-escribe-como-análisis)), y termina con
+las dos contrapruebas que pidió la revisión
+(["La revisión adversarial y sus dos hallazgos"](#la-revisión-adversarial-y-sus-dos-hallazgos)). Entre
+las doce ejecuciones originales y las ocho de las contrapruebas, veinte ejecuciones acertaron la
+dirección de la arista sin ninguna excepción, así que el texto de la regla 11 sigue siendo el de arriba
+y no se tocó ni la especificación, ni el código, ni los ficheros de referencia.
+
+**El problema que comprueba.** La regla 11 de `RULES`
+(["La salida literal"](../spec/cmd/prime.md#la-salida-literal)) dice hacia dónde apunta una
+dependencia:
+
+```
+ 11. A dependency is written on the task that waits:
+     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.
+```
+
+Esa frase se escribió razonando sobre el texto y comprobando el comportamiento del programa
+(["La ayuda enseña la dirección de una dependencia"](detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)),
+pero nunca se puso delante de un agente que no supiera nada más de `biso` que lo que ese mensaje le
+cuenta. Este protocolo hace exactamente eso.
+
+### El tablero de ejemplo
+
+El tablero vive fuera del repositorio, en un directorio temporal fijo para que las órdenes de abajo se
+puedan copiar y pegar sin sustituir nada. Quien ejecute el protocolo compila el binario y crea el
+tablero con estas órdenes, en este orden, desde la raíz del repositorio:
+
+```
+mkdir -p /tmp/biso-task89/bin
+go build -o /tmp/biso-task89/bin/biso ./cmd/biso
+
+mkdir -p /tmp/biso-task89/template
+/tmp/biso-task89/bin/biso -C /tmp/biso-task89/template init "Example Project" --prefix EXP --at ./board-data
+/tmp/biso-task89/bin/biso -C /tmp/biso-task89/template new "Alpha"
+/tmp/biso-task89/bin/biso -C /tmp/biso-task89/template new "Beta"
+```
+
+`new "Alpha"` es la primera tarea del tablero y recibe el identificador `EXP-1`; `new "Beta"` recibe
+`EXP-2`. Ningún título describe una acción real ni sugiere un orden entre las dos, a propósito: si
+"Alpha" y "Beta" fueran, por ejemplo, "Preparar el entorno" y "Ejecutar las pruebas", un agente podría
+acertar la dirección por el sentido común del propio trabajo y no por haber leído la regla 11, y eso
+falsearía la medida. No se fija ninguna identidad (`BISO_ME` no se declara), no se añade ningún tipo,
+prioridad, etiqueta ni descripción: cualquier campo de más es una variable que el protocolo no necesita
+controlar.
+
+`/tmp/biso-task89/template` queda como la copia maestra, sin ninguna dependencia entre sus dos tareas.
+No se toca nunca directamente: cada una de las doce ejecuciones de más abajo trabaja sobre su propia
+copia.
+
+**El texto exacto que imprime `biso prime` sobre este tablero**, capturado con
+`biso -C /tmp/biso-task89/template prime`, y que hay que pegar sin cambiar ni un carácter donde este
+protocolo lo pide:
+
+```
+biso 1.0.0 - the task board of this project. This message is all you need to start.
+
+BOARD  Example Project
+  To Do 2 | In Progress 0 | Done 0
+  new tasks start in To Do; `biso start` moves to In Progress; `biso finish` to Done
+  types       task, bug, docs
+  priorities  high, medium, low
+  you are     (not set: run biso as BISO_ME=@you biso ...)
+
+COMMANDS  (`biso help <cmd>...` for the detail of any, several at once)
+  biso ls [--status STATUS] [--type T] [--label LABEL] [--mine] [--search TEXT]
+  biso get <ref> [--section ac]
+  biso new "TITLE" [--append-desc TEXT] [--add-ac TEXT]... [--type T] [--priority P]
+  biso start <ref>... [--append-plan TEXT]
+  biso note <ref> "TEXT"
+  biso ask <ref> "QUESTION"
+  biso answer <ref> "TEXT"
+  biso finish <ref>... [--append-summary "TEXT"] [--check-ac all]
+  biso set <ref>... [any field flag]
+  biso comment <ref> "TEXT" [--comment-author @who]
+
+FIELD FLAGS  (same names, same meaning, in every command above that writes)
+  --title  --status  --type --clear-type  --priority --clear-priority
+  --parent --clear-parent  --due --clear-due  --author --clear-author
+  --ordinal first|last  --above <ref> --below <ref>  --clear-ordinal
+  --add-labels --rm-labels --clear-labels --replace-labels
+  --add-assignees --rm-assignees --clear-assignees --replace-assignees
+  --add-refs --rm-refs --clear-refs --replace-refs
+  --add-deps --rm-deps --clear-deps --replace-deps
+  --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac
+  --append-desc --clear-desc  --append-plan --clear-plan
+  --append-note --clear-notes  --append-summary --clear-summary
+  --comment --rm-comment --set-comment-date
+
+RULES  (none of these are guessable; they are the whole learning curve)
+  1. Every write goes through biso. Nothing else touches the board.
+  2. <ref> is an id (MYP-12), a bare number (12) or free text ("CRLF"). Text
+     matching several tasks is an error that lists them, never a guess. `note`,
+     `comment`, `ask` and `answer` take one <ref>; `set`, `start` and `finish`
+     take several.
+  3. Filters reject values this board does not have: `--status Pending` is an error,
+     not an empty list. Case, spaces, hyphens and underscores are ignored, so
+     `--status todo`, `--status "To Do"` and `--status TO_DO` are one and the same filter. An
+     empty list is therefore a fact about the board that you can act on.
+  4. `biso ls` prints 30 tasks by urgency and leaves out the Done ones. It says
+     on stderr what it left out. --all lifts the limit, --any-status includes
+     Done, --archived reaches the archive.
+  5. --check-ac and --uncheck-ac take all, 3, 1-4, 1,3,7 or the criterion text. The
+     numbers are the stable #N keys that `biso get` shows, and they never shift
+     when one criterion is removed.
+  6. `biso new` prints the new id and nothing else. Every other write prints one
+     line per task: id, status, criteria, urgency. Add --print for the whole
+     record, or --json for a versioned envelope.
+  7. Write `biso -C <dir> ...`, never `cd <dir> && biso ...`.
+  8. Long text: a real newline works, and so do --append-desc @file.md and --append-desc - for stdin.
+  9. Exit codes: 0 ok, 2 bad usage, 3 bad value, 4 not found, 5 ambiguous,
+     6 precondition not met, 7 nothing written, 8 environment, 20 no board here.
+ 10. `biso ask <ref> "..."` parks a task on a question and `biso answer` unparks
+     it, writing both into the comments. Ask instead of guessing. A task
+     assigned to you is one a person decided you should do.
+ 11. A dependency is written on the task that waits:
+     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.
+
+NEXT UP  (not assigned to you, by urgency)
+  EXP-1  To Do  -  -  Alpha  -  -  -
+  EXP-2  To Do  -  -  Beta   -  -  -
+
+Pick one, `biso start <ref> --append-plan "..."`, work, `biso note <ref> "..."` as you go,
+and close with `biso finish <ref> --check-ac all --append-summary "..."`.
+That is the loop. Create a task when the work needs planning or review; do small
+edits directly.
+```
+
+Si al ejecutar el protocolo esta captura sale distinta (otra versión en la primera línea, otra fecha,
+otro texto de `RULES`), es la nueva captura la que se usa en todo lo que sigue, no la de aquí arriba:
+esta es la fotografía del momento en que se escribió el protocolo, y la única que cuenta de verdad es
+la que produce el binario que se está probando. La cadena de versión de la primera línea puede cambiar
+sin que eso invalide nada, igual que dice
+["La salida literal"](../spec/cmd/prime.md#la-salida-literal) de `prime.md`.
+
+### Las cuatro formulaciones del encargo
+
+Cuatro maneras de pedir la misma cosa en el mundo real: que `Alpha` vaya primero y que `Beta` espere
+por ella. Ninguna nombra un comando de `biso` ni dice la palabra "dependency" o "dependencia" salvo la
+que la necesita por construcción (la segunda, que es justamente la forma "B depende de A"). Van en
+inglés, como el resto del texto que en un tablero real escribiría quien usa el programa (la interfaz
+de `biso`, sus mensajes y sus ejemplos son ingleses de punta a punta), y para no mezclar dos idiomas
+dentro de la misma conversación del agente fresco, que lee la regla 11 también en inglés.
+
+| Formulación | Texto exacto del encargo |
+|---|---|
+| F1, "A bloquea a B" | `Alpha blocks Beta.` |
+| F2, "B depende de A" | `Beta depends on Alpha.` |
+| F3, "A antes que B" | `Alpha has to happen before Beta.` |
+| F4, "B no puede empezar hasta que A termine" | `Beta cannot start until Alpha is finished.` |
+
+Cada celda de la columna derecha es el mensaje completo que recibe el agente fresco: ni una palabra
+más, ni una coma menos.
+
+### Qué recibe cada agente fresco, y qué no
+
+**El sitio de trabajo.** Bajo `/tmp/biso-task89/runs/` hay doce carpetas, una por ejecución, con esta
+forma fija (`<slug>` es uno de `f1-blocks`, `f2-depends`, `f3-before`, `f4-cannot-start`, y `<n>` es
+`1`, `2` o `3`):
+
+```
+/tmp/biso-task89/runs/<slug>/<n>/board/
+```
+
+Cada una de esas doce carpetas `board/` es una copia completa e independiente de
+`/tmp/biso-task89/template/`, copiada así:
+
+```
+mkdir -p /tmp/biso-task89/runs/<slug>/<n>
+cp -R /tmp/biso-task89/template/. /tmp/biso-task89/runs/<slug>/<n>/board/
+```
+
+Toda copia cuelga de la misma ruta relativa (`board/` dentro de su propia carpeta de ejecución), así
+que la orden que copia, la que lanza el agente y la que verifica el resultado son idénticas en las doce
+salvo por `<slug>` y `<n>`. `--at` se guardó como ruta relativa (`./board-data`) al crear la maestra, así
+que cada copia resuelve su propio `board-data/` sin arrastrar nada de las demás
+(["`biso init`"](../spec/cmd/init.md)).
+
+**El agente fresco es una invocación de `claude` en modo no interactivo**, no un subagente de esta
+misma sesión de Claude Code: un subagente lanzado con la herramienta `Agent` heredaría, por estar
+dentro de este repositorio, los ficheros `CLAUDE.md` del proyecto (el de la raíz, el de `.claude/` y
+este mismo documento en el índice de memoria), que hablan de la especificación, del tablero de
+Backlog.md y de cómo se trabaja en `biso`; eso es exactamente el contexto que el protocolo tiene que
+excluir. `/tmp/biso-task89/` está fuera de cualquier repositorio con `CLAUDE.md`, así que lanzar `claude`
+desde ahí, con `--bare`, no descubre ninguno.
+
+Antes de lanzar las doce ejecuciones se escriben dos ficheros de texto, palabra por palabra:
+
+`/tmp/biso-task89/prompts/system.txt`, igual para las doce ejecuciones (sustituir
+`<PRIME_TEXT>` por el bloque completo capturado en la sección anterior, sin tocarlo):
+
+```
+You are a software engineer with a shell. Bash is your only tool. The project you are working in
+uses a command-line program called biso to track its tasks, and biso is already on your PATH.
+Before you read anything else, running `biso prime` printed this automatically:
+
+<PRIME_TEXT>
+
+Nothing else about biso or about this project has been explained to you. A colleague is about to
+tell you one fact about the board. Decide which single biso command makes the board match what they
+say, run it, and then reply with exactly one line: the command you ran and nothing else.
+```
+
+`/tmp/biso-task89/prompts/<slug>.txt`, uno por formulación, con el texto exacto de la tabla de arriba
+y nada más (por ejemplo `f1-blocks.txt` contiene la única línea `Alpha blocks Beta.`).
+
+**La orden que lanza una ejecución**, igual para las doce salvo `<slug>` y `<n>`:
+
+```
+cd /tmp/biso-task89/runs/<slug>/<n>/board
+PATH="/tmp/biso-task89/bin:$PATH" \
+claude -p \
+  --bare \
+  --model sonnet \
+  --tools "Bash" \
+  --strict-mcp-config \
+  --disable-slash-commands \
+  --permission-mode bypassPermissions \
+  --max-budget-usd 1 \
+  --output-format json \
+  --system-prompt "$(cat /tmp/biso-task89/prompts/system.txt)" \
+  "$(cat /tmp/biso-task89/prompts/<slug>.txt)" \
+  > /tmp/biso-task89/runs/<slug>/<n>/result.json \
+  2> /tmp/biso-task89/runs/<slug>/<n>/stderr.log
+```
+
+`--bare` apaga el descubrimiento de `CLAUDE.md`, los hooks, los plugins y la memoria automática; junto
+con `--strict-mcp-config` y `--disable-slash-commands` deja al agente sin más herramienta que `Bash` y
+sin ningún comando propio que invocar. `--permission-mode bypassPermissions` es necesario porque
+`--print` no tiene a nadie que conteste un permiso; es aceptable porque la carpeta sobre la que actúa
+es una copia desechable fuera del repositorio. `--max-budget-usd 1` es un límite de seguridad, no una
+medida del experimento: ninguna de las cuatro formulaciones debería necesitar gastar cerca de eso para
+una sola escritura.
+
+**Qué recibe, en resumen: el texto de `biso prime` de la sección anterior (dentro de `--system-prompt`,
+sin nada más alrededor salvo el envoltorio fijo de arriba), la formulación exacta que le toca (como
+único mensaje de usuario), una copia propia del tablero en el directorio desde el que se lanza
+`claude`, y la instrucción de ejecutar el comando de `biso` que corresponda y decir cuál fue.**
+
+**Qué no recibe, explícitamente: ningún fichero de `docs/spec/`, ningún fichero `.go` del repositorio,
+este documento ni ninguna otra página de `docs/decisiones/`, ninguna mención de que se está midiendo
+la dirección de una dependencia, ni acceso a ninguna herramienta que no sea `Bash`.** No hace falta
+ninguna orden que se lo impida aparte de las banderas de arriba: `--tools "Bash"` ya deja fuera
+`Read`, `Grep` y cualquier otra que pudiera usar para explorar el repositorio, y de todas formas el
+directorio de trabajo (`board/`, una copia de `template/`) no contiene ni la especificación ni el
+código fuente, solo el puntero y la base de datos del tablero.
+
+**Cómo se ejecutó en la práctica.** El entorno donde se corrió `TASK-89` no podía invocar el binario
+`claude` como proceso externo, así que las doce ejecuciones se lanzaron con la herramienta `Agent` de
+esa misma sesión de Claude Code (`subagent_type: "general-purpose"`, sin `isolation` y sin pasarle
+ningún contexto de la conversación que coordinaba el protocolo), una llamada independiente por
+ejecución. Es la misma salvedad que el párrafo de arriba advertía que había que evitar, aceptada aquí
+como la única vía disponible: cada agente fresco recibió, como todo su encargo, el texto exacto que
+este apartado describe (el bloque de `biso prime` capturado más arriba, la formulación que le tocaba y
+una frase neutra con la ruta de su copia del tablero y la del binario), sin ninguna mención de "TASK-89",
+de "protocolo", de "regla 11" ni de que se estuviera midiendo nada. La diferencia frente al diseño
+original es que el agente no llevaba `--tools "Bash"` forzado por la línea de comandos, así que en
+teoría podía usar `Read` o `Grep`, y su directorio de trabajo por defecto no era la copia del tablero
+sino el que hereda de la sesión que lo lanza. **Esa teoría resultó ser el problema real**, medido y
+corregido en ["La revisión adversarial y sus dos hallazgos"](#la-revisión-adversarial-y-sus-dos-hallazgos),
+más abajo: la carpeta desde la que trabaja un agente lanzado así no es la copia de `template/` que se
+le nombra en el texto, y sí lleva de serie los `CLAUDE.md` del proyecto.
+
+### Cómo se verifica el resultado
+
+Tras cada ejecución, con `<slug>` y `<n>` de esa ejecución:
+
+```
+BOARD=/tmp/biso-task89/runs/<slug>/<n>/board
+D1=$(/tmp/biso-task89/bin/biso -C "$BOARD" get EXP-1 --json | jq -r '.data.task.dependencies | join(",")')
+D2=$(/tmp/biso-task89/bin/biso -C "$BOARD" get EXP-2 --json | jq -r '.data.task.dependencies | join(",")')
+```
+
+`dependencies` es el campo que se escribe (["Las relaciones entre tareas"](../spec/modelo-de-datos/relaciones.md#dependencies-la-precedencia));
+`blocks` es su inverso derivado y no hace falta leerlo aparte para clasificar, aunque coincide siempre
+con `dependencies` por construcción. La clasificación de esa ejecución, por este orden:
+
+1. **Acierto.** `$D2` es `EXP-1` (y, por construcción, `$D1` es vacío). `Beta` quedó esperando a
+   `Alpha`, que es lo que piden las cuatro formulaciones dicho de cuatro maneras.
+2. **Inversión.** `$D1` es `EXP-2` (y, por construcción, `$D2` es vacío). La arista se escribió al
+   revés: `Alpha` quedó esperando a `Beta`.
+3. **Sin resultado.** Cualquier otro caso: `$D1` y `$D2` vacíos los dos (no se escribió ninguna
+   dependencia), o cualquier valor que no sea exactamente uno de los dos patrones de arriba (por
+   ejemplo, una referencia añadida con `--add-refs` en vez de `--add-deps`, o un identificador que no
+   es ni `EXP-1` ni `EXP-2`). También cae aquí una ejecución que no terminó: el proceso `claude` salió
+   con código distinto de cero, agotó `--max-budget-usd`, o `result.json` no contiene una respuesta
+   final. `stderr.log` y `result.json` de esa ejecución se guardan igual y se leen a mano para escribir
+   la nota del caso en el análisis.
+
+**"Sin resultado" no es ni acierto ni inversión, y se cuenta en su propia columna.** Descartarlo del
+recuento, o repartirlo entre las otras dos categorías porque "en el fondo no invirtió nada", escondería
+un fallo distinto: el agente no llegó a actuar sobre la regla 11 en absoluto, por el motivo que sea, y
+eso es un dato sobre el protocolo o sobre el propio agente, no sobre si la regla enseña bien la
+dirección.
+
+### Cómo se tabula y qué se escribe como análisis
+
+La tabla, sobre tres ejecuciones por formulación, se rellena con las cifras medidas y no antes:
+
+| Formulación | Aciertos | Inversiones | Sin resultado |
+|---|---|---|---|
+| F1, `Alpha blocks Beta.` | 3 | 0 | 0 |
+| F2, `Beta depends on Alpha.` | 3 | 0 | 0 |
+| F3, `Alpha has to happen before Beta.` | 3 | 0 | 0 |
+| F4, `Beta cannot start until Alpha is finished.` | 3 | 0 | 0 |
+| **Total** | 12 | 0 | 0 |
+
+Cada fila suma la cantidad fija de ejecuciones de esa formulación; la fila de total suma las doce.
+
+**El análisis.** Las doce ejecuciones acertaron, sin una sola excepción: en las cuatro formulaciones,
+los tres agentes frescos de cada una escribieron la dependencia con `biso set EXP-2 --add-deps EXP-1`
+(verificado con `biso get EXP-1 --json` y `biso get EXP-2 --json` sobre cada una de las doce copias del
+tablero, que dan `EXP-1` con `dependencies` vacío y `EXP-2` con `dependencies: ["EXP-1"]` en las doce).
+No hay ninguna formulación que falle una sola vez, ni un patrón que aparezca en una ejecución y no en
+las otras dos de la misma fila: las tres repeticiones de cada formulación coinciden entre sí.
+
+El dato más informativo no es que acertaran, sino que las cuatro lo hicieron con el mismo comando pese
+a estar redactadas de maneras muy distintas. F1 ("Alpha blocks Beta") nombra el verbo activo
+(`blocks`) que también usa la propia regla 11 al describir el ejemplo, así que un acierto ahí es
+consistente con leer la regla y aplicarla, pero también con adivinar por la forma de la frase sin haber
+entendido la regla. F2 ("Beta depends on Alpha") es la única que usa la palabra "depends" y la nombra
+en la dirección contraria a como la nombra F1: si el acierto de F1 fuera un efecto de superficie del
+verbo "blocks" y no de haber entendido la regla, F2 tendría que fallar o al menos vacilar, porque pide
+traducir "depende de" a "escribe la dependencia en la tarea que depende", que es exactamente el paso
+que la regla 11 explica y que ninguna otra parte del mensaje de arranque dice. F2 acertó las tres veces
+igual que F1. F3 y F4 no usan ni "blocks" ni "depends": expresan la misma relación con un orden temporal
+("has to happen before") y con una condición de bloqueo ("cannot start until... is finished"), y
+tampoco fallaron. Que las cuatro formulaciones, con vocabulario disjunto entre sí, conviertan al mismo
+comando sin ninguna inversión es la evidencia de que la regla 11 enseña la dirección con claridad
+suficiente para un agente que parte de cero, y no solo para quien ya sabe interpretar el ejemplo. Esta
+lectura da por hecho que el agente partía de cero y que el orden de creación no jugaba ningún papel;
+las dos cosas se pusieron a prueba después, en
+["La revisión adversarial y sus dos hallazgos"](#la-revisión-adversarial-y-sus-dos-hallazgos).
+
+Con el criterio fijado antes de medir (una sola inversión atribuible a la regla 11, en cualquiera de las
+doce ejecuciones, bastaría para reescribir su texto), el resultado no lo activa: cero de doce
+ejecuciones invirtieron la arista y cero se quedaron sin resultado. El texto de la regla 11 se deja tal
+como está, y no se corrigen ni la especificación, ni el código, ni los ficheros de referencia de
+`cmd/biso/testdata/`.
+
+### Qué pasa si algún agente invierte la arista
+
+**El criterio: una sola inversión atribuible a la regla 11, en cualquiera de las doce ejecuciones,
+basta para reescribir su texto.** No hace falta que sea mayoría dentro de una formulación. La razón es
+la misma que justificó escribir la regla la primera vez
+(["La ayuda enseña la dirección de una dependencia"](detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)):
+una dependencia invertida es un dato válido que el programa nunca detecta, y deja el cálculo de
+bloqueo y de urgencia corrompido en silencio para siempre, no solo en esa sesión. Un umbral de mayoría
+toleraría a propósito una tasa de inversión medida y real (por ejemplo una de tres, un tercio de las
+ejecuciones de esa formulación) para el único tipo de error que el programa no puede avisar, lo que
+contradice el motivo por el que la regla existe. Se descarta por eso: el coste de corregir el texto es
+bajo (cabe de sobra en el margen medido más abajo) frente al coste de dejar una frase que se sabe que
+confunde a un agente de cada tantos.
+
+**Antes de contar una inversión hacia este criterio, se lee su transcripción.** `result.json` de esa
+ejecución trae la respuesta completa del agente fresco. Si el motivo fue no entender hacia dónde
+apunta la regla 11 (leyó "Alpha blocks Beta" y escribió la dependencia en `EXP-1` en vez de en `EXP-2`,
+por ejemplo), cuenta hacia el criterio de arriba. Si el motivo es otro y no tiene que ver con la
+dirección (confundió qué identificador era `Alpha` y cuál `Beta`, por ejemplo, algo que ninguna
+redacción de la regla 11 podría arreglar), se anota igual en el análisis, pero no obliga a tocar el
+texto de la regla: ese fallo no lo causa la regla, lo causaría igual cualquier redacción.
+
+**Si ninguna de las doce invierte la arista, la entrada lo dice así, con la tabla de arriba ya rellena
+de ceros en esa columna, y el texto de la regla 11 no se toca.** Es lo que pasó: las doce ejecuciones
+midieron `EXP-2` con `EXP-1` como dependencia y `EXP-1` sin ninguna, la columna de inversiones de la
+tabla de arriba queda en cero en cada formulación, y el párrafo siguiente sobre el margen de bytes
+queda como referencia para la próxima vez que haga falta tocar `RULES`, no como algo que esta medición
+haya usado.
+
+**El margen de bytes disponible hoy, medido con el binario y no con la cifra ya escrita en
+["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño):** la parte fija del
+mensaje mide **3.623 bytes** sobre el propio tablero de este protocolo (`EXP-1`/`EXP-2`, sin ninguna
+tarea más), exactamente la misma cifra que mide sobre el tablero de la especificación
+(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)), porque la parte fija
+no depende del contenido del tablero. El tope de la parte fija es **3.840 bytes**
+(["El presupuesto de tamaño"](../spec/presupuestos.md#el-presupuesto-de-tamaño)), así que quedan
+**217 bytes** libres hoy para ampliar la regla 11 (o cualquier otra parte del bloque fijo) sin tocar el
+tope. Si la corrección no cupiera en esos 217 bytes, el orden a seguir es el de
+["El presupuesto del mensaje de arranque"](#el-presupuesto-del-mensaje-de-arranque): apretar el resto
+del texto fijo antes de subir el tope, y subirlo solo con la misma clase de evidencia medida que subió
+el tope de 5.120 a 5.504 en
+["El grid completo de flags de campo en el mensaje de arranque, medido con un agente real"](#el-grid-completo-de-flags-de-campo-en-el-mensaje-de-arranque-medido-con-un-agente-real).
+
+**Si el texto se corrige, el protocolo se repite entero sobre el texto nuevo**, con un tablero de
+ejemplo nuevo (mismas órdenes, misma ruta) y las mismas doce ejecuciones, porque un texto corregido sin
+volver a medirlo es exactamente la situación que este protocolo existe para no dar por buena. Cuando la
+corrección exista, la especificación
+(["La salida literal"](../spec/cmd/prime.md#la-salida-literal)), el código y los ficheros de referencia
+de `cmd/biso/testdata/` cambian a la vez, como pide la regla de este repositorio sobre ejemplos y
+fixtures.
+
+### La revisión adversarial y sus dos hallazgos
+
+Una revisión posterior, hecha por un agente que no había escrito ni ejecutado nada de lo de arriba,
+encontró dos maneras en que la medición de doce aciertos y cero inversiones podía estar sesgada. Las
+dos se comprobaron empíricamente, no se descartaron ni se dieron por buenas de palabra.
+
+**Primer hallazgo: el orden de creación coincidía con la respuesta correcta en las doce ejecuciones.**
+`EXP-1` ("Alpha", creada primero) quedó siempre sin dependencias y `EXP-2` ("Beta", creada segunda)
+quedó siempre con la dependencia. Un agente que ignorase la regla 11 por completo y aplicase la
+heurística "lo creado antes no depende de nada, lo creado después es lo que espera" habría acertado
+igual las doce veces, sin haber entendido la dirección que enseña la regla.
+
+La contraprueba fue un segundo tablero, creado con el orden invertido: `biso new "Beta"` primero
+(`EXP-1`) y `biso new "Alpha"` segundo (`EXP-2`), dejando intacto todo lo demás (mismos títulos, mismo
+significado de las cuatro formulaciones). En este tablero la respuesta correcta según la regla 11 es
+la contraria a la que predice la heurística del orden: `Beta` sigue siendo la que espera, así que la
+dependencia va en `EXP-1` (aunque se creó primero) apuntando a `EXP-2` (aunque se creó segundo). La
+heurística del orden, de estar operando, habría escrito `EXP-2 --add-deps EXP-1`, que en este tablero
+es la dirección equivocada.
+
+Se probó una ejecución por formulación sobre este tablero invertido (cuatro en total, no doce, porque
+esto es una contraprueba de un sesgo concreto y no una repetición de la medida). Las cuatro acertaron
+la dirección real y ninguna aplicó la heurística del orden:
+
+| Formulación | Comando ejecutado | Correcto según la regla 11 |
+|---|---|---|
+| F1, `Alpha blocks Beta.` | `biso set Beta --add-deps Alpha` (`EXP-1 --add-deps EXP-2` por resolución de título) | sí |
+| F2, `Beta depends on Alpha.` | `biso set EXP-1 --add-deps EXP-2` | sí |
+| F3, `Alpha has to happen before Beta.` | `biso set EXP-1 --add-deps EXP-2` | sí |
+| F4, `Beta cannot start until Alpha is finished.` | `biso set EXP-1 --add-deps EXP-2` | sí |
+
+Verificado con `biso get EXP-1 --json` y `biso get EXP-2 --json` sobre cada copia: las cuatro dieron
+`EXP-1` con `dependencies: ["EXP-2"]` y `EXP-2` sin ninguna, que es la dirección que pide la regla 11 y
+la contraria a la que predice "lo creado antes nunca depende de nada". El sesgo del orden de creación
+queda descartado con esta evidencia: los dieciséis aciertos conjuntos (los doce originales más estos
+cuatro) no se explican por una heurística de identificador, porque cuando el identificador y la regla
+piden cosas distintas, los agentes siguieron a la regla.
+
+**Segundo hallazgo: los agentes frescos podían estar recibiendo el `CLAUDE.md` del proyecto.** El
+párrafo de arriba, escrito antes de correr el protocolo, ya avisaba de que el diseño original quería
+excluirlo y que lanzar los doce con la herramienta `Agent` en vez de con `claude -p --bare` external era
+la salvedad que rompía esa exclusión. La comprobación pendiente era si de verdad pasaba.
+
+Se comprobó con tres agentes de diagnóstico, cada uno con una única instrucción neutra (ejecutar `pwd`,
+buscar `CLAUDE.md` en cada directorio ascendiente hasta `/`, y decir si ya traían contexto de proyecto
+antes de leer el mensaje), lanzados con las tres formas disponibles de la herramienta `Agent`:
+
+| Modo | `pwd` | `CLAUDE.md` encontrados subiendo hasta `/` | ¿Traía contexto de Biso ya puesto? |
+|---|---|---|---|
+| Sin `isolation` | `/Users/avilches/Hub/Projects/Biso` | `Biso/CLAUDE.md`, `Hub/CLAUDE.md` | sí, los dos completos más la memoria |
+| `isolation: "worktree"` | `.../Biso/.claude/worktrees/agent-<id>` | el `CLAUDE.md` del propio worktree, `.claude/CLAUDE.md`, `Biso/CLAUDE.md`, `Hub/CLAUDE.md` | sí, igual que sin `isolation` |
+| `isolation: "remote"` | el mismo patrón `.../worktrees/agent-<id>` que `worktree` | los mismos cuatro | sí, igual que los otros dos |
+
+Ninguno de los tres modos evita la fuga: los tres heredan como directorio de trabajo por defecto el de
+la sesión que los lanza, no la ruta que se les nombra dentro del mensaje, y esa ruta tiene `CLAUDE.md`
+en varios niveles. `isolation: "worktree"` no ayuda porque el worktree que crea es del propio
+repositorio de Biso, así que arrastra su `CLAUDE.md` igual; `isolation: "remote"` mostró el mismo
+patrón de directorio que `worktree`, así que tampoco lo evitó en este entorno. La herramienta `Agent`
+de esta sesión no tiene ningún parámetro para arrancar un agente en un directorio limpio sin
+ascendientes con `CLAUDE.md`, así que no hay, dentro de lo que ofrece esta herramienta, una forma de
+replicar la exclusión que lograba `claude -p --bare --tools "Bash"` del diseño original. Esto también
+significa que un agente lanzado así no estaba limitado a `Bash`: en teoría podía usar `Read` o `Grep`
+para abrir `docs/spec/cmd/set.md` o `docs/decisiones/detalles.md`, que explican la dirección de una
+dependencia en prosa mucho más extensa que la regla 11, y acertar por haber leído la especificación en
+vez de por haber entendido `biso prime`. Ninguna de las dieciséis ejecuciones que se pueden auditar
+(ver el párrafo siguiente) lo hizo, pero la posibilidad estuvo abierta en las doce originales sin que
+nada la cerrara.
+
+La mitigación disponible, a falta de una `isolation` que dé un directorio limpio, fue instruir al
+agente dentro del propio mensaje: una frase explícita pidiéndole que ignore cualquier contexto de
+proyecto que ya tuviera puesto y que no lea, busque ni abra ningún fichero salvo para ejecutar el
+comando de `biso`, más una segunda línea de respuesta obligatoria diciendo si leyó algo más. Con esa
+instrucción se repitió una ejecución por formulación (cuatro en total) sobre una copia nueva del
+tablero original (`EXP-1` "Alpha" sin dependencias, `EXP-2` "Beta" con la dependencia, el mismo reparto
+que las doce primeras ejecuciones):
+
+| Formulación | Comando ejecutado | ¿Leyó algún fichero además del binario? |
+|---|---|---|
+| F1, `Alpha blocks Beta.` | `biso set EXP-2 --add-deps EXP-1` | no |
+| F2, `Beta depends on Alpha.` | `biso set EXP-2 --add-deps EXP-1` | no (consultó `biso --help` y `biso set --help`, ningún fichero) |
+| F3, `Alpha has to happen before Beta.` | `biso set EXP-2 --add-deps EXP-1` | no |
+| F4, `Beta cannot start until Alpha is finished.` | `biso set EXP-2 --add-deps EXP-1` | no |
+
+Las cuatro acertaron, verificado igual que las demás con `biso get --json`, y las cuatro declararon no
+haber leído nada fuera del binario de `biso` (dos de ellas sí consultaron su propia ayuda con
+`--help`, que no es un fichero del repositorio). Esa declaración es autoinforme del propio agente, no
+una garantía estructural como la que daba `--tools "Bash"` en el diseño original, y por eso es una
+evidencia más débil que una exclusión real; combinada con que ninguna de las ocho ejecuciones nuevas
+(las cuatro de este hallazgo más las cuatro del sesgo de orden) usó más de un puñado de llamadas a
+herramientas, ninguna de ellas coherente con haber abierto y leído una página de la especificación,
+apoya que la fuga de `CLAUDE.md`, aunque real y confirmada, no cambió el resultado medido: ningún
+agente de los veinte (doce originales, cuatro de la contraprueba del orden, cuatro de esta
+confirmación) escribió la dependencia al revés.
+
+**Qué demuestra el experimento corregido y qué no.** Demuestra que, sobre las veinte ejecuciones que se
+han corrido en total sobre este texto de la regla 11, ninguna la invirtió, ni cuando el identificador
+más bajo era el que debía depender (contraprueba del orden) ni cuando se le pidió al agente que
+ignorase cualquier fuga de contexto de proyecto (contraprueba del `CLAUDE.md`). No demuestra que la
+fuga de `CLAUDE.md` sea inofensiva en general: solo que en las ocho ejecuciones donde se comprobó
+expresamente, ninguna explotó el acceso a herramientas de más para ir a leer la especificación, a
+juzgar por su propio informe y por su número de llamadas a herramientas. Una repetición futura de este
+protocolo con una herramienta capaz de arrancar un agente en un directorio sin ningún `CLAUDE.md`
+ascendiente (el equivalente real a `claude -p --bare --tools "Bash"`) cerraría esta pega por completo;
+hasta entonces, la mitigación de instruir al agente a ignorar el contexto y a no leer ficheros de más
+es la mejor disponible con las herramientas de esta sesión, y quedó aplicada y verificada en las ocho
+ejecuciones de arriba.
+
+Con el criterio de una sola inversión ya fijado, y sin que ninguna de las veinte ejecuciones lo
+active, la conclusión no cambia: el texto de la regla 11 sigue siendo el de arriba, y no se toca ni la
+especificación, ni el código, ni los ficheros de referencia.
+
+**Tercer hallazgo (menor, no obliga a nada): la formulación en voz pasiva.** Se sugirió añadir una
+quinta formulación del tipo "Beta is blocked by Alpha." como contraprueba adicional de vocabulario. Se
+descarta por escrito: las cuatro formulaciones que ya tiene la tabla alternan cuál de las dos tareas se
+nombra primero (F1 y F3 empiezan por `Alpha`, F2 y F4 empiezan por `Beta`) y usan vocabulario disjunto
+entre sí (`blocks`, `depends on`, `has to happen before`, `cannot start until... is finished`), así
+que ya cubren tanto el orden de mención como la ausencia de una palabra común entre todas. Una quinta
+formulación en voz pasiva pondría a prueba una construcción gramatical distinta, no una dirección
+semántica distinta, y el criterio de aceptación de `TASK-89` pide formulaciones que digan lo mismo de
+maneras distintas, no que cubran todas las construcciones gramaticales posibles del inglés.

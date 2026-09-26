@@ -9,9 +9,8 @@ Los tipos son `string` (texto de una línea; ningún `string` admite un salto de
 `text` (bloque de prosa, con saltos de línea),
 `enum(...)` (un vocabulario cerrado, entre paréntesis; dice "configurable" cuando el tablero puede
 ampliarlo), `date` (una fecha o un instante; el formato exacto se dice en la fila del campo), `int`,
-`float`, `bool`, `list<string>` (varios valores simples separados por coma al escribir,
-direccionables por su propio valor, nunca por posición), y `map<string,string>` (pares clave-valor
-con las claves declaradas de antemano, direccionables por su clave). Los campos con estructura
+`float`, `bool` y `list<string>` (varios valores simples separados por coma al escribir,
+direccionables por su propio valor, nunca por posición). Los campos con estructura
 propia usan tipos con nombre, cada uno definido en su propia página: `list<Criterion>`,
 `list<Comment>` y `Question` (esta última con un único valor, nunca una lista).
 
@@ -54,17 +53,14 @@ Precisiones:
 | `status` | `enum(...)`, configurable (ver `statuses` en [`biso config`](../cmd/config.md)) | obligatorio |
 | `type` | `enum(...)`, configurable (ver `types` en [`biso config`](../cmd/config.md)) | |
 | `priority` | `enum(...)`, configurable (ver `priorities` en [`biso config`](../cmd/config.md)) | |
-| `parent` | `string` (referencia a otra tarea) | |
+| `parent` | `string` (referencia a otra tarea); ver ["Las relaciones entre tareas"](relaciones.md) | |
 | `assignees` | `list<string>` (textos de persona) | |
 | `author` | `string` (texto de persona); ver ["El autor de una tarea"](autor.md) | |
 | `labels` | `list<string>` | |
-| `dependencies` | `list<string>` (referencias a tareas) | |
-| `references` | `list<string>` | |
-| `documentation` | `list<string>` | |
-| `modifiedFiles` | `list<string>` | |
+| `dependencies` | `list<string>` (referencias a tareas); ver ["Las relaciones entre tareas"](relaciones.md) | |
+| `references` | `list<string>`; ver ["Las relaciones entre tareas"](relaciones.md) | el único campo de punteros: un documento es una referencia más |
 | `due` | `date` (`YYYY-MM-DD`) | |
-| `ordinal` | `int` (>= 0) | |
-| `ext` | `map<string,string>` | |
+| `ordinal` | `string` (clave de orden); ver ["El orden manual y su clave"](orden-manual.md) | no se teclea: lo escriben `--ordinal first`, `--ordinal last`, `--above` y `--below` |
 | `description` | `text` | |
 | `plan` | `text` | |
 | `notes` | `text` | |
@@ -75,6 +71,10 @@ Precisiones:
 
 Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 
+- **Un `status`, `type` o `priority` guardado que la configuración no declara, o una fecha guardada que
+  no es una fecha, hace la tarea ilegible.** Los campos de vocabulario se comprueban al leer con la
+  misma regla que al escribir, y la lista completa de lo que se comprueba, con lo que hace cada comando,
+  está en ["Qué se comprueba"](../garantias.md#qué-se-comprueba).
 - **`author` se fija una sola vez, al crear la tarea, y con reglas propias** que dependen de si se
   pasa `--author` y de si hay identidad configurada; están completas en ["El autor de una
   tarea"](autor.md).
@@ -86,9 +86,13 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
   ["Borrar o corregir la fecha de un comentario"](../../decisiones/detalles.md#borrar-o-corregir-la-fecha-de-un-comentario).
 - **`question` se llena con `biso ask` (autor e instante los fija el programa, el cuerpo lo da quien
   llama) y se vacía con `biso answer`.** Los tres detalles están en ["La pregunta abierta"](pregunta-abierta.md).
-- **Un `ordinal` negativo es error 2 (`USAGE`)**, con el `code` `invalid_number` y el mensaje
-  `error: ordinal cannot be negative: -1`. El tipo de la tabla es `int (>= 0)`, y el cero es un valor
-  legítimo y no una ausencia: la forma de dejar el campo sin valor es `--clear-ordinal`.
+- **`ordinal` es un `string` de una forma cerrada, y quien llama no lo teclea.** Es la clave de orden
+  manual de ["El orden manual y su clave"](orden-manual.md): sus símbolos salen de `0-9a-z`, no
+  termina en `0` y se compara por puntos de código. No hay ningún flag que la reciba escrita; la
+  escriben `--ordinal first`, `--ordinal last`, `--above <ref>` y `--below <ref>`, cada uno colocando
+  la tarea en un sitio del orden, y la forma de dejar el campo sin valor es `--clear-ordinal`
+  (["El orden manual"](../familias-de-flags.md#el-orden-manual)). El único sitio donde una clave
+  llega escrita es el lote de [`biso new --from`](../cmd/new.md#el-modo-lote), que la valida.
 
 ## Los campos derivados
 
@@ -100,12 +104,20 @@ Precisiones para los campos de esta tabla que no son enteramente de quien llama:
 | `blocks` | `list<string>` |
 | `blocked`, `waiting` | `bool` |
 | `leaseExpired` | `bool` |
+| `blockedByCount`, `unblocksCount` | `int`; ver ["`biso get`"](../cmd/get.md#salida) |
 
 **Ninguno de estos campos se guarda.** Se calculan al leer, y son exactamente los campos que
 [`biso export`](../cmd/export.md) no escribe y que [`biso new --from`](../cmd/new.md) rechaza como
 clave desconocida: `urgency`, `acDone`, `acTotal`, `commentCount`, `blocks`,
-`blocked`, `waiting` y `leaseExpired`. Esta es la única lista de campos derivados del documento; las
-demás páginas remiten a ella.
+`blocked`, `waiting`, `leaseExpired`, `blockedByCount` y `unblocksCount`. Esta es la única lista de
+campos derivados del documento; las demás páginas remiten a ella.
+
+**`blockedByCount` y `unblocksCount` son los dos únicos campos de esta tabla que no están en
+`task.list`.** Los demás ocho están en la ficha de cualquier tarea, tanto si viene de `biso ls` como
+de `biso get` o de los cuatro bloques de `biso prime`; estos dos solo están en `task.get`, por el
+coste de calcular un cierre transitivo tarea a tarea (["`biso get`"](../cmd/get.md#el-esquema-json)).
+Siguen siendo campos derivados en todo lo demás: no se guardan, `export` no los escribe y
+`new --from` los rechaza igual que a cualquier otra clave de esta tabla si llegaran en un lote.
 
 **`blocks` se ordena por identificador ascendente**, el mismo criterio de desempate que usa
 ["`biso ls`"](../cmd/ls.md#comportamiento-caso-a-caso) para cualquier listado de tareas, para no tener

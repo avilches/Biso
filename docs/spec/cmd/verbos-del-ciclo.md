@@ -204,7 +204,7 @@ que las demás.
 | Caso | Qué pasa |
 |---|---|
 | Sin ningún texto y sin ningún flag de campo | Error 2, con el `code` `missing_text` y el mensaje de abajo |
-| Texto vacío | No añade nada y avisa, según ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) |
+| Texto vacío | No añade nada y avisa, según ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío). `biso comment` no comparte esta fila: un texto vacío ahí es error, ver ["`biso comment`"](#biso-comment) |
 | La tarea no tiene notas todavía | Se crean |
 | Varios textos | Un párrafo por texto, en el orden dado |
 | La tarea está archivada | Se hace, con `note: MYP-11 is archived` por stderr, igual que `biso get`. Solo `start` queda bloqueado sobre una tarea archivada, porque solo `start` reclama un arrendamiento (["`biso start`"](#biso-start)) |
@@ -308,6 +308,16 @@ hint: to comment the same thing on several tasks: biso set MYP-1 MYP-2 --comment
 Y sin ningún texto y sin ningún flag de campo es el error 2 de `biso note`, con su mismo `code`
 `missing_text`: `error: biso comment needs a text to append`.
 
+**Un texto vacío o de solo espacios es siempre error, y en esto `biso comment` no sigue a `biso
+note`.** `biso note` avisa y no añade nada (["`biso note`"](#biso-note)), porque una nota es un
+párrafo de más entre otros. Un comentario no es una decoración: es el registro entero de la
+conversación, la misma razón por la que un `title` vacío tampoco se descarta al crear una tarea. Por
+eso `biso comment MYP-11 ""` es `error: --comment cannot be empty`, código 2, el mismo `code`
+`unexpected_argument` y exactamente el mismo mensaje que da `--comment ""` en `biso set` o en `biso
+new`: el texto posicional no es más que la forma corta de escribir `--comment`, así que las dos
+formas de esta misma llamada dan el mismo error
+(["El valor vacío"](../valores-de-entrada.md#el-valor-vacío)).
+
 El autor es texto libre, no se valida contra nada y no interpreta el `@` inicial. **Sin
 `--comment-author` y sin [ninguna identidad configurada](../invocacion.md#variables-de-entorno), es error 2**: `error: --comment-author is
 required, no identity is configured`. Lo mismo vale para `--comment` en cualquier otro comando de
@@ -329,7 +339,8 @@ comentario (["Los comentarios"](../modelo-de-datos/comentarios.md#los-comentario
 
 ### Códigos de salida
 
-Los mismos de `biso note`, más el error 2 de `--comment-author` sin identidad configurada.
+Los mismos de `biso note`, con el código 2 cubriendo además un texto vacío y `--comment-author` sin
+identidad configurada.
 
 ### `biso comment --help`
 
@@ -373,7 +384,7 @@ Examples:
 
 ```
 biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]...
-            [--append-note <text>]... [--add-files <path>]... [--status <v>] [--strict] [--no-checks]
+            [--append-note <text>]... [--status <v>] [--strict] [--no-checks]
             [--id] [--match] [cualquier flag de campo de las familias de flags]
 ```
 
@@ -388,12 +399,12 @@ biso finish <ref>... [--append-summary <text>] [--check-ac <sel>]...
 | `--id` | no | booleano | falso | no | no | `--match` |
 | `--match` | no | booleano | falso | no | no | `--id` |
 
-`--append-summary`, `--check-ac`, `--append-note` y `--add-files` son los flags de
+`--append-summary`, `--check-ac` y `--append-note` son los flags de
 campo de siempre.
 
 ### Qué hace
 
-Marca criterios, escribe la última nota y el resumen, apunta los ficheros tocados y mueve al estado
+Marca criterios, escribe la última nota y el resumen y mueve al estado
 terminal, todo en una escritura.
 
 | Caso | Qué pasa |
@@ -494,7 +505,6 @@ Options:
       --check-ac <sel>         check criteria: all, 3, 1-4, 1,3,7 or the text.
                                With several tasks the selector has to be `all`
       --append-note <text>     one last implementation note; repeatable
-      --add-files <path>       record a modified file; repeatable
       --status <value>         use another status instead of the terminal one
       --strict           refuse to finish with unchecked criteria, unfinished
                          subtasks or no summary

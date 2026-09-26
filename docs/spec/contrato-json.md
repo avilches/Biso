@@ -48,35 +48,64 @@ resuelto a la identidad concreta que se usó). Como cualquier otra clave documen
 | `archived` | `--archived` | `bool` | `false` |
 | `onlyArchived` | `--only-archived` | `bool` | `false` |
 | `type` | `--type` | `list<string>` | `[]` |
+| `notType` | `--not-type` | `list<string>` | `[]` |
 | `priority` | `--priority` | `list<string>` | `[]` |
+| `notPriority` | `--not-priority` | `list<string>` | `[]` |
 | `label` | `--label` | `list<string>` | `[]` |
 | `labelOr` | `--label-or` | `list<string>` | `[]` |
+| `notLabel` | `--not-label` | `list<string>` | `[]` |
 | `assignee` | `--assignee`, `--mine` | `list<string>` | `[]` |
+| `notAssignee` | `--not-assignee` | `list<string>` | `[]` |
 | `unassigned` | `--unassigned` | `bool` | `false` |
+| `author` | `--author` | `list<string>` | `[]` |
 | `parent` | `--parent` | `string \| null` | `null` |
+| `root` | `--root` | `bool` | `false` |
 | `blocked` | `--blocked` / `--not-blocked` | `bool \| null` | `null` |
 | `waiting` | `--waiting` / `--not-waiting` | `bool \| null` | `null` |
 | `active` | `--active` / `--not-active` | `bool \| null` | `null` |
 | `overdue` | `--overdue` | `bool` | `false` |
 | `dueBefore` | `--due-before` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `createdAfter` | `--created-after` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `createdBefore` | `--created-before` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `updatedAfter` | `--updated-after` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `updatedBefore` | `--updated-before` | `string \| null` (`YYYY-MM-DD`) | `null` |
+| `ref` | `--ref` | `list<string>` | `[]` |
+| `notRef` | `--not-ref` | `list<string>` | `[]` |
 | `search` | `--search` | `string \| null` | `null` |
 | `unchecked` | `--unchecked` | `bool` | `false` |
 
 Precisiones:
 
-- **Una lista con más de un valor es siempre un "o"**, salvo `label`, la única que se combina con "y"
-  (["Reglas de combinación de filtros"](cmd/ls.md#parámetros)). El JSON no lo distingue por forma, las
-  dos son `list<string>`; lo distingue la clave.
+- **Una lista con más de un valor es siempre un "o"**, salvo `label`, la única que se combina con "y",
+  y salvo las negaciones (`notStatus`, `notType`, `notPriority`, `notLabel`, `notAssignee` y `notRef`),
+  que restan cada valor por su cuenta en vez de combinarse con "o" o con "y"
+  (["Reglas de combinación de filtros"](cmd/ls.md#parámetros)). El JSON no lo distingue por forma,
+  todas son `list<string>`; lo distingue la clave.
 - **`assignee` ya trae `--mine` resuelto** a la identidad concreta que se usó, igual que `status`
   resuelve su valor por defecto. `unassigned` es una clave aparte porque "nadie asignado" no es una
   persona que se pueda meter en esa lista.
 - **`parent` es el identificador ya resuelto** (`MYP-11`), nunca el texto de búsqueda que se haya
   tecleado tras `--parent` (["Cómo se resuelve una referencia a una tarea"](referencias.md)).
+- **Un filtro por la clave de una etiqueta viaja en `label`, `labelOr` y `notLabel` con un solo dos
+  puntos**, `milestone:`, aunque se escribiera `milestone::`, porque las dos formas son el mismo filtro
+  (["Consultar por la clave de una etiqueta con ámbito"](vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito)).
+  Lo que sí conserva es la grafía de la clave tal como se tecleó: se compara plegada y no hay ninguna
+  grafía configurada a la que resolverla, al contrario de lo que pasa con un `status`.
+- **Ninguna tarea trae un campo derivado por clave de etiqueta**, en ningún `kind`: `labels` es la
+  lista entera, y quien quiera el valor de una clave la parte por los primeros dos puntos con la
+  regla de ["Las etiquetas con ámbito"](valores-de-entrada.md#las-etiquetas-con-ámbito). Añadir ese
+  campo después sería un cambio compatible; quitarlo, no, y por eso no entra en la versión 1.0
+  (["Las etiquetas con ámbito"](../decisiones/detalles.md#las-etiquetas-con-ámbito)).
 - **`blocked`, `waiting` y `active` son los tres únicos filtros con un opuesto explícito que compite
   por el mismo bit.** `null` es "no se pidió ninguno de los dos", la misma convención que usa el resto
   de este contrato para "sin valor" (["Números, fechas y ausencias"](#números-fechas-y-ausencias)), y
   no `false`, que ya significa "se pidió la variante negativa". Los demás booleanos de la tabla son
-  unarios, sin opuesto, así que `false` ya significa por sí solo "no se filtró por esto".
+  unarios, sin opuesto, así que `false` ya significa por sí solo "no se filtró por esto". `root` es uno
+  de esos unarios: no compite por el mismo bit que `parent`, aunque los flags `--root` y `--parent`
+  sean incompatibles entre sí (["`biso ls`"](cmd/ls.md#parámetros)).
+- **`author` viaja como lista aunque `author` sea un escalar en cada tarea**, la misma forma que
+  `assignee`, porque `--author` es repetible y varios valores se combinan con "o", igual que
+  `--assignee`.
 
 ## Los errores en JSON
 
@@ -130,18 +159,18 @@ regla de cuándo acompañan:
 |---|---|
 | `exitCode`, `code`, `message` | En todos, siempre |
 | `field` y `given` | En los que nombran un flag, una clave de configuración o un valor de entrada concreto: todos los del código 3, y los del 2 que nombran un flag |
-| `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs`. En `ambiguous_vocabulary` no es el conjunto entero, sino **solo los valores configurados que empatan**, que es lo que hay que desambiguar (["Cuando el tablero tiene dos valores que se normalizan igual"](vocabularios.md#cuando-el-tablero-tiene-dos-valores-que-se-normalizan-igual)) |
+| `valid` | En los que rechazan un valor contra un conjunto conocido: los del 3 sobre vocabulario, y los del 2 sobre un dominio cerrado, como el modo de `--vcs`. En `ambiguous_vocabulary` no es el conjunto entero, sino **solo los valores configurados que empatan**, que es lo que hay que desambiguar (["Cuando el tablero tiene dos valores que se normalizan igual"](vocabularios.md#cuando-el-tablero-tiene-dos-valores-que-se-normalizan-igual)). `wrong_label_separator` no lo lleva, porque lo que rechaza no es un valor contra un conjunto sino un separador contra el que la clave declara, y una clave abierta no tiene ningún valor que ofrecer (["La lista `labels`"](cmd/config.md#la-lista-labels)) |
 | `details` | Solo en `batch_invalid`, y es una lista de objetos de esta misma forma, uno por fallo |
 | `vcsOutput` | Solo en `vcs_commit_failed` y en `vcs_push_failed`, y es la lista de líneas que escribió **la orden que falló**, no las de las que fueron bien antes, que sí están todas en `data.vcsOutput` cuando la llamada acaba bien (["`biso snapshot`"](cmd/snapshot.md)) |
 | `warnings` | Al mismo nivel que `error`, no dentro de él, en cualquier `code` cuya llamada haya producido al menos un aviso antes de fallar, con la misma forma que `data.warnings` (["Notas y avisos"](salida-y-terminal.md#notas-y-avisos)) |
 
-**La fila de `field` y `given` tiene dos excepciones, y son de signo distinto.** La primera es
-`incompatible_flags`, que **no lleva ninguna de las dos**: nombra un par de flags, y ninguno de los
-dos es más culpable que el otro, así que elegir uno para `field` sería inventarse una atribución que
-la llamada no tiene. Los demás errores del código 2 que nombran un flag sí las llevan,
+**La fila de `field` y `given` tiene excepciones declaradas, y no son todas del mismo signo.** La
+primera es `incompatible_flags`, que **no lleva ninguna de las dos**: nombra un par de flags, y
+ninguno de los dos es más culpable que el otro, así que elegir uno para `field` sería inventarse una
+atribución que la llamada no tiene. Los demás errores del código 2 que nombran un flag sí las llevan,
 `read_only_flag` incluido, que nombra uno solo (["Los flags globales"](cmd/flags-globales.md)).
 
-La segunda es `invalid_lease`, que **lleva `field` y no lleva `given`**. Sus dos mitades
+La siguiente es `invalid_lease`, que **lleva `field` y no lleva `given`**. Sus dos mitades
 (["`biso new`"](cmd/new.md#el-modo-lote)) no reprochan ningún valor: la primera reprocha el estado
 de la tarea sobre la que llegó la clave, y la segunda que falte la otra clave de la pareja. No hay
 nada que citar, así que la clave no viaja, en vez de viajar vacía: una `given` de cadena vacía
@@ -150,11 +179,35 @@ ningún valor". Es la misma regla que ["Números, fechas y ausencias"](#números
 aplica a una salida de datos, aquí aplicada a la única clave de un error que puede faltar sin que
 falte también su pareja.
 
+Y la última es `mixed_label_separators`, que **lleva `field` igual a `labels` y tampoco lleva
+`given`**, por la misma razón que `incompatible_flags` no elige flag: su mensaje cita dos etiquetas
+que se contradicen entre sí (["Escribir una etiqueta con ámbito"](familias-de-flags.md#escribir-una-etiqueta-con-ámbito))
+y ninguna de las dos es la culpable, así que copiar una en `given` diría que el problema es esa y no
+la pareja. `field` sí se puede nombrar sin inventar nada, porque el campo en discordia es uno solo.
+`exclusive_label_conflict`, en cambio, no lleva ninguna de las dos claves y no es ninguna excepción:
+sale con el código 6, y la fila de arriba solo se las promete a los del 3 y a los del 2 que nombran
+un flag.
+
 Las cinco de detalle van juntas con su `code` y no con su código de salida, que es lo que hace la regla
 comprobable: quien ramifica sobre `unknown_status` sabe que va a tener `field`, `given` y `valid`, y
 quien ramifica sobre `busy` sabe que no va a tener ninguna de las cinco. `warnings` es la excepción:
 no depende del `code`, sino de si esa llamada en concreto llegó a producir algún aviso antes de fallar,
 así que puede acompañar a cualquiera de ellos.
+
+**El `field` de una negación de `biso ls` no sigue una sola regla: depende de si el eje que valida es
+un vocabulario configurado por el tablero o uno de los conjuntos de etiquetas y personas.**
+`--not-status`, `--not-type` y `--not-priority` validan con la misma resolución de vocabulario que
+`--status`, `--type` y `--priority`
+(["El algoritmo de coincidencia"](vocabularios.md#el-algoritmo-de-coincidencia)), así que su error, si
+lo hay, es del eje que falla y no del flag que lo pidió: `field` vale `status`, `type` o `priority` en
+los dos sentidos, el mismo para el filtro positivo y para su negación. `--not-label` y
+`--not-assignee`, en cambio, llevan su propio `field` (`notLabel` y `notAssignee`), distinto del de
+`--label` y `--assignee`, porque cada uno de esos filtros se valida por separado contra el conjunto de
+etiquetas o de personas del tablero
+(["Qué valida cada filtro, y contra qué"](vocabularios.md#qué-valida-cada-filtro-y-contra-qué)), con
+su propio `field` desde antes de que existiera ninguna negación: es la misma razón por la que
+`--label-or` ya lleva `field: "labelOr"`, distinto del `field: "label"` de `--label`, aunque las dos
+validen contra el mismo conjunto de etiquetas.
 
 ## Los identificadores de error
 
@@ -164,11 +217,11 @@ agrupada por el código de salida con el que sale cada uno:
 | Código de salida | `code` |
 |---:|---|
 | 1 | `internal` |
-| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_extension_key`, `malformed_string_value`, `id_like_positional`, `missing_text`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_snapshot_id`, `unknown_key`, `id_taken`, `invalid_lease`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
-| 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_assignee`, `unknown_extension_key`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_line`, `invalid_encoding` |
+| 2 | `incompatible_flags`, `duplicate_scalar_flag`, `unexpected_argument`, `missing_value`, `unknown_flag`, `unknown_command`, `unknown_section`, `unknown_sort_field`, `missing_title`, `missing_ref`, `nothing_to_change`, `malformed_id`, `malformed_label`, `malformed_assignee`, `malformed_string_value`, `malformed_ordinal`, `mixed_label_separators`, `id_like_positional`, `missing_text`, `inverted_range`, `key_selector_with_many_tasks`, `criterion_selector_overlap`, `comment_selector_overlap`, `self_ordinal_neighbour`, `two_stdin`, `read_only_flag`, `invalid_date`, `invalid_number`, `invalid_ordinal_value`, `invalid_prefix`, `dependency_cycle`, `parent_cycle`, `self_dependency`, `board_exists`, `delete_not_supported`, `missing_identity`, `invalid_status_roles`, `unknown_status_role`, `too_few_statuses`, `invalid_snapshot_config`, `invalid_snapshot_id`, `unknown_key`, `id_taken`, `invalid_lease`, `invalid_vcs_mode`, `invalid_color_mode`, `vcs_push_unavailable`, `vcs_commit_unavailable` |
+| 3 | `unknown_status`, `unknown_type`, `unknown_priority`, `unknown_label`, `unknown_label_key`, `unknown_label_value`, `wrong_label_separator`, `unknown_assignee`, `ambiguous_vocabulary`, `empty_scalar_value`, `bad_config_value`, `undecodable_task`, `invalid_line`, `invalid_encoding` |
 | 4 | `not_found`, `never_allocated`, `no_such_command`, `unknown_config_key`, `criterion_not_found`, `comment_not_found`, `file_not_found` |
 | 5 | `ambiguous_reference`, `criterion_ambiguous`, `comment_ambiguous` |
-| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity` |
+| 6 | `already_finished`, `precondition_failed`, `board_inconsistent`, `doctor_problems`, `open_question_exists`, `no_open_question`, `mine_requires_identity`, `exclusive_label_conflict`, `neighbour_without_ordinal` |
 | 7 | `batch_invalid` |
 | 8 | `busy`, `io_error`, `file_unreadable`, `lease_lost`, `no_terminal`, `port_in_use`, `vcs_commit_failed`, `vcs_push_failed` |
 | 20 | `no_board`, `pointer_unresolved` |
@@ -188,7 +241,8 @@ formato de intercambio no declara), `id_taken` (un `id` que el tablero ya tiene,
 veces en el mismo fichero), `invalid_lease` (cualquiera de las dos mitades de la invariante de
 ["El vaciado"](lease.md#el-vaciado) rota en una línea), `invalid_line` (una línea que no se puede
 interpretar como una tarea del formato: JSON mal formado, un valor del tipo equivocado, un `null` en
-una lista, una fecha ilegible o una clave de criterio o de comentario repetida) y
+una lista, una fecha ilegible, una clave de criterio o de comentario repetida, o un comentario sin
+cuerpo, incluido un `null` en el lugar de un elemento de `comments`) y
 `invalid_snapshot_id`, que ["`biso init`"](cmd/init.md) ya nombraba en su tabla de casos y que esta
 lista no llevaba. Los cuatro primeros viajan siempre dentro de `details`, porque el lote los agrupa
 bajo un `batch_invalid`.
@@ -225,6 +279,27 @@ simultánea (["`biso start`"](cmd/verbos-del-ciclo.md#biso-start)); sale con 8 p
 fue la petición, que era correcta, sino conseguir el acceso exclusivo que hacía falta para servirla,
 que es exactamente lo que ese código cubre en la tabla de ["`biso set`"](cmd/set.md#códigos-de-salida).
 
+**`undecodable_task` es el error de `biso get` y de las escrituras dirigidas sobre una tarea ilegible**
+(["El primer caso: una tarea ilegible"](garantias.md#el-primer-caso-una-tarea-ilegible)), con código 3.
+Lleva `field`, que nombra el campo dañado (`status`, `due`, `comment #1 createdAt`...), y `given`, que
+es lo que hay guardado, vacío incluido. `valid` viaja solo cuando el campo es de vocabulario y trae los
+valores que el tablero declara, igual que en `unknown_status`. Es un `code` propio y no uno de
+`unknown_status`, `unknown_type` o `unknown_priority` porque lo que falla no es un valor que llega sino
+uno que ya estaba guardado, y quien ramifica sobre él tiene que poder distinguir que repetir la llamada
+con otros filtros u otra referencia no lo cambia.
+
+**Los `code` del orden manual se reparten por lo que falla en cada uno**, que es lo que
+permite ramificar sin leer la frase (["El orden manual"](familias-de-flags.md#el-orden-manual)).
+`invalid_ordinal_value` es `--ordinal` con algo que no es `first` ni `last`, y lleva `valid` porque su
+dominio es cerrado y del programa, como el de `--color` o el de `--vcs`. `self_ordinal_neighbour` es
+la tarea que se nombra a sí misma como vecina, hermano de `self_dependency`. `malformed_ordinal` es
+una clave de orden mal formada en una línea de un lote, el único sitio donde una clave llega escrita
+(["El modo lote"](cmd/new.md#el-modo-lote)), y viaja dentro de `details` como los demás fallos de un
+lote; no se confunde con `invalid_number`, porque una clave de orden no es un número, ni con
+`invalid_line`, que es lo que contesta un `ordinal` que ni siquiera es una cadena.
+`neighbour_without_ordinal` es el único que sale con el código 6, porque la llamada está bien escrita
+y lo que no la admite es el estado del tablero.
+
 **La lista es ampliable y las entradas son permanentes.** Una versión posterior puede añadir un `code`
 nuevo, pero ninguno de los de arriba cambiará de significado, cambiará de código de salida ni
 desaparecerá. Quien ramifique sobre un `code` desconocido debe tratarlo por su código de salida, que
@@ -246,6 +321,11 @@ anterior a esta rama.
   (["`biso get`"](cmd/get.md#el-esquema-json)). Los términos son los sumandos de ese mismo número, así que se escriben
   igual que él: `6.0` y no `6`, y los siete ceros de una tarea en estado terminal son `0.0` y no `0`.
   Decirlo solo de `urgency` fue lo que dejó que el desglose se serializara como entero.
+- **`ordinal` es una cadena o `null`, nunca un número.** Es la clave de orden manual de
+  ["El orden manual y su clave"](modelo-de-datos/orden-manual.md), y viaja tal cual está guardada en
+  `task.list`, en `task.get`, en la exportación y en el lote de entrada. Es el único campo de una
+  tarea cuyo valor no se puede teclear en la línea de comandos, así que el JSON es el único sitio
+  donde se lee entero.
 - Un campo sin valor es `null`, nunca la cadena vacía ni la ausencia de la clave. **Ninguna clave va ni
   viene según los datos**: la que está documentada para un `kind` aparece siempre que se emite ese
   `kind`, valga lo que valga, para que nadie tenga que distinguir entre "no está" y "no tiene valor".
@@ -257,6 +337,7 @@ anterior a esta rama.
   | Clave | `kind` | El flag que la gobierna |
   |---|---|---|
   | `data.task.urgencyBreakdown` | `task.get` | Solo aparece con `--explain-urgency` (["`biso get`"](cmd/get.md)) |
+  | `data.task.closure` | `task.get` | Solo aparece con `--closure`, ignorando qué se pidió con `--section` (["`biso get`"](cmd/get.md#--closure)) |
   | Las demás claves de `data.task` | `task.get` | Con `--section`, `data.task` trae solo `id` y las claves de las secciones pedidas, y ninguna otra (["`biso get`"](cmd/get.md)) |
 - Una lista vacía es `[]` y un mapa vacío es `{}`, nunca `null`.
 - **Todo lo de arriba gobierna las salidas de datos, y el sobre de error se gobierna aparte** (["Los errores en JSON"](#los-errores-en-json)). La

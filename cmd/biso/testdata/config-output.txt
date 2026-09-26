@@ -11,7 +11,6 @@ types = idea,memory,task,bug,docs
 priorities = high,medium,low
 labels =
 assignees =
-extensions = trello.card
 task_prefix = TASK
 finish_strict = false
 lease_minutes = 240

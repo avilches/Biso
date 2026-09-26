@@ -52,6 +52,17 @@ func NewOn(b *board.Board, env Env, p NewParams) (*WriteResult, error) {
 
 	w := newWriter(b, env, p.Changes)
 	w.newTask = true
+	if err := w.prepareLabels(); err != nil {
+		return w.partial(), err
+	}
+
+	// A task can be born placed, so the gap is resolved before the field
+	// flags are applied, exactly as in `biso set`. The task does not exist
+	// yet, so it moves nothing and every key of the board counts
+	// (docs/spec/cmd/new.md#parámetros-propios).
+	if err := w.prepareOrdinal(nil); err != nil {
+		return w.partial(), err
+	}
 
 	task := &model.Task{
 		Title:  p.Title,
@@ -88,7 +99,7 @@ func NewOn(b *board.Board, env Env, p NewParams) (*WriteResult, error) {
 		// none to name the task by: the answer is the count and the
 		// warnings the real call would have produced
 		// (docs/spec/cmd/new.md#--dry-run-sobre-una-sola-tarea).
-		if err := task.Validate(b.Config.Extensions); err != nil {
+		if err := task.Validate(); err != nil {
 			return w.partial(), err
 		}
 		result.Warnings, result.Notes = w.warnings, w.notes

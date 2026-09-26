@@ -36,20 +36,8 @@ func cloneTask(t *model.Task) *model.Task {
 	clone.Labels = append([]string(nil), t.Labels...)
 	clone.Dependencies = append([]string(nil), t.Dependencies...)
 	clone.References = append([]string(nil), t.References...)
-	clone.Documentation = append([]string(nil), t.Documentation...)
-	clone.ModifiedFiles = append([]string(nil), t.ModifiedFiles...)
 	clone.AcceptanceCriteria = append([]model.Criterion(nil), t.AcceptanceCriteria...)
 	clone.Comments = append([]model.Comment(nil), t.Comments...)
-	if t.Ordinal != nil {
-		ordinal := *t.Ordinal
-		clone.Ordinal = &ordinal
-	}
-	if t.Ext != nil {
-		clone.Ext = make(map[string]string, len(t.Ext))
-		for k, v := range t.Ext {
-			clone.Ext[k] = v
-		}
-	}
 	if t.Question != nil {
 		question := *t.Question
 		clone.Question = &question

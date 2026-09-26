@@ -34,9 +34,10 @@ const InstantLayout = "2006-01-02T15:04:05Z"
 //   - **A zero time.Time is the absence of a date**, for the same reason:
 //     no date field can hold the zero instant.
 //
-// Ordinal is the one field that needs a pointer, because 0 is a value a
-// caller can legitimately give it (docs/spec/modelo-de-datos/index.md says
-// int >= 0), so it cannot double as the absence of one.
+// Ordinal follows the first of the two without an exception: it is the
+// ordinal key of docs/spec/modelo-de-datos/orden-manual.md, a text whose
+// alphabet cannot produce the empty string, so the empty string is how a
+// task with no place in the manual order carries it.
 //
 // The derived fields of docs/spec/modelo-de-datos/index.md#los-campos-derivados
 // are not fields here: none of them is stored, so they are methods
@@ -52,25 +53,22 @@ type Task struct {
 	LeaseHolder    string
 
 	// The fields the caller sets.
-	Title         string
-	Status        string
-	Type          string
-	Priority      string
-	Parent        string
-	Assignees     []string
-	Author        string
-	Labels        []string
-	Dependencies  []string
-	References    []string
-	Documentation []string
-	ModifiedFiles []string
-	Due           time.Time // a calendar day at UTC midnight, zero when unset
-	Ordinal       *int
-	Ext           map[string]string
-	Description   string
-	Plan          string
-	Notes         string
-	Summary       string
+	Title        string
+	Status       string
+	Type         string
+	Priority     string
+	Parent       string
+	Assignees    []string
+	Author       string
+	Labels       []string
+	Dependencies []string
+	References   []string
+	Due          time.Time // a calendar day at UTC midnight, zero when unset
+	Ordinal      string    // the ordinal key, empty when the task has none
+	Description  string
+	Plan         string
+	Notes        string
+	Summary      string
 
 	AcceptanceCriteria []Criterion
 	Comments           []Comment
@@ -118,22 +116,20 @@ type Question struct {
 	Body    string
 }
 
-// ListField names one of the six list<string> fields of
+// ListField names one of the four list<string> fields of
 // docs/spec/modelo-de-datos/index.md. It is a closed vocabulary: ListField
 // and SetListField reject any other name instead of answering an empty
 // list, per the rule of the project's CLAUDE.md that a value that does not
 // exist is an error whether it is being written or read.
 type ListField string
 
-// The six list<string> fields. The names are the ones the JSON contract
+// The four list<string> fields. The names are the ones the JSON contract
 // uses, so the same constant serves the model, the storage and the wire.
 const (
-	FieldAssignees     ListField = "assignees"
-	FieldLabels        ListField = "labels"
-	FieldDependencies  ListField = "dependencies"
-	FieldReferences    ListField = "references"
-	FieldDocumentation ListField = "documentation"
-	FieldModifiedFiles ListField = "modifiedFiles"
+	FieldAssignees    ListField = "assignees"
+	FieldLabels       ListField = "labels"
+	FieldDependencies ListField = "dependencies"
+	FieldReferences   ListField = "references"
 )
 
 // listFields is the closed vocabulary itself, in the order of the table of
@@ -143,11 +139,9 @@ var listFields = []ListField{
 	FieldLabels,
 	FieldDependencies,
 	FieldReferences,
-	FieldDocumentation,
-	FieldModifiedFiles,
 }
 
-// ListFields answers the six list<string> field names, in the order of the
+// ListFields answers the four list<string> field names, in the order of the
 // specification's table. The caller gets a copy: the vocabulary is closed
 // and nobody outside this package extends it.
 func ListFields() []ListField {
@@ -157,7 +151,7 @@ func ListFields() []ListField {
 }
 
 // ErrUnknownListField is what ListField and SetListField answer for a name
-// that is not one of the six. It is not a *Error of the specification:
+// that is not one of the four. It is not a *Error of the specification:
 // no command lets a caller name a list field freely, so reaching it means
 // the program asked for a field that does not exist, which is a bug and
 // not a case of docs/spec/codigos-de-salida.md.
@@ -168,7 +162,7 @@ func (e ErrUnknownListField) Error() string {
 	return fmt.Sprintf("unknown list field %q", string(e))
 }
 
-// ListField answers the values of one of the six list fields.
+// ListField answers the values of one of the four list fields.
 func (t *Task) ListField(f ListField) ([]string, error) {
 	switch f {
 	case FieldAssignees:
@@ -179,15 +173,11 @@ func (t *Task) ListField(f ListField) ([]string, error) {
 		return t.Dependencies, nil
 	case FieldReferences:
 		return t.References, nil
-	case FieldDocumentation:
-		return t.Documentation, nil
-	case FieldModifiedFiles:
-		return t.ModifiedFiles, nil
 	}
 	return nil, ErrUnknownListField(f)
 }
 
-// SetListField replaces the values of one of the six list fields, in the
+// SetListField replaces the values of one of the four list fields, in the
 // order given. Lists are never sorted on their own
 // (docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura).
 func (t *Task) SetListField(f ListField, values []string) error {
@@ -200,10 +190,6 @@ func (t *Task) SetListField(f ListField, values []string) error {
 		t.Dependencies = values
 	case FieldReferences:
 		t.References = values
-	case FieldDocumentation:
-		t.Documentation = values
-	case FieldModifiedFiles:
-		t.ModifiedFiles = values
 	default:
 		return ErrUnknownListField(f)
 	}

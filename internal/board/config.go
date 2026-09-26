@@ -9,7 +9,7 @@ import (
 	"biso/internal/model"
 )
 
-// This file is the board's own configuration: the twenty keys of
+// This file is the board's own configuration: the nineteen keys of
 // docs/spec/cmd/config.md, which live inside the board's database and
 // therefore travel with it wherever the directory goes.
 
@@ -39,7 +39,6 @@ type Config struct {
 	Priorities     []string
 	Labels         []string
 	Assignees      []string
-	Extensions     []string
 	TaskPrefix     string
 	FinishStrict   bool
 	LeaseMinutes   int
@@ -59,7 +58,6 @@ func DefaultConfig(name, prefix string) Config {
 		Priorities:     append([]string(nil), DefaultPriorities...),
 		Labels:         []string{},
 		Assignees:      []string{},
-		Extensions:     []string{},
 		TaskPrefix:     prefix,
 		FinishStrict:   false,
 		LeaseMinutes:   DefaultLeaseMinutes,
@@ -78,7 +76,6 @@ const (
 	KeyPriorities      = "priorities"
 	KeyLabels          = "labels"
 	KeyAssignees       = "assignees"
-	KeyExtensions      = "extensions"
 	KeyTaskPrefix      = "task_prefix"
 	KeyFinishStrict    = "finish_strict"
 	KeyLeaseMinutes    = "lease_minutes"
@@ -91,12 +88,12 @@ const (
 	KeyUrgencyAge      = "urgency.age"
 )
 
-// ConfigKeys are the twenty keys, in the order of the table of
+// ConfigKeys are the nineteen keys, in the order of the table of
 // docs/spec/cmd/config.md#las-claves.
 var ConfigKeys = []string{
 	KeyProjectName, KeyStatuses, KeyInitialStatus, KeyActiveStatus,
 	KeyTerminalStatus, KeyTypes, KeyPriorities, KeyLabels, KeyAssignees,
-	KeyExtensions, KeyTaskPrefix, KeyFinishStrict, KeyLeaseMinutes,
+	KeyTaskPrefix, KeyFinishStrict, KeyLeaseMinutes,
 	KeyUrgencyPriority, KeyUrgencyActive, KeyUrgencyBlocking,
 	KeyUrgencyBlocked, KeyUrgencyDue, KeyUrgencyCriteria, KeyUrgencyAge,
 }
@@ -115,7 +112,6 @@ func (c Config) rows() map[string]string {
 		KeyPriorities:      encodeList(c.Priorities),
 		KeyLabels:          encodeList(c.Labels),
 		KeyAssignees:       encodeList(c.Assignees),
-		KeyExtensions:      encodeList(c.Extensions),
 		KeyTaskPrefix:      c.TaskPrefix,
 		KeyFinishStrict:    strconv.FormatBool(c.FinishStrict),
 		KeyLeaseMinutes:    strconv.Itoa(c.LeaseMinutes),
@@ -227,8 +223,6 @@ func (c *Config) set(key, value string) *model.Error {
 		c.Labels, err = decodeList(key, value)
 	case KeyAssignees:
 		c.Assignees, err = decodeList(key, value)
-	case KeyExtensions:
-		c.Extensions, err = decodeList(key, value)
 	case KeyTaskPrefix:
 		c.TaskPrefix = value
 	case KeyFinishStrict:

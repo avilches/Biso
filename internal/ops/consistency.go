@@ -358,11 +358,8 @@ func changedFields(before, after *model.Task) []string {
 		{"labels", func(t *model.Task) any { return t.Labels }},
 		{"dependencies", func(t *model.Task) any { return t.Dependencies }},
 		{"references", func(t *model.Task) any { return t.References }},
-		{"documentation", func(t *model.Task) any { return t.Documentation }},
-		{"modifiedFiles", func(t *model.Task) any { return t.ModifiedFiles }},
 		{"due", func(t *model.Task) any { return t.Due }},
-		{"ordinal", func(t *model.Task) any { return ordinalOf(t) }},
-		{"ext", func(t *model.Task) any { return t.Ext }},
+		{"ordinal", func(t *model.Task) any { return t.Ordinal }},
 		{"description", func(t *model.Task) any { return t.Description }},
 		{"plan", func(t *model.Task) any { return t.Plan }},
 		{"notes", func(t *model.Task) any { return t.Notes }},
@@ -379,15 +376,6 @@ func changedFields(before, after *model.Task) []string {
 		}
 	}
 	return changed
-}
-
-// ordinalOf turns the one pointer field into a value, so that comparing two
-// tasks never compares two addresses.
-func ordinalOf(t *model.Task) any {
-	if t.Ordinal == nil {
-		return nil
-	}
-	return *t.Ordinal
 }
 
 // sameValue compares two field values the way the caller sees them: an empty
@@ -501,6 +489,10 @@ func (w *writer) views(tasks []*model.Task, byID map[string]*model.Task) ([]Task
 		if err != nil {
 			return nil, err
 		}
+		// The card --print writes is the whole card of `biso get`
+		// (docs/spec/cmd/flags-globales.md), which always carries `blocked
+		// by`/`unblocks`.
+		v = r.withClosure(v, false)
 		out = append(out, v)
 	}
 	return out, nil

@@ -29,24 +29,23 @@ const primeCommands = "COMMANDS  (`biso help <cmd>...` for the detail of any, se
 	"  biso comment <ref> \"TEXT\" [--comment-author @who]\n"
 
 // primeFieldFlags is the FIELD FLAGS grid: the names of every field flag,
-// in thirteen lines. `--full` prints the same flags grouped by the field
+// in the eleven lines docs/spec/cmd/prime.md#la-salida-literal counts,
+// under their heading. `--full` prints the same flags grouped by the field
 // they write, and neither block replaces the other.
 const primeFieldFlags = "FIELD FLAGS  (same names, same meaning, in every command above that writes)\n" +
 	"  --title  --status  --type --clear-type  --priority --clear-priority\n" +
-	"  --parent --clear-parent  --due --clear-due  --ordinal --clear-ordinal  --author --clear-author\n" +
+	"  --parent --clear-parent  --due --clear-due  --author --clear-author\n" +
+	"  --ordinal first|last  --above <ref> --below <ref>  --clear-ordinal\n" +
 	"  --add-labels --rm-labels --clear-labels --replace-labels\n" +
 	"  --add-assignees --rm-assignees --clear-assignees --replace-assignees\n" +
 	"  --add-refs --rm-refs --clear-refs --replace-refs\n" +
-	"  --add-docs --rm-docs --clear-docs --replace-docs\n" +
 	"  --add-deps --rm-deps --clear-deps --replace-deps\n" +
-	"  --add-files --rm-files --clear-files --replace-files\n" +
 	"  --add-ac --rm-ac --clear-acs   --check-ac --uncheck-ac\n" +
 	"  --append-desc --clear-desc  --append-plan --clear-plan\n" +
 	"  --append-note --clear-notes  --append-summary --clear-summary\n" +
-	"  --comment --rm-comment --set-comment-date\n" +
-	"  --ext K=V --rm-ext --clear-ext\n"
+	"  --comment --rm-comment --set-comment-date\n"
 
-// primeRules is the RULES block: the ten rules that cannot be guessed.
+// primeRules is the RULES block: the eleven rules that cannot be guessed.
 const primeRules = "RULES  (none of these are guessable; they are the whole learning curve)\n" +
 	"  1. Every write goes through biso. Nothing else touches the board.\n" +
 	"  2. <ref> is an id (MYP-12), a bare number (12) or free text (\"CRLF\"). Text\n" +
@@ -72,7 +71,9 @@ const primeRules = "RULES  (none of these are guessable; they are the whole lear
 	"     6 precondition not met, 7 nothing written, 8 environment, 20 no board here.\n" +
 	" 10. `biso ask <ref> \"...\"` parks a task on a question and `biso answer` unparks\n" +
 	"     it, writing both into the comments. Ask instead of guessing. A task\n" +
-	"     assigned to you is one a person decided you should do.\n"
+	"     assigned to you is one a person decided you should do.\n" +
+	" 11. A dependency is written on the task that waits:\n" +
+	"     `biso set MYP-10 --add-deps MYP-4` means MYP-4 blocks MYP-10.\n"
 
 // primeClosing is the paragraph that closes the message.
 const primeClosing = "Pick one, `biso start <ref> --append-plan \"...\"`, work, `biso note <ref> \"...\"` as you go,\n" +

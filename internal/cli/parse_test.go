@@ -48,16 +48,6 @@ func testCommands() []CommandSpec {
 		{Name: "type", Value: PlainValue, Category: Scalar, ClosedVocabulary: true, ClearFlag: "clear-type"},
 		{Name: "author", Value: PlainValue, Category: Scalar, SingleLine: true, ClearFlag: "clear-author"},
 		{Name: "due", Value: PlainValue, Category: Scalar, ClearFlag: "clear-due"},
-		{
-			Name: "ext", Value: PlainValue, Repeatable: true, Category: ExtKey,
-			Pair: PairAtFirstEquals, PairSyntax: "<key>=<value>",
-			Alphabet: ExtKeyAlphabet, Noun: "extension key",
-			SingleLine: true, LastKeyWins: true,
-		},
-		{
-			Name: "rm-ext", Value: PlainValue, Repeatable: true, Category: Remove,
-			Alphabet: ExtKeyAlphabet, Noun: "extension key", Field: "ext",
-		},
 		{Name: "check-ac", Value: PlainValue, Repeatable: true, Category: CheckAC},
 		{
 			Name: "set-comment-date", Value: PlainValue, Repeatable: true,
@@ -481,7 +471,7 @@ func TestEmptyValue(t *testing.T) {
 func TestEmptyValueOutsideATaskScalar(t *testing.T) {
 	for _, argv := range [][]string{
 		{"set", "MYP-1", "--rm-labels", ""},
-		{"set", "MYP-1", "--rm-ext", "   "},
+		{"set", "MYP-1", "--rm-labels", "   "},
 		{"ls", "--cwd", ""},
 		{"ls", "--limit", ""},
 	} {
@@ -494,28 +484,16 @@ func TestEmptyValueOutsideATaskScalar(t *testing.T) {
 }
 
 // TestPairWithAnEmptyValue is the same rule for a flag whose value is a pair:
-// --ext k= says nothing the specification documents, and --clear-ext and
-// --rm-ext are what empty a map or one of its keys.
+// --set-comment-date 3= says nothing the specification documents: the date of
+// a comment is corrected, never emptied.
 func TestPairWithAnEmptyValue(t *testing.T) {
-	_, err := parse(t, "set", "MYP-1", "--ext", "k=")
+	_, err := parse(t, "set", "MYP-1", "--set-comment-date", "3=")
 	e := wantError(t, err, 2, "unexpected_argument")
-	if e.Message != `--ext: the value of key "k" cannot be empty` {
+	if e.Message != `--set-comment-date: the value of key "3" cannot be empty` {
 		t.Errorf("message is %q", e.Message)
 	}
-	if e.Field != "ext" || e.Given != "k=" {
+	if e.Field != "set-comment-date" || e.Given != "3=" {
 		t.Errorf("field/given are %q/%q", e.Field, e.Given)
-	}
-}
-
-// TestPairWithANewlineInItsValue covers
-// docs/spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string, which
-// names the values of ext among the fields of one line. The rules of a value
-// apply to the right half of a pair like they apply to any other value.
-func TestPairWithANewlineInItsValue(t *testing.T) {
-	_, err := parse(t, "set", "MYP-1", "--ext", "k=first\nsecond")
-	e := wantError(t, err, 2, "malformed_string_value")
-	if e.Field != "ext" {
-		t.Errorf("field is %q, want ext", e.Field)
 	}
 }
 
@@ -732,18 +710,6 @@ func TestMalformedToken(t *testing.T) {
 	if len(e.Hints) != 1 || e.Hints[0] != "a label may contain letters, digits, and - _ . : @" {
 		t.Errorf("hints are %q", e.Hints)
 	}
-
-	// An ext key admits neither "=" nor ":" nor "@", so a flag that takes a
-	// bare key, such as --rm-ext, is where that malformed key shows up: --ext
-	// itself cuts at the first "=" and never sees one inside its key.
-	_, err = parse(t, "set", "MYP-1", "--rm-ext", "trello=card")
-	e = wantError(t, err, 2, "malformed_extension_key")
-	if e.Message != `malformed extension key: "trello=card"` {
-		t.Errorf("message is %q", e.Message)
-	}
-	if e.Hints[0] != "an extension key may contain letters, digits, and - _ ." {
-		t.Errorf("hints are %q", e.Hints)
-	}
 }
 
 func TestMalformedStringValue(t *testing.T) {
@@ -755,61 +721,33 @@ func TestMalformedStringValue(t *testing.T) {
 	if e.Field != "title" {
 		t.Errorf("field is %q", e.Field)
 	}
+
+	// The rule belongs to the field and not to one flag: --author is the
+	// other flag whose value is one line.
+	_, err = parse(t, "set", "MYP-1", "--author", "first\rsecond")
+	wantError(t, err, 2, "malformed_string_value")
 }
 
 func TestPairs(t *testing.T) {
-	// --ext cuts at the first "=", which it can because an ext key cannot
-	// contain one.
-	p := mustParse(t, "set", "MYP-1", "--ext", "trello=card/9=1")
-	c := onlyChange(t, p, "ext")
-	if c.Key != "trello" || c.Value != "card/9=1" {
-		t.Errorf("got %q=%q", c.Key, c.Value)
-	}
-
-	// --set-comment-date cuts at the last one, because its selector is free
+	// --set-comment-date cuts at the last "=", because its selector is free
 	// text that may carry another.
-	p = mustParse(t, "set", "MYP-1", "--set-comment-date", "a=b=2026-08-14T10:22:00Z")
-	c = onlyChange(t, p, "set-comment-date")
+	p := mustParse(t, "set", "MYP-1", "--set-comment-date", "a=b=2026-08-14T10:22:00Z")
+	c := onlyChange(t, p, "set-comment-date")
 	if c.Key != "a=b" || c.Value != "2026-08-14T10:22:00Z" {
 		t.Errorf("got %q=%q", c.Key, c.Value)
 	}
 
-	_, err := parse(t, "set", "MYP-1", "--ext", "trello")
+	_, err := parse(t, "set", "MYP-1", "--set-comment-date", "trello")
 	e := wantError(t, err, 2, "unexpected_argument")
-	if e.Message != `--ext: expected <key>=<value>, got "trello"` {
+	if e.Message != `--set-comment-date: expected <sel>=<instant>, got "trello"` {
 		t.Errorf("message is %q", e.Message)
 	}
 }
 
-func TestSameExtKeyTwiceKeepsTheLastValue(t *testing.T) {
-	p := mustParse(t, "set", "MYP-1", "--ext", "k=a", "--ext", "k=b")
-	c := onlyChange(t, p, "ext")
-	if c.Key != "k" || c.Value != "b" {
-		t.Errorf("got %q=%q, want k=b", c.Key, c.Value)
-	}
-	w := onlyWarning(t, p)
-	if w.Code != "duplicate_ext_key" || w.Message != `--ext: key "k" given twice, kept last value` {
-		t.Errorf("warning is %q/%q", w.Code, w.Message)
-	}
-
-	// Three appearances are one warning that counts them, not two warnings
-	// that both say "twice".
-	p = mustParse(t, "set", "MYP-1", "--ext", "k=a", "--ext", "k=b", "--ext", "k=c")
-	c = onlyChange(t, p, "ext")
-	if c.Value != "c" {
-		t.Errorf("value is %q, want c", c.Value)
-	}
-	w = onlyWarning(t, p)
-	if w.Message != `--ext: key "k" given 3 times, kept last value` {
-		t.Errorf("warning is %q", w.Message)
-	}
-}
-
 // TestSameCommentDateKeyTwice is the rule of
-// docs/spec/familias-de-flags.md#comentarios, which is deliberately not the
-// rule of --ext: the same comment with two different instants is the error of
-// a repeated scalar, and with the same instant it applies once and says
-// nothing.
+// docs/spec/familias-de-flags.md#comentarios: the same comment with two
+// different instants is the error of a repeated scalar, and with the same
+// instant it applies once and says nothing.
 func TestSameCommentDateKeyTwice(t *testing.T) {
 	_, err := parse(t, "set", "MYP-1",
 		"--set-comment-date", "3=2026-08-14T10:22:00Z",
@@ -868,7 +806,6 @@ func TestChangesAreOrderedByCategory(t *testing.T) {
 		"--status", "Done",
 		"--clear-labels",
 		"--add-labels", "a",
-		"--ext", "k=v",
 		"--rm-labels", "old",
 		"--check-ac", "all",
 		"--replace-labels", "r",
@@ -883,7 +820,6 @@ func TestChangesAreOrderedByCategory(t *testing.T) {
 		"replace-labels",
 		"rm-labels",
 		"add-labels", "add-labels",
-		"ext",
 		"status",
 		"check-ac",
 		"set-comment-date",

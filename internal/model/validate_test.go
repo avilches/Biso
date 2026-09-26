@@ -15,14 +15,11 @@ func validTask() *Task {
 		Author:    "@avilches",
 		Assignees: []string{"@claude"},
 		Labels:    []string{"parser"},
-		Ext:       map[string]string{"trello.card": "5f2a8c1e"},
 	}
 	task.AddCriterion("The exporter writes CRLF untouched")
 	task.AddComment("@avilches", time.Date(2026, 9, 6, 9, 12, 4, 0, time.UTC), "A comment.")
 	return task
 }
-
-func extensions() []string { return []string{"trello.card", "github.issue"} }
 
 // assertSpecError checks that err is the *Error the specification fixes for
 // a case, by exit code, code and field.
@@ -43,7 +40,7 @@ func assertSpecError(t *testing.T, err error, exitCode int, code, field string) 
 }
 
 func TestValidateAcceptsATaskWithEveryFieldFilled(t *testing.T) {
-	if err := validTask().Validate(extensions()); err != nil {
+	if err := validTask().Validate(); err != nil {
 		t.Fatalf("Validate on a well formed task: %v", err)
 	}
 }
@@ -57,7 +54,7 @@ func TestValidateRejectsAnEmptyTitle(t *testing.T) {
 		task := validTask()
 		task.Title = title
 
-		err := task.Validate(extensions())
+		err := task.Validate()
 		specErr := assertSpecError(t, err, 2, "missing_title", "")
 		if specErr.Message != "title cannot be empty" {
 			t.Fatalf("message = %q, not the literal text of the specification", specErr.Message)
@@ -67,7 +64,7 @@ func TestValidateRejectsAnEmptyTitle(t *testing.T) {
 
 // TestValidateRejectsANewlineInEveryStringField covers
 // docs/spec/valores-de-entrada.md#el-salto-de-línea-en-un-campo-string over
-// the four fields it names, which is the distinction between a `string`
+// the three fields it names, which is the distinction between a `string`
 // and a `text` of docs/spec/modelo-de-datos/index.md made enforceable.
 func TestValidateRejectsANewlineInEveryStringField(t *testing.T) {
 	cases := []struct {
@@ -108,9 +105,19 @@ func TestValidateRejectsANewlineInEveryStringField(t *testing.T) {
 			spoil: func(task *Task) { task.AcceptanceCriteria[0].Text = "first line\nsecond line" },
 		},
 		{
-			name:  "the value of an extension field",
-			field: StringFieldExt,
-			spoil: func(task *Task) { task.Ext["trello.card"] = "5f2a8c1e\n5f2a8c1f" },
+			name:  "a reference with a line feed",
+			field: StringFieldReference,
+			spoil: func(task *Task) { task.References = []string{"docs/a.md", "first line\nsecond line"} },
+		},
+		{
+			name:  "a reference with a carriage return",
+			field: StringFieldReference,
+			spoil: func(task *Task) { task.References = []string{"first line\rsecond line"} },
+		},
+		{
+			name:  "a reference with a carriage return and a line feed",
+			field: StringFieldReference,
+			spoil: func(task *Task) { task.References = []string{"first line\r\nsecond line"} },
 		},
 	}
 
@@ -119,7 +126,7 @@ func TestValidateRejectsANewlineInEveryStringField(t *testing.T) {
 			task := validTask()
 			c.spoil(task)
 
-			err := task.Validate(extensions())
+			err := task.Validate()
 			specErr := assertSpecError(t, err, 2, "malformed_string_value", c.field)
 			wantHint := "a string field cannot contain a newline or a carriage return"
 			if len(specErr.Hints) != 1 || specErr.Hints[0] != wantHint {
@@ -135,7 +142,7 @@ func TestValidateExampleMessageOfTheSpecification(t *testing.T) {
 	task := validTask()
 	task.Title = "first line\nsecond line"
 
-	err := task.Validate(extensions())
+	err := task.Validate()
 	specErr := assertSpecError(t, err, 2, "malformed_string_value", StringFieldTitle)
 	want := `malformed title: "first line\nsecond line"`
 	if specErr.Message != want {
@@ -155,58 +162,67 @@ func TestValidateAcceptsANewlineInEveryTextField(t *testing.T) {
 	task.Comments[0].Body = "a comment\nwith two lines"
 	task.Question = &Question{Author: "@claude", Body: "a question\nwith two lines"}
 
-	if err := task.Validate(extensions()); err != nil {
+	if err := task.Validate(); err != nil {
 		t.Fatalf("Validate rejected a line break in a text field: %v", err)
+	}
+}
+
+// TestValidateAcceptsAnOrdinaryReference is the other half of
+// TestValidateRejectsANewlineInEveryStringField for references:
+// docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token does
+// not give references a closed alphabet, so a comma, a backslash and a
+// space, none of which are a line break, still pass.
+func TestValidateAcceptsAnOrdinaryReference(t *testing.T) {
+	task := validTask()
+	task.References = []string{"docs/a,b.md", `C:\dir\file.md`, "a path with spaces.md"}
+
+	if err := task.Validate(); err != nil {
+		t.Fatalf("Validate rejected an ordinary reference: %v", err)
 	}
 }
 
 // TestValidateRejectsALabelAndAnAssigneeOutsideTheirAlphabet is
 // docs/spec/valores-de-entrada.md#el-juego-de-caracteres-de-un-token
-// applied to the two fields of its table that are not an extension key.
+// applied to the two fields of its table.
 func TestValidateRejectsALabelAndAnAssigneeOutsideTheirAlphabet(t *testing.T) {
 	withLabel := validTask()
 	withLabel.Labels = []string{"parser", "urgent!"}
-	specErr := assertSpecError(t, withLabel.Validate(extensions()), 2, "malformed_label", "labels")
+	specErr := assertSpecError(t, withLabel.Validate(), 2, "malformed_label", "labels")
 	if specErr.Message != `malformed label: "urgent!"` {
 		t.Fatalf("message = %q, not the literal text of the specification", specErr.Message)
 	}
 
 	withAssignee := validTask()
 	withAssignee.Assignees = []string{"sara smith"}
-	specErr = assertSpecError(t, withAssignee.Validate(extensions()), 2, "malformed_assignee", "assignees")
+	specErr = assertSpecError(t, withAssignee.Validate(), 2, "malformed_assignee", "assignees")
 	if specErr.Message != `malformed assignee: "sara smith"` {
 		t.Fatalf("message = %q, not the literal text of the specification", specErr.Message)
 	}
 }
 
-// TestValidateRejectsAnUndeclaredOrMalformedExtensionKey keeps the two
-// extension-key errors covered now that they are reached through Validate.
-func TestValidateRejectsAnUndeclaredOrMalformedExtensionKey(t *testing.T) {
-	undeclared := validTask()
-	undeclared.Ext = map[string]string{"jira.key": "PROJ-1"}
-	assertSpecError(t, undeclared.Validate(extensions()), 3, "unknown_extension_key", "ext")
-
-	malformed := validTask()
-	malformed.Ext = map[string]string{"trello card": "5f2a8c1e"}
-	assertSpecError(t, malformed.Validate(extensions()), 2, "malformed_extension_key", "ext")
-}
-
-// TestValidateRejectsANegativeOrdinal is the `int (>= 0)` of the field
-// table of docs/spec/modelo-de-datos/index.md. Zero is a value and not an
-// absence, which is why Ordinal is a pointer, so it has to pass.
-func TestValidateRejectsANegativeOrdinal(t *testing.T) {
-	negative := -1
-	task := validTask()
-	task.Ordinal = &negative
-	specErr := assertSpecError(t, task.Validate(extensions()), 2, "invalid_number", "ordinal")
-	if specErr.Message != "ordinal cannot be negative: -1" {
-		t.Fatalf("message = %q", specErr.Message)
+// TestValidateRejectsAnOrdinalThatIsNotAKey is the type of `ordinal` in the
+// field table of docs/spec/modelo-de-datos/index.md: the ordinal key of
+// docs/spec/modelo-de-datos/orden-manual.md and nothing else. The batch of
+// `biso new --from` is the one route by which a value that is not one can
+// reach a task, which is why the model refuses it here and not the parser.
+func TestValidateRejectsAnOrdinalThatIsNotAKey(t *testing.T) {
+	for _, key := range []string{"3000", "m0", "M8", "m 8", "m-8"} {
+		task := validTask()
+		task.Ordinal = key
+		specErr := assertSpecError(t, task.Validate(), 2, "malformed_ordinal", "ordinal")
+		want := `malformed ordinal: "` + key +
+			`" (an ordinal key is made of 0-9 and a-z, and never ends in 0)`
+		if specErr.Message != want {
+			t.Errorf("message = %q, want %q", specErr.Message, want)
+		}
 	}
 
-	zero := 0
-	task.Ordinal = &zero
-	if err := task.Validate(extensions()); err != nil {
-		t.Fatalf("Validate rejected ordinal 0, which the field table admits: %v", err)
+	for _, key := range []string{"", "i", "00i", "m8", "zzzz1"} {
+		task := validTask()
+		task.Ordinal = key
+		if err := task.Validate(); err != nil {
+			t.Errorf("Validate refused the key %q: %v", key, err)
+		}
 	}
 }
 
@@ -219,7 +235,7 @@ func TestValidateRejectsANegativeOrdinal(t *testing.T) {
 func TestValidateRejectsACriterionKeyThatBreaksItsContract(t *testing.T) {
 	zeroKey := validTask()
 	zeroKey.AcceptanceCriteria = []Criterion{{Key: 0, Text: "No key at all"}}
-	err := zeroKey.Validate(extensions())
+	err := zeroKey.Validate()
 	if err == nil {
 		t.Fatalf("Validate accepted a criterion with key 0")
 	}
@@ -233,7 +249,7 @@ func TestValidateRejectsACriterionKeyThatBreaksItsContract(t *testing.T) {
 		{Key: 1, Text: "The first one"},
 		{Key: 1, Text: "The same key again"},
 	}
-	if err := duplicate.Validate(extensions()); err == nil {
+	if err := duplicate.Validate(); err == nil {
 		t.Fatalf("Validate accepted two criteria sharing a key")
 	}
 }

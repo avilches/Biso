@@ -116,16 +116,6 @@ func TestNewRejectsAParentThatDoesNotExist(t *testing.T) {
 	assertSpec(t, err, 4, "never_allocated")
 }
 
-func TestNewRejectsAnUndeclaredExtensionKey(t *testing.T) {
-	h := newHarness(t)
-
-	_, err := NewOn(h.b, h.env, NewParams{
-		Title: "A task", HasTitle: true, Changes: []Change{ext("jira.key", "X-1")},
-	})
-
-	assertSpec(t, err, 3, "unknown_extension_key")
-}
-
 func TestNewRejectsAMalformedDueDateAndWarnsAboutAPastOne(t *testing.T) {
 	h := newHarness(t)
 

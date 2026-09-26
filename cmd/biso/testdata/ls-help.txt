@@ -5,40 +5,55 @@ archived ones, and says on stderr what it left out. A filter value the board
 does not have is an error, never an empty list, so an empty list is a fact.
 
 Filters (repeat or comma-separate; same field is OR, different fields are AND):
-      --status <value>       configured status (default: all but the terminal)
-      --not-status <value>   exclude a status
-      --any-status           include the terminal status too
-      --archived             include archived tasks
-      --only-archived        only archived tasks
-      --type <value>         configured type
-      --priority <value>     configured priority
-      --label <value>        label; several labels are ANDed
-      --label-or <value>     label; several are ORed
-      --assignee <@who>      assignee
-      --mine                 assigned to you
-      --unassigned           assigned to nobody
-      --parent <ref>         subtasks of this task
-      --blocked              something unfinished blocks it
-      --not-blocked          nothing unfinished blocks it; it may still be
-                             waiting on an answer, so add --not-waiting
-      --waiting              has an open question
-      --not-waiting          has no open question
-      --active               in the board's active status
-      --not-active           not in the active status
-      --overdue              past its due date
-      --due-before <date>    due before YYYY-MM-DD
-      --search <text>        free text; see `biso get --help` for the scope
-      --unchecked            do not check that the labels and assignees you
-                             filter by exist on the board; nothing else
-                             changes
+      --status <value>          configured status (default: all but the terminal)
+      --not-status <value>      exclude a status
+      --any-status              include the terminal status too
+      --archived                include archived tasks
+      --only-archived           only archived tasks
+      --type <value>            configured type
+      --not-type <value>        exclude a type
+      --priority <value>        configured priority
+      --not-priority <value>    exclude a priority
+      --label <value>           label; several labels are ANDed. The form key:
+                                matches any value of that scoped-label key
+      --label-or <value>        label; several are ORed; takes key: too
+      --not-label <value>       exclude a label; several are ORed (excluded if it
+                                carries any of them); takes key: too
+      --assignee <@who>         assignee
+      --not-assignee <@who>     exclude an assignee
+      --mine                    assigned to you
+      --unassigned              assigned to nobody
+      --author <@who>           task author
+      --parent <ref>            subtasks of this task
+      --root                    no parent
+      --blocked                 something unfinished blocks it
+      --not-blocked             nothing unfinished blocks it; it may still be
+                                waiting on an answer, so add --not-waiting
+      --waiting                 has an open question
+      --not-waiting             has no open question
+      --active                  in the board's active status
+      --not-active              not in the active status
+      --overdue                 past its due date
+      --due-before <date>       due before YYYY-MM-DD
+      --created-after <date>    created on or after YYYY-MM-DD
+      --created-before <date>   created before YYYY-MM-DD
+      --updated-after <date>    updated on or after YYYY-MM-DD
+      --updated-before <date>   updated before YYYY-MM-DD
+      --ref <text>              substring match on references
+      --not-ref <text>          exclude a references substring match
+      --search <text>           free text; see `biso get --help` for the scope
+      --unchecked               do not check that the labels and assignees you
+                                filter by exist on the board; nothing else
+                                changes
 
 Shape:
-      --sort <field>         urgency, id, ordinal, due, updated, created, title
-      --reverse              flip the whole order, tie-breaks included
-      --limit <n>            how many rows to print (default 30, 0 prints none)
-      --all                  print every match
-      --ids                  print only ids, one per line
-      --count                print only how many match
+      --sort <field>            urgency, id, ordinal, due, updated, created, title,
+                                priority
+      --reverse                 flip the whole order, tie-breaks included
+      --limit <n>               how many rows to print (default 30, 0 prints none)
+      --all                     print every match
+      --ids                     print only ids, one per line
+      --count                   print only how many match
 
 Columns: id, status, type, priority, title, criteria, assignee, due. Empty
 cells print a dash. The title is cut at 100 characters, always, before any
@@ -58,3 +73,5 @@ Examples:
   biso ls --type bug --priority high --limit 10
   biso ls --not-blocked --not-waiting --ids
   biso ls --any-status --archived --all
+  biso ls --ref internal/ops/write.go --any-status
+  biso ls --root --not-label blocked

@@ -145,7 +145,8 @@ def sort_key(urgency, task):
     ordinal = task.get("ordinal")
     return (
         0 if ordinal is not None else 1,
-        ordinal if ordinal is not None else 0,
+        # The manual order is a text key compared by code points, never a number.
+        ordinal if ordinal is not None else "",
         -urgency,
         int(task["id"].split("-")[1]),
     )

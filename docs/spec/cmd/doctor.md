@@ -116,15 +116,18 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | Comprobación | Nivel | Reparable con `--fix` |
 |---|---|---|
 | Identificadores duplicados | error | no, hay que decidir a mano |
-| Tareas que no se pueden leer | error | no |
-| Claves de extensión no declaradas | error | no |
-| Estados, tipos o prioridades que ya no están configurados | error | no |
+| Tareas que no se pueden leer, por un motivo distinto de un valor fuera de vocabulario: una fecha que no es una fecha o una obligatoria vacía, un campo de lista desconocido, una columna del tipo equivocado (la lista completa está en ["Qué se comprueba"](../garantias.md#qué-se-comprueba)) | error | no, es daño externo que ningún comando de `biso` puede editar |
+| Un `status` vacío o fuera de `statuses`, un `type` fuera de `types` o una `priority` fuera de `priorities`, comparados letra por letra | error | no, hay que decidir qué valor se quiso decir: con `biso set` o con `biso config set` (["Cómo se arregla una tarea ilegible"](../garantias.md#cómo-se-arregla-una-tarea-ilegible)) |
 | `initial_status`, `active_status` o `terminal_status` que no están en `statuses` | error | no |
 | `statuses` con menos de tres elementos, o dos de los tres papeles apuntando al mismo estado | error | no |
 | Dependencias que apuntan a tareas inexistentes | error | no |
+| Un `parent` que apunta a una tarea inexistente | error | no |
 | Ciclos de dependencias | error | no |
 | Ciclos de tarea padre | error | no |
 | Claves de criterio repetidas dentro de una tarea | error | no |
+| Una etiqueta guardada que la lista `labels` de la configuración no admite, por su valor o por su separador (["La lista `labels`"](config.md#la-lista-labels)) | error | no, hay que decidir a mano qué valor se quiso decir |
+| Una tarea con más de un valor de una clave escrita con `::`, o con los dos separadores de una misma clave | error | no, por lo mismo |
+| Una clave de etiqueta que el tablero usa con los dos separadores, en tareas distintas | aviso | no, las dos escrituras eran legítimas |
 | `leaseExpiresAt` o `leaseHolder` con valor en una tarea que no está a la vez en el estado activo y asignada, o uno de los dos con valor y el otro vacío | error | sí, vaciando los dos |
 | El identificador más alto que el tablero recuerda haber asignado (["Identificador de tarea"](../modelo-de-datos/identificadores.md#identificador-de-tarea)) es menor que el identificador más alto de una tarea existente | error | sí |
 | Falta el marcador `<id>.id` en el directorio del tablero (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)) | error | sí, escribiéndolo con el `id` que lleva la base de datos |
@@ -134,6 +137,28 @@ añade ninguna fila ni reutiliza su prefijo `warning:`.
 | El directorio del tablero está en un sistema de ficheros donde el modo WAL de SQLite no es seguro | aviso | no, es una propiedad del sistema de ficheros, no algo que `biso` pueda cambiar |
 | El fichero de exclusión no corresponde al `vcs` configurado en la máquina | aviso | no, hay que escribirlo a mano |
 | Huecos en la numeración | no es un problema | no son un problema, no se reportan |
+
+**Las dos primeras filas son la misma definición de tarea ilegible que usan todos los comandos de
+lectura**, la de ["Qué se comprueba"](../garantias.md#qué-se-comprueba), y `doctor` la aplica sin
+excepción a las archivadas y a las terminadas. Se reparten en dos `code` (`value_not_configured` para un
+valor fuera de vocabulario, `task_unreadable` para lo demás) porque el remedio es distinto: el primero
+se arregla con `biso set` o `biso config set`, y el segundo con ningún comando de `biso`
+(["Cómo se arregla una tarea ilegible"](../garantias.md#cómo-se-arregla-una-tarea-ilegible)). Una fila
+que no se puede decodificar se reporta por el primer campo dañado que se encuentra, y los demás
+aparecen al arreglarlo. `biso doctor` es el sitio donde se ve el porqué de un aviso `task_skipped` de
+otro comando, junto con el resto de problemas del tablero.
+
+**Para `ordinal` y para el nombre de un campo de lista, esta fila solo sale si el valor guardado no
+viola el `CHECK` que protege a los dos en el esquema.** Si se corrompe uno de ellos dejando ese
+`CHECK` declarado (por ejemplo con un `UPDATE` bajo `PRAGMA ignore_check_constraints=1`, fuera de
+cualquier operación de `biso`), la fila de la comprobación de integridad de la base de datos, más
+abajo en esta misma tabla, encuentra antes la misma violación y aborta el comando entero con el
+código 21, sin llegar a reportar `task_unreadable` para ese campo. Si en cambio el propio esquema no
+declara ya el `CHECK`, por ejemplo en un tablero de una versión anterior a él, el mismo valor no viola
+nada y esta fila sí sale con normalidad, como en `cmd/biso/ordinal_unreadable_test.go`. En los dos
+casos, `biso ls`, `biso get` y `biso export` sobre esa misma base de datos siguen el trato normal de
+tarea ilegible (["Qué se comprueba"](../garantias.md#qué-se-comprueba)), así que son la vía de
+diagnóstico mientras el `CHECK` siga declarado.
 
 **No hay ninguna comprobación sobre el nombre de la carpeta del tablero, y no es un olvido.** El nombre
 es decorativo y nadie resuelve por él (sección ["Cómo se elige el tablero"](../resolucion-del-tablero.md)), así que una carpeta con el nombre de un `project_name`
@@ -289,6 +314,26 @@ que la fila del marcador `<id>.id` discrepante. Sale bajo `Warnings:`:
 Su `code` en el JSON es `ignore_file_mismatch`, con `task` a `null`, porque es un hallazgo del tablero
 y no de ninguna tarea, igual que la raíz adicional que no se puede leer.
 
+**Las comprobaciones de etiquetas se reparten entre los dos casos de arriba, y ninguna es
+reparable.** Las primeras son daño externo: ninguna escritura de `biso` puede dejar guardada una
+etiqueta que la lista `labels` prohíbe, porque `biso config set labels` se niega a declarar una lista
+que prohibiría algo que ya está escrito (["La lista `labels`"](config.md#la-lista-labels)) y cada
+escritura valida lo que pone; y ninguna puede dejar dos valores de una clave exclusiva en la misma
+tarea, por la regla de
+["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito). Si un
+tablero llega a cualquiera de esos estados es porque alguien escribió su base de datos por fuera. Y
+`--fix` no las toca porque elegir qué valor se quiso decir, o cuál de los guardados sobra, es
+exactamente la clase de decisión que destruye información al tomarla sola.
+
+La última es distinta: **la clave usada con los dos separadores no denuncia ningún daño, sino una
+ambigüedad**, y las escrituras que la produjeron eran legítimas una por una, porque la exclusividad se
+comprueba dentro de una tarea y nunca sobre el tablero entero. Mientras nadie lo decida, esa clave no
+dice si admite uno o varios valores por tarea, aunque quien filtre por ella los encuentre todos igual
+(["Consultar por la clave de una etiqueta con ámbito"](../vocabularios.md#consultar-por-la-clave-de-una-etiqueta-con-ámbito)).
+Eso es verdad, merece la pena saberlo y no rompe nada, que es la definición de aviso de esta página. El
+remedio, cuando se quiera, es declarar la clave en la lista `labels` y reescribir las etiquetas que
+sobren, y eso tampoco lo puede decidir `--fix`.
+
 Con esto, todas las filas de la tabla son un problema real salvo los huecos en la numeración, que no
 lo son y no se reportan nunca. Y de las que sí lo son, solo la comprobación de integridad de la base de
 datos no llega a aparecer nunca como una línea del informe, por la razón de arriba.
@@ -306,15 +351,18 @@ concreto, el mismo criterio que ya usan `extra_root_unreadable` e `ignore_file_m
 | Comprobación | `code` | `task` | Mensaje |
 |---|---|---|---|
 | Identificadores duplicados | `duplicate_id` | el id compartido | `id "MYP-40" is used by 2 tasks, ids must be unique` |
-| Tareas que no se pueden leer | `task_unreadable` | el id, si se puede recuperar, o `null` | `task "MYP-40" could not be parsed: unexpected end of JSON input` |
-| Claves de extensión no declaradas | `undeclared_extension_key` | la tarea | `ext key "trello.card" is not declared, declared keys are "jira.issue"` |
-| Estados, tipos o prioridades ya no configurados | `value_not_configured` | la tarea | `status "Blocked" is not one of the configured statuses "To Do, In Progress, Done"` (o el mismo mensaje con `type` o `priority`, según cuál sea) |
+| Tareas que no se pueden leer | `task_unreadable` | el id, si se puede recuperar, o `null` | `task "MYP-40" could not be parsed: due is not a calendar day (YYYY-MM-DD): "2026-9-1"`; lo que sigue a los dos puntos es el motivo exacto que da `biso get` de esa tarea (["Qué hace cada comando"](../garantias.md#qué-hace-cada-comando)) |
+| Estado, tipo o prioridad fuera de lo configurado | `value_not_configured` | la tarea | `status "Blocked" is not one of the configured statuses "To Do, In Progress, Done"` (o el mismo mensaje con `type` o `priority`, según cuál sea; un `status` vacío se cita como `status ""`) |
 | `initial_status`, `active_status` o `terminal_status` fuera de `statuses` | `status_role_unknown` | `null` | `active_status "Doing" is not one of the configured statuses "To Do, In Progress, Done"` |
 | `statuses` con menos de tres elementos, o dos papeles apuntando al mismo estado | `status_role_invalid` | `null` | `statuses has 2 elements, at least 3 are required`, o `active_status and terminal_status are both "Done", the three roles must be distinct` |
 | Dependencias que apuntan a tareas inexistentes | `dependency_not_found` | la tarea que declara la dependencia | `dependency MYP-99 does not exist` |
+| Un `parent` que apunta a una tarea inexistente | `parent_not_found` | la tarea que declara el padre | `parent MYP-99 does not exist` |
 | Ciclos de dependencias | `dependency_cycle` | una tarea del ciclo | `MYP-11 is part of a dependency cycle: MYP-11 -> MYP-12 -> MYP-11` |
 | Ciclos de tarea padre | `parent_cycle` | una tarea del ciclo | `MYP-11 is part of a parent cycle: MYP-11 -> MYP-12 -> MYP-11` |
 | Claves de criterio repetidas dentro de una tarea | `duplicate_criterion_key` | la tarea | `acceptance criterion key #3 is used by 2 criteria, keys must be unique within a task` |
+| Etiqueta que la lista `labels` no admite | `label_not_declared` | la tarea | `label "size::xl" is not one of the values the key "size" declares: size::s, size::m, size::l`, o, cuando lo que falla es el separador, `label "milestone:m1" uses :, and the key "milestone" is declared with ::` |
+| Exclusividad rota dentro de una tarea | `label_exclusive_violated` | la tarea | `the label key "size" has 2 values on this task, and :: allows at most one: size::a, size::b` |
+| Clave usada con los dos separadores | `label_key_mixed_separators` | `null` | `label key "milestone" is used with both separators, 2 tasks with : and 1 with ::` |
 | Arrendamiento sin tarea activa y asignada | `lease_invariant` | la tarea | `has a lease but is not both active and assigned` |
 | Identificador más alto por detrás | `highest_id_behind` | `null` | `the highest recorded id was MYP-40 and tasks go up to MYP-52` |
 | Falta el marcador `<id>.id` | `marker_missing` | `null` | `board directory has no <id>.id marker, the database says id is "3f9a2b1c"` |
@@ -378,22 +426,17 @@ contador a cero solo está por detrás cuando existe alguna tarea con un número
 
 ### Cuando la lista que el mensaje cita está vacía
 
-Dos de los mensajes citan una lista configurada: la de claves de extensión declaradas y la del
-vocabulario cerrado que un valor incumple. **`types`, `priorities` y `extensions` se pueden dejar
-vacías** (["`biso config`"](config.md)), y entonces citar la lista imprimiría unas comillas con nada
-dentro, que no dice nada y se lee como un fallo del programa. **Con la lista vacía el mensaje dice que
-no hay ninguna**, en vez de citarla:
-
-```
-  ext key "trello.card" is not declared, and the board declares none
-```
+El mensaje de un valor que incumple un vocabulario cerrado cita la lista configurada. **`types` y
+`priorities` se pueden dejar vacías** (["`biso config`"](config.md)), y entonces citar la lista
+imprimiría unas comillas con nada dentro, que no dice nada y se lee como un fallo del programa. **Con
+la lista vacía el mensaje dice que no hay ninguna**, en vez de citarla:
 
 ```
   type "bug" is not one of the configured types, and the board configures none
 ```
 
-Los `code` no cambian, `undeclared_extension_key` y `value_not_configured`: es el mismo hallazgo
-contado con las palabras que le tocan. `statuses` no necesita esta forma, porque nunca puede quedarse
+El `code` no cambia, `value_not_configured`: es el mismo hallazgo contado con las palabras que le
+tocan. `statuses` no necesita esta forma, porque nunca puede quedarse
 vacía: la comprobación de la tabla de arriba exige al menos tres.
 
 ### El orden en que sale el informe
@@ -563,14 +606,16 @@ llamada real que le sigue, y `doctor` no tiene fila del 7 en ella.
 ```
 Usage: biso doctor [options]
 
-Check the board for duplicate ids, unreadable tasks, undeclared extension keys,
-values that are no longer configured, a broken status-role invariant, broken
-dependencies, dependency cycles, parent cycles, repeated criterion keys, a lease
-on a task that is not both active and assigned, a recorded highest id that has
-fallen behind, a database that fails its integrity check, a missing or
-mismatched <id>.id marker, an extra board root that cannot be read, an exclusion
-file that no longer matches the configured vcs, and a board directory on a
-filesystem where SQLite's WAL mode is not safe.
+Check the board for duplicate ids, unreadable tasks, values that are no longer
+configured, a broken status-role invariant, broken dependencies, a parent that
+does not exist, dependency cycles, parent cycles, repeated criterion keys, a
+stored label the labels list does not allow, a task with more than one value of
+a :: label key, a label key used with both separators, a lease on a task that
+is not both active and assigned, a recorded highest id that has fallen behind,
+a database that fails its integrity check, a missing or mismatched <id>.id
+marker, an extra board root that cannot be read, an exclusion file that no
+longer matches the configured vcs, and a board directory on a filesystem where
+SQLite's WAL mode is not safe.
 
 Options:
       --fix      repair what can be repaired without a decision

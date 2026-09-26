@@ -108,8 +108,8 @@ type Warning struct {
 
 // Change is one value of one flag that writes a field, with the step of
 // docs/spec/garantias.md#orden-de-aplicación-dentro-de-una-escritura it
-// belongs to. Key is filled only for a flag whose value is a pair, such as
-// --ext and --set-comment-date.
+// belongs to. Key is filled only for a flag whose value is a pair, which is
+// --set-comment-date.
 type Change struct {
 	Flag     *FlagSpec
 	Category Category
@@ -119,8 +119,7 @@ type Change struct {
 
 // occurrence is one value of one flag as it was found. A dropped occurrence is
 // one the rules of the specification take back out: a repeated value of a list
-// kept once, an ext key given twice and kept at its last value, or an empty
-// value that adds nothing.
+// kept once, or an empty value that adds nothing.
 type occurrence struct {
 	flag    *FlagSpec
 	key     string
@@ -444,17 +443,13 @@ func (st *parser) value(f *FlagSpec, raw string) error {
 // value: the empty one, the closed alphabet of a token field, the one line of
 // a string field, a domain of fixed values, and the rules of repetition. A
 // value of the form "<left>=<right>" is cut first and then the same rules
-// apply to each half, the alphabet to the key and the rest to the value, so
-// that none of them is unreachable for the flags that take a pair.
+// apply to its right half; the left half is free text and has no alphabet.
 func (st *parser) element(f *FlagSpec, v string) error {
 	key, value := "", v
 	if f.Pair != NotAPair {
 		var err error
 		if key, value, err = splitPair(f, v); err != nil {
 			return err
-		}
-		if !f.Alphabet.allowed(key) {
-			return errMalformedToken(f, key)
 		}
 	}
 	if isEmpty(value) {
@@ -466,8 +461,13 @@ func (st *parser) element(f *FlagSpec, v string) error {
 		}
 		return st.empty(f, value)
 	}
-	if key == "" && !f.Alphabet.allowed(value) {
+	if !f.Alphabet.allowed(value) {
 		return errMalformedToken(f, value)
+	}
+	if key == "" {
+		if err := checkLabelSyntax(f, value); err != nil {
+			return err
+		}
 	}
 	if f.SingleLine && strings.ContainsAny(value, "\n\r") {
 		return errMalformedString(f, value)
@@ -497,6 +497,15 @@ func (st *parser) empty(f *FlagSpec, v string) error {
 		// Replacing with nothing is emptying, and that is explicit.
 		st.p.emptied[f.Name] = true
 		return nil
+	case f.Category == Scalar && len(f.Domain) > 0:
+		// A scalar whose domain the program owns judges the empty value
+		// itself, and the answer is the same one any other value outside
+		// that domain gets: a command line that is wrong, and not a value
+		// the board does not have
+		// (docs/spec/valores-de-entrada.md#el-valor-vacío). What is quoted
+		// is the empty string and not the spaces that were typed, exactly
+		// as in the case below.
+		return errOutsideDomain(f, "")
 	case f.ClosedVocabulary:
 		// The board's vocabulary is what judges this value, so it travels
 		// down and internal/match answers with the code of an unknown
@@ -515,53 +524,30 @@ func (st *parser) empty(f *FlagSpec, v string) error {
 	return errEmptyValue(f, "", v)
 }
 
-// splitPair cuts a value of the form "<left>=<right>". Where it cuts is the
-// difference docs/spec/familias-de-flags.md#comentarios spells out, and the
-// table says which of the two rules each flag follows.
+// splitPair cuts a value of the form "<left>=<right>" at the last "=", which
+// is what docs/spec/familias-de-flags.md#comentarios says about the selector
+// of --set-comment-date: its left half is free text that may carry another.
 func splitPair(f *FlagSpec, v string) (key, value string, err error) {
-	var ok bool
-	if f.Pair == PairAtLastEquals {
-		if idx := strings.LastIndex(v, "="); idx >= 0 {
-			key, value, ok = v[:idx], v[idx+1:], true
-		}
-	} else {
-		key, value, ok = strings.Cut(v, "=")
-	}
-	if !ok || key == "" {
+	idx := strings.LastIndex(v, "=")
+	if idx <= 0 {
 		return "", "", errMalformedPair(f, v)
 	}
-	return key, value, nil
+	return v[:idx], v[idx+1:], nil
 }
 
 // pair records one key of a flag whose value is a pair, and answers what the
-// same key twice in one call means. The two flags that take a pair answer
-// differently, and LastKeyWins is which of the two rules this one follows.
+// same key twice in one call means: with two different values it is the
+// error of a repeated scalar, and with the same value it applies once and
+// says nothing (docs/spec/familias-de-flags.md#comentarios).
 func (st *parser) pair(f *FlagSpec, key, value string) error {
 	for _, o := range st.p.occs {
 		if o.flag != f || o.dropped || o.key != key {
 			continue
 		}
-		if !f.LastKeyWins {
-			// docs/spec/familias-de-flags.md#comentarios: the same key
-			// with two different values is the error of a repeated
-			// scalar, and with the same value it applies once and says
-			// nothing.
-			if o.value != value {
-				return errDuplicateKey(f, key, o.value, value)
-			}
-			return nil
+		if o.value != value {
+			return errDuplicateKey(f, key, o.value, value)
 		}
-		// The last value of the command line wins, with a warning,
-		// because a key of a map behaves like one more token and not like
-		// a scalar of the whole task.
-		o.dropped = true
-		st.warnAgain("key\x00"+f.Name+"\x00"+key, func(times int) Warning {
-			return Warning{
-				Code:    "duplicate_ext_key",
-				Message: fmt.Sprintf("%s: key %q given %s, kept last value", f.long(), key, timesWritten(times)),
-				Fields:  map[string]any{"flag": f.long(), "key": key},
-			}
-		})
+		return nil
 	}
 	st.record(f, key, value)
 	return nil

@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"sort"
 	"time"
 
 	"biso/internal/model"
@@ -34,8 +33,6 @@ func taskObject(v ops.TaskView) map[string]any {
 		"parent":         orNull(t.Parent),
 		"dependencies":   list(t.Dependencies),
 		"references":     list(t.References),
-		"documentation":  list(t.Documentation),
-		"modifiedFiles":  list(t.ModifiedFiles),
 		"due":            day(t.Due),
 		"ordinal":        ordinal(t),
 		"createdAt":      instantOrNull(t.CreatedAt),
@@ -51,7 +48,6 @@ func taskObject(v ops.TaskView) map[string]any {
 		"waiting":        v.Waiting,
 		"leaseExpired":   v.LeaseExpired,
 		"archived":       t.Archived,
-		"ext":            extObject(t.Ext),
 	}
 }
 
@@ -87,8 +83,18 @@ func getObject(r *ops.GetResult) map[string]any {
 	object["summary"] = orNull(t.Summary)
 	object["comments"] = commentsObject(t.Comments)
 	object["question"] = questionObject(t.Question)
+	// blockedByCount and unblocksCount are ordinary keys of the block of
+	// metadata, like blocks or urgency, and not governed by a flag: they
+	// are always present, with or without --closure
+	// (docs/spec/cmd/get.md#el-esquema-json). They are not in task.list,
+	// which is why taskObject does not carry them.
+	object["blockedByCount"] = r.Task.BlockedByCount
+	object["unblocksCount"] = r.Task.UnblocksCount
 	if r.Task.Breakdown != nil {
 		object["urgencyBreakdown"] = breakdownObject(r.Task.Breakdown)
+	}
+	if r.Task.Closure != nil {
+		object["closure"] = closureObject(r.Task.Closure)
 	}
 	if r.WholeCard {
 		return object
@@ -100,21 +106,36 @@ func getObject(r *ops.GetResult) map[string]any {
 			for key := range taskObject(r.Task) {
 				wanted[key] = true
 			}
+			wanted["blockedByCount"] = true
+			wanted["unblocksCount"] = true
 			continue
 		}
 		for _, key := range sectionKeys[section] {
 			wanted[key] = true
 		}
 	}
-	// urgencyBreakdown is governed by its own flag and not by a section,
-	// so --explain-urgency keeps it whatever was asked for.
+	// urgencyBreakdown and closure are governed by their own flag and not
+	// by a section, so --explain-urgency and --closure keep them whatever
+	// was asked for with --section.
 	wanted["urgencyBreakdown"] = true
+	wanted["closure"] = true
 	for key := range object {
 		if !wanted[key] {
 			delete(object, key)
 		}
 	}
 	return object
+}
+
+// closureObject is `closure` of docs/spec/cmd/get.md#el-esquema-json: the
+// complete transitive closure in each direction, finished and archived
+// tasks included, never filtered the way blockedByCount and unblocksCount
+// are.
+func closureObject(c *ops.Closure) map[string]any {
+	return map[string]any{
+		"blockedBy": list(c.BlockedBy),
+		"unblocks":  list(c.Unblocks),
+	}
 }
 
 // breakdownObject is the `urgencyBreakdown` of
@@ -183,17 +204,6 @@ func questionObject(q *model.Question) any {
 	}
 }
 
-// extObject is the external fields, which are a map and therefore `{}` when
-// there are none, never null
-// (docs/spec/contrato-json.md#números-fechas-y-ausencias).
-func extObject(ext map[string]string) map[string]string {
-	out := make(map[string]string, len(ext))
-	for k, v := range ext {
-		out[k] = v
-	}
-	return out
-}
-
 // orNull is the convention of the contract for every string field: an empty
 // string is the absence of a value, and the absence of a value is null.
 func orNull(s string) any {
@@ -212,11 +222,15 @@ func list(values []string) []string {
 	return values
 }
 
+// ordinal is the one field of the envelope that is a string or null and
+// never a number: it is the ordinal key of
+// docs/spec/modelo-de-datos/orden-manual.md, and it travels exactly as it
+// is stored (docs/spec/contrato-json.md#números-fechas-y-ausencias).
 func ordinal(t *model.Task) any {
-	if t.Ordinal == nil {
+	if t.Ordinal == "" {
 		return nil
 	}
-	return *t.Ordinal
+	return t.Ordinal
 }
 
 // instantOrNull is a date field that names an instant: ISO 8601 in UTC, to
@@ -235,15 +249,4 @@ func day(at time.Time) any {
 		return nil
 	}
 	return at.UTC().Format(model.DateLayout)
-}
-
-// sortedKeys is how a map of external fields is written wherever the output
-// has to be the same twice: a map has no order of its own.
-func sortedKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }

@@ -19,8 +19,8 @@ ni que quitar: `--replace-*` se acepta y deja la lista igual que `--add-*`, porq
 que sustituir, y `--rm-*` se acepta pero no tiene ningún elemento sobre el que actuar. `--clear-*` no
 hace nada y avisa. Las que se usan de verdad al crear son
 `--append-desc`, `--add-ac`, `--type`, `--priority`, `--add-labels`,
-`--add-assignees`, `--add-refs`, `--add-docs`, `--add-deps`, `--parent`,
-`--due`, `--ordinal`, `--author`, `--ext`, `--append-plan`, `--append-note`,
+`--add-assignees`, `--add-refs`, `--add-deps`, `--parent`,
+`--due`, `--ordinal`, `--above`, `--below`, `--author`, `--append-plan`, `--append-note`,
 `--append-summary` y `--comment`.
 
 - **El título llega por un sitio, y solo por uno.** Se escribe como argumento (`biso new "Fix the parser"`)
@@ -35,6 +35,11 @@ hace nada y avisa. Las que se usan de verdad al crear son
   si `--start` dejara la tarea activa y asignada sin arrendamiento, `biso new "X" --start` y
   `biso new "X"` seguido de `biso start` darían dos tareas distintas. Es, junto con `biso start`, la
   única vía que fija `leaseHolder` fuera de la importación.
+- **Una tarea puede nacer colocada en el orden manual.** `--ordinal first`, `--ordinal last`,
+  `--above <ref>` y `--below <ref>` valen aquí con el mismo significado que en `biso set`
+  (["El orden manual"](../familias-de-flags.md#el-orden-manual)), así que
+  `biso new "Fix the parser" --below MYP-11` crea la tarea justo debajo de `MYP-11`. Sin ninguno de
+  los cuatro, la tarea nace sin clave, que es lo normal.
 - **`--comment` funciona al crear**, igual que en cualquier otro comando de escritura.
 - **`--append-plan`, `--append-note` y `--append-summary` no están restringidos por el estado.** Se
   pueden escribir al crear, en cualquier estado.
@@ -52,9 +57,10 @@ hace nada y avisa. Las que se usan de verdad al crear son
 | `--add-deps` a una tarea inexistente | Error 4. **Las dependencias se validan al escribirlas** |
 | `--add-deps` a la propia tarea | Error 2. Un ciclo, en cambio, no puede darse al crear una sola tarea: no tiene identificador todavía y nada puede apuntar a ella (["Las familias de flags"](../familias-de-flags.md#campos-de-lista-que-admiten-coma)) |
 | `--parent` inexistente | Error 4. Un ciclo de padres tampoco puede darse aquí, por el mismo motivo |
-| `--ext` con una clave no declarada | Error 3 |
 | `--due` con formato incorrecto | Error 2, señalando `YYYY-MM-DD` |
 | `--due` en el pasado | Se acepta, con aviso |
+| `--above` o `--below` a una tarea inexistente | Error 4, como cualquier otra referencia |
+| `--above` o `--below` sobre una tarea que no tiene clave de orden | Error 6, con el `code` `neighbour_without_ordinal`, y la tarea no se crea (["El orden manual"](../familias-de-flags.md#el-orden-manual)) |
 | `--append-desc @fichero` que no existe | Error 4 |
 | `--start` sin ninguna identidad configurada (["Variables de entorno"](../invocacion.md#variables-de-entorno)) y sin `--add-assignees` | La tarea se crea en el estado activo y sin asignar, con `note: no identity configured, task left unassigned`, y **sin arrendamiento**: no hay ninguna identidad a la que atribuírselo, y una tarea sin asignar no puede tenerlo (["El arrendamiento de una tarea"](../lease.md)). Es el mismo caso que la fila equivalente de `biso start` (["`biso start`"](verbos-del-ciclo.md#biso-start)) |
 | `--start` con `--add-assignees @sara` y una identidad configurada distinta | La tarea queda asignada a `@sara` y el arrendamiento es de quien llama, igual que en `biso start`: quien lo toma es quien escribe, no quien figura en `assignees` |
@@ -104,8 +110,8 @@ de llegar a un estado terminal** (`terminal_ac_unchecked`, `terminal_no_summary`
 `open_question_on_terminal`, ["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Los tres nombran la tarea, en su frase y en su
 campo `task`, y aquí no hay ninguna que nombrar: el identificador no se ha gastado. Escribirlos con
 el hueco vacío daría una frase con dos espacios seguidos y un `task` con la cadena vacía, que es justo
-lo que prohíbe ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), y es el mismo motivo por el que el aviso
-`imported_dod_merged` del lote nombra la línea del fichero en vez de la tarea. Los demás avisos, que
+lo que prohíbe ["Números, fechas y ausencias"](../contrato-json.md#números-fechas-y-ausencias), y es el mismo motivo por el que los avisos
+`imported_dod_merged`, `imported_documentation_merged`, `imported_modified_files_merged` e `imported_empty_dropped` del lote nombran la línea del fichero en vez de la tarea. Los demás avisos, que
 no nombran ninguna tarea, salen igual con `--dry-run` que sin él: `due_in_past`, `clear_on_new_task`,
 `duplicate_flag_value` y el resto. Crear la tarea de verdad en un estado terminal sí emite los tres,
 porque entonces el identificador ya existe.
@@ -136,7 +142,7 @@ ignoran. Las claves son las del modelo de datos de la sección ["El modelo de da
 Ejemplo de una línea, con todos los tipos compuestos:
 
 ```json
-{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"ext":{"trello.card":"5f2a8c1e"},"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"comments":[{"key":1,"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
+{"id":"MYP-101","title":"Normalize CRLF in the diff","type":"bug","priority":"high","status":"Done","description":"...","labels":["parser"],"references":["docs/bugs/BUG-02.md"],"dependencies":["MYP-90"],"acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":3,"text":"There is a test","checked":false}],"comments":[{"key":1,"author":"@avilches","createdAt":"2026-08-14T10:22:00Z","body":"Reported from Windows"}],"question":{"author":"@avilches","askedAt":"2026-08-16T09:00:00Z","body":"Is it a CRLF, or also a lone CR?"},"createdAt":"2026-08-14T10:20:00Z","updatedAt":"2026-08-20T18:05:00Z"}
 ```
 
 Las reglas del lote, todas obligatorias:
@@ -147,8 +153,9 @@ Las reglas del lote, todas obligatorias:
 - **El contador de claves se sitúa por encima de la clave mayor que tenga la tarea al acabar de
   importarla**, de modo que un criterio añadido después nunca choca con uno importado. El contador no
   es una clave del formato: se deduce.
-- **`definitionOfDone` se acepta, se convierte en criterios de aceptación y avisa.** Es la única clave
-  ajena al modelo que no es un fallo de validación, y existe por una razón concreta: la definición de
+- **`definitionOfDone` se acepta, se convierte en criterios de aceptación y avisa.** Es una de las tres
+  claves ajenas al modelo que no son un fallo de validación (las otras dos, `documentation` y
+  `modifiedFiles`, siguen a esta regla), y existe por una razón concreta: la definición de
   hecho estuvo en `biso` y sigue estando en Backlog.md, de donde viene la mayoría de los lotes de
   importación (["Se retira la definición de hecho"](../../decisiones/detalles.md#se-retira-la-definición-de-hecho)).
   Acepta las mismas dos formas que `acceptanceCriteria`, la cadena y el objeto. La conversión es un
@@ -156,7 +163,7 @@ Las reglas del lote, todas obligatorias:
 
     1. Se importa `acceptanceCriteria` con sus propias reglas, y el contador de la tarea queda por
        encima de la clave mayor que haya entrado por ahí.
-    2. Cada elemento de `definitionOfDone` se añade al final de la lista, en el orden en que venía,
+    2. Cada elemento de `definitionOfDone` que no esté vacío (regla del elemento vacío, más abajo) se añade al final de la lista, en el orden en que venía,
        conservando su `text` y su `checked` y **tomando la siguiente clave libre del contador**. Su
        `key` original, si la trae, se descarta sin mirarla: las dos listas tenían contadores
        independientes, así que un elemento de cada una puede traer perfectamente la misma, y una
@@ -164,8 +171,9 @@ Las reglas del lote, todas obligatorias:
        motivo. Es la única diferencia con `acceptanceCriteria`, donde la `key` sí se respeta y
        repetirla sí es un fallo.
     3. Si se convirtió **al menos un** elemento, la tarea emite el aviso `imported_dod_merged`
-       (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Una lista vacía no avisa de
-       nada, porque no se ha convertido nada, y el lote no falla en ninguno de los dos casos.
+       (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Una lista vacía, o cuyos
+       elementos estaban todos vacíos, no avisa de esto, porque no se ha convertido nada, y el lote
+       no falla en ninguno de los dos casos.
 
     `definitionOfDone: null` equivale a que la clave no viniera, y no es un fallo de validación: la
     regla de que `null` en una lista es un fallo vale para las listas del modelo, y esta no lo es.
@@ -173,6 +181,52 @@ Las reglas del lote, todas obligatorias:
   ```json
   {"title":"Normalize CRLF","acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true}],"definitionOfDone":[{"key":1,"text":"Reviewed","checked":false}]}
   {"title":"Normalize CRLF","acceptanceCriteria":[{"key":1,"text":"The diff ignores CRLF","checked":true},{"key":2,"text":"Reviewed","checked":false}]}
+  ```
+  La primera avisa y la segunda no, y las dos dejan la misma tarea.
+- **`documentation` se acepta, se funde en `references` y avisa.** Es la segunda de las tres claves
+  ajenas al modelo que no son un fallo de validación, y existe por la misma razón que `definitionOfDone`: el campo
+  estuvo en `biso` y sigue estando en Backlog.md, de donde viene la mayoría de los lotes de
+  importación (["Se retira `documentation` y `references` queda como único campo de punteros"](../../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros)).
+  Es una lista de textos como `references`, con las mismas reglas que ella, y la fusión es un
+  procedimiento en tres pasos, en este orden:
+
+    1. Se importa `references` con sus propias reglas.
+    2. Cada elemento de `documentation` que no esté vacío (regla del elemento vacío, más abajo) se añade al final de esa lista, en el orden en que venía y
+       conservando su texto. Un valor que la lista ya tenía, porque estaba en `references` o porque
+       `documentation` lo repetía, no se añade otra vez. Es una regla propia de esta fusión, no la de
+       los flags (["Repetición y listas separadas por comas"](../valores-de-entrada.md#repetición-y-listas-separadas-por-comas)):
+       el lote no deduplica nada más, y un `references` que ya trae un valor repetido lo guarda
+       repetido.
+    3. Si la línea trajo **al menos un** elemento de `documentation`, la tarea emite el aviso
+       `imported_documentation_merged` (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)),
+       que cuenta los elementos que llegaron y no estaban vacíos, aunque alguno se haya guardado una
+       sola vez por repetido. Una lista vacía, o cuyos elementos estaban todos vacíos, no avisa de
+       esto, porque no se ha fundido nada, y el lote no falla en ninguno de los dos casos.
+
+    `documentation: null` equivale a que la clave no viniera y no es un fallo de validación, por la
+    misma razón que `definitionOfDone: null`: la regla de que `null` en una lista es un fallo vale
+    para las listas del modelo, y esta no lo es. Estas dos líneas importan la misma tarea:
+  ```json
+  {"title":"Normalize CRLF","references":["docs/bugs/BUG-02.md"],"documentation":["docs/parser.md"]}
+  {"title":"Normalize CRLF","references":["docs/bugs/BUG-02.md","docs/parser.md"]}
+  ```
+  La primera avisa y la segunda no, y las dos dejan la misma tarea.
+- **`modifiedFiles` se acepta, se funde en `references` y avisa, con la misma regla que
+  `documentation`.** Es la tercera clave ajena al modelo que no es un fallo de validación, y existe
+  por la misma razón: el campo estuvo en `biso` y sigue estando en Backlog.md
+  (["Se retira `modifiedFiles`"](../../decisiones/detalles.md#se-retira-modifiedfiles)). Sus elementos
+  se funden en `references` con el mismo procedimiento de tres pasos, y el aviso se llama
+  `imported_modified_files_merged` (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)).
+  **Si una línea trae las dos claves, el orden es fijo y no depende del orden en que estén escritas en
+  el fichero:** primero `references`, luego los elementos de `documentation` y por último los de
+  `modifiedFiles`. Un valor que ya estaba se guarda una sola vez, donde apareció por primera vez, y
+  la línea emite ambos avisos, el de `documentation` primero. Cada aviso cuenta los elementos no vacíos que
+  trajo su propia clave, aunque alguno se haya guardado una sola vez por repetido. `modifiedFiles: null`
+  equivale a que la clave no viniera, por la misma razón que `documentation: null`. Estas dos
+  líneas importan la misma tarea:
+  ```json
+  {"title":"Normalize CRLF","references":["docs/bugs/BUG-02.md"],"modifiedFiles":["internal/diff/diff.go"]}
+  {"title":"Normalize CRLF","references":["docs/bugs/BUG-02.md","internal/diff/diff.go"]}
   ```
   La primera avisa y la segunda no, y las dos dejan la misma tarea.
 - **Las claves que la conversión crea son lo único que `biso new` sí anuncia.** La salida de `new` no
@@ -189,6 +243,20 @@ Las reglas del lote, todas obligatorias:
   contador de comentarios de esa tarea, y una `key` repetida dentro de los comentarios de la misma
   tarea es un fallo de validación. Es lo que hace cierta la simetría de `biso export` para la clave de
   un comentario (["`biso export`"](export.md)).
+  **Un elemento de `comments` que no es un objeto, o cuyo `body` está vacío o es solo espacios, es un
+  fallo de validación de la línea y no se descarta con aviso.** No sigue la regla del elemento vacío
+  de más abajo, que es de las listas de texto libre y de tokens: un comentario es un objeto con
+  cuerpo y autor, y un cuerpo vacío no es un hueco inocente sino un comentario al que le falta lo
+  único que lo hace un comentario, la misma razón por la que un `title` vacío tampoco se descarta.
+  Falla igual un elemento `null` en el lugar de un comentario, que un objeto sin `body` o con `body`
+  vacío, y ninguno de los dos guarda nada. El `code` es `invalid_line`, el mismo de un `null` en
+  cualquier otra lista:
+  ```
+  line 7: comments.1: expected an object, got null
+  line 9: comments.0: comment body cannot be empty
+  ```
+  La razón completa, con las alternativas que se descartaron, está en
+  ["Un comentario vacío o `null` en un lote es un fallo de validación"](../../decisiones/detalles.md#un-comentario-vacío-o-null-en-un-lote-es-un-fallo-de-validación).
 - **`question` se acepta como objeto** con `author`, `askedAt` y `body` (["La pregunta abierta"](../modelo-de-datos/pregunta-abierta.md#la-pregunta-abierta)) en el lote de `--from`.
   `askedAt` es opcional y, si falta, se pone el instante de la importación, igual que `createdAt` en
   `comments`. Ausente la clave, la tarea se importa sin pregunta abierta.
@@ -221,18 +289,116 @@ Las reglas del lote, todas obligatorias:
   tablero). No es una restricción nueva sobre la simetría: exportar un tablero y restaurarlo con
   `biso snapshot` y `biso init --from` (["`biso export`"](export.md), ["`biso snapshot`"](snapshot.md)) trae también su `task_prefix`, así que los `id`
   de su `snapshot.ndjson` siempre lo llevan puesto.
+- **`ordinal` es el único sitio donde una clave de orden llega escrita, y se valida.** Es una cadena
+  con la forma que fija ["El orden manual y su clave"](../modelo-de-datos/orden-manual.md): símbolos
+  de `0-9a-z` y sin `0` final. Una que no la cumpla es un fallo de validación con `code` propio,
+  `malformed_ordinal`, y no el error de un número mal escrito, porque aquí no hay ningún número:
+  ```
+  line 14: malformed ordinal: "3000" (an ordinal key is made of 0-9 and a-z, and never ends in 0)
+  ```
+  **La cadena vacía tampoco cumple la forma**, así que es ese mismo fallo y no una forma de decir
+  "sin clave": la que sí lo dice es `null`, o no escribir la clave, como en cualquier otro escalar
+  opcional (más abajo en esta misma lista). Es la misma frontera que en la línea de órdenes, donde
+  `--ordinal ""` es un error y `--clear-ordinal` es lo que quita la clave
+  (["El valor vacío"](../valores-de-entrada.md#el-valor-vacío)).
+  Un valor que no sea una cadena, por ejemplo el `3000` sin comillas de un tablero exportado por otra
+  herramienta, es un valor del tipo equivocado y cae en `invalid_line`, como cualquier otro
+  (["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)). **Dos líneas
+  pueden traer la misma clave**, y no es un fallo: las claves no son únicas, y el listado desempata
+  por identificador (["La regla de orden, completa"](ls.md#la-regla-de-orden-completa)). La clave se
+  guarda tal cual llega, sin recalcular nada, que es lo que hace exacta la simetría con
+  [`biso export`](export.md).
 - **`archived` se acepta como booleano.** Por defecto, si la clave no aparece, la tarea se crea sin
   archivar. Ningún otro comando tiene un flag de campo para él: fuera de la importación,
   archivar se hace con `biso archive`.
+- **Un elemento vacío o de solo espacios se descarta y avisa.** Vale para cada elemento de
+  `assignees`, `labels`, `dependencies`, `references` y `acceptanceCriteria`, y de las claves ajenas
+  `definitionOfDone`, `documentation` y `modifiedFiles`, y es la regla del flag que añade
+  (["El valor vacío"](../valores-de-entrada.md#el-valor-vacío)) aplicada a cada elemento: una cadena
+  sin ningún carácter, o solo con espacios, no es un valor. No es una etiqueta mal formada, ni una
+  dependencia que no existe, ni una referencia en blanco: no se guarda nada. Los elementos que no
+  están vacíos se guardan como llegan, sin recortar los espacios, igual que en el flag. La razón, y
+  las alternativas que se descartaron, están en
+  ["Un elemento vacío de un lote se descarta y avisa"](../../decisiones/detalles.md#un-elemento-vacío-de-un-lote-se-descarta-y-avisa).
+
+    - **En `acceptanceCriteria` y en `definitionOfDone` el elemento está vacío si su texto lo está**,
+      venga como cadena o como objeto, y un objeto que no trae `text` tiene el texto vacío. El
+      elemento se descarta antes de mirar nada más de él: su `key` no ocupa ninguna clave ni cuenta
+      para el fallo de una `key` repetida, el contador se sitúa por encima de la clave mayor de los
+      criterios que quedan, y un `checked` verdadero no deja nada marcado porque no hay nada que
+      marcar.
+    - **Los elementos que se descartan de `documentation` y de `modifiedFiles` no cuentan para el
+      aviso de la fusión** de más arriba, y los de `definitionOfDone` tampoco para el suyo: esos
+      avisos cuentan lo que se convirtió.
+    - **Una lista que se queda sin elementos por esto queda `[]`, y la línea no falla.**
+    - **El aviso es `imported_empty_dropped`** (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)),
+      uno por cada lista de la que una línea descartó algo, con la cuenta de lo descartado. Nombra la
+      línea y no la tarea, por la misma razón que `imported_dod_merged`. Las listas de una línea avisan
+      en este orden fijo, sea cual sea el de las claves en el fichero: `assignees`, `labels`,
+      `dependencies`, `references`, `acceptanceCriteria`, `definitionOfDone`, `documentation` y
+      `modifiedFiles`; y los avisos de una línea van antes que los de su conversión. Como los de
+      conversión, salen solo si el lote es válido, y también con `--dry-run`.
+  ```json
+  {"title":"Normalize CRLF","labels":["parser",""],"references":["","docs/bugs/BUG-02.md","   "]}
+  ```
+  ```
+  warning: line 1: 1 empty item dropped from labels
+  warning: line 1: 2 empty items dropped from references
+  ```
+  La línea deja la tarea con la etiqueta `parser` y la referencia `docs/bugs/BUG-02.md`.
 - **`null` explícito en un escalar opcional (`due`, `ordinal`, `parent`) equivale a que la clave no
-  viniera.** En una lista o un mapa (`labels`, `references`, `dependencies`, `documentation`,
-  `modifiedFiles`, `ext`, `acceptanceCriteria`, `comments`), en cambio, `null` es
-  un fallo de validación: su forma de estar vacío es `[]` o `{}`, nunca `null`, la misma regla que
+  viniera.** En una lista (`labels`, `references`, `dependencies`,
+  `acceptanceCriteria`, `comments`), en cambio, `null` es
+  un fallo de validación: su forma de estar vacío es `[]`, nunca `null`, la misma regla que
   ["El valor vacío"](../valores-de-entrada.md#el-valor-vacío) aplica a un escalar en la línea de
-  órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta.
+  órdenes. `null` en `question` equivale también a ausente, sin pregunta abierta. **Y un `null` que
+  ocupa el sitio de un elemento de una lista es también un fallo de validación**, en cualquiera de
+  las listas del bullet de arriba, porque un elemento tiene que ser texto y `null` no lo es, como
+  tampoco lo es un número: no se trata como el elemento vacío, que sí es texto. Es un `invalid_line`
+  con código 3, que nombra la lista y la posición del elemento, y lo mismo vale para un `null` en el
+  `text` de un criterio dado como objeto:
+  ```
+  line 7: references.1: expected text, got null
+  ```
+  Los elementos de `acceptanceCriteria` y de `definitionOfDone` pueden ser texto o un objeto, así
+  que su mensaje lo dice: un elemento que no es ninguno de los dos, sea `null`, un número, un
+  booleano o una lista, falla con `acceptanceCriteria.0: expected text or an object, got null` (o
+  `got number`, `got bool`, `got array`), y un objeto cuyo `text` no es texto, con
+  `acceptanceCriteria.0.text: expected text, got null` (o `got number`). Los mismos mensajes valen
+  con `definitionOfDone` en lugar de `acceptanceCriteria`, y nombran la posición del elemento en la
+  lista, contando desde cero. Un `text` que falta no es un `text` nulo: es un texto vacío, y el
+  elemento se descarta.
+  `documentation: null` y `modifiedFiles: null` son la clave ausente, y un `null` dentro de la lista
+  de cualquiera de las dos es este mismo fallo.
+  **`comments` queda fuera de esta regla, con la suya propia**, ya descrita en el bullet de arriba
+  que define esa clave: no se descarta con aviso ni un cuerpo vacío ni un `null` en su lugar, los dos
+  fallan la línea.
+- **`labels` se valida línea a línea con la regla de las etiquetas con ámbito.** Una etiqueta vacía no
+  es una etiqueta mal formada, sino un elemento vacío que se descarta (bullet de arriba). Una etiqueta mal
+  formada, una clave escrita con `::` que recibe más de un valor, una clave con los dos separadores
+  en la misma línea, o un valor o un separador que la lista `labels` de la configuración no admite,
+  son fallos de validación de esa línea
+  (["Escribir una etiqueta con ámbito"](../familias-de-flags.md#escribir-una-etiqueta-con-ámbito) y
+  ["La lista `labels`"](config.md#la-lista-labels)). **Aquí una clave con `::` repetida no se queda con
+  el último valor**, a diferencia de lo que hace esa misma pareja escrita en dos `--add-labels`: en una
+  línea de comandos los flags son una secuencia y el último es la intención más reciente, mientras que
+  la lista `labels` de una línea describe el estado guardado de una tarea, y quedarse con uno de los
+  valores en silencio perdería un dato que el fichero afirmaba. Los mensajes, con la forma de línea
+  del informe del lote:
+  ```
+  line 7: malformed label: "size:"
+  line 9: labels mix the two separators of the key "size": "size:a" and "size::b"
+  line 12: labels give the key "size" more than one value, and :: allows at most one: "size::a" and "size::b"
+  line 14: unknown label value: "size::xl" (valid: size::s, size::m, size::l)
+  line 18: wrong separator for the label key "milestone": "milestone:m1"
+  ```
+  Sus `code`, dentro de `details`, son los mismos que fuera del lote: `malformed_label`,
+  `mixed_label_separators`, `exclusive_label_conflict`, `unknown_label_value` y
+  `wrong_label_separator` (["Los identificadores de error"](../contrato-json.md#los-identificadores-de-error)).
 - **Una clave desconocida es un fallo de validación, no se ignora.** Ni la línea ni el lote se
-  escriben, y el mensaje dice la línea y la clave. La única excepción es `definitionOfDone`, con
-  cualquiera de sus valores admitidos, que se convierte con la regla de más arriba en vez de fallar.
+  escriben, y el mensaje dice la línea y la clave. Las únicas excepciones son `definitionOfDone`,
+  `documentation` y `modifiedFiles`, con cualquiera de sus valores admitidos, que se convierten con la regla de más
+  arriba en vez de fallar.
 - **Los campos derivados de la sección ["El modelo de datos de una tarea"](../modelo-de-datos/index.md) no se aceptan.** En la entrada son claves desconocidas y
   por tanto un fallo de validación.
 - **Se valida el fichero entero antes de escribir nada**, y se aplica la garantía de todo o nada de
@@ -242,8 +408,9 @@ Las reglas del lote, todas obligatorias:
   (`terminal_ac_unchecked`, `terminal_no_summary` y `open_question_on_terminal`). Todos hablan de
   llegar, y una tarea importada no llega a ninguna parte: ya estaba donde el fichero la pone, igual
   que una escritura sobre una tarea que ya estaba en el estado terminal tampoco los repite
-  (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). El único aviso propio del lote es
-  `imported_dod_merged`.
+  (["Notas y avisos"](../salida-y-terminal.md#notas-y-avisos)). Los únicos avisos propios del lote son
+  `imported_dod_merged`, `imported_documentation_merged`, `imported_modified_files_merged` e
+  `imported_empty_dropped`.
 - **`--print` es error 2 en un lote**, con el mensaje `--print does not apply to a batch, which
   affects no task that existed before`. Es la misma razón por la que lo es en
   [`biso init --from`](init.md): un lote crea de cero todas las tareas del fichero, así que no hay
@@ -316,14 +483,21 @@ pasada. La línea 130 del bloque de arriba es justo uno de ellos, y aun así sal
 | Tarea o lote creado | 0 |
 | `--dry-run` que habría funcionado | 0 |
 | Falta el título, flags incompatibles, fecha mal formada | 2 |
-| Valor fuera de un vocabulario, clave de extensión no declarada, entrada no interpretable | 3 |
+| Valor fuera de un vocabulario, entrada no interpretable | 3 |
 | `--add-deps` o `--parent` a una tarea que no existe, o fichero de `@` que no existe | 4 |
 | `--add-deps` o `--parent` por texto con varias coincidencias | 5 |
+| La vecina de `--above` o de `--below` no tiene clave de orden | 6 |
 | Cualquier fallo de validación en el lote de `--from`, o un `--dry-run` de ese lote que no pasa. **Solo del lote**: un `--dry-run` sobre una sola tarea nunca da 7, sino el código específico de su fallo (["`--dry-run` sobre una sola tarea"](#--dry-run-sobre-una-sola-tarea)) | 7 |
 | El almacén falla, o no se obtiene el acceso exclusivo | 8 |
 | No hay tablero | 20 |
 
 ## `biso new --help`
+
+Además de los flags de uso más frecuente, la ayuda glosa `--add-deps`, `--parent` y `--add-refs`, y
+dice que `--add-deps` nombra lo que va antes de la tarea nueva. No hay un flag para que la tarea
+nueva bloquee a una existente: se crea y después se escribe la arista con `biso set` en la existente,
+como dice la ayuda
+(["La ayuda enseña la dirección de una dependencia"](../../decisiones/detalles.md#la-ayuda-enseña-la-dirección-de-una-dependencia)).
 
 ```
 Usage: biso new <title> [options]
@@ -344,7 +518,10 @@ Most used:
       --status <value>        configured status (default: the initial one)
       --add-labels <value>    add a label; repeatable or comma-separated
       --add-assignees <@who>  add an assignee; repeatable or comma-separated
-      --add-deps <ref>        add a dependency; validated, repeatable
+      --add-deps <ref>        tasks that must be done first, so each blocks the
+                              new task; repeatable, checked to exist
+      --parent <ref>          the task this one is part of; at most one
+      --add-refs <text>       a path, URL or task id to look at; repeatable
       --due <YYYY-MM-DD>      due date
       --comment <text>        add a discussion comment; repeatable
       --append-plan <text>    implementation plan
@@ -352,6 +529,10 @@ Most used:
                               to you, with the lease claimed for you
 
 Every other field flag of `biso set --help` is accepted too.
+
+Dependencies are written on the task that waits: `--add-deps MYP-4` means
+MYP-4 goes first and blocks it. There is no flag for the opposite, a new task
+that blocks MYP-10; create it, then run `biso set MYP-10 --add-deps <new id>`.
 
 Batch:
       --from <file|->        NDJSON, one task object per line. The only place
@@ -362,15 +543,17 @@ Batch:
 Any text option also takes @file to read a file, or - to read stdin.
 
 Exit codes:
-  0  created            4  a referenced task or file does not exist
-  2  bad usage          5  a text reference matched several tasks
+  0  created            5  a text reference matched several tasks
+  2  bad usage          6  --above or --below on a task with no place
   3  unknown value      8  the board could not be written
+  4  a referenced task or file does not exist
   7  batch or --dry-run validation failed, nothing was written
                         20 no board here
 
 Examples:
   biso new "Normalize CRLF in the diff" --type bug --priority high
   biso new "Add OAuth" --add-ac "Login succeeds" --add-ac "Token refreshes"
+  biso new "Parse the header" --parent MYP-10 --add-deps MYP-4
   biso new "Rewrite the installer" --append-desc @docs/installer.md --start
   biso new --from tasks.ndjson --dry-run
 ```

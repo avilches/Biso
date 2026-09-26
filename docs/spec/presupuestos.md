@@ -26,6 +26,21 @@ sobre `biso`: debe leerlo como una afirmación sobre esa máquina. Un portátil 
 otro; lo que sí dice algo es que el número suba en la propia máquina de referencia de una versión a
 la siguiente, porque ahí el hardware no ha cambiado y lo único que puede haber cambiado es el código.
 
+**Qué se mide, y qué muestra decide.** Se mide reloj, no tiempo de CPU: el del proceso entero, desde
+antes de lanzarlo hasta después de que termine, porque el presupuesto es lo que espera quien ejecuta el
+comando y una espera (de disco, de sincronización, de lo que sea) gasta reloj sin gastar CPU. El
+veredicto no es una ejecución suelta ni su mediana, sino **la más rápida de varias**: el presupuesto se
+cumple si alguna de las ejecuciones que la prueba toma de cada comando termina en menos de 25
+milisegundos, y se incumple cuando ninguna lo consigue. El ruido de una máquina ocupada solo puede
+añadir tiempo a una ejecución, nunca quitárselo, así que la más rápida es la que menos pesa de la
+máquina y más del código, y una regresión real sube también esa. La prueba sigue siendo de la máquina de
+referencia y sigue fallando ante una regresión real; lo que no hace es fallar porque otro proceso
+estuviera usando el núcleo en el instante en que se midió. `make test` no mide este presupuesto, porque corre bajo el detector de carreras y bajo él la prueba
+se salta declarándolo; lo mide `make check`, a través del objetivo `test-budget`, que ejecuta solo esa
+prueba sin el detector. El número de ejecuciones, las medidas que lo
+sostienen y las alternativas descartadas están en
+["El presupuesto de arranque se mide con la muestra más rápida"](../decisiones/lenguaje-y-rendimiento.md#el-presupuesto-de-arranque-se-mide-con-la-muestra-más-rápida).
+
 **La composición del tablero de 300 tareas es indiferente, y por eso no se fija.** No importa cuántas
 estén en cada estado, ni si alguna tiene una pregunta abierta o un arrendamiento vencido: ninguno de
 los comandos se ramifica según el contenido de una tarea concreta, así que su coste crece de forma
@@ -106,8 +121,13 @@ recorte no toca nunca (la salida de `--json`), está en
 sobre el mensaje sin `--full`**, que es ayuda para quien aprende la herramienta y no parte del
 arranque.
 
-El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.089 bytes** con el tablero del ejemplo: **3.600** de
-parte fija y **1.489** de resumen. Las dos partes caben dentro de su tope.
+El texto literal de la sección ["La salida literal"](cmd/prime.md#la-salida-literal) ocupa **5.151 bytes** con el tablero del ejemplo: **3.623** de
+parte fija y **1.528** de resumen. Las dos partes caben dentro de su tope. La última vez que esa
+cifra se movió fue al añadir, bajo la primera fila de `NEXT UP`, la línea de cuántas tareas
+desbloquea transitivamente esa tarea si se termina antes que las demás
+(["`biso prime`"](cmd/prime.md#la-salida-literal)), que le sumó 39 bytes al resumen y ninguno a la
+parte fija, porque solo aparece en esa fila y solo cuando el recuento es mayor que cero.
+Es la medida del proceso y no un recuento sobre el texto: la comprueba la suite.
 
 **El número que congela el contrato de estabilidad de la sección ["El contrato de estabilidad"](estabilidad.md) es el total, 5.504 bytes**, porque
 es el único que quien llama observa. El reparto entre las dos partes puede cambiar sin romper ese

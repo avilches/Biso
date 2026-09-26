@@ -36,7 +36,7 @@ func TestInitPrintsTheOutputOfTheSpecification(t *testing.T) {
 	m := newMachine(t)
 
 	got := m.run(t, "init", "My project", "--prefix", "MYP",
-		"--at", "my-project-board", "--extensions", "trello.card").assertCode(t, 0)
+		"--at", "my-project-board").assertCode(t, 0)
 
 	assertEqual(t, got.stdout, fixture(t, "init-output.txt"), "the output of biso init")
 	assertEqual(t, got.stderr, fixture(t, "init-notes.txt"), "the notes of biso init")
@@ -46,7 +46,7 @@ func TestInitWritesThePointerOfTheSpecification(t *testing.T) {
 	m := newMachine(t)
 
 	m.run(t, "init", "My project", "--prefix", "MYP",
-		"--at", "my-project-board", "--extensions", "trello.card").assertCode(t, 0)
+		"--at", "my-project-board").assertCode(t, 0)
 
 	// docs/spec/cmd/init.md prints this pointer for this very call. The id
 	// is the one this run minted, because nothing can hand a real process
@@ -62,7 +62,7 @@ func TestInitEnvelopeMatchesTheSchemaOfTheSpecification(t *testing.T) {
 	m := newMachine(t)
 
 	got := m.run(t, "init", "My project", "--prefix", "MYP", "--at", "my-project-board",
-		"--extensions", "trello.card", "--json").assertCode(t, 0)
+		"--json").assertCode(t, 0)
 
 	assertSameJSON(t, got.stdout, fixture(t, "init-json.txt"))
 	// The notes keep travelling as text on stderr with --json, because no
@@ -220,6 +220,7 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"get-question.txt", "cmd/get.md", "", "Salida", 2},
 		{"get-explain.txt", "cmd/get.md", "", "Salida", 3},
 		{"get-terminal-urgency.txt", "cmd/get.md", "", "Salida", 4},
+		{"get-closure.txt", "cmd/get.md", "Salida", "`--closure`", 0},
 		{"get-json.txt", "cmd/get.md", "", "El esquema JSON", 0},
 		{"prime-help.txt", "cmd/prime.md", "", "`biso prime --help`", 0},
 		{"prime-full-json.txt", "cmd/prime.md", "", "Parámetros", 0},
@@ -294,10 +295,8 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 			"Las dos formas de un mensaje reparable", 3},
 		{"doctor-highest-none.txt", "cmd/doctor.md", "",
 			"Cuando el tablero no recuerda haber asignado ningún identificador", 0},
-		{"doctor-ext-none.txt", "cmd/doctor.md", "",
-			"Cuando la lista que el mensaje cita está vacía", 0},
 		{"doctor-vocabulary-none.txt", "cmd/doctor.md", "",
-			"Cuando la lista que el mensaje cita está vacía", 1},
+			"Cuando la lista que el mensaje cita está vacía", 0},
 		{"help-help.txt", "cmd/help.md", "", "`biso help --help`", 0},
 		{"help-all.txt", "cmd/help.md", "", "Salida de `biso help all`", 0},
 		{"help-unknown.txt", "cmd/help.md", "", "Varios comandos en una sola llamada", 0},
@@ -305,11 +304,33 @@ func TestTheFixturesStillMatchTheSpecification(t *testing.T) {
 		{"help-json.txt", "cmd/help.md", "", "El esquema JSON", 0},
 		{"export-help.txt", "cmd/export.md", "", "`biso export --help`", 0},
 		{"snapshot-help.txt", "cmd/snapshot.md", "", "`biso snapshot --help`", 0},
-		{"new-batch-lease.txt", "cmd/new.md", "", "El modo lote", 4},
-		{"new-batch-ids.txt", "cmd/new.md", "", "El modo lote", 5},
-		{"new-batch-dry-run.txt", "cmd/new.md", "", "El modo lote", 6},
-		{"new-batch-invalid.txt", "cmd/new.md", "", "El modo lote", 7},
-		{"new-batch-invalid-one-line.txt", "cmd/new.md", "", "El modo lote", 8},
+		// The block at index 5 is the invalid comment of a line: a null and
+		// an empty body, from two lines that are not the same run, so it is
+		// not the output of a single run and it has no fixture
+		// (docs/spec/cmd/new.md#el-modo-lote). Its two messages are pinned
+		// by the tests of internal/ops instead.
+		// The block at index 6 is the id already taken, on the board and by
+		// an earlier line of the file: the same reason, two lines that are
+		// not one run.
+		{"new-batch-lease.txt", "cmd/new.md", "", "El modo lote", 7},
+		// The block at index 8 is the malformed ordinal key of a line: one
+		// failure among many of a whole file, so it is not the output of a
+		// single run and it has no fixture
+		// (docs/spec/cmd/new.md#el-modo-lote). Its message is pinned by the
+		// tests of internal/ops instead.
+		// The line of a batch with an empty element, the two warnings it
+		// gets and the failure a null in the place of an element is.
+		{"new-batch-empty-items-input.txt", "cmd/new.md", "", "El modo lote", 9},
+		{"new-batch-empty-items.txt", "cmd/new.md", "", "El modo lote", 10},
+		{"new-batch-null-element.txt", "cmd/new.md", "", "El modo lote", 11},
+		// The block at index 12 is the one of the labels of a line, which
+		// is five failures of five different files and therefore no
+		// fixture of a single run (docs/spec/cmd/new.md#el-modo-lote). Its
+		// five messages are pinned by the tests of internal/ops instead.
+		{"new-batch-ids.txt", "cmd/new.md", "", "El modo lote", 13},
+		{"new-batch-dry-run.txt", "cmd/new.md", "", "El modo lote", 14},
+		{"new-batch-invalid.txt", "cmd/new.md", "", "El modo lote", 15},
+		{"new-batch-invalid-one-line.txt", "cmd/new.md", "", "El modo lote", 16},
 		{"ref-malformed-id.txt", "referencias.md", "",
 			`Los tres mensajes de "no la encuentro"`, 0},
 		{"ref-never-allocated.txt", "referencias.md", "",

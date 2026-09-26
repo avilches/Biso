@@ -7,8 +7,8 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   una lista de textos, y una decisión de diseño no tiene comando propio: vive en la documentación del
   proyecto, no en el tablero.
 - **No hay campo de hito ni de proyecto en la tarea.** Hubo un campo `milestone` y un campo `project`,
-  y los dos se retiraron: la agrupación real se resuelve con `parent` (una tarea con hijas, de
-  cualquier `type`) y con `type` (una partición plana), sin ningún campo dedicado solo a agrupar. El
+  y los dos se retiraron: la agrupación real se resuelve con `parent` (["Las relaciones entre tareas"](modelo-de-datos/relaciones.md):
+  una tarea con hijas, de cualquier `type`) y con `type` (una partición plana), sin ningún campo dedicado solo a agrupar. El
   porqué, con las alternativas descartadas, está en
   ["Se retiran `project` y `milestone`"](../decisiones/detalles.md#se-retiran-project-y-milestone).
 - **No hay definición de hecho.** Una tarea tiene una sola lista de comprobación, la de criterios de
@@ -17,11 +17,23 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   sus elementos en criterios, avisando de ello (["`biso new`"](cmd/new.md)). El porqué, con la medida
   que lo decide, está en
   ["Se retira la definición de hecho"](../decisiones/detalles.md#se-retira-la-definición-de-hecho).
+- **No hay un campo de documentación aparte de `references`.** Una tarea tiene un solo campo de
+  punteros, y un documento es una referencia más. La importación de `biso new --from` sí acepta la
+  clave `documentation` de un lote ajeno y funde sus valores en `references`, avisando de ello
+  (["`biso new`"](cmd/new.md)). El porqué, con la medida que lo decide, está en
+  ["Se retira `documentation` y `references` queda como único campo de punteros"](../decisiones/detalles.md#se-retira-documentation-y-references-queda-como-único-campo-de-punteros).
+- **No hay un campo de ficheros tocados.** Qué código tocó un trabajo lo dice el control de versiones,
+  y una ruta que valga la pena señalar es una referencia más. La importación de `biso new --from` sí
+  acepta la clave `modifiedFiles` de un lote ajeno y funde sus valores en `references`, avisando de
+  ello (["`biso new`"](cmd/new.md)). El porqué, con las medidas que lo deciden, está en
+  ["Se retira `modifiedFiles`"](../decisiones/detalles.md#se-retira-modifiedfiles).
 - **No hay contextos de sesión**, es decir, filtros por defecto guardados que cambien lo que devuelve
   una consulta sin que se vea en la línea de comandos.
 - **No hay recurrencia, ni seguimiento de tiempo, ni subtareas con numeración propia.** Una subtarea
   es una tarea normal con `--parent`, y el mensaje de error de un identificador como `MYP-1.1` lo
-  dice.
+  dice. El porqué de no adoptar esa forma con punto, con la alternativa que resuelve sin ella la
+  migración desde Backlog.md, está en
+  ["No se adoptan identificadores de subtarea con punto"](../decisiones/detalles.md#no-se-adoptan-identificadores-de-subtarea-con-punto).
 - **No hay servidor de integración ni protocolo de herramientas.** La interfaz de la versión 1.0 es
   esta línea de comandos y su salida JSON.
 - **No hay ningún flag ni variable de entorno que nombre un tablero.** El tablero se elige por
@@ -33,7 +45,6 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
 - **No hay exportación al formato de Backlog.md.** `biso export` escribe el mismo formato que lee
   `biso new --from`, y traducir a un formato ajeno es trabajo de un conversor aparte, no de este
   comando.
-- **No hay sincronización con ningún sistema externo.**
 - **No hay sincronización entre máquinas.** Un tablero vive en la máquina donde se creó, y lo que
   cruza a otra es la instantánea que deja `biso snapshot`, para reconstruirlo entero con
   `biso init --from`, no para mantener dos copias vivas al día (sección ["La decisión de persistencia"](../decisiones/persistencia.md#la-decisión-de-persistencia)).

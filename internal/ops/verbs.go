@@ -510,6 +510,20 @@ func textChanges(b *board.Board, command, flag string, step Step,
 			return nil, nil, err
 		}
 		if strings.TrimSpace(text.Value) == "" {
+			if step == StepComment {
+				// A comment is not a decoration that can be dropped in
+				// silence, the same reason an empty title is not: the
+				// positional text is the same call as --comment written
+				// the short way, so the two give the same error
+				// (docs/spec/valores-de-entrada.md#el-valor-vacío).
+				return nil, nil, &model.Error{
+					ExitCode: 2,
+					Code:     "unexpected_argument",
+					Message:  "--comment cannot be empty",
+					Field:    "comments",
+					Given:    text.Value,
+				}
+			}
 			// The empty value adds nothing and says so, exactly as it
 			// does behind the flag this verb stands for
 			// (docs/spec/valores-de-entrada.md#el-valor-vacío).

@@ -7,28 +7,27 @@ package cli
 // table is the only way of keeping.
 //
 // The four shapes of a list field, the three of the criteria, the two of a
-// prose field, the three of an external field and the pair of a scalar all
-// come out of the same four builders below, so a field that broke the shape
-// would be visible here as an entry that did not go through one of them.
+// prose field and the pair of a scalar all come out of the builders below,
+// so a field that broke the shape would be visible here as an entry that did
+// not go through one of them.
 
-// listFields are the six fields of
+// listFieldFlags are the four fields of
 // docs/spec/familias-de-flags.md#campos-de-lista-que-admiten-coma, each with
 // its four flags. The name of the flag is the tail, the field of the JSON
 // envelope is the model's own name, and the two token fields close their
-// alphabet while the other four are free text, because a reference or a path
-// cannot have its alphabet closed without leaving legitimate values out.
+// alphabet while the other two are free text, because a reference cannot have
+// its alphabet closed without leaving legitimate values out.
 var listFieldFlags = []struct {
 	suffix   string
 	field    string
 	alphabet Alphabet
 	noun     string
+	labels   LabelSyntax
 }{
-	{suffix: "labels", field: "labels", alphabet: TokenAlphabet, noun: "label"},
+	{suffix: "labels", field: "labels", alphabet: TokenAlphabet, noun: "label", labels: LabelWritten},
 	{suffix: "assignees", field: "assignees", alphabet: TokenAlphabet, noun: "assignee"},
 	{suffix: "refs", field: "references"},
-	{suffix: "docs", field: "documentation"},
 	{suffix: "deps", field: "dependencies"},
-	{suffix: "files", field: "modifiedFiles"},
 }
 
 // proseFields are the four of
@@ -57,6 +56,10 @@ var scalarFields = []struct {
 	vocabulary bool
 	singleLine bool
 	text       bool
+	// placement marks the manual order, whose four flags all write the
+	// same field and are therefore incompatible with one another
+	// (docs/spec/familias-de-flags.md#el-orden-manual).
+	placement bool
 }{
 	{name: "title", field: "title", singleLine: true, text: true},
 	{name: "status", field: "status", vocabulary: true},
@@ -64,7 +67,11 @@ var scalarFields = []struct {
 	{name: "priority", field: "priority", clear: "clear-priority", vocabulary: true},
 	{name: "parent", field: "parent", clear: "clear-parent"},
 	{name: "due", field: "due", clear: "clear-due"},
-	{name: "ordinal", field: "ordinal", clear: "clear-ordinal"},
+	// The manual order is the one scalar whose value is not the value of
+	// the field: --ordinal takes first or last and the two flags below take
+	// a neighbour, and what gets written is the key the program computes
+	// from them (docs/spec/familias-de-flags.md#el-orden-manual).
+	{name: "ordinal", field: "ordinal", clear: "clear-ordinal", placement: true},
 	// A person field never interprets a leading "@", so --author takes its
 	// value exactly as it is typed
 	// (docs/spec/valores-de-entrada.md#tres-formas-de-pasar-un-valor-largo).
@@ -80,7 +87,7 @@ func fieldFlags() []FlagSpec {
 			return FlagSpec{
 				Name: prefix + f.suffix, Value: PlainValue,
 				Repeatable: true, Comma: true, Category: category,
-				Alphabet: f.alphabet, Noun: f.noun, Field: f.field,
+				Alphabet: f.alphabet, Noun: f.noun, Labels: f.labels, Field: f.field,
 			}
 		}
 		flags = append(flags,
@@ -118,36 +125,45 @@ func fieldFlags() []FlagSpec {
 		)
 	}
 
-	// The external fields have three, and --ext is the one flag of the
-	// whole table with a step of its own, between the additions and the
-	// scalars (docs/spec/familias-de-flags.md#campos-externos).
-	flags = append(flags,
-		FlagSpec{Name: "clear-ext", Category: Clear, Field: "ext"},
-		FlagSpec{
-			Name: "rm-ext", Value: PlainValue, Repeatable: true, Category: Remove,
-			Alphabet: ExtKeyAlphabet, Noun: "extension key", Field: "ext",
-		},
-		FlagSpec{
-			Name: "ext", Value: PlainValue, Repeatable: true, Category: ExtKey,
-			Pair: PairAtFirstEquals, PairSyntax: "<key>=<value>",
-			Alphabet: ExtKeyAlphabet, Noun: "extension key",
-			SingleLine: true, LastKeyWins: true, Field: "ext",
-		},
-	)
-
 	for _, f := range scalarFields {
 		value := PlainValue
 		if f.text {
 			value = TextValue
 		}
 		if f.clear != "" {
-			flags = append(flags, FlagSpec{Name: f.clear, Category: Clear, Field: f.field})
+			flags = append(flags, FlagSpec{
+				Name: f.clear, Category: Clear, Field: f.field,
+				Conflicts: placementConflicts(f.placement, f.clear),
+			})
 		}
-		flags = append(flags, FlagSpec{
+		scalar := FlagSpec{
 			Name: f.name, Value: value, Category: Scalar,
 			ClosedVocabulary: f.vocabulary, SingleLine: f.singleLine,
 			ClearFlag: f.clear, Field: f.field,
-		})
+			Conflicts: placementConflicts(f.placement, f.name),
+		}
+		if f.placement {
+			// --ordinal is the one scalar with a domain the program owns
+			// and the board does not, so an unknown value is exit code 2
+			// and never the 3 of a value the board does not have
+			// (docs/spec/familias-de-flags.md#el-orden-manual).
+			scalar.Domain = []string{"first", "last"}
+			scalar.DomainCode = "invalid_ordinal_value"
+			scalar.DomainHints = []string{
+				"--ordinal takes first or last; " +
+					"to place a task next to another one, use --above or --below",
+			}
+		}
+		flags = append(flags, scalar)
+		if !f.placement {
+			continue
+		}
+		for _, name := range []string{"above", "below"} {
+			flags = append(flags, FlagSpec{
+				Name: name, Value: PlainValue, Category: Scalar,
+				Field: f.field, Conflicts: placementConflicts(f.placement, name),
+			})
+		}
 	}
 
 	// The comments, which are the one list of objects that is never edited
@@ -173,4 +189,29 @@ func fieldFlags() []FlagSpec {
 		},
 	)
 	return flags
+}
+
+// placementFlagNames are the four flags of the manual order, in the order
+// of the table above, which is the order a message that names two of them
+// names them in.
+var placementFlagNames = []string{"clear-ordinal", "ordinal", "above", "below"}
+
+// placementConflicts answers what one flag of the manual order cannot share
+// a call with: the other three, because all four write the same field
+// (docs/spec/familias-de-flags.md#el-orden-manual). For every other scalar
+// it answers nothing, since the pair of a scalar and its --clear-<field> is
+// not a conflict anywhere else: --clear-due --due 2026-09-20 is the ordinary
+// way of replacing a value, and only here is it a contradiction, because
+// what the caller would be asking for is a place and no place at once.
+func placementConflicts(placement bool, self string) []string {
+	if !placement {
+		return nil
+	}
+	others := make([]string, 0, len(placementFlagNames)-1)
+	for _, name := range placementFlagNames {
+		if name != self {
+			others = append(others, name)
+		}
+	}
+	return others
 }
