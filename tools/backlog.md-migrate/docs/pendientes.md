@@ -115,12 +115,22 @@ también se han cerrado.
   y la forma de los ids al escribir. Todo eso es el diseño de TASK-7.
 - **La estabilidad de las órdenes de `biso` que se usan.** No he encontrado una garantía escrita para
   `biso config list --json` y `biso export`.
-- **Cómo es de verdad el `ordinal` de Backlog.md.** A13 asume que es un número comparable entre
-  cualesquiera dos tareas del tablero, sin importar su estado, y que ordenarlas todas por él conserva el
-  orden manual que alguien quiso. No se ha medido con el CLI de Backlog.md 1.52.0 si el contador es
-  global o si se lleva por columna de estado, ni si dos tareas pueden compartir el mismo valor. Hace
-  falta medirlo, con la misma disciplina que el resto de "El formato de Backlog.md se mide con su CLI,
-  no con un tablero", antes de dar A13 por cerrada.
+- **Cómo es de verdad el `ordinal` de Backlog.md: medido, pero no con el CLI.** A diferencia del resto
+  de esta página, esto se midió contra los ficheros reales de `backlog/tasks/*.md` del tablero de este
+  mismo proyecto (111 tareas), no creando un tablero de prueba con el CLI de Backlog.md como pide "El
+  formato de Backlog.md se mide con su CLI, no con un tablero" de decisiones.md. Es una muestra de un
+  solo tablero, con un patrón claro y consistente, pero no tiene la misma garantía metodológica que las
+  mediciones hechas con el CLI. El resultado: el `ordinal` es un único contador global, no uno por
+  columna de estado (`TASK-69`, estado Done, `ordinal: 200`; `TASK-70`, To Do, `ordinal: 300`; `TASK-68`,
+  To Do, `ordinal: 400`; `TASK-71`, Done, `ordinal: 600`, entremezclados sin importar el estado). No es
+  único: `TASK-3` y `TASK-8` comparten `ordinal: 3000`, el único par que lo hace en las 111 tareas del
+  tablero, todas con el campo presente. Backlog.md inserta con valores intermedios al reordenar a mano,
+  sin renumerar el resto (`ordinal` en incrementos de 500, como `26500`, `26750` y `41500`, intercalados
+  entre los de incrementos de 1000). La regla de desempate para el caso de empate está en "El orden
+  manual se recalcula, no se copia" de decisiones.md. Sigue siendo deseable, aunque no bloqueante,
+  repetir esta comprobación creando un tablero de prueba con el CLI de Backlog.md y forzando a propósito
+  un empate de `ordinal` entre tareas de distinto estado, para tener la misma garantía metodológica que
+  el resto de lo medido.
 
 ## E. El repaso terminó
 

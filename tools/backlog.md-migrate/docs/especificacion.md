@@ -205,8 +205,10 @@ relativo, con el mismo algoritmo del punto medio que usan `--ordinal last`, `--a
 la primera tarea importada toma la clave intermedia entre el ancla del destino y la ausencia de
 siguiente, y cada tarea siguiente toma la clave intermedia entre la que se acaba de asignar y la
 ausencia de siguiente, como si el lote entero se colocara con `--ordinal last`, una tarea detrás de otra,
-después de todo lo que ya hubiera en el destino. Un empate en el `ordinal` de origen se desempata por el
-id de origen, para que dos ejecuciones den el mismo resultado. Las claves calculadas no chocan nunca con
+después de todo lo que ya hubiera en el destino. Un empate en el `ordinal` de origen se desempata
+ordenando esas tareas entre sí por su id de origen ascendente, con el mismo orden natural que usa
+"Identificadores", regla 4, para asignar número nuevo a los ids que chocan, para que dos ejecuciones den
+el mismo resultado. Las claves calculadas no chocan nunca con
 una clave ya existente en el destino, porque cada una es estrictamente mayor que el ancla y que la clave
 recién asignada antes que ella, sea cual sea el estado del destino.
 

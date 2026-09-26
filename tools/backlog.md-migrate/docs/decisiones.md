@@ -192,6 +192,20 @@ el ancla y que la clave que se acaba de asignar antes que ella, así que cae sie
 hay ninguna tarea del destino, sea cual sea el estado del destino. Una tarea sin `ordinal` en origen no
 recibe ninguna clave, igual que en `biso` una tarea sin orden manual no ocupa ningún sitio de él.
 
+**El `ordinal` es un único contador global, no uno por columna de estado.** Medido contra los ficheros
+reales de `backlog/tasks/*.md` del tablero de este mismo proyecto (111 tareas), no con el CLI de
+Backlog.md sobre un tablero de prueba controlado como el resto de lo medido en esta página (ver "El
+formato de Backlog.md se mide con su CLI, no con un tablero"): es una muestra de un solo tablero, no una
+garantía verificada con el CLI. Prueba: `TASK-69` tiene `status: Done` y `ordinal: 200`; `TASK-70` tiene
+`status: To Do` y `ordinal: 300`; `TASK-68` tiene `status: To Do` y `ordinal: 400`; `TASK-71` tiene
+`status: Done` y `ordinal: 600`. Tareas de estados distintos se entremezclan en la misma secuencia
+ascendente, lo que descarta un contador separado por columna. El mismo barrido encontró que el `ordinal`
+no es necesariamente único: `TASK-3` y `TASK-8` comparten `ordinal: 3000`, el único par que lo hace entre
+las 111 tareas del tablero. Cuando dos tareas de origen comparten `ordinal`, el convertidor las ordena
+entre sí por su id de origen ascendente, con el mismo orden natural que usa "Identificadores" para
+asignar número nuevo a los ids que chocan, antes de asignarles las claves nuevas de orden manual; así dos
+ejecuciones sobre el mismo origen dan siempre el mismo resultado.
+
 **Descartado: convertir el número a su grafía en base 36 y usarla tal cual.** Falla por partida doble:
 puede terminar en `0` (`1000` en base 36 es `rs`, que no termina en cero por casualidad, pero `36000` sí
 lo haría) y, sobre todo, no preserva el orden relativo entre dos claves de longitudes distintas de la
