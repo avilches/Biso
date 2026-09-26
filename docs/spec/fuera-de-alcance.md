@@ -31,7 +31,9 @@ Nombrar lo que no está evita que alguien lo dé por olvidado.
   una consulta sin que se vea en la línea de comandos.
 - **No hay recurrencia, ni seguimiento de tiempo, ni subtareas con numeración propia.** Una subtarea
   es una tarea normal con `--parent`, y el mensaje de error de un identificador como `MYP-1.1` lo
-  dice.
+  dice. El porqué de no adoptar esa forma con punto, con la alternativa que resuelve sin ella la
+  migración desde Backlog.md, está en
+  ["No se adoptan identificadores de subtarea con punto"](../decisiones/detalles.md#no-se-adoptan-identificadores-de-subtarea-con-punto).
 - **No hay servidor de integración ni protocolo de herramientas.** La interfaz de la versión 1.0 es
   esta línea de comandos y su salida JSON.
 - **No hay ningún flag ni variable de entorno que nombre un tablero.** El tablero se elige por
