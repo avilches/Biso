@@ -302,8 +302,24 @@ la salida de errores, con el fichero y el campo. Incluye una clave del frontmatt
 cuerpo que no reconoce. El código de salida 5 avisa de que hubo hallazgos y `--strict` permite negarse
 a escribir nada si los hay. Quien ejecuta decide.
 
+**Un fichero de tarea cuyo frontmatter no se puede interpretar como YAML válido sigue la misma regla:
+es un hallazgo, no un fichero que aborta el lote.** Medido contra el CLI real de Backlog.md 1.53.0: un
+frontmatter con una comilla sin cerrar (`title: "Tarea rota`) o con la clave `status` duplicada hace
+que el propio Backlog.md descarte esa tarea en silencio, sin ningún aviso en `stdout` ni en `stderr`, y
+ni siquiera `backlog task view TASK-3` la encuentra (responde `Task TASK-3 not found`, el mismo mensaje
+que si el fichero no existiera). El convertidor, en cambio, lee `tasks/`, `completed/` y
+`archive/tasks/` directamente con su propio analizador de YAML, así que sí se va a encontrar tableros
+reales con un fichero así, que el CLI de Backlog.md nunca marcó como roto. Esa tarea se salta, se
+informa con el fichero y el error de parseo, y el resto del lote sigue adelante; con `--strict`, este
+hallazgo cuenta igual que cualquier otro y no se escribe nada.
+
 **Descartado: abortar en el primer hallazgo.** Un solo estado desconocido impediría ver el resto de
 problemas del tablero de una sola vez.
+
+**Descartado: abortar el import entero por un fichero con el frontmatter roto.** Es el mismo argumento
+que abortar en el primer hallazgo, aplicado a un caso concreto: un solo fichero mal escrito a mano no
+puede impedir ver el resto de un tablero real, y menos cuando ni siquiera el propio Backlog.md se dio
+cuenta de que estaba roto.
 
 ## La exportación: mejor esfuerzo, pero reversible
 

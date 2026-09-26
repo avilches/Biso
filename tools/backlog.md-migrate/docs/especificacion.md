@@ -33,6 +33,14 @@ backlog.md-migrate import <backlog-dir> --project <dir> [--out <file|->] [--biso
 - `archive/tasks/`: las tareas archivadas. Se importan con `archived: true`.
 - `milestones/` y `archive/milestones/`: solo para leer el título de cada milestone (el campo `title`
   de su frontmatter).
+- **Un fichero de `tasks/`, `completed/` o `archive/tasks/` cuyo frontmatter no se puede interpretar
+  como YAML válido (una comilla sin cerrar, una clave duplicada) se salta**, con un hallazgo que trae
+  el fichero y el error de parseo, y el resto del lote sigue. Backlog.md 1.53.0 descarta esa misma
+  tarea en silencio (no sale en `backlog task list` y ni siquiera `backlog task view` la encuentra),
+  pero el convertidor lee estas carpetas directamente con su propio analizador de YAML, así que sí se
+  la encuentra. No es el mismo tipo de hallazgo que una clave o un vocabulario no reconocido dentro de
+  una tarea que sí se pudo leer (ver "El mapeo de campos"): este fichero ni siquiera llegó a
+  convertirse en una tarea.
 - **No lee la configuración de Backlog.md.** Backlog.md la guarda en `<backlog-dir>/config.yml` o, con
   `--config-location root`, en un `backlog.config.yml` junto a la carpeta, y nada de lo que contiene
   hace falta: el prefijo de los ids del origen se deduce de los propios ids (ver "Identificadores").
@@ -345,6 +353,8 @@ warning: <fichero>: <campo>: <mensaje>
 
 `<fichero>` es el nombre del fichero de origen (o `-` si el hallazgo es de todo el tablero) y
 `<campo>` la clave del frontmatter, la sección o el campo de `biso` afectado. El mensaje va en inglés.
+Un frontmatter que no se pudo interpretar como YAML usa `frontmatter` como `<campo>`, porque el fallo
+es de todo el fichero y no de una clave concreta.
 
 ### Códigos de salida
 
@@ -352,9 +362,14 @@ warning: <fichero>: <campo>: <mensaje>
 |---|---|
 | 0 | Convertido y sin ningún hallazgo |
 | 2 | Uso incorrecto: falta un argumento o hay uno desconocido |
-| 3 | El origen no se puede leer: no existe la carpeta, no tiene `tasks/`, un YAML no se puede interpretar, un id tiene una forma que no es la de "Identificadores", los ids no comparten prefijo o dos ficheros traen el mismo id |
+| 3 | El origen no se puede leer: no existe la carpeta, no tiene `tasks/`, un id tiene una forma que no es la de "Identificadores", los ids no comparten prefijo o dos ficheros traen el mismo id |
 | 4 | El destino no responde: no se encuentra `biso`, o falla una de sus órdenes |
 | 5 | Convertido con hallazgos. El NDJSON está escrito, salvo con `--strict`, donde no se escribe nada |
+
+**Corrección.** Esta página decía antes que un frontmatter que no se puede interpretar como YAML era
+uno de los motivos del código 3, que aborta el lote entero. Ya no es así: ver "Qué lee del origen" más
+arriba. Un fichero así se salta como un hallazgo (código 5), no aborta el import por el resto de
+ficheros que sí se pudieron leer.
 
 **El código 5 no es un fallo**: el NDJSON está escrito. Encadenar `import` con `biso new --from` en un
 `&&` se detiene en el 5, así que quien automatice el paso debe aceptarlo explícitamente.
