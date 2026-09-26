@@ -25,6 +25,15 @@ y `modifiedFiles` se retiró sin sustituto, porque una ruta que valga la pena se
 llama `documentation` y `modified_files` sigue cruzándose, pero como entrada de `references`, y por eso
 aparece en la fila de `references` y no en filas aparte.
 
+**La fila `id` frente a Backlog.md se corrigió el 2026-09-25,** cuando se decidió que `biso` no
+adopta la forma con punto que Backlog.md usa para nombrar una subtarea
+(["No se adoptan identificadores de subtarea con punto"](../decisiones/detalles.md#no-se-adoptan-identificadores-de-subtarea-con-punto)).
+Antes de esa decisión la fila trataba el `id` de Backlog.md, con punto incluido para una subtarea,
+como si `biso` fuera a guardarlo tal cual en su propio campo `id`, y por eso lo marcaba como directa.
+Ahora es con transformación: el `id` de `biso` es siempre `<PREFIJO>-<n>` y no reproduce por sí solo el
+identificador con punto de una subtarea de Backlog.md, y la conservación de ese dato para el viaje de
+ida y vuelta queda en manos del conversor de `tools/backlog.md-migrate`.
+
 ## Método
 
 Cada campo guardado de una tarea de `biso` (los automáticos y los fijados por el
@@ -82,7 +91,7 @@ sistema.
 
 | Campo de `biso` | Backlog.md | Linear | Trello | Beads | GitHub Issues | Taskwarrior | Task Master |
 |---|---|---|---|---|---|---|---|
-| `id` | Sí | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
+| `id` | Transf. | Sí | Transf. | Transf. | Transf. | Transf. | Transf. |
 | `createdAt` | Transf. | Sí | No | Sí | Sí | Transf. | No |
 | `updatedAt` | Transf. | Sí | Transf. | Sí | Sí | Transf. | No |
 | `archived` | Transf. | No | Sí | No | No | Transf. | No |
@@ -126,7 +135,7 @@ concepto de tarea versionada como fichero, mismos nombres para casi todo.
 
 | Campo de `biso` | Backlog.md | Correspondencia |
 |---|---|---|
-| `id` | `id` (`TASK-<n>`, o `TASK-<n>.<m>` para una subtarea) | Directa |
+| `id` | `id` (`TASK-<n>`, o `TASK-<n>.<m>` para una subtarea) | Con transformación: el de una subtarea es `TASK-<n>.<m>` y el `id` de `biso` es siempre `<PREFIJO>-<n>`; la conservación exacta de ese identificador con punto no es directa en el campo `id` de `biso` (["No se adoptan identificadores de subtarea con punto"](../decisiones/detalles.md#no-se-adoptan-identificadores-de-subtarea-con-punto)) |
 | `createdAt` | `created_date` | Con transformación: precisión de minuto, no de segundo, y no se confirmó que sea UTC |
 | `updatedAt` | `updated_date` | Con transformación: mismo caso |
 | `archived` | mover el fichero a `archive/` con `backlog task archive` | Con transformación: es una ubicación de fichero, no un campo booleano |
@@ -136,7 +145,7 @@ concepto de tarea versionada como fichero, mismos nombres para casi todo.
 | `status` | `status`, enum configurable por proyecto | Directa |
 | `type` | `type`, enum configurable por proyecto | Directa |
 | `priority` | `priority`, enum configurable por proyecto | Directa |
-| `parent` | `parent_task_id` | Directa (el `id` de la propia subtarea pasa a forma jerárquica `TASK-56.1`, pero el campo en sí no pierde el valor) |
+| `parent` | `parent_task_id` | Directa |
 | `assignees` | `assignee` (lista de `@nombre`) | Directa |
 | `author` | ninguno (solo hay `assignee`, no un campo de quien creó la tarea) | Sin equivalente |
 | `labels` | `labels` | Directa |

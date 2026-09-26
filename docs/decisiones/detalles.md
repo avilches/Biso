@@ -561,6 +561,41 @@ clave de configuración que seguir leyendo. Hoy es gratis.
 
 ---
 
+## No se adoptan identificadores de subtarea con punto
+
+**La decisión.** Un identificador sigue siendo siempre `<PREFIJO>-<n>`, con `n` entero positivo
+(["Identificador de tarea"](../spec/modelo-de-datos/identificadores.md)); `biso` no adopta la forma
+`<PREFIJO>-<n>.<m>` que usa Backlog.md para nombrar una subtarea, ni al escribir ni al leer. Conservar
+ese identificador de origen para el viaje de ida y vuelta es responsabilidad del conversor de
+Backlog.md a `biso` (`tools/backlog.md-migrate`, TASK-70 y TASK-7): decidirá y documentará su propio
+mecanismo, en su propio registro de decisiones, cuando se implemente esa tarea, sin comprometerlo
+aquí.
+
+**Por qué no es un cambio de borde.** La forma `<PREFIJO>-<n>` es un invariante que atraviesa el
+programa entero: la gramática de referencias admite además las formas abreviadas `<n>` y `#<n>` sobre
+ese mismo entero, `biso ls` ordena por él, el tablero guarda el identificador más alto que ha llegado a
+asignar y ese dato aparece en los tres mensajes de "no la encuentro" y en `biso doctor`
+(["Identificador de tarea"](../spec/modelo-de-datos/identificadores.md)), y ya hay un mensaje de error
+dedicado a cerrarle la puerta a un identificador con punto
+(["Los tres mensajes de \"no la encuentro\""](../spec/referencias.md#los-tres-mensajes-de-no-la-encuentro)).
+Adoptar el punto habría abierto preguntas de diseño en ese mismo centro, como el orden entre `1.2` y
+`1.10` o qué significa el identificador más alto asignado cuando `<n>.<m>` existe sin que exista `<n>`,
+sin que ninguna tuviera una respuesta barata, mientras que resolverlo en el conversor no toca ninguna
+de esas piezas.
+
+**Qué se pierde, sin medir.** Una mención suelta a `TASK-56.1` escrita en prosa, dentro de una
+descripción o de un mensaje de commit, deja de resolver como referencia: la gramática de
+["Cómo se resuelve una referencia a una tarea"](../spec/referencias.md#la-gramática) no reconoce esa
+forma, así que con `--id` es `malformed_id` y sin él cae en la búsqueda de texto. No hay ninguna medida
+de que esa mención se use hoy: es una limitación que se acepta sin comprobar, no una que se sepa
+barata, y queda pendiente de lo que se aprenda al escribir el conversor de TASK-70.
+
+**Descartado: adoptar `<PREFIJO>-<n>.<m>` como identificador legal.** Es lo que pedía la tarea
+original. Se descarta porque el coste cae en el centro del modelo, arriba, a cambio de una ganancia
+que un conversor fuera de `biso` ya obtiene sin él.
+
+---
+
 ## El orden manual es una clave de texto
 
 **La decisión.** El orden manual de una tarea, `ordinal`, es una clave de texto opcional y no un número.
