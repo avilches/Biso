@@ -63,12 +63,13 @@ type Board struct {
 // the moment it runs, as docs/especificacion.md, "Qué le pregunta al
 // destino", describes.
 //
-// The three error shapes docs/decisiones and the phase 3 brief distinguish
-// are all wrapped so the message names which one it is: biso could not be
-// run at all (not found, not on PATH, not executable), biso ran but exited
-// with a non-zero code (the message then includes that code and biso's own
-// stderr), or biso's output could not be parsed as the JSON or NDJSON this
-// package expects.
+// The three error shapes docs/especificacion.md, "Códigos de salida",
+// groups under code 4 ("El destino no responde: no se encuentra biso, o
+// falla una de sus órdenes") are all wrapped so the message names which one
+// it is: biso could not be run at all (not found, not on PATH, not
+// executable), biso ran but exited with a non-zero code (the message then
+// includes that code and biso's own stderr), or biso's output could not be
+// parsed as the JSON or NDJSON this package expects.
 func Read(biso, project string) (Board, error) {
 	configOutput, err := run(biso, project, "config", "list", "--json")
 	if err != nil {
@@ -105,7 +106,7 @@ func run(biso, project string, args ...string) ([]byte, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	command := "biso " + strings.Join(fullArgs, " ")
+	command := biso + " " + strings.Join(fullArgs, " ")
 
 	if err := cmd.Run(); err != nil {
 		var exitErr *exec.ExitError
