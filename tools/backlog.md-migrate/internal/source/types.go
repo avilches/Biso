@@ -43,9 +43,9 @@ type Task struct {
 	Type          string
 	Project       string
 	// Ordinal is nil when the task has no ordinal field at all. It is a
-	// float64, not an int, because docs/spec/presupuestos... no field
-	// in Backlog.md has ever been seen with a fractional ordinal, but
-	// the format does not forbid one, so this package keeps whatever
+	// float64 rather than an int or a string because no field in
+	// Backlog.md has ever been seen with a fractional ordinal, but the
+	// format does not forbid one, so this package keeps whatever
 	// precision the source has instead of assuming an integer.
 	Ordinal      *float64
 	ParentTaskID string

@@ -50,8 +50,8 @@ type Board struct {
 // subdirectory Read looks at (tasks/, completed/, archive/tasks/,
 // milestones/, archive/milestones/, drafts/, archive/drafts/, docs/,
 // decisions/) is optional: a missing one is treated as empty, not as an
-// error, matching "vacía o ausente, no produce nada" for the folders that
-// only produce a count.
+// error, the same way an empty one is, for the folders that only produce a
+// count.
 //
 // Read never touches backlogDir's config.yml or a sibling
 // backlog.config.yml: docs/especificacion.md, "Qué lee del origen", says

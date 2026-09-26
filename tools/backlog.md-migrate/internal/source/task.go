@@ -169,7 +169,7 @@ func getString(raw map[string]interface{}, key string) string {
 	return fmt.Sprint(v)
 }
 
-// getStringSlice returns raw[key] as a slice of strings, tal cual: no
+// getStringSlice returns raw[key] as a slice of strings, as-is: no
 // filtering, no deduplication, no space conversion. Backlog.md always
 // writes these fields as a YAML list, but a bare scalar is also accepted
 // and treated as a single-element list, defensively.
