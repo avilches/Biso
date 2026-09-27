@@ -122,13 +122,19 @@ func assertHelpText(t *testing.T, text string) {
 	}
 }
 
-func TestRunImportNotImplementedYet(t *testing.T) {
+func TestRunImportMissingTasksDirectoryGivesExitCode3(t *testing.T) {
+	// "./backlog" does not exist under this package's own directory, so it
+	// has no tasks/ subdirectory either: the exact case
+	// docs/especificacion.md, "Códigos de salida", maps to exit code 3.
+	// This replaces the old placeholder test that checked for the "not
+	// implemented yet" scaffolding message; the exhaustive assembly and exit
+	// code tests live in TestRunImport* below and in internal/convert.
 	_, errOut, code := run("import", "./backlog", "--project", ".")
-	if code != 1 {
-		t.Fatalf("got exit code %d, want 1", code)
+	if code != 3 {
+		t.Fatalf("got exit code %d, want 3", code)
 	}
-	if !strings.Contains(errOut, "not implemented yet") {
-		t.Fatalf("expected a not-implemented message on stderr, got %q", errOut)
+	if !strings.Contains(errOut, "tasks/") {
+		t.Fatalf("expected a message about the missing tasks/ directory on stderr, got %q", errOut)
 	}
 }
 
