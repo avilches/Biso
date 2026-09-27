@@ -6,7 +6,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -50,17 +49,34 @@ func runImport(args []string, stdout, stderr io.Writer) int {
 		return code
 	}
 
-	// docs/especificacion.md, "Qué lee del origen", and the task-70 phase 5
-	// brief: source.Read treats a missing tasks/ directory as an empty
-	// board, which is correct for its own read-anything-that-is-there
-	// purpose but not for import's exit code 3 ("no tiene tasks/"). This
-	// check runs before source.Read for that reason, and it also covers
-	// <backlog-dir> itself not existing or not being a directory, since a
-	// missing or non-directory <backlog-dir> can never contain a tasks/
-	// directory either.
+	// docs/especificacion.md, "Qué lee del origen": source.Read treats a
+	// missing tasks/ directory as an empty board, which is correct for its
+	// own read-anything-that-is-there purpose but not for import's exit
+	// code 3. This check runs before source.Read for that reason, and
+	// distinguishes three different conditions rather than collapsing them
+	// into one message: <backlog-dir> itself missing or not a directory,
+	// <backlog-dir> present but with no tasks/ subdirectory, and any other
+	// os.Stat failure on tasks/ (a permission error, for example), which is
+	// reported with its own underlying error rather than described as if
+	// tasks/ were simply absent.
+	if info, err := os.Stat(opts.BacklogDir); err != nil {
+		fmt.Fprintf(stderr, "backlog.md-migrate: %s does not exist: %s\n", opts.BacklogDir, err)
+		return 3
+	} else if !info.IsDir() {
+		fmt.Fprintf(stderr, "backlog.md-migrate: %s is not a directory\n", opts.BacklogDir)
+		return 3
+	}
+
 	tasksDir := filepath.Join(opts.BacklogDir, "tasks")
-	if info, err := os.Stat(tasksDir); err != nil || !info.IsDir() {
-		fmt.Fprintf(stderr, "backlog.md-migrate: %s has no tasks/ directory\n", opts.BacklogDir)
+	if info, err := os.Stat(tasksDir); err != nil {
+		if os.IsNotExist(err) {
+			fmt.Fprintf(stderr, "backlog.md-migrate: %s has no tasks/ directory\n", opts.BacklogDir)
+		} else {
+			fmt.Fprintf(stderr, "backlog.md-migrate: could not check %s: %s\n", tasksDir, err)
+		}
+		return 3
+	} else if !info.IsDir() {
+		fmt.Fprintf(stderr, "backlog.md-migrate: %s exists but is not a directory\n", tasksDir)
 		return 3
 	}
 
@@ -99,14 +115,13 @@ func runImport(args []string, stdout, stderr io.Writer) int {
 
 	if err := writeNDJSON(lines, opts.Out, stdout); err != nil {
 		fmt.Fprintf(stderr, "backlog.md-migrate: could not write the NDJSON output: %s\n", err)
-		// Not one of docs/especificacion.md's own exit codes: writing the
-		// output failing (a full disk, a permission error) is outside the
-		// three input/output conditions the specification's exit code
-		// table names (source unreadable, destination unresponsive,
-		// findings present). This is a deliberate implementer decision,
-		// reported alongside the rest of phase 5's work: a generic
-		// unexpected-failure code, distinct from every code the
-		// specification does define.
+		// docs/especificacion.md, "Códigos de salida", code 1: the residual
+		// code for a write failure unrelated to the source, the
+		// destination, or findings. The findings already accumulated (from
+		// reading the source and converting it) are still worth printing
+		// here, even though the write itself failed, since they are useful
+		// for diagnosing the run.
+		printFindings(stderr, findings)
 		return 1
 	}
 
@@ -135,7 +150,7 @@ func printFindings(w io.Writer, findings []source.Finding) {
 // leaves out untouched and removes the temporary file.
 func writeNDJSON(lines []convert.Line, out string, stdout io.Writer) error {
 	if out == "" || out == "-" {
-		return encodeNDJSON(stdout, lines)
+		return convert.EncodeNDJSON(stdout, lines)
 	}
 
 	dir := filepath.Dir(out)
@@ -149,9 +164,18 @@ func writeNDJSON(lines []convert.Line, out string, stdout io.Writer) error {
 	// succeeds, tmpName no longer exists and Remove is a silent no-op.
 	defer os.Remove(tmpName)
 
-	if err := encodeNDJSON(tmp, lines); err != nil {
+	if err := convert.EncodeNDJSON(tmp, lines); err != nil {
 		tmp.Close()
 		return fmt.Errorf("writing %s: %w", out, err)
+	}
+	// os.CreateTemp creates the file with mode 0600 regardless of the
+	// process umask, since it is meant for private scratch files; this one
+	// is about to become the final output file, so it gets the ordinary
+	// 0644 permissions a written file would otherwise have, set explicitly
+	// rather than left to whatever the process umask happens to be.
+	if err := tmp.Chmod(0o644); err != nil {
+		tmp.Close()
+		return fmt.Errorf("setting permissions on the temporary file for %s: %w", out, err)
 	}
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("closing temporary file for %s: %w", out, err)
@@ -159,21 +183,6 @@ func writeNDJSON(lines []convert.Line, out string, stdout io.Writer) error {
 
 	if err := os.Rename(tmpName, out); err != nil {
 		return fmt.Errorf("renaming temporary file to %s: %w", out, err)
-	}
-	return nil
-}
-
-// encodeNDJSON writes one compact JSON object per line to w, in convert.Line
-// order, disabling HTML escaping so a title, description, or comment body
-// containing '<', '>', or '&' is not silently rewritten into a Unicode
-// escape sequence: this output is NDJSON for "biso new --from", never HTML.
-func encodeNDJSON(w io.Writer, lines []convert.Line) error {
-	enc := json.NewEncoder(w)
-	enc.SetEscapeHTML(false)
-	for _, line := range lines {
-		if err := enc.Encode(line); err != nil {
-			return err
-		}
 	}
 	return nil
 }

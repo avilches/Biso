@@ -9,6 +9,20 @@ import (
 	"backlog.md-migrate/internal/source"
 )
 
+// encodeLines runs the real EncodeNDJSON (the same function writeNDJSON
+// calls in production) over lines and returns the result as a string, so a
+// test comparing the exact byte shape of a line exercises the very encoder
+// import actually uses, escaping and trailing newline included, rather than
+// a second one built just for the test.
+func encodeLines(t *testing.T, lines []Line) string {
+	t.Helper()
+	var b strings.Builder
+	if err := EncodeNDJSON(&b, lines); err != nil {
+		t.Fatalf("EncodeNDJSON: %v", err)
+	}
+	return b.String()
+}
+
 // findLine finds the Line with the given final id, failing the test if it is
 // not there (a helper, not a rule this file is testing).
 func findLine(t *testing.T, lines []Line, id string) Line {
@@ -26,9 +40,9 @@ func findLine(t *testing.T, lines []Line, id string) Line {
 	return Line{}
 }
 
-// TestAssembleCombinesEveryFieldSource covers the task-70 phase 5 brief's
-// pipeline step 4: a single Line combines fields from four different
-// places (Identified, the matching Result, AssignOrdinals, and the original
+// TestAssembleCombinesEveryFieldSource covers docs/especificacion.md, "El
+// mapeo de campos": a single Line combines fields from four different places
+// (Identified, the matching Result, AssignOrdinals, and the original
 // source.Task) that no earlier phase ever joins together on its own. This
 // is the one test that would catch a field pulled from the wrong source, or
 // forgotten entirely, especially References/Documentation/ModifiedFiles/
@@ -163,9 +177,10 @@ func TestAssembleCombinesEveryFieldSource(t *testing.T) {
 	}
 }
 
-// TestAssembleOmitsOrdinalForATaskWithNoSourceOrdinal covers the brief's
-// explicit warning: a task with no ordinal at all must have its ordinal key
-// omitted entirely, not written as an empty string or null.
+// TestAssembleOmitsOrdinalForATaskWithNoSourceOrdinal covers
+// docs/especificacion.md, "Orden manual": a task with no ordinal at all must
+// have its ordinal key omitted entirely, not written as an empty string or
+// null.
 func TestAssembleOmitsOrdinalForATaskWithNoSourceOrdinal(t *testing.T) {
 	sourceBoard := source.Board{
 		Tasks: []source.Task{
@@ -183,12 +198,9 @@ func TestAssembleOmitsOrdinalForATaskWithNoSourceOrdinal(t *testing.T) {
 		t.Errorf("Ordinal = %q, want empty (no source ordinal at all)", got.Ordinal)
 	}
 
-	data, err := json.Marshal(got)
-	if err != nil {
-		t.Fatalf("json.Marshal: %v", err)
-	}
-	if strings.Contains(string(data), `"ordinal"`) {
-		t.Errorf("marshaled line = %s, must not mention the \"ordinal\" key at all", data)
+	data := encodeLines(t, []Line{got})
+	if strings.Contains(data, `"ordinal"`) {
+		t.Errorf("encoded line = %s, must not mention the \"ordinal\" key at all", data)
 	}
 }
 
@@ -229,9 +241,10 @@ func TestAssembleSortsByTheSourceIdsNumberAscending(t *testing.T) {
 	}
 }
 
-// TestAssemblePropagatesTheIdentifiersFatalError covers the brief's pipeline
-// step 2: when Identifiers fails its point-1 validation, Assemble returns
-// that error and nothing else, since there is no batch left to assemble.
+// TestAssemblePropagatesTheIdentifiersFatalError covers
+// docs/especificacion.md, "Identificadores", point 1: when Identifiers fails
+// that validation, Assemble returns that error and nothing else, since there
+// is no batch left to assemble.
 func TestAssemblePropagatesTheIdentifiersFatalError(t *testing.T) {
 	sourceBoard := source.Board{
 		Tasks: []source.Task{
@@ -252,9 +265,10 @@ func TestAssemblePropagatesTheIdentifiersFatalError(t *testing.T) {
 	}
 }
 
-// TestAssembleIsDeterministic covers the brief's own requirement: two runs
-// of Assemble over the exact same input boards must produce byte-for-byte
-// identical NDJSON.
+// TestAssembleIsDeterministic covers docs/especificacion.md, "La salida":
+// two runs of Assemble over the exact same input boards must produce
+// byte-for-byte identical NDJSON, so that two conversions of the same
+// source and destination give the same file.
 func TestAssembleIsDeterministic(t *testing.T) {
 	buildBoards := func() (source.Board, destination.Board) {
 		ordinal1 := 500.0
@@ -282,17 +296,6 @@ func TestAssembleIsDeterministic(t *testing.T) {
 		return sourceBoard, destBoard
 	}
 
-	encode := func(lines []Line) string {
-		var b strings.Builder
-		enc := json.NewEncoder(&b)
-		for _, line := range lines {
-			if err := enc.Encode(line); err != nil {
-				t.Fatalf("json encode: %v", err)
-			}
-		}
-		return b.String()
-	}
-
 	sb1, db1 := buildBoards()
 	lines1, findings1, err := Assemble(sb1, db1)
 	if err != nil {
@@ -304,8 +307,8 @@ func TestAssembleIsDeterministic(t *testing.T) {
 		t.Fatalf("unexpected error (run 2): %v", err)
 	}
 
-	ndjson1 := encode(lines1)
-	ndjson2 := encode(lines2)
+	ndjson1 := encodeLines(t, lines1)
+	ndjson2 := encodeLines(t, lines2)
 	if ndjson1 != ndjson2 {
 		t.Fatalf("two runs produced different NDJSON:\nrun 1: %s\nrun 2: %s", ndjson1, ndjson2)
 	}
@@ -320,12 +323,14 @@ func TestAssembleIsDeterministic(t *testing.T) {
 }
 
 // TestLineFieldOrderMatchesTheSpecification covers docs/especificacion.md,
-// "La salida" ("las claves de cada linea en un orden fijo") and the task-70
-// phase 5 brief's exact list: a Line with every field filled in must
-// serialize with its keys in exactly that order. This is a literal,
-// byte-for-byte comparison against the brief's own key list, deliberately
-// not reusing Assemble so that a change to Line's field order is caught even
-// if the assembly pipeline's own logic did not change.
+// "La salida", and "El mapeo de campos": a Line with every field filled in
+// must serialize with its keys in exactly the fixed order those sections
+// require. This is a literal, byte-for-byte comparison against that order,
+// deliberately not reusing Assemble so that a change to Line's field order
+// is caught even if the assembly pipeline's own logic did not change. It
+// uses EncodeNDJSON, the same encoder writeNDJSON calls in production,
+// rather than a plain json.Marshal, so the comparison also covers the
+// trailing newline and the disabled HTML escaping that encoder adds.
 func TestLineFieldOrderMatchesTheSpecification(t *testing.T) {
 	line := Line{
 		ID:                 "BISO-1",
@@ -353,10 +358,7 @@ func TestLineFieldOrderMatchesTheSpecification(t *testing.T) {
 		Comments:           []CommentLine{{Author: "@ann", CreatedAt: "2026-01-01T10:00:00Z", Body: "hi"}},
 	}
 
-	data, err := json.Marshal(line)
-	if err != nil {
-		t.Fatalf("json.Marshal: %v", err)
-	}
+	data := encodeLines(t, []Line{line})
 
 	want := `{"id":"BISO-1","title":"T","status":"Done","type":"bug","priority":"high",` +
 		`"assignees":["ann"],"labels":["backend"],"dependencies":["BISO-2"],"parent":"BISO-3",` +
@@ -364,9 +366,9 @@ func TestLineFieldOrderMatchesTheSpecification(t *testing.T) {
 		`"modifiedFiles":["src/a.go"],"archived":true,"createdAt":"2026-01-01T10:00:00Z",` +
 		`"updatedAt":"2026-01-02T11:00:00Z","description":"D","plan":"P","notes":"N","summary":"S",` +
 		`"acceptanceCriteria":[{"key":1,"text":"Works","checked":true}],` +
-		`"comments":[{"author":"@ann","createdAt":"2026-01-01T10:00:00Z","body":"hi"}]}`
+		`"comments":[{"author":"@ann","createdAt":"2026-01-01T10:00:00Z","body":"hi"}]}` + "\n"
 
-	if string(data) != want {
+	if data != want {
 		t.Fatalf("got  %s\nwant %s", data, want)
 	}
 }
@@ -377,22 +379,18 @@ func TestLineFieldOrderMatchesTheSpecification(t *testing.T) {
 func TestLineOmitsEveryEmptyField(t *testing.T) {
 	line := Line{ID: "BISO-1", Title: "Bare task"}
 
-	data, err := json.Marshal(line)
-	if err != nil {
-		t.Fatalf("json.Marshal: %v", err)
-	}
+	data := encodeLines(t, []Line{line})
 
-	want := `{"id":"BISO-1","title":"Bare task"}`
-	if string(data) != want {
+	want := `{"id":"BISO-1","title":"Bare task"}` + "\n"
+	if data != want {
 		t.Fatalf("got  %s\nwant %s", data, want)
 	}
 }
 
 // TestCommentLineOmitsAuthorAndCreatedAtWhenAbsent covers
 // docs/especificacion.md, "Comentarios": a comment without an author, or
-// without a created date, is valid, and the brief's own instruction that
-// both keys are then omitted from the comment object, not written as empty
-// strings.
+// without a created date, is valid, and both keys are then omitted from the
+// comment object, not written as empty strings.
 func TestCommentLineOmitsAuthorAndCreatedAtWhenAbsent(t *testing.T) {
 	data, err := json.Marshal(CommentLine{Body: "No author, no date"})
 	if err != nil {
@@ -404,8 +402,8 @@ func TestCommentLineOmitsAuthorAndCreatedAtWhenAbsent(t *testing.T) {
 	}
 }
 
-// TestAcceptanceCriterionAlwaysWritesChecked covers the brief's own
-// clarification: unlike every other optional field, "checked" is never
+// TestAcceptanceCriterionAlwaysWritesChecked covers docs/spec/cmd/new.md,
+// "El modo lote": unlike every other optional field, "checked" is never
 // omitted even when false, because a false value is meaningful (unchecked),
 // not absent.
 func TestAcceptanceCriterionAlwaysWritesChecked(t *testing.T) {

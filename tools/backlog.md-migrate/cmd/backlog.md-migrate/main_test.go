@@ -41,15 +41,15 @@ func TestBinaryIsWiredUp(t *testing.T) {
 	if isExitErr {
 		code = exitErr.ExitCode()
 	}
-	// "./backlog" does not exist under this package's own directory, so it
-	// has no tasks/ subdirectory either: docs/especificacion.md, "Códigos de
-	// salida", maps that to exit code 3. The exhaustive exit code matrix
-	// lives in internal/cli, which is faster to run and easier to debug.
+	// "./backlog" does not exist under this package's own directory:
+	// docs/especificacion.md, "Códigos de salida", maps a source that cannot
+	// be read to exit code 3. The exhaustive exit code matrix lives in
+	// internal/cli, which is faster to run and easier to debug.
 	if code != 3 {
 		t.Fatalf("got exit code %d, want 3, output: %s", code, out)
 	}
-	if !strings.Contains(string(out), "tasks/") {
-		t.Fatalf("expected a message about the missing tasks/ directory, got: %s", out)
+	if !strings.Contains(string(out), "does not exist") {
+		t.Fatalf("expected a message about the missing backlog directory, got: %s", out)
 	}
 }
 
@@ -95,15 +95,15 @@ func runCLI(t *testing.T, bin, dir string, args ...string) {
 	}
 }
 
-// TestEndToEndSmokeAgainstRealBisoAndBacklogCLIs is phase 5's own smoke
-// test, task-70 phase 5 brief, "Pruebas": it exercises the compiled
+// TestEndToEndSmokeAgainstRealBisoAndBacklogCLIs exercises the compiled
 // backlog.md-migrate binary end to end against a real Backlog.md source
 // board (generated with the actual backlog CLI when it is on PATH) and a
 // real biso destination board (bin/biso, built by the repository's own
 // Makefile), and confirms the NDJSON import produces is accepted by
 // "biso new --from --dry-run" with no errors. It only confirms the wiring
-// works; the rich test matrix for every acceptance criterion #7 case is
-// phase 6's job, not this test's.
+// works end to end; a rich test matrix over every case of
+// docs/especificacion.md belongs in a dedicated end-to-end test suite, not
+// this smoke test.
 func TestEndToEndSmokeAgainstRealBisoAndBacklogCLIs(t *testing.T) {
 	repoRoot := findRepoRoot(t)
 	biso := filepath.Join(repoRoot, "bin", "biso")
@@ -117,8 +117,8 @@ func TestEndToEndSmokeAgainstRealBisoAndBacklogCLIs(t *testing.T) {
 	}
 
 	// A minimal real Backlog.md source board, generated with the actual
-	// Backlog.md CLI rather than a hand-written fixture, per the task-70
-	// phase 5 brief's own preference for this end-to-end test.
+	// Backlog.md CLI rather than a hand-written fixture, so this end-to-end
+	// test exercises source.Read against real CLI output.
 	sourceRoot := t.TempDir()
 	runCLI(t, backlogCLI, sourceRoot, "init", "Smoke", "--defaults", "--no-git", "--agent-instructions", "none")
 	runCLI(t, backlogCLI, sourceRoot, "task", "create", "Smoke test task", "--plain")

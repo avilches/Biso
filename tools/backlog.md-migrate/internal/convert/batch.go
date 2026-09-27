@@ -1,14 +1,16 @@
 package convert
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"sort"
 
 	"backlog.md-migrate/internal/destination"
 	"backlog.md-migrate/internal/source"
 )
 
-// This is phase 5's assembly step (task-70, phase 5 brief). It does not run
+// This is the final assembly step of the conversion engine. It does not run
 // any conversion of its own: every value a Line carries was already computed
 // by phase 4a (Task, convert.go), phase 4b (Identifiers, identifiers.go),
 // phase 4c (AssignOrdinals, ordinal.go), or read verbatim from the
@@ -44,10 +46,9 @@ type CommentLine struct {
 
 // Line is one task ready to be serialized as a single line of NDJSON, with
 // its fields declared in the exact fixed order docs/especificacion.md, "La
-// salida", requires ("las claves de cada linea en un orden fijo"):
-// encoding/json serializes a struct's fields in declaration order, so this
-// declaration order alone fixes the output's key order, with no hand-written
-// encoder needed.
+// salida", requires: encoding/json serializes a struct's fields in
+// declaration order, so this declaration order alone fixes the output's key
+// order, with no hand-written encoder needed.
 //
 // Every field but ID and Title carries "omitempty": docs/especificacion.md
 // says a field that is absent or empty (an empty string, an empty list, or
@@ -153,10 +154,10 @@ func Assemble(sourceBoard source.Board, destBoard destination.Board) ([]Line, []
 		}
 	}
 
-	// docs/especificacion.md, "La salida": "las tareas salen ordenadas por
-	// el numero de su id de origen, ascendente". naturalSourceIDLess is the
-	// same natural order identifiers.go and ordinal.go already use, reused
-	// here unchanged so all three phases agree on what that order means.
+	// docs/especificacion.md, "La salida", requires ascending order by the
+	// source id's own number. naturalSourceIDLess is the same natural order
+	// identifiers.go and ordinal.go already use, reused here unchanged so
+	// all three phases agree on what that order means.
 	sort.SliceStable(entries, func(i, j int) bool {
 		return naturalSourceIDLess(entries[i].parsed, entries[j].parsed)
 	})
@@ -229,4 +230,25 @@ func convertComments(comments []Comment) []CommentLine {
 		out[i] = CommentLine{Author: c.Author, CreatedAt: c.CreatedAt, Body: c.Body}
 	}
 	return out
+}
+
+// EncodeNDJSON writes one compact JSON object per line to w, in lines'
+// order, disabling HTML escaping so a title, description, or comment body
+// containing '<', '>', or '&' is not silently rewritten into a Unicode
+// escape sequence: this output is NDJSON for "biso new --from"
+// (docs/especificacion.md, "La salida"), never HTML. It lives in this
+// package, next to Line itself, rather than in the cli package that calls
+// it, so that a test exercising the exact byte-for-byte shape of a line
+// (field order, omitted fields, escaping) can call the very same encoder
+// the real import command uses instead of a second one built just for the
+// test.
+func EncodeNDJSON(w io.Writer, lines []Line) error {
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	for _, line := range lines {
+		if err := enc.Encode(line); err != nil {
+			return err
+		}
+	}
+	return nil
 }

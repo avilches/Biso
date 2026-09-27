@@ -101,8 +101,12 @@ func TestRunImportSourceBacklogDirDoesNotExist(t *testing.T) {
 	if code != 3 {
 		t.Fatalf("got exit code %d, want 3", code)
 	}
-	if !strings.Contains(errOut, "tasks/") {
-		t.Fatalf("errOut = %q, want it to mention the missing tasks/ directory", errOut)
+	// <backlog-dir> itself missing is a different condition than <backlog-dir>
+	// existing without a tasks/ subdirectory (TestRunImportSourceBacklogDirHasNoTasksDirectory
+	// below), and gets its own distinct message rather than being described
+	// as if it were merely missing tasks/.
+	if !strings.Contains(errOut, "does not exist") {
+		t.Fatalf("errOut = %q, want it to say the backlog directory does not exist", errOut)
 	}
 }
 
@@ -116,6 +120,24 @@ func TestRunImportSourceBacklogDirHasNoTasksDirectory(t *testing.T) {
 	}
 	if !strings.Contains(errOut, "tasks/") {
 		t.Fatalf("errOut = %q, want it to mention the missing tasks/ directory", errOut)
+	}
+	if strings.Contains(errOut, "does not exist") {
+		t.Fatalf("errOut = %q, want it to distinguish this from the backlog directory itself not existing", errOut)
+	}
+}
+
+func TestRunImportSourceBacklogDirIsAFileNotADirectory(t *testing.T) {
+	notADir := filepath.Join(t.TempDir(), "backlog-is-a-file")
+	if err := os.WriteFile(notADir, []byte("not a directory"), 0o644); err != nil {
+		t.Fatalf("WriteFile(%q): %v", notADir, err)
+	}
+
+	_, errOut, code := run("import", notADir, "--project", ".")
+	if code != 3 {
+		t.Fatalf("got exit code %d, want 3", code)
+	}
+	if !strings.Contains(errOut, "is not a directory") {
+		t.Fatalf("errOut = %q, want it to say the backlog directory is not a directory", errOut)
 	}
 }
 
@@ -257,6 +279,17 @@ func TestRunImportOutFileIsWrittenAtomicallyWithNoLeftoverTempFile(t *testing.T)
 		t.Fatalf("outDir's only entry is %q, want tasks.ndjson", entries[0].Name())
 	}
 
+	info, err := os.Stat(outFile)
+	if err != nil {
+		t.Fatalf("Stat(%q): %v", outFile, err)
+	}
+	// os.CreateTemp creates its file with mode 0600, meant for a private
+	// scratch file; the final output file must not inherit that, since it
+	// is an ordinary file meant to be read like any other.
+	if perm := info.Mode().Perm(); perm != 0o644 {
+		t.Errorf("permissions = %o, want 0644 (not the restrictive mode of the temporary file it was written through)", perm)
+	}
+
 	content, err := os.ReadFile(outFile)
 	if err != nil {
 		t.Fatalf("ReadFile(%q): %v", outFile, err)
@@ -267,5 +300,36 @@ func TestRunImportOutFileIsWrittenAtomicallyWithNoLeftoverTempFile(t *testing.T)
 	}
 	if line["id"] != "BISO-1" {
 		t.Errorf("id = %v, want BISO-1", line["id"])
+	}
+}
+
+func TestRunImportStrictWithFindingsAndOutFileWritesNoFileAtAll(t *testing.T) {
+	biso := findBisoBinary(t)
+	project := newTestProject(t, biso)
+
+	backlogDir := t.TempDir()
+	writeMinimalBacklogTask(t, backlogDir, "TASK-1", "Odd status task", "Not A Configured Status")
+
+	outDir := t.TempDir()
+	outFile := filepath.Join(outDir, "tasks.ndjson")
+
+	_, errOut, code := run("import", backlogDir, "--project", project, "--biso", biso, "--out", outFile, "--strict")
+	if code != 5 {
+		t.Fatalf("got exit code %d, want 5, stderr: %s", code, errOut)
+	}
+	if !strings.HasPrefix(errOut, "warning: ") {
+		t.Fatalf("errOut = %q, want it to start with a finding line", errOut)
+	}
+
+	entries, err := os.ReadDir(outDir)
+	if err != nil {
+		t.Fatalf("ReadDir(%q): %v", outDir, err)
+	}
+	if len(entries) != 0 {
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		t.Fatalf("outDir has %d entries, want 0 (--strict with findings writes neither the final file nor a temporary one): %v", len(entries), names)
 	}
 }
