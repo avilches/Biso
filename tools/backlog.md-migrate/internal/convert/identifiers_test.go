@@ -632,31 +632,43 @@ func TestIdentifiersRewritesAPaddedMentionOfAnUnpaddedSourceTask(t *testing.T) {
 	}
 }
 
-// TestIdentifiersRewritesASubtaskMentionByCanonicalNumberIgnoringLeadingZeros
-// covers the same canonical-form lookup for a subtask: a source subtask
-// recorded as "TASK-1.02" is mentioned elsewhere as "TASK-1.2", without the
-// leading zero on the subtask number. The definitive rewrite must still
-// resolve that mention to TASK-1.02's own final (reassigned) id.
-func TestIdentifiersRewritesASubtaskMentionByCanonicalNumberIgnoringLeadingZeros(t *testing.T) {
+// TestIdentifiersRewritesAPaddedSubtaskMentionOfAnUnpaddedSubtask covers the
+// same canonical-form lookup for a subtask, in the direction that actually
+// distinguishes it from a literal-string match by coincidence: the source
+// subtask is recorded WITHOUT padding ("TASK-1.2"), but the text mentions it
+// WITH padding on the subtask number ("TASK-1.02"). A version that looked up
+// the mention's own literal text in a canonically-keyed index (instead of
+// canonicalizing the mention before searching) would miss this, the same
+// way TestIdentifiersRewritesAPaddedMentionOfAnUnpaddedSourceTask catches
+// that gap for a simple id: TASK-1.02's canonical key and TASK-1.2's
+// canonical key must be the SAME key before the lookup even happens, or
+// this never matches.
+func TestIdentifiersRewritesAPaddedSubtaskMentionOfAnUnpaddedSubtask(t *testing.T) {
 	batch := []TaskInput{
-		{Task: source.Task{File: "sub.md", ID: "TASK-1.02", Title: "Sub"}, Result: Result{}},
+		{Task: source.Task{File: "sub.md", ID: "TASK-1.2", Title: "Sub"}, Result: Result{}},
 		{
-			Task:   source.Task{File: "mentioner.md", ID: "TASK-3", Title: "Blocked by TASK-1.2"},
+			Task:   source.Task{File: "mentioner.md", ID: "TASK-3", Title: "Blocked by TASK-1.02"},
 			Result: Result{},
 		},
 	}
 	board := destination.Board{Config: identifiersConfig}
 
-	out, _, err := Identifiers(batch, board)
+	out, findings, err := Identifiers(batch, board)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	// The only Finding expected here is TASK-1.2's own reassignment (every
+	// subtask is always reassigned, point 4); the mention itself must not
+	// add an "unresolved mention" Finding.
+	if len(findings) != 1 {
+		t.Fatalf("got %d findings, want exactly 1 (TASK-1.2's own reassignment): %v", len(findings), findings)
+	}
 
-	subID := findByID(t, out, "TASK-1.02").ID
+	subID := findByID(t, out, "TASK-1.2").ID
 	got := findByID(t, out, "TASK-3").Title
 	want := fmt.Sprintf("Blocked by %s", subID)
 	if got != want {
-		t.Errorf("Title = %q, want %q (TASK-1.2 must resolve to TASK-1.02's final id by canonical number)", got, want)
+		t.Errorf("Title = %q, want %q (a padded mention TASK-1.02 must resolve to the unpadded subtask TASK-1.2)", got, want)
 	}
 }
 
@@ -874,8 +886,102 @@ func TestIdentifiersAWrongCaseMentionIsNeverSubstitutedAndIsGrouped(t *testing.T
 	}
 }
 
+// TestIdentifiersRecognizesAParentByCanonicalNumberIgnoringLeadingZeros
+// covers docs/especificacion.md, "Identificadores", point 7's full canonical
+// resolution: a parent_task_id of "TASK-1" actually names a source task
+// recorded as "TASK-001". They must be recognized as the same task, with no
+// "parent not found" Finding.
+func TestIdentifiersRecognizesAParentByCanonicalNumberIgnoringLeadingZeros(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "parent.md", ID: "TASK-001", Title: "Parent"}, Result: Result{}},
+		{
+			Task:   source.Task{File: "child.md", ID: "TASK-2", Title: "Child", ParentTaskID: "TASK-1"},
+			Result: Result{},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("got %d findings, want 0 (TASK-1 must recognize TASK-001, not be dropped as unknown): %v", len(findings), findings)
+	}
+
+	parentID := findByID(t, out, "TASK-001").ID
+	if got := findByID(t, out, "TASK-2").Parent; got != parentID {
+		t.Errorf("Parent = %q, want %q (parent_task_id: TASK-1 must recognize TASK-001 by canonical number)", got, parentID)
+	}
+}
+
+// TestIdentifiersRecognizesADependencyWithALowercasePrefix covers point 7's
+// other half: unlike a free-text mention (point 5), which is case-sensitive
+// on purpose to avoid matching a branch name by accident, a dependency
+// field is never free text, so its prefix is compared without regard to
+// case. A dependency written "task-1" (lowercase) must still recognize a
+// source task recorded as "TASK-001".
+func TestIdentifiersRecognizesADependencyWithALowercasePrefix(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "target.md", ID: "TASK-001", Title: "Target"}, Result: Result{}},
+		{
+			Task: source.Task{
+				File: "b.md", ID: "TASK-2", Title: "B",
+				Dependencies: []string{"task-1"},
+			},
+			Result: Result{},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("got %d findings, want 0 (a dependency's prefix case must not matter): %v", len(findings), findings)
+	}
+
+	targetID := findByID(t, out, "TASK-001").ID
+	want := []string{targetID}
+	if got := findByID(t, out, "TASK-2").Dependencies; !equalStrings(got, want) {
+		t.Errorf("Dependencies = %v, want %v (lowercase task-1 must still recognize TASK-001)", got, want)
+	}
+}
+
+// TestIdentifiersDeduplicatesDependenciesThatResolveToTheSameFinalId covers
+// point 7's deduplication: "TASK-1" and "TASK-001" in the same
+// Dependencies list resolve to the same final id by canonical form, so only
+// the first is kept.
+func TestIdentifiersDeduplicatesDependenciesThatResolveToTheSameFinalId(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "target.md", ID: "TASK-1", Title: "Target"}, Result: Result{}},
+		{
+			Task: source.Task{
+				File: "b.md", ID: "TASK-2", Title: "B",
+				Dependencies: []string{"TASK-1", "TASK-001"},
+			},
+			Result: Result{},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, _, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	targetID := findByID(t, out, "TASK-1").ID
+	want := []string{targetID}
+	if got := findByID(t, out, "TASK-2").Dependencies; !equalStrings(got, want) {
+		t.Errorf("Dependencies = %v, want %v (TASK-1 and TASK-001 resolve to the same task, kept once)", got, want)
+	}
+}
+
 // TestIdentifiersDropsAnUnknownParentWithAFinding covers
-// docs/especificacion.md, "Identificadores", point 7, for parent.
+// docs/especificacion.md, "Identificadores", point 7, for parent: a parent
+// with the shape of an id that does not correspond to any task in the
+// batch, not even by canonical form, is still dropped with a Finding.
 func TestIdentifiersDropsAnUnknownParentWithAFinding(t *testing.T) {
 	batch := []TaskInput{
 		{Task: source.Task{File: "t.md", ID: "TASK-2", Title: "Orphan", ParentTaskID: "TASK-999"}, Result: Result{}},
@@ -898,7 +1004,9 @@ func TestIdentifiersDropsAnUnknownParentWithAFinding(t *testing.T) {
 
 // TestIdentifiersDropsOneUnknownDependencyKeepingTheRest covers
 // docs/especificacion.md, "Identificadores", point 7, for dependencies:
-// only the unresolvable element is removed.
+// only the unresolvable element is removed, TASK-999 has the shape of an id
+// but does not correspond to any task in the batch, not even by canonical
+// form.
 func TestIdentifiersDropsOneUnknownDependencyKeepingTheRest(t *testing.T) {
 	batch := []TaskInput{
 		{Task: source.Task{File: "a.md", ID: "TASK-1", Title: "A"}, Result: Result{}},

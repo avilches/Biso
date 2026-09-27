@@ -49,16 +49,18 @@ type Identified struct {
 	// source task's own number (docs/especificacion.md, "Identificadores",
 	// point 2) or a reassigned one (point 4).
 	ID string
-	// Parent is Task.ParentTaskID rewritten through the equivalence table
-	// by an exact match, not the mention pattern (docs/especificacion.md,
-	// "Identificadores", point 7), or empty when the task had no parent, or
-	// its parent named an id outside the whole source batch (dropped, with
-	// a Finding).
+	// Parent is Task.ParentTaskID resolved by its full canonical form, not
+	// the case-sensitive mention pattern (docs/especificacion.md,
+	// "Identificadores", point 7: prefix folded to uppercase, main number
+	// as an int, and subtask number as an int when it has one), or empty
+	// when the task had no parent, or its parent named an id outside the
+	// whole source batch (dropped, with a Finding).
 	Parent string
-	// Dependencies is Task.Dependencies rewritten through the equivalence
-	// table the same way as Parent, in the same order, with any element
-	// naming an id outside the batch removed (with a Finding) rather than
-	// the whole line failing.
+	// Dependencies is Task.Dependencies resolved the same way as Parent, in
+	// the same order, with any element naming an id outside the batch
+	// removed (with a Finding) rather than the whole line failing, and any
+	// element resolving to the same final id as an earlier one in this same
+	// list dropped silently (point 7's deduplication).
 	Dependencies []string
 
 	// Title, Description, Plan, Notes, and Summary are the source task's
@@ -474,20 +476,52 @@ var mentionFieldOrder = []string{
 	"acceptanceCriteria", "comments",
 }
 
+// resolveByCanonicalForm implements docs/especificacion.md,
+// "Identificadores", point 7's full canonical resolution for parent and
+// dependencies: value is parsed the same way any source id is
+// (parseSourceID), and its prefix is folded to uppercase and compared
+// against prefixUpper WITHOUT the case sensitivity point 5's free-text
+// mention pattern requires. docs/decisiones.md's paragraph on parent and
+// dependencies explains why the two differ: a parent or dependency field is
+// never free text where an id could appear by accident (unlike a branch
+// name such as "task-10-modelo" sitting in prose), so there is nothing to
+// protect from a false match by keeping the prefix case-sensitive here.
+//
+// A value that does not even parse as an id (parseSourceID's ok is false),
+// or whose prefix does not fold to prefixUpper, is never found: ok is
+// false, matching the "value that does not have the shape of an id at all"
+// case point 7 still drops with a Finding.
+func resolveByCanonicalForm(value, prefixUpper string, equivalentsByCanonical map[string]string) (resolved string, ok bool) {
+	parsed, parseOK := parseSourceID(value)
+	if !parseOK || strings.ToUpper(parsed.prefix) != prefixUpper {
+		return "", false
+	}
+	resolved, ok = equivalentsByCanonical[canonicalIDKey(prefixUpper, parsed)]
+	return resolved, ok
+}
+
 // identifyTask builds the Identified for one non-skipped task, plus every
 // Finding raised while rewriting its parent, dependencies, mentions, and
 // backlog.id:: label. p is parsedByID[b.Task.ID], passed in rather than
 // re-parsed since the caller already has it.
 //
 // equivalents (keyed by literal source id) and equivalentsByCanonical
-// (keyed by canonical form) are both needed here, for two genuinely
-// different lookups: ID, Parent, and Dependencies resolve an id that is
-// already known exactly (the task's own id, or a parent/dependency field
-// that names one), by exact string, per docs/especificacion.md,
-// "Identificadores", point 7; a mention found inside free text (point 5)
-// resolves by canonical form instead, per docs/decisiones.md's paragraph on
-// mentions and canonical form, since the text offers no guarantee it used
-// the same zero-padding as the id it names.
+// (keyed by canonical form) serve three genuinely different lookups here:
+//
+//   - ID resolves the task's own id, which is already known exactly (it is
+//     b.Task.ID itself), so it stays a plain lookup in equivalents.
+//   - Parent and Dependencies resolve docs/especificacion.md,
+//     "Identificadores", point 7's full canonical form, prefix folded to
+//     uppercase included: resolveByCanonicalForm, built on
+//     equivalentsByCanonical, the same index rewriteMentions uses.
+//   - A mention found inside free text (point 5) also resolves by
+//     canonical form, through equivalentsByCanonical, but with the
+//     prefix's case kept significant, enforced by mentionMatch.ExactCase
+//     before rewriteMentions even looks anything up: docs/decisiones.md's
+//     paragraph on parent/dependencies explains why the two differ (a
+//     parent or dependency field is never free text where an id could
+//     appear by accident, so there is no false match to protect against by
+//     keeping its prefix case-sensitive, unlike a mention in prose).
 func identifyTask(
 	b TaskInput,
 	p parsedSourceID,
@@ -539,7 +573,7 @@ func identifyTask(
 
 	parent := ""
 	if b.Task.ParentTaskID != "" {
-		if resolved, ok := equivalents[b.Task.ParentTaskID]; ok {
+		if resolved, ok := resolveByCanonicalForm(b.Task.ParentTaskID, prefixUpper, equivalentsByCanonical); ok {
 			parent = resolved
 		} else {
 			findings = append(findings, source.Finding{
@@ -553,20 +587,31 @@ func identifyTask(
 		}
 	}
 
+	// docs/especificacion.md, "Identificadores", point 7's deduplication:
+	// two elements of the same task's Dependencies that resolve to the same
+	// final id by canonical form keep only the first, in original order,
+	// the same rule CleanTokenList (tokens.go) already applies when two
+	// labels or assignees of one task collapse to the same value.
 	var dependencies []string
+	seenDependencies := make(map[string]bool, len(b.Task.Dependencies))
 	for _, dep := range b.Task.Dependencies {
-		if resolved, ok := equivalents[dep]; ok {
-			dependencies = append(dependencies, resolved)
+		resolved, ok := resolveByCanonicalForm(dep, prefixUpper, equivalentsByCanonical)
+		if !ok {
+			findings = append(findings, source.Finding{
+				File:  b.Task.File,
+				Field: "dependencies",
+				Message: fmt.Sprintf(
+					"dependency %q does not name any task in the source batch, dropped",
+					dep,
+				),
+			})
 			continue
 		}
-		findings = append(findings, source.Finding{
-			File:  b.Task.File,
-			Field: "dependencies",
-			Message: fmt.Sprintf(
-				"dependency %q does not name any task in the source batch, dropped",
-				dep,
-			),
-		})
+		if seenDependencies[resolved] {
+			continue
+		}
+		seenDependencies[resolved] = true
+		dependencies = append(dependencies, resolved)
 	}
 
 	labels := append([]string(nil), b.Result.Labels...)
