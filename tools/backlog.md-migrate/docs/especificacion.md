@@ -172,8 +172,19 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    porque los ceros no coincidan letra por letra.
 7. Un `parent` o una dependencia que nombra un id que no está entre las tareas del origen se quita
    de la línea y es un hallazgo, porque `biso` rechaza el lote entero (código 4) por un solo
-   identificador que no existe. Los ciclos de padres o de dependencias no se detectan: los rechaza
-   `biso new --from --dry-run`, y por eso el ensayo forma parte del uso.
+   identificador que no existe. "Estar entre las tareas del origen" se decide aquí por la forma
+   canónica completa de la regla 1, prefijo sin distinguir mayúsculas incluido, a diferencia del patrón
+   de mención de la regla 5, que sí distingue mayúsculas para no tocar por accidente un nombre de rama
+   en texto libre: un valor estructurado como `parent_task_id` o un elemento de `dependencies` no tiene
+   ese riesgo, porque todo su valor es un id, no texto libre donde un id puede aparecer por casualidad.
+   Así, un `parent_task_id: TASK-1` que en realidad apunta a la tarea de origen `TASK-001` se reconoce
+   igual. Un valor que no tiene siquiera la forma de un id de la regla 1 se quita igual, con su hallazgo.
+   Si dos elementos de `dependencies` de la misma tarea resuelven al mismo id final por esta forma
+   canónica (`TASK-1` y `TASK-001` en la misma lista, por ejemplo), se deja uno solo, el primero en el
+   orden original, con el mismo criterio de deduplicación que ya aplica "Alfabeto de un token" cuando dos
+   valores de `labels` o `assignees` de la misma tarea quedan iguales tras la conversión. Los ciclos de
+   padres o de dependencias no se detectan: los rechaza `biso new --from --dry-run`, y por eso el ensayo
+   forma parte del uso.
 8. Cada id reasignado es un hallazgo: `XYZ-001.01: id BISO-97 assigned (subtask ids have no equivalent)`
    o `TASK-12: id BISO-12 is taken on the destination, reassigned to BISO-97`.
 9. **El id de origen de una subtarea se guarda además en la etiqueta con ámbito

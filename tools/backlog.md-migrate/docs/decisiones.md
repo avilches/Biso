@@ -151,6 +151,18 @@ cuenta como una mención en absoluto no cambia: sigue distinguiendo mayúsculas 
 palabra; la forma canónica solo entra después, para decidir a qué tarea del lote corresponde una mención
 ya reconocida como válida.
 
+**`parent` y `dependencies` se resuelven por la forma canónica entera, prefijo insensible a mayúsculas
+incluido, porque no son texto libre.** El patrón que reconoce una mención en la regla 5 distingue
+mayúsculas por una razón concreta: protege texto libre donde un id puede aparecer por casualidad, como
+un nombre de rama (`task-10-modelo`) que no es una mención real. Un valor de `parent_task_id` o de
+`dependencies` no corre ese riesgo, porque el campo entero es un id y nada más; no hay nada que proteger
+de una coincidencia accidental. Por eso ahí se aplica la forma canónica completa de la regla 1 sin la
+salvedad de mayúsculas: un `parent_task_id: TASK-1` que apunta a la tarea de origen `TASK-001` se
+reconoce igual que si apuntara con el prefijo en minúsculas. Cuando dos elementos de `dependencies` de
+la misma tarea resuelven al mismo id final por esta forma canónica, se deja uno solo, el primero en el
+orden original, el mismo criterio de deduplicación que ya usa "Alfabeto de un token" para dos valores de
+`labels` o `assignees` que quedan iguales tras la conversión.
+
 ## El identificador de origen de una subtarea se guarda en una etiqueta con ámbito
 
 **La decisión.** `biso` decidió no adoptar la forma `<PREFIJO>-<n>.<m>` de Backlog.md, y dejó
