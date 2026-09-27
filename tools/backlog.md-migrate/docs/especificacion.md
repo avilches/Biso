@@ -400,10 +400,17 @@ es de todo el fichero y no de una clave concreta.
 | Código | Cuándo |
 |---|---|
 | 0 | Convertido y sin ningún hallazgo |
+| 1 | Fallo inesperado al escribir la salida (E/S, permisos, el directorio de `--out` no existe) |
 | 2 | Uso incorrecto: falta un argumento o hay uno desconocido |
 | 3 | El origen no se puede leer: no existe la carpeta, no tiene `tasks/`, un id tiene una forma que no es la de "Identificadores", los ids no comparten prefijo o dos ficheros traen el mismo id |
 | 4 | El destino no responde: no se encuentra `biso`, o falla una de sus órdenes |
 | 5 | Convertido con hallazgos. El NDJSON está escrito, salvo con `--strict`, donde no se escribe nada |
+
+**El código 1 es distinto de los códigos 3, 4 y 5.** Esos tres describen una condición concreta: el
+origen que no se puede leer, el destino que no responde, o hallazgos durante la conversión. El código 1
+es el residual para cualquier fallo al escribir la salida que no sea ninguno de esos tres: no habla del
+origen ni del destino ni de lo que se convirtió, sino de que la propia escritura del NDJSON falló por un
+motivo ajeno a los datos.
 
 **Corrección.** Esta página decía antes que un frontmatter que no se puede interpretar como YAML era
 uno de los motivos del código 3, que aborta el lote entero. Ya no es así: ver "Qué lee del origen" más
