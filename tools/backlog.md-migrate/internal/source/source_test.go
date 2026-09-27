@@ -383,6 +383,83 @@ func TestBrokenFrontmatterIsSkippedAndTheRestOfTheBatchIsStillRead(t *testing.T)
 	}
 }
 
+func TestUnclosedDescriptionMarkerIsAbsentAndRaisesAFindingWithoutAffectingSiblings(t *testing.T) {
+	board := readBoard(t, "unclosed-sections")
+	task := findTask(t, board.Tasks, "unclosed-description.md")
+
+	if task.Description != "" {
+		t.Errorf("Description = %q, want empty: an unclosed section must be treated as absent", task.Description)
+	}
+
+	fs := findingsFor(board.Findings, "unclosed-description.md", "DESCRIPTION")
+	if len(fs) != 1 {
+		t.Fatalf("findings for DESCRIPTION = %+v, want exactly one", fs)
+	}
+	wantMessage := "DESCRIPTION section marker was never closed"
+	if fs[0].Message != wantMessage {
+		t.Errorf("finding message = %q, want %q", fs[0].Message, wantMessage)
+	}
+
+	wantAC := []Checkbox{{Number: 1, Checked: false, Text: "First criterion"}}
+	if !equalCheckboxes(task.AcceptanceCriteria, wantAC) {
+		t.Errorf("AcceptanceCriteria = %+v, want %+v, a sibling section must still be read", task.AcceptanceCriteria, wantAC)
+	}
+	wantPlan := "A short plan that must still be read even though Description above it is\nbroken."
+	if task.Plan != wantPlan {
+		t.Errorf("Plan = %q, want %q", task.Plan, wantPlan)
+	}
+}
+
+func TestUnclosedUnknownNameMarkerRaisesBothFindingsAndLeavesSiblingsAlone(t *testing.T) {
+	board := readBoard(t, "unclosed-sections")
+	task := findTask(t, board.Tasks, "unclosed-unknown-name.md")
+
+	unknown := findingsFor(board.Findings, "unclosed-unknown-name.md", "REVIEW")
+	if len(unknown) != 2 {
+		t.Fatalf("findings for REVIEW = %+v, want exactly two (unrecognized body section, and unclosed)", unknown)
+	}
+	var gotUnrecognized, gotUnclosed bool
+	for _, f := range unknown {
+		switch f.Message {
+		case "unrecognized body section":
+			gotUnrecognized = true
+		case "REVIEW section marker was never closed":
+			gotUnclosed = true
+		}
+	}
+	if !gotUnrecognized || !gotUnclosed {
+		t.Errorf("findings for REVIEW = %+v, want one %q and one %q", unknown, "unrecognized body section", "REVIEW section marker was never closed")
+	}
+
+	wantDescription := "A normal description, unaffected by the broken Review section below."
+	if task.Description != wantDescription {
+		t.Errorf("Description = %q, want %q", task.Description, wantDescription)
+	}
+}
+
+func TestAllMarkersClosedRaisesNoUnclosedFinding(t *testing.T) {
+	board := readBoard(t, "unclosed-sections")
+	task := findTask(t, board.Tasks, "all-markers-closed.md")
+
+	for _, f := range board.Findings {
+		if f.File != "all-markers-closed.md" {
+			continue
+		}
+		t.Errorf("unexpected finding for a fully closed body: %+v", f)
+	}
+
+	if task.Description != "A normal, fully closed description." {
+		t.Errorf("Description = %q", task.Description)
+	}
+	wantAC := []Checkbox{{Number: 1, Checked: false, Text: "First criterion"}}
+	if !equalCheckboxes(task.AcceptanceCriteria, wantAC) {
+		t.Errorf("AcceptanceCriteria = %+v, want %+v", task.AcceptanceCriteria, wantAC)
+	}
+	if task.Plan != "A short plan." {
+		t.Errorf("Plan = %q", task.Plan)
+	}
+}
+
 // --- test helpers ---
 
 func equalSlices(a, b []string) bool {

@@ -125,6 +125,58 @@ func findUnknownSections(body string) []string {
 	return unknown
 }
 
+// findUnclosedSections scans body for every marker (in either style,
+// "SECTION:name" or the bare block name) and returns, once each, the names
+// whose BEGIN marker has no matching END later in the body:
+// docs/especificacion.md, "El mapeo de campos", treats that as a finding
+// regardless of whether the name itself is one this package recognizes.
+//
+// Matching walks the markers in the order they appear in the document and
+// pairs each BEGIN with the next unmatched END of the same name, the way a
+// reader would: it is not enough to compare how many BEGINs and ENDs a name
+// has in total, because a stray END sitting before any BEGIN of that name
+// would make the totals come out equal (one of each) while the BEGIN that
+// follows it still has nothing closing it. Symmetrically, a name can have
+// one fully closed BEGIN/END pair earlier in the body and still end up
+// reported here because of a second, unrelated BEGIN further down that is
+// never closed; the first pair does not "cover" the second BEGIN.
+//
+// A name is reported at most once, in the order its first marker (BEGIN or
+// END) appears in the body, the same ordering findUnknownSections uses.
+func findUnclosedSections(body string) []string {
+	open := make(map[string]int)
+	var order []string
+	seenOrder := make(map[string]bool)
+
+	for _, m := range markerRe.FindAllStringSubmatch(body, -1) {
+		name, kind := m[1], m[2]
+		if !seenOrder[name] {
+			seenOrder[name] = true
+			order = append(order, name)
+		}
+		if kind == "BEGIN" {
+			open[name]++
+			continue
+		}
+		// An END pairs off the most recently opened BEGIN of this name
+		// that is not already paired. A stray END with nothing open
+		// yet (open[name] == 0) matches nothing and is ignored: it
+		// must not let a later BEGIN of the same name borrow its
+		// closure.
+		if open[name] > 0 {
+			open[name]--
+		}
+	}
+
+	var unclosed []string
+	for _, name := range order {
+		if open[name] > 0 {
+			unclosed = append(unclosed, name)
+		}
+	}
+	return unclosed
+}
+
 // checkboxLineRe matches a checkbox line such as "- [ ] #1 text" or
 // "- [x] #12 text". It requires the "#n" marker right after the checkbox,
 // the same way docs/especificacion.md, "Criterios de aceptación", defines

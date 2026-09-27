@@ -95,6 +95,14 @@ func parseTask(file, content string, archived bool) (task Task, findings []Findi
 		})
 	}
 
+	for _, name := range findUnclosedSections(body) {
+		findings = append(findings, Finding{
+			File:    file,
+			Field:   name,
+			Message: fmt.Sprintf("%s section marker was never closed", name),
+		})
+	}
+
 	task.Description, _ = extractSection(body, "DESCRIPTION")
 	task.Plan, _ = extractSection(body, "PLAN")
 	task.Notes, _ = extractSection(body, "NOTES")
