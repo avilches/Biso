@@ -41,9 +41,23 @@ type TaskInput struct {
 // deliberately absent here, so the two are combined rather than duplicated.
 type Identified struct {
 	// SourceID is the source.Task.ID this Identified was computed from,
-	// exactly as read (its original prefix and zero-padding, if any): the
-	// join key a later phase uses to find the matching Result.
+	// exactly as read (its original prefix and zero-padding, if any). It is
+	// NOT a unique key on its own: docs/especificacion.md, "Identificadores",
+	// point 1's id-reuse-after-archiving case means two different
+	// Identified values can carry the exact same SourceID (Backlog.md hands
+	// the reused task the very same id string as the one it archived). A
+	// caller matching an Identified back to the TaskInput it came from must
+	// use BatchIndex instead.
 	SourceID string
+
+	// BatchIndex is the position, in the batch slice passed to Identifiers,
+	// of the TaskInput this Identified was computed from. Unlike SourceID,
+	// it is always unique: it is the real position of one particular
+	// source.Task in the batch, so a caller (Assemble, phase 5) uses it to
+	// find that task's own Result and source.Task (batch[BatchIndex].Result,
+	// batch[BatchIndex].Task) instead of indexing a map by SourceID, which
+	// would silently collide for two tasks sharing a reused id.
+	BatchIndex int
 
 	// ID is the final id: the destination's task_prefix plus either the
 	// source task's own number (docs/especificacion.md, "Identificadores",
@@ -741,6 +755,7 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 			continue
 		}
 		identified, taskFindings := identifyTask(b, parsedByID[b.Task.ID], perTaskFinalID[i], equivalentsByCanonical, ambiguousGroups, pattern, prefixUpper)
+		identified.BatchIndex = i
 		findings = append(findings, taskFindings...)
 		out = append(out, identified)
 	}

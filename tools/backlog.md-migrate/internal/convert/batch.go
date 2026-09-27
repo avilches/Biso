@@ -104,14 +104,10 @@ func Assemble(sourceBoard source.Board, destBoard destination.Board) ([]Line, []
 	findings = append(findings, f...)
 
 	batch := make([]TaskInput, len(sourceBoard.Tasks))
-	resultsBySourceID := make(map[string]Result, len(sourceBoard.Tasks))
-	sourceTasksByID := make(map[string]source.Task, len(sourceBoard.Tasks))
 	for i, t := range sourceBoard.Tasks {
 		result, taskFindings := Task(t, milestoneSlugs, destBoard.Config)
 		findings = append(findings, taskFindings...)
 		batch[i] = TaskInput{Task: t, Result: result}
-		resultsBySourceID[t.ID] = result
-		sourceTasksByID[t.ID] = t
 	}
 
 	identified, identifierFindings, err := Identifiers(batch, destBoard)
@@ -122,11 +118,16 @@ func Assemble(sourceBoard source.Board, destBoard destination.Board) ([]Line, []
 
 	// AssignOrdinals needs exactly the tasks that are going to produce a
 	// line of output (its own doc comment: a skipped task must never reach
-	// it), which is precisely what identified already enumerates by
-	// SourceID.
+	// it), which is precisely what identified already enumerates, one
+	// Identified per producing task. Looked up by BatchIndex, not SourceID:
+	// docs/especificacion.md, "Identificadores", point 1's id-reuse case
+	// means two Identified values can share the exact same SourceID, so a
+	// map keyed by SourceID (as this used to be) would silently collapse
+	// two distinct tasks into one, handing AssignOrdinals, and every line
+	// built below, the wrong source.Task for one of them.
 	producing := make([]source.Task, len(identified))
 	for i, id := range identified {
-		producing[i] = sourceTasksByID[id.SourceID]
+		producing[i] = batch[id.BatchIndex].Task
 	}
 	ordinals := AssignOrdinals(producing, destBoard)
 
@@ -136,8 +137,8 @@ func Assemble(sourceBoard source.Board, destBoard destination.Board) ([]Line, []
 	}
 	entries := make([]entry, len(identified))
 	for i, id := range identified {
-		result := resultsBySourceID[id.SourceID]
-		sourceTask := sourceTasksByID[id.SourceID]
+		result := batch[id.BatchIndex].Result
+		sourceTask := batch[id.BatchIndex].Task
 
 		parsed, ok := parseSourceID(id.SourceID)
 		if !ok {

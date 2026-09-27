@@ -1487,9 +1487,13 @@ func TestIdentifiersTwoNonArchivedCopiesOfASharedIdRemainFatal(t *testing.T) {
 // the literal id "FIX-4", reproducing the exact real-world sequence
 // docs/decisiones.md describes (archive a task, let Backlog.md reuse its
 // number). Before this fix, validateSourceShape rejected this as two files
-// sharing an id; this test only confirms that fatal error is gone, not the
-// full field-level correctness of every Line Assemble produces for this
-// board.
+// sharing an id.
+//
+// It also confirms Identified.BatchIndex keeps the two resulting lines from
+// being mixed up (the batch.go bug found while implementing the id-reuse
+// fix, and corrected separately): each FIX-4 copy has a clearly different
+// title and status in its own source file, and each line must carry its
+// OWN, not the other's.
 func TestAssembleNoLongerFailsOnAnArchivedAndANonArchivedCopyOfTheSameId(t *testing.T) {
 	sourceBoard, err := source.Read(filepath.Join("..", "source", "testdata", "backlog-board"))
 	if err != nil {
@@ -1497,7 +1501,32 @@ func TestAssembleNoLongerFailsOnAnArchivedAndANonArchivedCopyOfTheSameId(t *test
 	}
 	destBoard := destination.Board{Config: identifiersConfig}
 
-	if _, _, err := Assemble(sourceBoard, destBoard); err != nil {
+	lines, _, err := Assemble(sourceBoard, destBoard)
+	if err != nil {
 		t.Fatalf("Assemble returned an error, want none (the two FIX-4 copies must not be treated as a fatal duplicate id): %v", err)
+	}
+
+	var completed, archived Line
+	var foundCompleted, foundArchived bool
+	for _, l := range lines {
+		switch l.Title {
+		case "Task to complete":
+			completed, foundCompleted = l, true
+		case "Task to archive":
+			archived, foundArchived = l, true
+		}
+	}
+	if !foundCompleted || !foundArchived {
+		t.Fatalf("did not find both FIX-4 lines by their own title, want one %q and one %q: %+v", "Task to complete", "Task to archive", lines)
+	}
+
+	if completed.ID == archived.ID {
+		t.Fatalf("both FIX-4 copies got the same final id %q, want two distinct ids", completed.ID)
+	}
+	if completed.Archived {
+		t.Errorf("the completed/ copy's line has Archived = true, want false (not mixed up with the archive/tasks/ copy)")
+	}
+	if !archived.Archived {
+		t.Errorf("the archive/tasks/ copy's line has Archived = false, want true (not mixed up with the completed/ copy)")
 	}
 }

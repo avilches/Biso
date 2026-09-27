@@ -416,3 +416,88 @@ func TestAcceptanceCriterionAlwaysWritesChecked(t *testing.T) {
 		t.Fatalf("got  %s\nwant %s", data, want)
 	}
 }
+
+// TestAssembleKeepsEachSharedIdCopysOwnFields covers the bug found while
+// implementing docs/especificacion.md, "Identificadores", point 1's id-reuse
+// case (Backlog.md handing an archived task's number to the next one it
+// creates, docs/decisiones.md's paragraph on it): two source.Task values
+// that share the exact same literal ID, one archived and one not, produce
+// TWO lines, and each one must be built from ITS OWN Result and source.Task,
+// never the other's.
+//
+// Before Identified.BatchIndex existed, Assemble looked up a task's Result
+// and source.Task by its SourceID in a map keyed by that same literal id;
+// with two tasks sharing that literal id, the second one processed
+// overwrote the first in both maps, so one of the two lines silently ended
+// up with the OTHER copy's title, description, and createdAt, even though
+// its own final id (computed by Identifiers, which already worked by batch
+// position rather than by SourceID) was correct. Title, Description, and
+// CreatedDate are deliberately given very different values below so any
+// mix-up between the two copies is obvious in the assertions.
+func TestAssembleKeepsEachSharedIdCopysOwnFields(t *testing.T) {
+	sourceBoard := source.Board{
+		Tasks: []source.Task{
+			{
+				File:        "active.md",
+				ID:          "TASK-4",
+				Title:       "Active title",
+				Description: "Active description",
+				CreatedDate: "2026-05-01 09:00",
+			},
+			{
+				File:        "archived.md",
+				ID:          "TASK-4",
+				Archived:    true,
+				Title:       "Archived title",
+				Description: "Archived description",
+				CreatedDate: "2020-01-01 09:00",
+			},
+		},
+	}
+	destBoard := destination.Board{Config: destination.Config{TaskPrefix: "BISO"}}
+
+	lines, _, err := Assemble(sourceBoard, destBoard)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(lines) != 2 {
+		t.Fatalf("got %d lines, want 2 (both copies must be emitted)", len(lines))
+	}
+
+	active := findLine(t, lines, "BISO-4")
+	if active.Title != "Active title" {
+		t.Errorf("active line Title = %q, want %q (not mixed up with the archived copy)", active.Title, "Active title")
+	}
+	if active.Description != "Active description" {
+		t.Errorf("active line Description = %q, want %q", active.Description, "Active description")
+	}
+	if active.CreatedAt != "2026-05-01T09:00:00Z" {
+		t.Errorf("active line CreatedAt = %q, want %q", active.CreatedAt, "2026-05-01T09:00:00Z")
+	}
+	if active.Archived {
+		t.Errorf("active line Archived = true, want false")
+	}
+
+	var archived Line
+	found := false
+	for _, l := range lines {
+		if l.ID != "BISO-4" {
+			archived, found = l, true
+		}
+	}
+	if !found {
+		t.Fatalf("no second line besides BISO-4 found, want the reassigned archived copy: %+v", lines)
+	}
+	if archived.Title != "Archived title" {
+		t.Errorf("archived line Title = %q, want %q (not mixed up with the active copy)", archived.Title, "Archived title")
+	}
+	if archived.Description != "Archived description" {
+		t.Errorf("archived line Description = %q, want %q", archived.Description, "Archived description")
+	}
+	if archived.CreatedAt != "2020-01-01T09:00:00Z" {
+		t.Errorf("archived line CreatedAt = %q, want %q", archived.CreatedAt, "2020-01-01T09:00:00Z")
+	}
+	if !archived.Archived {
+		t.Errorf("archived line Archived = false, want true")
+	}
+}
