@@ -147,6 +147,26 @@ func parseSourceID(id string) (parsed parsedSourceID, ok bool) {
 	return parsed, true
 }
 
+// naturalSourceIDLess reports whether a sorts strictly before b in the
+// source id's own natural order: main number ascending; when two ids share
+// a main number, a SIMPLE id always sorts before any subtask of that same
+// number ("TASK-1" reads before "TASK-1.0"), and two subtasks of the same
+// parent sort by their own subtask number ascending. Identifiers uses this
+// to break ties among ids reassigned by point 4 (see below), and
+// ordinal.go (phase 4c) reuses it unchanged to break a tie between two
+// source tasks that share the same ordinal (docs/especificacion.md, "Orden
+// manual"), so that both phases agree on what "the source id's own natural
+// order" means and a batch converts the same way every time it runs.
+func naturalSourceIDLess(a, b parsedSourceID) bool {
+	if a.number != b.number {
+		return a.number < b.number
+	}
+	if a.hasSub != b.hasSub {
+		return !a.hasSub
+	}
+	return a.sub < b.sub
+}
+
 // canonicalIDKey returns the canonical form docs/especificacion.md,
 // "Identificadores", point 1's last paragraph defines for deciding whether
 // two source ids are the exact same id, explained further in
@@ -389,18 +409,11 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 	// parent, or a simple id that collides with the destination reassigned
 	// alongside one of its own subtasks (a colliding TASK-1 and its subtask
 	// TASK-1.1 both end up in this list at once, sharing main number 1).
-	// Sorting by (number, hasSub, sub) makes the final order deterministic
-	// in every one of those cases, regardless of the order entries arrived
-	// in batch.
+	// Sorting by naturalSourceIDLess makes the final order deterministic in
+	// every one of those cases, regardless of the order entries arrived in
+	// batch.
 	sort.SliceStable(toReassign, func(i, j int) bool {
-		a, b := toReassign[i].parsed, toReassign[j].parsed
-		if a.number != b.number {
-			return a.number < b.number
-		}
-		if a.hasSub != b.hasSub {
-			return !a.hasSub
-		}
-		return a.sub < b.sub
+		return naturalSourceIDLess(toReassign[i].parsed, toReassign[j].parsed)
 	})
 
 	nextNumber := max(maxDestNumber, maxSourceNumber) + 1
