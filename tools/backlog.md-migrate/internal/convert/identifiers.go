@@ -193,11 +193,11 @@ type seenSourceID struct {
 // in this file writes into a final id and matches text mentions against.
 //
 // This is the one failure "Identificadores" turns into a Go error rather
-// than a Finding: docs/especificacion.md, "Códigos de salida", code 3 ("El
-// origen no se puede leer"), which aborts the whole batch instead of
-// skipping one task. Translating this error into that exit code is a later
-// phase's job; this function only needs to say clearly, in its error's
-// message, which of the three things failed and with what value.
+// than a Finding: docs/especificacion.md, section "Códigos de salida", the
+// row for exit code 3, which aborts the whole batch instead of skipping one
+// task. Translating this error into that exit code is a later phase's job;
+// this function only needs to say clearly, in its error's message, which of
+// the three things failed and with what value.
 func validateSourceShape(tasks []source.Task) (parsed map[string]parsedSourceID, prefixUpper string, err error) {
 	parsed = make(map[string]parsedSourceID, len(tasks))
 	seenIn := make(map[string]seenSourceID, len(tasks))
@@ -430,16 +430,34 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 		nextNumber++
 	}
 
+	// docs/decisiones.md, section "Los identificadores conservan su número y
+	// cambian de prefijo", the paragraph explaining that the same canonical
+	// form also decides which task a text mention corresponds to: point 5's
+	// definitive rewrite (and point 6's "does not resolve" count) looks up a
+	// mention by the same canonical form validateSourceShape and naiveTitle
+	// already use (same prefix, same main number as an int, and the same
+	// subtask number as an int when the mention has one), not by the exact
+	// string, so a mention of "TASK-1" in text finds a source task recorded
+	// as "TASK-001" just as it would find one recorded as "TASK-1". Built
+	// once equivalents has one entry per every batch task (skipped,
+	// conserved, and reassigned all included): validateSourceShape already
+	// ruled out two tasks sharing a canonical key, so this can never
+	// overwrite one entry with another.
+	equivalentsByCanonical := make(map[string]string, len(parsedByID))
+	for id, p := range parsedByID {
+		equivalentsByCanonical[canonicalIDKey(prefixUpper, p)] = equivalents[id]
+	}
+
 	// docs/especificacion.md, "Identificadores", points 5, 6, 7, and 9:
 	// build the actual output for every task that was not skipped, in
-	// batch order, now that equivalents (built by points 2, 3, and 4
-	// together) is complete.
+	// batch order, now that equivalents and equivalentsByCanonical (both
+	// built by points 2, 3, and 4 together) are complete.
 	var out []Identified
 	for _, b := range batch {
 		if skipped[b.Task.ID] {
 			continue
 		}
-		identified, taskFindings := identifyTask(b, parsedByID[b.Task.ID], equivalents, pattern, prefixUpper)
+		identified, taskFindings := identifyTask(b, parsedByID[b.Task.ID], equivalents, equivalentsByCanonical, pattern, prefixUpper)
 		findings = append(findings, taskFindings...)
 		out = append(out, identified)
 	}
@@ -460,10 +478,21 @@ var mentionFieldOrder = []string{
 // Finding raised while rewriting its parent, dependencies, mentions, and
 // backlog.id:: label. p is parsedByID[b.Task.ID], passed in rather than
 // re-parsed since the caller already has it.
+//
+// equivalents (keyed by literal source id) and equivalentsByCanonical
+// (keyed by canonical form) are both needed here, for two genuinely
+// different lookups: ID, Parent, and Dependencies resolve an id that is
+// already known exactly (the task's own id, or a parent/dependency field
+// that names one), by exact string, per docs/especificacion.md,
+// "Identificadores", point 7; a mention found inside free text (point 5)
+// resolves by canonical form instead, per docs/decisiones.md's paragraph on
+// mentions and canonical form, since the text offers no guarantee it used
+// the same zero-padding as the id it names.
 func identifyTask(
 	b TaskInput,
 	p parsedSourceID,
 	equivalents map[string]string,
+	equivalentsByCanonical map[string]string,
 	pattern *regexp.Regexp,
 	prefixUpper string,
 ) (Identified, []source.Finding) {
@@ -471,7 +500,7 @@ func identifyTask(
 	unresolvedCounts := make(map[string]int, len(mentionFieldOrder))
 
 	rewrite := func(field, text string) string {
-		rewritten, unresolved := rewriteMentions(text, pattern, prefixUpper, equivalents)
+		rewritten, unresolved := rewriteMentions(text, pattern, prefixUpper, equivalentsByCanonical)
 		unresolvedCounts[field] += unresolved
 		return rewritten
 	}
@@ -640,17 +669,28 @@ func scanMentions(text string, pattern *regexp.Regexp, prefixUpper string, handl
 
 // rewriteMentions implements docs/especificacion.md, "Identificadores",
 // points 5 and 6 together, for one text field: every candidate scanMentions
-// finds whose case exactly matches prefixUpper and is a key of equivalents
-// is substituted with its final id (point 5); every other candidate,
-// whether its case matches but it names no task in the batch, or its case
-// does not match at all (point 6's "Xyz-002"/"task-12"), is left untouched
-// and counted in unresolved, since both share the same
-// grouped-by-file-and-field Finding identifyTask raises from that count.
-func rewriteMentions(text string, pattern *regexp.Regexp, prefixUpper string, equivalents map[string]string) (rewritten string, unresolved int) {
+// finds whose case exactly matches prefixUpper is looked up in
+// equivalentsByCanonical by its CANONICAL form, not by its exact string
+// (docs/decisiones.md's paragraph on mentions and canonical form: "TASK-1"
+// in text must find a source task recorded as "TASK-001" just as it would
+// find one recorded as "TASK-1"), and substituted with its final id when
+// found (point 5). Every other candidate, whether its case matches but its
+// canonical form names no task in the batch, or its case does not match at
+// all (point 6's "Xyz-002"/"task-12"), is left untouched and counted in
+// unresolved, since both share the same grouped-by-file-and-field Finding
+// identifyTask raises from that count.
+//
+// The pattern that decides whether something counts as a mention at all is
+// unchanged by this: canonical form only enters AFTER a candidate already
+// passed scanMentions's exact-case, word-boundary check, to decide which
+// batch task it names.
+func rewriteMentions(text string, pattern *regexp.Regexp, prefixUpper string, equivalentsByCanonical map[string]string) (rewritten string, unresolved int) {
 	rewritten = scanMentions(text, pattern, prefixUpper, func(m mentionMatch) string {
 		if m.ExactCase {
-			if final, ok := equivalents[m.Text]; ok {
-				return final
+			if parsed, ok := parseSourceID(m.Text); ok {
+				if final, ok := equivalentsByCanonical[canonicalIDKey(prefixUpper, parsed)]; ok {
+					return final
+				}
 			}
 		}
 		unresolved++
@@ -671,9 +711,9 @@ func rewriteMentions(text string, pattern *regexp.Regexp, prefixUpper string, eq
 // paragraph about the naive title comparison and the one right after it
 // about the limitation this rewrite accepts.
 //
-// point 3's final rule (as of docs/especificacion.md's current text) is
-// narrower than "substitute every candidate": a candidate is substituted,
-// with the destination's own prefix and the SAME number it names, ONLY
+// point 3's rule is narrower than "substitute every candidate": a candidate
+// is substituted, with the destination's own prefix and the SAME number it
+// names, ONLY
 // when its case exactly matches the source prefix AND its number, with no
 // subtask suffix at all, matches a SIMPLE (non-subtask) source id present
 // in simpleSourceNumbers. Every other exact-case candidate is left

@@ -261,11 +261,17 @@ func TestNaiveTitleLeavesAMentionOfAnUnknownIdUntouched(t *testing.T) {
 // gets a fresh number this naive rewrite cannot predict (point 4). This is
 // the accepted limitation docs/decisiones.md documents for a title that
 // mentions a subtask.
+//
+// simpleSourceNumbers deliberately has main number 1, as if a SIMPLE
+// "TASK-1" also existed in the batch alongside the subtask "TASK-1.1": a
+// version of naiveTitle that only checked the main number, without also
+// checking that the candidate itself has no dot, would wrongly substitute
+// this mention. An empty simpleSourceNumbers would not catch that mistake,
+// since the number-not-found path and the is-a-subtask path would look the
+// same.
 func TestNaiveTitleLeavesAMentionOfAKnownSubtaskUntouched(t *testing.T) {
 	pattern := mentionPattern("TASK")
-	// TASK-1.1 is a real subtask of the batch, but subtasks never belong in
-	// simpleSourceNumbers: only a SIMPLE id's main number does.
-	simpleSourceNumbers := map[int]bool{}
+	simpleSourceNumbers := map[int]bool{1: true}
 
 	got := naiveTitle("Finish TASK-1.1", pattern, "TASK", "BISO", simpleSourceNumbers)
 
@@ -557,6 +563,103 @@ func TestIdentifiersRewritesMentionsInVariousTextContexts(t *testing.T) {
 	}
 }
 
+// TestIdentifiersRewritesAMentionByCanonicalNumberIgnoringLeadingZeros
+// covers docs/especificacion.md, "Identificadores", point 5's canonical-form
+// lookup and docs/decisiones.md's paragraph on mentions and canonical form:
+// a source task recorded as "TASK-001" is mentioned elsewhere in the batch
+// as "TASK-1", without the leading zero. The definitive rewrite must still
+// resolve that mention to TASK-001's final id, exactly the case a
+// string-exact lookup in the equivalence table would miss.
+func TestIdentifiersRewritesAMentionByCanonicalNumberIgnoringLeadingZeros(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "target.md", ID: "TASK-001", Title: "Target"}, Result: Result{}},
+		{
+			Task:   source.Task{File: "mentioner.md", ID: "TASK-2", Title: "See TASK-1 for details"},
+			Result: Result{},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("got %d findings, want 0 (TASK-1 must resolve, not be reported as unrecognized): %v", len(findings), findings)
+	}
+
+	targetID := findByID(t, out, "TASK-001").ID
+	got := findByID(t, out, "TASK-2").Title
+	want := fmt.Sprintf("See %s for details", targetID)
+	if got != want {
+		t.Errorf("Title = %q, want %q (TASK-1 must resolve to TASK-001's final id by canonical number)", got, want)
+	}
+}
+
+// TestIdentifiersRewritesAPaddedMentionOfAnUnpaddedSourceTask covers the
+// other direction of the same canonical-form lookup: the source task itself
+// is recorded WITHOUT padding ("TASK-1"), but the text mentions it WITH
+// padding ("TASK-001"). This is the direction that actually proves the
+// lookup canonicalizes the mention, not just the table: the equivalence
+// table's canonical key for "TASK-1" is already "TASK-1" (canonicalIDKey
+// always strips padding), so a mention that happens to already be
+// unpadded (like TASK-1 mentioning TASK-1) would still match even a plain
+// exact-string lookup against that table by coincidence; only a PADDED
+// mention forces the lookup itself to canonicalize before searching.
+func TestIdentifiersRewritesAPaddedMentionOfAnUnpaddedSourceTask(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "target.md", ID: "TASK-1", Title: "Target"}, Result: Result{}},
+		{
+			Task:   source.Task{File: "mentioner.md", ID: "TASK-2", Title: "See TASK-001 for details"},
+			Result: Result{},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("got %d findings, want 0: %v", len(findings), findings)
+	}
+
+	targetID := findByID(t, out, "TASK-1").ID
+	got := findByID(t, out, "TASK-2").Title
+	want := fmt.Sprintf("See %s for details", targetID)
+	if got != want {
+		t.Errorf("Title = %q, want %q (a padded mention TASK-001 must resolve to the unpadded source task TASK-1)", got, want)
+	}
+}
+
+// TestIdentifiersRewritesASubtaskMentionByCanonicalNumberIgnoringLeadingZeros
+// covers the same canonical-form lookup for a subtask: a source subtask
+// recorded as "TASK-1.02" is mentioned elsewhere as "TASK-1.2", without the
+// leading zero on the subtask number. The definitive rewrite must still
+// resolve that mention to TASK-1.02's own final (reassigned) id.
+func TestIdentifiersRewritesASubtaskMentionByCanonicalNumberIgnoringLeadingZeros(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "sub.md", ID: "TASK-1.02", Title: "Sub"}, Result: Result{}},
+		{
+			Task:   source.Task{File: "mentioner.md", ID: "TASK-3", Title: "Blocked by TASK-1.2"},
+			Result: Result{},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, _, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	subID := findByID(t, out, "TASK-1.02").ID
+	got := findByID(t, out, "TASK-3").Title
+	want := fmt.Sprintf("Blocked by %s", subID)
+	if got != want {
+		t.Errorf("Title = %q, want %q (TASK-1.2 must resolve to TASK-1.02's final id by canonical number)", got, want)
+	}
+}
+
 // TestRewriteMentionsSubstitutesFromTheOriginalTextOnly is a direct,
 // deterministic proof of docs/especificacion.md, "Identificadores", point
 // 5's single-pass substitution requirement, exercised at rewriteMentions
@@ -572,12 +675,12 @@ func TestIdentifiersRewritesMentionsInVariousTextContexts(t *testing.T) {
 // that shares the source's own prefix.
 func TestRewriteMentionsSubstitutesFromTheOriginalTextOnly(t *testing.T) {
 	pattern := mentionPattern("TASK")
-	equivalents := map[string]string{
+	equivalentsByCanonical := map[string]string{
 		"TASK-1": "TASK-2",
 		"TASK-2": "TASK-3",
 	}
 
-	got, unresolved := rewriteMentions("See TASK-1 and TASK-2", pattern, "TASK", equivalents)
+	got, unresolved := rewriteMentions("See TASK-1 and TASK-2", pattern, "TASK", equivalentsByCanonical)
 
 	want := "See TASK-2 and TASK-3"
 	if got != want {
