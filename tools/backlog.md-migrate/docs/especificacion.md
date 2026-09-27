@@ -115,16 +115,27 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    (`XYZ-001`). El prefijo del origen se deduce de los propios ids: todos tienen que compartirlo, sin
    distinguir mayúsculas, porque Backlog.md escribe siempre el prefijo en mayúsculas en el id aunque su
    configuración lo guarde de otra forma. Un id con otra forma, o dos prefijos distintos, es un error de
-   origen (código 3). El prefijo del destino sale de `task_prefix` del destino.
+   origen (código 3). Dos ids de origen cuentan como el mismo id, a los efectos de ese mismo error de
+   código 3 ("dos ficheros traen el mismo id", ver "Códigos de salida"), cuando su prefijo coincide sin
+   distinguir mayúsculas y su número, interpretado como número entero y no como cadena, es igual, y, si
+   los dos tienen forma de subtarea, también lo es su número de subtarea interpretado igual: es la misma
+   forma canónica que la regla 2 usa para decidir si un número choca con el destino, no la igualdad de la
+   cadena exacta del id. El prefijo del destino sale de `task_prefix` del destino.
 2. **Un id simple de origen conserva su número con el prefijo del destino** (`TASK-70` pasa a
    `BISO-70`, `XYZ-001` pasa a `BISO-1`) siempre que ese número no exista ya en el destino. Los ceros a
    la izquierda no se escriben.
 3. **Una tarea que ya está en el destino no se vuelve a importar.** Es la misma tarea de una
    importación anterior si el destino tiene una con el mismo `title` y el mismo `createdAt`, sea cual
-   sea su id. No se escribe su línea, su id de origen se equipara al que ya tiene en el destino, y es un
-   hallazgo (`already on the destination, skipped`). Así ejecutar `import` dos veces no duplica el
-   tablero, subtareas incluidas. No actualiza la tarea que ya estaba, y una tarea que se haya editado
-   en el destino después de importarla (otro título) ya no se reconoce.
+   sea su id. El `title` que se compara no es el crudo del fichero de origen: es ese mismo título con
+   sus menciones de id de origen ya reescritas de forma ingenua, el prefijo del destino y el mismo
+   número del id mencionado, sin tener en cuenta si ese número choca con algo en el destino ni si la
+   tarea mencionada se va a reasignar; el porqué de esta reescritura, y el caso raro que aun así se
+   pierde, están en decisiones.md, ["Los identificadores conservan su número y cambian de
+   prefijo"](decisiones.md#los-identificadores-conservan-su-número-y-cambian-de-prefijo). No se escribe
+   su línea, su id de origen se equipara al que ya tiene en el destino, y es un hallazgo (`already on
+   the destination, skipped`). Así ejecutar `import` dos veces no duplica el tablero, subtareas
+   incluidas. No actualiza la tarea que ya estaba, y una tarea que se haya editado en el destino después
+   de importarla (otro título) ya no se reconoce.
 4. **Reciben un número nuevo los ids simples que chocan con el destino y todos los ids de subtarea**,
    porque un id de `biso` es siempre `<PREFIJO>-<n>` y no admite el punto. Se les asigna, en el orden
    natural de su id de origen, el siguiente número libre a partir de `max(mayor número del destino,

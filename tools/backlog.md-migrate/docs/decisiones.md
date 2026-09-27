@@ -89,6 +89,39 @@ renumerar todo desde el siguiente libre.** Cambia todos los números aunque no c
 parecido entre los dos tableros. **Descartado: dejar que `biso` asigne los ids.** Un lote no puede
 expresar un padre o una dependencia sobre un id que todavía no existe.
 
+**La comparación de "ya está en el destino" usa el título ya reescrito, no el crudo.** El título de una
+tarea de origen puede mencionar el id de otra tarea (`"Follow-up of TASK-1"`), y la regla 5 de
+"Identificadores" lo reescribe en el título que de verdad se escribe en el destino (`"Follow-up of
+BISO-1"`). Si la comparación de la excepción anterior usara el título crudo de origen, la segunda
+ejecución de `import` compararía `"Follow-up of TASK-1"` contra el `"Follow-up of BISO-1"` que ya está
+guardado, no encontraría la coincidencia y duplicaría la tarea, justo lo que esta misma decisión promete
+evitar. Por eso esa comparación usa una reescritura de menciones más simple que la definitiva de la
+regla 5, y que no depende de si un id choca o no en esta ejecución concreta (evita la circularidad de
+necesitar saber qué tareas se saltan antes de poder decidir qué tareas se saltan): sustituye cada
+mención válida de un id de origen (misma forma y límites de palabra que la regla 5) por el prefijo del
+destino y el mismo número del id de origen, sin tener en cuenta si ese número choca con algo en el
+destino ni si la tarea mencionada se va a reasignar. Esta reescritura "ingenua" (naive en el código) es
+estable entre ejecuciones: la primera y la segunda vez que se lee el mismo origen dan el mismo título
+para comparar, sin importar el estado del destino en ese momento.
+
+**Una limitación que se acepta.** Si la tarea mencionada en el título fue ella misma reasignada a un
+número distinto en la primera importación, porque su número chocaba en aquel momento, la reescritura
+ingenua de la segunda ejecución no reproduce ese número reasignado, y la comparación vuelve a fallar: la
+tarea se duplicaría en ese caso concreto. Es la misma clase de fragilidad que ya acepta esta decisión
+para una tarea cuyo título se editó a mano en el destino después de importarla ("ya no se reconoce"), no
+una fragilidad nueva. No compensa resolverla con más mecanismo, como guardar aparte un identificador
+estable: sería una complejidad nueva para un caso raro (un título que menciona a una tarea que además
+choca en la primera importación) que esta misma decisión ya acepta perder en el caso hermano del título
+editado a mano.
+
+**El mismo número, no la misma cadena, también decide cuándo dos ids de origen chocan entre sí.** La
+regla 1 de "Identificadores" aborta el lote con el código 3 cuando dos ficheros de origen traen el
+mismo id, y esa comparación usa la misma forma canónica (prefijo sin distinguir mayúsculas, número
+entero, número de subtarea entero si lo hay) con la que esta decisión ya compara números para saber si
+uno choca con el destino. `TASK-1` y `TASK-001` son el mismo id de origen aunque las dos cadenas sean
+distintas, y dos ficheros que los traen paran el import en vez de convertirse en silencio en la misma
+tarea de destino, que sería perder una tarea entera sin avisar.
+
 ## El identificador de origen de una subtarea se guarda en una etiqueta con ámbito
 
 **La decisión.** `biso` decidió no adoptar la forma `<PREFIJO>-<n>.<m>` de Backlog.md, y dejó
