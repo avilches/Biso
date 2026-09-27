@@ -307,7 +307,8 @@ símbolos `- _ . : @`. Se aplica en este orden:
    (`-`, U+002D): `with space` da `with-space` y `Sara Smith` da `Sara-Smith`. Cada conversión es un
    hallazgo.
 2. Un valor que sigue sin cumplir el alfabeto (`a/b`, `c!`) se quita de la lista y es un hallazgo.
-3. Si tras convertir dos valores de la misma tarea quedan iguales (`a b` y `a-b`), se deja uno solo.
+3. Si tras convertir dos valores de la misma tarea quedan iguales (`a b` y `a-b`), se deja uno solo, el
+   primero en el orden original.
 
 Es la regla de `biso` al escribir, aplicada aquí para que el lote no falle entero por una etiqueta. La
 conversión de los espacios no se deshace al exportar: `with-space` se queda como `with-space`.
