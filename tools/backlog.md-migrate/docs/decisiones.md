@@ -93,28 +93,45 @@ a esta tercera el id `TASK-2` otra vez, el mismo número que la archivada y no u
 Tratar "dos ficheros traen el mismo id" como fatal sin excepción rompería el uso normal de cualquier
 proyecto real que lleve tiempo en marcha y tenga tareas archivadas: la primera vez que Backlog.md
 reutiliza un número, `import` rechazaría el tablero entero. Por eso, cuando exactamente uno de los
-ficheros que comparten el id no está archivado y el id compartido es simple, ese fichero es el que
-conserva el número: es el que de verdad importa hoy en el tablero, mientras que los archivados ya
-cerraron su ciclo y no pierden nada relevante al recibir un número nuevo en el destino, porque su
-parentesco y sus menciones se siguen reescribiendo igual con la tabla de equivalencias. Cuando el id
-compartido tiene forma de subtarea esto no cambia nada en la práctica, porque ninguna subtarea conserva
-su número: todas las copias se reasignan igual, esté o no alguna archivada. Cuando hay más de un fichero
-no archivado con el mismo id, o todos los que lo comparten están archivados y ninguno está activo ni
-terminado, sigue siendo el error fatal de código 3: Backlog.md solo reutiliza un número después de
-archivar la tarea que lo tenía, así que esa combinación solo puede venir de un tablero editado a mano de
-una forma que el propio Backlog.md no produce, y no hay ninguna señal en los datos que diga cuál de los
-ficheros es el verdadero.
+ficheros que comparten el id no está archivado y todos los demás sí, esto no es fatal, sea cual sea la
+forma del id compartido: la condición es la misma para un id simple que para uno de subtarea, y lo único
+que cambia entre los dos es el resultado de la reasignación. Cuando el id es simple, el fichero no
+archivado es el que conserva el número: es el que de verdad importa hoy en el tablero, mientras que los
+archivados ya cerraron su ciclo y no pierden nada relevante al recibir un número nuevo en el destino,
+porque su parentesco y sus menciones se siguen reescribiendo igual con la tabla de equivalencias. Cuando
+el id compartido tiene forma de subtarea, la misma condición no cambia el resultado, porque ninguna
+subtarea conserva su número (ni siquiera la copia no archivada): todas las copias se reasignan igual,
+con el motivo de subtarea de siempre. Cuando hay más de un fichero no archivado con el mismo id, o todos
+los que lo comparten están archivados y ninguno está activo ni terminado, sigue siendo el error fatal de
+código 3, sea cual sea la forma del id: Backlog.md solo reutiliza un número después de archivar la tarea
+que lo tenía, así que esa combinación solo puede venir de un tablero editado a mano de una forma que el
+propio Backlog.md no produce, y no hay ninguna señal en los datos que diga cuál de los ficheros es el
+verdadero.
 
-**Cualquier referencia a un id compartido resuelve a la tarea que no está archivada.** Una mención en
-texto libre, un `parent` o un elemento de `dependencies` que nombra un id que dos o más ficheros
-comparten no puede distinguir a cuál de las dos incarnaciones del mismo número se refería quien lo
-escribió: Backlog.md no guarda esa intención en ningún sitio, solo el número. Por eso la resolución
-siempre elige la tarea que no está archivada, la misma que conserva el número cuando el id compartido es
-simple: es la que de verdad existe hoy en el tablero, mientras que la archivada ya cerró su ciclo y no es
-a la que tendría sentido seguir apuntando. Es una simplificación deliberada, no una detección: el
-convertidor no intenta adivinar cuál de las dos incarnaciones tenía en mente quien escribió la
-referencia, solo resuelve de la única forma que tiene sentido de las dos posibles, tanto si el id
-compartido es simple como si tiene forma de subtarea.
+**Cualquier referencia a un id compartido resuelve a la tarea que no está archivada, y deja un
+hallazgo.** Una mención en texto libre, un `parent` o un elemento de `dependencies` que nombra un id que
+dos o más ficheros comparten no puede distinguir a cuál de las tareas se refería quien lo escribió:
+Backlog.md no guarda esa intención en ningún sitio, solo el número. Por eso la resolución siempre elige
+la tarea que no está archivada, la misma que conserva el número cuando el id compartido es simple: es la
+que de verdad existe hoy en el tablero, mientras que la archivada, o las archivadas si hay varias, ya
+cerraron su ciclo y no son a las que tendría sentido seguir apuntando. Es una simplificación deliberada,
+no una detección: el convertidor no intenta adivinar cuál de las tareas tenía en mente quien escribió la
+referencia, solo resuelve de la única forma que tiene sentido de todas las posibles, tanto si el id
+compartido es simple como si tiene forma de subtarea. Esta resolución deja un hallazgo, no bloqueante,
+con el fichero, el id compartido y el id final al que se resolvió: ["Nada se pierde en
+silencio"](#nada-se-pierde-en-silencio), más abajo, incluye este caso, porque una referencia ambigua
+resuelta sin avisar sería justo el tipo de pérdida silenciosa que ese principio prohíbe, aunque aquí lo
+que se pierde no es un dato sino la certeza de a qué tarea apuntaba de verdad quien escribió la
+referencia.
+
+**Descartado: dejar la referencia sin resolver**, tratándola como la mención no reconocida de la regla 6
+de "Identificadores". Perdería la referencia por completo en el caso más común, precisamente aquel en el
+que la interpretación "la tarea que existe hoy en el tablero" sí es la correcta: la inmensa mayoría de
+las referencias a un id reutilizado, cuando la tarea que lo tenía ya está archivada, quieren decir la
+tarea activa, no un limbo sin resolver. **Descartado: resolver por la fecha de la referencia**, eligiendo
+la tarea cuya fecha de creación esté más cerca en el tiempo de cuando se escribió el texto que contiene
+la mención. Backlog.md no guarda cuándo se escribió cada mención dentro de una tarea, solo la fecha de la
+tarea entera, así que no hay ningún dato con el que hacerlo con precisión.
 
 **La comparación de "ya está en el destino" usa el título ya reescrito, no el crudo.** El título de una
 tarea de origen puede mencionar el id de otra tarea (`"Follow-up of TASK-1"`), y la regla 5 de
