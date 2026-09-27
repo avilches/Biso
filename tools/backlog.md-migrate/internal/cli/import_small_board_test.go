@@ -51,20 +51,37 @@ func runBacklog(t *testing.T, backlogCLI, dir string, args ...string) string {
 // its first line ("Task TASK-1 - Title").
 var backlogTaskIDPattern = regexp.MustCompile(`Task (\S+) -`)
 
+// backlogTaskFilePattern matches the file path backlog task create --plain
+// prints on its very first line ("File: /abs/path/task-1 - Title.md").
+var backlogTaskFilePattern = regexp.MustCompile(`^File: (.+)$`)
+
+// createdBacklogTask is what createBacklogTask reports about a task it just
+// created: its source id and the base name of the file Backlog.md wrote for
+// it, both parsed from the real CLI's own --plain output rather than
+// assumed, so this test depends neither on ids starting at 1 nor on a
+// particular filename slugification scheme.
+type createdBacklogTask struct {
+	ID   string
+	File string
+}
+
 // createBacklogTask runs "backlog task create" with args inside sourceRoot
-// and returns the source id Backlog.md assigned to the new task, parsed
-// from its --plain output rather than assumed, so this test does not depend
-// on ids starting at 1.
-func createBacklogTask(t *testing.T, backlogCLI, sourceRoot string, args ...string) string {
+// and reports the id and file Backlog.md assigned to the new task.
+func createBacklogTask(t *testing.T, backlogCLI, sourceRoot string, args ...string) createdBacklogTask {
 	t.Helper()
 	fullArgs := append([]string{"task", "create"}, args...)
 	fullArgs = append(fullArgs, "--plain")
 	out := runBacklog(t, backlogCLI, sourceRoot, fullArgs...)
-	m := backlogTaskIDPattern.FindStringSubmatch(out)
-	if m == nil {
+
+	idMatch := backlogTaskIDPattern.FindStringSubmatch(out)
+	if idMatch == nil {
 		t.Fatalf("could not parse the created task id from backlog output: %s", out)
 	}
-	return m[1]
+	fileMatch := backlogTaskFilePattern.FindStringSubmatch(strings.SplitN(out, "\n", 2)[0])
+	if fileMatch == nil {
+		t.Fatalf("could not parse the created task file from backlog output: %s", out)
+	}
+	return createdBacklogTask{ID: idMatch[1], File: filepath.Base(strings.TrimSpace(fileMatch[1]))}
 }
 
 // sourceNumberPattern extracts the trailing number of a source id
@@ -142,9 +159,14 @@ func findLineByTitle(t *testing.T, lines []convert.Line, title string) convert.L
 //     duplicated.
 //   - A title mentioning another source task's id, rewritten to that task's
 //     final destination id.
-//   - A lowercase branch-like mention ("task-10-modelo") that must be left
-//     untouched, since the mention pattern only matches an uppercase source
-//     prefix.
+//   - A lowercase branch-like mention ("task-2-modelo", naming a task that
+//     DOES exist in this same batch) that must be left untouched, since the
+//     mention pattern only matches an uppercase source prefix. Naming a real
+//     task's number is deliberate: with a number that names no task at all,
+//     any converter, broken or not, would leave the text alone for the
+//     wrong reason (an unresolved mention), so the case would never
+//     actually exercise docs/especificacion.md, "Identificadores", point 5's
+//     word-boundary and case protection.
 func TestImportSmallBoardCoversDoDCollisionRerunMentionAndBranchName(t *testing.T) {
 	biso := findBisoBinary(t)
 	backlogCLI := findBacklogBinary(t)
@@ -153,6 +175,7 @@ func TestImportSmallBoardCoversDoDCollisionRerunMentionAndBranchName(t *testing.
 	// own, so its number (1) is already taken before the conversion starts.
 	project := newTestProject(t, biso)
 	runBiso(t, biso, "-C", project, "new", "Existing destination task", "--quiet")
+	const destExistingNumber = 1
 
 	// The source: a real Backlog.md board, generated with the actual CLI
 	// (docs/decisiones.md, "El formato de Backlog.md se mide con su CLI, no
@@ -161,16 +184,32 @@ func TestImportSmallBoardCoversDoDCollisionRerunMentionAndBranchName(t *testing.
 	runBacklog(t, backlogCLI, sourceRoot, "init", "Fixture", "--defaults", "--no-git", "--agent-instructions", "none")
 	backlogDir := filepath.Join(sourceRoot, "backlog")
 
-	collisionID := createBacklogTask(t, backlogCLI, sourceRoot,
+	collision := createBacklogTask(t, backlogCLI, sourceRoot,
 		"Collision source task", "--ac", "First criterion", "--ac", "Second criterion", "--dod", "Done item one")
-	contextID := createBacklogTask(t, backlogCLI, sourceRoot, "Context task")
-	followUpSourceTitle := fmt.Sprintf("Follow-up of %s", contextID)
-	followUpID := createBacklogTask(t, backlogCLI, sourceRoot, followUpSourceTitle)
-	createBacklogTask(t, backlogCLI, sourceRoot,
-		"Branch mention task", "-d", "See branch task-10-modelo for context.")
+	context := createBacklogTask(t, backlogCLI, sourceRoot, "Context task")
+	followUpSourceTitle := fmt.Sprintf("Follow-up of %s", context.ID)
+	followUp := createBacklogTask(t, backlogCLI, sourceRoot, followUpSourceTitle)
+	branchMentionText := fmt.Sprintf("See branch task-%d-modelo for context.", sourceNumber(t, context.ID))
+	branch := createBacklogTask(t, backlogCLI, sourceRoot, "Branch mention task", "-d", branchMentionText)
 
-	contextNumber := sourceNumber(t, contextID)
-	followUpNumber := sourceNumber(t, followUpID)
+	contextNumber := sourceNumber(t, context.ID)
+	followUpNumber := sourceNumber(t, followUp.ID)
+
+	// docs/especificacion.md, "Identificadores", point 4: the reassigned
+	// number is the next free one above the greater of the destination's own
+	// maximum and the source batch's own maximum, computed here from the
+	// four real source numbers this run just created, not assumed.
+	maxSourceNumber := sourceNumber(t, collision.ID)
+	for _, n := range []int{contextNumber, followUpNumber, sourceNumber(t, branch.ID)} {
+		if n > maxSourceNumber {
+			maxSourceNumber = n
+		}
+	}
+	maxNumber := maxSourceNumber
+	if destExistingNumber > maxNumber {
+		maxNumber = destExistingNumber
+	}
+	wantCollisionID := fmt.Sprintf("BISO-%d", maxNumber+1)
 
 	// --- First run: converts all four tasks. The collision is itself a
 	// Finding, so the run exits 5, but docs/especificacion.md, "Códigos de
@@ -186,11 +225,26 @@ func TestImportSmallBoardCoversDoDCollisionRerunMentionAndBranchName(t *testing.
 		t.Fatalf("first run: got %d lines, want 4", len(firstLines))
 	}
 
+	// The COMPLETE and exact set of findings the first run should raise:
+	// only the one reassignment, docs/especificacion.md, "Identificadores",
+	// point 8's exact message shape. Checking the full set, not just that
+	// this one finding is present among possibly others, is what would catch
+	// an extra, unwanted finding slipping in (an unresolved mention that
+	// should have stayed silent, for example).
+	wantFindings := fmt.Sprintf(
+		"warning: %s: id: %s: id BISO-%d is taken on the destination, reassigned to %s\n",
+		collision.File, collision.ID, destExistingNumber, wantCollisionID,
+	)
+	if errOut != wantFindings {
+		t.Errorf("first run: errOut = %q, want exactly %q", errOut, wantFindings)
+	}
+
 	// Definition of Done alongside the task's own acceptance criteria, and
-	// the id collision, both on the same task.
+	// the id collision, both on the same task, reassigned to the EXACT
+	// number point 4 computes, not merely away from BISO-1.
 	collisionLine := findLineByTitle(t, firstLines, "Collision source task")
-	if collisionLine.ID == "BISO-1" {
-		t.Fatalf("collision task kept id BISO-1, want it reassigned (BISO-1 is the pre-existing destination task)")
+	if collisionLine.ID != wantCollisionID {
+		t.Errorf("collision task id = %q, want %q (point 4's next free number above max(destination, source))", collisionLine.ID, wantCollisionID)
 	}
 	wantAC := []convert.AcceptanceCriterion{
 		{Key: 1, Text: "First criterion", Checked: false},
@@ -199,10 +253,6 @@ func TestImportSmallBoardCoversDoDCollisionRerunMentionAndBranchName(t *testing.
 	}
 	if !reflect.DeepEqual(collisionLine.AcceptanceCriteria, wantAC) {
 		t.Errorf("collision task AcceptanceCriteria = %+v, want %+v", collisionLine.AcceptanceCriteria, wantAC)
-	}
-	wantReassignFinding := fmt.Sprintf("%s: id BISO-1 is taken on the destination, reassigned to %s", collisionID, collisionLine.ID)
-	if !strings.Contains(errOut, wantReassignFinding) {
-		t.Errorf("errOut = %q, want it to contain %q", errOut, wantReassignFinding)
 	}
 
 	// The context task's own number was free on the destination, so it
@@ -222,18 +272,22 @@ func TestImportSmallBoardCoversDoDCollisionRerunMentionAndBranchName(t *testing.
 		t.Errorf("follow-up task id = %q, want %q (its own number was free)", followUpLine.ID, wantFollowUpID)
 	}
 
-	// A lowercase branch-like mention is never a real mention: the pattern
-	// only matches the source prefix in uppercase (point 5's last
-	// paragraph), so it must survive untouched.
+	// A lowercase branch-like mention naming a task that DOES exist in this
+	// batch is never a real mention: the pattern only matches the source
+	// prefix in uppercase, and even disabling only the word-boundary
+	// protection (leaving the case check intact) cannot corrupt this text,
+	// since the case check alone still blocks the substitution; see this
+	// test's own doc comment for why a nonexistent number would not have
+	// exercised this at all.
 	branchLine := findLineByTitle(t, firstLines, "Branch mention task")
-	if branchLine.Description != "See branch task-10-modelo for context." {
-		t.Errorf("branch mention task Description = %q, want the branch-like text left untouched", branchLine.Description)
+	if branchLine.Description != branchMentionText {
+		t.Errorf("branch mention task Description = %q, want the branch-like text left untouched (%q)", branchLine.Description, branchMentionText)
 	}
 
 	// --- Apply the first batch for real, so the destination actually has
 	// these four tasks (not just an unapplied NDJSON) before the second run,
-	// as the criterion requires: "con bin/biso new --from real entre
-	// medias". ---
+	// per docs/especificacion.md, "Identificadores", point 3: it is what
+	// makes a task "already on the destination" for the second run below. ---
 	runBiso(t, biso, "-C", project, "new", "--from", firstOut, "--dry-run")
 	runBiso(t, biso, "-C", project, "new", "--from", firstOut)
 

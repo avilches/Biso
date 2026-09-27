@@ -2,8 +2,10 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -68,23 +70,32 @@ var realBoardSampleTaskIDs = []string{
 	"TASK-7",  // blocked; description and notes; unchecked criteria; no plan, no summary
 }
 
-// notesContainProtectedMentions lists the sample tasks whose Notes field
-// talks ABOUT id mentions rather than just containing plain ones: TASK-70's
-// notes are this very project's own changelog of the mention-rewriting
-// algorithm, and mention, as text examples, a lowercase "task-1" (measured
-// in decisiones.md as a real branch-name look-alike) and a "TASK-1.0" that
-// never existed as a real subtask; TASK-10's notes mention the worktree
-// "task-10-modelo" it was implemented in, the same branch-name shape
-// docs/especificacion.md itself uses as its example. Both are correctly
-// left untouched by the converter (docs/especificacion.md, "Identificadores",
-// points 5 and 6), but wantMentionsRewritten's plain regex cannot tell a
-// protected mention from an ordinary one, so for these two tasks the Notes
-// comparison below trusts the conversion engine's own output (already
-// covered field by field by internal/convert's tests and by this package's
-// small-board test) instead of trying to reproduce the rewrite by hand.
+// notesContainProtectedMentions lists the one sample task whose Notes field
+// wantMentionsRewritten cannot reproduce correctly, and why: TASK-70's notes
+// are this very project's own changelog of the mention-rewriting algorithm,
+// and mention, as a text example, "TASK-1.0", a subtask-shaped mention that
+// never existed as a real subtask of any real task (docs/especificacion.md,
+// "Identificadores", point 6: a mention with the right shape that names no
+// task in the batch is left untouched). wantMentionsRewritten's plain regex
+// does not know that: it matches the "TASK-1" prefix inside "TASK-1.0" and
+// rewrites it, producing "REAL-1.0" where the real converter correctly
+// leaves the whole thing alone. The same notes also mention "TASK-001",
+// which the real converter resolves by canonical form (ignoring the leading
+// zero) to the same task as "TASK-1"; wantMentionsRewritten does not
+// canonicalize, so it would keep the padded "REAL-001" instead. Neither
+// mismatch has anything to do with letter case: a lowercase mention like
+// "task-1" (also present in these same notes) or the branch-like
+// "task-10-modelo" TASK-10's own notes mention are matched identically by
+// wantMentionsRewritten's uppercase-only pattern and the real converter's
+// own case check, and need no exclusion at all, which is why TASK-10 is not
+// in this map. Only TASK-70's notes are excluded here, and only from the raw
+// source cross-check: the comparison below falls back to what the
+// conversion engine itself computed (already covered field by field by
+// internal/convert's tests and by this package's small-board test) instead
+// of trying to reproduce canonical-form and subtask-shape resolution by
+// hand.
 var notesContainProtectedMentions = map[string]bool{
 	"TASK-70": true,
-	"TASK-10": true,
 }
 
 // mentionPattern matches a simple source id mention (TASK-<digits>) for the
@@ -133,15 +144,27 @@ type bisoGetEnvelope struct {
 }
 
 // bisoGetJSON runs "biso get <id> --json" against project and decodes its
-// task object. It decodes only the leading JSON value rather than the whole
-// output, because "biso get" on an archived task appends a trailing plain
-// text "note: ... is archived" line after the JSON envelope.
+// task object. It reads only stdout (cmd.Output, not runBiso's
+// CombinedOutput): "biso get" on an archived task also prints a
+// "note: ... is archived" line, but on stderr, as a separate stream, not
+// interleaved into the JSON itself; that line only ever appeared mixed in
+// when captured through CombinedOutput. A streaming Decoder is kept here
+// too, as a second line of defense, so any other trailing text on stdout
+// this test does not anticipate still would not break decoding.
 func bisoGetJSON(t *testing.T, biso, project, id string) bisoGetTask {
 	t.Helper()
-	out := runBiso(t, biso, "-C", project, "--json", "get", id)
+	cmd := exec.Command(biso, "-C", project, "--json", "get", id)
+	stdout, err := cmd.Output()
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			t.Fatalf("biso -C %s --json get %s: %v\nstderr: %s", project, id, err, exitErr.Stderr)
+		}
+		t.Fatalf("biso -C %s --json get %s: %v", project, id, err)
+	}
 	var env bisoGetEnvelope
-	if err := json.NewDecoder(strings.NewReader(out)).Decode(&env); err != nil {
-		t.Fatalf("biso get %s --json: invalid JSON: %v\noutput: %s", id, err, out)
+	if err := json.NewDecoder(strings.NewReader(string(stdout))).Decode(&env); err != nil {
+		t.Fatalf("biso get %s --json: invalid JSON: %v\noutput: %s", id, err, stdout)
 	}
 	return env.Data.Task
 }
@@ -256,7 +279,7 @@ func TestImportRealProjectBoardPreservesTitleStatusAcceptanceCriteriaDescription
 		}
 		wantNotes := wantMentionsRewritten(sourceTask.Notes, destPrefix)
 		if notesContainProtectedMentions[sourceID] {
-			t.Logf("%s: notes mentions a lowercase or dotted id example that must survive untouched; comparing against what import itself computed instead of a raw source cross-check", sourceID)
+			t.Logf("%s: notes mention a dotted or zero-padded id example wantMentionsRewritten cannot resolve like the real converter does; comparing against what import itself computed instead of a raw source cross-check (see notesContainProtectedMentions's doc comment)", sourceID)
 			wantNotes = line.Notes
 		}
 		if got.Notes != wantNotes {
