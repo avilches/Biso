@@ -146,12 +146,13 @@ func parseSourceID(id string) (parsed parsedSourceID, ok bool) {
 }
 
 // canonicalIDKey returns the canonical form docs/especificacion.md,
-// "Identificadores", point 1's last paragraph, and docs/decisiones.md, "El
-// mismo número, no la misma cadena, también decide cuándo dos ids de origen
-// chocan entre sí", define for deciding whether two source ids are the
-// exact same id: the prefix folded to uppercase, the main number as an int
-// (ignoring leading zeros), and, only when the id has a dot, the subtask
-// number as an int too (also ignoring leading zeros).
+// "Identificadores", point 1's last paragraph defines for deciding whether
+// two source ids are the exact same id, explained further in
+// docs/decisiones.md, section "Los identificadores conservan su número y
+// cambian de prefijo", in its closing paragraph about same-number
+// collisions between source ids: the prefix folded to uppercase, the main
+// number as an int (ignoring leading zeros), and, only when the id has a
+// dot, the subtask number as an int too (also ignoring leading zeros).
 //
 // A simple id and a subtask id are never the same canonical key even when
 // their main number matches, because only a subtask's key has a dot at
@@ -290,6 +291,19 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 	// pattern, only what they do with a candidate differs.
 	pattern := mentionPattern(prefixUpper)
 
+	// naiveTitle only ever substitutes a mention whose number names a
+	// SIMPLE source id (docs/especificacion.md, "Identificadores", point 3;
+	// see naiveTitle's own comment for the full rule), so this is every
+	// main number that belongs to a non-subtask task in the batch, built
+	// once from parsedByID rather than inside naiveTitle's own closure per
+	// call.
+	simpleSourceNumbers := make(map[int]bool, len(parsedByID))
+	for _, p := range parsedByID {
+		if !p.hasSub {
+			simpleSourceNumbers[p.number] = true
+		}
+	}
+
 	var findings []source.Finding
 
 	// docs/especificacion.md, "Identificadores", point 3: a task is a
@@ -304,7 +318,7 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 	equivalents := make(map[string]string, len(batch))
 	skipped := make(map[string]bool, len(batch))
 	for _, b := range batch {
-		candidateTitle := naiveTitle(b.Task.Title, pattern, prefixUpper, board.Config.TaskPrefix)
+		candidateTitle := naiveTitle(b.Task.Title, pattern, prefixUpper, board.Config.TaskPrefix, simpleSourceNumbers)
 		for _, dt := range board.Tasks {
 			if candidateTitle == dt.Title && b.Result.CreatedAt == dt.CreatedAt {
 				equivalents[b.Task.ID] = dt.ID
@@ -365,17 +379,24 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 	}
 
 	// Point 4 assigns reassigned numbers in the source id's own natural
-	// order: main number ascending, and, when two entries share a main
-	// number, subtask number ascending. Two entries only ever share a main
-	// number when both are subtasks of the same parent: a simple id that
-	// tied on number would already have kept it above, so it never reaches
-	// this list. Sorting by (number, sub) therefore covers both a batch of
-	// only simple ids and one mixing in subtasks, regardless of the order
-	// they arrived in batch.
+	// order: main number ascending; when two entries share a main number, a
+	// SIMPLE id always sorts before any subtask of that same number ("TASK-1"
+	// reads before "TASK-1.0"), and two subtasks of the same parent sort by
+	// their own subtask number ascending. Two entries can share a main
+	// number two different ways, not just one: two subtasks of the same
+	// parent, or a simple id that collides with the destination reassigned
+	// alongside one of its own subtasks (a colliding TASK-1 and its subtask
+	// TASK-1.1 both end up in this list at once, sharing main number 1).
+	// Sorting by (number, hasSub, sub) makes the final order deterministic
+	// in every one of those cases, regardless of the order entries arrived
+	// in batch.
 	sort.SliceStable(toReassign, func(i, j int) bool {
 		a, b := toReassign[i].parsed, toReassign[j].parsed
 		if a.number != b.number {
 			return a.number < b.number
+		}
+		if a.hasSub != b.hasSub {
+			return !a.hasSub
 		}
 		return a.sub < b.sub
 	})
@@ -582,9 +603,9 @@ type mentionMatch struct {
 //
 // The result is rebuilt from pieces of the ORIGINAL text plus handle's
 // replacements, in a single pass: handle's own output is never fed back
-// through pattern. That is what point 5 means by "todas las menciones se
-// sustituyen en una sola pasada, de modo que un número reasignado no vuelve
-// a sustituirse", and it is what makes rewriteMentions and naiveTitle share
+// through pattern. That is the single-pass substitution point 5 requires,
+// the one that keeps a reassigned number from ever being substituted a
+// second time, and it is what makes rewriteMentions and naiveTitle share
 // this one scan instead of each reimplementing it.
 func scanMentions(text string, pattern *regexp.Regexp, prefixUpper string, handle func(mentionMatch) string) string {
 	if text == "" {
@@ -639,24 +660,36 @@ func rewriteMentions(text string, pattern *regexp.Regexp, prefixUpper string, eq
 }
 
 // naiveTitle implements the "naive" mention rewrite docs/especificacion.md,
-// "Identificadores", point 3, and docs/decisiones.md, "Los identificadores
-// conservan su número y cambian de prefijo" (its paragraphs on "La
-// comparación de 'ya está en el destino' usa el título ya reescrito, no el
-// crudo"), define for exactly one purpose: deciding whether a source task
-// is already on the destination, BEFORE this phase knows the equivalence
-// table. That table needs to know which tasks are skipped before it can be
-// completed, so this comparison cannot depend on it without becoming
-// circular; naiveTitle breaks that circularity by computing something
-// simpler on its own.
+// "Identificadores", point 3, defines for exactly one purpose: deciding
+// whether a source task is already on the destination, BEFORE this phase
+// knows the equivalence table. That table needs to know which tasks are
+// skipped before it can be completed, so this comparison cannot depend on
+// it without becoming circular; naiveTitle breaks that circularity by
+// computing something simpler on its own. The full reasoning, and the
+// limitation it knowingly accepts, are in docs/decisiones.md, section "Los
+// identificadores conservan su número y cambian de prefijo", in its
+// paragraph about the naive title comparison and the one right after it
+// about the limitation this rewrite accepts.
 //
-// It substitutes every candidate scanMentions finds whose case exactly
-// matches the source prefix with the destination's own prefix and the SAME
-// number the mention names, dropping any subtask suffix (a biso id is
-// always simple, so a mention of "TASK-1.2" naively becomes "BISO-1"),
-// regardless of whether that number collides with anything on the
-// destination or the mentioned task ends up reassigned in this same batch.
+// point 3's final rule (as of docs/especificacion.md's current text) is
+// narrower than "substitute every candidate": a candidate is substituted,
+// with the destination's own prefix and the SAME number it names, ONLY
+// when its case exactly matches the source prefix AND its number, with no
+// subtask suffix at all, matches a SIMPLE (non-subtask) source id present
+// in simpleSourceNumbers. Every other exact-case candidate is left
+// untouched:
+//
+//   - one shaped like a subtask (it has a dot) is always left untouched,
+//     whether or not that exact subtask exists in the batch, because a
+//     subtask always gets a fresh number this phase cannot predict yet
+//     (point 4); this is the accepted limitation docs/decisiones.md
+//     describes for a title that mentions a subtask;
+//   - one shaped like a simple id but whose number names no simple source
+//     task at all is left untouched too, the same way point 6 leaves an
+//     unresolved mention untouched in the definitive rewrite.
+//
 // A candidate whose case does not exactly match the source prefix is left
-// untouched, the same as rewriteMentions leaves it.
+// untouched as well, the same as rewriteMentions leaves it.
 //
 // The result is used ONLY for the "already on the destination" comparison
 // and is discarded right after: the title actually written to the
@@ -665,18 +698,22 @@ func rewriteMentions(text string, pattern *regexp.Regexp, prefixUpper string, eq
 // Reusing this naive result as a task's final title would be wrong even
 // for a task that is not skipped, since it never accounts for a collision
 // or a reassignment at all.
-func naiveTitle(title string, pattern *regexp.Regexp, prefixUpper, destinationPrefix string) string {
+func naiveTitle(title string, pattern *regexp.Regexp, prefixUpper, destinationPrefix string, simpleSourceNumbers map[int]bool) string {
 	return scanMentions(title, pattern, prefixUpper, func(m mentionMatch) string {
 		if !m.ExactCase {
 			return m.Text
 		}
 
 		numeric := m.Text[len(prefixUpper)+1:]
-		if dot := strings.IndexByte(numeric, '.'); dot >= 0 {
-			numeric = numeric[:dot]
+		if strings.IndexByte(numeric, '.') >= 0 {
+			// Shaped like a subtask: never substituted here, regardless of
+			// whether that exact subtask exists in the batch (see the
+			// function comment's first bullet).
+			return m.Text
 		}
+
 		n, err := strconv.Atoi(numeric)
-		if err != nil {
+		if err != nil || !simpleSourceNumbers[n] {
 			return m.Text
 		}
 

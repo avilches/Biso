@@ -175,18 +175,27 @@ func TestIdentifiersSkipsATaskAlreadyOnTheDestination(t *testing.T) {
 
 // TestIdentifiersAlreadyImportedComparisonUsesTheNaivelyRewrittenTitle
 // covers docs/especificacion.md, "Identificadores", point 3's naive title
-// rewrite and docs/decisiones.md, "Los identificadores conservan su número y
-// cambian de prefijo" ("La comparación de 'ya está en el destino' usa el
-// título ya reescrito, no el crudo"). TASK-2's raw title mentions TASK-1
-// ("Follow-up of TASK-1"); the destination already has a task whose title
-// is the REWRITTEN form from an earlier run ("Follow-up of BISO-1").
+// rewrite, and its reasoning in docs/decisiones.md, section "Los
+// identificadores conservan su número y cambian de prefijo", in the
+// paragraph about the naive title comparison. TASK-2's raw title mentions
+// TASK-1 ("Follow-up of TASK-1"); the destination already has a task whose
+// title is the REWRITTEN form from an earlier run ("Follow-up of BISO-1").
 // Comparing the raw title would never match this destination title, and
 // TASK-2 would be duplicated; comparing the naively rewritten title does
-// match, because it substitutes TASK-1's own number regardless of whether
-// TASK-1 itself collides or gets reassigned in this run.
+// match, because TASK-1 is a simple id present in the batch, so its own
+// number gets substituted.
+//
+// The destination also already has an unrelated task occupying number 1
+// ("BISO-1"), which forces TASK-1 itself to collide and be reassigned to a
+// different number in THIS run. The naive comparison must still use TASK-1's
+// ORIGINAL number, 1, not its freshly reassigned one, or this test would not
+// actually distinguish the naive rewrite from the definitive one.
 func TestIdentifiersAlreadyImportedComparisonUsesTheNaivelyRewrittenTitle(t *testing.T) {
 	batch := []TaskInput{
-		{Task: source.Task{File: "one.md", ID: "TASK-1", Title: "Original"}, Result: Result{}},
+		{
+			Task:   source.Task{File: "one.md", ID: "TASK-1", Title: "Original"},
+			Result: Result{CreatedAt: "2020-06-01T00:00:00Z"},
+		},
 		{
 			Task:   source.Task{File: "two.md", ID: "TASK-2", Title: "Follow-up of TASK-1"},
 			Result: Result{CreatedAt: "2026-01-01T00:00:00Z"},
@@ -195,6 +204,7 @@ func TestIdentifiersAlreadyImportedComparisonUsesTheNaivelyRewrittenTitle(t *tes
 	board := destination.Board{
 		Config: identifiersConfig,
 		Tasks: []destination.Task{
+			{ID: "BISO-1", Title: "Unrelated", CreatedAt: "2099-01-01T00:00:00Z"},
 			{ID: "BISO-2", Title: "Follow-up of BISO-1", CreatedAt: "2026-01-01T00:00:00Z"},
 		},
 	}
@@ -202,6 +212,11 @@ func TestIdentifiersAlreadyImportedComparisonUsesTheNaivelyRewrittenTitle(t *tes
 	out, findings, err := Identifiers(batch, board)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+
+	reassignedTask1ID := findByID(t, out, "TASK-1").ID
+	if reassignedTask1ID == "BISO-1" {
+		t.Fatalf("TASK-1 was not actually reassigned, this test proves nothing: ID = %q", reassignedTask1ID)
 	}
 
 	for _, i := range out {
@@ -218,6 +233,61 @@ func TestIdentifiersAlreadyImportedComparisonUsesTheNaivelyRewrittenTitle(t *tes
 	}
 	if !found {
 		t.Fatalf("findings = %v, want %+v", findings, want)
+	}
+}
+
+// TestNaiveTitleLeavesAMentionOfAnUnknownIdUntouched covers
+// docs/especificacion.md, "Identificadores", point 3's naive rewrite: a
+// mention with the right shape that does not correspond to any task in the
+// batch (TASK-99 is not one of the batch's ids at all here) is left
+// untouched, the same way point 6 leaves an unresolved mention untouched in
+// the definitive rewrite.
+func TestNaiveTitleLeavesAMentionOfAnUnknownIdUntouched(t *testing.T) {
+	pattern := mentionPattern("TASK")
+	simpleSourceNumbers := map[int]bool{} // TASK-99 names no task in this batch.
+
+	got := naiveTitle("Revert TASK-99", pattern, "TASK", "BISO", simpleSourceNumbers)
+
+	want := "Revert TASK-99"
+	if got != want {
+		t.Errorf("got %q, want %q (TASK-99 is not a batch task, so it must be left untouched)", got, want)
+	}
+}
+
+// TestNaiveTitleLeavesAMentionOfAKnownSubtaskUntouched covers
+// docs/especificacion.md, "Identificadores", point 3's narrower final rule:
+// a mention of a SUBTASK (TASK-1.1 here) is left untouched even though that
+// exact subtask really is a task in the batch, because a subtask always
+// gets a fresh number this naive rewrite cannot predict (point 4). This is
+// the accepted limitation docs/decisiones.md documents for a title that
+// mentions a subtask.
+func TestNaiveTitleLeavesAMentionOfAKnownSubtaskUntouched(t *testing.T) {
+	pattern := mentionPattern("TASK")
+	// TASK-1.1 is a real subtask of the batch, but subtasks never belong in
+	// simpleSourceNumbers: only a SIMPLE id's main number does.
+	simpleSourceNumbers := map[int]bool{}
+
+	got := naiveTitle("Finish TASK-1.1", pattern, "TASK", "BISO", simpleSourceNumbers)
+
+	want := "Finish TASK-1.1"
+	if got != want {
+		t.Errorf("got %q, want %q (TASK-1.1 is a subtask, point 3 never substitutes a subtask mention)", got, want)
+	}
+}
+
+// TestNaiveTitleSubstitutesAMentionOfAKnownSimpleTask covers
+// docs/especificacion.md, "Identificadores", point 3's one case that IS
+// substituted: a mention whose number names a SIMPLE task present in the
+// batch is rewritten to the destination's own prefix and that same number.
+func TestNaiveTitleSubstitutesAMentionOfAKnownSimpleTask(t *testing.T) {
+	pattern := mentionPattern("TASK")
+	simpleSourceNumbers := map[int]bool{1: true}
+
+	got := naiveTitle("Follow-up of TASK-1", pattern, "TASK", "BISO", simpleSourceNumbers)
+
+	want := "Follow-up of BISO-1"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
 
@@ -293,8 +363,8 @@ func TestIdentifiersReassignmentCeilingCountsSkippedTasksToo(t *testing.T) {
 }
 
 // TestIdentifiersReassignsInNaturalOrderRegardlessOfBatchOrder covers
-// docs/especificacion.md, "Identificadores", point 4's "en el orden natural
-// de su id de origen": three subtasks that all need reassigning arrive in
+// docs/especificacion.md, "Identificadores", point 4's natural-order
+// assignment rule: three subtasks that all need reassigning arrive in
 // scrambled batch order, but their final numbers must still follow the
 // ascending (main number, subtask number) order of their SOURCE ids, not
 // the order they were given in.
@@ -318,6 +388,38 @@ func TestIdentifiersReassignsInNaturalOrderRegardlessOfBatchOrder(t *testing.T) 
 	}
 	if got := findByID(t, out, "TASK-5.2").ID; got != "BISO-8" {
 		t.Errorf("TASK-5.2 = %q, want BISO-8 (assigned last)", got)
+	}
+}
+
+// TestIdentifiersASimpleIdSortsBeforeItsOwnSubtaskWhenBothAreReassigned
+// covers docs/especificacion.md, "Identificadores", point 4's natural-order
+// tie-break in the one case it can actually happen: a simple id that
+// collides with the destination (TASK-1) and one of its own subtasks
+// (TASK-1.0, always reassigned) share the same main number, 1, and both
+// land in the reassigned group at once. A simple id must always be
+// assigned the smaller of the two new numbers ("TASK-1" reads before
+// "TASK-1.0"), regardless of the order the two arrive in the batch slice;
+// giving the subtask first in the input here is what exposes a tie-break
+// that falls back to batch order instead of being deterministic.
+func TestIdentifiersASimpleIdSortsBeforeItsOwnSubtaskWhenBothAreReassigned(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "sub.md", ID: "TASK-1.0", Title: "Sub"}, Result: Result{}},
+		{Task: source.Task{File: "simple.md", ID: "TASK-1", Title: "Simple"}, Result: Result{}},
+	}
+	board := destination.Board{
+		Config: identifiersConfig,
+		Tasks:  []destination.Task{{ID: "BISO-1", Title: "Unrelated", CreatedAt: "2020-01-01T00:00:00Z"}},
+	}
+
+	out, _, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := findByID(t, out, "TASK-1").ID; got != "BISO-2" {
+		t.Errorf("TASK-1 = %q, want BISO-2 (the simple id, always assigned first on a tie)", got)
+	}
+	if got := findByID(t, out, "TASK-1.0").ID; got != "BISO-3" {
+		t.Errorf("TASK-1.0 = %q, want BISO-3 (its own subtask, assigned second)", got)
 	}
 }
 
@@ -412,8 +514,8 @@ func TestIdentifiersRewritesMentionsAcrossFieldsInOnePass(t *testing.T) {
 }
 
 // TestIdentifiersRewritesMentionsInVariousTextContexts covers
-// docs/especificacion.md, "Identificadores", point 5's "se reescribe en
-// cualquier lugar del texto, un bloque de código incluido": a mention
+// docs/especificacion.md, "Identificadores", point 5's rule that a mention
+// is rewritten anywhere in the text, code blocks included: a mention
 // surrounded by parentheses, backticks, a multi-line code fence, or
 // immediately followed by a sentence-ending period, is still found and
 // substituted, because none of those characters are letters, digits, '_',
@@ -457,7 +559,7 @@ func TestIdentifiersRewritesMentionsInVariousTextContexts(t *testing.T) {
 
 // TestRewriteMentionsSubstitutesFromTheOriginalTextOnly is a direct,
 // deterministic proof of docs/especificacion.md, "Identificadores", point
-// 5's "en una sola pasada" requirement, exercised at rewriteMentions
+// 5's single-pass substitution requirement, exercised at rewriteMentions
 // itself: TASK-1's equivalent is TASK-2, and TASK-2's own equivalent is
 // TASK-3. If substitution rescanned its own output, the "TASK-2" written in
 // place of "TASK-1" would be found again and turned into "TASK-3",
