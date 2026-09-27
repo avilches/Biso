@@ -105,21 +105,24 @@ ninguna copia está activa ni terminada, ninguna conserva el número: todas se r
 ningún desempate entre las archivadas para decidir cuál es "la buena", el mismo tratamiento que ya reciben
 todas las subtareas.
 
-**Cualquier referencia a un id compartido resuelve a la tarea que no está archivada, y deja un
-hallazgo.** Una mención en texto libre, un `parent` o un elemento de `dependencies` que nombra un id que
-dos o más ficheros comparten no puede distinguir a cuál de las tareas se refería quien lo escribió:
-Backlog.md no guarda esa intención en ningún sitio, solo el número. Por eso la resolución siempre elige
-la tarea que no está archivada, la misma que conserva el número cuando el id compartido es simple: es la
-que de verdad existe hoy en el tablero, mientras que la archivada, o las archivadas si hay varias, ya
-cerraron su ciclo y no son a las que tendría sentido seguir apuntando. Es una simplificación deliberada,
-no una detección: el convertidor no intenta adivinar cuál de las tareas tenía en mente quien escribió la
-referencia, solo resuelve de la única forma que tiene sentido de todas las posibles, tanto si el id
-compartido es simple como si tiene forma de subtarea. Esta resolución deja un hallazgo, no bloqueante,
-con el fichero, el id compartido y el id final al que se resolvió: ["Nada se pierde en
-silencio"](#nada-se-pierde-en-silencio), más abajo, incluye este caso, porque una referencia ambigua
-resuelta sin avisar sería justo el tipo de pérdida silenciosa que ese principio prohíbe, aunque aquí lo
-que se pierde no es un dato sino la certeza de a qué tarea apuntaba de verdad quien escribió la
-referencia.
+**Cualquier referencia a un id compartido resuelve a una única tarea, y deja un hallazgo.** Una mención
+en texto libre, un `parent` o un elemento de `dependencies` que nombra un id que dos o más ficheros
+comparten no puede distinguir a cuál de las tareas se refería quien lo escribió: Backlog.md no guarda esa
+intención en ningún sitio, solo el número. Si exactamente una de ellas no está archivada, la resolución
+elige esa: es la misma que conserva el número cuando el id compartido es simple, la que de verdad existe
+hoy en el tablero, mientras que la archivada, o las archivadas si hay varias, ya cerraron su ciclo y no
+son a las que tendría sentido seguir apuntando. Si NINGUNA de las tareas que comparten el id está activa
+ni terminada, no hay ninguna "existente hoy" a la que apuntar: la resolución elige entonces la de
+creación más reciente entre todas las que comparten el id, con el mismo desempate por ruta relativa que
+usa la regla 4 de "Identificadores" para el orden natural, la más cercana de todas ellas a ser "la
+actual". Es una simplificación deliberada en los dos casos, no una detección: el convertidor no intenta
+adivinar cuál de las tareas tenía en mente quien escribió la referencia, solo resuelve de la única forma
+que tiene sentido, tanto si el id compartido es simple como si tiene forma de subtarea. Esta resolución
+deja un hallazgo, no bloqueante, con el fichero, el id compartido y el id final al que se resolvió:
+["Nada se pierde en silencio"](#nada-se-pierde-en-silencio), más abajo, incluye este caso, porque una
+referencia ambigua resuelta sin avisar sería justo el tipo de pérdida silenciosa que ese principio
+prohíbe, aunque aquí lo que se pierde no es un dato sino la certeza de a qué tarea apuntaba de verdad
+quien escribió la referencia.
 
 **Descartado: dejar la referencia sin resolver**, tratándola como la mención no reconocida de la regla 6
 de "Identificadores". Perdería la referencia por completo en el caso más común, precisamente aquel en el
@@ -127,17 +130,18 @@ que la interpretación "la tarea que existe hoy en el tablero" sí es la correct
 las referencias a un id reutilizado, cuando la tarea que lo tenía ya está archivada, quieren decir la
 tarea activa, no un limbo sin resolver.
 
-**Descartado: resolver por la fecha de la referencia.** Existe una cota real: si la fecha de creación o
-de actualización de la tarea que hace la referencia es ANTERIOR a la fecha de creación de la tarea no
-archivada, esa referencia no puede estar hablando de ella, porque todavía no existía. Aun así, no se usa,
-por tres motivos. Primero, esa cota solo dice cuándo NO puede ser la activa, nunca confirma que sí lo sea,
-así que no resuelve el caso general, solo descarta uno de los dos lados en una fracción de las
-referencias ambiguas. Segundo, en el caso más común y mayoritario la interpretación "la tarea que existe
-hoy" ya es la correcta sin necesitar ninguna cota. Tercero, añadir una heurística parcial que a veces
-contradice la regla simple, "siempre la no archivada", haría el comportamiento más difícil de predecir y
-de explicar, a cambio de ganar precisión solo en el caso raro que sí se puede detectar con esta cota: una
-referencia histórica, anterior a que existiera la tarea activa, que de todos modos ya queda marcada con
-el hallazgo de resolución ambigua para que quien ejecute la revise a mano si le importa.
+**Descartado: resolver por la fecha de la referencia**, con un argumento honesto y no uno débil: la cota
+sí resuelve sin ambigüedad el caso más común, una tarea activa y una sola archivada compartiendo el id.
+Si la fecha de creación o de actualización de la tarea que menciona el id es anterior a la fecha de
+creación de la tarea activa, esa mención solo puede referirse a la archivada, y con una sola archivada eso
+ya deja una única candidata sin ambigüedad. Aun así se descarta, porque añadir esta heurística complica
+la implementación con sus propios casos límite: qué pasa si hay más de una archivada y la cota descarta
+solo a algunas de ellas, qué fecha del que menciona se usa si le falta tanto `updated_date` como
+`created_date`, o qué pasa en un empate exacto de fechas. El beneficio que ganaría, precisión en un caso
+que hoy queda marcado como ambiguo, ya lo cubre de otra forma el hallazgo de resolución: al quedar visible
+y no bloqueante, quien le importe el caso concreto puede revisarlo y corregirlo a mano. La simplicidad de
+"siempre la no archivada, o la más reciente si ninguna lo es" es preferible a una regla más precisa pero
+más frágil.
 
 **La comparación de "ya está en el destino" usa el título ya reescrito, no el crudo.** El título de una
 tarea de origen puede mencionar el id de otra tarea (`"Follow-up of TASK-1"`), y la regla 5 de
@@ -434,9 +438,10 @@ configuración y de las opciones que alguien usó, y la herramienta es general.
 la salida de errores, con el fichero y el campo. Incluye una clave del frontmatter o una sección del
 cuerpo que no reconoce. El código de salida 5 avisa de que hubo hallazgos y `--strict` permite negarse
 a escribir nada si los hay. Quien ejecuta decide. También resolver una referencia ambigua a un id
-compartido hacia la tarea no archivada (["Los identificadores conservan su número y cambian de
-prefijo"](#los-identificadores-conservan-su-número-y-cambian-de-prefijo)) sigue esta misma regla: es un
-hallazgo, no un fallo silencioso, con el fichero, el id compartido y el id final al que se resolvió.
+compartido (["Los identificadores conservan su número y cambian de
+prefijo"](#los-identificadores-conservan-su-número-y-cambian-de-prefijo)), a la tarea no archivada o, si
+ninguna lo está, a la de creación más reciente, sigue esta misma regla: es un hallazgo, no un fallo
+silencioso, con el fichero, el id compartido y el id final al que se resolvió.
 
 **Un fichero de tarea cuyo frontmatter no se puede interpretar como YAML válido sigue la misma regla:
 es un hallazgo, no un fichero que aborta el lote.** Medido contra el CLI real de Backlog.md 1.53.0: un

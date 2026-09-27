@@ -134,7 +134,9 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    número se reutilice, y archivar también esa reutilización deja dos ficheros en `archive/tasks/` con
    `id: TASK-2` y ninguno activo ni terminado en absoluto, una secuencia perfectamente normal, no un
    tablero editado a mano. Qué recibe cada copia en los casos no fatales (una sola copia no archivada, o
-   ninguna) lo dice la regla 4.
+   ninguna) lo dice la regla 4. Esta comprobación, fatal o no, se hace siempre antes que la regla 3,
+   porque solo necesita el origen: dos copias activas del mismo id son fatales aunque una de ellas
+   resulte estar ya importada en el destino, sin llegar siquiera a comprobar eso.
 2. **Un id simple de origen conserva su número con el prefijo del destino** (`TASK-70` pasa a
    `BISO-70`, `XYZ-001` pasa a `BISO-1`) siempre que ese número no exista ya en el destino. Los ceros a
    la izquierda no se escriben.
@@ -150,9 +152,10 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    se compara no es el crudo del fichero de origen: es ese mismo título con sus menciones de id de origen
    reescritas de forma ingenua, sustituyendo por el prefijo del destino y el mismo número mencionado solo
    la mención (misma forma y límites de palabra que la regla 5) cuyo id corresponde, por la forma
-   canónica de la regla 1, exactamente a una tarea SIMPLE del lote de origen actual, sin tener en cuenta
-   si ese número choca con algo en el destino ni si esa tarea se va a reasignar; cualquier otra mención con
-   forma de id, sea porque no corresponde a ninguna tarea del lote o porque corresponde a una subtarea,
+   canónica de la regla 1, a AL MENOS una tarea SIMPLE del lote de origen actual (puede corresponder a
+   más de una si el número se reutilizó tras archivar, regla 1; basta con que al menos una la tenga), sin
+   tener en cuenta si ese número choca con algo en el destino ni si esa tarea se va a reasignar; cualquier
+   otra mención con forma de id, sea porque no corresponde a ninguna tarea del lote o porque corresponde a una subtarea,
    se deja tal cual, con el mismo criterio con el que la regla 6 deja tal cual una mención que no
    reconoce. El porqué de esta reescritura, y el caso que aun así se pierde, están en decisiones.md,
    ["Los identificadores conservan su número y cambian de
@@ -190,10 +193,13 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    id SIMPLE va siempre antes que cualquier id de SUBTAREA con el mismo número principal; y si los dos son
    de SUBTAREA con el mismo número principal, por su número de subtarea ascendente. Cuando dos o más
    ficheros comparten el mismo id por la forma canónica de la regla 1, y por tanto este orden no los
-   distingue entre sí, se desempatan por su `created_date` ascendente y, si esa fecha falta, no se puede
-   interpretar, o también empata entre ellos, por la ruta relativa completa de su fichero de origen (desde
-   la raíz del origen) ascendente, que sí es siempre distinta entre dos ficheros distintos aunque compartan
-   el mismo nombre en carpetas distintas (`tasks/TASK-2.md` y `archive/tasks/TASK-2.md`, por ejemplo).
+   distingue entre sí, se desempatan con un orden estricto de dos niveles, sin excepciones: primero, todas
+   las copias que SÍ tienen una `created_date` válida, ordenadas entre sí por esa fecha ascendente;
+   después, siempre detrás y sin mezclarse con las anteriores, todas las copias que NO tienen una fecha
+   válida (ausente, o con una forma que no es ninguna de las dos que reconoce "Fechas"), ordenadas entre sí
+   por la ruta relativa completa de su fichero de origen (desde la raíz del origen) ascendente, que sí es
+   siempre distinta entre dos ficheros distintos aunque compartan el mismo nombre en carpetas diferentes
+   (`tasks/TASK-2.md` y `archive/tasks/TASK-2.md`, por ejemplo).
 5. Con esa tabla de equivalencias se reescriben el `id`, `parent` y `dependencies` de todas las
    tareas, y **toda mención de un id de origen en el texto** (`title`, `description`, `plan`,
    `notes`, `summary`, el texto de los criterios y el cuerpo de los comentarios): `TASK-12` pasa a
@@ -208,15 +214,21 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    mención tiene forma de subtarea, mismo número de subtarea como entero), no por la cadena exacta: una
    mención `TASK-1` encuentra en la tabla de equivalencias tanto a una tarea de origen `TASK-1` como a
    una `TASK-001`. **Si esa forma canónica corresponde a más de una tarea del lote** (el id reutilizado
-   tras archivar, regla 1), la mención resuelve siempre a la tarea que NO está archivada, la misma que
-   conserva el número cuando el id compartido es simple: el texto de origen no puede distinguir a cuál de
-   las tareas se refería quien lo escribió, y la no archivada es la única de todas ellas que tiene sentido
-   resolver. Resolver así es un hallazgo, no bloqueante: `TASK-2: mention resolved to BISO-2, the
-   non-archived task sharing this id`, con el fichero, el id compartido y el id final al que se resolvió;
-   si el mismo fichero y campo tienen varias menciones que resuelven así, se agrupan con un recuento, el
-   mismo criterio que usa la regla 6 para las menciones no reconocidas, en vez de un hallazgo por mención.
-   Se reescribe en cualquier lugar del texto, un bloque de código incluido. No se toca `documentation`,
-   `references` ni `modified_files`, que son rutas y URLs opacas.
+   tras archivar, regla 1), la mención resuelve a una sola de ellas: si exactamente una NO está archivada,
+   resuelve siempre a esa, la misma que conserva el número cuando el id compartido es simple, porque el
+   texto de origen no puede distinguir a cuál de las tareas se refería quien lo escribió y la no archivada
+   es la única de todas ellas que tiene sentido resolver. **Si NINGUNA de las tareas que comparten el id
+   está activa ni terminada** (todas archivadas), no hay ninguna "no archivada" a la que resolver: la
+   mención resuelve a la última copia en el orden que define la regla 4 para desempatar entre copias que
+   comparten un id (la de `created_date` más reciente entre las que la tienen válida, o la última por ruta
+   relativa si ninguna la tiene), la más cercana de todas ellas a ser "la actual". En los dos casos,
+   resolver así es un hallazgo, no bloqueante: `TASK-2: mention resolved to BISO-2, the non-archived task
+   sharing this id` (o `..., the most recently created task sharing this id` cuando ninguna está
+   archivada), con el fichero, el id compartido y el id final al que se resolvió; si el mismo fichero y
+   campo tienen varias menciones que resuelven así, se agrupan con un recuento, el mismo criterio que usa
+   la regla 6 para las menciones no reconocidas, en vez de un hallazgo por mención. Se reescribe en
+   cualquier lugar del texto, un bloque de código incluido. No se toca `documentation`, `references` ni
+   `modified_files`, que son rutas y URLs opacas.
 6. Una mención que tiene la forma de un id de origen pero no corresponde a ninguna tarea del origen, o
    que solo difiere en las mayúsculas (`Xyz-002`, `task-12`), se deja como está y es un hallazgo,
    uno por fichero y campo con el recuento, para que quien ejecuta pueda revisarla. Si corresponde a
@@ -233,12 +245,14 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    Así, un `parent_task_id: TASK-1` que en realidad apunta a la tarea de origen `TASK-001` se reconoce
    igual. **Si esa forma canónica corresponde a más de una tarea del lote** (el id reutilizado tras
    archivar, regla 1), `parent` y cada elemento de `dependencies` resuelven con el mismo criterio que una
-   mención de texto libre (regla 5): siempre a la tarea que NO está archivada, la misma que conserva el
-   número cuando el id compartido es simple, porque el valor no puede distinguir a cuál de las tareas se
-   refería quien lo escribió y la no archivada es la única de todas ellas que tiene sentido resolver.
-   Resolver así es un hallazgo, no bloqueante, con el mismo formato que la regla 5 y `parent` o
-   `dependency` en vez de `mention`: `TASK-2: parent resolved to BISO-2, the non-archived task sharing
-   this id`; varias resoluciones así del mismo fichero y campo se agrupan con un recuento, el mismo
+   mención de texto libre (regla 5), casos "ninguna activa" incluido: siempre a la tarea que NO está
+   archivada cuando hay exactamente una, la misma que conserva el número si el id compartido es simple, o
+   a la de `created_date` más reciente (con el mismo desempate de ruta relativa de la regla 4) cuando
+   ninguna de las que comparten el id está activa ni terminada, porque en los dos casos el valor no puede
+   distinguir a cuál de las tareas se refería quien lo escribió y esa es la única de todas ellas que tiene
+   sentido resolver. Resolver así es un hallazgo, no bloqueante, con el mismo formato que la regla 5 y
+   `parent` o `dependency` en vez de `mention`: `TASK-2: parent resolved to BISO-2, the non-archived task
+   sharing this id`; varias resoluciones así del mismo fichero y campo se agrupan con un recuento, el mismo
    criterio que la regla 5 toma de la regla 6. Un valor que no tiene siquiera la forma de un id de la
    regla 1 se quita igual, con su hallazgo. Si dos elementos de `dependencies` de la misma tarea resuelven
    al mismo id final por esta forma canónica (`TASK-1` y `TASK-001` en la misma lista, por ejemplo), se
