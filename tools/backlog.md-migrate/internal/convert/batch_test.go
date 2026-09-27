@@ -434,6 +434,12 @@ func TestAcceptanceCriterionAlwaysWritesChecked(t *testing.T) {
 // position rather than by SourceID) was correct. Title, Description, and
 // CreatedDate are deliberately given very different values below so any
 // mix-up between the two copies is obvious in the assertions.
+//
+// Both copies also carry their own, distinct source Ordinal, covering the
+// matching bug in AssignOrdinals (phase 4c, ordinal.go): before it returned
+// a slice parallel to its own input rather than a map keyed by the shared
+// literal id, the second copy's manual order key would have overwritten the
+// first's in that map too.
 func TestAssembleKeepsEachSharedIdCopysOwnFields(t *testing.T) {
 	sourceBoard := source.Board{
 		Tasks: []source.Task{
@@ -443,6 +449,7 @@ func TestAssembleKeepsEachSharedIdCopysOwnFields(t *testing.T) {
 				Title:       "Active title",
 				Description: "Active description",
 				CreatedDate: "2026-05-01 09:00",
+				Ordinal:     float64Ptr(100),
 			},
 			{
 				File:        "archived.md",
@@ -451,6 +458,7 @@ func TestAssembleKeepsEachSharedIdCopysOwnFields(t *testing.T) {
 				Title:       "Archived title",
 				Description: "Archived description",
 				CreatedDate: "2020-01-01 09:00",
+				Ordinal:     float64Ptr(50),
 			},
 		},
 	}
@@ -477,6 +485,9 @@ func TestAssembleKeepsEachSharedIdCopysOwnFields(t *testing.T) {
 	if active.Archived {
 		t.Errorf("active line Archived = true, want false")
 	}
+	if active.Ordinal == "" {
+		t.Errorf("active line Ordinal is empty, want a manual order key (it has its own source ordinal, 100)")
+	}
 
 	var archived Line
 	found := false
@@ -499,5 +510,17 @@ func TestAssembleKeepsEachSharedIdCopysOwnFields(t *testing.T) {
 	}
 	if !archived.Archived {
 		t.Errorf("archived line Archived = false, want true")
+	}
+	if archived.Ordinal == "" {
+		t.Errorf("archived line Ordinal is empty, want a manual order key (it has its own source ordinal, 50)")
+	}
+	if archived.Ordinal == active.Ordinal {
+		t.Fatalf("both lines got the SAME ordinal key %q, want two distinct ones", archived.Ordinal)
+	}
+	// The archived copy's source ordinal (50) is smaller than the active
+	// copy's (100), so it must be assigned first: the smaller manual order
+	// key.
+	if !(archived.Ordinal < active.Ordinal) {
+		t.Errorf("archived.Ordinal = %q, active.Ordinal = %q, want archived < active (its smaller source ordinal)", archived.Ordinal, active.Ordinal)
 	}
 }

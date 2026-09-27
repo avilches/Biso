@@ -186,28 +186,39 @@ func DestinationAnchor(board destination.Board) string {
 // calling this function. Passing a skipped task in by mistake would give it
 // a key it should never have.
 //
-// The result maps a source task's own id (source.Task.ID, exactly as read,
-// the same join key Identified.SourceID uses) to its assigned key, with one
-// entry only for a task that received one. None of the keys this function
-// returns can ever collide with a key already on the destination: each one
-// is built by KeyBetween(previous, "") from either the anchor or the key
-// assigned right before it, and KeyBetween's own guarantee is that its
-// result is always strictly greater than its first argument, so every
-// assigned key is strictly greater than the anchor (which is itself the
-// greatest key already on the destination, or nothing at all) and strictly
-// greater than every key assigned before it in the same call. That chain of
-// strict inequalities places every assigned key in the empty stretch of the
-// order that starts right after the destination's own greatest key,
-// regardless of what the destination's keys actually are.
-func AssignOrdinals(tasks []source.Task, board destination.Board) map[string]string {
+// The result is a slice PARALLEL to tasks, same length, same position:
+// result[i] is the key assigned to tasks[i], or the empty string when
+// tasks[i].Ordinal is nil. This is deliberately NOT a map keyed by
+// source.Task.ID: docs/especificacion.md, "Identificadores", point 1's
+// id-reuse-after-archiving case means two different elements of tasks can
+// share the exact same literal ID (Backlog.md hands the reused task the
+// very same id string as the one it archived), and a map keyed by that id
+// would silently let the second one's key overwrite the first's whenever
+// both happened to have their own source ordinal. A caller (Assemble, phase
+// 5) that built tasks from batch[id.BatchIndex].Task for each Identified in
+// order reads this result back the same way, result[i] for identified[i],
+// rather than by SourceID.
+//
+// None of the keys this function returns can ever collide with a key
+// already on the destination: each one is built by KeyBetween(previous, "")
+// from either the anchor or the key assigned right before it, and
+// KeyBetween's own guarantee is that its result is always strictly greater
+// than its first argument, so every assigned key is strictly greater than
+// the anchor (which is itself the greatest key already on the destination,
+// or nothing at all) and strictly greater than every key assigned before it
+// in the same call. That chain of strict inequalities places every assigned
+// key in the empty stretch of the order that starts right after the
+// destination's own greatest key, regardless of what the destination's keys
+// actually are.
+func AssignOrdinals(tasks []source.Task, board destination.Board) []string {
 	type entry struct {
-		task    source.Task
+		index   int
 		parsed  parsedSourceID
 		ordinal float64
 	}
 
 	var withOrdinal []entry
-	for _, t := range tasks {
+	for i, t := range tasks {
 		if t.Ordinal == nil {
 			continue
 		}
@@ -222,7 +233,7 @@ func AssignOrdinals(tasks []source.Task, board destination.Board) map[string]str
 			// the caller, not a data problem this file can report.
 			panic(fmt.Sprintf("convert: AssignOrdinals given task %q with an id that does not parse as a source id", t.ID))
 		}
-		withOrdinal = append(withOrdinal, entry{task: t, parsed: parsed, ordinal: *t.Ordinal})
+		withOrdinal = append(withOrdinal, entry{index: i, parsed: parsed, ordinal: *t.Ordinal})
 	}
 
 	sort.SliceStable(withOrdinal, func(i, j int) bool {
@@ -232,11 +243,11 @@ func AssignOrdinals(tasks []source.Task, board destination.Board) map[string]str
 		return naturalSourceIDLess(withOrdinal[i].parsed, withOrdinal[j].parsed)
 	})
 
-	result := make(map[string]string, len(withOrdinal))
+	result := make([]string, len(tasks))
 	anchor := DestinationAnchor(board)
 	for _, e := range withOrdinal {
 		key := KeyBetween(anchor, "")
-		result[e.task.ID] = key
+		result[e.index] = key
 		anchor = key
 	}
 	return result

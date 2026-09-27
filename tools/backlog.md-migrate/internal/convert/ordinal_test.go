@@ -78,8 +78,8 @@ func TestAssignOrdinalsOnAnEmptyDestinationGivesTheFirstTaskI(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("len(got) = %d, want 1", len(got))
 	}
-	if got["TASK-1"] != "i" {
-		t.Errorf(`got["TASK-1"] = %q, want "i"`, got["TASK-1"])
+	if got[0] != "i" {
+		t.Errorf(`got[0] = %q, want "i"`, got[0])
 	}
 }
 
@@ -100,10 +100,10 @@ func TestAssignOrdinalsChainsOnAnEmptyDestination(t *testing.T) {
 	want2 := KeyBetween(want1, "")
 	want3 := KeyBetween(want2, "")
 
-	if got["TASK-1"] != want1 || got["TASK-2"] != want2 || got["TASK-3"] != want3 {
+	if got[0] != want1 || got[1] != want2 || got[2] != want3 {
 		t.Fatalf("got = %#v, want TASK-1=%q TASK-2=%q TASK-3=%q", got, want1, want2, want3)
 	}
-	if !(got["TASK-1"] < got["TASK-2"] && got["TASK-2"] < got["TASK-3"]) {
+	if !(got[0] < got[1] && got[1] < got[2]) {
 		t.Errorf("keys are not in ascending code point order: %#v", got)
 	}
 }
@@ -122,14 +122,14 @@ func TestAssignOrdinalsOnADestinationWithAnExistingKeyAnchorsAfterIt(t *testing.
 	want1 := KeyBetween("m", "")
 	want2 := KeyBetween(want1, "")
 
-	if got["TASK-1"] != want1 {
-		t.Errorf(`got["TASK-1"] = %q, want %q`, got["TASK-1"], want1)
+	if got[0] != want1 {
+		t.Errorf(`got[0] = %q, want %q`, got[0], want1)
 	}
-	if got["TASK-2"] != want2 {
-		t.Errorf(`got["TASK-2"] = %q, want %q`, got["TASK-2"], want2)
+	if got[1] != want2 {
+		t.Errorf(`got[1] = %q, want %q`, got[1], want2)
 	}
 	// The anchor itself is never reused as a task's own key.
-	if got["TASK-1"] == "m" || got["TASK-2"] == "m" {
+	if got[0] == "m" || got[1] == "m" {
 		t.Errorf("an assigned key collided with the destination's own anchor: %#v", got)
 	}
 }
@@ -144,7 +144,12 @@ func TestAssignOrdinalsOrdersBySourceOrdinalAscending(t *testing.T) {
 
 	got := AssignOrdinals(tasks, board)
 
-	if !(got["TASK-1"] < got["TASK-2"] && got["TASK-2"] < got["TASK-3"]) {
+	// got is parallel to tasks, not sorted by ordinal itself: got[1] is
+	// TASK-1's own key (smallest ordinal, 100, assigned first), got[2] is
+	// TASK-2's (200, assigned second), and got[0] is TASK-3's (300, the
+	// input's own first element, but assigned LAST because its ordinal is
+	// the greatest).
+	if !(got[1] < got[2] && got[2] < got[0]) {
 		t.Errorf("keys do not preserve the source ordinal's relative order: %#v", got)
 	}
 }
@@ -161,7 +166,8 @@ func TestAssignOrdinalsTiesOnTheSameOrdinalBreakByNaturalSourceIDOrderSimpleBefo
 
 	got := AssignOrdinals(tasks, board)
 
-	if !(got["TASK-1"] < got["TASK-1.1"]) {
+	// got[1] is TASK-1's (simple) own key, got[0] is TASK-1.1's (subtask).
+	if !(got[1] < got[0]) {
 		t.Errorf("TASK-1 (simple) should sort before TASK-1.1 (subtask): %#v", got)
 	}
 }
@@ -175,7 +181,8 @@ func TestAssignOrdinalsTiesOnTheSameOrdinalBreakByMainNumberAscending(t *testing
 
 	got := AssignOrdinals(tasks, board)
 
-	if !(got["TASK-2"] < got["TASK-9"]) {
+	// got[1] is TASK-2's own key, got[0] is TASK-9's.
+	if !(got[1] < got[0]) {
 		t.Errorf("TASK-2 should sort before TASK-9 on a tied ordinal: %#v", got)
 	}
 }
@@ -189,11 +196,11 @@ func TestAssignOrdinalsATaskWithNoOrdinalDoesNotAppear(t *testing.T) {
 
 	got := AssignOrdinals(tasks, board)
 
-	if _, ok := got["TASK-1"]; ok {
-		t.Errorf("TASK-1 has no ordinal, it should not appear in the result: %#v", got)
+	if got[0] != "" {
+		t.Errorf("TASK-1 has no ordinal, its position should be empty: %#v", got)
 	}
-	if _, ok := got["TASK-2"]; !ok {
-		t.Errorf("TASK-2 has an ordinal, it should appear in the result: %#v", got)
+	if got[1] == "" {
+		t.Errorf("TASK-2 has an ordinal, its position should not be empty: %#v", got)
 	}
 }
 
@@ -210,11 +217,11 @@ func TestAssignOrdinalsATaskSkippedByPhase4bDoesNotAppear(t *testing.T) {
 
 	got := AssignOrdinals(tasks, board)
 
-	if _, ok := got["TASK-1"]; ok {
-		t.Errorf("TASK-1 was never passed in, it should not appear in the result: %#v", got)
-	}
 	if len(got) != 1 {
-		t.Errorf("len(got) = %d, want 1", len(got))
+		t.Fatalf("len(got) = %d, want 1 (parallel to the single task passed in)", len(got))
+	}
+	if got[0] == "" {
+		t.Errorf("TASK-2 has an ordinal, its position should not be empty: %#v", got)
 	}
 }
 
@@ -236,12 +243,47 @@ func TestAssignOrdinalsNeverCollidesWithAnExistingDestinationKey(t *testing.T) {
 
 	got := AssignOrdinals(tasks, board)
 
-	for id, key := range got {
+	for i, key := range got {
 		if existing[key] {
-			t.Errorf("assigned key %q for %s collides with an existing destination key", key, id)
+			t.Errorf("assigned key %q for %s collides with an existing destination key", key, tasks[i].ID)
 		}
 		if key <= "zzi" {
-			t.Errorf("assigned key %q for %s is not strictly greater than the anchor %q", key, id, "zzi")
+			t.Errorf("assigned key %q for %s is not strictly greater than the anchor %q", key, tasks[i].ID, "zzi")
 		}
+	}
+}
+
+// TestAssignOrdinalsGivesEachSharedIdCopyItsOwnKeyByPosition covers the bug
+// found while implementing docs/especificacion.md, "Identificadores", point
+// 1's id-reuse-after-archiving case (Backlog.md handing an archived task's
+// number to the next one it creates, docs/decisiones.md's paragraph on it):
+// two source.Task values that share the exact same literal ID (one
+// archived, one not), each with its OWN distinct source ordinal, must each
+// get their OWN correctly computed key at their OWN position in the result,
+// never the other's. Before AssignOrdinals returned a slice, a map keyed by
+// the shared literal ID would let the second one processed overwrite the
+// first's key.
+func TestAssignOrdinalsGivesEachSharedIdCopyItsOwnKeyByPosition(t *testing.T) {
+	tasks := []source.Task{
+		{ID: "TASK-4", Archived: false, Ordinal: float64Ptr(100)},
+		{ID: "TASK-4", Archived: true, Ordinal: float64Ptr(50)},
+	}
+	board := destination.Board{}
+
+	got := AssignOrdinals(tasks, board)
+
+	if len(got) != 2 {
+		t.Fatalf("len(got) = %d, want 2 (parallel to tasks)", len(got))
+	}
+	if got[0] == "" || got[1] == "" {
+		t.Fatalf("both copies have their own ordinal, neither position should be empty: %#v", got)
+	}
+	if got[0] == got[1] {
+		t.Fatalf("both copies got the SAME key, want two distinct ones: %#v", got)
+	}
+	// tasks[1] has the smaller source ordinal (50 < 100), so it must be
+	// assigned first, the smaller key.
+	if !(got[1] < got[0]) {
+		t.Errorf("the archived copy (smaller source ordinal) should get the smaller key: got = %#v", got)
 	}
 }

@@ -125,6 +125,12 @@ func Assemble(sourceBoard source.Board, destBoard destination.Board) ([]Line, []
 	// map keyed by SourceID (as this used to be) would silently collapse
 	// two distinct tasks into one, handing AssignOrdinals, and every line
 	// built below, the wrong source.Task for one of them.
+	//
+	// AssignOrdinals now returns a slice parallel to producing rather than a
+	// map keyed by source id, for the exact same reason: two tasks sharing a
+	// reused id could otherwise overwrite each other's assigned key.
+	// producing[i] is built from identified[i], so ordinals[i] is always
+	// identified[i]'s own key, read back below by that same index.
 	producing := make([]source.Task, len(identified))
 	for i, id := range identified {
 		producing[i] = batch[id.BatchIndex].Task
@@ -150,7 +156,7 @@ func Assemble(sourceBoard source.Board, destBoard destination.Board) ([]Line, []
 		}
 
 		entries[i] = entry{
-			line:   buildLine(id, result, ordinals[id.SourceID], sourceTask),
+			line:   buildLine(id, result, ordinals[i], sourceTask),
 			parsed: parsed,
 		}
 	}
