@@ -130,17 +130,21 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
 3. **Una tarea que ya está en el destino no se vuelve a importar.** Es la misma tarea de una
    importación anterior si el destino tiene una con el mismo `title` y el mismo `createdAt`, sea cual
    sea su id. El `title` que se compara no es el crudo del fichero de origen: es ese mismo título con
-   sus menciones de id de origen ya reescritas de forma ingenua, sustituyendo cada mención por el
-   prefijo del destino y el mismo número del id mencionado, sin tener en cuenta si ese número choca con
-   algo en el destino ni si la tarea mencionada se va a reasignar; el porqué de esta reescritura, y el
-   caso raro que aun así se pierde, están en decisiones.md, ["Los identificadores conservan su número y
-   cambian de prefijo"](decisiones.md#los-identificadores-conservan-su-número-y-cambian-de-prefijo). Ese
-   título reescrito de forma ingenua se usa solo para esta comparación y se descarta después: el título
-   que de verdad se escribe en el destino, cuando la tarea no es un duplicado, sale siempre de la
-   reescritura definitiva de la regla 5. No se escribe su línea, su id de origen se equipara al que ya
-   tiene en el destino, y es un hallazgo (`already on the destination, skipped`). Así ejecutar `import`
-   dos veces no duplica el tablero, subtareas incluidas. No actualiza la tarea que ya estaba, y una tarea
-   que se haya editado en el destino después de importarla (otro título) ya no se reconoce.
+   sus menciones de id de origen reescritas de forma ingenua, sustituyendo por el prefijo del destino y
+   el mismo número mencionado solo la mención (misma forma y límites de palabra que la regla 5) cuyo id
+   corresponde exactamente a una tarea SIMPLE del lote de origen actual, sin tener en cuenta si ese
+   número choca con algo en el destino ni si esa tarea se va a reasignar; cualquier otra mención con
+   forma de id, sea porque no corresponde a ninguna tarea del lote o porque corresponde a una subtarea,
+   se deja tal cual, con el mismo criterio con el que la regla 6 deja tal cual una mención que no
+   reconoce. El porqué de esta reescritura, y el caso que aun así se pierde, están en decisiones.md,
+   ["Los identificadores conservan su número y cambian de
+   prefijo"](decisiones.md#los-identificadores-conservan-su-número-y-cambian-de-prefijo). Ese título
+   reescrito de forma ingenua se usa solo para esta comparación y se descarta después: el título que de
+   verdad se escribe en el destino, cuando la tarea no es un duplicado, sale siempre de la reescritura
+   definitiva de la regla 5. No se escribe su línea, su id de origen se equipara al que ya tiene en el
+   destino, y es un hallazgo (`already on the destination, skipped`). Así ejecutar `import` dos veces no
+   duplica el tablero, subtareas incluidas. No actualiza la tarea que ya estaba, y una tarea que se haya
+   editado en el destino después de importarla (otro título) ya no se reconoce.
 4. **Reciben un número nuevo los ids simples que chocan con el destino y todos los ids de subtarea**,
    porque un id de `biso` es siempre `<PREFIJO>-<n>` y no admite el punto. Se les asigna, en el orden
    natural de su id de origen, el siguiente número libre a partir de `max(mayor número del destino,

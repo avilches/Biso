@@ -97,22 +97,34 @@ ejecución de `import` compararía `"Follow-up of TASK-1"` contra el `"Follow-up
 guardado, no encontraría la coincidencia y duplicaría la tarea, justo lo que esta misma decisión promete
 evitar. Por eso esa comparación usa una reescritura de menciones más simple que la definitiva de la
 regla 5, y que no depende de si un id choca o no en esta ejecución concreta (evita la circularidad de
-necesitar saber qué tareas se saltan antes de poder decidir qué tareas se saltan): sustituye cada
-mención válida de un id de origen (misma forma y límites de palabra que la regla 5) por el prefijo del
-destino y el mismo número del id de origen, sin tener en cuenta si ese número choca con algo en el
-destino ni si la tarea mencionada se va a reasignar. Esta reescritura "ingenua" (naive en el código) es
-estable entre ejecuciones: la primera y la segunda vez que se lee el mismo origen dan el mismo título
-para comparar, sin importar el estado del destino en ese momento.
+necesitar saber qué tareas se saltan antes de poder decidir qué tareas se saltan): sustituye por el
+prefijo del destino y el mismo número mencionado solo la mención (misma forma y límites de palabra que
+la regla 5) cuyo id corresponde exactamente a una tarea SIMPLE del lote de origen actual, sin tener en
+cuenta si ese número choca con algo en el destino ni si esa tarea se va a reasignar; cualquier otra
+mención con forma de id, sea porque no corresponde a ninguna tarea del lote o porque corresponde a una
+subtarea, se deja tal cual, con el mismo criterio con el que la regla 6 de "Identificadores" deja tal
+cual una mención que no reconoce. Esta reescritura "ingenua" (naive en el código) es estable entre
+ejecuciones: la primera y la segunda vez que se lee el mismo origen dan el mismo título para comparar,
+sin importar el estado del destino en ese momento.
 
-**Una limitación que se acepta.** Si la tarea mencionada en el título fue ella misma reasignada a un
-número distinto en la primera importación, porque su número chocaba en aquel momento, la reescritura
-ingenua de la segunda ejecución no reproduce ese número reasignado, y la comparación vuelve a fallar: la
-tarea se duplicaría en ese caso concreto. Es la misma clase de fragilidad que ya acepta esta decisión
-para una tarea cuyo título se editó a mano en el destino después de importarla ("ya no se reconoce"), no
-una fragilidad nueva. No compensa resolverla con más mecanismo, como guardar aparte un identificador
-estable: sería una complejidad nueva para un caso raro (un título que menciona a una tarea que además
-choca en la primera importación) que esta misma decisión ya acepta perder en el caso hermano del título
-editado a mano.
+**Una limitación que se acepta.** Que una mención no corresponda a ninguna tarea del lote de origen no
+es un problema: tanto la reescritura ingenua de una segunda ejecución como la reescritura definitiva de
+la primera dejan esa mención sin tocar, así que el título candidato y el título ya guardado coinciden en
+esa parte y la comparación funciona sin necesidad de aceptar nada aquí. La limitación real cubre dos
+casos. El primero: si la tarea SIMPLE mencionada en el título fue ella misma reasignada a un número
+distinto en la primera importación, porque su número chocaba en aquel momento, la reescritura ingenua de
+la segunda ejecución no reproduce ese número reasignado, y la comparación vuelve a fallar. El segundo,
+más amplio: cualquier mención de una SUBTAREA, choque o no, porque una subtarea siempre recibe un número
+nuevo (regla 4 de "Identificadores"), y la reescritura ingenua no puede predecir ese número sin conocer
+ya el resultado de la reasignación, la misma circularidad que motiva toda esta reescritura; así que un
+título que menciona una subtarea se duplicará en cada reimportación, no solo cuando esa subtarea choca.
+En los dos casos la tarea se duplicaría. Es la misma clase de fragilidad que ya acepta esta decisión para
+una tarea cuyo título se editó a mano en el destino después de importarla ("ya no se reconoce"), ampliada
+a un caso más amplio de lo que se pensó al escribirla la primera vez, no una fragilidad de una naturaleza
+distinta. No compensa resolverla con más mecanismo, como guardar aparte un identificador estable: sería
+una complejidad nueva para casos que siguen siendo específicos (un título que menciona a una subtarea, o
+a una tarea simple que además choca en la primera importación) frente al caso hermano, ya aceptado, del
+título editado a mano.
 
 **El mismo número, no la misma cadena, también decide cuándo dos ids de origen chocan entre sí, pero
 solo entre ids de la misma forma.** La regla 1 de "Identificadores" aborta el lote con el código 3
