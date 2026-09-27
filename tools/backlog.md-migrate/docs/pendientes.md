@@ -4,9 +4,9 @@
 Todo lo que dicen [`decisiones.md`](decisiones.md) y [`especificacion.md`](especificacion.md) nació de
 una conversación, y esta página se escribió para juntar cada propuesta y repasarla antes de escribir
 código. Ese repaso ya terminó: las secciones A y B quedan ratificadas tal como están escritas, y las dos
-preguntas que quedaban abiertas en la sección C también están cerradas. No hay código Go todavía, pero
-ya no es por falta de decisiones: lo que sigue pendiente es otro tipo de trabajo, no una decisión, y está
-en la sección D (mediciones sin hacer) y en el diseño completo de la exportación (TASK-7).
+preguntas que quedaban abiertas en la sección C también están cerradas. La implementación de `import`
+ya está terminada; lo que sigue pendiente ya no es ninguna decisión: es otro tipo de trabajo, y está en
+la sección D (mediciones sin hacer) y en el diseño completo de la exportación (TASK-7).
 
 **Qué bloqueaba la implementación, y ya no.** TASK-70 (`import`) y TASK-7 (`export`) esperaban a que
 `biso` resolviera TASK-73 (aceptar identificadores de subtarea con punto). TASK-73 ya se resolvió, y en

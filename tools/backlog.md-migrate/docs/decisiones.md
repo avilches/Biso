@@ -1,10 +1,7 @@
 # Decisiones de diseño
 
-> **Provisional.** Ninguna de estas decisiones está cerrada: son propuestas que se van a repasar una
-> por una. TASK-73 ya se resolvió (`biso` no adopta identificadores de subtarea con punto), y la
-> decisión que le tocaba a este proyecto está más abajo, en ["El identificador de origen de una
-> subtarea se guarda en una etiqueta con ámbito"](#el-identificador-de-origen-de-una-subtarea-se-guarda-en-una-etiqueta-con-ámbito).
-> La lista completa de lo que falta revisar está en [`pendientes.md`](pendientes.md).
+> **Cerradas e implementadas.** Cada decisión de esta página está implementada y verificada con pruebas
+> reales; el repaso completo, decisión por decisión, está en [`pendientes.md`](pendientes.md).
 
 Cada entrada dice primero la decisión vigente, en un párrafo que se puede citar sin más contexto. Las
 alternativas que se consideraron van después, marcadas como **descartadas** y con la razón. Si una
@@ -83,6 +80,22 @@ conservar el id de origen, en la siguiente sección.
 tablero medido hay cinco menciones en minúsculas que son nombres de ramas y de worktrees
 (`task-10-modelo`), y reescribirlas sin distinguir mayúsculas las habría corrompido.
 
+**Backlog.md reutiliza el número de una tarea archivada, y el import lo tolera en vez de rechazarlo.**
+Con el CLI real (1.53.0): crear `TASK-1` y `TASK-2`, archivar `TASK-2`, y crear una tercera tarea le da
+a esta tercera el id `TASK-2` otra vez, el mismo número que la archivada y no uno nuevo; el fichero de
+`archive/tasks/` sigue con `id: TASK-2` en su frontmatter, y el nuevo fichero de `tasks/` también.
+Tratar "dos ficheros traen el mismo id" como fatal sin excepción rompería el uso normal de cualquier
+proyecto real que lleve tiempo en marcha y tenga tareas archivadas: la primera vez que Backlog.md
+reutiliza un número, `import` rechazaría el tablero entero. Por eso, cuando exactamente uno de los
+ficheros que comparten el id no está archivado, ese es el que conserva el número: es el que de verdad
+importa hoy en el tablero, mientras que los archivados ya cerraron su ciclo y no pierden nada relevante
+al recibir un número nuevo en el destino, porque su parentesco y sus menciones se siguen reescribiendo
+igual con la tabla de equivalencias. Cuando hay más de un fichero no archivado con el mismo id, o todos
+los que lo comparten están archivados y ninguno está activo ni terminado, sigue siendo el error fatal de
+código 3: Backlog.md solo reutiliza un número después de archivar la tarea que lo tenía, así que esa
+combinación solo puede venir de un tablero editado a mano de una forma que el propio Backlog.md no
+produce, y no hay ninguna señal en los datos que diga cuál de los ficheros es el verdadero.
+
 **Descartado: obligar a que el destino tenga el mismo prefijo que el origen** (`--prefix TASK`).
 Dejaba un tablero con un prefijo que no elige nadie y que no se puede cambiar después. **Descartado:
 renumerar todo desde el siguiente libre.** Cambia todos los números aunque no choque nada y rompe el
@@ -118,10 +131,11 @@ más amplio: cualquier mención de una SUBTAREA, choque o no, porque una subtare
 nuevo (regla 4 de "Identificadores"), y la reescritura ingenua no puede predecir ese número sin conocer
 ya el resultado de la reasignación, la misma circularidad que motiva toda esta reescritura; así que un
 título que menciona una subtarea se duplicará en cada reimportación, no solo cuando esa subtarea choca.
-En los dos casos la tarea se duplicaría. Es la misma clase de fragilidad que ya acepta esta decisión para
-una tarea cuyo título se editó a mano en el destino después de importarla ("ya no se reconoce"), ampliada
-a un caso más amplio de lo que se pensó al escribirla la primera vez, no una fragilidad de una naturaleza
-distinta. No compensa resolverla con más mecanismo, como guardar aparte un identificador estable: sería
+En los dos casos la tarea se duplicaría. La identidad por título es frágil por construcción, y esta
+decisión ya acepta esa fragilidad para una tarea cuyo título se editó a mano en el destino después de
+importarla ("ya no se reconoce"); la reasignación por colisión y la mención de una subtarea son
+manifestaciones de esa misma fragilidad, no de una fragilidad de una naturaleza distinta. No compensa
+resolverla con más mecanismo, como guardar aparte un identificador estable: sería
 una complejidad nueva para casos que siguen siendo específicos (un título que menciona a una subtarea, o
 a una tarea simple que además choca en la primera importación) frente al caso hermano, ya aceptado, del
 título editado a mano.
@@ -140,11 +154,13 @@ paran el import en vez de convertirse en silencio en la misma tarea de destino, 
 tarea entera sin avisar.
 
 **Esa misma forma canónica también decide a qué tarea corresponde una mención en el texto.** La
-reescritura definitiva de menciones (regla 5 de "Identificadores") y el hallazgo de una mención que no
-corresponde a ninguna tarea (regla 6) buscan en la tabla de equivalencias por el mismo número entero y
-no por la cadena exacta, igual que la reescritura ingenua de la comparación de "ya está en el destino"
-ya lo hacía. Sin esto, una tarea de origen con ceros en su id (`TASK-001`) y un título o una descripción
-que la mencionan sin ceros (`TASK-1`) quedarían sin conectar: la mención no se reescribiría en la
+reescritura definitiva de menciones (regla 5 de "Identificadores"), el hallazgo de una mención que no
+corresponde a ninguna tarea (regla 6) y la reescritura ingenua de la comparación de "ya está en el
+destino" (regla 3) buscan los tres en la tabla de equivalencias por el mismo número entero, no por la
+cadena exacta: es una única forma canónica la que decide, en cualquier punto de la especificación donde
+hace falta, a qué tarea de origen corresponde un id. Sin esto, una tarea de origen con ceros en su id
+(`TASK-001`) y un título o una descripción que la mencionan sin ceros (`TASK-1`) quedarían sin conectar:
+la mención no se reescribiría en la
 primera importación, la comparación de "ya está en el destino" (que sí usa forma canónica) no
 reconocería lo que quedó escrito en la segunda, y la tarea se duplicaría. El patrón que decide si algo
 cuenta como una mención en absoluto no cambia: sigue distinguiendo mayúsculas y los mismos límites de

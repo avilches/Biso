@@ -12,7 +12,7 @@ Vive en `tools/backlog.md-migrate/` del repositorio de `biso` por comodidad, y *
 - Tiene su propio módulo Go (`go.mod` en esta carpeta). El `go vet ./...` y el `go test ./...` de la
   raíz no entran aquí, y la dependencia de YAML no toca el `go.mod` de `biso`.
 - **No importa ningún paquete de `internal/` de `biso`.** Habla con `biso` solo como lo haría
-  cualquier usuario: ejecutando el binario (`biso config get`, `biso ls`, `biso new --from`). Si
+  cualquier usuario: ejecutando el binario (`biso config list --json`, `biso export`). Si
   necesita una regla de `biso` (el algoritmo de coincidencia de vocabularios, por ejemplo), la
   reimplementa y la describe en su propia especificación.
 - Su documentación no está en `docs/` de `biso`, no se publica en su sitio de MkDocs y `docs-doctor`

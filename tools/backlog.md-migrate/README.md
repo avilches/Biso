@@ -9,13 +9,12 @@ backlog.md-migrate import <backlog-dir> --project <dir> [--out <file>] [--biso <
 backlog.md-migrate export ...        # por diseñar, ver TASK-7
 ```
 
-**Estado: sin implementar.** La especificación y las decisiones se repasaron entera con quien encarga el
-proyecto, y ese repaso ya terminó: las propuestas de [`docs/pendientes.md`](docs/pendientes.md) quedan
-ratificadas sin ninguna decisión pendiente, TASK-73 (los ids de subtarea con punto) incluida, que se
-resolvió en el sentido de que `biso` no adopta esa forma, así que este proyecto decidió su propio
-mecanismo para conservarla (ver [`docs/decisiones.md`](docs/decisiones.md)). Lo que queda antes de
-escribir código no es ya ninguna decisión: son las mediciones pendientes de la sección D de
-[`docs/pendientes.md`](docs/pendientes.md) y el diseño completo de la exportación (TASK-7).
+**Estado: implementado.** Las seis fases de `import` están terminadas, revisadas y con sus pruebas de
+extremo a extremo pasando contra el binario real de `biso`. La especificación completa está en
+[`docs/especificacion.md`](docs/especificacion.md), y el porqué de cada regla, incluidas las que se
+precisaron durante la implementación, en [`docs/decisiones.md`](docs/decisiones.md). Lo que queda es
+`export`, sin diseñar todavía (TASK-7), y las mediciones sueltas de la sección D de
+[`docs/pendientes.md`](docs/pendientes.md).
 
 Es un proyecto aparte, con su propia especificación y sus propias decisiones. Vive dentro del
 repositorio de `biso` por comodidad, pero no cuelga de él: ver [`CLAUDE.md`](CLAUDE.md).

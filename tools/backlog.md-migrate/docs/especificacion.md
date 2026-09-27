@@ -1,9 +1,8 @@
 # Especificación
 
-> **Borrador provisional.** Ninguna regla de esta página está aprobada: son propuestas pendientes de
-> revisión. TASK-73 ya se resolvió (`biso` no adopta identificadores de subtarea con punto), así que
-> lo que queda pendiente es una decisión propia de este proyecto y el resto de lo que ya recogía
-> [`pendientes.md`](pendientes.md).
+> **Implementada y verificada.** Cada regla de esta página está implementada y comprobada con pruebas
+> de extremo a extremo contra el binario real de `biso`. Las reglas que se precisaron o corrigieron
+> durante la implementación quedan registradas, con su porqué, en [`decisiones.md`](decisiones.md).
 
 Esta página dice qué hace cada orden, sin decir por qué: las razones están en
 [`decisiones.md`](decisiones.md). Hoy solo `import` está especificada. `export` se diseña en TASK-7
@@ -123,7 +122,17 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    canónica que la regla 2 usa para decidir si un número choca con el destino. Un id simple y un id de
    subtarea con el mismo número principal nunca son el mismo id a estos efectos, precisamente porque uno
    tiene número de subtarea y el otro no: `TASK-1` y `TASK-1.2` son dos ids distintos, la tarea y una de
-   sus subtareas.
+   sus subtareas. Que dos o más ficheros traigan el mismo id por esta forma canónica no siempre es el
+   error fatal de código 3: Backlog.md reutiliza el número de una tarea archivada en la siguiente tarea
+   que se crea, así que un tablero real y en marcha puede tener legítimamente dos ficheros con el mismo
+   id, uno archivado y otro no. Si exactamente uno de los ficheros que comparten el id no está archivado
+   (viene de `tasks/` o de `completed/`, no de `archive/tasks/`), ese es el que conserva el número,
+   sujeto a la regla normal de colisión con el destino de la regla 2, y cada uno de los demás, todos
+   archivados, entra en el grupo de reasignados de la regla 4 con el motivo "reused id" que describe esa
+   regla. En cualquier otro caso (dos o más ficheros no archivados con el mismo id, o todos archivados y
+   ninguno activo ni terminado) sigue siendo el error fatal de código 3, porque no hay ninguna señal en
+   los datos que diga cuál de ellos es el verdadero: esa combinación solo puede venir de un tablero
+   editado a mano de una forma que el propio Backlog.md no produce.
 2. **Un id simple de origen conserva su número con el prefijo del destino** (`TASK-70` pasa a
    `BISO-70`, `XYZ-001` pasa a `BISO-1`) siempre que ese número no exista ya en el destino. Los ceros a
    la izquierda no se escriben.
@@ -145,10 +154,12 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    destino, y es un hallazgo (`already on the destination, skipped`). Así ejecutar `import` dos veces no
    duplica el tablero, subtareas incluidas. No actualiza la tarea que ya estaba, y una tarea que se haya
    editado en el destino después de importarla (otro título) ya no se reconoce.
-4. **Reciben un número nuevo los ids simples que chocan con el destino y todos los ids de subtarea**,
-   porque un id de `biso` es siempre `<PREFIJO>-<n>` y no admite el punto. Se les asigna, en el orden
-   natural de su id de origen, el siguiente número libre a partir de `max(mayor número del destino,
-   mayor número del origen) + 1`. Solo esos ids cambian de número; el resto no se desplaza.
+4. **Reciben un número nuevo los ids simples que chocan con el destino, todos los ids de subtarea, y
+   cada fichero archivado cuyo id fue reutilizado por otro fichero no archivado** (regla 1), porque un
+   id de `biso` es siempre `<PREFIJO>-<n>` y no admite el punto, y porque solo uno de los ficheros que
+   comparten un id reutilizado puede conservarlo. Se les asigna, en el orden natural de su id de
+   origen, el siguiente número libre a partir de `max(mayor número del destino, mayor número del
+   origen) + 1`. Solo esos ids cambian de número; el resto no se desplaza.
 5. Con esa tabla de equivalencias se reescriben el `id`, `parent` y `dependencies` de todas las
    tareas, y **toda mención de un id de origen en el texto** (`title`, `description`, `plan`,
    `notes`, `summary`, el texto de los criterios y el cuerpo de los comentarios): `TASK-12` pasa a
@@ -185,8 +196,10 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    valores de `labels` o `assignees` de la misma tarea quedan iguales tras la conversión. Los ciclos de
    padres o de dependencias no se detectan: los rechaza `biso new --from --dry-run`, y por eso el ensayo
    forma parte del uso.
-8. Cada id reasignado es un hallazgo: `XYZ-001.01: id BISO-97 assigned (subtask ids have no equivalent)`
-   o `TASK-12: id BISO-12 is taken on the destination, reassigned to BISO-97`.
+8. Cada id reasignado es un hallazgo: `XYZ-001.01: id BISO-97 assigned (subtask ids have no equivalent)`,
+   `TASK-12: id BISO-12 is taken on the destination, reassigned to BISO-97`, o, cuando el motivo es que
+   Backlog.md reutilizó el número tras archivar (regla 1), `TASK-2: id BISO-45 assigned (id reused after
+   archiving)`.
 9. **El id de origen de una subtarea se guarda además en la etiqueta con ámbito
    `backlog.id::<id-de-origen>`** (`backlog.id::TASK-56.1`), con el id completo tal como lo escribe
    Backlog.md, punto incluido, para que `export` lo pueda reconstruir; el porqué está en decisiones.md,
@@ -402,7 +415,7 @@ es de todo el fichero y no de una clave concreta.
 | 0 | Convertido y sin ningún hallazgo |
 | 1 | Fallo inesperado al escribir la salida (E/S, permisos, el directorio de `--out` no existe) |
 | 2 | Uso incorrecto: falta un argumento o hay uno desconocido |
-| 3 | El origen no se puede leer: no existe la carpeta, no tiene `tasks/`, un id tiene una forma que no es la de "Identificadores", los ids no comparten prefijo o dos ficheros traen el mismo id |
+| 3 | El origen no se puede leer: no existe la carpeta, no tiene `tasks/`, un id tiene una forma que no es la de "Identificadores", los ids no comparten prefijo o dos ficheros traen el mismo id sin que exactamente uno de ellos esté activo o terminado (regla 1) |
 | 4 | El destino no responde: no se encuentra `biso`, o falla una de sus órdenes |
 | 5 | Convertido con hallazgos. El NDJSON está escrito, salvo con `--strict`, donde no se escribe nada |
 
