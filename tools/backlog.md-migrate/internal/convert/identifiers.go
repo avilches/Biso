@@ -189,10 +189,153 @@ func canonicalIDKey(prefixUpper string, p parsedSourceID) string {
 	return fmt.Sprintf("%s-%d", prefixUpper, p.number)
 }
 
+// groupTieBreakKey stands in for docs/especificacion.md, "Identificadores",
+// point 4's "ruta relativa completa desde la raíz del origen" tie-break, in
+// the one situation two members of the same shared-id group (docs/decisiones.md,
+// "Los identificadores conservan su número y cambian de prefijo", the
+// paragraph on id reuse) can actually need it: a SUBTASK id shared by one
+// non-archived copy and one or more archived copies, all reassigned together
+// because a subtask never conserves its number regardless of sharing. Within
+// one shared-id group, two files can only have the exact same
+// source.Task.File when exactly one of them is archived and the other is
+// not: they then live in different directories (archive/tasks/ versus
+// tasks/ or completed/). Two ARCHIVED copies of the same group always live
+// in the very same archive/tasks/ directory, so an equal File there would
+// mean they are literally the same file, not two distinct ones; and this
+// tie-break is never reached by two non-archived copies of the same group at
+// all, since more than one non-archived copy is already fatal
+// (validateSourceShape). Prefixing File with whether the task is archived is
+// therefore already enough to make this synthetic key unique in every case
+// this tie-break is ever reached, without adding a real relative-path field
+// to source.Task just for this.
+func groupTieBreakKey(t source.Task) string {
+	if t.Archived {
+		return "archived:" + t.File
+	}
+	return "active:" + t.File
+}
+
+// hasValidCreatedDate reports whether b's already-converted created_date
+// (b.Result.CreatedAt, docs/especificacion.md, "Fechas") is present: phase 4a
+// (convert.go, ConvertDate) already turned an absent or invalid
+// source.Task.CreatedDate into the empty string, the same criterion the rest
+// of this module uses for "does this task have a valid created_date at all".
+func hasValidCreatedDate(b TaskInput) bool {
+	return b.Result.CreatedAt != ""
+}
+
+// sharedGroupAssignmentLess breaks a tie between two toReassign entries that
+// share the exact same parsedSourceID: this can only happen between members
+// of the same shared-id group (docs/especificacion.md, "Identificadores",
+// point 1's last paragraph guarantees two DIFFERENT ids never collide in
+// canonical form), so this implements point 4's own two-level tie-break, on
+// top of naturalSourceIDLess: every entry with a valid created_date sorts
+// before every entry without one; two entries that both have one sort by
+// that date ascending; and a final tie, either between two equal dates or
+// between two entries that both lack a date, is broken by groupTieBreakKey
+// ascending.
+func sharedGroupAssignmentLess(a, b reassignEntry) bool {
+	if a.hasDate != b.hasDate {
+		return a.hasDate
+	}
+	if a.hasDate && a.createdAt != b.createdAt {
+		return a.createdAt < b.createdAt
+	}
+	return groupTieBreakKey(a.task) < groupTieBreakKey(b.task)
+}
+
+// nonArchivedMember returns the index (into batch) of the one non-archived
+// task among members, and true, when there is one. validateSourceShape
+// already guarantees a shared-id group never has more than one, so the first
+// one found is the only one there is.
+func nonArchivedMember(members []int, batch []TaskInput) (int, bool) {
+	for _, i := range members {
+		if !batch[i].Task.Archived {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+// pickGroupWinner implements the tie-break docs/especificacion.md,
+// "Identificadores", point 5 defines for a shared-id group with NO
+// non-archived member at all: among the members with a valid created_date,
+// if there are any, the one with the most recent date wins, ties broken by
+// the largest groupTieBreakKey; when no member has a valid date at all, the
+// one with the largest groupTieBreakKey wins outright. This deliberately
+// does NOT reuse point 4's own bucketed order (dated members entirely before
+// undated ones) as a single sort-and-take-the-last, because that would let
+// an undated member outrank a dated one whenever the group mixes both,
+// exactly backwards from point 5's "at least one has a valid date" wording:
+// point 5 only ever falls back to undated members when NONE of them has a
+// date, so the two cases below are evaluated as an if/else on that
+// condition, each with its own ascending sort ending on its own winner,
+// rather than as one merged order.
+func pickGroupWinner(members []int, batch []TaskInput) int {
+	var dated []int
+	for _, i := range members {
+		if hasValidCreatedDate(batch[i]) {
+			dated = append(dated, i)
+		}
+	}
+
+	pool := dated
+	if len(pool) == 0 {
+		pool = append([]int(nil), members...)
+	}
+
+	sort.SliceStable(pool, func(x, y int) bool {
+		ix, iy := pool[x], pool[y]
+		cx, cy := batch[ix].Result.CreatedAt, batch[iy].Result.CreatedAt
+		if cx != cy {
+			return cx < cy
+		}
+		return groupTieBreakKey(batch[ix].Task) < groupTieBreakKey(batch[iy].Task)
+	})
+	return pool[len(pool)-1]
+}
+
+// ambiguousGroupInfo records, for one shared-id group's canonical key, which
+// of docs/especificacion.md, "Identificadores", point 5's two ambiguous
+// cases produced its equivalentsByCanonical entry: SelectedFromArchived is
+// false when exactly one member is non-archived (the mention/parent/
+// dependency resolves to that one), and true when none of the group's
+// members is active nor terminated (it resolves to pickGroupWinner's choice
+// among the archived copies instead). A canonical key with no entry in this
+// map at all is not shared by more than one task, so resolving against it is
+// never ambiguous and never raises the Finding this map exists to drive.
+type ambiguousGroupInfo struct {
+	SelectedFromArchived bool
+}
+
+// ambiguousMessage builds the Finding text docs/especificacion.md,
+// "Identificadores", points 5 and 7 define for a mention, parent, or
+// dependency that resolved against a shared id (a number Backlog.md reused
+// after archiving, point 1) rather than a single unambiguous source task.
+// kind is "mention", "parent", or "dependency": point 7 reuses point 5's
+// wording verbatim for parent and dependency, only that one word differs.
+// count is 1 for the exact literal wording points 5 and 7 both give; any
+// other count means this file, field, and shared id resolved this way more
+// than once, grouped into one line with a count instead of one Finding per
+// occurrence, the same treatment point 6 already gives a repeated unresolved
+// mention. Neither point fixes a literal wording for that grouped case, the
+// same way point 6 does not either.
+func ambiguousMessage(kind string, count int, canonical, finalID string, info ambiguousGroupInfo) string {
+	role := "the non-archived task sharing this id"
+	if info.SelectedFromArchived {
+		role = "the archived task selected among those sharing this id"
+	}
+	if count == 1 {
+		return fmt.Sprintf("%s: %s resolved to %s, %s", canonical, kind, finalID, role)
+	}
+	return fmt.Sprintf("%d %s(s) of %s resolve to %s, %s", count, kind, canonical, finalID, role)
+}
+
 // seenSourceID records, for validateSourceShape's duplicate check, which
-// file and which literal id string first produced a given canonical key, so
-// the error message can name both tasks by file and by their own original
-// id, not just by the canonical key they collide on.
+// file and which literal id string first produced a given canonical key
+// among the batch's NON-ARCHIVED tasks, so the error message can name both
+// tasks by file and by their own original id, not just by the canonical key
+// they collide on.
 type seenSourceID struct {
 	file string
 	id   string
@@ -201,18 +344,31 @@ type seenSourceID struct {
 // validateSourceShape implements docs/especificacion.md, "Identificadores",
 // point 1, over ALL of the batch's source tasks at once (active, completed,
 // and archived tasks together): every id must have the shape parseSourceID
-// accepts, every id must share the same prefix once folded to uppercase
+// accepts, and every id must share the same prefix once folded to uppercase
 // (Backlog.md always writes the prefix in uppercase in the id itself, even
 // when its own configuration stores it differently, so no configuration
-// needs to be read here), and no two tasks may canonicalize to the same id
-// (canonicalIDKey): same prefix folded, same main number, the same shape
-// (both simple or both subtask, since a simple id and a subtask id with the
-// same main number are never the same id), and, only when both are
-// subtasks, the same subtask number too.
+// needs to be read here).
 //
-// It returns a parsedSourceID per task, keyed by the task's literal id, and
-// the shared prefix already folded to uppercase: the form every later step
-// in this file writes into a final id and matches text mentions against.
+// The one case point 1 still makes fatal is MORE THAN ONE non-archived task
+// (from tasks/ or completed/, never archive/tasks/) canonicalizing
+// (canonicalIDKey) to the same id: same prefix folded, same main number, the
+// same shape (both simple or both subtask, since a simple id and a subtask
+// id with the same main number are never the same id), and, only when both
+// are subtasks, the same subtask number too. Backlog.md reuses the number of
+// an archived task in the next one it creates (docs/decisiones.md, "Los
+// identificadores conservan su número y cambian de prefijo"), so any number
+// of ARCHIVED tasks may canonicalize to the same id, alone or alongside a
+// single non-archived one, without this ever being fatal: it is Identifiers
+// itself (point 4's shared-id handling, further down this file) that decides
+// which of them conserves the number and which are reassigned with "id
+// reused after archiving".
+//
+// It returns a parsedSourceID per task, keyed by the task's literal id
+// (harmlessly overwritten with an identical value when two tasks happen to
+// share the exact same literal id string, which parseSourceID always parses
+// the same way), and the shared prefix already folded to uppercase: the form
+// every later step in this file writes into a final id and matches text
+// mentions against.
 //
 // This is the one failure "Identificadores" turns into a Go error rather
 // than a Finding: docs/especificacion.md, section "Códigos de salida", the
@@ -222,7 +378,7 @@ type seenSourceID struct {
 // the three things failed and with what value.
 func validateSourceShape(tasks []source.Task) (parsed map[string]parsedSourceID, prefixUpper string, err error) {
 	parsed = make(map[string]parsedSourceID, len(tasks))
-	seenIn := make(map[string]seenSourceID, len(tasks))
+	firstNonArchivedIn := make(map[string]seenSourceID, len(tasks))
 
 	for _, t := range tasks {
 		p, ok := parseSourceID(t.ID)
@@ -243,14 +399,16 @@ func validateSourceShape(tasks []source.Task) (parsed map[string]parsedSourceID,
 			)
 		}
 
-		canonical := canonicalIDKey(folded, p)
-		if prev, duplicate := seenIn[canonical]; duplicate {
-			return nil, "", fmt.Errorf(
-				"identifiers: %s (id %q) and %s (id %q) are the same id",
-				prev.file, prev.id, t.File, t.ID,
-			)
+		if !t.Archived {
+			canonical := canonicalIDKey(folded, p)
+			if prev, duplicate := firstNonArchivedIn[canonical]; duplicate {
+				return nil, "", fmt.Errorf(
+					"identifiers: %s (id %q) and %s (id %q) are the same id",
+					prev.file, prev.id, t.File, t.ID,
+				)
+			}
+			firstNonArchivedIn[canonical] = seenSourceID{file: t.File, id: t.ID}
 		}
-		seenIn[canonical] = seenSourceID{file: t.File, id: t.ID}
 
 		parsed[t.ID] = p
 	}
@@ -274,6 +432,41 @@ func destinationNumber(id string) (int, bool) {
 	return n, true
 }
 
+// reassignReason records, for one entry of toReassign, which of point 4's
+// (or point 8's) three reasons put it there, so the assignment loop further
+// down can print the exact wording point 8 fixes for each one.
+type reassignReason int
+
+const (
+	// reassignCollision is a simple id whose own number is already taken on
+	// the destination (point 2's collision, point 8's "is taken on the
+	// destination, reassigned to" wording).
+	reassignCollision reassignReason = iota
+	// reassignSubtask is any id with a dot: a subtask never conserves its
+	// number, shared id or not (point 8's "subtask ids have no equivalent").
+	reassignSubtask
+	// reassignReused is a simple id that is one of the ARCHIVED copies of a
+	// shared id (point 1, point 4): reassigned regardless of whether its own
+	// number would also have collided (point 8's "id reused after
+	// archiving", the only Finding printed for it even then).
+	reassignReused
+)
+
+// reassignEntry is one task point 4 could not let conserve its own number,
+// waiting to be assigned a new one. createdAt and hasDate are b.Result's
+// already-converted created_date (docs/especificacion.md, "Fechas") and
+// whether it is present at all, carried alongside task and parsed purely so
+// sharedGroupAssignmentLess can break a tie without needing the whole
+// TaskInput.
+type reassignEntry struct {
+	index     int
+	task      source.Task
+	parsed    parsedSourceID
+	createdAt string
+	hasDate   bool
+	reason    reassignReason
+}
+
 // Identifiers is phase 4b's entry point (docs/especificacion.md,
 // "Identificadores"). It receives the whole batch at once, because an
 // identifier can only be decided knowing every source task and every task
@@ -289,8 +482,10 @@ func destinationNumber(id string) (int, bool) {
 //  1. One Identified per TaskInput that was NOT skipped as already on the
 //     destination (point 3), in the same relative order as batch.
 //  2. Every Finding this phase raises: a skip (point 3), a reassignment
-//     (point 4 and point 8's exact wording), an unresolved or wrong-case
-//     mention grouped by file and field (point 6), a dropped parent or
+//     (point 4 and point 8's exact wording, "id reused after archiving"
+//     included), an unresolved or wrong-case mention grouped by file and
+//     field (point 6), an ambiguous resolution against a shared id grouped
+//     by file, field, and shared id (points 5 and 7), a dropped parent or
 //     dependency (point 7), and a dropped label colliding with backlog.id
 //     (point 9).
 //  3. A non-nil error, instead of any Identified or Finding, when
@@ -326,6 +521,23 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 		}
 	}
 
+	// groups collects, for every canonical key (canonicalIDKey), the indices
+	// into batch of every task that canonicalizes to it, in batch order.
+	// Almost every key maps to exactly one index; a key mapping to more than
+	// one is docs/especificacion.md, "Identificadores", point 1's shared-id
+	// case (Backlog.md reusing a number after archiving), which
+	// validateSourceShape already allowed through because at most one member
+	// of the group is non-archived. canonicalOf[i] is the same key for
+	// batch[i], kept alongside so later steps do not need to reparse
+	// batch[i].Task.ID to find its own group again.
+	groups := make(map[string][]int, len(batch))
+	canonicalOf := make([]string, len(batch))
+	for i, b := range batch {
+		key := canonicalIDKey(prefixUpper, parsedByID[b.Task.ID])
+		canonicalOf[i] = key
+		groups[key] = append(groups[key], i)
+	}
+
 	var findings []source.Finding
 
 	// docs/especificacion.md, "Identificadores", point 3: a task is a
@@ -336,15 +548,20 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 	// so that a title mentioning another source id still matches the title
 	// biso actually wrote on a previous run. The equivalent of a skipped
 	// task is the id that destination task ALREADY has, and it is skipped
-	// rather than emitted.
-	equivalents := make(map[string]string, len(batch))
-	skipped := make(map[string]bool, len(batch))
-	for _, b := range batch {
+	// rather than emitted. This is evaluated per task, by INDEX rather than
+	// by literal source id: two tasks that share a literal id (point 1's
+	// reuse case, where Backlog.md hands the exact same id string to the
+	// task that reused a number) must still be checked against the
+	// destination independently of one another, point 3's own closing
+	// sentence.
+	perTaskFinalID := make([]string, len(batch))
+	skipped := make([]bool, len(batch))
+	for i, b := range batch {
 		candidateTitle := naiveTitle(b.Task.Title, pattern, prefixUpper, board.Config.TaskPrefix, simpleSourceNumbers)
 		for _, dt := range board.Tasks {
 			if candidateTitle == dt.Title && b.Result.CreatedAt == dt.CreatedAt {
-				equivalents[b.Task.ID] = dt.ID
-				skipped[b.Task.ID] = true
+				perTaskFinalID[i] = dt.ID
+				skipped[i] = true
 				findings = append(findings, source.Finding{
 					File:    b.Task.File,
 					Field:   "id",
@@ -382,22 +599,59 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 		}
 	}
 
-	type reassignEntry struct {
-		task   source.Task
-		parsed parsedSourceID
-	}
 	var toReassign []reassignEntry
 
-	for _, b := range batch {
-		if skipped[b.Task.ID] {
+	for i, b := range batch {
+		if skipped[i] {
 			continue
 		}
 		p := parsedByID[b.Task.ID]
-		if !p.hasSub && !destNumbers[p.number] {
-			equivalents[b.Task.ID] = fmt.Sprintf("%s-%d", board.Config.TaskPrefix, p.number)
+
+		if p.hasSub {
+			// A subtask never conserves its number, shared id or not (point
+			// 4's own closing sentence for the subtask case).
+			toReassign = append(toReassign, reassignEntry{
+				index: i, task: b.Task, parsed: p,
+				createdAt: b.Result.CreatedAt, hasDate: hasValidCreatedDate(b),
+				reason: reassignSubtask,
+			})
 			continue
 		}
-		toReassign = append(toReassign, reassignEntry{task: b.Task, parsed: p})
+
+		// designated is whether THIS task is the one point 4 lets compete
+		// for its own number under the normal collision rule: either it is
+		// the only member of its canonical group at all (the common case,
+		// no id reuse involved), or it is the group's one non-archived
+		// member. validateSourceShape already guarantees a shared group
+		// never has more than one non-archived member, so a non-archived
+		// task in a shared group is always that one member.
+		group := groups[canonicalOf[i]]
+		designated := len(group) == 1 || !b.Task.Archived
+
+		if designated {
+			if !destNumbers[p.number] {
+				perTaskFinalID[i] = fmt.Sprintf("%s-%d", board.Config.TaskPrefix, p.number)
+				continue
+			}
+			toReassign = append(toReassign, reassignEntry{
+				index: i, task: b.Task, parsed: p,
+				createdAt: b.Result.CreatedAt, hasDate: hasValidCreatedDate(b),
+				reason: reassignCollision,
+			})
+			continue
+		}
+
+		// A simple id, in a shared group of more than one member, and this
+		// copy is NOT the designated (non-archived) one: it is one of the
+		// archived copies of a number Backlog.md later reused, reassigned
+		// regardless of whether its own number would also have collided
+		// (point 8's note that "id reused after archiving" is the only
+		// Finding printed for it in that case).
+		toReassign = append(toReassign, reassignEntry{
+			index: i, task: b.Task, parsed: p,
+			createdAt: b.Result.CreatedAt, hasDate: hasValidCreatedDate(b),
+			reason: reassignReused,
+		})
 	}
 
 	// Point 4 assigns reassigned numbers in the source id's own natural
@@ -405,74 +659,88 @@ func Identifiers(batch []TaskInput, board destination.Board) ([]Identified, []so
 	// SIMPLE id always sorts before any subtask of that same number ("TASK-1"
 	// reads before "TASK-1.0"), and two subtasks of the same parent sort by
 	// their own subtask number ascending. Two entries can share a main
-	// number two different ways, not just one: two subtasks of the same
-	// parent, or a simple id that collides with the destination reassigned
-	// alongside one of its own subtasks (a colliding TASK-1 and its subtask
-	// TASK-1.1 both end up in this list at once, sharing main number 1).
-	// Sorting by naturalSourceIDLess makes the final order deterministic in
-	// every one of those cases, regardless of the order entries arrived in
-	// batch.
+	// number more than one way: two subtasks of the same parent, a simple id
+	// that collides with the destination reassigned alongside one of its own
+	// subtasks, or, since this arrangement, two or more members of the same
+	// shared-id group (point 1's reuse case), which naturalSourceIDLess
+	// cannot tell apart at all since they carry the identical
+	// parsedSourceID. sharedGroupAssignmentLess breaks exactly that last
+	// tie, point 4's own two-level created_date/path order; it is never
+	// consulted for the other two cases, where naturalSourceIDLess already
+	// decides one way or the other.
 	sort.SliceStable(toReassign, func(i, j int) bool {
-		return naturalSourceIDLess(toReassign[i].parsed, toReassign[j].parsed)
+		a, b := toReassign[i], toReassign[j]
+		if naturalSourceIDLess(a.parsed, b.parsed) {
+			return true
+		}
+		if naturalSourceIDLess(b.parsed, a.parsed) {
+			return false
+		}
+		return sharedGroupAssignmentLess(a, b)
 	})
 
 	nextNumber := max(maxDestNumber, maxSourceNumber) + 1
 	for _, r := range toReassign {
 		newID := fmt.Sprintf("%s-%d", board.Config.TaskPrefix, nextNumber)
-		equivalents[r.task.ID] = newID
+		perTaskFinalID[r.index] = newID
 
-		if r.parsed.hasSub {
-			findings = append(findings, source.Finding{
-				File:  r.task.File,
-				Field: "id",
-				Message: fmt.Sprintf(
-					"%s: id %s assigned (subtask ids have no equivalent)",
-					r.task.ID, newID,
-				),
-			})
-		} else {
+		var message string
+		switch r.reason {
+		case reassignSubtask:
+			message = fmt.Sprintf("%s: id %s assigned (subtask ids have no equivalent)", r.task.ID, newID)
+		case reassignReused:
+			message = fmt.Sprintf("%s: id %s assigned (id reused after archiving)", r.task.ID, newID)
+		default: // reassignCollision
 			wouldBeID := fmt.Sprintf("%s-%d", board.Config.TaskPrefix, r.parsed.number)
-			findings = append(findings, source.Finding{
-				File:  r.task.File,
-				Field: "id",
-				Message: fmt.Sprintf(
-					"%s: id %s is taken on the destination, reassigned to %s",
-					r.task.ID, wouldBeID, newID,
-				),
-			})
+			message = fmt.Sprintf("%s: id %s is taken on the destination, reassigned to %s", r.task.ID, wouldBeID, newID)
 		}
+		findings = append(findings, source.Finding{File: r.task.File, Field: "id", Message: message})
 
 		nextNumber++
 	}
 
-	// docs/decisiones.md, section "Los identificadores conservan su número y
-	// cambian de prefijo", the paragraph explaining that the same canonical
-	// form also decides which task a text mention corresponds to: point 5's
-	// definitive rewrite (and point 6's "does not resolve" count) looks up a
-	// mention by the same canonical form validateSourceShape and naiveTitle
-	// already use (same prefix, same main number as an int, and the same
-	// subtask number as an int when the mention has one), not by the exact
-	// string, so a mention of "TASK-1" in text finds a source task recorded
-	// as "TASK-001" just as it would find one recorded as "TASK-1". Built
-	// once equivalents has one entry per every batch task (skipped,
-	// conserved, and reassigned all included): validateSourceShape already
-	// ruled out two tasks sharing a canonical key, so this can never
-	// overwrite one entry with another.
-	equivalentsByCanonical := make(map[string]string, len(parsedByID))
-	for id, p := range parsedByID {
-		equivalentsByCanonical[canonicalIDKey(prefixUpper, p)] = equivalents[id]
+	// docs/especificacion.md, "Identificadores", points 5 and 7: for every
+	// canonical group, decide the one final id a mention, parent, or
+	// dependency naming it resolves to. A group of one is the ordinary case,
+	// point 5's "TASK-1" finding its own equivalent; a shared group (point
+	// 1's reuse case) resolves to its one non-archived member's own final id
+	// when it has one, or, when every member is archived, to
+	// pickGroupWinner's choice among them (point 5's "at least one has a
+	// created_date... resolves to the archived task selected among those
+	// sharing this id" wording, reused verbatim by point 7). ambiguousGroups
+	// records which of the two shared-group cases produced each entry,
+	// purely so identifyTask can raise the right Finding when a
+	// mention/parent/dependency actually resolves against one; a canonical
+	// key with no entry there was never shared, so resolving against it is
+	// never ambiguous.
+	equivalentsByCanonical := make(map[string]string, len(groups))
+	ambiguousGroups := make(map[string]ambiguousGroupInfo, len(groups))
+	for key, members := range groups {
+		if len(members) == 1 {
+			equivalentsByCanonical[key] = perTaskFinalID[members[0]]
+			continue
+		}
+		if nonArchived, ok := nonArchivedMember(members, batch); ok {
+			equivalentsByCanonical[key] = perTaskFinalID[nonArchived]
+			ambiguousGroups[key] = ambiguousGroupInfo{SelectedFromArchived: false}
+			continue
+		}
+		winner := pickGroupWinner(members, batch)
+		equivalentsByCanonical[key] = perTaskFinalID[winner]
+		ambiguousGroups[key] = ambiguousGroupInfo{SelectedFromArchived: true}
 	}
 
 	// docs/especificacion.md, "Identificadores", points 5, 6, 7, and 9:
 	// build the actual output for every task that was not skipped, in
-	// batch order, now that equivalents and equivalentsByCanonical (both
-	// built by points 2, 3, and 4 together) are complete.
+	// batch order, now that perTaskFinalID, equivalentsByCanonical, and
+	// ambiguousGroups (all built by points 2, 3, and 4 together) are
+	// complete.
 	var out []Identified
-	for _, b := range batch {
-		if skipped[b.Task.ID] {
+	for i, b := range batch {
+		if skipped[i] {
 			continue
 		}
-		identified, taskFindings := identifyTask(b, parsedByID[b.Task.ID], equivalents, equivalentsByCanonical, pattern, prefixUpper)
+		identified, taskFindings := identifyTask(b, parsedByID[b.Task.ID], perTaskFinalID[i], equivalentsByCanonical, ambiguousGroups, pattern, prefixUpper)
 		findings = append(findings, taskFindings...)
 		out = append(out, identified)
 	}
@@ -503,26 +771,36 @@ var mentionFieldOrder = []string{
 // A value that does not even parse as an id (parseSourceID's ok is false),
 // or whose prefix does not fold to prefixUpper, is never found: ok is
 // false, matching the "value that does not have the shape of an id at all"
-// case point 7 still drops with a Finding.
-func resolveByCanonicalForm(value, prefixUpper string, equivalentsByCanonical map[string]string) (resolved string, ok bool) {
+// case point 7 still drops with a Finding, and canonical is the empty string
+// in that case too. When ok is true, the caller uses canonical to check
+// ambiguousGroups, since resolveByCanonicalForm itself does not know whether
+// the group it resolved against was shared at all.
+func resolveByCanonicalForm(value, prefixUpper string, equivalentsByCanonical map[string]string) (resolved, canonical string, ok bool) {
 	parsed, parseOK := parseSourceID(value)
 	if !parseOK || strings.ToUpper(parsed.prefix) != prefixUpper {
-		return "", false
+		return "", "", false
 	}
-	resolved, ok = equivalentsByCanonical[canonicalIDKey(prefixUpper, parsed)]
-	return resolved, ok
+	canonical = canonicalIDKey(prefixUpper, parsed)
+	resolved, ok = equivalentsByCanonical[canonical]
+	if !ok {
+		return "", "", false
+	}
+	return resolved, canonical, true
 }
 
 // identifyTask builds the Identified for one non-skipped task, plus every
 // Finding raised while rewriting its parent, dependencies, mentions, and
-// backlog.id:: label. p is parsedByID[b.Task.ID], passed in rather than
-// re-parsed since the caller already has it.
+// backlog.id:: label. p is parsedByID[b.Task.ID], and finalID is
+// perTaskFinalID for this same task, both passed in rather than recomputed
+// since the caller already has them (finalID by INDEX rather than by literal
+// source id, so that two tasks sharing a literal id, docs/especificacion.md,
+// "Identificadores", point 1's reuse case, still each get their own value
+// here).
 //
-// equivalents (keyed by literal source id) and equivalentsByCanonical
-// (keyed by canonical form) serve three genuinely different lookups here:
+// equivalentsByCanonical (keyed by canonical form) and ambiguousGroups
+// (keyed the same way, but present only for a canonical key more than one
+// task shares) serve two lookups here:
 //
-//   - ID resolves the task's own id, which is already known exactly (it is
-//     b.Task.ID itself), so it stays a plain lookup in equivalents.
 //   - Parent and Dependencies resolve docs/especificacion.md,
 //     "Identificadores", point 7's full canonical form, prefix folded to
 //     uppercase included: resolveByCanonicalForm, built on
@@ -535,20 +813,41 @@ func resolveByCanonicalForm(value, prefixUpper string, equivalentsByCanonical ma
 //     parent or dependency field is never free text where an id could
 //     appear by accident, so there is no false match to protect against by
 //     keeping its prefix case-sensitive, unlike a mention in prose).
+//
+// Both consult ambiguousGroups, by the canonical key they just resolved
+// against, to raise points 5 and 7's "mention/parent/dependency resolved
+// to..." Finding whenever that resolution went through a shared id.
 func identifyTask(
 	b TaskInput,
 	p parsedSourceID,
-	equivalents map[string]string,
+	finalID string,
 	equivalentsByCanonical map[string]string,
+	ambiguousGroups map[string]ambiguousGroupInfo,
 	pattern *regexp.Regexp,
 	prefixUpper string,
 ) (Identified, []source.Finding) {
 	var findings []source.Finding
 	unresolvedCounts := make(map[string]int, len(mentionFieldOrder))
+	// ambiguousByField accumulates, per field, how many times each shared
+	// canonical id was actually resolved against while rewriting that
+	// field's mentions (points 5 and 6's shared grouping: file, field, AND
+	// shared id together, docs/especificacion.md, "Identificadores", point
+	// 5's closing paragraph), across however many rewrite() calls that field
+	// takes (one for title/description/plan/notes/summary, one per
+	// acceptance criterion, one per comment).
+	ambiguousByField := make(map[string]map[string]int, len(mentionFieldOrder))
 
 	rewrite := func(field, text string) string {
-		rewritten, unresolved := rewriteMentions(text, pattern, prefixUpper, equivalentsByCanonical)
+		rewritten, unresolved, hits := rewriteMentions(text, pattern, prefixUpper, equivalentsByCanonical, ambiguousGroups)
 		unresolvedCounts[field] += unresolved
+		for canonical, n := range hits {
+			agg := ambiguousByField[field]
+			if agg == nil {
+				agg = make(map[string]int)
+				ambiguousByField[field] = agg
+			}
+			agg[canonical] += n
+		}
 		return rewritten
 	}
 
@@ -582,12 +881,37 @@ func identifyTask(
 				),
 			})
 		}
+		if agg := ambiguousByField[field]; len(agg) > 0 {
+			// Deterministic regardless of Go's map iteration order: sorted
+			// alphabetically by the shared id's own canonical text, since
+			// neither point 5 nor point 7 fixes an order for two DIFFERENT
+			// shared ids resolved in the same file and field.
+			canonicals := make([]string, 0, len(agg))
+			for canonical := range agg {
+				canonicals = append(canonicals, canonical)
+			}
+			sort.Strings(canonicals)
+			for _, canonical := range canonicals {
+				findings = append(findings, source.Finding{
+					File:    b.Task.File,
+					Field:   field,
+					Message: ambiguousMessage("mention", agg[canonical], canonical, equivalentsByCanonical[canonical], ambiguousGroups[canonical]),
+				})
+			}
+		}
 	}
 
 	parent := ""
 	if b.Task.ParentTaskID != "" {
-		if resolved, ok := resolveByCanonicalForm(b.Task.ParentTaskID, prefixUpper, equivalentsByCanonical); ok {
+		if resolved, canonical, ok := resolveByCanonicalForm(b.Task.ParentTaskID, prefixUpper, equivalentsByCanonical); ok {
 			parent = resolved
+			if info, shared := ambiguousGroups[canonical]; shared {
+				findings = append(findings, source.Finding{
+					File:    b.Task.File,
+					Field:   "parent",
+					Message: ambiguousMessage("parent", 1, canonical, resolved, info),
+				})
+			}
 		} else {
 			findings = append(findings, source.Finding{
 				File:  b.Task.File,
@@ -605,10 +929,18 @@ func identifyTask(
 	// final id by canonical form keep only the first, in original order,
 	// the same rule CleanTokenList (tokens.go) already applies when two
 	// labels or assignees of one task collapse to the same value.
+	//
+	// depAmbiguous and depAmbiguousOrder group point 7's ambiguous-resolution
+	// Finding by shared id, in the order each shared id was first
+	// encountered in Dependencies: a single field can have at most one
+	// grouped line per shared id here, same as a free-text field's mentions,
+	// even though Dependencies is a list rather than one block of prose.
 	var dependencies []string
 	seenDependencies := make(map[string]bool, len(b.Task.Dependencies))
+	depAmbiguous := make(map[string]int)
+	var depAmbiguousOrder []string
 	for _, dep := range b.Task.Dependencies {
-		resolved, ok := resolveByCanonicalForm(dep, prefixUpper, equivalentsByCanonical)
+		resolved, canonical, ok := resolveByCanonicalForm(dep, prefixUpper, equivalentsByCanonical)
 		if !ok {
 			findings = append(findings, source.Finding{
 				File:  b.Task.File,
@@ -620,11 +952,24 @@ func identifyTask(
 			})
 			continue
 		}
+		if _, shared := ambiguousGroups[canonical]; shared {
+			if depAmbiguous[canonical] == 0 {
+				depAmbiguousOrder = append(depAmbiguousOrder, canonical)
+			}
+			depAmbiguous[canonical]++
+		}
 		if seenDependencies[resolved] {
 			continue
 		}
 		seenDependencies[resolved] = true
 		dependencies = append(dependencies, resolved)
+	}
+	for _, canonical := range depAmbiguousOrder {
+		findings = append(findings, source.Finding{
+			File:    b.Task.File,
+			Field:   "dependencies",
+			Message: ambiguousMessage("dependency", depAmbiguous[canonical], canonical, equivalentsByCanonical[canonical], ambiguousGroups[canonical]),
+		})
 	}
 
 	labels := append([]string(nil), b.Result.Labels...)
@@ -637,7 +982,7 @@ func identifyTask(
 
 	return Identified{
 		SourceID:           b.Task.ID,
-		ID:                 equivalents[b.Task.ID],
+		ID:                 finalID,
 		Parent:             parent,
 		Dependencies:       dependencies,
 		Title:              title,
@@ -742,11 +1087,27 @@ func scanMentions(text string, pattern *regexp.Regexp, prefixUpper string, handl
 // unchanged by this: canonical form only enters AFTER a candidate already
 // passed scanMentions's exact-case, word-boundary check, to decide which
 // batch task it names.
-func rewriteMentions(text string, pattern *regexp.Regexp, prefixUpper string, equivalentsByCanonical map[string]string) (rewritten string, unresolved int) {
+//
+// ambiguousGroups is nil-safe (a nil map is only ever read from, never
+// written to) so a caller that never deals with a shared id, such as
+// TestRewriteMentionsSubstitutesFromTheOriginalTextOnly, can pass nil.
+// ambiguousHits counts, by canonical key, how many candidates in this one
+// text actually resolved against a shared id (a key present in
+// ambiguousGroups): identifyTask merges this into its own per-field
+// grouping for points 5 and 7's "resolved to..., the ... task sharing this
+// id" Finding. It is nil when this text raised no such case at all.
+func rewriteMentions(text string, pattern *regexp.Regexp, prefixUpper string, equivalentsByCanonical map[string]string, ambiguousGroups map[string]ambiguousGroupInfo) (rewritten string, unresolved int, ambiguousHits map[string]int) {
 	rewritten = scanMentions(text, pattern, prefixUpper, func(m mentionMatch) string {
 		if m.ExactCase {
 			if parsed, ok := parseSourceID(m.Text); ok {
-				if final, ok := equivalentsByCanonical[canonicalIDKey(prefixUpper, parsed)]; ok {
+				canonical := canonicalIDKey(prefixUpper, parsed)
+				if final, ok := equivalentsByCanonical[canonical]; ok {
+					if _, shared := ambiguousGroups[canonical]; shared {
+						if ambiguousHits == nil {
+							ambiguousHits = make(map[string]int)
+						}
+						ambiguousHits[canonical]++
+					}
 					return final
 				}
 			}
@@ -754,7 +1115,7 @@ func rewriteMentions(text string, pattern *regexp.Regexp, prefixUpper string, eq
 		unresolved++
 		return m.Text
 	})
-	return rewritten, unresolved
+	return rewritten, unresolved, ambiguousHits
 }
 
 // naiveTitle implements the "naive" mention rewrite docs/especificacion.md,

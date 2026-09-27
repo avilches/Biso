@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -692,7 +693,7 @@ func TestRewriteMentionsSubstitutesFromTheOriginalTextOnly(t *testing.T) {
 		"TASK-2": "TASK-3",
 	}
 
-	got, unresolved := rewriteMentions("See TASK-1 and TASK-2", pattern, "TASK", equivalentsByCanonical)
+	got, unresolved, _ := rewriteMentions("See TASK-1 and TASK-2", pattern, "TASK", equivalentsByCanonical, nil)
 
 	want := "See TASK-2 and TASK-3"
 	if got != want {
@@ -1137,5 +1138,366 @@ func TestIdentifiersNeverTreatsASimpleIdAndItsSubtaskAsTheSameId(t *testing.T) {
 	}
 	if len(out) != 2 {
 		t.Fatalf("out = %v, want 2 tasks", out)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// docs/especificacion.md, "Identificadores", point 1's id-reuse-after-
+// archiving case (Backlog.md handing an archived task's number to the next
+// one it creates), and points 4, 5, and 7's handling of it.
+//
+// Two copies that share a reused id also share the exact literal SourceID
+// string (Backlog.md hands the reused task the very same id), so findByID
+// cannot tell them apart. These tests index into Identifiers' own output
+// slice directly instead: Identifiers documents that it returns one
+// Identified per non-skipped batch entry IN THE SAME RELATIVE ORDER as
+// batch, and none of these tests' tasks are skipped (point 3), so out[i]
+// is always batch[i]'s own result.
+// ---------------------------------------------------------------------------
+
+// TestIdentifiersAnActiveAndAnArchivedCopyOfTheSameIdIsNotFatal covers point
+// 1's central case: exactly one non-archived copy of a shared simple id is
+// never fatal. The active copy conserves its number under the normal rule
+// (point 2, free here), and the archived copy is reassigned with the new
+// "id reused after archiving" reason, never the ordinary collision wording.
+func TestIdentifiersAnActiveAndAnArchivedCopyOfTheSameIdIsNotFatal(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "active.md", ID: "TASK-2", Title: "Active"}, Result: Result{}},
+		{Task: source.Task{File: "archived.md", ID: "TASK-2", Title: "Archived", Archived: true}, Result: Result{}},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v, want the shared id to be tolerated (only one copy is non-archived)", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("out = %v, want both copies emitted", out)
+	}
+
+	active, archived := out[0], out[1]
+	if active.ID != "BISO-2" {
+		t.Errorf("active.ID = %q, want BISO-2 (conserved, its number is free)", active.ID)
+	}
+	if archived.ID == "BISO-2" || archived.ID == "" {
+		t.Fatalf("archived.ID = %q, want a freshly reassigned id, distinct from the active copy's", archived.ID)
+	}
+
+	want := fmt.Sprintf("TASK-2: id %s assigned (id reused after archiving)", archived.ID)
+	if _, ok := findingWithSubstring(findings, want); !ok {
+		t.Fatalf("findings = %v, want one containing %q", findings, want)
+	}
+	if _, ok := findingWithSubstring(findings, "is taken on the destination"); ok {
+		t.Errorf("findings = %v, want no ordinary collision wording for the archived copy", findings)
+	}
+}
+
+// TestIdentifiersMentionResolvesToTheNonArchivedCopyOfASharedId covers
+// docs/especificacion.md, "Identificadores", point 5's first ambiguous case:
+// a free-text mention of a shared id with exactly one non-archived copy
+// resolves to that copy's own final id, with the exact Finding wording point
+// 5 fixes.
+func TestIdentifiersMentionResolvesToTheNonArchivedCopyOfASharedId(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "active.md", ID: "TASK-2", Title: "Active"}, Result: Result{}},
+		{Task: source.Task{File: "archived.md", ID: "TASK-2", Title: "Archived", Archived: true}, Result: Result{}},
+		{Task: source.Task{File: "c.md", ID: "TASK-9", Title: "Mentions TASK-2"}, Result: Result{}},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	activeID := out[0].ID
+	if activeID != "BISO-2" {
+		t.Fatalf("active.ID = %q, want BISO-2", activeID)
+	}
+
+	mentioner := out[2]
+	want := fmt.Sprintf("Mentions %s", activeID)
+	if mentioner.Title != want {
+		t.Errorf("Title = %q, want %q", mentioner.Title, want)
+	}
+
+	wantFinding := fmt.Sprintf("TASK-2: mention resolved to %s, the non-archived task sharing this id", activeID)
+	if _, ok := findingWithSubstring(findings, wantFinding); !ok {
+		t.Fatalf("findings = %v, want one containing %q", findings, wantFinding)
+	}
+}
+
+// TestIdentifiersThreeArchivedCopiesMentionResolvesToTheMostRecentDate
+// covers docs/especificacion.md, "Identificadores", point 5's second
+// ambiguous case: with no non-archived copy at all, all three are
+// reassigned, and a mention resolves to the copy with the most recent
+// created_date, with the exact "archived task selected among those sharing
+// this id" wording.
+func TestIdentifiersThreeArchivedCopiesMentionResolvesToTheMostRecentDate(t *testing.T) {
+	batch := []TaskInput{
+		{
+			Task:   source.Task{File: "old.md", ID: "TASK-2", Title: "Old", Archived: true},
+			Result: Result{CreatedAt: "2020-01-01T00:00:00Z"},
+		},
+		{
+			Task:   source.Task{File: "mid.md", ID: "TASK-2", Title: "Mid", Archived: true},
+			Result: Result{CreatedAt: "2022-06-01T00:00:00Z"},
+		},
+		{
+			Task:   source.Task{File: "new.md", ID: "TASK-2", Title: "New", Archived: true},
+			Result: Result{CreatedAt: "2026-01-01T00:00:00Z"},
+		},
+		{Task: source.Task{File: "mentioner.md", ID: "TASK-9", Title: "Mentions TASK-2"}, Result: Result{}},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(out) != 4 {
+		t.Fatalf("out = %v, want 4 rows, all three copies reassigned and emitted", out)
+	}
+
+	oldID, midID, newID := out[0].ID, out[1].ID, out[2].ID
+	ids := map[string]bool{oldID: true, midID: true, newID: true}
+	if len(ids) != 3 {
+		t.Fatalf("the three archived copies must get three DISTINCT ids: got %q, %q, %q", oldID, midID, newID)
+	}
+	for _, id := range []string{oldID, midID, newID} {
+		f := fmt.Sprintf("TASK-2: id %s assigned (id reused after archiving)", id)
+		if _, ok := findingWithSubstring(findings, f); !ok {
+			t.Errorf("findings = %v, want one containing %q", findings, f)
+		}
+	}
+
+	mentioner := out[3]
+	want := fmt.Sprintf("Mentions %s", newID)
+	if mentioner.Title != want {
+		t.Errorf("Title = %q, want %q (must resolve to the most recently created copy, new.md)", mentioner.Title, want)
+	}
+
+	wantFinding := fmt.Sprintf("TASK-2: mention resolved to %s, the archived task selected among those sharing this id", newID)
+	if _, ok := findingWithSubstring(findings, wantFinding); !ok {
+		t.Fatalf("findings = %v, want one containing %q", findings, wantFinding)
+	}
+}
+
+// TestIdentifiersTwoArchivedCopiesWithTheSameExactDateTieBreakIsStable
+// covers docs/especificacion.md, "Identificadores", point 4's second tie-
+// break level: when two archived copies of a shared id tie on the exact
+// same created_date, the synthetic Archived+File key decides, and it must
+// give the same answer every time Identifiers runs over the same batch.
+func TestIdentifiersTwoArchivedCopiesWithTheSameExactDateTieBreakIsStable(t *testing.T) {
+	batch := []TaskInput{
+		{
+			Task:   source.Task{File: "a.md", ID: "TASK-2", Title: "A", Archived: true},
+			Result: Result{CreatedAt: "2026-01-01T00:00:00Z"},
+		},
+		{
+			Task:   source.Task{File: "z.md", ID: "TASK-2", Title: "Z", Archived: true},
+			Result: Result{CreatedAt: "2026-01-01T00:00:00Z"},
+		},
+		{Task: source.Task{File: "mentioner.md", ID: "TASK-9", Title: "Mentions TASK-2"}, Result: Result{}},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	var mentionsAcrossRuns []string
+	for run := 0; run < 5; run++ {
+		out, _, err := Identifiers(batch, board)
+		if err != nil {
+			t.Fatalf("run %d: unexpected error: %v", run, err)
+		}
+		mentionsAcrossRuns = append(mentionsAcrossRuns, out[2].Title)
+	}
+	for i, got := range mentionsAcrossRuns {
+		if got != mentionsAcrossRuns[0] {
+			t.Fatalf("run %d resolved the tie differently (%q) than run 0 (%q), want a stable, deterministic pick", i, got, mentionsAcrossRuns[0])
+		}
+	}
+}
+
+// TestIdentifiersSharedSubtaskIdIsAlwaysReassignedNeverIdReusedAfterArchiving
+// covers docs/especificacion.md, "Identificadores", point 4's explicit
+// carve-out: a SUBTASK id shared by a non-archived and an archived copy
+// reassigns BOTH, neither with "id reused after archiving" (that reason only
+// ever applies to a SIMPLE shared id, point 8).
+func TestIdentifiersSharedSubtaskIdIsAlwaysReassignedNeverIdReusedAfterArchiving(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "active.md", ID: "TASK-5.1", Title: "Active sub"}, Result: Result{}},
+		{Task: source.Task{File: "archived.md", ID: "TASK-5.1", Title: "Archived sub", Archived: true}, Result: Result{}},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("out = %v, want both copies emitted", out)
+	}
+
+	activeID, archivedID := out[0].ID, out[1].ID
+	if activeID == archivedID || activeID == "" || archivedID == "" {
+		t.Fatalf("both subtask copies must get their own distinct reassigned id: got %q and %q", activeID, archivedID)
+	}
+
+	for _, id := range []string{activeID, archivedID} {
+		f := fmt.Sprintf("id %s assigned (subtask ids have no equivalent)", id)
+		if _, ok := findingWithSubstring(findings, f); !ok {
+			t.Errorf("findings = %v, want one containing %q", findings, f)
+		}
+	}
+	if _, ok := findingWithSubstring(findings, "id reused after archiving"); ok {
+		t.Errorf("findings = %v, want no \"id reused after archiving\" wording for a subtask", findings)
+	}
+}
+
+// TestIdentifiersActiveAndTwoArchivedCopiesShareAnId covers
+// docs/especificacion.md, "Identificadores", point 4: the active copy
+// conserves its number, and the two archived copies are reassigned in the
+// point-4 tie-break order (here, by created_date ascending), each getting
+// its own consecutive number.
+func TestIdentifiersActiveAndTwoArchivedCopiesShareAnId(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "active.md", ID: "TASK-3", Title: "Active"}, Result: Result{}},
+		{
+			Task:   source.Task{File: "older.md", ID: "TASK-3", Title: "Older", Archived: true},
+			Result: Result{CreatedAt: "2020-01-01T00:00:00Z"},
+		},
+		{
+			Task:   source.Task{File: "newer.md", ID: "TASK-3", Title: "Newer", Archived: true},
+			Result: Result{CreatedAt: "2021-01-01T00:00:00Z"},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, _, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(out) != 3 {
+		t.Fatalf("out = %v, want all three copies emitted", out)
+	}
+
+	active, older, newer := out[0], out[1], out[2]
+	if active.ID != "BISO-3" {
+		t.Errorf("active.ID = %q, want BISO-3 (conserved)", active.ID)
+	}
+	if older.ID != "BISO-4" {
+		t.Errorf("older.ID = %q, want BISO-4 (reassigned first: older created_date)", older.ID)
+	}
+	if newer.ID != "BISO-5" {
+		t.Errorf("newer.ID = %q, want BISO-5 (reassigned second: newer created_date)", newer.ID)
+	}
+}
+
+// TestIdentifiersParentResolvesToTheNonArchivedCopyOfASharedId covers
+// docs/especificacion.md, "Identificadores", point 7's reuse of point 5's
+// ambiguous resolution for parent_task_id.
+func TestIdentifiersParentResolvesToTheNonArchivedCopyOfASharedId(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "active.md", ID: "TASK-2", Title: "Active"}, Result: Result{}},
+		{Task: source.Task{File: "archived.md", ID: "TASK-2", Title: "Archived", Archived: true}, Result: Result{}},
+		{
+			Task:   source.Task{File: "child.md", ID: "TASK-9", Title: "Child", ParentTaskID: "TASK-2"},
+			Result: Result{},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	activeID := out[0].ID
+	child := out[2]
+	if child.Parent != activeID {
+		t.Errorf("Parent = %q, want %q (the non-archived copy)", child.Parent, activeID)
+	}
+
+	want := fmt.Sprintf("TASK-2: parent resolved to %s, the non-archived task sharing this id", activeID)
+	if _, ok := findingWithSubstring(findings, want); !ok {
+		t.Fatalf("findings = %v, want one containing %q", findings, want)
+	}
+}
+
+// TestIdentifiersTwoDependenciesResolvingToTheSameSharedIdAreDeduplicated
+// covers docs/especificacion.md, "Identificadores", point 7's deduplication
+// rule combined with point 1's reuse case: two Dependencies elements both
+// naming the shared id "TASK-2" resolve to the SAME final id (the
+// non-archived copy's), so only one survives, and the ambiguous-resolution
+// Finding is grouped into one line with a count of 2.
+func TestIdentifiersTwoDependenciesResolvingToTheSameSharedIdAreDeduplicated(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "active.md", ID: "TASK-2", Title: "Active"}, Result: Result{}},
+		{Task: source.Task{File: "archived.md", ID: "TASK-2", Title: "Archived", Archived: true}, Result: Result{}},
+		{
+			Task: source.Task{
+				File: "b.md", ID: "TASK-9", Title: "B",
+				Dependencies: []string{"TASK-2", "TASK-002"},
+			},
+			Result: Result{},
+		},
+	}
+	board := destination.Board{Config: identifiersConfig}
+
+	out, findings, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	activeID := out[0].ID
+	dependent := out[2]
+	want := []string{activeID}
+	if !equalStrings(dependent.Dependencies, want) {
+		t.Errorf("Dependencies = %v, want %v (both elements resolve to the same non-archived copy, kept once)", dependent.Dependencies, want)
+	}
+
+	wantFinding := fmt.Sprintf("2 dependency(s) of TASK-2 resolve to %s, the non-archived task sharing this id", activeID)
+	if _, ok := findingWithSubstring(findings, wantFinding); !ok {
+		t.Fatalf("findings = %v, want one containing %q", findings, wantFinding)
+	}
+}
+
+// TestIdentifiersTwoNonArchivedCopiesOfASharedIdRemainFatal covers
+// docs/especificacion.md, "Identificadores", point 1's own carve-out for the
+// carve-out: MORE THAN ONE non-archived copy of the same id is still the one
+// fatal case, with the exact same error wording as before this file started
+// tolerating a single archived copy.
+func TestIdentifiersTwoNonArchivedCopiesOfASharedIdRemainFatal(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "a.md", ID: "TASK-1", Title: "A"}, Result: Result{}},
+		{Task: source.Task{File: "b.md", ID: "TASK-1", Title: "B"}, Result: Result{}},
+	}
+	_, _, err := Identifiers(batch, destination.Board{Config: identifiersConfig})
+	if err == nil {
+		t.Fatal("got nil error, want one about the two non-archived copies sharing an id")
+	}
+	if !strings.Contains(err.Error(), "TASK-1") {
+		t.Errorf("error = %v, want it to mention TASK-1", err)
+	}
+}
+
+// TestAssembleNoLongerFailsOnAnArchivedAndANonArchivedCopyOfTheSameId is an
+// end-to-end smoke test through Assemble (phase 5), reusing the existing
+// "FIX-4" fixture (internal/source/testdata/backlog-board): one copy in
+// completed/ (non-archived) and one in archive/tasks/ (archived), both with
+// the literal id "FIX-4", reproducing the exact real-world sequence
+// docs/decisiones.md describes (archive a task, let Backlog.md reuse its
+// number). Before this fix, validateSourceShape rejected this as two files
+// sharing an id; this test only confirms that fatal error is gone, not the
+// full field-level correctness of every Line Assemble produces for this
+// board.
+func TestAssembleNoLongerFailsOnAnArchivedAndANonArchivedCopyOfTheSameId(t *testing.T) {
+	sourceBoard, err := source.Read(filepath.Join("..", "source", "testdata", "backlog-board"))
+	if err != nil {
+		t.Fatalf("source.Read: %v", err)
+	}
+	destBoard := destination.Board{Config: identifiersConfig}
+
+	if _, _, err := Assemble(sourceBoard, destBoard); err != nil {
+		t.Fatalf("Assemble returned an error, want none (the two FIX-4 copies must not be treated as a fatal duplicate id): %v", err)
 	}
 }
