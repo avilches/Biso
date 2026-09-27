@@ -222,11 +222,20 @@ func canonicalIDKey(prefixUpper string, p parsedSourceID) string {
 // therefore already enough to make this synthetic key unique in every case
 // this tie-break is ever reached, without adding a real relative-path field
 // to source.Task just for this.
+//
+// The prefix must sort an archived copy BEFORE a non-archived one, because
+// that is what the real relative path always does: "archive/" sorts before
+// both "tasks/" and "completed/" alphabetically ('a' < 'c' and 'a' < 't'),
+// so archive/tasks/<file> is always less than tasks/<file> or
+// completed/<file>, whatever <file> itself is named. "0-" for an archived
+// copy and "1-" for a non-archived one reproduce exactly that ordering
+// without needing a real directory name; within either bucket, the tie still
+// falls through to File itself, ascending, unchanged from before.
 func groupTieBreakKey(t source.Task) string {
 	if t.Archived {
-		return "archived:" + t.File
+		return "0-" + t.File
 	}
-	return "active:" + t.File
+	return "1-" + t.File
 }
 
 // hasValidCreatedDate reports whether b's already-converted created_date

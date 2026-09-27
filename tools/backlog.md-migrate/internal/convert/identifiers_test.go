@@ -1342,6 +1342,25 @@ func TestIdentifiersSharedSubtaskIdIsAlwaysReassignedNeverIdReusedAfterArchiving
 		t.Fatalf("both subtask copies must get their own distinct reassigned id: got %q and %q", activeID, archivedID)
 	}
 
+	// The two copies also tie on everything naturalSourceIDLess and the
+	// created_date level of sharedGroupAssignmentLess look at (same subtask
+	// id, neither has a created_date here), so groupTieBreakKey is what
+	// actually decides between them: the archived copy must sort first and
+	// receive the lower of the two freshly assigned numbers, the same way a
+	// real archive/tasks/... path always sorts before tasks/... or
+	// completed/....
+	activeNum, ok := destinationNumber(activeID)
+	if !ok {
+		t.Fatalf("activeID = %q, want a well-formed destination id", activeID)
+	}
+	archivedNum, ok := destinationNumber(archivedID)
+	if !ok {
+		t.Fatalf("archivedID = %q, want a well-formed destination id", archivedID)
+	}
+	if archivedNum >= activeNum {
+		t.Errorf("archivedID = %q activeID = %q, want the archived copy to receive the LOWER number", archivedID, activeID)
+	}
+
 	for _, id := range []string{activeID, archivedID} {
 		f := fmt.Sprintf("id %s assigned (subtask ids have no equivalent)", id)
 		if _, ok := findingWithSubstring(findings, f); !ok {
@@ -1350,6 +1369,62 @@ func TestIdentifiersSharedSubtaskIdIsAlwaysReassignedNeverIdReusedAfterArchiving
 	}
 	if _, ok := findingWithSubstring(findings, "id reused after archiving"); ok {
 		t.Errorf("findings = %v, want no \"id reused after archiving\" wording for a subtask", findings)
+	}
+}
+
+// TestIdentifiersArchivedCopySortsBeforeActiveCopyOnTheTieBreak covers the
+// exact real-world case docs/decisiones.md's paragraph on id reuse
+// describes, and docs/especificacion.md, "Identificadores", point 4's
+// tie-break: a SIMPLE id shared by one non-archived copy, whose own number
+// collides with an existing destination task, and one archived copy,
+// neither carrying a valid created_date. Both land in the same reassignment
+// pass (the non-archived one via the ordinary collision rule, point 2's
+// carve-out; the archived one via "id reused after archiving", point 4's
+// shared-id case), and tie all the way down to groupTieBreakKey. The
+// archived copy's real relative path (archive/tasks/...) always sorts
+// before the non-archived one's (tasks/... or completed/...), so it must be
+// the one to receive the LOWER of the two freshly assigned numbers, not the
+// non-archived copy.
+func TestIdentifiersArchivedCopySortsBeforeActiveCopyOnTheTieBreak(t *testing.T) {
+	batch := []TaskInput{
+		{Task: source.Task{File: "active.md", ID: "TASK-2", Title: "Active"}, Result: Result{}},
+		{Task: source.Task{File: "archived.md", ID: "TASK-2", Title: "Archived", Archived: true}, Result: Result{}},
+	}
+	board := destination.Board{
+		Config: identifiersConfig,
+		Tasks:  []destination.Task{{ID: "BISO-2", Title: "Unrelated", CreatedAt: "2020-01-01T00:00:00Z"}},
+	}
+
+	out, _, err := Identifiers(batch, board)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("out = %v, want both copies emitted", out)
+	}
+
+	active, archived := out[0], out[1]
+	if active.ID == "BISO-2" {
+		t.Fatalf("the active copy was not actually reassigned, this test proves nothing: ID = %q", active.ID)
+	}
+
+	activeNum, ok := destinationNumber(active.ID)
+	if !ok {
+		t.Fatalf("active.ID = %q, want a well-formed destination id", active.ID)
+	}
+	archivedNum, ok := destinationNumber(archived.ID)
+	if !ok {
+		t.Fatalf("archived.ID = %q, want a well-formed destination id", archived.ID)
+	}
+	if archivedNum >= activeNum {
+		t.Errorf(
+			"archived.ID = %q active.ID = %q, want the archived copy to receive the LOWER number "+
+				"(archive/tasks/... always sorts before tasks/... or completed/...)",
+			archived.ID, active.ID,
+		)
+	}
+	if archived.ID != "BISO-3" || active.ID != "BISO-4" {
+		t.Errorf("archived.ID = %q active.ID = %q, want BISO-3 and BISO-4 respectively", archived.ID, active.ID)
 	}
 }
 
