@@ -80,6 +80,12 @@ conservar el id de origen, en la siguiente sección.
 tablero medido hay cinco menciones en minúsculas que son nombres de ramas y de worktrees
 (`task-10-modelo`), y reescribirlas sin distinguir mayúsculas las habría corrompido.
 
+**Descartado: obligar a que el destino tenga el mismo prefijo que el origen** (`--prefix TASK`).
+Dejaba un tablero con un prefijo que no elige nadie y que no se puede cambiar después. **Descartado:
+renumerar todo desde el siguiente libre.** Cambia todos los números aunque no choque nada y rompe el
+parecido entre los dos tableros. **Descartado: dejar que `biso` asigne los ids.** Un lote no puede
+expresar un padre o una dependencia sobre un id que todavía no existe.
+
 **Backlog.md reutiliza el número de una tarea archivada, y el import lo tolera en vez de rechazarlo.**
 Con el CLI real (1.53.0): crear `TASK-1` y `TASK-2`, archivar `TASK-2`, y crear una tercera tarea le da
 a esta tercera el id `TASK-2` otra vez, el mismo número que la archivada y no uno nuevo; el fichero de
@@ -87,20 +93,28 @@ a esta tercera el id `TASK-2` otra vez, el mismo número que la archivada y no u
 Tratar "dos ficheros traen el mismo id" como fatal sin excepción rompería el uso normal de cualquier
 proyecto real que lleve tiempo en marcha y tenga tareas archivadas: la primera vez que Backlog.md
 reutiliza un número, `import` rechazaría el tablero entero. Por eso, cuando exactamente uno de los
-ficheros que comparten el id no está archivado, ese es el que conserva el número: es el que de verdad
-importa hoy en el tablero, mientras que los archivados ya cerraron su ciclo y no pierden nada relevante
-al recibir un número nuevo en el destino, porque su parentesco y sus menciones se siguen reescribiendo
-igual con la tabla de equivalencias. Cuando hay más de un fichero no archivado con el mismo id, o todos
-los que lo comparten están archivados y ninguno está activo ni terminado, sigue siendo el error fatal de
-código 3: Backlog.md solo reutiliza un número después de archivar la tarea que lo tenía, así que esa
-combinación solo puede venir de un tablero editado a mano de una forma que el propio Backlog.md no
-produce, y no hay ninguna señal en los datos que diga cuál de los ficheros es el verdadero.
+ficheros que comparten el id no está archivado y el id compartido es simple, ese fichero es el que
+conserva el número: es el que de verdad importa hoy en el tablero, mientras que los archivados ya
+cerraron su ciclo y no pierden nada relevante al recibir un número nuevo en el destino, porque su
+parentesco y sus menciones se siguen reescribiendo igual con la tabla de equivalencias. Cuando el id
+compartido tiene forma de subtarea esto no cambia nada en la práctica, porque ninguna subtarea conserva
+su número: todas las copias se reasignan igual, esté o no alguna archivada. Cuando hay más de un fichero
+no archivado con el mismo id, o todos los que lo comparten están archivados y ninguno está activo ni
+terminado, sigue siendo el error fatal de código 3: Backlog.md solo reutiliza un número después de
+archivar la tarea que lo tenía, así que esa combinación solo puede venir de un tablero editado a mano de
+una forma que el propio Backlog.md no produce, y no hay ninguna señal en los datos que diga cuál de los
+ficheros es el verdadero.
 
-**Descartado: obligar a que el destino tenga el mismo prefijo que el origen** (`--prefix TASK`).
-Dejaba un tablero con un prefijo que no elige nadie y que no se puede cambiar después. **Descartado:
-renumerar todo desde el siguiente libre.** Cambia todos los números aunque no choque nada y rompe el
-parecido entre los dos tableros. **Descartado: dejar que `biso` asigne los ids.** Un lote no puede
-expresar un padre o una dependencia sobre un id que todavía no existe.
+**Cualquier referencia a un id compartido resuelve a la tarea que no está archivada.** Una mención en
+texto libre, un `parent` o un elemento de `dependencies` que nombra un id que dos o más ficheros
+comparten no puede distinguir a cuál de las dos incarnaciones del mismo número se refería quien lo
+escribió: Backlog.md no guarda esa intención en ningún sitio, solo el número. Por eso la resolución
+siempre elige la tarea que no está archivada, la misma que conserva el número cuando el id compartido es
+simple: es la que de verdad existe hoy en el tablero, mientras que la archivada ya cerró su ciclo y no es
+a la que tendría sentido seguir apuntando. Es una simplificación deliberada, no una detección: el
+convertidor no intenta adivinar cuál de las dos incarnaciones tenía en mente quien escribió la
+referencia, solo resuelve de la única forma que tiene sentido de las dos posibles, tanto si el id
+compartido es simple como si tiene forma de subtarea.
 
 **La comparación de "ya está en el destino" usa el título ya reescrito, no el crudo.** El título de una
 tarea de origen puede mencionar el id de otra tarea (`"Follow-up of TASK-1"`), y la regla 5 de
@@ -141,17 +155,22 @@ a una tarea simple que además choca en la primera importación) frente al caso 
 título editado a mano.
 
 **El mismo número, no la misma cadena, también decide cuándo dos ids de origen chocan entre sí, pero
-solo entre ids de la misma forma.** La regla 1 de "Identificadores" aborta el lote con el código 3
-cuando dos ficheros de origen traen el mismo id, y esa comparación usa la misma forma canónica (prefijo
-sin distinguir mayúsculas, número entero, número de subtarea entero si lo hay) con la que esta decisión
-ya compara números para saber si uno choca con el destino: dos ids simples, o dos ids de subtarea, con
-el mismo prefijo y el mismo número principal (y, si son de subtarea, el mismo número de subtarea) son
-el mismo id de origen aunque las cadenas sean distintas, como `TASK-1` y `TASK-001`. Un id simple y un
-id de subtarea nunca son el mismo id aunque compartan el número principal: `TASK-1` y `TASK-1.2` son dos
-ids distintos, la tarea y una de sus subtareas, justo el caso que la regla 4 y la sección anterior dan
-por hecho que conviven sin ser un error. Dos ficheros que sí traen el mismo id por esta forma canónica
-paran el import en vez de convertirse en silencio en la misma tarea de destino, que sería perder una
-tarea entera sin avisar.
+solo entre ids de la misma forma.** La regla 1 de "Identificadores" usa esta misma forma canónica
+(prefijo sin distinguir mayúsculas, número entero, número de subtarea entero si lo hay) con la que esta
+decisión ya compara números para saber si uno choca con el destino: dos ids simples, o dos ids de
+subtarea, con el mismo prefijo y el mismo número principal (y, si son de subtarea, el mismo número de
+subtarea) son el mismo id de origen aunque las cadenas sean distintas, como `TASK-1` y `TASK-001`. Un id
+simple y un id de subtarea nunca son el mismo id aunque compartan el número principal: `TASK-1` y
+`TASK-1.2` son dos ids distintos, la tarea y una de sus subtareas, justo el caso que la regla 4 y la
+sección anterior dan por hecho que conviven sin ser un error.
+
+**Corrección:** esta entrada decía que dos ficheros que traen el mismo id por esta forma canónica
+siempre paran el import con el código 3, para no convertirse en silencio en la misma tarea de destino y
+perder una tarea entera sin avisar. Ya no es del todo cierto: cuando exactamente uno de los ficheros que
+comparten el id no está archivado, se aplica en su lugar la excepción de "Backlog.md reutiliza el número
+de una tarea archivada, y el import lo tolera en vez de rechazarlo", más arriba en esta misma sección, y
+el lote no se aborta. El código 3 sigue siendo el desenlace en cualquier otro caso: dos o más ficheros no
+archivados con el mismo id, o todos archivados y ninguno activo ni terminado.
 
 **Esa misma forma canónica también decide a qué tarea corresponde una mención en el texto.** La
 reescritura definitiva de menciones (regla 5 de "Identificadores"), el hallazgo de una mención que no
@@ -200,9 +219,10 @@ un id propio de Backlog.md a partir del `parent` y de una numeración nueva. La 
 **solo** a las tareas cuyo id de origen llevaba punto; una tarea con un id simple (`TASK-70`) no la
 necesita, porque su id de destino ya se reconstruye con la regla de "Los identificadores conservan su
 número y cambian de prefijo": basta con volver a poner el prefijo de origen delante del mismo número,
-salvo que ese id fuera de los reasignados por colisión, caso en el que de todos modos no hay un número
-de origen que reconstruir con sentido, porque el conflicto ya dice que ese número no era libre en el
-tablero de origen en el momento de exportar.
+salvo que ese id fuera de los reasignados por colisión o por id reutilizado tras archivar (regla 1 de
+"Identificadores"), casos en los que de todos modos no hay un número de origen que reconstruir con
+sentido, porque el conflicto, o la reutilización, ya dicen que ese número no era único en el tablero de
+origen en el momento de exportar.
 
 **Descartado: guardar el id de origen para toda tarea, no solo las subtareas.** Sería una etiqueta más
 por tarea sin ninguna ganancia: un id simple ya se reconstruye con la regla de prefijo y número, y

@@ -66,8 +66,10 @@ nada, así que el fallo es seguro y se resuelve repitiendo la conversión.
 ### La salida
 
 NDJSON: un objeto JSON por línea, con las claves que acepta `biso new --from`, en `camelCase`. Las
-tareas salen ordenadas por el número de su id de origen, ascendente, y las claves de cada línea en un
-orden fijo, para que dos ejecuciones sobre el mismo tablero den el mismo fichero byte a byte.
+tareas salen ordenadas por el número de su id de origen, ascendente (con el mismo desempate de
+"Identificadores", regla 4, cuando dos o más comparten literalmente el mismo id de origen), y las claves
+de cada línea en un orden fijo, para que dos ejecuciones sobre el mismo tablero den el mismo fichero byte
+a byte.
 
 ### El mapeo de campos
 
@@ -115,31 +117,41 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    distinguir mayúsculas, porque Backlog.md escribe siempre el prefijo en mayúsculas en el id aunque su
    configuración lo guarde de otra forma. Un id con otra forma, o dos prefijos distintos, es un error de
    origen (código 3). El prefijo del destino sale de `task_prefix` del destino. Dos ids de origen cuentan
-   como el mismo id, a los efectos de ese mismo error de código 3 ("dos ficheros traen el mismo id", ver
-   "Códigos de salida"), cuando su prefijo coincide sin distinguir mayúsculas, cuando los dos son simples
-   o los dos son de subtarea, cuando su número principal es igual y, si los dos son de subtarea, también
-   lo es su número de subtarea, todo interpretado como número entero y no como cadena: es la misma forma
-   canónica que la regla 2 usa para decidir si un número choca con el destino. Un id simple y un id de
-   subtarea con el mismo número principal nunca son el mismo id a estos efectos, precisamente porque uno
-   tiene número de subtarea y el otro no: `TASK-1` y `TASK-1.2` son dos ids distintos, la tarea y una de
-   sus subtareas. Que dos o más ficheros traigan el mismo id por esta forma canónica no siempre es el
-   error fatal de código 3: Backlog.md reutiliza el número de una tarea archivada en la siguiente tarea
-   que se crea, así que un tablero real y en marcha puede tener legítimamente dos ficheros con el mismo
-   id, uno archivado y otro no. Si exactamente uno de los ficheros que comparten el id no está archivado
-   (viene de `tasks/` o de `completed/`, no de `archive/tasks/`), ese es el que conserva el número,
-   sujeto a la regla normal de colisión con el destino de la regla 2, y cada uno de los demás, todos
-   archivados, entra en el grupo de reasignados de la regla 4 con el motivo "reused id" que describe esa
-   regla. En cualquier otro caso (dos o más ficheros no archivados con el mismo id, o todos archivados y
-   ninguno activo ni terminado) sigue siendo el error fatal de código 3, porque no hay ninguna señal en
-   los datos que diga cuál de ellos es el verdadero: esa combinación solo puede venir de un tablero
-   editado a mano de una forma que el propio Backlog.md no produce.
+   como el mismo id, a los efectos de la regla de ids repetidos que sigue, cuando su prefijo coincide sin
+   distinguir mayúsculas, cuando los dos son simples o los dos son de subtarea, cuando su número principal
+   es igual y, si los dos son de subtarea, también lo es su número de subtarea, todo interpretado como
+   número entero y no como cadena: es la misma forma canónica que la regla 2 usa para decidir si un número
+   choca con el destino. Un id simple y un id de subtarea con el mismo número principal nunca son el mismo
+   id a estos efectos, precisamente porque uno tiene número de subtarea y el otro no: `TASK-1` y
+   `TASK-1.2` son dos ids distintos, la tarea y una de sus subtareas. Que dos o más ficheros traigan el
+   mismo id por esta forma canónica no siempre es el error fatal de código 3 ("dos o más ficheros traen el
+   mismo id", ver "Códigos de salida"): Backlog.md reutiliza el número de una tarea archivada en la
+   siguiente tarea que se crea, así que un tablero real y en marcha puede tener legítimamente dos ficheros
+   con el mismo id, uno archivado y otro no. Si exactamente uno de los ficheros que comparten el id no
+   está archivado (viene de `tasks/` o de `completed/`, no de `archive/tasks/`) y el id compartido es
+   SIMPLE, ese fichero es el que conserva el número, sujeto a la regla normal de colisión con el destino
+   de la regla 2, y cada uno de los demás, todos archivados, entra en el grupo de reasignados de la regla
+   4 con el motivo "reused id" que describe esa regla. Cuando el id compartido tiene forma de SUBTAREA,
+   esta distinción no cambia nada en la práctica: ningún id de subtarea conserva su número (regla 4), así
+   que todas las copias, esté o no alguna sin archivar, se reasignan igual, cada una con su motivo de
+   subtarea de siempre. En cualquier otro caso (dos o más ficheros no archivados con el mismo id, o todos
+   archivados y ninguno activo ni terminado) sigue siendo el error fatal de código 3, porque no hay
+   ninguna señal en los datos que diga cuál de ellos es el verdadero: esa combinación solo puede venir de
+   un tablero editado a mano de una forma que el propio Backlog.md no produce.
 2. **Un id simple de origen conserva su número con el prefijo del destino** (`TASK-70` pasa a
    `BISO-70`, `XYZ-001` pasa a `BISO-1`) siempre que ese número no exista ya en el destino. Los ceros a
    la izquierda no se escriben.
 3. **Una tarea que ya está en el destino no se vuelve a importar.** Es la misma tarea de una
    importación anterior si el destino tiene una con el mismo `title` y el mismo `createdAt`, sea cual
-   sea su id. El `title` que se compara no es el crudo del fichero de origen: es ese mismo título con
-   sus menciones de id de origen reescritas de forma ingenua, sustituyendo por el prefijo del destino y
+   sea su id. Esto se evalúa por tarea: cuando dos o más ficheros de origen comparten un id (regla 1),
+   cada uno se compara contra el destino por su propio `title` y su propia `createdAt`, no por el id que
+   comparte con otro fichero, así que un fichero archivado y el no archivado que reutilizó su número se
+   detectan como "ya importados" de forma independiente el uno del otro. La regla sobre a qué tarea
+   resuelve una referencia a un id compartido (reglas 5 y 7, más abajo) es solo para las referencias
+   SALIENTES de cualquier tarea del lote hacia ese id (una mención de texto libre, un `parent`, un
+   elemento de `dependencies`), no para decidir si esta tarea concreta ya está importada. El `title` que
+   se compara no es el crudo del fichero de origen: es ese mismo título con sus menciones de id de origen
+   reescritas de forma ingenua, sustituyendo por el prefijo del destino y
    el mismo número mencionado solo la mención (misma forma y límites de palabra que la regla 5) cuyo id
    corresponde exactamente a una tarea SIMPLE del lote de origen actual, sin tener en cuenta si ese
    número choca con algo en el destino ni si esa tarea se va a reasignar; cualquier otra mención con
@@ -159,7 +171,10 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    id de `biso` es siempre `<PREFIJO>-<n>` y no admite el punto, y porque solo uno de los ficheros que
    comparten un id reutilizado puede conservarlo. Se les asigna, en el orden natural de su id de
    origen, el siguiente número libre a partir de `max(mayor número del destino, mayor número del
-   origen) + 1`. Solo esos ids cambian de número; el resto no se desplaza.
+   origen) + 1`. Solo esos ids cambian de número; el resto no se desplaza. Cuando dos o más ficheros
+   comparten literalmente el mismo id de origen (el caso del id reutilizado tras archivar), el orden
+   natural entre ellos, que su propio id no distingue, se desempata por su `created_date` ascendente y,
+   si también empatan en eso, por el nombre de su fichero de origen ascendente.
 5. Con esa tabla de equivalencias se reescriben el `id`, `parent` y `dependencies` de todas las
    tareas, y **toda mención de un id de origen en el texto** (`title`, `description`, `plan`,
    `notes`, `summary`, el texto de los criterios y el cuerpo de los comentarios): `TASK-12` pasa a
@@ -173,7 +188,11 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    que la regla 1 usa para "mismo id" (mismo prefijo, mismo número principal como entero y, si la
    mención tiene forma de subtarea, mismo número de subtarea como entero), no por la cadena exacta: una
    mención `TASK-1` encuentra en la tabla de equivalencias tanto a una tarea de origen `TASK-1` como a
-   una `TASK-001`. Se reescribe en cualquier lugar del texto, un bloque de código incluido. No se toca
+   una `TASK-001`. **Si esa forma canónica corresponde a más de una tarea del lote** (el id reutilizado
+   tras archivar, regla 1), la mención resuelve siempre a la que NO está archivada, la misma tarea que
+   conserva el número: el texto de origen no puede distinguir a cuál de las dos incarnaciones del mismo
+   número se refería quien lo escribió, y la no archivada es la única de las dos que tiene sentido
+   resolver. Se reescribe en cualquier lugar del texto, un bloque de código incluido. No se toca
    `documentation`, `references` ni `modified_files`, que son rutas y URLs opacas.
 6. Una mención que tiene la forma de un id de origen pero no corresponde a ninguna tarea del origen, o
    que solo difiere en las mayúsculas (`Xyz-002`, `task-12`), se deja como está y es un hallazgo,
@@ -189,8 +208,11 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    en texto libre: un valor estructurado como `parent_task_id` o un elemento de `dependencies` no tiene
    ese riesgo, porque todo su valor es un id, no texto libre donde un id puede aparecer por casualidad.
    Así, un `parent_task_id: TASK-1` que en realidad apunta a la tarea de origen `TASK-001` se reconoce
-   igual. Un valor que no tiene siquiera la forma de un id de la regla 1 se quita igual, con su hallazgo.
-   Si dos elementos de `dependencies` de la misma tarea resuelven al mismo id final por esta forma
+   igual. **Si esa forma canónica corresponde a más de una tarea del lote** (el id reutilizado tras
+   archivar, regla 1), `parent` y cada elemento de `dependencies` resuelven con el mismo criterio que una
+   mención de texto libre (regla 5): siempre a la tarea que no está archivada. Un valor que no tiene
+   siquiera la forma de un id de la regla 1 se quita igual, con su hallazgo. Si dos elementos de
+   `dependencies` de la misma tarea resuelven al mismo id final por esta forma
    canónica (`TASK-1` y `TASK-001` en la misma lista, por ejemplo), se deja uno solo, el primero en el
    orden original, con el mismo criterio de deduplicación que ya aplica "Alfabeto de un token" cuando dos
    valores de `labels` o `assignees` de la misma tarea quedan iguales tras la conversión. Los ciclos de
@@ -199,7 +221,10 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
 8. Cada id reasignado es un hallazgo: `XYZ-001.01: id BISO-97 assigned (subtask ids have no equivalent)`,
    `TASK-12: id BISO-12 is taken on the destination, reassigned to BISO-97`, o, cuando el motivo es que
    Backlog.md reutilizó el número tras archivar (regla 1), `TASK-2: id BISO-45 assigned (id reused after
-   archiving)`.
+   archiving)`. El motivo "id reused after archiving" solo se usa cuando el id compartido es SIMPLE: una
+   subtarea siempre se reasigna por su propio motivo, "subtask ids have no equivalent", coincida o no
+   además con una reutilización, así que una subtarea archivada cuyo id fue reutilizado sigue llevando el
+   motivo de subtarea de siempre, nunca "id reused after archiving".
 9. **El id de origen de una subtarea se guarda además en la etiqueta con ámbito
    `backlog.id::<id-de-origen>`** (`backlog.id::TASK-56.1`), con el id completo tal como lo escribe
    Backlog.md, punto incluido, para que `export` lo pueda reconstruir; el porqué está en decisiones.md,
@@ -415,7 +440,7 @@ es de todo el fichero y no de una clave concreta.
 | 0 | Convertido y sin ningún hallazgo |
 | 1 | Fallo inesperado al escribir la salida (E/S, permisos, el directorio de `--out` no existe) |
 | 2 | Uso incorrecto: falta un argumento o hay uno desconocido |
-| 3 | El origen no se puede leer: no existe la carpeta, no tiene `tasks/`, un id tiene una forma que no es la de "Identificadores", los ids no comparten prefijo o dos ficheros traen el mismo id sin que exactamente uno de ellos esté activo o terminado (regla 1) |
+| 3 | El origen no se puede leer: no existe la carpeta, no tiene `tasks/`, un id tiene una forma que no es la de "Identificadores", los ids no comparten prefijo o dos o más ficheros traen el mismo id sin que exactamente uno de ellos esté activo o terminado (regla 1) |
 | 4 | El destino no responde: no se encuentra `biso`, o falla una de sus órdenes |
 | 5 | Convertido con hallazgos. El NDJSON está escrito, salvo con `--strict`, donde no se escribe nada |
 
