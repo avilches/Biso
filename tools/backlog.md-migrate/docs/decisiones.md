@@ -116,9 +116,8 @@ ni terminada, no hay ninguna "existente hoy" a la que apuntar: si al menos una d
 tiene una `created_date` válida, la resolución elige la de fecha más reciente entre ellas y, si dos o más
 empatan también en la fecha exacta, gana la última por ruta relativa ascendente entre las que empatan, el
 mismo mecanismo que usa la regla 4 de "Identificadores" para su propio desempate; si ninguna copia tiene
-una fecha válida, elige la última por ruta relativa ascendente. En cualquiera de los dos casos es la
-copia más cercana de todas ellas a ser "la actual". Es una simplificación deliberada en los dos casos,
-no una detección: el convertidor no intenta
+una fecha válida, elige la última por ruta relativa ascendente. Es una simplificación deliberada en los
+dos casos, no una detección: el convertidor no intenta
 adivinar cuál de las tareas tenía en mente quien escribió la referencia, solo resuelve de la única forma
 que tiene sentido, tanto si el id compartido es simple como si tiene forma de subtarea. Esta resolución
 deja un hallazgo, no bloqueante, con el fichero, el id compartido y el id final al que se resolvió:
@@ -143,7 +142,8 @@ solo a algunas de ellas, qué fecha del que menciona se usa si le falta tanto `u
 `created_date`, o qué pasa en un empate exacto de fechas. El beneficio que ganaría, precisión en un caso
 que hoy queda marcado como ambiguo, ya lo cubre de otra forma el hallazgo de resolución: al quedar visible
 y no bloqueante, quien le importe el caso concreto puede revisarlo y corregirlo a mano. La simplicidad de
-"siempre la no archivada, o la más reciente si ninguna lo es" es preferible a una regla más precisa pero
+"siempre la no archivada, o la seleccionada entre las archivadas según fecha o, en su defecto, ruta, si
+ninguna está activa" es preferible a una regla más precisa pero
 más frágil.
 
 **La comparación de "ya está en el destino" usa el título ya reescrito, no el crudo.** El título de una

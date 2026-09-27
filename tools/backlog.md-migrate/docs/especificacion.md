@@ -225,15 +225,15 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    más reciente entre ellas y, si dos o más empatan también en la fecha exacta, gana la ÚLTIMA por ruta
    relativa ascendente entre las que empatan (el mismo mecanismo de comparación de fechas y de rutas que
    define la regla 4 para su propio desempate); si NINGUNA copia archivada tiene una fecha válida,
-   resuelve a la última por ruta relativa ascendente. En cualquiera de los dos casos es la copia más
-   cercana de todas ellas a ser "la actual". Resolver así es un hallazgo, no bloqueante: `TASK-2: mention
-   resolved to BISO-2, the non-archived task sharing this id` cuando hay exactamente una copia no
-   archivada, o, cuando ninguna de las tareas que comparten el id está activa ni terminada, `TASK-2:
-   mention resolved to BISO-2, the archived task selected among those sharing this id`, un texto
-   deliberadamente neutro sobre el motivo (fecha o ruta) para no afirmar que la elegida es "la más
-   reciente" cuando pudo elegirse solo por ruta, sin ninguna fecha con la que compararla. En los dos
-   casos, el hallazgo lleva el fichero, el id compartido y el id final al que se resolvió; si el mismo
-   fichero y campo tienen varias menciones que resuelven así para el MISMO id compartido, se agrupan con
+   resuelve a la última por ruta relativa ascendente. Resolver así es un hallazgo, no bloqueante:
+   `TASK-2: mention resolved to BISO-2, the non-archived task sharing this id` cuando hay exactamente una
+   copia no archivada, o, cuando ninguna de las tareas que comparten el id está activa ni terminada,
+   `TASK-2: mention resolved to BISO-97, the archived task selected among those sharing this id` (el
+   número siempre es uno reasignado en este caso, nunca el original: ninguna copia archivada conserva su
+   número), un texto deliberadamente neutro sobre el motivo (fecha o ruta) para no afirmar que la elegida
+   es "la más reciente" cuando pudo elegirse solo por ruta, sin ninguna fecha con la que compararla. En
+   los dos casos, el hallazgo lleva el fichero, el id compartido y el id final al que se resolvió; si el
+   mismo fichero y campo tienen varias menciones que resuelven así para el MISMO id compartido, se agrupan con
    un recuento, el mismo criterio que usa la regla 6 para las menciones no reconocidas, en vez de un
    hallazgo por mención; un id compartido distinto en el mismo fichero y campo (dos ids reutilizados
    distintos mencionados en el mismo título, por ejemplo) genera su propia línea de hallazgo agrupado, con
@@ -260,8 +260,9 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    tampoco puede distinguir a cuál de las tareas se refería quien lo escribió. Resolver así es un hallazgo,
    no bloqueante, con el mismo formato que la regla 5 y `parent` o `dependency` en vez de `mention`:
    `TASK-2: parent resolved to BISO-2, the non-archived task sharing this id` cuando hay exactamente una
-   copia no archivada, o `TASK-2: parent resolved to BISO-2, the archived task selected among those
-   sharing this id` cuando ninguna lo está; varias resoluciones así del mismo fichero, campo e id
+   copia no archivada, o `TASK-2: parent resolved to BISO-97, the archived task selected among those
+   sharing this id` cuando ninguna lo está (el número siempre es uno reasignado en este segundo caso);
+   varias resoluciones así del mismo fichero, campo e id
    compartido se agrupan con un recuento, el mismo criterio que la regla 5 toma de la regla 6, y un id
    compartido distinto en el mismo fichero y campo genera su propia línea agrupada. Un valor que no tiene
    siquiera la forma de un id de la regla 1 se quita igual, con su hallazgo. Si dos elementos de
