@@ -194,12 +194,14 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    de SUBTAREA con el mismo número principal, por su número de subtarea ascendente. Cuando dos o más
    ficheros comparten el mismo id por la forma canónica de la regla 1, y por tanto este orden no los
    distingue entre sí, se desempatan con un orden estricto de dos niveles, sin excepciones: primero, todas
-   las copias que SÍ tienen una `created_date` válida, ordenadas entre sí por esa fecha ascendente;
-   después, siempre detrás y sin mezclarse con las anteriores, todas las copias que NO tienen una fecha
-   válida (ausente, o con una forma que no es ninguna de las dos que reconoce "Fechas"), ordenadas entre sí
-   por la ruta relativa completa de su fichero de origen (desde la raíz del origen) ascendente, que sí es
-   siempre distinta entre dos ficheros distintos aunque compartan el mismo nombre en carpetas diferentes
-   (`tasks/TASK-2.md` y `archive/tasks/TASK-2.md`, por ejemplo).
+   las copias que SÍ tienen una `created_date` válida, ordenadas entre sí por esa fecha ascendente y, si
+   dos o más empatan también en la fecha exacta, por la ruta relativa ascendente que se describe a
+   continuación; después, siempre detrás y sin mezclarse con las anteriores, todas las copias que NO
+   tienen una fecha válida (ausente, o con una forma que no es ninguna de las dos que reconoce "Fechas"),
+   ordenadas entre sí por la ruta relativa completa de su fichero de origen (desde la raíz del origen)
+   ascendente, que sí es siempre distinta entre dos ficheros distintos aunque compartan el mismo nombre en
+   carpetas diferentes (`tasks/TASK-2.md` y `archive/tasks/TASK-2.md`, por ejemplo). Con este desempate
+   dentro de cada uno de los dos niveles, el orden es siempre total: nunca queda un empate sin resolver.
 5. Con esa tabla de equivalencias se reescriben el `id`, `parent` y `dependencies` de todas las
    tareas, y **toda mención de un id de origen en el texto** (`title`, `description`, `plan`,
    `notes`, `summary`, el texto de los criterios y el cuerpo de los comentarios): `TASK-12` pasa a
@@ -218,17 +220,23 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    resuelve siempre a esa, la misma que conserva el número cuando el id compartido es simple, porque el
    texto de origen no puede distinguir a cuál de las tareas se refería quien lo escribió y la no archivada
    es la única de todas ellas que tiene sentido resolver. **Si NINGUNA de las tareas que comparten el id
-   está activa ni terminada** (todas archivadas), no hay ninguna "no archivada" a la que resolver: la
-   mención resuelve a la última copia en el orden que define la regla 4 para desempatar entre copias que
-   comparten un id (la de `created_date` más reciente entre las que la tienen válida, o la última por ruta
-   relativa si ninguna la tiene), la más cercana de todas ellas a ser "la actual". En los dos casos,
-   resolver así es un hallazgo, no bloqueante: `TASK-2: mention resolved to BISO-2, the non-archived task
-   sharing this id` (o `..., the most recently created task sharing this id` cuando ninguna está
-   archivada), con el fichero, el id compartido y el id final al que se resolvió; si el mismo fichero y
-   campo tienen varias menciones que resuelven así, se agrupan con un recuento, el mismo criterio que usa
-   la regla 6 para las menciones no reconocidas, en vez de un hallazgo por mención. Se reescribe en
-   cualquier lugar del texto, un bloque de código incluido. No se toca `documentation`, `references` ni
-   `modified_files`, que son rutas y URLs opacas.
+   está activa ni terminada** (todas archivadas), no hay ninguna "no archivada" a la que resolver: si al
+   menos una de esas copias archivadas tiene una `created_date` válida, la mención resuelve a la de fecha
+   más reciente entre ellas, con el mismo desempate por ruta relativa ascendente si dos o más empatan en
+   la fecha exacta (el mismo mecanismo de comparación de fechas y de rutas que define la regla 4 para su
+   propio desempate); si NINGUNA copia archivada tiene una fecha válida, resuelve a la última por ruta
+   relativa ascendente. En cualquiera de los dos casos es la copia más cercana de todas ellas a ser "la
+   actual". En los dos escenarios (una no archivada, o ninguna), resolver así es un hallazgo, no
+   bloqueante: `TASK-2: mention resolved to BISO-2, the non-archived task sharing this id` (o `..., the
+   most recently created task sharing this id` cuando ninguna de las tareas que comparten el id está
+   activa ni terminada), con el fichero, el id compartido y el id final al que se resolvió; si el mismo
+   fichero y campo tienen varias menciones que resuelven así para el MISMO id compartido, se agrupan con
+   un recuento, el mismo criterio que usa la regla 6 para las menciones no reconocidas, en vez de un
+   hallazgo por mención; un id compartido distinto en el mismo fichero y campo (dos ids reutilizados
+   distintos mencionados en el mismo título, por ejemplo) genera su propia línea de hallazgo agrupado, con
+   su propio recuento, nunca mezclada con la del otro id. Se reescribe en cualquier lugar del texto, un
+   bloque de código incluido. No se toca `documentation`, `references` ni `modified_files`, que son rutas
+   y URLs opacas.
 6. Una mención que tiene la forma de un id de origen pero no corresponde a ninguna tarea del origen, o
    que solo difiere en las mayúsculas (`Xyz-002`, `task-12`), se deja como está y es un hallazgo,
    uno por fichero y campo con el recuento, para que quien ejecuta pueda revisarla. Si corresponde a
@@ -244,20 +252,17 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    ese riesgo, porque todo su valor es un id, no texto libre donde un id puede aparecer por casualidad.
    Así, un `parent_task_id: TASK-1` que en realidad apunta a la tarea de origen `TASK-001` se reconoce
    igual. **Si esa forma canónica corresponde a más de una tarea del lote** (el id reutilizado tras
-   archivar, regla 1), `parent` y cada elemento de `dependencies` resuelven con el mismo criterio que una
-   mención de texto libre (regla 5), casos "ninguna activa" incluido: siempre a la tarea que NO está
-   archivada cuando hay exactamente una, la misma que conserva el número si el id compartido es simple, o
-   a la de `created_date` más reciente (con el mismo desempate de ruta relativa de la regla 4) cuando
-   ninguna de las que comparten el id está activa ni terminada, porque en los dos casos el valor no puede
-   distinguir a cuál de las tareas se refería quien lo escribió y esa es la única de todas ellas que tiene
-   sentido resolver. Resolver así es un hallazgo, no bloqueante, con el mismo formato que la regla 5 y
-   `parent` o `dependency` en vez de `mention`: `TASK-2: parent resolved to BISO-2, the non-archived task
-   sharing this id`; varias resoluciones así del mismo fichero y campo se agrupan con un recuento, el mismo
-   criterio que la regla 5 toma de la regla 6. Un valor que no tiene siquiera la forma de un id de la
-   regla 1 se quita igual, con su hallazgo. Si dos elementos de `dependencies` de la misma tarea resuelven
-   al mismo id final por esta forma canónica (`TASK-1` y `TASK-001` en la misma lista, por ejemplo), se
-   deja uno solo, el primero en el orden original, con el mismo criterio de deduplicación que ya aplica
-   "Alfabeto de un token" cuando dos
+   archivar, regla 1), `parent` y cada elemento de `dependencies` resuelven exactamente con el mismo
+   criterio que una mención de texto libre (regla 5), el caso "ninguna activa" incluido, porque el valor
+   tampoco puede distinguir a cuál de las tareas se refería quien lo escribió. Resolver así es un hallazgo,
+   no bloqueante, con el mismo formato que la regla 5 y `parent` o `dependency` en vez de `mention`:
+   `TASK-2: parent resolved to BISO-2, the non-archived task sharing this id`; varias resoluciones así del
+   mismo fichero, campo e id compartido se agrupan con un recuento, el mismo criterio que la regla 5 toma
+   de la regla 6, y un id compartido distinto en el mismo fichero y campo genera su propia línea agrupada.
+   Un valor que no tiene siquiera la forma de un id de la regla 1 se quita igual, con su hallazgo. Si dos
+   elementos de `dependencies` de la misma tarea resuelven al mismo id final por esta forma canónica
+   (`TASK-1` y `TASK-001` en la misma lista, por ejemplo), se deja uno solo, el primero en el orden
+   original, con el mismo criterio de deduplicación que ya aplica "Alfabeto de un token" cuando dos
    valores de `labels` o `assignees` de la misma tarea quedan iguales tras la conversión. Los ciclos de
    padres o de dependencias no se detectan: los rechaza `biso new --from --dry-run`, y por eso el ensayo
    forma parte del uso.

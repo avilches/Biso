@@ -112,10 +112,12 @@ intención en ningún sitio, solo el número. Si exactamente una de ellas no est
 elige esa: es la misma que conserva el número cuando el id compartido es simple, la que de verdad existe
 hoy en el tablero, mientras que la archivada, o las archivadas si hay varias, ya cerraron su ciclo y no
 son a las que tendría sentido seguir apuntando. Si NINGUNA de las tareas que comparten el id está activa
-ni terminada, no hay ninguna "existente hoy" a la que apuntar: la resolución elige entonces la de
-creación más reciente entre todas las que comparten el id, con el mismo desempate por ruta relativa que
-usa la regla 4 de "Identificadores" para el orden natural, la más cercana de todas ellas a ser "la
-actual". Es una simplificación deliberada en los dos casos, no una detección: el convertidor no intenta
+ni terminada, no hay ninguna "existente hoy" a la que apuntar: si al menos una de esas copias archivadas
+tiene una `created_date` válida, la resolución elige la de fecha más reciente entre ellas, con el mismo
+desempate por ruta relativa ascendente que usa la regla 4 de "Identificadores" si dos o más empatan en la
+fecha exacta; si ninguna copia tiene una fecha válida, elige la última por ruta relativa ascendente. En
+cualquiera de los dos casos es la copia más cercana de todas ellas a ser "la actual". Es una
+simplificación deliberada en los dos casos, no una detección: el convertidor no intenta
 adivinar cuál de las tareas tenía en mente quien escribió la referencia, solo resuelve de la única forma
 que tiene sentido, tanto si el id compartido es simple como si tiene forma de subtarea. Esta resolución
 deja un hallazgo, no bloqueante, con el fichero, el id compartido y el id final al que se resolvió:
@@ -153,9 +155,10 @@ evitar. Por eso esa comparación usa una reescritura de menciones más simple qu
 regla 5, y que no depende de si un id choca o no en esta ejecución concreta (evita la circularidad de
 necesitar saber qué tareas se saltan antes de poder decidir qué tareas se saltan): sustituye por el
 prefijo del destino y el mismo número mencionado solo la mención (misma forma y límites de palabra que
-la regla 5) cuyo id corresponde exactamente a una tarea SIMPLE del lote de origen actual, sin tener en
-cuenta si ese número choca con algo en el destino ni si esa tarea se va a reasignar; cualquier otra
-mención con forma de id, sea porque no corresponde a ninguna tarea del lote o porque corresponde a una
+la regla 5) cuyo id corresponde a AL MENOS una tarea SIMPLE del lote de origen actual (puede corresponder
+a más de una si el número se reutilizó tras archivar, regla 1 de "Identificadores"; basta con que al
+menos una la tenga), sin tener en cuenta si ese número choca con algo en el destino ni si esa tarea se va
+a reasignar; cualquier otra mención con forma de id, sea porque no corresponde a ninguna tarea del lote o porque corresponde a una
 subtarea, se deja tal cual, con el mismo criterio con el que la regla 6 de "Identificadores" deja tal
 cual una mención que no reconoce. Esta reescritura "ingenua" (naive en el código) es estable entre
 ejecuciones: la primera y la segunda vez que se lee el mismo origen dan el mismo título para comparar,
@@ -164,7 +167,7 @@ sin importar el estado del destino en ese momento.
 **Una limitación que se acepta.** Que una mención no corresponda a ninguna tarea del lote de origen no
 es un problema: tanto la reescritura ingenua de una segunda ejecución como la reescritura definitiva de
 la primera dejan esa mención sin tocar, así que el título candidato y el título ya guardado coinciden en
-esa parte y la comparación funciona sin necesidad de aceptar nada aquí. La limitación real cubre dos
+esa parte y la comparación funciona sin necesidad de aceptar nada aquí. La limitación real cubre tres
 casos. El primero: si la tarea SIMPLE mencionada en el título fue ella misma reasignada a un número
 distinto en la primera importación, porque su número chocaba en aquel momento, la reescritura ingenua de
 la segunda ejecución no reproduce ese número reasignado, y la comparación vuelve a fallar. El segundo,
@@ -172,14 +175,22 @@ más amplio: cualquier mención de una SUBTAREA, choque o no, porque una subtare
 nuevo (regla 4 de "Identificadores"), y la reescritura ingenua no puede predecir ese número sin conocer
 ya el resultado de la reasignación, la misma circularidad que motiva toda esta reescritura; así que un
 título que menciona una subtarea se duplicará en cada reimportación, no solo cuando esa subtarea choca.
-En los dos casos la tarea se duplicaría. La identidad por título es frágil por construcción, y esta
-decisión ya acepta esa fragilidad para una tarea cuyo título se editó a mano en el destino después de
-importarla ("ya no se reconoce"); la reasignación por colisión y la mención de una subtarea son
-manifestaciones de esa misma fragilidad, no de una fragilidad de una naturaleza distinta. No compensa
-resolverla con más mecanismo, como guardar aparte un identificador estable: sería
-una complejidad nueva para casos que siguen siendo específicos (un título que menciona a una subtarea, o
-a una tarea simple que además choca en la primera importación) frente al caso hermano, ya aceptado, del
-título editado a mano.
+El tercero: si el id SIMPLE mencionado en el título lo comparten varias tareas y NINGUNA está activa ni
+terminada (todas archivadas, regla 1 de "Identificadores"), la copia a la que resuelve esa mención en la
+reescritura definitiva de la primera importación (la de creación más reciente, o la última por ruta si
+ninguna tiene fecha, según la decisión de más arriba) recibe siempre un número nuevo, porque ninguna
+copia archivada conserva el suyo cuando todas están archivadas; la reescritura ingenua de la segunda
+ejecución, que solo comprueba si el número está presente entre los ids simples del lote sin conocer
+reasignaciones, sigue usando el número original sin reasignar, y la comparación vuelve a fallar igual que
+en los otros dos casos. En los tres casos la tarea se duplicaría. La identidad por título es frágil por
+construcción, y esta decisión ya acepta esa fragilidad para una tarea cuyo título se editó a mano en el
+destino después de importarla ("ya no se reconoce"); la reasignación por colisión, la mención de una
+subtarea y la de un id compartido sin ninguna copia activa son manifestaciones de esa misma fragilidad,
+no de una fragilidad de una naturaleza distinta. No compensa resolverla con más mecanismo, como guardar
+aparte un identificador estable: sería una complejidad nueva para casos que siguen siendo específicos
+(un título que menciona a una subtarea, a un id compartido sin ninguna copia activa, o a una tarea simple
+que además choca en la primera importación) frente al caso hermano, ya aceptado, del título editado a
+mano.
 
 **El mismo número, no la misma cadena, también decide cuándo dos ids de origen chocan entre sí, pero
 solo entre ids de la misma forma.** La regla 1 de "Identificadores" usa esta misma forma canónica
