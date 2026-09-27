@@ -89,24 +89,21 @@ expresar un padre o una dependencia sobre un id que todavía no existe.
 **Backlog.md reutiliza el número de una tarea archivada, y el import lo tolera en vez de rechazarlo.**
 Con el CLI real (1.53.0): crear `TASK-1` y `TASK-2`, archivar `TASK-2`, y crear una tercera tarea le da
 a esta tercera el id `TASK-2` otra vez, el mismo número que la archivada y no uno nuevo; el fichero de
-`archive/tasks/` sigue con `id: TASK-2` en su frontmatter, y el nuevo fichero de `tasks/` también.
-Tratar "dos ficheros traen el mismo id" como fatal sin excepción rompería el uso normal de cualquier
-proyecto real que lleve tiempo en marcha y tenga tareas archivadas: la primera vez que Backlog.md
-reutiliza un número, `import` rechazaría el tablero entero. Por eso, cuando exactamente uno de los
-ficheros que comparten el id no está archivado y todos los demás sí, esto no es fatal, sea cual sea la
-forma del id compartido: la condición es la misma para un id simple que para uno de subtarea, y lo único
-que cambia entre los dos es el resultado de la reasignación. Cuando el id es simple, el fichero no
-archivado es el que conserva el número: es el que de verdad importa hoy en el tablero, mientras que los
-archivados ya cerraron su ciclo y no pierden nada relevante al recibir un número nuevo en el destino,
-porque su parentesco y sus menciones se siguen reescribiendo igual con la tabla de equivalencias. Cuando
-el id compartido tiene forma de subtarea, la misma condición no cambia el resultado, porque ninguna
-subtarea conserva su número (ni siquiera la copia no archivada): todas las copias se reasignan igual,
-con el motivo de subtarea de siempre. Cuando hay más de un fichero no archivado con el mismo id, o todos
-los que lo comparten están archivados y ninguno está activo ni terminado, sigue siendo el error fatal de
-código 3, sea cual sea la forma del id: Backlog.md solo reutiliza un número después de archivar la tarea
-que lo tenía, así que esa combinación solo puede venir de un tablero editado a mano de una forma que el
-propio Backlog.md no produce, y no hay ninguna señal en los datos que diga cuál de los ficheros es el
-verdadero.
+`archive/tasks/` sigue con `id: TASK-2` en su frontmatter, y el nuevo fichero de `tasks/` también. El
+ciclo se puede repetir sin que en ningún momento haya dos copias activas a la vez: archivar también esa
+reutilización deja dos ficheros en `archive/tasks/` con `id: TASK-2` y ninguna copia activa ni terminada,
+una secuencia perfectamente normal de un tablero real que lleva tiempo en marcha, no un tablero editado a
+mano. Tratar "dos ficheros traen el mismo id" como fatal sin excepción rompería este uso normal: la
+primera vez que Backlog.md reutiliza un número, `import` rechazaría el tablero entero. Por eso el único
+caso fatal pasa a ser que MÁS DE UNA copia no archivada comparta el id: es lo único que Backlog.md nunca
+puede producir por sí mismo, y sigue siendo el error fatal de código 3. Con cero o una copia no
+archivada, nunca es fatal, sea cual sea la forma del id compartido. Cuando hay exactamente una copia no
+archivada, esa es la que conserva el número si el id es simple, mientras que cada una de las archivadas se
+reasigna con el motivo de reutilización; si el id compartido tiene forma de subtarea, la copia no
+archivada se reasigna igual que las demás, porque ninguna subtarea conserva su número nunca. Cuando
+ninguna copia está activa ni terminada, ninguna conserva el número: todas se reasignan, sin que haga falta
+ningún desempate entre las archivadas para decidir cuál es "la buena", el mismo tratamiento que ya reciben
+todas las subtareas.
 
 **Cualquier referencia a un id compartido resuelve a la tarea que no está archivada, y deja un
 hallazgo.** Una mención en texto libre, un `parent` o un elemento de `dependencies` que nombra un id que
@@ -128,10 +125,19 @@ referencia.
 de "Identificadores". Perdería la referencia por completo en el caso más común, precisamente aquel en el
 que la interpretación "la tarea que existe hoy en el tablero" sí es la correcta: la inmensa mayoría de
 las referencias a un id reutilizado, cuando la tarea que lo tenía ya está archivada, quieren decir la
-tarea activa, no un limbo sin resolver. **Descartado: resolver por la fecha de la referencia**, eligiendo
-la tarea cuya fecha de creación esté más cerca en el tiempo de cuando se escribió el texto que contiene
-la mención. Backlog.md no guarda cuándo se escribió cada mención dentro de una tarea, solo la fecha de la
-tarea entera, así que no hay ningún dato con el que hacerlo con precisión.
+tarea activa, no un limbo sin resolver.
+
+**Descartado: resolver por la fecha de la referencia.** Existe una cota real: si la fecha de creación o
+de actualización de la tarea que hace la referencia es ANTERIOR a la fecha de creación de la tarea no
+archivada, esa referencia no puede estar hablando de ella, porque todavía no existía. Aun así, no se usa,
+por tres motivos. Primero, esa cota solo dice cuándo NO puede ser la activa, nunca confirma que sí lo sea,
+así que no resuelve el caso general, solo descarta uno de los dos lados en una fracción de las
+referencias ambiguas. Segundo, en el caso más común y mayoritario la interpretación "la tarea que existe
+hoy" ya es la correcta sin necesitar ninguna cota. Tercero, añadir una heurística parcial que a veces
+contradice la regla simple, "siempre la no archivada", haría el comportamiento más difícil de predecir y
+de explicar, a cambio de ganar precisión solo en el caso raro que sí se puede detectar con esta cota: una
+referencia histórica, anterior a que existiera la tarea activa, que de todos modos ya queda marcada con
+el hallazgo de resolución ambigua para que quien ejecute la revise a mano si le importa.
 
 **La comparación de "ya está en el destino" usa el título ya reescrito, no el crudo.** El título de una
 tarea de origen puede mencionar el id de otra tarea (`"Follow-up of TASK-1"`), y la regla 5 de
@@ -183,11 +189,11 @@ sección anterior dan por hecho que conviven sin ser un error.
 
 **Corrección:** esta entrada decía que dos ficheros que traen el mismo id por esta forma canónica
 siempre paran el import con el código 3, para no convertirse en silencio en la misma tarea de destino y
-perder una tarea entera sin avisar. Ya no es del todo cierto: cuando exactamente uno de los ficheros que
-comparten el id no está archivado, se aplica en su lugar la excepción de "Backlog.md reutiliza el número
-de una tarea archivada, y el import lo tolera en vez de rechazarlo", más arriba en esta misma sección, y
-el lote no se aborta. El código 3 sigue siendo el desenlace en cualquier otro caso: dos o más ficheros no
-archivados con el mismo id, o todos archivados y ninguno activo ni terminado.
+perder una tarea entera sin avisar. Ya no es del todo cierto: la excepción de "Backlog.md reutiliza el
+número de una tarea archivada, y el import lo tolera en vez de rechazarlo", más arriba en esta misma
+sección, hace que el código 3 solo se dispare cuando MÁS DE UNA de las copias que comparten el id no está
+archivada; con cero o una copia no archivada, el lote nunca se aborta por este motivo, sea cual sea el
+número de copias archivadas que compartan el id.
 
 **Esa misma forma canónica también decide a qué tarea corresponde una mención en el texto.** La
 reescritura definitiva de menciones (regla 5 de "Identificadores"), el hallazgo de una mención que no
@@ -427,7 +433,10 @@ configuración y de las opciones que alguien usó, y la herramienta es general.
 **La decisión.** Todo lo que el convertidor no puede mapear, cambia o quita, sale como un hallazgo por
 la salida de errores, con el fichero y el campo. Incluye una clave del frontmatter o una sección del
 cuerpo que no reconoce. El código de salida 5 avisa de que hubo hallazgos y `--strict` permite negarse
-a escribir nada si los hay. Quien ejecuta decide.
+a escribir nada si los hay. Quien ejecuta decide. También resolver una referencia ambigua a un id
+compartido hacia la tarea no archivada (["Los identificadores conservan su número y cambian de
+prefijo"](#los-identificadores-conservan-su-número-y-cambian-de-prefijo)) sigue esta misma regla: es un
+hallazgo, no un fallo silencioso, con el fichero, el id compartido y el id final al que se resolvió.
 
 **Un fichero de tarea cuyo frontmatter no se puede interpretar como YAML válido sigue la misma regla:
 es un hallazgo, no un fichero que aborta el lote.** Medido contra el CLI real de Backlog.md 1.53.0: un
