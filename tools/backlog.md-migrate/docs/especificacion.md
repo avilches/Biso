@@ -8,7 +8,11 @@ Esta página dice qué hace cada orden, sin decir por qué: las razones están e
 [`decisiones.md`](decisiones.md). Hoy solo `import` está especificada. `export` se diseña en TASK-7
 y sus reglas ya decididas están en la sección "La exportación" de las decisiones.
 
-Versión de Backlog.md contra la que se ha medido todo lo que sigue: **1.52.0**.
+Versión de Backlog.md contra la que se ha medido todo lo que sigue: **1.52.0**, salvo dos hechos que se
+comprobaron con **1.53.0** y que llevan su versión marcada en el sitio donde aparecen: que un frontmatter
+que no es YAML válido hace que el propio Backlog.md descarte la tarea en silencio ("Qué lee del origen") y
+que Backlog.md reutiliza el número de una tarea archivada en la siguiente que crea ("Identificadores",
+regla 1).
 
 ## `backlog.md-migrate import`
 
@@ -108,6 +112,30 @@ Backlog.md 1.52.0, son `id`, `title`, `status`, `assignee`, `created_date`, `upd
 `DESCRIPTION`, `PLAN`, `NOTES`, `FINAL_SUMMARY`, los criterios de aceptación (`AC`), la definición de
 hecho (`DOD`) y los comentarios (`COMMENTS`).
 
+**Una marca `BEGIN` sin su `END` correspondiente en ningún punto posterior del cuerpo es un hallazgo,
+para cualquier nombre, conocido o no, con o sin el prefijo `SECTION:`.** El lector busca la pareja
+completa de marcas de una sección; si encuentra la apertura y no encuentra después su cierre, no intenta
+adivinar dónde debería haber terminado el texto: la sección se trata como ausente, exactamente igual que
+si la marca de apertura no hubiera estado nunca, con el mensaje `<nombre> section marker was never
+closed`. No es un fallo que detiene la conversión, el mismo trato que ya reciben las demás filas de esta
+tabla.
+
+**Limitación aceptada: un cuerpo sin ninguna marca HTML en absoluto no se detecta.** Una tarea escrita en
+el formato anterior a que existieran las marcas de sección, con encabezados de Markdown simples (`##
+Description`, `## Acceptance Criteria`) y sin ningún `<!-- ... -->` alrededor, o editada a mano para
+quitarlas, sigue siendo una tarea válida para Backlog.md, que la muestra con su contenido. El convertidor,
+en cambio, no la reconoce en absoluto: sin ninguna marca que diga dónde empieza y dónde termina cada
+sección, `DESCRIPTION`, `PLAN`, `NOTES`, `FINAL_SUMMARY`, los criterios de aceptación, la definición de
+hecho y los comentarios de un cuerpo así se pierden en silencio, como si esas secciones nunca hubieran
+existido. Un encabezado `##` suelto en el cuerpo que no tiene ninguna marca corre la misma suerte: nunca
+se distingue de un `##` de texto libre legítimo dentro de otra sección que sí está marcada, el mismo caso
+que ya cubre "Casos que no son obvios" con `## Not a real section` dentro de una `DESCRIPTION` real. El
+remedio práctico es dejar que Backlog.md reescriba el fichero, abriéndolo y guardándolo o editándolo con
+su propio CLI, lo que añade las marcas actuales, y ejecutar `import` después. El porqué de tratar los dos
+casos de forma distinta está en decisiones.md, ["Una marca sin cerrar es un hallazgo; un cuerpo sin
+marcas en absoluto es una limitación
+aceptada"](decisiones.md#una-marca-sin-cerrar-es-un-hallazgo-un-cuerpo-sin-marcas-en-absoluto-es-una-limitación-aceptada).
+
 ### Identificadores
 
 1. **Forma de un id de origen.** Es `<PREFIJO>-<n>` o, para una subtarea, `<PREFIJO>-<n>.<m>`
@@ -129,7 +157,8 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    traen el mismo id", ver "Códigos de salida". Es lo único que Backlog.md nunca puede producir por sí
    mismo: nunca crea dos tareas activas o terminadas con el mismo número a la vez. Con cero o una copia
    no archivada, nunca es fatal, sea cual sea el número de copias archivadas que compartan el id.
-   Backlog.md reutiliza el número de una tarea archivada en la siguiente que crea, y ese ciclo se puede
+   Backlog.md reutiliza el número de una tarea archivada en la siguiente que crea (medido con el CLI de
+   Backlog.md 1.53.0), y ese ciclo se puede
    repetir sin que en ningún momento haya dos copias activas a la vez: archivar `TASK-2`, dejar que su
    número se reutilice, y archivar también esa reutilización deja dos ficheros en `archive/tasks/` con
    `id: TASK-2` y ninguno activo ni terminado en absoluto, una secuencia perfectamente normal, no un
@@ -454,7 +483,9 @@ en un lote, así que no es un hallazgo. Un bloque sin `created` sí lo es, y la 
 
 ### Casos que no son obvios
 
-Medidos con el CLI de Backlog.md 1.52.0:
+Medidos con el CLI de Backlog.md 1.52.0. Los dos hechos de esta página comprobados en cambio con 1.53.0,
+el frontmatter roto y la reutilización de ids tras archivar, llevan su versión marcada donde aparecen, en
+"Qué lee del origen" e "Identificadores":
 
 - **El frontmatter es YAML de verdad.** Un título con comillas, dos puntos, `#` o corchetes se guarda
   entre comillas simples (`title: 'Title: with "quotes" # hash'`), así que se lee con un intérprete de
@@ -462,7 +493,9 @@ Medidos con el CLI de Backlog.md 1.52.0:
 - **Una tarea puede no tener ninguna sección.** Una tarea creada solo con título tiene el frontmatter y
   nada más. Todo campo ausente se omite de la línea.
 - **Una sección puede contener `##` y `---`** en su texto sin dejar de ser una sola sección: se delimita
-  por sus marcas, no por lo que contenga.
+  por sus marcas, no por lo que contenga. Por ejemplo, un `## Not a real section` escrito dentro del texto
+  de una `DESCRIPTION` real, entre sus propias marcas, sigue siendo parte de esa `DESCRIPTION` y no se
+  convierte en una sección nueva ni en un hallazgo.
 - **`priority` y `type` se guardan en minúsculas** aunque la configuración los escriba con mayúscula
   inicial (`priority: high` con la prioridad configurada `High`). El casado con el vocabulario del destino
   lo absorbe.
@@ -507,10 +540,9 @@ es el residual para cualquier fallo al escribir la salida que no sea ninguno de 
 origen ni del destino ni de lo que se convirtió, sino de que la propia escritura del NDJSON falló por un
 motivo ajeno a los datos.
 
-**Corrección.** Esta página decía antes que un frontmatter que no se puede interpretar como YAML era
-uno de los motivos del código 3, que aborta el lote entero. Ya no es así: ver "Qué lee del origen" más
-arriba. Un fichero así se salta como un hallazgo (código 5), no aborta el import por el resto de
-ficheros que sí se pudieron leer.
+**Un frontmatter que no se puede interpretar como YAML no dispara el código 3.** Ese fichero se salta
+como un hallazgo (código 5), y el resto del lote que sí se pudo leer sigue adelante; ver "Qué lee del
+origen" más arriba.
 
 **El código 5 no es un fallo**: el NDJSON está escrito. Encadenar `import` con `biso new --from` en un
 `&&` se detiene en el 5, así que quien automatice el paso debe aceptarlo explícitamente.

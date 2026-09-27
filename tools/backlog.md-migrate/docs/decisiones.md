@@ -474,6 +474,63 @@ que abortar en el primer hallazgo, aplicado a un caso concreto: un solo fichero 
 puede impedir ver el resto de un tablero real, y menos cuando ni siquiera el propio Backlog.md se dio
 cuenta de que estaba roto.
 
+## Una marca sin cerrar es un hallazgo; un cuerpo sin marcas en absoluto es una limitación aceptada
+
+**La decisión.** El lector de secciones (`internal/source/sections.go`) solo reconoce el texto de una
+sección cuando encuentra su marca `BEGIN` y, más adelante en el mismo cuerpo, la marca `END` que le
+corresponde. Cuando aparece una `BEGIN`, de cualquier nombre, conocido o no, con o sin el prefijo
+`SECTION:`, sin su `END` en ningún punto posterior del cuerpo, esa sección se trata como si no existiera:
+no se intenta rescatar el texto que hay entre la marca abierta y donde sea que el cuerpo termine. Es un
+hallazgo, con el nombre de la sección como campo y el mensaje `<nombre> section marker was never closed`,
+y no detiene la conversión, el mismo trato que ya reciben las demás filas no fatales de "El mapeo de
+campos" en especificacion.md.
+
+Un cuerpo de tarea escrito sin ninguna marca HTML en absoluto, del formato anterior a que existieran las
+marcas o editado a mano para quitarlas, es el caso contrario: no se detecta ni se informa, y sus secciones
+se pierden en silencio, exactamente como si nunca hubieran existido. Es una limitación aceptada, no un
+hallazgo. Los dos casos se tratan de forma distinta porque solo uno de los dos tiene una señal barata y
+fiable de detectar.
+
+Una marca `BEGIN` sin su `END` es barata de comprobar, basta con mirar si el mismo nombre tiene una `END`
+más adelante en el cuerpo, y no arriesga ningún falso positivo contra un fichero real: Backlog.md 1.52.0 y
+1.53.0, las dos versiones que este proyecto mide y declara como objetivo (ver
+[`pendientes.md`](pendientes.md)), escriben siempre las dos marcas juntas, la de apertura y la de cierre,
+en el mismo momento en que escriben el encabezado Markdown fijo que las precede (`## Description` antes de
+`SECTION:DESCRIPTION:BEGIN`, `## Acceptance Criteria` antes de `AC:BEGIN`, `## Definition of Done` antes
+de `DOD:BEGIN`, `## Implementation Plan` antes de `SECTION:PLAN:BEGIN`, `## Implementation Notes` antes de
+`SECTION:NOTES:BEGIN`, `## Comments` antes de `COMMENTS:BEGIN`, `## Final Summary` antes de
+`SECTION:FINAL_SUMMARY:BEGIN`). Un cuerpo real de esas dos versiones nunca deja una marca abierta sin su
+cierre.
+
+Un cuerpo sin ninguna marca, en cambio, no tiene ninguna señal fiable. Distinguir un encabezado `##` que
+de verdad debería abrir una sección de un `##` que alguien escribió como texto libre dentro de otra
+sección ya marcada exigiría adivinar la intención de quien escribió el fichero, y la propia especificación
+ya muestra, en el fixture real
+[`fix-1 - Multi-field-task-FIX-1-mentions-itself.md`](../internal/source/testdata/backlog-board/tasks/fix-1%20-%20Multi-field-task-FIX-1-mentions-itself.md),
+un `## Not a real section` que aparece dentro del texto de una `DESCRIPTION` real, entre sus propias
+marcas, y que deliberadamente no cuenta como una sección nueva (ver "El mapeo de campos" y "Casos que no
+son obvios" en especificacion.md). Además, ni Backlog.md 1.52.0 ni 1.53.0 escriben nunca un cuerpo sin las
+marcas HTML: siempre las añaden junto al encabezado. Un cuerpo sin marcas solo puede venir de una versión
+anterior a que existieran, o de una edición a mano que las quitó, ninguno de los dos el objetivo declarado
+de esta herramienta (ver "Es una herramienta general" en `CLAUDE.md`). El remedio práctico es dejar que
+Backlog.md reescriba el fichero, abriendo y guardando la tarea o editándola con su propio CLI, lo que
+añade las marcas actuales, y ejecutar `import` después.
+
+**Descartado: tratar cualquier `##` que aparezca fuera de una sección reconocida como un hallazgo.**
+Dispararía sobre el mismo `## Not a real section` del fixture citado arriba, que es texto libre legítimo
+dentro de una `DESCRIPTION` real y no debe contar como nada distinto de esa sección: cualquier tablero
+real con una sola sección que mencione un encabezado dentro de su propio texto daría un hallazgo falso.
+**Descartado: intentar distinguir un encabezado suelto de un `##` de texto libre mirando su contenido o su
+posición.** Un encabezado sin marca y un `##` de texto libre dentro de una sección real tienen la misma
+forma superficial; no hay ninguna propiedad del texto que distinga un caso del otro sin ese mismo riesgo
+de falso positivo. La comprobación de la marca sin cerrar no tiene este problema porque no mira
+encabezados: mira solo si una `BEGIN` tiene su `END`, una propiedad binaria del propio par de marcas.
+**Descartado: aceptar el riesgo de falso positivo a cambio de cubrir también el formato sin marcas.** El
+objetivo declarado de este convertidor son las versiones 1.52.0 y 1.53.0 de Backlog.md, que siempre
+escriben las marcas junto al encabezado; optimizar por un formato que ninguna de las dos versiones
+objetivo produce, a costa de romper ficheros reales de las versiones que sí importan, invierte la
+prioridad.
+
 ## La exportación: mejor esfuerzo, pero reversible
 
 **La decisión (sin implementar; su diseño y su prueba son TASK-7).** `export` escribe un directorio
