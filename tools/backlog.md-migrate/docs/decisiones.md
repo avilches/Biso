@@ -113,11 +113,12 @@ elige esa: es la misma que conserva el número cuando el id compartido es simple
 hoy en el tablero, mientras que la archivada, o las archivadas si hay varias, ya cerraron su ciclo y no
 son a las que tendría sentido seguir apuntando. Si NINGUNA de las tareas que comparten el id está activa
 ni terminada, no hay ninguna "existente hoy" a la que apuntar: si al menos una de esas copias archivadas
-tiene una `created_date` válida, la resolución elige la de fecha más reciente entre ellas, con el mismo
-desempate por ruta relativa ascendente que usa la regla 4 de "Identificadores" si dos o más empatan en la
-fecha exacta; si ninguna copia tiene una fecha válida, elige la última por ruta relativa ascendente. En
-cualquiera de los dos casos es la copia más cercana de todas ellas a ser "la actual". Es una
-simplificación deliberada en los dos casos, no una detección: el convertidor no intenta
+tiene una `created_date` válida, la resolución elige la de fecha más reciente entre ellas y, si dos o más
+empatan también en la fecha exacta, gana la última por ruta relativa ascendente entre las que empatan, el
+mismo mecanismo que usa la regla 4 de "Identificadores" para su propio desempate; si ninguna copia tiene
+una fecha válida, elige la última por ruta relativa ascendente. En cualquiera de los dos casos es la
+copia más cercana de todas ellas a ser "la actual". Es una simplificación deliberada en los dos casos,
+no una detección: el convertidor no intenta
 adivinar cuál de las tareas tenía en mente quien escribió la referencia, solo resuelve de la única forma
 que tiene sentido, tanto si el id compartido es simple como si tiene forma de subtarea. Esta resolución
 deja un hallazgo, no bloqueante, con el fichero, el id compartido y el id final al que se resolvió:
@@ -451,8 +452,8 @@ cuerpo que no reconoce. El código de salida 5 avisa de que hubo hallazgos y `--
 a escribir nada si los hay. Quien ejecuta decide. También resolver una referencia ambigua a un id
 compartido (["Los identificadores conservan su número y cambian de
 prefijo"](#los-identificadores-conservan-su-número-y-cambian-de-prefijo)), a la tarea no archivada o, si
-ninguna lo está, a la de creación más reciente, sigue esta misma regla: es un hallazgo, no un fallo
-silencioso, con el fichero, el id compartido y el id final al que se resolvió.
+ninguna lo está, a la seleccionada entre las que lo comparten, sigue esta misma regla: es un hallazgo, no
+un fallo silencioso, con el fichero, el id compartido y el id final al que se resolvió.
 
 **Un fichero de tarea cuyo frontmatter no se puede interpretar como YAML válido sigue la misma regla:
 es un hallazgo, no un fichero que aborta el lote.** Medido contra el CLI real de Backlog.md 1.53.0: un
