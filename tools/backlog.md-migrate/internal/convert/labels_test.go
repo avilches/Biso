@@ -16,8 +16,8 @@ func TestMilestoneSlugsOfAKnownMilestone(t *testing.T) {
 }
 
 // TestMilestoneSlugsFallsBackToTheIdWhenTheTitleSlugifiesToNothing covers
-// docs task point 4, step 3: a milestone whose title has no letter or
-// digit at all uses its own id as the slug, with a finding.
+// docs/especificacion.md, "Milestone y proyecto": a milestone whose title
+// has no letter or digit at all uses its own id as the slug, with a finding.
 func TestMilestoneSlugsFallsBackToTheIdWhenTheTitleSlugifiesToNothing(t *testing.T) {
 	slugs, findings := MilestoneSlugs(map[string]string{"m-9": "..."})
 	if slugs["m-9"] != "m-9" {
@@ -32,8 +32,8 @@ func TestMilestoneSlugsFallsBackToTheIdWhenTheTitleSlugifiesToNothing(t *testing
 }
 
 // TestMilestoneSlugsReportsACollisionBetweenTwoDistinctMilestones covers
-// docs task point 4, step 4: two distinct milestone ids that produce the
-// same slug raise a finding.
+// docs/especificacion.md, "Milestone y proyecto": two distinct milestone
+// ids that produce the same slug raise a finding.
 func TestMilestoneSlugsReportsACollisionBetweenTwoDistinctMilestones(t *testing.T) {
 	slugs, findings := MilestoneSlugs(map[string]string{
 		"m-1": "Sprint 3",
@@ -83,10 +83,12 @@ func TestScopedLabelsForAnUnknownMilestoneUsesTheId(t *testing.T) {
 	}
 }
 
-// TestScopedLabelsRemovesAColldingSourceMilestoneLabel covers the encargo's
-// explicit example: a task with labels: ["milestone::ya-tenia-esto"] and
-// milestone: m-4 drops the source label, with a finding, and ends up with
-// the derived milestone::puesta-en-uso label instead.
+// TestScopedLabelsRemovesAColldingSourceMilestoneLabel covers
+// docs/decisiones.md, "Una etiqueta con ámbito derivada del dato real gana
+// a la etiqueta de origen que choca con ella": a task with
+// labels: ["milestone::ya-tenia-esto"] and milestone: m-4 drops the source
+// label, with a finding, and ends up with the derived
+// milestone::puesta-en-uso label instead.
 func TestScopedLabelsRemovesAColldingSourceMilestoneLabel(t *testing.T) {
 	slugs := map[string]string{"m-4": "puesta-en-uso"}
 	result, findings := ScopedLabels("t.md", []string{"milestone::ya-tenia-esto"}, "m-4", "", slugs)
@@ -136,8 +138,8 @@ func TestScopedLabelsForAProject(t *testing.T) {
 }
 
 // TestScopedLabelsOrdersMilestoneBeforeProject checks the final ordering
-// docs task point 4 mandates: origin labels, then milestone::, then
-// project::.
+// docs/especificacion.md, "Milestone y proyecto", mandates: origin labels,
+// then milestone::, then project::.
 func TestScopedLabelsOrdersMilestoneBeforeProject(t *testing.T) {
 	slugs := map[string]string{"m-4": "puesta-en-uso"}
 	result, _ := ScopedLabels("t.md", []string{"backend"}, "m-4", "alpha", slugs)
@@ -166,8 +168,8 @@ func TestScopedLabelsOfAProjectThatSlugifiesToNothingFallsBackToTheRawValue(t *t
 }
 
 // TestATaskWithNeitherMilestoneNorProjectGetsNoLabelsAndNoFinding checks
-// the encargo's explicit carve-out: absent milestone/project is not a
-// finding.
+// docs/especificacion.md, "Milestone y proyecto"'s explicit carve-out: a
+// task with neither field gets no label and that is not a finding.
 func TestATaskWithNeitherMilestoneNorProjectGetsNoLabelsAndNoFinding(t *testing.T) {
 	result, findings := ScopedLabels("t.md", []string{"backend"}, "", "", nil)
 	if !equalStrings(result, []string{"backend"}) {

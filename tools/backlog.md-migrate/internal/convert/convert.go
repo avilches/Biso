@@ -4,15 +4,16 @@
 // the source board's milestone titles, but never another task in the same
 // batch and never a task that already exists on the destination.
 //
-// This is phase 4a of the conversion engine (docs/especificacion.md, "El
-// mapeo de campos"). It covers status, type and priority vocabulary
-// matching, the labels/assignees token alphabet, date conversion to UTC,
-// the milestone:: and project:: scoped labels, and folding Definition of
-// Done into acceptance criteria. It deliberately does NOT touch
-// identifiers, parent, dependencies, ordinal, title, description, plan,
-// notes, summary, or a comment's body: rewriting mentions and identifiers
-// needs to see every task in the batch and the tasks already on the
-// destination, which is a later phase's job, built on top of this one.
+// This file implements the per-task field conversion of the conversion
+// engine (docs/especificacion.md, "El mapeo de campos"). It covers status,
+// type and priority vocabulary matching, the labels/assignees token
+// alphabet, date conversion to UTC, the milestone:: and project:: scoped
+// labels, and folding Definition of Done into acceptance criteria. It
+// deliberately does NOT touch identifiers, parent, dependencies, ordinal,
+// title, description, plan, notes, summary, or a comment's body: rewriting
+// mentions and identifiers needs to see every task in the batch and the
+// tasks already on the destination, which identifiers.go handles, built on
+// top of this file's output.
 package convert
 
 import (

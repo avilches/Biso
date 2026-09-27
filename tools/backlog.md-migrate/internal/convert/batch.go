@@ -12,13 +12,12 @@ import (
 
 // This is the final assembly step of the conversion engine. It does not run
 // any conversion of its own: every value a Line carries was already computed
-// by phase 4a (Task, convert.go), phase 4b (Identifiers, identifiers.go),
-// phase 4c (AssignOrdinals, ordinal.go), or read verbatim from the
-// source.Task no earlier phase touches (References, Documentation,
-// ModifiedFiles, Archived). Assemble's only job is to run those phases in
-// the right order and join their outputs into what "biso new --from" expects
-// (docs/especificacion.md, "La salida", and docs/spec/cmd/new.md, "El modo
-// lote").
+// by Task (convert.go), Identifiers (identifiers.go), AssignOrdinals
+// (ordinal.go), or read verbatim from the source.Task none of those touch
+// (References, Documentation, ModifiedFiles, Archived). Assemble's only job
+// is to run those steps in the right order and join their outputs into what
+// "biso new --from" expects (docs/especificacion.md, "La salida", and
+// docs/spec/cmd/new.md, "El modo lote").
 
 // AcceptanceCriterion is one element of a Line's acceptanceCriteria, in the
 // object shape docs/spec/cmd/new.md, "El modo lote", accepts: key, text,
@@ -81,11 +80,11 @@ type Line struct {
 
 // Assemble runs the whole conversion engine over a full source board and a
 // full destination board and returns the final, ordered list of Lines ready
-// to serialize as NDJSON, plus every Finding phases 4a and 4b raise along
-// the way (converting each task, then resolving identifiers), in that
+// to serialize as NDJSON, plus every Finding Task and Identifiers raise
+// along the way (converting each task, then resolving identifiers), in that
 // order.
 //
-// sourceBoard.Findings (raised while reading the board, phase 2) is
+// sourceBoard.Findings (raised while reading the source board) is
 // deliberately NOT part of the returned findings: Assemble only knows about
 // the findings the conversion engine itself raises. A caller combines the
 // two, source board findings first, since those happened first in the

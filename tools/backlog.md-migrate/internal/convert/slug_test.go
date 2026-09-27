@@ -16,9 +16,9 @@ func TestSlugifyExamples(t *testing.T) {
 	}
 }
 
-// TestSlugifyOfATitleWithNoLetterOrDigitIsEmpty covers docs task point 4,
-// step 3's example: a title with no letter or digit at all (only dots)
-// slugifies to nothing.
+// TestSlugifyOfATitleWithNoLetterOrDigitIsEmpty covers
+// docs/especificacion.md, "Milestone y proyecto"'s example: a title with
+// no letter or digit at all (only dots) slugifies to nothing.
 func TestSlugifyOfATitleWithNoLetterOrDigitIsEmpty(t *testing.T) {
 	if got := slugify("..."); got != "" {
 		t.Errorf("slugify(\"...\") = %q, want empty", got)

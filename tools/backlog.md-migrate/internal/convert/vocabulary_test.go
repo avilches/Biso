@@ -67,10 +67,10 @@ func TestMatchFieldOnAnEmptyValueIsNotAFinding(t *testing.T) {
 	}
 }
 
-// TestTwoConfiguredValuesThatNormalizeTheSameAreAmbiguous covers docs task
-// point 1's requested case: two DISTINCT configured values ("high" and
-// "HIGH") that normalize identically must make coincidir() report no
-// result, not pick one arbitrarily.
+// TestTwoConfiguredValuesThatNormalizeTheSameAreAmbiguous covers
+// docs/spec/vocabularios.md, "El algoritmo de coincidencia": two DISTINCT
+// configured values ("high" and "HIGH") that normalize identically must
+// make coincidir() report no result, not pick one arbitrarily.
 func TestTwoConfiguredValuesThatNormalizeTheSameAreAmbiguous(t *testing.T) {
 	configured := []string{"high", "HIGH", "low"}
 

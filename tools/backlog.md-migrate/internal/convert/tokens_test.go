@@ -17,8 +17,9 @@ func equalStrings(a, b []string) bool {
 	return true
 }
 
-// TestSpacesBecomeHyphensWithAFinding covers docs task point 2's two named
-// examples: "with space" and "Sara Smith".
+// TestSpacesBecomeHyphensWithAFinding covers docs/decisiones.md, "Los
+// espacios de una etiqueta o un asignado se convierten en guiones"'s two
+// named examples: "with space" and "Sara Smith".
 func TestSpacesBecomeHyphensWithAFinding(t *testing.T) {
 	cleaned, findings := CleanTokenList("t.md", "labels", []string{"with space", "Sara Smith"})
 
@@ -39,9 +40,10 @@ func TestSpacesBecomeHyphensWithAFinding(t *testing.T) {
 	}
 }
 
-// TestAValueWithNoSpaceIsNotAFinding checks the encargo's explicit
-// carve-out: a value with no whitespace at all does not raise the
-// space-conversion finding, even though it passes through
+// TestAValueWithNoSpaceIsNotAFinding checks the explicit carve-out of
+// docs/decisiones.md, "Los espacios de una etiqueta o un asignado se
+// convierten en guiones": a value with no whitespace at all does not raise
+// the space-conversion finding, even though it passes through
 // collapseWhitespaceToHyphens.
 func TestAValueWithNoSpaceIsNotAFinding(t *testing.T) {
 	cleaned, findings := CleanTokenList("t.md", "labels", []string{"backend"})
@@ -53,7 +55,8 @@ func TestAValueWithNoSpaceIsNotAFinding(t *testing.T) {
 	}
 }
 
-// TestAValueOutsideTheAlphabetIsDropped covers docs task point 2's "a/b"
+// TestAValueOutsideTheAlphabetIsDropped covers docs/decisiones.md, "Los
+// espacios de una etiqueta o un asignado se convierten en guiones"'s "a/b"
 // example: a character outside the token alphabet drops the whole value,
 // with a finding.
 func TestAValueOutsideTheAlphabetIsDropped(t *testing.T) {
@@ -71,10 +74,11 @@ func TestAValueOutsideTheAlphabetIsDropped(t *testing.T) {
 }
 
 // TestCollidingValuesAfterCleanupAreMergedWithoutAnExtraFinding covers
-// docs task point 2's "a b" / "a-b" example: two values of the same list
-// that become equal after cleanup collapse to one, and produce only the
-// finding already raised for the conversion that caused the collision (no
-// separate "duplicate" finding).
+// docs/decisiones.md, "Los espacios de una etiqueta o un asignado se
+// convierten en guiones"'s "a b" / "a-b" example: two values of the same
+// list that become equal after cleanup collapse to one, and produce only
+// the finding already raised for the conversion that caused the collision
+// (no separate "duplicate" finding).
 func TestCollidingValuesAfterCleanupAreMergedWithoutAnExtraFinding(t *testing.T) {
 	cleaned, findings := CleanTokenList("t.md", "labels", []string{"a b", "a-b"})
 

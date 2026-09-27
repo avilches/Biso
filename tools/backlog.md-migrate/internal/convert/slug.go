@@ -3,8 +3,8 @@ package convert
 import "strings"
 
 // slugify implements the milestone/project slug algorithm of
-// docs/especificacion.md, "Milestone y proyecto" (docs task point 4, step
-// 2): Unicode case folding, then NFD decomposition with combining marks
+// docs/especificacion.md, "Milestone y proyecto": Unicode case folding,
+// then NFD decomposition with combining marks
 // stripped, then every run of one or more characters that is NOT a Unicode
 // letter or digit collapsed into a single hyphen, with no leading or
 // trailing hyphen. "Puesta en uso" slugifies to "puesta-en-uso", and

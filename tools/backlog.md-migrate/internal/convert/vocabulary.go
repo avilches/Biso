@@ -76,16 +76,17 @@ func MatchVocabulary(v string, configured []string) (match string, ok bool) {
 
 // MatchField matches a single status, type, or priority value against the
 // destination's configured vocabulary for that field, reusing
-// MatchVocabulary for all three rather than duplicating the algorithm
-// (docs task point 1 asks for exactly that).
+// MatchVocabulary for all three rather than duplicating the algorithm,
+// since docs/spec/vocabularios.md, "El algoritmo de coincidencia", defines
+// coincidir(v, configured) once for all three fields.
 //
 // value is the source task's raw value for the field; an empty value (the
 // task simply has no status/type/priority) is not attempted and raises no
 // finding, since there is nothing to match. A non-empty value that
 // MatchVocabulary cannot resolve unambiguously returns "" together with a
 // Finding naming the original value and the destination's configured
-// values: docs task point 1, "d" and "e", say this tool never aborts on
-// that, it omits the field and reports it instead of biso's own error 3.
+// values: this tool never aborts on that, it omits the field and reports it
+// instead of biso's own error 3.
 func MatchField(file, field, value string, configured []string) (string, []source.Finding) {
 	if value == "" {
 		return "", nil

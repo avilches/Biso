@@ -204,8 +204,8 @@ func TestAssignOrdinalsATaskWithNoOrdinalDoesNotAppear(t *testing.T) {
 	}
 }
 
-func TestAssignOrdinalsATaskSkippedByPhase4bDoesNotAppear(t *testing.T) {
-	// A caller filters out a task phase 4b skipped as already on the
+func TestAssignOrdinalsASkippedTaskDoesNotAppear(t *testing.T) {
+	// A caller filters out a task Identifiers skipped as already on the
 	// destination before calling AssignOrdinals: this file has no notion
 	// of "skipped" of its own, so the test only checks that a task simply
 	// left out of the input never appears in the output, even though it

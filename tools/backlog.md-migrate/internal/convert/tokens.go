@@ -74,7 +74,7 @@ func collapseWhitespaceToHyphens(s string) (result string, changed bool) {
 
 // CleanTokenList applies docs/spec/valores-de-entrada.md, "El juego de
 // caracteres de un token", to every value of a single labels or assignees
-// list of one task, in the exact order docs task point 2 requires:
+// list of one task, in this exact order:
 //
 //  1. Trim Unicode whitespace from both ends and collapse every internal
 //     run of whitespace into a single hyphen (docs/decisiones.md, "Los

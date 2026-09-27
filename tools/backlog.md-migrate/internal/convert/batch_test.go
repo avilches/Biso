@@ -104,7 +104,7 @@ func TestAssembleCombinesEveryFieldSource(t *testing.T) {
 
 	got := lines[0]
 
-	// From Identified (phase 4b).
+	// From Identified.
 	if got.ID != "BISO-1" {
 		t.Errorf("ID = %q, want BISO-1", got.ID)
 	}
@@ -133,7 +133,7 @@ func TestAssembleCombinesEveryFieldSource(t *testing.T) {
 		t.Errorf("Comments = %+v", got.Comments)
 	}
 
-	// From Result (phase 4a).
+	// From Result.
 	if got.Status != "Done" {
 		t.Errorf("Status = %q, want Done", got.Status)
 	}
@@ -156,7 +156,7 @@ func TestAssembleCombinesEveryFieldSource(t *testing.T) {
 		t.Errorf("UpdatedAt = %q", got.UpdatedAt)
 	}
 
-	// From AssignOrdinals (phase 4c).
+	// From AssignOrdinals.
 	if got.Ordinal == "" {
 		t.Errorf("Ordinal is empty, want a manual order key (the source task had an ordinal)")
 	}
@@ -436,7 +436,7 @@ func TestAcceptanceCriterionAlwaysWritesChecked(t *testing.T) {
 // mix-up between the two copies is obvious in the assertions.
 //
 // Both copies also carry their own, distinct source Ordinal, covering the
-// matching bug in AssignOrdinals (phase 4c, ordinal.go): before it returned
+// matching bug in AssignOrdinals (ordinal.go): before it returned
 // a slice parallel to its own input rather than a map keyed by the shared
 // literal id, the second copy's manual order key would have overwritten the
 // first's in that map too.

@@ -99,10 +99,10 @@ func runImport(args []string, stdout, stderr io.Writer) int {
 	}
 
 	// docs/especificacion.md, "Los hallazgos": the source board's own
-	// findings (phase 2, reading) come first, since they happened first in
-	// the pipeline, followed by every finding the conversion engine raised
-	// (phases 4a and 4b, in the deterministic order Assemble already
-	// produced them).
+	// findings (raised while reading it) come first, since they happened
+	// first in the pipeline, followed by every finding the conversion
+	// engine raised (converting each task, then resolving identifiers, in
+	// the deterministic order Assemble already produced them).
 	findings := append(append([]source.Finding(nil), sourceBoard.Findings...), convertFindings...)
 
 	if opts.Strict && len(findings) > 0 {

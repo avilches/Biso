@@ -60,10 +60,10 @@ type Task struct {
 	Summary     string
 
 	// AcceptanceCriteria and DefinitionOfDone are kept as two separate
-	// lists: this phase does not merge Definition of Done into
+	// lists: reading the board does not merge Definition of Done into
 	// acceptance criteria with the "#dod" suffix, because that needs to
-	// know the destination's next free acceptance criteria key first
-	// (a phase 4 concern).
+	// know the destination's next free acceptance criteria key first,
+	// which convert.MergeDefinitionOfDone does instead.
 	AcceptanceCriteria []Checkbox
 	DefinitionOfDone   []Checkbox
 

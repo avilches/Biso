@@ -120,7 +120,7 @@ func TestIdentifiersASubtaskIsAlwaysReassignedAndLabeled(t *testing.T) {
 // TestIdentifiersDropsASourceBacklogIdLabelThatCollides covers the second
 // half of docs/especificacion.md, "Identificadores", point 9: a subtask
 // whose own labels already carry a backlog.id key loses that source label
-// (with a Finding), same as milestone/project already do in phase 4a.
+// (with a Finding), same as milestone/project already do in convert.Task.
 func TestIdentifiersDropsASourceBacklogIdLabelThatCollides(t *testing.T) {
 	batch := []TaskInput{
 		{
@@ -1556,7 +1556,7 @@ func TestIdentifiersTwoNonArchivedCopiesOfASharedIdRemainFatal(t *testing.T) {
 }
 
 // TestAssembleNoLongerFailsOnAnArchivedAndANonArchivedCopyOfTheSameId is an
-// end-to-end smoke test through Assemble (phase 5), reusing the existing
+// end-to-end smoke test through Assemble (batch.go), reusing the existing
 // "FIX-4" fixture (internal/source/testdata/backlog-board): one copy in
 // completed/ (non-archived) and one in archive/tasks/ (archived), both with
 // the literal id "FIX-4", reproducing the exact real-world sequence

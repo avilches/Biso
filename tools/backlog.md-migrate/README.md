@@ -9,7 +9,7 @@ backlog.md-migrate import <backlog-dir> --project <dir> [--out <file>] [--biso <
 backlog.md-migrate export ...        # por diseñar, ver TASK-7
 ```
 
-**Estado: implementado.** Las seis fases de `import` están terminadas, revisadas y con sus pruebas de
+**Estado: implementado.** `import` está terminado, revisado y con sus pruebas de
 extremo a extremo pasando contra el binario real de `biso`. La especificación completa está en
 [`docs/especificacion.md`](docs/especificacion.md), y el porqué de cada regla, incluidas las que se
 precisaron durante la implementación, en [`docs/decisiones.md`](docs/decisiones.md). Lo que queda es

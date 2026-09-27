@@ -12,16 +12,16 @@ import (
 	"backlog.md-migrate/internal/source"
 )
 
-// This is phase 4b of the conversion engine (docs/especificacion.md,
-// "Identificadores"). Unlike phase 4a (convert.go), it looks at the whole
-// batch and at the destination board at once, because an identifier can
-// only be decided knowing every source task and every task already on the
-// destination: which numbers are free, which task is a repeat of an earlier
-// import, and which id every mention, parent, and dependency in the batch
-// resolves to.
+// This file implements identifier resolution (docs/especificacion.md,
+// "Identificadores"). Unlike convert.go's per-task conversion, it looks at
+// the whole batch and at the destination board at once, because an
+// identifier can only be decided knowing every source task and every task
+// already on the destination: which numbers are free, which task is a
+// repeat of an earlier import, and which id every mention, parent, and
+// dependency in the batch resolves to.
 
-// TaskInput pairs one source.Task with the Result phase 4a already computed
-// for it (Task, in convert.go). Identifiers needs both together for every
+// TaskInput pairs one source.Task with the Result convert.Task already
+// computed for it. Identifiers needs both together for every
 // task of the batch: it reads Result.CreatedAt (already converted to UTC)
 // to decide whether a task is already on the destination, and it rewrites
 // mentions inside Result.AcceptanceCriteria and Result.Comments (already
@@ -32,13 +32,14 @@ type TaskInput struct {
 	Result Result
 }
 
-// Identified is phase 4b's output for one source task that was NOT skipped
-// as already on the destination: every piece that needed the whole batch
-// and the destination board to compute. A later phase (4c/5) joins this
-// with the matching TaskInput.Result by SourceID to build one line of
-// NDJSON. Every field Result already owns and this phase never touches
-// (Status, Type, Priority, Assignees, Due, CreatedAt, UpdatedAt) is
-// deliberately absent here, so the two are combined rather than duplicated.
+// Identified is identifier resolution's output for one source task that was
+// NOT skipped as already on the destination: every piece that needed the
+// whole batch and the destination board to compute. Assemble (batch.go)
+// joins this with the matching TaskInput.Result by SourceID to build one
+// line of NDJSON. Every field Result already owns and identifier resolution
+// never touches (Status, Type, Priority, Assignees, Due, CreatedAt,
+// UpdatedAt) is deliberately absent here, so the two are combined rather
+// than duplicated.
 type Identified struct {
 	// SourceID is the source.Task.ID this Identified was computed from,
 	// exactly as read (its original prefix and zero-padding, if any). It is
@@ -53,8 +54,8 @@ type Identified struct {
 	// BatchIndex is the position, in the batch slice passed to Identifiers,
 	// of the TaskInput this Identified was computed from. Unlike SourceID,
 	// it is always unique: it is the real position of one particular
-	// source.Task in the batch, so a caller (Assemble, phase 5) uses it to
-	// find that task's own Result and source.Task (batch[BatchIndex].Result,
+	// source.Task in the batch, so a caller (Assemble, in batch.go) uses it
+	// to find that task's own Result and source.Task (batch[BatchIndex].Result,
 	// batch[BatchIndex].Task) instead of indexing a map by SourceID, which
 	// would silently collide for two tasks sharing a reused id.
 	BatchIndex int
@@ -92,23 +93,23 @@ type Identified struct {
 	Summary     string
 
 	// AcceptanceCriteria mirrors Result.AcceptanceCriteria (already merged
-	// with Definition of Done by phase 4a) item for item, in the same
+	// with Definition of Done by convert.Task) item for item, in the same
 	// order: Number and Checked untouched, Text with every mention
 	// rewritten.
 	AcceptanceCriteria []source.Checkbox
 
-	// Comments mirrors Result.Comments (already date-converted by phase
-	// 4a) item for item, in the same order: Author and CreatedAt untouched
-	// (point 5 explicitly excludes a comment's author from mention
+	// Comments mirrors Result.Comments (already date-converted by
+	// convert.Task) item for item, in the same order: Author and CreatedAt
+	// untouched (point 5 explicitly excludes a comment's author from mention
 	// rewriting), Body with every mention rewritten.
 	Comments []Comment
 
 	// Labels is Result.Labels (already including milestone:: and
-	// project:: from phase 4a) with backlog.id::<source-id> appended when
-	// the source id has a dot (docs/especificacion.md, "Identificadores",
-	// point 9). A source label colliding with the backlog.id key is
-	// dropped first, with a Finding, exactly the way phase 4a already
-	// drops one colliding with milestone or project
+	// project:: from convert.Task) with backlog.id::<source-id> appended
+	// when the source id has a dot (docs/especificacion.md,
+	// "Identificadores", point 9). A source label colliding with the
+	// backlog.id key is dropped first, with a Finding, exactly the way
+	// convert.Task already drops one colliding with milestone or project
 	// (RemoveCollidingScopedLabel, reused here unchanged). A task whose
 	// source id has no dot never gets this label at all.
 	Labels []string
@@ -167,9 +168,9 @@ func parseSourceID(id string) (parsed parsedSourceID, ok bool) {
 // number ("TASK-1" reads before "TASK-1.0"), and two subtasks of the same
 // parent sort by their own subtask number ascending. Identifiers uses this
 // to break ties among ids reassigned by point 4 (see below), and
-// ordinal.go (phase 4c) reuses it unchanged to break a tie between two
+// ordinal.go's AssignOrdinals reuses it unchanged to break a tie between two
 // source tasks that share the same ordinal (docs/especificacion.md, "Orden
-// manual"), so that both phases agree on what "the source id's own natural
+// manual"), so that both files agree on what "the source id's own natural
 // order" means and a batch converts the same way every time it runs.
 func naturalSourceIDLess(a, b parsedSourceID) bool {
 	if a.number != b.number {
@@ -239,8 +240,8 @@ func groupTieBreakKey(t source.Task) string {
 }
 
 // hasValidCreatedDate reports whether b's already-converted created_date
-// (b.Result.CreatedAt, docs/especificacion.md, "Fechas") is present: phase 4a
-// (convert.go, ConvertDate) already turned an absent or invalid
+// (b.Result.CreatedAt, docs/especificacion.md, "Fechas") is present:
+// convert.go's ConvertDate already turned an absent or invalid
 // source.Task.CreatedDate into the empty string, the same criterion the rest
 // of this module uses for "does this task have a valid created_date at all".
 func hasValidCreatedDate(b TaskInput) bool {
@@ -475,8 +476,9 @@ const (
 	reassignReused
 )
 
-// reassignEntry is one task point 4 could not let conserve its own number,
-// waiting to be assigned a new one. createdAt and hasDate are b.Result's
+// reassignEntry is one task that could not keep its own number under
+// docs/especificacion.md, "Identificadores", point 4, waiting to be
+// assigned a new one. createdAt and hasDate are b.Result's
 // already-converted created_date (docs/especificacion.md, "Fechas") and
 // whether it is present at all, carried alongside task and parsed purely so
 // sharedGroupAssignmentLess can break a tie without needing the whole
@@ -490,8 +492,9 @@ type reassignEntry struct {
 	reason    reassignReason
 }
 
-// Identifiers is phase 4b's entry point (docs/especificacion.md,
-// "Identificadores"). It receives the whole batch at once, because an
+// Identifiers resolves identifiers for the whole batch
+// (docs/especificacion.md, "Identificadores"). It receives the whole batch
+// at once, because an
 // identifier can only be decided knowing every source task and every task
 // already on the destination:
 //

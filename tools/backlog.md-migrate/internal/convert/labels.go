@@ -8,16 +8,15 @@ import (
 	"backlog.md-migrate/internal/source"
 )
 
-// MilestoneSlugs computes the milestone slug docs task point 4 describes
-// for every milestone in titles (a source.Board.Milestones map, milestone
-// id to title), plus:
+// MilestoneSlugs computes the milestone slug docs/especificacion.md,
+// "Milestone y proyecto", describes for every milestone in titles (a
+// source.Board.Milestones map, milestone id to title), plus:
 //
-//   - a Finding for a title that slugifies to the empty string (docs task
-//     point 4, step 3), falling back to using the milestone id itself as
-//     the slug;
+//   - a Finding for a title that slugifies to the empty string, falling
+//     back to using the milestone id itself as the slug;
 //   - a Finding for two or more DISTINCT milestone ids that end up with
-//     the same slug (docs task point 4, step 4), because they would
-//     collapse into a single milestone::<slug> label.
+//     the same slug, because they would collapse into a single
+//     milestone::<slug> label.
 //
 // This must run once over the whole map, not once per task: the collision
 // check needs every milestone's slug at once to compare them against each
@@ -87,8 +86,11 @@ func MilestoneSlugs(titles map[string]string) (slugs map[string]string, findings
 // key is what precedes the separator, whether the separator turns out to
 // be one colon or two, since a second colon only extends the separator, it
 // never moves where the key starts). A label with no colon at all has no
-// key and hasKey is false; docs task point 4 says such a label "nunca
-// choca" with a derived milestone:: or project:: label.
+// key and hasKey is false; such a label never collides with a derived
+// milestone:: or project:: label (docs/decisiones.md, "El identificador de
+// origen de una subtarea se guarda en una etiqueta con ámbito": "La clave
+// `backlog.id` no choca con `milestone` ni con `project`", which applies the
+// same way to a label with no key at all).
 func scopedLabelKey(label string) (key string, hasKey bool) {
 	idx := strings.IndexByte(label, ':')
 	if idx < 0 {
@@ -111,10 +113,10 @@ func scopedLabelKey(label string) (key string, hasKey bool) {
 // does not strip diacritics, spaces, hyphens, or underscores), and reusing
 // the vocabulary function here would silently change which labels collide.
 //
-// Exported because phase 4b (identifiers.go) reuses it verbatim for the
-// backlog.id:: label, per docs/especificacion.md, "Identificadores", point
-// 9: a source label whose key collides with backlog.id is dropped the same
-// way one colliding with milestone or project already is here.
+// Exported because identifiers.go reuses it verbatim for the backlog.id::
+// label, per docs/especificacion.md, "Identificadores", point 9: a source
+// label whose key collides with backlog.id is dropped the same way one
+// colliding with milestone or project already is here.
 func RemoveCollidingScopedLabel(file string, labels []string, targetKey string) (kept []string, findings []source.Finding) {
 	foldedTarget := foldCase(targetKey)
 	for _, label := range labels {
@@ -135,9 +137,10 @@ func RemoveCollidingScopedLabel(file string, labels []string, targetKey string) 
 	return kept, findings
 }
 
-// ScopedLabels computes the milestone:: and project:: labels of docs task
-// point 4 for a single task, on top of labels: the task's origin labels
-// list, already cleaned through CleanTokenList. It:
+// ScopedLabels computes the milestone:: and project:: labels of
+// docs/especificacion.md, "Milestone y proyecto", for a single task, on top
+// of labels: the task's origin labels list, already cleaned through
+// CleanTokenList. It:
 //
 //  1. Looks up milestoneID (t.Milestone, a milestone id such as "m-4") in
 //     milestoneSlugs, the map MilestoneSlugs already computed for the
@@ -149,14 +152,13 @@ func RemoveCollidingScopedLabel(file string, labels []string, targetKey string) 
 //     file to look up) directly with slugify. When that yields the empty
 //     string, docs/especificacion.md does not define a fallback the way it
 //     does for milestone's id; this implementation falls back to the raw
-//     projectValue itself as the slug, with a Finding (a decision made by
-//     this phase's implementer, documented in its final report, since the
-//     specification leaves it open).
+//     projectValue itself as the slug, with a Finding (this implementation's
+//     own choice, since the specification leaves it open).
 //  3. Removes from labels any label whose key collides with "milestone" or
 //     "project" (RemoveCollidingScopedLabel), then appends
 //     "milestone::<slug>" and "project::<slug>", in that order, after
-//     whatever origin labels remain: the exact final ordering docs task
-//     point 4 requires.
+//     whatever origin labels remain: the exact final ordering
+//     docs/especificacion.md, "Milestone y proyecto", requires.
 //
 // A task with no milestone (milestoneID == "") gets no milestone:: label
 // and no related Finding; the same holds for project. The backlog.id::

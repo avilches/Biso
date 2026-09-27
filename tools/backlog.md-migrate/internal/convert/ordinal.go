@@ -8,16 +8,17 @@ import (
 	"backlog.md-migrate/internal/source"
 )
 
-// This is phase 4c of the conversion engine (docs/especificacion.md, "Orden
-// manual", and docs/decisiones.md, "El orden manual se recalcula, no se
-// copia"). It computes the final manual order key for every source task
-// that is going to produce a line of output, that is, every source task
-// AssignOrdinals is given: a task phase 4b skipped because it was already
-// on the destination never reaches this file at all, and a task with no
-// ordinal in the source never receives a key either. This file never reads
-// or writes anything: it is a pure computation on top of source.Task and
-// destination.Board, exactly like identifiers.go's naturalSourceIDLess,
-// which it reuses unchanged for its own tie break.
+// This file computes the manual order key of the conversion engine
+// (docs/especificacion.md, "Orden manual", and docs/decisiones.md, "El
+// orden manual se recalcula, no se copia"). It computes the final manual
+// order key for every source task that is going to produce a line of
+// output, that is, every source task AssignOrdinals is given: a task
+// Identifiers skipped because it was already on the destination never
+// reaches this file at all, and a task with no ordinal in the source never
+// receives a key either. This file never reads or writes anything: it is a
+// pure computation on top of source.Task and destination.Board, exactly
+// like identifiers.go's naturalSourceIDLess, which it reuses unchanged for
+// its own tie break.
 
 // ordinalAlphabet is the 36 symbols a manual order key is built from, in
 // order: "0123456789abcdefghijklmnopqrstuvwxyz". A symbol's value is its
@@ -134,8 +135,8 @@ func KeyBetween(before, after string) string {
 	return string(ordinalAlphabet[a]) + KeyBetween(beforeTail, "")
 }
 
-// DestinationAnchor is the ancla del destino
-// (docs/especificacion.md, "Orden manual"): the greatest manual order key
+// DestinationAnchor is the destination's anchor (what docs/especificacion.md,
+// "Orden manual", calls the "ancla del destino"): the greatest manual order key
 // among every task already on the destination board, compared by Unicode
 // code point exactly as KeyBetween itself compares (plain Go string
 // comparison, since a key's alphabet is ASCII), or the empty string
@@ -170,8 +171,8 @@ func DestinationAnchor(board destination.Board) string {
 //     from the result if it is present with Ordinal == nil.
 //  3. Those tasks are ordered by Ordinal ascending; a tie is broken between
 //     the tied tasks by naturalSourceIDLess on their own source id, the
-//     exact same tie break identifiers.go (phase 4b) uses to reassign a
-//     colliding id's number, so the two phases agree on what "the source
+//     exact same tie break identifiers.go's Identifiers uses to reassign a
+//     colliding id's number, so the two files agree on what "the source
 //     id's own natural order" means and a batch converts to the same
 //     result every time it runs.
 //  4. Keys are assigned in that order as if the whole batch were placed
@@ -181,10 +182,10 @@ func DestinationAnchor(board destination.Board) string {
 //     KeyBetween(the key just assigned, "").
 //
 // tasks must already be the tasks that are going to produce a line of
-// output: this file does not know about phase 4b's own notion of "already
-// on the destination, skipped", so a caller filters those out before
-// calling this function. Passing a skipped task in by mistake would give it
-// a key it should never have.
+// output: this file does not know about identifiers.go's own notion of
+// "already on the destination, skipped", so a caller filters those out
+// before calling this function. Passing a skipped task in by mistake would
+// give it a key it should never have.
 //
 // The result is a slice PARALLEL to tasks, same length, same position:
 // result[i] is the key assigned to tasks[i], or the empty string when
@@ -194,10 +195,10 @@ func DestinationAnchor(board destination.Board) string {
 // share the exact same literal ID (Backlog.md hands the reused task the
 // very same id string as the one it archived), and a map keyed by that id
 // would silently let the second one's key overwrite the first's whenever
-// both happened to have their own source ordinal. A caller (Assemble, phase
-// 5) that built tasks from batch[id.BatchIndex].Task for each Identified in
-// order reads this result back the same way, result[i] for identified[i],
-// rather than by SourceID.
+// both happened to have their own source ordinal. A caller (Assemble, in
+// batch.go) that built tasks from batch[id.BatchIndex].Task for each
+// Identified in order reads this result back the same way, result[i] for
+// identified[i], rather than by SourceID.
 //
 // None of the keys this function returns can ever collide with a key
 // already on the destination: each one is built by KeyBetween(previous, "")
@@ -225,9 +226,9 @@ func AssignOrdinals(tasks []source.Task, board destination.Board) []string {
 		parsed, ok := parseSourceID(t.ID)
 		if !ok {
 			// Every task that reaches this function already produces a
-			// line of output, which means it already went through phase
-			// 4b's validateSourceShape, which requires this exact shape
-			// for every task in the batch, skipped or not. A task whose id
+			// line of output, which means it already went through
+			// identifiers.go's validateSourceShape, which requires this
+			// exact shape for every task in the batch, skipped or not. A task whose id
 			// does not parse here would mean a caller passed in a task
 			// that never went through that validation, which is a bug in
 			// the caller, not a data problem this file can report.

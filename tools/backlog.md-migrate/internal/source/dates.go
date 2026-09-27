@@ -8,7 +8,7 @@ import "regexp"
 // digits, two digits, two digits, and so on): it does not reject a
 // calendar-invalid date such as 2026-02-30, because the specification only
 // asks that the text match one of the two shapes, and leaves any further
-// validation to the phase that converts it to UTC.
+// validation to convert.ConvertDate, which converts it to UTC.
 var (
 	dateWithTimeShape = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$`)
 	dateOnlyShape     = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
