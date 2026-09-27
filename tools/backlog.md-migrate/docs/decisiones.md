@@ -114,13 +114,18 @@ estable: sería una complejidad nueva para un caso raro (un título que menciona
 choca en la primera importación) que esta misma decisión ya acepta perder en el caso hermano del título
 editado a mano.
 
-**El mismo número, no la misma cadena, también decide cuándo dos ids de origen chocan entre sí.** La
-regla 1 de "Identificadores" aborta el lote con el código 3 cuando dos ficheros de origen traen el
-mismo id, y esa comparación usa la misma forma canónica (prefijo sin distinguir mayúsculas, número
-entero, número de subtarea entero si lo hay) con la que esta decisión ya compara números para saber si
-uno choca con el destino. `TASK-1` y `TASK-001` son el mismo id de origen aunque las dos cadenas sean
-distintas, y dos ficheros que los traen paran el import en vez de convertirse en silencio en la misma
-tarea de destino, que sería perder una tarea entera sin avisar.
+**El mismo número, no la misma cadena, también decide cuándo dos ids de origen chocan entre sí, pero
+solo entre ids de la misma forma.** La regla 1 de "Identificadores" aborta el lote con el código 3
+cuando dos ficheros de origen traen el mismo id, y esa comparación usa la misma forma canónica (prefijo
+sin distinguir mayúsculas, número entero, número de subtarea entero si lo hay) con la que esta decisión
+ya compara números para saber si uno choca con el destino: dos ids simples, o dos ids de subtarea, con
+el mismo prefijo y el mismo número principal (y, si son de subtarea, el mismo número de subtarea) son
+el mismo id de origen aunque las cadenas sean distintas, como `TASK-1` y `TASK-001`. Un id simple y un
+id de subtarea nunca son el mismo id aunque compartan el número principal: `TASK-1` y `TASK-1.2` son dos
+ids distintos, la tarea y una de sus subtareas, justo el caso que la regla 4 y la sección anterior dan
+por hecho que conviven sin ser un error. Dos ficheros que sí traen el mismo id por esta forma canónica
+paran el import en vez de convertirse en silencio en la misma tarea de destino, que sería perder una
+tarea entera sin avisar.
 
 ## El identificador de origen de una subtarea se guarda en una etiqueta con ámbito
 
