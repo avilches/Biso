@@ -157,12 +157,19 @@ hecho (`DOD`) y los comentarios (`COMMENTS`).
    mayúsculas seguido de `-`, dígitos y, si los hay, de `.` y dígitos (`XYZ-001.01`),
    **distinguiendo mayúsculas**, y solo si no va precedida de una letra, un dígito, `_` o `-`, ni
    seguida de una letra, un dígito, `_` o de `-` y una letra o un dígito. Así `TASK-10-modelo`, que
-   podría ser el nombre de una rama, no se toca, y tampoco `SUBTASK-12`. Se reescribe en cualquier
-   lugar del texto, un bloque de código incluido. No se toca `documentation`, `references` ni
-   `modified_files`, que son rutas y URLs opacas.
+   podría ser el nombre de una rama, no se toca, y tampoco `SUBTASK-12`. Una vez que este patrón
+   reconoce una mención válida, a qué tarea del lote corresponde se decide por la misma forma canónica
+   que la regla 1 usa para "mismo id" (mismo prefijo, mismo número principal como entero y, si la
+   mención tiene forma de subtarea, mismo número de subtarea como entero), no por la cadena exacta: una
+   mención `TASK-1` encuentra en la tabla de equivalencias tanto a una tarea de origen `TASK-1` como a
+   una `TASK-001`. Se reescribe en cualquier lugar del texto, un bloque de código incluido. No se toca
+   `documentation`, `references` ni `modified_files`, que son rutas y URLs opacas.
 6. Una mención que tiene la forma de un id de origen pero no corresponde a ninguna tarea del origen, o
    que solo difiere en las mayúsculas (`Xyz-002`, `task-12`), se deja como está y es un hallazgo,
-   uno por fichero y campo con el recuento, para que quien ejecuta pueda revisarla.
+   uno por fichero y campo con el recuento, para que quien ejecuta pueda revisarla. Si corresponde a
+   alguna tarea del origen se decide con esa misma forma canónica de la regla 1, no por cadena exacta:
+   una mención `TASK-1` sí corresponde a una tarea de origen `TASK-001`, y no cae en este hallazgo solo
+   porque los ceros no coincidan letra por letra.
 7. Un `parent` o una dependencia que nombra un id que no está entre las tareas del origen se quita
    de la línea y es un hallazgo, porque `biso` rechaza el lote entero (código 4) por un solo
    identificador que no existe. Los ciclos de padres o de dependencias no se detectan: los rechaza

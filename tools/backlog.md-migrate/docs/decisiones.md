@@ -139,6 +139,18 @@ por hecho que conviven sin ser un error. Dos ficheros que sí traen el mismo id 
 paran el import en vez de convertirse en silencio en la misma tarea de destino, que sería perder una
 tarea entera sin avisar.
 
+**Esa misma forma canónica también decide a qué tarea corresponde una mención en el texto.** La
+reescritura definitiva de menciones (regla 5 de "Identificadores") y el hallazgo de una mención que no
+corresponde a ninguna tarea (regla 6) buscan en la tabla de equivalencias por el mismo número entero y
+no por la cadena exacta, igual que la reescritura ingenua de la comparación de "ya está en el destino"
+ya lo hacía. Sin esto, una tarea de origen con ceros en su id (`TASK-001`) y un título o una descripción
+que la mencionan sin ceros (`TASK-1`) quedarían sin conectar: la mención no se reescribiría en la
+primera importación, la comparación de "ya está en el destino" (que sí usa forma canónica) no
+reconocería lo que quedó escrito en la segunda, y la tarea se duplicaría. El patrón que decide si algo
+cuenta como una mención en absoluto no cambia: sigue distinguiendo mayúsculas y los mismos límites de
+palabra; la forma canónica solo entra después, para decidir a qué tarea del lote corresponde una mención
+ya reconocida como válida.
+
 ## El identificador de origen de una subtarea se guarda en una etiqueta con ámbito
 
 **La decisión.** `biso` decidió no adoptar la forma `<PREFIJO>-<n>.<m>` de Backlog.md, y dejó
